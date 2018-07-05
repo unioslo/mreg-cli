@@ -1,0 +1,2 @@
+class HostNotFoundError(Exception):
+    pass

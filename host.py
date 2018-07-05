@@ -1,11 +1,20 @@
-from mh_log import log
-from typing import *
-from coreapi import Client, codecs
+import sys
+import requests
+from email import utils
+
+from configurations import *
+from util import *
+
+try:
+    conf = cli_config(required_fields=("server_ip", "server_port"))
+except Exception as e:
+    print(e)
+    sys.exit(1)
 
 
 def host(option: str, args: Sequence[str]) -> None:
-    log.trace("host({}, {})".format(option, args))
     if option == "add":
+        # TODO implementere interaktivt modus dersom man ikke spesifiserer argumenter
         if len(args) < 3:
             print("Missing argument(s).")
             return
@@ -21,30 +30,108 @@ def host(option: str, args: Sequence[str]) -> None:
             return
         host_add(args[0], args[1], args[2], hinfo, comment)
 
+    elif option == "remove":
+        if len(args) < 1:
+            print("Missing name/ip")
+            return
+        host_remove(args[0])
+
     elif option == "info":
         if len(args) < 1:
             print("Missing name/ip.")
             return
         host_info(args[0])
 
+    else:
+        print("Option unknown/not implemented")
 
-def host_add(name, ip_or_net, contact, hinfo="", comment=""):
-    pass
+
+def host_add(name, ip_or_net, contact, hinfo=None, comment=None):
+    # TODO handle short names with uio.no as default?
+    # TODO handle ip or subnet handling
+    # TODO handle random ip address
+    if re.match(r"^.*([.:]0|::)/$", ip):
+        # find random ip address from subnet
+        pass
+
+    # 1 - create host
+    try:
+        resolve_input_name(name)
+    except HostNotFoundError:
+        pass
+    except Exception as e:
+        cli_error(e)
+        return
+    else:
+        cli_warning("host \"{}\" already exists".format(name))
+        return
+
+    host_name = name if is_longform(name) else to_longform(name)
+    host_url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
+    host_data = {
+        "name": name,
+        "contact": contact,
+    }
+    if hinfo:
+        host_data["hinfo"] = hinfo
+    if comment:
+        host_data["comment"] = comment
+    post_host = requests.post(host_url, data=host_data)
+    if post_host.ok:
+        cli_info("{}: {} {}".format(host_name, post_host.status_code, post_host.reason))
+    else:
+        cli_error("{} {}".format(post_host.status_code, post_host.reason))
+        return
+
+    # 2 - add ip addresses to that host
+    # TODO create ip or subnet depending on input
+    ip_url = "http://{}:{}/hosts/{}/ipaddress/".format(conf["server_ip"],
+                                                       conf["server_port"],
+                                                       host_name)
+    ip_data = {
+        "ipaddress": ip_or_net
+    }
+    post_ip = requests.post(ip_url, ip_data)
+    if post_ip.ok:
+        cli_info("{}: {} {}".format(ip_or_net, post_host.status_code, post_host.reason))
+    else:
+        cli_error("{} {}".format(ip_or_net, post_ip.status_code, post_ip.reason))
 
 
 def host_remove(name_or_ip):
-    pass
+    # 1 - search with get req. if host exists (handle long and short name)
+    try:
+        host_name = resolve_name_or_ip(name_or_ip)
+    except HostNotFoundError:
+        cli_warning("couldn't get address for \"{}\"".format(name_or_ip))
+    except Exception as e:
+        cli_error(e)
+    else:
+        url = "http://{}:{}/hosts/{}/"
+        host_del = requests.delete(url.format(url.format(conf["server_ip"], conf["server_port"],
+                                                         host_name)))
+        if host_del.ok:
+            cli_info("deleted {} ({})".format(host_name, host_del.status_code))
+        else:
+            cli_error("{} {}".format(host_del.status_code, host_del.reason))
 
 
 def host_info(name_or_ip):
-    log.trace("host_info({})".format(name_or_ip))
-    decoders = [codecs.CoreJSONCodec(), codecs.JSONCodec()]
-    client = Client(decoders=decoders)
-    schema = client.get("http://localhost:8000/hosts/")
-    # print("schema ({}):\n{}".format(type(schema), schema))
-    for d in schema:
-        if "uio.no" in d:
-            print(d)
+    try:
+        host_name = resolve_name_or_ip(name_or_ip)
+    except HostNotFoundError:
+        cli_warning("couldn't get address for \"{}\"".format(name_or_ip))
+    except Exception as e:
+        cli_error(e)
+    else:
+        url = "http://{}:{}/hosts/{}/"
+        host_get = requests.get(url.format(conf["server_ip"], conf["server_port"], host_name))
+        if host_get.ok:
+            # TODO Pretty print host info when receiving correct info
+            cli_info("received {} {}".format(host_get.status_code, host_get.reason))
+            print(host_get.text)
+        else:
+            cli_error("{}: {}".format(host_get.status_code, host_get.reason))
 
 
 def host_set_hinfo(name, hinfo):
