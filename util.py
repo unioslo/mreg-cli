@@ -2,6 +2,7 @@ import re
 import sys
 import ipaddress
 import typing
+import types
 import inspect
 import requests
 
@@ -62,19 +63,31 @@ def to_longform(name: typing.AnyStr) -> str:
 #                                                                              #
 ################################################################################
 
+def _prefix_from_stack() -> str:
+    stack = inspect.stack()
+    stack.reverse()
+    prefix = ""
+    for f in stack:
+        if re.match("^do_.*$", f[3]):
+            prefix += " " + f[3].split('_', maxsplit=1)[1]
+        if re.match("^opt_.*$", f[3]):
+            prefix += " " + f[3].split('_', maxsplit=1)[1]
+    return prefix + ":"
+
+
 def cli_error(msg: typing.Any):
     """Print an error message with the name of the caller"""
-    print("ERROR: {}: {}".format(inspect.stack()[1][3], msg))
+    print("ERROR:{} {}".format(_prefix_from_stack(), msg))
 
 
 def cli_warning(msg):
     """Print a warning message with the name of the caller"""
-    print("Warning: {}: {}".format(inspect.stack()[1][3], msg))
+    print("Warning:{} {}".format(_prefix_from_stack(), msg))
 
 
 def cli_info(msg):
     """Print an info message with the name of the caller"""
-    print("{}: {}".format(inspect.stack()[1][3], msg))
+    print("{} {}".format(_prefix_from_stack(), msg))
 
 
 ################################################################################
