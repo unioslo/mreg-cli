@@ -5,12 +5,13 @@ import types
 import typing
 
 from util import *
-from configurations import *
+from config import *
 
 try:
     conf = cli_config(required_fields=("server_ip", "server_port"))
 except Exception as e:
-    print(e)
+    print("commands.py: cli_config:", e)
+    traceback.print_exc()
     sys.exit(1)
 
 
@@ -90,6 +91,8 @@ class Host(CommandBase):
     Create, delete or edit host.
         host <option> <argument(s)>
     """
+
+    # TODO handle hinfo. nå representert ved tall.
 
     def opt_info(self, args: typing.List[str]) -> None:
         """
@@ -190,12 +193,12 @@ class Host(CommandBase):
                 # TODO: kreve force hvis host har: flere A-records eller CNAME, SRV eller NAPTR pekende på seg
                 pass
             url = "http://{}:{}/hosts/{}/"
-            host_del = requests.delete(url.format(url.format(conf["server_ip"], conf["server_port"],
-                                                             host_name)))
+            host_del = requests.delete(url.format(conf["server_ip"], conf["server_port"],
+                                                  host_name))
             if host_del.ok:
                 cli_info("deleted {} ({})".format(host_name, host_del.status_code))
             else:
-                cli_error("{} {}".format(host_del.status_code, host_del.reason))
+                cli_error("{} {} - {}".format(host_del.status_code, host_del.reason, host_del.text))
 
     def opt_add(self, args: typing.List[str]) -> None:
         """
@@ -219,7 +222,7 @@ class Host(CommandBase):
 
         if re.match(r"^.*([.:]0|::)/$", ip_or_net):
             # TODO handle random ip address
-            # find random ip address from subnet
+            # find random ip address from subnet /24
             pass
 
         try:
@@ -237,7 +240,10 @@ class Host(CommandBase):
         # TODO handle short names with uio.no as default?
         host_name = name if is_longform(name) else to_longform(name)
         host_url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
-        host_data = {"name": name}
+        host_data = {
+            "name": host_name,
+            "ipaddress": ip_or_net
+        }
         if is_valid_email(contact):
             host_data["contact"] = contact
         else:
@@ -251,27 +257,20 @@ class Host(CommandBase):
         if post_host.ok:
             cli_info("{}: {} {}".format(host_name, post_host.status_code, post_host.reason))
         else:
-            cli_error("{} {}".format(post_host.status_code, post_host.reason))
+            cli_error("{} {} - {}".format(post_host.status_code, post_host.reason, post_host.text))
             return
 
-        # 2 - add ip addresses to that host
-        # TODO create ip or subnet depending on input
-        ip_url = "http://{}:{}/hosts/{}/ipaddress/".format(conf["server_ip"],
-                                                           conf["server_port"],
-                                                           host_name)
-        ip_data = {
-            "ipaddress": ip_or_net
-        }
-        post_ip = requests.post(ip_url, ip_data)
-        if post_ip.ok:
-            cli_info("{}: {} {}".format(ip_or_net, post_host.status_code, post_host.reason))
-        else:
-            cli_error("{} {}".format(ip_or_net, post_ip.status_code, post_ip.reason))
+    def apt_a_add(self, args):
+        """
+        a_add <name> <ip|subnet>
+            Add an A record to host.
+        """
+        pass
 
     def opt_a_remove(self, args):
         """
         a_remove <name> <ip>
-            Remove A record.
+            Remove A record from host.
         """
         # DELETE /hosts/<ipaddress>/ipaddress/
 

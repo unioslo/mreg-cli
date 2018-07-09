@@ -1,18 +1,20 @@
 import re
 import sys
 import ipaddress
+import traceback
 import typing
 import types
 import inspect
 import requests
 
-from configurations import *
+from config import *
 from exceptions import *
 
 try:
     conf = cli_config(required_fields=("server_ip", "server_port"))
 except Exception as e:
-    print(e)
+    print("util.py: cli_config:", e)
+    traceback.print_exc()
     sys.exit(1)
 
 IpAddress = typing.Union[str, bytes, int]
@@ -30,6 +32,7 @@ def resolve_name_or_ip(name_or_ip: typing.Union[typing.AnyStr, IpAddress]) -> st
 
 def resolve_input_name(name: typing.AnyStr) -> str:
     """Tries to find the named host. Raises an exception if not."""
+    # TODO: bruk GET /hosts/ for å få list med navn og bruk listen for å sjekke. 1 mindre kall og mindre data overført
     if not isinstance(name, str):
         name = str(name)
 
