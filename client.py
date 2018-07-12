@@ -17,6 +17,7 @@ class ClientShell(cmd.Cmd):
 
     def command_do(self, args, command):
         assert isinstance(command, CommandBase)
+        # TODO ARGS: Split the arguments better. Do not split strings inside double quotes
         args = args.split()
         if len(args) < 1:
             print("missing argument(s).")
@@ -28,9 +29,9 @@ class ClientShell(cmd.Cmd):
                 command.opt_help(args[1])
         else:
             try:
-                command.do(args[0])(args[1:])
-            except UnknownOptionError as e:
-                cli_error(e)
+                command.method(args[0])(args[1:])
+            except CliException as e:
+                print(e)
             except Exception:
                 traceback.print_exc()
 
