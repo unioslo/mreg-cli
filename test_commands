@@ -1,0 +1,8 @@
+#### Test fil for å lese kommandoer fra fil ####
+
+host info ifi # kommentar
+host info math
+
+host info tulleserver
+
+host tullevalg
