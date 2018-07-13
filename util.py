@@ -57,17 +57,19 @@ def host_info_by_name_or_ip(name_or_ip: str) -> dict:
     return host_info_by_name(name)
 
 
-def host_info_by_name(name: str) -> dict:
+def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
     """
     Return a dict with host information about the given host.
 
     :param name: A host name on either short or long form.
+    :param follow_cnames: Indicate whether or not to follow cname relations. If True (default)
+    then it will return the host with the canonical name instead of the given alias.
     :return: A dict of the JSON object received with the host information
     """
     name = resolve_input_name(name)
     url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], name)
     host = get(url).json()
-    if host["cname"]:
+    if host["cname"] and follow_cnames:
         if len(host["cname"]) > 1:
             cli_error("{} has multiple CNAME records".format(name))
         return host_info_by_name(host["cname"][0]["cname"])
@@ -94,6 +96,7 @@ def choose_ip_from_subnet(subnet: str) -> str:
 
 def post(url: str, **kwargs) -> requests.Response:
     """Uses requests to make a post request. Assumes that all kwargs are data fields"""
+    # TODO HISTORY: Add some history tracking when posting. With undo options.
     p = requests.post(url, data=kwargs)
     if not p.ok:
         message = "POST \"{}\": {}: {}".format(url, p.status_code, p.reason)
@@ -109,6 +112,7 @@ def post(url: str, **kwargs) -> requests.Response:
 
 def patch(url: str, **kwargs) -> requests.Response:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
+    # TODO HISTORY: Add some history tracking when patching. With undo options.
     p = requests.patch(url, data=kwargs)
     if not p.ok:
         message = "PATCH \"{}\": {}: {}".format(url, p.status_code, p.reason)
@@ -124,6 +128,7 @@ def patch(url: str, **kwargs) -> requests.Response:
 
 def delete(url: str) -> requests.Response:
     """Uses requests to make a delete request"""
+    # TODO HISTORY: Add some history tracking when deleting. With undo options.
     d = requests.delete(url)
     if not d.ok:
         message = "DELETE \"{}\": {}: {}".format(url, d.status_code, d.reason)
@@ -274,7 +279,7 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
     for hinfo in hinfo_get.json():
         assert isinstance(hinfo, dict)
         # Assuming hinfo preset ids are 1-indexed
-        hl.insert(hinfo["hinfoid"] - 1, (hinfo["cpu"], hinfo["os"]))
+        hl.insert(hinfo["hinfoid"] - 1, (hinfo["os"], hinfo["cpu"]))
     return hl
 
 
@@ -424,7 +429,7 @@ def print_hinfo(hinfo: typing.Tuple[str, str], padding: int = 14) -> None:
     assert isinstance(hinfo, tuple)
     assert len(hinfo) == 2
     assert isinstance(hinfo[0], str) and isinstance(hinfo[1], str)
-    print("{1:<{0}}{2} {3}".format(padding, "Hinfo:", hinfo[0], hinfo[1]))
+    print("{1:<{0}}os={2} cpu={3}".format(padding, "Hinfo:", hinfo[0], hinfo[1]))
 
 
 def print_hinfo_list(hinfos: typing.List[typing.Tuple[str, str]], padding: int = 14) -> None:

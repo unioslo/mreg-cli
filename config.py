@@ -10,17 +10,10 @@ def cli_config(config_file: str = "cli.conf", required_fields: Sequence[str] = [
             line = f.readline()
             if not line:
                 break
-            line = line.strip()
-            if not line:
-                continue
             num += 1
-            if not re.match("^\s*(\w[\w\d-]*\s*=\s*.+)?\s*(#.*)?$", line):
-                raise Exception(
-                    "Invalid config file: cannot understand line {}: {}".format(num, line))
-            line = line.split("#", 1)[0]
-            if line:
-                pair = line.split("=")
-                conf[pair[0].strip()] = pair[1].strip()
+            m = re.match("^\s*(?P<key>\w[\w\d-]*)\s*=\s*(?P<value>.+)\s*(#.*)?$", line)
+            if m:
+                conf[m.group("key")] = m.group("value")
 
     missing_field = False
     for field in required_fields:
