@@ -12,6 +12,7 @@ import requests
 from datetime import datetime
 from config import *
 from exceptions import *
+from history import history
 
 try:
     conf = cli_config(required_fields=("server_ip", "server_port", "log_file"))
@@ -159,7 +160,7 @@ def get(url: str) -> requests.Response:
 
 ################################################################################
 #                                                                              #
-#   Cname utilities
+#   Cname utilities                                                            #
 #                                                                              #
 ################################################################################
 

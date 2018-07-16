@@ -7,6 +7,7 @@ import requests
 
 from util import *
 from config import *
+from history import history
 
 try:
     conf = cli_config(required_fields=("server_ip", "server_port"))
@@ -136,16 +137,32 @@ class Host(CommandBase):
         else:
             name_or_ip = args[0]
 
-        # Require force if host has multiple A/AAAA records or any CNAME, SRV or NAPTR records.
         info = host_info_by_name_or_ip(name_or_ip)
-        if "y" not in args:
-            # TODO FORCE: kreve force hvis host har: flere A-records eller CNAME, SRV eller NAPTR pekende på seg
-            pass
+
+        if len(info["ipaddress"]) > 1 and "y" not in args:
+            cli_warning("{} has multiple ipaddresses, must force")
+
+        # Require force if host has any aliases
+        aliases = aliases_of_host(info["name"])
+        if len(aliases):
+            if "y" not in args:
+                cli_warning("{} has {} aliases, must force".format(info["name"], len(aliases)))
+            else:
+                for alias in aliases:
+                    url = "http://{}:{}/hosts/{}/".format(
+                        conf["server_ip"],
+                        conf["server_port"],
+                        alias,
+                    )
+                    delete(url)
+                    cli_info("deleted alias host {} when removing {}".format(alias, info["name"]))
+
+        # TODO FORCE: kreve force hvis host har:  SRV eller NAPTR pekende på seg
 
         # Delete host
         url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], info["name"])
         delete(url)
-        cli_info("deleted {}".format(info["name"]))
+        cli_info("removed {}".format(info["name"]), print_msg=True)
 
     def opt_add(self, args: typing.List[str]) -> None:
         """
@@ -212,7 +229,7 @@ class Host(CommandBase):
         url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
         post(url, name=name, ipaddress=ip, contact=contact or None,
              hinfo=hinfo or None, comment=comment or None)
-        cli_info("created host {}".format(name))
+        cli_info("created host {}".format(name), print_msg=True)
 
     def opt_set_contact(self, args: typing.List[str]) -> None:
         """
@@ -274,17 +291,30 @@ class Host(CommandBase):
 
         # Require force if the new name is already in use
         try:
-            new_name = resolve_input_name(new_name)
+           info = host_info_by_name(new_name, follow_cnames=False)
         except HostNotFoundWarning:
             pass
         else:
             if "y" not in args:
                 # QUESTION: should inform if the existing host has any records (like remove)?
-                cli_warning("host {} already exists, must force".format(new_name))
+                cli_warning("host {} already exists, must force".format(info["name"]))
+            for alias in aliases_of_host(info["name"]):
+                url = "http://{}:{}/hosts/{}/".format(
+                    conf["server_ip"],
+                    conf["server_port"],
+                    alias,
+                )
+                delete(url)
+                cli_info("deleted alias host {} when removing {} before renaming {}".format(
+                    alias,
+                    info["name"],
+                    old_name,
+                ))
+            # TODO FORCE: check and remove SRV, NAPTR pointing at existing host
             url = "http://{}:{}/hosts/{}/".format(
                 conf["server_ip"],
                 conf["server_port"],
-                new_name,
+                info["name"],
             )
             delete(url)
             # NOTE: Could need a "regret" functionality if delete succeeds but post fails
@@ -297,6 +327,23 @@ class Host(CommandBase):
         url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], old_name)
         patch(url, name=new_name)
         cli_info("renamed {} to {}".format(old_name, new_name))
+
+        url = "http://{}:{}/cnames/?cname={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            old_name,
+        )
+        cnames = get(url).json()
+        for cname in cnames:
+            url = "http://{}:{}/cnames/{}/".format(
+                conf["server_ip"],
+                conf["server_port"],
+                cname["id"],
+            )
+            patch(url, cname=new_name)
+
+        # TODO SRV: Update all SRV pointing at host when renaming it
+        # TODO NAPTR: Update all NAPTR pointing at host when renaming it
 
     def opt_a_add(self, args: typing.List[str]) -> None:
         """
@@ -380,7 +427,8 @@ class Host(CommandBase):
         if not is_valid_ipv4(old_ip):
             cli_warning("invalid ipv4 \"{}\" (target host {})".format(old_ip, name))
         elif not is_valid_ipv4(ip_or_subnet) and not is_valid_subnet(ip_or_subnet):
-            cli_warning("invalid ipv4 nor subnet \"{}\" (target host {})".format(ip_or_subnet, name))
+            cli_warning(
+                "invalid ipv4 nor subnet \"{}\" (target host {})".format(ip_or_subnet, name))
 
         # Check that ip belongs to host
         info = host_info_by_name(name)
@@ -642,11 +690,8 @@ class Host(CommandBase):
         # Gets the host info of the named host or the cname host if name is an alias
         info = host_info_by_name(name)
 
-        url = "http://{}:{}/hosts/?cname__cname={}".format(conf["server_ip"], conf["server_port"],
-                                                           info["name"])
-        cname_hosts = get(url).json()
-        for cname_host in cname_hosts:
-            print_cname(cname_host["name"], info["name"])
+        for alias in aliases_of_host(info["name"]):
+            print_cname(alias, info["name"])
         cli_info("showed cname aliases for {}".format(info["name"]))
 
     def opt_loc_set(self, args: typing.List[str]) -> None:
