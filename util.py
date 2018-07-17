@@ -193,9 +193,19 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
         return resolve_input_name(name_or_ip)
 
 
-def resolve_ip_or_subnet(ip_or_subnet: str) -> str:
-    # TODO SUBNET: implement this??
-    return "resolve ip or subnet not implemented"
+def resolve_subnet(range: str) -> str:
+    "Returns subnet associated with given range"
+    url = "http://{}:{}/subnets/{}?used_list=True".format(
+        conf["server_ip"],
+        conf["server_port"],
+        range
+    )
+
+    is_valid_subnet(range)
+    subnet = get(url).json()
+    if subnet.status_code == 404:
+        cli_warning("subnet not found", exception=SubnetNotFoundWarning)
+    return subnet
 
 
 def resolve_ip(ip: str) -> str:
@@ -467,6 +477,36 @@ def print_txt(txt: str, padding: int = 14) -> None:
     assert isinstance(txt, str)
     print("{1:<{0}}{2}".format(padding, "TXT:", txt))
 
+def print_subnet_unused(count: int, padding: int = 14) -> None:
+    "Pretty print amount of unused addresses"
+    assert (isinstance(count, int))
+    print("{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
+
+def print_subnet_reserved(range: str, padding: int = 14) -> None:
+    "Pretty print ip range and reserved addresses list"
+    assert (isinstance(range, str))
+    subnet = ipaddress.IPv4Network(range)
+    hosts = subnet.hosts()
+    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address, subnet.broadcast_address))
+    print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", 3 if subnet.num_addresses > 4 else 0))
+    print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
+    if len(hosts) > 4:
+        for i in range(3):
+            print("{1:<{0}}{2}".format(padding, "", hosts[i].exploded()))
+    print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)" ))
+
+def print_subnet_str(info: str, text: str, padding: int = 14) -> None:
+    assert(isinstance(info, str))
+    print("{1:<{0}}{2}".format(padding, text, info))
+
+def print_subnet_int(info: int, text: str, padding: int = 14) -> None:
+    assert(isinstance(info, int))
+    print("{1:<{0}}{2}".format(padding, text, info))
+
+def print_subnet_bool(info: int, text: str, padding: int = 14) -> None:
+    assert(isinstance(info, bool))
+    print("{1:<{0}}{2}".format(padding, text, info))
+
 
 ################################################################################
 #                                                                              #
@@ -502,14 +542,12 @@ def is_valid_ipv6(ip: str) -> bool:
 
 def is_valid_subnet(net: str) -> bool:
     """Check if net is a valid subnet"""
-    if is_valid_ip(net):
-        return False
     try:
-        ipaddress.ip_network(net)
-    except ValueError:
-        return False
-    else:
-        return True
+        ipaddress.IPv4Network(net)
+    except ipaddress.NetmaskValueError:
+        cli_warning("not a valid mask", exception=ipaddress.NetmaskValueError)
+    except ipaddress.AddressValueError:
+        cli_warning("not a valid ip", exception=ipaddress.AddressValueError)
 
 
 def is_valid_ttl(ttl: typing.Union[int, str, bytes]) -> bool:  # int?
