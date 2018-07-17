@@ -4,6 +4,7 @@ import re
 import types
 import typing
 import requests
+import ipaddress
 
 from util import *
 from config import *
@@ -807,6 +808,27 @@ class Subnet(CommandBase):
         info <subnet>
             Display subnet info
         """
+        if len(args) < 1:
+            range = input("Enter subnet> ")
+        else:
+            range = args[0]
+
+        # Get host info or raise exception
+        info = resolve_subnet(range)
+        network = ipaddress.IPv4Network(info['range'])
+
+        # Pretty print all subnet info
+        print_subnet_str(info["range"], "Subnet:")
+        print_subnet_str(network.netmask, "Netmask:")
+        print_subnet_str(info['description'], "Description:")
+        print_subnet_str(info['category'] if info['category'] else 'None', "Category:")
+        print_subnet_str(info['location'] if info['location'] else 'None', "Location:")
+        print_subnet_int(info['vlan'], "VLAN")
+        print_subnet_bool(info['dns_delegated'] if info['category'] else False, "DNS delegated:")
+        print_subnet_reserved(info["range"])
+        print_subnet_int(len(info['used_list']), "Used addresses:")
+        print_subnet_unused(network.num_addresses - (5 if network.num_addresses > 4 else 2)- len(info['used_list']), "Unused addresses:")
+        cli_info("printed subnet info for {}".format(info["range"]))
         pass
 
     def opt_set_vlan(self, args: typing.List[str]):
