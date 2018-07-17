@@ -1,10 +1,10 @@
-import datetime
 import getpass
 import inspect
 import re
 import sys
 import traceback
 
+from datetime import datetime
 from exceptions import *
 from config import cli_config
 
