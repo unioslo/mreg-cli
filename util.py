@@ -9,12 +9,13 @@ import types
 import inspect
 import requests
 
-from datetime import datetime
-from config import *
+from config import cli_config
 from exceptions import *
+from history import history
+from log import *
 
 try:
-    conf = cli_config(required_fields=("server_ip", "server_port", "log_file"))
+    conf = cli_config(required_fields=("server_ip", "server_port"))
 except Exception as e:
     print("util.py: cli_config:", e)
     traceback.print_exc()
@@ -67,7 +68,7 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
     :return: A dict of the JSON object received with the host information
     """
     name = resolve_input_name(name)
-    url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], name)
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], name)
     host = get(url).json()
     if host["cname"] and follow_cnames:
         if len(host["cname"]) > 1:
@@ -110,7 +111,7 @@ def post(url: str, **kwargs) -> requests.Response:
     return p
 
 
-def patch(url: str, **kwargs) -> requests.Response:
+def patch(url: str, old_data: dict = None, **kwargs) -> requests.Response:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
     # TODO HISTORY: Add some history tracking when patching. With undo options.
     p = requests.patch(url, data=kwargs)
@@ -126,7 +127,7 @@ def patch(url: str, **kwargs) -> requests.Response:
     return p
 
 
-def delete(url: str) -> requests.Response:
+def delete(url: str, old_data: dict = None) -> requests.Response:
     """Uses requests to make a delete request"""
     # TODO HISTORY: Add some history tracking when deleting. With undo options.
     d = requests.delete(url)
@@ -159,7 +160,7 @@ def get(url: str) -> requests.Response:
 
 ################################################################################
 #                                                                              #
-#   Cname utilities
+#   Cname utilities                                                            #
 #                                                                              #
 ################################################################################
 
@@ -281,72 +282,6 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
         # Assuming hinfo preset ids are 1-indexed
         hl.insert(hinfo["hinfoid"] - 1, (hinfo["os"], hinfo["cpu"]))
     return hl
-
-
-################################################################################
-#                                                                              #
-#   Logging                                                                    #
-#                                                                              #
-################################################################################
-
-# 2018-07-21 14:30:23 magnuhi [OK] host info
-# 2018-07-21 14:30:23 magnuhi [OK] host add: added peter.uio.no
-
-def _prefix_from_stack() -> str:
-    stack = inspect.stack()
-    stack.reverse()
-    prefix = ""
-    for f in stack:
-        if re.match("^do_.*$", f[3]):
-            prefix += " " + f[3].split('_', maxsplit=1)[1]
-        if re.match("^opt_.*$", f[3]):
-            prefix += " " + f[3].split('_', maxsplit=1)[1]
-    return prefix.strip()
-
-
-def _write_log(entry: str, end: str = "\n") -> None:
-    with open(conf["log_file"], "a+") as f:
-        f.write(entry + end)
-
-
-def cli_error(msg: str, raise_exception: bool = True, exception=CliError) -> None:
-    """Write a ERROR log entry."""
-    s = "{} {} [ERROR] {}: {}".format(
-        datetime.now().isoformat(sep=' ', timespec="seconds"),
-        getpass.getuser(),
-        _prefix_from_stack(),
-        msg,
-    )
-    _write_log(s)
-    if raise_exception:
-        raise exception("ERROR: {}".format(msg))
-
-
-def cli_warning(msg: str, raise_exception: bool = True, exception=CliWarning) -> None:
-    """Write a WARNING log entry."""
-    s = "{} {} [WARNING] {}: {}".format(
-        datetime.now().isoformat(sep=' ', timespec="seconds"),
-        getpass.getuser(),
-        _prefix_from_stack(),
-        msg,
-    )
-    _write_log(s)
-    if raise_exception:
-        raise exception("WARNING: {}".format(msg))
-
-
-def cli_info(msg: str, print_msg: bool = False) -> None:
-    """Write an OK log entry."""
-    s = "{} {} [OK] {}: {}".format(
-        datetime.now().isoformat(sep=' ', timespec="seconds"),
-        getpass.getuser(),
-        _prefix_from_stack(),
-        msg,
-    )
-    _write_log(s)
-    if print_msg:
-        print("OK: {}".format(msg))
-
 
 ################################################################################
 #                                                                              #
