@@ -8,6 +8,7 @@ import requests
 from util import *
 from config import *
 from history import history
+from log import *
 
 try:
     conf = cli_config(required_fields=("server_ip", "server_port"))
@@ -149,7 +150,7 @@ class Host(CommandBase):
                 cli_warning("{} has {} aliases, must force".format(info["name"], len(aliases)))
             else:
                 for alias in aliases:
-                    url = "http://{}:{}/hosts/{}/".format(
+                    url = "http://{}:{}/hosts/{}".format(
                         conf["server_ip"],
                         conf["server_port"],
                         alias,
@@ -160,7 +161,7 @@ class Host(CommandBase):
         # TODO FORCE: kreve force hvis host har:  SRV eller NAPTR pekende på seg
 
         # Delete host
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], info["name"])
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         delete(url)
         cli_info("removed {}".format(info["name"]), print_msg=True)
 
@@ -213,7 +214,7 @@ class Host(CommandBase):
             if "y" not in args:
                 cli_warning("host {} already exists, must force".format(name))
             else:
-                url = "http://{}:{}/hosts/{}/".format(
+                url = "http://{}:{}/hosts/{}".format(
                     conf["server_ip"],
                     conf["server_port"],
                     name,
@@ -251,7 +252,7 @@ class Host(CommandBase):
         info = host_info_by_name(name)
 
         # Update contact information
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], info["name"])
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         patch(url, contact=contact)
         cli_info("Updated contact of {} to {}".format(info["name"], contact))
 
@@ -271,7 +272,7 @@ class Host(CommandBase):
         info = resolve_input_name(name)
 
         # Update comment
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], info["name"])
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         patch(url, comment=comment)
         cli_info("updated comment of {} to \"{}\"".format(info["name"], comment))
 
@@ -299,7 +300,7 @@ class Host(CommandBase):
                 # QUESTION: should inform if the existing host has any records (like remove)?
                 cli_warning("host {} already exists, must force".format(info["name"]))
             for alias in aliases_of_host(info["name"]):
-                url = "http://{}:{}/hosts/{}/".format(
+                url = "http://{}:{}/hosts/{}".format(
                     conf["server_ip"],
                     conf["server_port"],
                     alias,
@@ -311,7 +312,7 @@ class Host(CommandBase):
                     old_name,
                 ))
             # TODO FORCE: check and remove SRV, NAPTR pointing at existing host
-            url = "http://{}:{}/hosts/{}/".format(
+            url = "http://{}:{}/hosts/{}".format(
                 conf["server_ip"],
                 conf["server_port"],
                 info["name"],
@@ -324,7 +325,7 @@ class Host(CommandBase):
         new_name = new_name if is_longform(new_name) else to_longform(new_name)
 
         # Rename host
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], old_name)
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], old_name)
         patch(url, name=new_name)
         cli_info("renamed {} to {}".format(old_name, new_name))
 
@@ -335,7 +336,7 @@ class Host(CommandBase):
         )
         cnames = get(url).json()
         for cname in cnames:
-            url = "http://{}:{}/cnames/{}/".format(
+            url = "http://{}:{}/cnames/{}".format(
                 conf["server_ip"],
                 conf["server_port"],
                 cname["id"],
@@ -405,7 +406,7 @@ class Host(CommandBase):
             cli_warning("{} is not owned by {}".format(ip, info["name"]))
 
         # Remove ip
-        url = "http://{}:{}/ipaddresses/{}/".format(conf["server_ip"], conf["server_port"], ip)
+        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip)
         delete(url)
         cli_info("removed ip {} from {}".format(ip, info["name"]))
 
@@ -449,7 +450,7 @@ class Host(CommandBase):
             ip = choose_ip_from_subnet(ip_or_subnet)
 
         # Update A record ip address
-        url = "http://{}:{}/ipaddresses/{}/".format(conf["server_ip"], conf["server_port"], old_ip)
+        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], old_ip)
         patch(url, ipaddress=ip)
         cli_info("updated ip {} to {} for {}".format(old_ip, ip, info["name"]))
 
@@ -515,7 +516,7 @@ class Host(CommandBase):
             cli_warning("{} is not owned by {}".format(ip, info["name"]))
 
         # Delete AAAA record
-        url = "http://{}:{}/ipaddresses/{}/".format(conf["server_ip"], conf["server_port"], ip)
+        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip)
         delete(url)
         cli_info("removed {} from {}".format(ip, info["name"]))
 
@@ -551,7 +552,7 @@ class Host(CommandBase):
             cli_warning("\"{}\" is not owned by {}".format(old_ip, info["name"]))
 
         # Update AAAA records ip address
-        url = "http://{}:{}/ipaddresses/{}/".format(conf["server_ip"], conf["server_port"], old_ip)
+        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], old_ip)
         patch(url, ipaddress=new_ip)
         cli_info("changed ip {} to {} for {}".format(old_ip, new_ip, info["name"]))
 
@@ -585,7 +586,7 @@ class Host(CommandBase):
             cli_warning("invalid TTL value: {} (target host {})".format(ttl, host_name))
 
         # Update TTL
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], host_name)
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], host_name)
         patch(url, ttl=ttl if ttl != "default" else -1)
         cli_info("updated TTL for {}".format(host_name))
 
@@ -598,7 +599,7 @@ class Host(CommandBase):
         host_name = resolve_input_name(name)
 
         # Remove TTL value
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], host_name)
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], host_name)
         patch(url, ttl=-1)
         cli_info("removed TTL for {}".format(host_name))
 
@@ -675,7 +676,7 @@ class Host(CommandBase):
             cli_warning("\"{}\" is not an alias for \"{}\"".format(alias_info["name"], host_name))
 
         # Delete CNAME host
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"],
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
                                               alias_info["name"])
         delete(url)
         cli_info("Removed cname alias {} for {}".format(alias_info["name"], host_name))
@@ -713,7 +714,7 @@ class Host(CommandBase):
             cli_warning("invalid LOC \"{}\" (target host {})".format(loc, info["name"]))
 
         # Update LOC
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], info["name"])
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         patch(url, loc=loc)
         cli_info("updated LOC to {} for {}".format(loc, info["name"]))
 
@@ -724,7 +725,7 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], info["name"])
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         patch(url, loc="")
         cli_info("removed LOC for {}".format(info["name"]))
 
@@ -762,7 +763,7 @@ class Host(CommandBase):
         info = host_info_by_name(name)
 
         # Update hinfo
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], info["name"])
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         patch(url, hinfo=hinfo)
         cli_info("updated hinfo to {} for {}".format(hinfo, info["name"]))
 
@@ -773,7 +774,7 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
-        url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], info["name"])
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         patch(url, hinfo=-1)
         cli_info("removed hinfo for {}".format(info["name"]))
 
@@ -793,6 +794,42 @@ class Host(CommandBase):
             List addresses used on the subnet which <ip> belongs to.
         """
         # TODO: implementer used_list
+        pass
+
+
+class History(CommandBase):
+    """
+    Show history or redo/undo actions.
+    """
+
+    def opt_print(self, args: typing.List[str]):
+        """
+        print
+            Print the history.
+        """
+        history.print()
+
+    def opt_redo(self, args: typing.List[str]):
+        """
+        redo <history-number>
+            Redo some history request(s) given by <history-number>. If the number is on the form
+            "1.2" then request nr. 2 of command nr. 1 is redone. If it's on the form "1" then all
+            requests of command nr. 1 is redone (GET requests are not redone if not explicitly
+            numbered)
+        """
+        tmp = args[0].split(sep='.')
+        if len(tmp) < 2:
+            history.redo(int(tmp[0]))
+        else:
+            history.redo(int(tmp[0]), int(tmp[1]))
+
+    def opt_undo(self, args: typing.List[str]):
+        """
+        undo <history-number>
+            Undo some history request(s) given by <history-number>. If the number is on the form
+            "1.2" then request nr. 2 of command nr. 1 is redone. If it's on the form "1" then all
+            requests of command nr. 1 is redone (GET requests cannot be undone)
+        """
         pass
 
 
