@@ -5,6 +5,7 @@ from pathlib import Path
 
 from util import *
 from commands import *
+from history import history
 
 
 class ClientShell(cmd.Cmd):
@@ -29,11 +30,14 @@ class ClientShell(cmd.Cmd):
                 command.opt_help(args[1])
         else:
             try:
+                history.start_event(" ".join(self.lastcmd.split()[:2]))
                 command.method(args[0])(args[1:])
             except CliException as e:
                 print(e)
             except Exception:
                 traceback.print_exc()
+            finally:
+                history.end_event()
 
     def command_complete(self, text, line, begidx, indidx, command):
         assert isinstance(command, CommandBase)
@@ -140,6 +144,16 @@ class ClientShell(cmd.Cmd):
 
     def help_subnet(self):
         self.command_help(Subnet())
+
+    def do_history(self, args):
+        self.command_do(args, History())
+
+    def complete_history(self, text, line, begidx, endidx):
+        return self.command_complete(text, line, begidx, endidx, History())
+
+    def help_history(self):
+        self.command_help(History())
+
 
 
 if __name__ == '__main__':

@@ -9,17 +9,36 @@ import types
 import inspect
 import requests
 
-from datetime import datetime
-from config import *
+from config import cli_config
 from exceptions import *
 from history import history
+from log import *
 
 try:
-    conf = cli_config(required_fields=("server_ip", "server_port", "log_file"))
+    conf = cli_config(required_fields=("server_ip", "server_port", "tag_file"))
 except Exception as e:
     print("util.py: cli_config:", e)
     traceback.print_exc()
     sys.exit(1)
+
+location_tags = []
+category_tags = []
+
+with open(conf['tag_file'], 'r') as file:
+    line_number = 1
+    for line in file:
+        match = re.match(r"(?P<location>[a-zA-Z0-9]+)\s+:\s+Plassering:.*", line)
+        if match:
+            location_tags.append(match.group('location'))
+            line_number += 1
+        else:
+            match = re.match(r"(?P<category>[a-zA-Z0-9]+)\s+.*", line)
+            if not match:
+                print('ERROR in %s, wrong format on line: %d - %s\n', conf['tag_file'], line_number, line)
+                sys.exit(-1)
+            category_tags.append(match.group('category'))
+            line_number += 1
+
 
 
 def host_exists(name: str) -> bool:
@@ -68,7 +87,7 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
     :return: A dict of the JSON object received with the host information
     """
     name = resolve_input_name(name)
-    url = "http://{}:{}/hosts/{}/".format(conf["server_ip"], conf["server_port"], name)
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], name)
     host = get(url).json()
     if host["cname"] and follow_cnames:
         if len(host["cname"]) > 1:
@@ -111,7 +130,7 @@ def post(url: str, **kwargs) -> requests.Response:
     return p
 
 
-def patch(url: str, **kwargs) -> requests.Response:
+def patch(url: str, old_data: dict = None, **kwargs) -> requests.Response:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
     # TODO HISTORY: Add some history tracking when patching. With undo options.
     p = requests.patch(url, data=kwargs)
@@ -127,7 +146,7 @@ def patch(url: str, **kwargs) -> requests.Response:
     return p
 
 
-def delete(url: str) -> requests.Response:
+def delete(url: str, old_data: dict = None) -> requests.Response:
     """Uses requests to make a delete request"""
     # TODO HISTORY: Add some history tracking when deleting. With undo options.
     d = requests.delete(url)
@@ -193,18 +212,17 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
         return resolve_input_name(name_or_ip)
 
 
-def resolve_subnet(range: str) -> str:
+def resolve_subnet(ip_range: str, used_list: bool = False) -> str:
     "Returns subnet associated with given range"
-    url = "http://{}:{}/subnets/{}?used_list=True".format(
+    url = "http://{}:{}/subnets/{}{}".format(
         conf["server_ip"],
         conf["server_port"],
-        range
+        ip_range,
+        "?used_list" if used_list else ""
     )
 
-    is_valid_subnet(range)
+    is_valid_subnet(ip_range)
     subnet = get(url).json()
-    if subnet.status_code == 404:
-        cli_warning("subnet not found", exception=SubnetNotFoundWarning)
     return subnet
 
 
@@ -292,72 +310,6 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
         # Assuming hinfo preset ids are 1-indexed
         hl.insert(hinfo["hinfoid"] - 1, (hinfo["os"], hinfo["cpu"]))
     return hl
-
-
-################################################################################
-#                                                                              #
-#   Logging                                                                    #
-#                                                                              #
-################################################################################
-
-# 2018-07-21 14:30:23 magnuhi [OK] host info
-# 2018-07-21 14:30:23 magnuhi [OK] host add: added peter.uio.no
-
-def _prefix_from_stack() -> str:
-    stack = inspect.stack()
-    stack.reverse()
-    prefix = ""
-    for f in stack:
-        if re.match("^do_.*$", f[3]):
-            prefix += " " + f[3].split('_', maxsplit=1)[1]
-        if re.match("^opt_.*$", f[3]):
-            prefix += " " + f[3].split('_', maxsplit=1)[1]
-    return prefix.strip()
-
-
-def _write_log(entry: str, end: str = "\n") -> None:
-    with open(conf["log_file"], "a+") as f:
-        f.write(entry + end)
-
-
-def cli_error(msg: str, raise_exception: bool = True, exception=CliError) -> None:
-    """Write a ERROR log entry."""
-    s = "{} {} [ERROR] {}: {}".format(
-        datetime.now().isoformat(sep=' ', timespec="seconds"),
-        getpass.getuser(),
-        _prefix_from_stack(),
-        msg,
-    )
-    _write_log(s)
-    if raise_exception:
-        raise exception("ERROR: {}".format(msg))
-
-
-def cli_warning(msg: str, raise_exception: bool = True, exception=CliWarning) -> None:
-    """Write a WARNING log entry."""
-    s = "{} {} [WARNING] {}: {}".format(
-        datetime.now().isoformat(sep=' ', timespec="seconds"),
-        getpass.getuser(),
-        _prefix_from_stack(),
-        msg,
-    )
-    _write_log(s)
-    if raise_exception:
-        raise exception("WARNING: {}".format(msg))
-
-
-def cli_info(msg: str, print_msg: bool = False) -> None:
-    """Write an OK log entry."""
-    s = "{} {} [OK] {}: {}".format(
-        datetime.now().isoformat(sep=' ', timespec="seconds"),
-        getpass.getuser(),
-        _prefix_from_stack(),
-        msg,
-    )
-    _write_log(s)
-    if print_msg:
-        print("OK: {}".format(msg))
-
 
 ################################################################################
 #                                                                              #
@@ -477,33 +429,33 @@ def print_txt(txt: str, padding: int = 14) -> None:
     assert isinstance(txt, str)
     print("{1:<{0}}{2}".format(padding, "TXT:", txt))
 
-def print_subnet_unused(count: int, padding: int = 14) -> None:
+def print_subnet_unused(count: int, padding: int = 25) -> None:
     "Pretty print amount of unused addresses"
     assert (isinstance(count, int))
     print("{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
 
-def print_subnet_reserved(range: str, padding: int = 14) -> None:
+def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
     "Pretty print ip range and reserved addresses list"
-    assert (isinstance(range, str))
-    subnet = ipaddress.IPv4Network(range)
-    hosts = subnet.hosts()
+    assert (isinstance(ip_range, str))
+    assert (isinstance(reserved, int))
+    subnet = ipaddress.IPv4Network(ip_range)
+    hosts = list(subnet.hosts())
     print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address, subnet.broadcast_address))
     print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", 3 if subnet.num_addresses > 4 else 0))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
-    if len(hosts) > 4:
-        for i in range(3):
-            print("{1:<{0}}{2}".format(padding, "", hosts[i].exploded()))
+    for x in range(reserved):
+        print("{1:<{0}}{2}".format(padding, "", hosts[x]))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)" ))
 
-def print_subnet_str(info: str, text: str, padding: int = 14) -> None:
+def print_subnet_str(info: str, text: str, padding: int = 25) -> None:
     assert(isinstance(info, str))
     print("{1:<{0}}{2}".format(padding, text, info))
 
-def print_subnet_int(info: int, text: str, padding: int = 14) -> None:
+def print_subnet_int(info: int, text: str, padding: int = 25) -> None:
     assert(isinstance(info, int))
     print("{1:<{0}}{2}".format(padding, text, info))
 
-def print_subnet_bool(info: int, text: str, padding: int = 14) -> None:
+def print_subnet_bool(info: int, text: str, padding: int = 25) -> None:
     assert(isinstance(info, bool))
     print("{1:<{0}}{2}".format(padding, text, info))
 
@@ -575,3 +527,11 @@ def is_valid_email(email: typing.AnyStr) -> bool:
 def is_valid_loc(loc: str) -> bool:
     # TODO LOC: implement validate loc
     return True
+
+def is_valid_location_tag(loc: str) -> bool:
+    """Check if valid location tag"""
+    return loc in location_tags
+
+def is_valid_category_tag(cat: str) -> bool:
+    """Check if valid location tag"""
+    return cat in category_tags
