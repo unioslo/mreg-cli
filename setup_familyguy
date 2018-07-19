@@ -1,0 +1,10 @@
+# Script for å sette opp familyguy hosten for testing
+host add familyguy 1.2.3.4 peter@griffin.no -hinfo 1
+host a_add familyguy 11.22.33.44
+host aaaa_add familyguy 1001:2002:3003:4004:aa:bb:cc:dd
+host cname_add familyguy chris
+host cname_add familyguy meg
+host cname_add familyguy peter
+host cname_add familyguy stewie
+host cname_add familyguy louis
+host cname_add familyguy brian

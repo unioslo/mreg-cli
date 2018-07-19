@@ -1,3 +1,4 @@
+import re
 import os
 import cmd
 import traceback
@@ -6,6 +7,38 @@ from pathlib import Path
 from util import *
 from commands import *
 from history import history
+
+
+def split_args(arg_str: str) -> typing.List[str]:
+    """Splits a string of arguments on whitespaces, while preserving double quoted string and
+    removing pparentheses
+    """
+    args = []
+    word = ""
+    in_quotes = False
+    for c in arg_str:
+        if c.isspace():
+            if in_quotes:
+                word += c
+            elif word:
+                args.append(word)
+                word = ""
+        elif c == "\"":
+            if in_quotes:
+                args.append(word)
+                word = ""
+                in_quotes = False
+            else:
+                in_quotes = True
+        elif c == "(" or c == ")":
+            continue
+        else:
+            word += c
+    if in_quotes:
+        cli_warning("parsing input: mismatching quotes")
+    if word:
+        args.append(word)
+    return args
 
 
 class ClientShell(cmd.Cmd):
@@ -19,7 +52,7 @@ class ClientShell(cmd.Cmd):
     def command_do(self, args, command):
         assert isinstance(command, CommandBase)
         # TODO ARGS: Split the arguments better. Do not split strings inside double quotes
-        args = args.split()
+        args = split_args(args)
         if len(args) < 1:
             print("missing argument(s).")
             return

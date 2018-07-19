@@ -29,6 +29,7 @@ def host_exists(name: str) -> bool:
         conf["server_port"],
         name
     )
+    history.record_get(url)
     hosts = get(url).json()
 
     # Response data sanity checks
@@ -69,6 +70,7 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
     """
     name = resolve_input_name(name)
     url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], name)
+    history.record_get(url)
     host = get(url).json()
     if host["cname"] and follow_cnames:
         if len(host["cname"]) > 1:
@@ -97,7 +99,6 @@ def choose_ip_from_subnet(subnet: str) -> str:
 
 def post(url: str, **kwargs) -> requests.Response:
     """Uses requests to make a post request. Assumes that all kwargs are data fields"""
-    # TODO HISTORY: Add some history tracking when posting. With undo options.
     p = requests.post(url, data=kwargs)
     if not p.ok:
         message = "POST \"{}\": {}: {}".format(url, p.status_code, p.reason)
@@ -111,9 +112,8 @@ def post(url: str, **kwargs) -> requests.Response:
     return p
 
 
-def patch(url: str, old_data: dict = None, **kwargs) -> requests.Response:
+def patch(url: str, **kwargs) -> requests.Response:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
-    # TODO HISTORY: Add some history tracking when patching. With undo options.
     p = requests.patch(url, data=kwargs)
     if not p.ok:
         message = "PATCH \"{}\": {}: {}".format(url, p.status_code, p.reason)
@@ -127,9 +127,8 @@ def patch(url: str, old_data: dict = None, **kwargs) -> requests.Response:
     return p
 
 
-def delete(url: str, old_data: dict = None) -> requests.Response:
+def delete(url: str) -> requests.Response:
     """Uses requests to make a delete request"""
-    # TODO HISTORY: Add some history tracking when deleting. With undo options.
     d = requests.delete(url)
     if not d.ok:
         message = "DELETE \"{}\": {}: {}".format(url, d.status_code, d.reason)
@@ -171,6 +170,7 @@ def aliases_of_host(name: str) -> typing.List[str]:
         conf["server_port"],
         name
     )
+    history.record_get(url)
     hosts = get(url).json()
     aliases = []
     for host in hosts:
@@ -205,6 +205,7 @@ def resolve_ip(ip: str) -> str:
         conf["server_port"],
         ip
     )
+    history.record_get(url)
     hosts = get(url).json()
 
     # Response data sanity check
@@ -223,6 +224,7 @@ def resolve_input_name(name: str) -> str:
         conf["server_port"],
         name
     )
+    history.record_get(url)
     hosts = get(url).json()
 
     for host in hosts:
@@ -248,11 +250,13 @@ def is_longform(name: typing.AnyStr) -> bool:
     return True if re.match("^.*\.uio\.no\.?$", name) else False
 
 
-def to_longform(name: typing.AnyStr) -> str:
+def to_longform(name: typing.AnyStr, trailing_dot: bool = False) -> str:
     """Return long form of host name, i.e. append uio.no"""
     if not isinstance(name, str):
         name = str(name)
     s = ".uio.no" if name[len(name) - 1] != "." else "uio.no"
+    if trailing_dot:
+        s += "."
     return name + s
 
 
@@ -275,6 +279,7 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
     hinfo id
     """
     url = "http://{}:{}/hinfopresets/".format(conf["server_ip"], conf["server_port"])
+    history.record_get(url)
     hinfo_get = get(url)
     hl = []
     for hinfo in hinfo_get.json():
@@ -379,6 +384,18 @@ def print_hinfo_list(hinfos: typing.List[typing.Tuple[str, str]], padding: int =
     for i in range(0, len(hinfos)):
         print(
             "{1:<{0}} -> {2:<{3}} {4}".format(padding, i + 1, hinfos[i][0], max_len, hinfos[i][1]))
+
+
+def print_srv(srv: dict, padding: int = 14) -> None:
+    """Pretty print given srv"""
+    print("{1:<{0}} SRV {2:^6} {3:^6} {4:^6} {5}".format(
+        padding,
+        srv["service"],
+        srv["priority"],
+        srv["weight"],
+        srv["port"],
+        srv["target"],
+    ))
 
 
 def print_loc(loc: str, padding: int = 14) -> None:

@@ -92,6 +92,40 @@ class CommandBase():
 #                                                                              #
 ################################################################################
 
+
+class History(CommandBase):
+    """
+    Show history or redo/undo actions.
+    """
+
+    def opt_print(self, args: typing.List[str]):
+        """
+        print
+            Print the history.
+        """
+        history.print()
+
+    def opt_redo(self, args: typing.List[str]):
+        """
+        redo <history-number>
+            Redo some history request(s) given by <history-number> (GET requests are not redone)
+        """
+        try:
+            history.redo(int(args[0]))
+        except ValueError as e:
+            cli_warning("invalid input: {}".format(e))
+
+    def opt_undo(self, args: typing.List[str]):
+        """
+        undo <history-number>
+            Undo some history request(s) given by <history-number> (GET requests cannot be undone)
+        """
+        try:
+            history.undo(int(args[0]))
+        except ValueError as e:
+            cli_warning("invalid input: {}".format(e))
+
+
 class Host(CommandBase):
     """
     Create, delete or edit host.
@@ -155,13 +189,21 @@ class Host(CommandBase):
                         conf["server_port"],
                         alias,
                     )
+                    # Cannot undo delete because of hosts CNAME record
+                    history.record_delete(url, old_data=dict(), undoable=False)
                     delete(url)
                     cli_info("deleted alias host {} when removing {}".format(alias, info["name"]))
 
         # TODO FORCE: kreve force hvis host har:  SRV eller NAPTR pekende på seg
 
+        # To be able to undo the delete the ipaddress field of the 'old_data' has to be an ipaddress
+        # string
+        if len(info["ipaddress"]) > 0:
+            info["ipaddress"] = info["ipaddress"][0]["ipaddress"]
+
         # Delete host
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+        history.record_delete(url, old_data=info)
         delete(url)
         cli_info("removed {}".format(info["name"]), print_msg=True)
 
@@ -219,8 +261,8 @@ class Host(CommandBase):
                     conf["server_port"],
                     name,
                 )
+                history.record_delete(url, dict(), undoable=False)
                 delete(url)
-                # NOTE: Could need a "regret" functionality if delete succeeds but post fails
                 cli_info("deleted existing host {}".format(name))
 
         # Always use long form host name
@@ -228,8 +270,15 @@ class Host(CommandBase):
 
         # Create the new host with an ip address
         url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
-        post(url, name=name, ipaddress=ip, contact=contact or None,
-             hinfo=hinfo or None, comment=comment or None)
+        data = {
+            "name": name,
+            "ipaddress": ip,
+            "contact": contact,
+            "hinfo": hinfo or None,
+            "comment": comment or None,
+        }
+        history.record_post(url, resource_name=name, new_data=data)
+        post(url, **data)
         cli_info("created host {}".format(name), print_msg=True)
 
     def opt_set_contact(self, args: typing.List[str]) -> None:
@@ -250,11 +299,14 @@ class Host(CommandBase):
 
         # Get host info for <name> or its cname
         info = host_info_by_name(name)
+        old_data = {"contact": info["contact"]}
+        new_data = {"contact": contact}
 
         # Update contact information
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+        history.record_patch(url, new_data, old_data)
         patch(url, contact=contact)
-        cli_info("Updated contact of {} to {}".format(info["name"], contact))
+        cli_info("Updated contact of {} to {}".format(info["name"], contact), print_msg=True)
 
     def opt_set_comment(self, args: typing.List[str]) -> None:
         """
@@ -269,12 +321,15 @@ class Host(CommandBase):
             comment = " ".join(args[1:])
 
         # Get host info for <name> or its cname
-        info = resolve_input_name(name)
+        info = host_info_by_name(name)
+        old_data = {"comment": info["comment"] or ""}
+        new_data = {"comment": comment}
 
         # Update comment
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+        history.record_patch(url, new_data, old_data)
         patch(url, comment=comment)
-        cli_info("updated comment of {} to \"{}\"".format(info["name"], comment))
+        cli_info("updated comment of {} to \"{}\"".format(info["name"], comment), print_msg=True)
 
     def opt_rename(self, args: typing.List[str]) -> None:
         """
@@ -292,7 +347,7 @@ class Host(CommandBase):
 
         # Require force if the new name is already in use
         try:
-           info = host_info_by_name(new_name, follow_cnames=False)
+            info = host_info_by_name(new_name, follow_cnames=False)
         except HostNotFoundWarning:
             pass
         else:
@@ -305,6 +360,7 @@ class Host(CommandBase):
                     conf["server_port"],
                     alias,
                 )
+                history.record_delete(url, dict(), undoable=False)
                 delete(url)
                 cli_info("deleted alias host {} when removing {} before renaming {}".format(
                     alias,
@@ -317,23 +373,28 @@ class Host(CommandBase):
                 conf["server_port"],
                 info["name"],
             )
+            history.record_delete(url, dict(), undoable=False)
             delete(url)
-            # NOTE: Could need a "regret" functionality if delete succeeds but post fails
             cli_info("deleted existing host {}".format(new_name))
 
         # Always use long form host name
         new_name = new_name if is_longform(new_name) else to_longform(new_name)
+        old_data = {"name": old_name}
+        new_data = {"name": new_name}
 
         # Rename host
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], old_name)
+        # Cannot redo/undo now since it changes name
+        history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
         patch(url, name=new_name)
-        cli_info("renamed {} to {}".format(old_name, new_name))
+        cli_info("renamed {} to {}".format(old_name, new_name), print_msg=True)
 
         url = "http://{}:{}/cnames/?cname={}".format(
             conf["server_ip"],
             conf["server_port"],
             old_name,
         )
+        history.record_get(url)
         cnames = get(url).json()
         for cname in cnames:
             url = "http://{}:{}/cnames/{}".format(
@@ -341,6 +402,9 @@ class Host(CommandBase):
                 conf["server_port"],
                 cname["id"],
             )
+            old_data = {"cname": old_name}
+            new_data = {"cname": new_name}
+            history.record_patch(url, new_data, old_data)
             patch(url, cname=new_name)
 
         # TODO SRV: Update all SRV pointing at host when renaming it
@@ -374,10 +438,16 @@ class Host(CommandBase):
                 info["name"])
             )
 
+        data = {
+            "hostid": info["hostid"],
+            "ipaddress": ip,
+        }
+
         # Add A record
         url = "http://{}:{}/ipaddresses/".format(conf["server_ip"], conf["server_port"])
-        post(url, hostid=(info["hostid"]), ipaddress=ip)
-        cli_info("added ip {} to {}".format(ip, info["name"]))
+        history.record_post(url, ip, data)
+        post(url, **data)
+        cli_info("added ip {} to {}".format(ip, info["name"]), print_msg=True)
 
     def opt_a_remove(self, args: typing.List[str]) -> None:
         """
@@ -405,10 +475,16 @@ class Host(CommandBase):
         if not found:
             cli_warning("{} is not owned by {}".format(ip, info["name"]))
 
+        old_data = {
+            "hostid": info["hostid"],
+            "ipaddress": ip,
+        }
+
         # Remove ip
         url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip)
+        history.record_delete(url, old_data)
         delete(url)
-        cli_info("removed ip {} from {}".format(ip, info["name"]))
+        cli_info("removed ip {} from {}".format(ip, info["name"]), print_msg=True)
 
     def opt_a_change(self, args: typing.List[str]) -> None:
         """
@@ -449,10 +525,15 @@ class Host(CommandBase):
             cli_warning("subnets not implemented")
             ip = choose_ip_from_subnet(ip_or_subnet)
 
+        old_data = {"ipaddress": old_ip}
+        new_data = {"ipaddress": ip}
+
         # Update A record ip address
         url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], old_ip)
+        # Cannot redo/undo since resource name changes
+        history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
         patch(url, ipaddress=ip)
-        cli_info("updated ip {} to {} for {}".format(old_ip, ip, info["name"]))
+        cli_info("updated ip {} to {} for {}".format(old_ip, ip, info["name"]), print_msg=True)
 
     def opt_a_show(self, args: typing.List[str]) -> None:
         """
@@ -483,10 +564,16 @@ class Host(CommandBase):
         if not is_valid_ipv6(ip):
             cli_warning("not a valid ipv6 \"{}\" (target host {})".format(ip, info["name"]))
 
+        data = {
+            "hostid": info["hostid"],
+            "ipaddress": ip,
+        }
+
         # Create AAAA records
         url = "http://{}:{}/ipaddresses/".format(conf["server_ip"], conf["server_port"])
-        post(url, hostid=(info["hostid"]), ipaddress=ip)
-        cli_info("added ip {} to {}".format(ip, info["name"]))
+        history.record_post(url, ip, data)
+        post(url, **data)
+        cli_info("added ip {} to {}".format(ip, info["name"]), print_msg=True)
 
     def opt_aaaa_remove(self, args: typing.List[str]) -> None:
         """
@@ -515,10 +602,16 @@ class Host(CommandBase):
         if not found:
             cli_warning("{} is not owned by {}".format(ip, info["name"]))
 
+        old_data = {
+            "hostid": info["hostid"],
+            "ipaddress": ip,
+        }
+
         # Delete AAAA record
         url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip)
+        history.record_delete(url, old_data)
         delete(url)
-        cli_info("removed {} from {}".format(ip, info["name"]))
+        cli_info("removed {} from {}".format(ip, info["name"]), print_msg=True)
 
     def opt_aaaa_change(self, args: typing.List[str]) -> None:
         """
@@ -551,10 +644,15 @@ class Host(CommandBase):
         if not found:
             cli_warning("\"{}\" is not owned by {}".format(old_ip, info["name"]))
 
+        old_data = {"ipaddress": old_ip}
+        new_data = {"ipaddress": new_ip}
+
         # Update AAAA records ip address
         url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], old_ip)
+        # Cannot redo/undo since recourse name changes
+        history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
         patch(url, ipaddress=new_ip)
-        cli_info("changed ip {} to {} for {}".format(old_ip, new_ip, info["name"]))
+        cli_info("changed ip {} to {} for {}".format(old_ip, new_ip, info["name"]), print_msg=True)
 
     def opt_aaaa_show(self, args: typing.List[str]) -> None:
         """
@@ -579,16 +677,20 @@ class Host(CommandBase):
             name = args[0]
             ttl = args[1]
 
-        host_name = resolve_input_name(name)
+        info = host_info_by_name(name)
 
         # TTL sanity check
         if not is_valid_ttl(ttl):
-            cli_warning("invalid TTL value: {} (target host {})".format(ttl, host_name))
+            cli_warning("invalid TTL value: {} (target host {})".format(ttl, info["name"]))
+
+        old_data = {"ttl": info["ttl"] or -1}
+        new_data = {"ttl": ttl if ttl != "default" else -1}
 
         # Update TTL
-        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], host_name)
-        patch(url, ttl=ttl if ttl != "default" else -1)
-        cli_info("updated TTL for {}".format(host_name))
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+        history.record_patch(url, new_data, old_data)
+        patch(url, **new_data)
+        cli_info("updated TTL for {}".format(info["name"]), print_msg=True)
 
     def opt_ttl_remove(self, args: typing.List[str]) -> None:
         """
@@ -596,12 +698,15 @@ class Host(CommandBase):
             Remove explicit TTL for host. If <name> is an alias the alias host is updated.
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
-        host_name = resolve_input_name(name)
+        info = host_info_by_name(name)
+        old_data = {"ttl": info["ttl"]}
+        new_data = {"ttl": -1}
 
         # Remove TTL value
-        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], host_name)
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+        history.record_patch(url, new_data, old_data)
         patch(url, ttl=-1)
-        cli_info("removed TTL for {}".format(host_name))
+        cli_info("removed TTL for {}".format(info["name"]), print_msg=True)
 
     def opt_ttl_show(self, args: typing.List[str]) -> None:
         """
@@ -644,14 +749,21 @@ class Host(CommandBase):
         # Create cname host if it doesn't exist
         if not alias_info:
             alias = alias if is_longform(alias) else to_longform(alias)
+            data = {
+                "name": alias,
+                "contact": host_info["contact"],
+            }
             url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
-            post(url, name=alias, contact=host_info["contact"])
+            history.record_post(url, alias, data)
+            post(url, **data)
             alias_info = host_info_by_name(alias)
 
         # Create CNAME record
         url = "http://{}:{}/cnames/".format(conf["server_ip"], conf["server_port"])
+        history.record_post(url, "", dict(), redoable=False, undoable=False)
         post(url, hostid=alias_info["hostid"], cname=host_info["name"])
-        cli_info("Added cname alias {} for {}".format(alias_info["name"], host_info["name"]))
+        cli_info("Added cname alias {} for {}".format(alias_info["name"], host_info["name"]),
+                 print_msg=True)
 
     def opt_cname_remove(self, args: typing.List[str]) -> None:
         """
@@ -677,9 +789,11 @@ class Host(CommandBase):
 
         # Delete CNAME host
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
-                                              alias_info["name"])
+                                             alias_info["name"])
+        history.record_delete(url, dict(), undoable=False)
         delete(url)
-        cli_info("Removed cname alias {} for {}".format(alias_info["name"], host_name))
+        cli_info("Removed cname alias {} for {}".format(alias_info["name"], host_name),
+                 print_msg=True)
 
     def opt_cname_show(self, args: typing.List[str]) -> None:
         """
@@ -713,10 +827,14 @@ class Host(CommandBase):
         if not is_valid_loc(loc):
             cli_warning("invalid LOC \"{}\" (target host {})".format(loc, info["name"]))
 
+        old_data = {"loc": info["loc"] or ""}
+        new_data = {"loc": loc}
+
         # Update LOC
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+        history.record_patch(url, new_data, old_data)
         patch(url, loc=loc)
-        cli_info("updated LOC to {} for {}".format(loc, info["name"]))
+        cli_info("updated LOC to {} for {}".format(loc, info["name"]), print_msg=True)
 
     def opt_loc_remove(self, args: typing.List[str]) -> None:
         """
@@ -725,9 +843,12 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
+        old_data = {"loc": info["loc"]}
+        new_data = {"loc": ""}
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+        history.record_patch(url, new_data, old_data)
         patch(url, loc="")
-        cli_info("removed LOC for {}".format(info["name"]))
+        cli_info("removed LOC for {}".format(info["name"]), print_msg=True)
 
     def opt_loc_show(self, args: typing.List[str]) -> None:
         """
@@ -761,11 +882,14 @@ class Host(CommandBase):
             cli_warning("invalid hinfo.")
 
         info = host_info_by_name(name)
+        old_data = {"hinfo": info["hinfo"] or -1}
+        new_data = {"hinfo": hinfo}
 
         # Update hinfo
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+        history.record_patch(url, new_data, old_data)
         patch(url, hinfo=hinfo)
-        cli_info("updated hinfo to {} for {}".format(hinfo, info["name"]))
+        cli_info("updated hinfo to {} for {}".format(hinfo, info["name"]), print_msg=True)
 
     def opt_hinfo_remove(self, args: typing.List[str]) -> None:
         """
@@ -774,9 +898,12 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
+        old_data = {"hinfo": info["hinfo"]}
+        new_data = {"hinfo": -1}
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+        history.record_patch(url, new_data, old_data)
         patch(url, hinfo=-1)
-        cli_info("removed hinfo for {}".format(info["name"]))
+        cli_info("removed hinfo for {}".format(info["name"]), print_msg=True)
 
     def opt_hinfo_show(self, args: typing.List[str]) -> None:
         """
@@ -788,6 +915,125 @@ class Host(CommandBase):
         print_hinfo(hinfo_id_to_strings(info["hinfo"]))
         cli_info("showed hinfo for {}".format(info["name"]))
 
+    def opt_srv_add(self, args: typing.List[str]) -> None:
+        """
+        srv_add <service-name> <pri> <weight> <port> <target-name>
+            Add SRV record.
+        """
+        if len(args) < 5:
+            sname = input("Enter service name> ") if len(args) < 1 else args[0]
+            pri = input("Enter priority> ") if len(args) < 2 else args[1]
+            weight = input("Enter weight> ") if len(args) < 3 else args[2]
+            port = input("Enter port> ") if len(args) < 4 else args[3]
+            name = input("Enter target name> ")
+        else:
+            sname = args[0]
+            pri = args[1]
+            weight = args[2]
+            port = args[3]
+            name = args[4]
+
+        try:
+            host_name = resolve_input_name(name)
+        except HostNotFoundWarning:
+            if "y" not in args:
+                cli_warning("{} doesn't exist. Must force")
+            host_name = name
+
+        sname = sname if is_longform(sname) else to_longform(sname, trailing_dot=True)
+        url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"], conf["server_port"], sname)
+        history.record_get(url)
+        srvs = get(url).json()
+        if len(srvs) > 0:
+            entry_exists = True
+        else:
+            entry_exists = False
+
+        data = {
+            "service": sname,
+            "priority": pri,
+            "weight": weight,
+            "port": port,
+            "target": host_name,
+        }
+
+        url = "http://{}:{}/srvs/".format(conf["server_ip"], conf["server_port"])
+        history.record_post(url, "", data, undoable=False)
+        post(url, **data)
+        if entry_exists:
+            cli_info("Added SRV record {} with target {} to existing entry."
+                     .format(sname, host_name), print_msg=True)
+        else:
+            cli_info("Added SRV record {} with target {}".format(sname, host_name), print_msg=True)
+
+    def opt_srv_remove(self, args: typing.List[str]) -> None:
+        """
+        srv_remove <service-name>
+            Remove SRV record.
+        """
+        sname = input("Enter service name> ") if len(args) < 1 else args[0]
+        sname = sname if is_longform(sname) else to_longform(sname, trailing_dot=True)
+        url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"], conf["server_port"], sname)
+        history.record_get(url)
+        srvs = get(url).json()
+        if len(srvs) == 0:
+            cli_warning("not service named {}".format(sname))
+        elif len(srvs) > 1 and "y" not in args:
+            cli_warning("multiple services named {}, must force".format(sname))
+        for srv in srvs:
+            assert isinstance(srv, dict)
+            url = "http://{}:{}/srvs/{}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                srv["srvid"],
+            )
+            history.record_delete(url, srv, redoable=False)
+            delete(url)
+            cli_info("removed SRV record {} with target {}".format(srv["service"], srv["target"]),
+                     print_msg=True)
+
+    def opt_srv_show(self, args: typing.List[str]) -> None:
+        """
+        srv_show <service-name>
+            Show SRV show.
+        """
+        sname = input("Enter service name> ") if len(args) < 1 else args[0]
+        url = "http://{}:{}/srvs/?service__contains={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            sname,
+        )
+        history.record_get(url)
+        srvs = get(url).json()
+        if len(srvs) < 1:
+            cli_warning("no service matching {}".format(sname))
+        padding = 0
+        for srv in srvs:
+            if len(srv["service"]) > padding:
+                padding = len(srv["service"])
+        prev_name = ""
+        for srv in sorted(srvs, key=lambda k: k["service"]):
+            if prev_name == srv["service"]:
+                srv["service"] = ""
+            else:
+                prev_name = srv["service"]
+            print_srv(srv, padding)
+        cli_info("showed entries for SRV {}".format(sname))
+
+    def opt_txt_add(self, args: typing.List[str]) -> None:
+        """
+        txt_add <name> <text>
+            Add a txt record to host. <text> must be enclosed in double quotes if it contains more
+            than one word.
+        """
+        pass
+
+    def opt_txt_remove(self, args: typing.List[str]) -> None:
+        """
+        txt_remove <name>
+        """
+        pass
+
     def opt_used_list(self, args: typing.List[str]) -> None:
         """
         used_list <ip>
@@ -797,39 +1043,26 @@ class Host(CommandBase):
         pass
 
 
-class History(CommandBase):
+class Zone(CommandBase):
     """
-    Show history or redo/undo actions.
+    Handle zones.
+        zone <option> <argument(s)>
     """
 
-    def opt_print(self, args: typing.List[str]):
+    def opt_create(self, args: typing.List[str]):
         """
-        print
-            Print the history.
+        create <zone-name> (<primary-ns> <contact> <serialno> <refresh> <retry> <expire> <ttl>)
+            Create new zone.
         """
-        history.print()
+        pass
 
-    def opt_redo(self, args: typing.List[str]):
-        """
-        redo <history-number>
-            Redo some history request(s) given by <history-number>. If the number is on the form
-            "1.2" then request nr. 2 of command nr. 1 is redone. If it's on the form "1" then all
-            requests of command nr. 1 is redone (GET requests are not redone if not explicitly
-            numbered)
-        """
-        tmp = args[0].split(sep='.')
-        if len(tmp) < 2:
-            history.redo(int(tmp[0]))
-        else:
-            history.redo(int(tmp[0]), int(tmp[1]))
+    def opt_delete(self, args: typing.List[str]):
+        pass
 
-    def opt_undo(self, args: typing.List[str]):
-        """
-        undo <history-number>
-            Undo some history request(s) given by <history-number>. If the number is on the form
-            "1.2" then request nr. 2 of command nr. 1 is redone. If it's on the form "1" then all
-            requests of command nr. 1 is redone (GET requests cannot be undone)
-        """
+    def opt_set_ns(self, args: typing.List[str]):
+        pass
+
+    def opt_set_soa(self, args: typing.List[str]):
         pass
 
 
