@@ -51,7 +51,6 @@ class ClientShell(cmd.Cmd):
 
     def command_do(self, args, command):
         assert isinstance(command, CommandBase)
-        # TODO ARGS: Split the arguments better. Do not split strings inside double quotes
         args = split_args(args)
         if len(args) < 1:
             print("missing argument(s).")

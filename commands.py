@@ -175,14 +175,12 @@ class Host(CommandBase):
 
         info = host_info_by_name_or_ip(name_or_ip)
 
-        if len(info["ipaddress"]) > 1 and "y" not in args:
-            cli_warning("{} has multiple ipaddresses, must force")
-
+        warn_msg = ""
         # Require force if host has any aliases
         aliases = aliases_of_host(info["name"])
         if len(aliases):
             if "y" not in args:
-                cli_warning("{} has {} aliases, must force".format(info["name"], len(aliases)))
+                warn_msg += "{} aliases. ".format(len(aliases))
             else:
                 for alias in aliases:
                     url = "http://{}:{}/hosts/{}".format(
@@ -195,12 +193,18 @@ class Host(CommandBase):
                     delete(url)
                     cli_info("deleted alias host {} when removing {}".format(alias, info["name"]))
 
+        if len(info["ipaddress"]) > 1 and "y" not in args:
+            warn_msg += "{} ipaddresses. ".format(len(info["ipaddress"]))
+
         # TODO FORCE: kreve force hvis host har:  SRV eller NAPTR pekende på seg
 
         # To be able to undo the delete the ipaddress field of the 'old_data' has to be an ipaddress
         # string
         if len(info["ipaddress"]) > 0:
             info["ipaddress"] = info["ipaddress"][0]["ipaddress"]
+
+        if warn_msg:
+            cli_warning("{} has: {}Must force".format(info["name"], warn_msg))
 
         # Delete host
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
@@ -1027,13 +1031,165 @@ class Host(CommandBase):
             Add a txt record to host. <text> must be enclosed in double quotes if it contains more
             than one word.
         """
-        pass
+        if len(args) < 2:
+            name = input("Enter host name> ") if len(args) < 1 else args[0]
+            text = input("Enter text> ")
+        else:
+            name = args[0]
+            text = args[1]
+
+        info = host_info_by_name(name)
+
+        data = {
+            "hostid": info["hostid"],
+            "txt": text
+        }
+
+        url = "http://{}:{}/txts/".format(conf["server_ip"], conf["server_port"])
+        history.record_post(url, "", data, undoable=False)
+        post(url, **data)
+        cli_info("Added TXT record to {}".format(info["name"]), print_msg=True)
 
     def opt_txt_remove(self, args: typing.List[str]) -> None:
         """
-        txt_remove <name>
+        txt_remove <name> <text>
+            Remove TXT record for host matching <text>.
+        """
+        if len(args) < 2:
+            name = input("Enter host name> ") if len(args) < 1 else args[0]
+            text = input("Enter text> ")
+        else:
+            name = args[0]
+            text = args[1]
+
+        info = host_info_by_name(name)
+
+        url = "http://{}:{}/txts/?hostid={}&txt__contains={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            info["hostid"],
+            text,
+        )
+        history.record_get(url)
+        txts = get(url).json()
+        if len(txts) == 0:
+            cli_warning("{} hasn't got any TXT records matching \"{}\"".format(info["name"], text))
+        if len(txts) > 1 and "y" not in args:
+            cli_warning("\"{}\" matched {} of {} TXT records. Must force.".format(
+                text,
+                len(args),
+                info["name"],
+            ))
+        for txt in txts:
+            url = "http://{}:{}/txts/{}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                txt["txtid"],
+            )
+            history.record_delete(url, txt)
+            delete(url)
+        cli_info("deleted {} of {} TXT records matching \"{}\"".format(
+            len(args),
+            info["name"],
+            text
+        ))
+
+    def opt_txt_show(self, args: typing.List[str]) -> None:
+        """
+        txt_show <name>
+            Show all TXT records for host.
+        """
+        name = input("Enter host name> ") if len(args) < 1 else args[0]
+        info = host_info_by_name(name)
+        url = "http://{}:{}/txts/?hostid={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            info["hostid"],
+        )
+        history.record_get(url)
+        txts = get(url).json()
+        for txt in txts:
+            print_txt(txt["txt"], padding=5)
+        cli_info("showed TXT records for {}".format(info["name"]))
+
+    def opt_ptr_set(self, args: typing.List[str]) -> None:
+        """
+        ptr_set <ipv4|ipv6> <name>
+            Create a PTR record for host.
+        """
+        if len(args) < 2:
+            ip = input("Enter ip> ") if len(args) < 1 else args[0]
+            name = input("Enter host name> ")
+        else:
+            ip = args[0]
+            name = args[1]
+
+        if not is_valid_ip(ip):
+            cli_warning("invalid ip: {}".format(ip))
+
+        info = host_info_by_name(name)
+
+        data = {
+            "hostid": info["hostid"],
+            "ipaddress": ip,
+        }
+
+        url = "http://{}:{}/ptroverrides/".format(
+            conf["server_ip"],
+            conf["server_port"],
+        )
+        history.record_post(url, "", data, undoable=False)
+        post(url, **data)
+        cli_info("Added PTR record {} to {}".format(ip, info["name"]), print_msg=True)
+
+    def opt_ptr_remove(self, args: typing.List[str]) -> None:
+        """
+        ptr_remove <ipv4|ipv6> <name>
+            Remove PTR record from host.
         """
         pass
+
+    def opt_ptr_change(self, args: typing.List[str]) -> None:
+        """
+        ptr_change <ipv4|ipv6> <old-name> <new-name>
+            Move PTR record from <old-name> to <new-name>.
+        """
+        pass
+
+    def opt_ptr_show(self, args: typing.List[str]) -> None:
+        """
+        ptr_show <ipv4|ipv6>
+            Show PTR record.
+        """
+        ip = input("Enter ip address> ") if len(args) < 1 else args[0]
+
+        url = "http://{}:{}/ptroverrides/".format(
+            conf["server_ip"],
+            conf["server_port"],
+        )
+        history.record_get(url)
+        ptrs = get(url).json()
+
+        padding = 0
+        for ptr in ptrs:
+            if ip in ptr["ipaddress"]:
+                if len(ptr["ipaddress"]) > padding:
+                    padding = len(ptr["ipaddress"])
+
+        for ptr in ptrs:
+            if ip in ptr["ipaddress"]:
+                url = "http://{}:{}/hosts/?hostid={}".format(
+                    conf["server_ip"],
+                    conf["server_port"],
+                    ptr["hostid"],
+                )
+                history.record_get(url)
+                hosts = get(url).json()
+                if not hosts:
+                    cli_error("{} PTR records host (hostid: {}) doesn't exist."
+                              .format(ip, ptr["hostid"]))
+                print_ptr(ptr["ipaddress"], hosts[0]["name"], padding)
+        cli_info("showed PTR records matching {}".format(ip))
 
     def opt_used_list(self, args: typing.List[str]) -> None:
         """

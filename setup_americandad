@@ -1,3 +1,0 @@
-# Setup test hosts
-host add stan 12.34.56.78 american@dad.no -hinfo 2
-host add roger 13.24.35.46 american@dad.no -hinfo 3
