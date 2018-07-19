@@ -856,15 +856,15 @@ class Subnet(CommandBase):
         network = ipaddress.ip_network(subnet_info['range'])
 
         # Pretty print all subnet info
-        print_subnet_str(subnet_info['range'], "Subnet:")
-        print_subnet_str(network.netmask.exploded, "Netmask:")
-        print_subnet_str(subnet_info['description'], "Description:")
-        print_subnet_str(subnet_info['category'] if subnet_info['category'] else 'None', "Category:")
-        print_subnet_str(subnet_info['location'] if subnet_info['location'] else 'None', "Location:")
-        print_subnet_str(str(subnet_info['vlan']) if subnet_info['vlan'] else 'None', "VLAN")
-        print_subnet_bool(subnet_info['dns_delegated'] if subnet_info['category'] else False, "DNS delegated:")
+        print_subnet(subnet_info['range'], "Subnet:")
+        print_subnet(network.netmask.exploded, "Netmask:")
+        print_subnet(subnet_info['description'], "Description:")
+        print_subnet(subnet_info['category'], "Category:")
+        print_subnet(subnet_info['location'], "Location:")
+        print_subnet(subnet_info['vlan'], "VLAN")
+        print_subnet(subnet_info['dns_delegated'] if subnet_info['category'] else False, "DNS delegated:")
         print_subnet_reserved(subnet_info['range'], subnet_info['reserved'])
-        print_subnet_int(len(used_list), "Used addresses:")
+        print_subnet(len(used_list), "Used addresses:")
         print_subnet_unused(network.num_addresses - (subnet_info['reserved'] + 2)- len(used_list))
         cli_info("printed subnet info for {}".format(subnet_info['range']))
 
@@ -1016,10 +1016,130 @@ class Subnet(CommandBase):
         patch(url, reserved=reserved)
         cli_info("updated reserved to '{}' for {}".format(reserved, ip_range), True)
 
+    def opt_list_used_addresses(self, args: typing.List[str]):
+        """
+        TODO See if this can be done faster
+        list_used_addresses <subnet>
+            Lists all the used addresses for a subnet
+        """
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+
+        addresses = get_subnet_used_list(ip_range)
+        hosts = []
+
+        for address in addresses:
+            hosts.append(resolve_ip(address))
+
+        for x in range(len(addresses)):
+            print("{1:<{0}}{2}".format(25, addresses[x], hosts[x]))
+
     def opt_import(self, args: typing.List[str]):
         """
+        TODO raise warning if the import changes over 20% of the subnets
         import <file>
             Import subnet data from <file>.
         """
-        #TODO
-        pass
+        input_file = input("Enter path to import file>") if len(args) < 1 else args[0]
+        log_file = open('subnets_import.log', 'w+')
+        vlans = get_vlan_mapping()
+        ERROR = False # Flag to check before making requests if something isn't right
+
+        log_file.write("------ READ FROM {} START ------\n".format(input_file))
+
+        # Read in new subnet structure from file
+        import_data = {}
+        with open(input_file, 'r') as file:
+            line_number = 0
+            for line in file:
+                line_number += 1
+                match = re.match(r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+:(?P<tags>.*):\|(?P<description>.*)", line)
+                if match:
+                    tags = match.group('tags').split(':')
+                    info = {'location': None, 'category': ''}
+                    for tag in tags:
+                        if is_valid_location_tag(tag):
+                            info['location'] = tag
+                        elif is_valid_category_tag(tag):
+                            info['category'] = ('%s %s' % (info['category'], tag)).strip()
+                        else:
+                            # TODO ERROR = True ?
+                            log_file.write("{}: Invalid tag {}. Valid tags can be found in {}\n".format(line_number, tag, conf['tag_file']))
+                    data = {
+                        'range': match.group('range'),
+                        'description': match.group('description').strip(),
+                        'vlan': vlans[match.group('range')] if match.group('range') in vlans else 0,
+                        'category': info['category'] if info['category'] else None,
+                        'location': info['location'] if info['location'] else None,
+                        'frozen': False
+                    }
+                    import_data['%s' % match.group('range')] = data
+
+        log_file.write("------ READ FROM {} END ------\n".format(input_file))
+
+        # Fetch existing subnets from server
+        res = requests.get('http://{}:{}/subnets'.format(conf["server_ip"], conf["server_port"])).json()
+        current_subnets = {subnet['range']: subnet for subnet in res}
+
+        subnets_delete = current_subnets.keys() - import_data.keys()
+        subnets_post = import_data.keys() - current_subnets.keys()
+        subnets_patch = set()
+        subnets_ignore = import_data.keys() & current_subnets.keys()
+
+        # Check if subnets marked for deletion have any addresses in use
+        for subnet in subnets_delete:
+            used_list = get_subnet_used_list(subnet)
+            if used_list:
+                ERROR = True
+                log_file.write("WARNING: {} contains addresses that are in use. Remove hosts before deletion\n".format(
+                    {subnet['range']}))
+
+        # Check if subnets marked for creation have any overlap with existing subnets
+        for subnet_new in subnets_post:
+            subnet_object = ipaddress.ip_network(subnet_new)
+            for subnet_existing in subnets_patch:
+                if subnet_object.overlaps(ipaddress.ip_network(subnet_existing)):
+                    ERROR = True
+                    log_file.write("ERROR: Overlap found between new subnet {} and existing subnet {}\n".format(subnet_new, subnet_existing))
+
+        # Check which existing subnets need to be patched
+        for subnet in subnets_ignore:
+            current_data = current_subnets[subnet]
+            new_data = import_data[subnet]
+            if  (new_data['description'] != current_data['description'] \
+                or new_data['vlan'] != current_data['vlan'] \
+                or new_data['category'] != current_data['category'] \
+                or new_data['location'] != current_data['location']):
+                subnets_patch.add(subnet)
+
+        if ERROR:
+            cli_warning("Errors detected during setup. Check subnets_import.log for details")
+
+        log_file.write("------ API REQUESTS START ------\n".format(input_file))
+
+        for subnet in subnets_delete:
+            url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet)
+            delete(url)
+            log_file.write("DELETE {}\n".format(url))
+
+        for subnet in subnets_post:
+            url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
+            data = import_data[subnet]
+            post(url, range=data['range'], \
+                description=data['description'], \
+                vlan=data['vlan'], \
+                category=data['category'], \
+                location=data['location'], \
+                frozen=data['frozen'])
+            log_file.write("POST {} - {}\n".format(url, subnet))
+
+        for subnet in subnets_patch:
+            url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet)
+            data = import_data[subnet]
+            patch(url, description=data['description'], \
+                  vlan=data['vlan'], \
+                  category=data['category'], \
+                  location=data['location'])
+            log_file.write("PATCH {}\n".format(url))
+
+        log_file.write("------ API REQUESTS END ------\n".format(input_file))
