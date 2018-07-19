@@ -34,8 +34,7 @@ with open(conf['tag_file'], 'r') as file:
         else:
             match = re.match(r"(?P<category>[a-zA-Z0-9]+)\s+.*", line)
             if not match:
-                print('ERROR in %s, wrong format on line: %d - %s\n', conf['tag_file'], line_number,
-                      line)
+                print('ERROR in %s, wrong format on line: %d - %s\n', conf['tag_file'], line_number, line)
                 sys.exit(-1)
             category_tags.append(match.group('category'))
             line_number += 1
@@ -323,14 +322,15 @@ def get_subnet(ip: str) -> str:
             conf["server_ip"],
             conf["server_port"]
         )
+        ip_object = ipaddress.ip_address(ip)
         subnet = None
         subnet_list = get(url).json()
         subnet_ranges = [ip_range['range'] for ip_range in subnet_list]
         for ip_range in subnet_ranges:
             ip_network = ipaddress.ip_network(ip_range)
-            if ip in [str(ip_address) for ip_address in ip_network.hosts()].extend(
-                    [str(ip_network.network_address), str(ip_network.broadcast_address)]):
+            if ip_object in ip_network:
                 subnet = ip_range
+                break
 
         if subnet:
             url = "http://{}:{}/subnets/{}".format(
@@ -496,9 +496,7 @@ def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
 def print_subnet_unused(count: int, padding: int = 25) -> None:
     "Pretty print amount of unused addresses"
     assert (isinstance(count, int))
-    print(
-        "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
-
+    print("{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
 
 def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
     "Pretty print ip range and reserved addresses list"
@@ -506,27 +504,26 @@ def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> No
     assert (isinstance(reserved, int))
     subnet = ipaddress.IPv4Network(ip_range)
     hosts = list(subnet.hosts())
-    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address,
-                                     subnet.broadcast_address))
+    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address, subnet.broadcast_address))
     print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
     for x in range(reserved):
         print("{1:<{0}}{2}".format(padding, "", hosts[x]))
-    print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)"))
+    print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)" ))
 
 
 def print_subnet_str(info: str, text: str, padding: int = 25) -> None:
-    assert (isinstance(info, str))
+    assert(isinstance(info, str))
     print("{1:<{0}}{2}".format(padding, text, info))
 
 
 def print_subnet_int(info: int, text: str, padding: int = 25) -> None:
-    assert (isinstance(info, int))
+    assert(isinstance(info, int))
     print("{1:<{0}}{2}".format(padding, text, info))
 
 
 def print_subnet_bool(info: int, text: str, padding: int = 25) -> None:
-    assert (isinstance(info, bool))
+    assert(isinstance(info, bool))
     print("{1:<{0}}{2}".format(padding, text, info))
 
 
