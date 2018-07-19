@@ -850,10 +850,10 @@ class Subnet(CommandBase):
         else:
             ip_range = args[0]
 
-        # Get host info or raise exception
-        subnet_info = resolve_subnet(ip_range)
-        used_list = resolve_subnet(ip_range, used_list=True)
-        network = ipaddress.IPv4Network(subnet_info['range'])
+        # Get subnet info or raise exception
+        subnet_info = get_subnet(ip_range)
+        used_list = get_subnet_used_list(subnet_info['range'])
+        network = ipaddress.ip_network(subnet_info['range'])
 
         # Pretty print all subnet info
         print_subnet_str(subnet_info['range'], "Subnet:")
@@ -861,7 +861,7 @@ class Subnet(CommandBase):
         print_subnet_str(subnet_info['description'], "Description:")
         print_subnet_str(subnet_info['category'] if subnet_info['category'] else 'None', "Category:")
         print_subnet_str(subnet_info['location'] if subnet_info['location'] else 'None', "Location:")
-        print_subnet_int(subnet_info['vlan'], "VLAN")
+        print_subnet_str(str(subnet_info['vlan']) if subnet_info['vlan'] else 'None', "VLAN")
         print_subnet_bool(subnet_info['dns_delegated'] if subnet_info['category'] else False, "DNS delegated:")
         print_subnet_reserved(subnet_info['range'], subnet_info['reserved'])
         print_subnet_int(len(used_list), "Used addresses:")
@@ -874,7 +874,8 @@ class Subnet(CommandBase):
             Create a new subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
+        if not is_valid_subnet(ip_range): cli_warning("Not a valid netmask")
+
         description = input("Enter description>") if len(args) < 2 else args[1]
 
         vlan = input("Enter VLAN (optional)>") if len(args) < 3 else int(args[2])
@@ -905,8 +906,9 @@ class Subnet(CommandBase):
             Remove subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        if not is_valid_subnet(ip_range): cli_warning("Not a valid netmask")
 
-        host_list = resolve_subnet(ip_range, True)
+        host_list = get_subnet_used_list(ip_range)
         if host_list:
             cli_warning("Subnet contains addresses that are in use. Remove hosts before deletion")
 

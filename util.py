@@ -211,21 +211,6 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
     else:
         return resolve_input_name(name_or_ip)
 
-
-def resolve_subnet(ip_range: str, used_list: bool = False) -> str:
-    "Returns subnet associated with given range"
-    url = "http://{}:{}/subnets/{}{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        ip_range,
-        "?used_list" if used_list else ""
-    )
-
-    is_valid_subnet(ip_range)
-    subnet = get(url).json()
-    return subnet
-
-
 def resolve_ip(ip: str) -> str:
     """Returns host name associated with ip"""
     url = "http://{}:{}/hosts/?ipaddress__ipaddress={}".format(
@@ -310,6 +295,56 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
         # Assuming hinfo preset ids are 1-indexed
         hl.insert(hinfo["hinfoid"] - 1, (hinfo["os"], hinfo["cpu"]))
     return hl
+
+################################################################################
+#                                                                              #
+#   Subnet utility                                                             #
+#                                                                              #
+################################################################################
+
+def get_subnet(ip: str) -> str:
+    "Returns subnet associated with given range or IP"
+    if is_valid_subnet(ip):
+        url = "http://{}:{}/subnets/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            ip
+        )
+        return get(url).json()
+    elif is_valid_ip(ip):
+        url = "http://{}:{}/subnets/".format(
+            conf["server_ip"],
+            conf["server_port"]
+        )
+        subnet = None
+        subnet_list = get(url).json()
+        subnet_ranges = [ip_range['range'] for ip_range in subnet_list]
+        for ip_range in subnet_ranges:
+            ip_network = ipaddress.ip_network(ip_range)
+            if ip in [str(ip_address) for ip_address in ip_network.hosts()].extend([str(ip_network.network_address), str(ip_network.broadcast_address)]):
+                subnet = ip_range
+
+        if subnet:
+            url = "http://{}:{}/subnets/{}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                subnet
+            )
+            return get(url).json()
+        cli_warning("ip address is not an address in any existing subnet")
+    else:
+        cli_warning("Not a valid ip range or ip address")
+
+def get_subnet_used_list(ip_range: str):
+    "Return a list of the addresses in use on a given subnet"
+    url = "http://{}:{}/subnets/{}{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        ip_range,
+        "?used_list"
+    )
+    return get(url).json()
+
 
 ################################################################################
 #                                                                              #
@@ -441,7 +476,7 @@ def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> No
     subnet = ipaddress.IPv4Network(ip_range)
     hosts = list(subnet.hosts())
     print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address, subnet.broadcast_address))
-    print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", 3 if subnet.num_addresses > 4 else 0))
+    print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
     for x in range(reserved):
         print("{1:<{0}}{2}".format(padding, "", hosts[x]))
@@ -494,12 +529,13 @@ def is_valid_ipv6(ip: str) -> bool:
 
 def is_valid_subnet(net: str) -> bool:
     """Check if net is a valid subnet"""
+    if is_valid_ip(net):
+        return False
     try:
-        ipaddress.IPv4Network(net)
-    except ipaddress.NetmaskValueError:
-        cli_warning("not a valid mask", exception=ipaddress.NetmaskValueError)
-    except ipaddress.AddressValueError:
-        cli_warning("not a valid ip", exception=ipaddress.AddressValueError)
+        ipaddress.ip_network(net)
+        return True
+    except ValueError:
+        return False
 
 
 def is_valid_ttl(ttl: typing.Union[int, str, bytes]) -> bool:  # int?
