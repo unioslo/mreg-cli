@@ -4,6 +4,7 @@ import re
 import types
 import typing
 import requests
+import ipaddress
 
 from util import *
 from config import *
@@ -1077,53 +1078,181 @@ class Subnet(CommandBase):
         info <subnet>
             Display subnet info
         """
-        pass
+        if len(args) < 1:
+            ip_range = input("Enter subnet> ")
+        else:
+            ip_range = args[0]
+
+        # Get subnet info or raise exception
+        subnet_info = get_subnet(ip_range)
+        used_list = get_subnet_used_list(subnet_info['range'])
+        network = ipaddress.ip_network(subnet_info['range'])
+
+        # Pretty print all subnet info
+        print_subnet_str(subnet_info['range'], "Subnet:")
+        print_subnet_str(network.netmask.exploded, "Netmask:")
+        print_subnet_str(subnet_info['description'], "Description:")
+        print_subnet_str(subnet_info['category'] if subnet_info['category'] else 'None', "Category:")
+        print_subnet_str(subnet_info['location'] if subnet_info['location'] else 'None', "Location:")
+        print_subnet_str(str(subnet_info['vlan']) if subnet_info['vlan'] else 'None', "VLAN")
+        print_subnet_bool(subnet_info['dns_delegated'] if subnet_info['category'] else False, "DNS delegated:")
+        print_subnet_reserved(subnet_info['range'], subnet_info['reserved'])
+        print_subnet_int(len(used_list), "Used addresses:")
+        print_subnet_unused(network.num_addresses - (subnet_info['reserved'] + 2)- len(used_list))
+        cli_info("printed subnet info for {}".format(subnet_info['range']))
+
+    def opt_create(self, args:typing.List[str]):
+        """
+        create <subnet> <description> <vlan> <dns_delegated> <category> <location> <frozen>
+            Create a new subnet
+        """
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        if not is_valid_subnet(ip_range): cli_warning("Not a valid netmask")
+
+        description = input("Enter description>") if len(args) < 2 else args[1]
+
+        vlan = input("Enter VLAN (optional)>") if len(args) < 3 else int(args[2])
+        try:
+            vlan = int(vlan)
+        except ValueError:
+            cli_warning("Not a valid integer")
+
+        category = input("Enter category (optional)>") if len(args) < 4 else args[3]
+        if category and not is_valid_category_tag(category):
+            cli_warning("Not a valid category tag")
+        location = input("Enter location (optional)") if len(args) < 5 else args[4]
+        if location and not is_valid_location_tag(location):
+            cli_warning("Not a valid location tag")
+
+        frozen = input("Is the subnet frozen? y/n>") if len(args) < 6 else args[5]
+        while frozen != 'y' and frozen != 'n':
+            frozen = input("Is the subnet frozen? y/n>")
+        frozen = True if frozen == 'y' else False
+
+        url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
+        post(url, range=ip_range, description=description, vlan=vlan, category=category, location=location, frozen=frozen)
+        cli_info("created subnet {}".format(ip_range), True)
+
+    def opt_remove(self, args:typing.List[str]):
+        """
+        remove <subnet>
+            Remove subnet
+        """
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        if not is_valid_subnet(ip_range): cli_warning("Not a valid netmask")
+
+        host_list = get_subnet_used_list(ip_range)
+        if host_list:
+            cli_warning("Subnet contains addresses that are in use. Remove hosts before deletion")
+
+        if 'y' not in args:
+            cli_warning("Must force (y)")
+
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        delete(url)
+        cli_info("removed subnet {}".format(ip_range), True)
 
     def opt_set_vlan(self, args: typing.List[str]):
         """
         set_vlan <subnet> <vlan>
             Set VLAN for subnet
         """
-        pass
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+        vlan = int(input("Enter new VLAN>") if len(args) < 2 else args[1])
+
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        patch(url, vlan=vlan)
+        print("Updated vlan to {} for {}".format(vlan, ip_range))
+        cli_info("updated vlan to {} for {}".format(vlan, ip_range))
 
     def opt_set_description(self, args: typing.List[str]):
         """
         set_description <subnet> <description>
             Set description for subnet
         """
-        pass
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+        description = input("Enter new VLAN>") if len(args) < 2 else args[1]
 
-    def opt_set_name_prefix(self, args: typing.List[str]):
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        patch(url, description=description)
+        cli_info("updated description to '{}' for {}".format(description, ip_range), True)
+
+    def opt_set_location(self, args: typing.List[str]):
         """
-        set_name_prefix <subnet> <name-prefix>
-            Set name prefix for subnet
+        set_location <subnet> <location_tag>
+            Set location tag for subnet
         """
-        pass
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+        location_tag = input("Enter new location tag>") if len(args) < 2 else args[1]
+        is_valid_location_tag(location_tag)
+
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        patch(url, location=location_tag)
+        cli_info("updated location tag to '{}' for {}".format(location_tag, ip_range), True)
+
+    def opt_set_category(self, args: typing.List[str]):
+        """
+        set_category <subnet> <category_tag>
+            Set category tag for subnet
+        """
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+        category_tag = input("Enter new category tag>") if len(args) < 2 else args[1]
+        is_valid_category_tag(category_tag)
+
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        patch(url, category=category_tag)
+        cli_info("updated category tag to '{}' for {}".format(category_tag, ip_range), True)
 
     def opt_set_dns_delegated(self, args: typing.List[str]):
         """
         set_dns_delegated <subnet>
             Set that DNS-administration is being handled elsewhere.
         """
-        pass
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        patch(url, dns_delegated=True)
+        cli_info("updated dns_delegated to '{}' for {}".format(True, ip_range), True)
 
     def opt_unset_dns_delegated(self, args: typing.List[str]):
         """
         unset_dns_delegated <subnet>
             Set that DNS-administration is not being handled elsewhere.
         """
-        pass
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        patch(url, dns_delegated=False)
+        cli_info("updated dns_delegated to '{}' for {}".format(False, ip_range), True)
 
     def opt_set_reserved(self, args: typing.List[str]):
         """
         set_reserved <subnet> <number>
-            Set number of reserved addresses.
+            Set number of reserved hosts.
         """
-        pass
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+        reserved = input("Enter number of reserved hosts>")
+
+        try:
+            reserved = int(reserved)
+        except ValueError:
+            cli_warning("Not a valid integer")
+
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        patch(url, reserved=reserved)
+        cli_info("updated reserved to '{}' for {}".format(reserved, ip_range), True)
 
     def opt_import(self, args: typing.List[str]):
         """
         import <file>
             Import subnet data from <file>.
         """
+        #TODO
         pass

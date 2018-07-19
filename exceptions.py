@@ -12,3 +12,6 @@ class CliWarning(CliException):
 
 class HostNotFoundWarning(CliWarning):
     pass
+
+class SubnetNotFoundWarning(CliWarning):
+    pass

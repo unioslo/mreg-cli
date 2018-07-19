@@ -15,11 +15,30 @@ from history import history
 from log import *
 
 try:
-    conf = cli_config(required_fields=("server_ip", "server_port"))
+    conf = cli_config(required_fields=("server_ip", "server_port", "tag_file"))
 except Exception as e:
     print("util.py: cli_config:", e)
     traceback.print_exc()
     sys.exit(1)
+
+location_tags = []
+category_tags = []
+
+with open(conf['tag_file'], 'r') as file:
+    line_number = 1
+    for line in file:
+        match = re.match(r"(?P<location>[a-zA-Z0-9]+)\s+:\s+Plassering:.*", line)
+        if match:
+            location_tags.append(match.group('location'))
+            line_number += 1
+        else:
+            match = re.match(r"(?P<category>[a-zA-Z0-9]+)\s+.*", line)
+            if not match:
+                print('ERROR in %s, wrong format on line: %d - %s\n', conf['tag_file'], line_number, line)
+                sys.exit(-1)
+            category_tags.append(match.group('category'))
+            line_number += 1
+
 
 
 def host_exists(name: str) -> bool:
@@ -192,12 +211,6 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
     else:
         return resolve_input_name(name_or_ip)
 
-
-def resolve_ip_or_subnet(ip_or_subnet: str) -> str:
-    # TODO SUBNET: implement this??
-    return "resolve ip or subnet not implemented"
-
-
 def resolve_ip(ip: str) -> str:
     """Returns host name associated with ip"""
     url = "http://{}:{}/hosts/?ipaddress__ipaddress={}".format(
@@ -287,6 +300,56 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
         # Assuming hinfo preset ids are 1-indexed
         hl.insert(hinfo["hinfoid"] - 1, (hinfo["os"], hinfo["cpu"]))
     return hl
+
+################################################################################
+#                                                                              #
+#   Subnet utility                                                             #
+#                                                                              #
+################################################################################
+
+def get_subnet(ip: str) -> str:
+    "Returns subnet associated with given range or IP"
+    if is_valid_subnet(ip):
+        url = "http://{}:{}/subnets/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            ip
+        )
+        return get(url).json()
+    elif is_valid_ip(ip):
+        url = "http://{}:{}/subnets/".format(
+            conf["server_ip"],
+            conf["server_port"]
+        )
+        subnet = None
+        subnet_list = get(url).json()
+        subnet_ranges = [ip_range['range'] for ip_range in subnet_list]
+        for ip_range in subnet_ranges:
+            ip_network = ipaddress.ip_network(ip_range)
+            if ip in [str(ip_address) for ip_address in ip_network.hosts()].extend([str(ip_network.network_address), str(ip_network.broadcast_address)]):
+                subnet = ip_range
+
+        if subnet:
+            url = "http://{}:{}/subnets/{}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                subnet
+            )
+            return get(url).json()
+        cli_warning("ip address is not an address in any existing subnet")
+    else:
+        cli_warning("Not a valid ip range or ip address")
+
+def get_subnet_used_list(ip_range: str):
+    "Return a list of the addresses in use on a given subnet"
+    url = "http://{}:{}/subnets/{}{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        ip_range,
+        "?used_list"
+    )
+    return get(url).json()
+
 
 ################################################################################
 #                                                                              #
@@ -418,6 +481,36 @@ def print_txt(txt: str, padding: int = 14) -> None:
     assert isinstance(txt, str)
     print("{1:<{0}}{2}".format(padding, "TXT:", txt))
 
+def print_subnet_unused(count: int, padding: int = 25) -> None:
+    "Pretty print amount of unused addresses"
+    assert (isinstance(count, int))
+    print("{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
+
+def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
+    "Pretty print ip range and reserved addresses list"
+    assert (isinstance(ip_range, str))
+    assert (isinstance(reserved, int))
+    subnet = ipaddress.IPv4Network(ip_range)
+    hosts = list(subnet.hosts())
+    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address, subnet.broadcast_address))
+    print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
+    print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
+    for x in range(reserved):
+        print("{1:<{0}}{2}".format(padding, "", hosts[x]))
+    print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)" ))
+
+def print_subnet_str(info: str, text: str, padding: int = 25) -> None:
+    assert(isinstance(info, str))
+    print("{1:<{0}}{2}".format(padding, text, info))
+
+def print_subnet_int(info: int, text: str, padding: int = 25) -> None:
+    assert(isinstance(info, int))
+    print("{1:<{0}}{2}".format(padding, text, info))
+
+def print_subnet_bool(info: int, text: str, padding: int = 25) -> None:
+    assert(isinstance(info, bool))
+    print("{1:<{0}}{2}".format(padding, text, info))
+
 
 ################################################################################
 #                                                                              #
@@ -457,10 +550,9 @@ def is_valid_subnet(net: str) -> bool:
         return False
     try:
         ipaddress.ip_network(net)
+        return True
     except ValueError:
         return False
-    else:
-        return True
 
 
 def is_valid_ttl(ttl: typing.Union[int, str, bytes]) -> bool:  # int?
@@ -488,3 +580,11 @@ def is_valid_email(email: typing.AnyStr) -> bool:
 def is_valid_loc(loc: str) -> bool:
     # TODO LOC: implement validate loc
     return True
+
+def is_valid_location_tag(loc: str) -> bool:
+    """Check if valid location tag"""
+    return loc in location_tags
+
+def is_valid_category_tag(cat: str) -> bool:
+    """Check if valid location tag"""
+    return cat in category_tags
