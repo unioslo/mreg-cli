@@ -136,6 +136,15 @@ class ClientShell(cmd.Cmd):
     def help_host(self):
         self.command_help(Host())
 
+    def do_subnet(self, args):
+        self.command_do(args, Subnet())
+
+    def complete_subnet(self, text, line, begidx, endidx):
+        return self.command_complete(text, line, begidx, endidx, Subnet())
+
+    def help_subnet(self):
+        self.command_help(Subnet())
+
     def do_history(self, args):
         self.command_do(args, History())
 
@@ -144,6 +153,7 @@ class ClientShell(cmd.Cmd):
 
     def help_history(self):
         self.command_help(History())
+
 
 
 if __name__ == '__main__':
