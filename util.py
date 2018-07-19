@@ -316,13 +316,15 @@ def get_subnet(ip: str) -> str:
             conf["server_ip"],
             conf["server_port"]
         )
+        ip_object = ipaddress.ip_address(ip)
         subnet = None
         subnet_list = get(url).json()
         subnet_ranges = [ip_range['range'] for ip_range in subnet_list]
         for ip_range in subnet_ranges:
             ip_network = ipaddress.ip_network(ip_range)
-            if ip in [str(ip_address) for ip_address in ip_network.hosts()].extend([str(ip_network.network_address), str(ip_network.broadcast_address)]):
+            if ip_object in ip_network:
                 subnet = ip_range
+                break
 
         if subnet:
             url = "http://{}:{}/subnets/{}".format(
@@ -344,7 +346,6 @@ def get_subnet_used_list(ip_range: str):
         "?used_list"
     )
     return get(url).json()
-
 
 ################################################################################
 #                                                                              #
