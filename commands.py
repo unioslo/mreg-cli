@@ -1031,7 +1031,7 @@ class Subnet(CommandBase):
         patch(url, frozen=True)
         cli_info("updated frozen to '{}' for {}".format(True, ip_range), True)
 
-    def opt_unset_dns_delegated(self, args: typing.List[str]):
+    def opt_unset_frozen(self, args: typing.List[str]):
         """
         unset_frozen <subnet>
             Unfreeze a subnet.
