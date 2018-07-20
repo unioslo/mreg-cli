@@ -15,7 +15,7 @@ from history import history
 from log import *
 
 try:
-    conf = cli_config(required_fields=("server_ip", "server_port", "tag_file"))
+    conf = cli_config(required_fields=("server_ip", "server_port", "tag_file", "129_240_file", "158_36_file", "172_16_file", "193_157_file"))
 except Exception as e:
     print("util.py: cli_config:", e)
     traceback.print_exc()
@@ -98,14 +98,20 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
         return host
 
 
-def choose_ip_from_subnet(subnet: str) -> str:
+def choose_ip_from_subnet(subnet: dict) -> str:
     """
     Returns an arbitrary ip from the given subnet.
     Assumes subnet exists.
-    :param subnet: Subnet string. If the subnet is without a net mask then /24 is used.
+    :param subnet: dict with subnet info.
     :return: Ip address string
     """
-    return "12.34.56.78"
+    addresses = list(ipaddress.ip_network(subnet['range']).hosts())
+    addresses = set([str(ip) for ip in addresses[subnet['reserved']:]])
+    addresses_in_use = set(get_subnet_used_list(subnet['range']))
+    possible_addresses = addresses - addresses_in_use
+    if not possible_addresses:
+        cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
+    return possible_addresses.pop()
 
 
 ################################################################################
@@ -355,6 +361,27 @@ def get_subnet_used_list(ip_range: str):
     return get(url).json()
 
 
+def get_vlan_mapping():
+    """"Get VLAN mapping: subnet - vlan"""
+    vlans = {}
+    get_vlans_from_file(conf['129_240_file'], vlans)
+    get_vlans_from_file(conf['158_36_file'], vlans)
+    get_vlans_from_file(conf['172_16_file'], vlans)
+    get_vlans_from_file(conf['193_157_file'], vlans)
+    return vlans
+
+def get_vlans_from_file(file: str, vlans: dict):
+    "Read VLAN mapping from a file"
+    with open(file, 'r') as file:
+        for line in file:
+            if re.match(r"#.*", line):
+                pass
+            else:
+                match = re.match(r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+.*?[vlan|VLAN|Vlan]\s*?(?P<vlan>\d+).*", line)
+                if match:
+                    vlans[match.group('vlan')] = match.group('range')
+
+
 ################################################################################
 #                                                                              #
 #   Pretty printing                                                            #
@@ -495,13 +522,13 @@ def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
 
 def print_subnet_unused(count: int, padding: int = 25) -> None:
     "Pretty print amount of unused addresses"
-    assert (isinstance(count, int))
+    assert isinstance(count, int)
     print("{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
 
 def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
     "Pretty print ip range and reserved addresses list"
-    assert (isinstance(ip_range, str))
-    assert (isinstance(reserved, int))
+    assert isinstance(ip_range, str)
+    assert isinstance(reserved, int)
     subnet = ipaddress.IPv4Network(ip_range)
     hosts = list(subnet.hosts())
     print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address, subnet.broadcast_address))
@@ -511,19 +538,7 @@ def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> No
         print("{1:<{0}}{2}".format(padding, "", hosts[x]))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)" ))
 
-
-def print_subnet_str(info: str, text: str, padding: int = 25) -> None:
-    assert(isinstance(info, str))
-    print("{1:<{0}}{2}".format(padding, text, info))
-
-
-def print_subnet_int(info: int, text: str, padding: int = 25) -> None:
-    assert(isinstance(info, int))
-    print("{1:<{0}}{2}".format(padding, text, info))
-
-
-def print_subnet_bool(info: int, text: str, padding: int = 25) -> None:
-    assert(isinstance(info, bool))
+def print_subnet(info: int, text: str, padding: int = 25) -> None:
     print("{1:<{0}}{2}".format(padding, text, info))
 
 
