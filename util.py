@@ -287,7 +287,8 @@ def to_longform(name: typing.AnyStr, trailing_dot: bool = False) -> str:
 
 def hinfo_id_to_strings(id: int) -> typing.Tuple[str, str]:
     """Take a hinfo id and return a descriptive string"""
-    assert isinstance(id, int)
+    if not isinstance(id, int):
+        return tuple(("", ""))
     hl = hinfo_list()
     return hl[id - 1]
 

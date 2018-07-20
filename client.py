@@ -45,6 +45,10 @@ class ClientShell(cmd.Cmd):
     intro = "Welcome to mreg cli. Type help or ? for help."
     prompt = "mreg> "
 
+    def __init__(self):
+        super(ClientShell, self).__init__()
+        self.stop_on_error = False
+
     #####################################################################
     #   Functions which automatically handles any CommandBase() child   #
     #####################################################################
@@ -66,8 +70,14 @@ class ClientShell(cmd.Cmd):
                 command.method(args[0])(args[1:])
             except CliException as e:
                 print(e)
+                if self.stop_on_error:
+                    self.stop_on_error = False
+                    self.cmdqueue = []
             except Exception:
                 traceback.print_exc()
+                if self.stop_on_error:
+                    self.stop_on_error = False
+                    self.cmdqueue = []
             finally:
                 history.end_event()
 
@@ -102,11 +112,14 @@ class ClientShell(cmd.Cmd):
     ###############################
 
     def do_file(self, args):
-        """Read commands from a file."""
+        """Read commands from a file. If --exit is supplied then it'll stop executing on error.
+    file <file-name> [--exit]
+        """
         args = args.split()
         if len(args) < 1:
             cli_warning("missing file name.")
-            return
+        if "--exit" in args:
+            self.stop_on_error = True
         file_path = Path(args[0])
         if not file_path.exists():
             cli_warning("\"{}\" doesn't exist.".format(file_path))
@@ -131,6 +144,8 @@ class ClientShell(cmd.Cmd):
         words = line.split()
         if len(words) < 2:
             ps = "."
+        elif len(words) == 2 and not text:
+            return ["--exit"]
         else:
             if re.match("^/[^/]*$", words[1]):
                 ps = "/"
@@ -185,7 +200,6 @@ class ClientShell(cmd.Cmd):
 
     def help_history(self):
         self.command_help(History())
-
 
 
 if __name__ == '__main__':

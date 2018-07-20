@@ -127,6 +127,7 @@ class History(CommandBase):
             cli_warning("invalid input: {}".format(e))
 
 
+# noinspection PyMethodMayBeStatic,PyMethodMayBeStatic
 class Host(CommandBase):
     """
     Create, delete or edit host.
@@ -937,7 +938,8 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
-        print_hinfo(hinfo_id_to_strings(info["hinfo"]))
+        if info["hinfo"]:
+            print_hinfo(hinfo_id_to_strings(info["hinfo"]))
         cli_info("showed hinfo for {}".format(info["name"]))
 
     def opt_srv_add(self, args: typing.List[str]) -> None:
@@ -1167,14 +1169,77 @@ class Host(CommandBase):
         ptr_remove <ipv4|ipv6> <name>
             Remove PTR record from host.
         """
-        pass
+        if len(args) < 2:
+            ip = input("Enter ip> ") if len(args) < 1 else args[0]
+            name = input("Enter host name> ")
+        else:
+            ip = args[0]
+            name = args[1]
+
+        info = host_info_by_name(name)
+
+        url = "http://{}:{}/ptroverrides/?hostid={}&ipaddress={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            info["hostid"],
+            ip,
+        )
+        history.record_get(url)
+        ptrs = get(url).json()
+        if len(ptrs) == 0:
+            cli_warning("no PTR record for {} with ip {}".format(info["name"], ip))
+        url = "http://{}:{}/ptroverrides/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            ptrs[0]["id"],
+        )
+        history.record_delete(url, ptrs[0])
+        delete(url)
+        cli_info("deleted PTR record {} for {}".format(ip, info["name"]), print_msg=True)
 
     def opt_ptr_change(self, args: typing.List[str]) -> None:
         """
         ptr_change <ipv4|ipv6> <old-name> <new-name>
             Move PTR record from <old-name> to <new-name>.
         """
-        pass
+        if len(args) < 2:
+            ip = input("Enter ip> ") if len(args) < 1 else args[0]
+            old_name = input("Enter name of old host> ") if len(args) < 2 else args[1]
+            new_name = input("Enter name of new host> ")
+        else:
+            ip = args[0]
+            old_name = args[1]
+            new_name = args[2]
+
+        old_info = host_info_by_name(old_name)
+        new_info = host_info_by_name(new_name)
+
+        url = "http://{}:{}/ptroverrides/?hostid={}&ipaddress={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            old_info["hostid"],
+            ip,
+        )
+        history.record_get(url)
+        ptrs = get(url).json()
+        if len(ptrs) == 0:
+            cli_warning("no PTR record for {} with ip {}".format(info["name"], ip))
+
+        data = {
+            "hostid": new_info["hostid"],
+        }
+        url = "http://{}:{}/ptroverrides/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            ptrs[0]["id"],
+        )
+        history.record_patch(url, data, ptrs[0])
+        patch(url, **data)
+        cli_info("changed owner of PTR record {} from {} to {}".format(
+            ip,
+            old_info["name"],
+            new_info["name"],
+        ), print_msg=True)
 
     def opt_ptr_show(self, args: typing.List[str]) -> None:
         """
@@ -1278,7 +1343,7 @@ class Subnet(CommandBase):
         print_subnet_unused(network.num_addresses - (subnet_info['reserved'] + 2)- len(used_list))
         cli_info("printed subnet info for {}".format(subnet_info['range']))
 
-    def opt_create(self, args:typing.List[str]):
+    def opt_create(self, args: typing.List[str]):
         """
         create <subnet> <description> <vlan> <dns_delegated> <category> <location> <frozen>
             Create a new subnet
@@ -1307,10 +1372,11 @@ class Subnet(CommandBase):
         frozen = True if frozen == 'y' else False
 
         url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
-        post(url, range=ip_range, description=description, vlan=vlan, category=category, location=location, frozen=frozen)
+        post(url, range=ip_range, description=description, vlan=vlan, category=category,
+             location=location, frozen=frozen)
         cli_info("created subnet {}".format(ip_range), True)
 
-    def opt_remove(self, args:typing.List[str]):
+    def opt_remove(self, args: typing.List[str]):
         """
         remove <subnet>
             Remove subnet
