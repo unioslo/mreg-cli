@@ -195,12 +195,32 @@ class Host(CommandBase):
             if not 0 < hinfo <= len(hi_list):
                 cli_warning("invalid hinfo ({}) when trying to add {}".format(hinfo, name))
 
+
         # Handle arbitrary ip from subnet if received a subnet
-        if re.match(r"^.*([.:]0|::)/$", ip_or_net) or is_valid_subnet(ip_or_net):
-            # TODO SUBNET: handle random ip address
-            ip = choose_ip_from_subnet(ip_or_net)
+        if re.match(r"^.*\/$", ip_or_net):
+            subnet = get_subnet(ip_or_net[:-1])
+            ip = choose_ip_from_subnet(subnet)
+        elif is_valid_subnet(ip_or_net):
+            subnet = get_subnet(ip_or_net)
+            ip = choose_ip_from_subnet(subnet)
         else:
+            # check that the address given isn't reserved
+            subnet = get_subnet(ip_or_net)
+            network_object = ipaddress.ip_network(subnet['range'])
+            addresses = list(network_object.hosts())
+            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            if ip_or_net in reserved_addresses and 'y' not in args:
+                cli_warning("Address is reserved. Requires force")
+            if ip_or_net == network_object.network_address.exploded:
+                cli_warning("Can't overwrite the network address of the subnet")
+            if ip_or_net == network_object.broadcast_address.exploded:
+                cli_warning("Can't overwrite the broadcast address of the subnet")
             ip = ip_or_net
+
+
+        # Handle if subnet is frozen
+        if 'y' not in args and subnet['frozen']:
+            cli_warning("Subnet {} is frozen. Requires force".format(subnet['range']))
 
         # Contact sanity check
         if not is_valid_email(contact):
@@ -862,7 +882,8 @@ class Subnet(CommandBase):
         print_subnet(subnet_info['category'], "Category:")
         print_subnet(subnet_info['location'], "Location:")
         print_subnet(subnet_info['vlan'], "VLAN")
-        print_subnet(subnet_info['dns_delegated'] if subnet_info['category'] else False, "DNS delegated:")
+        print_subnet(subnet_info['dns_delegated'] if subnet_info['dns_delegated'] else False, "DNS delegated:")
+        print_subnet(subnet_info['frozen'] if subnet_info['frozen'] else False, "Frozen")
         print_subnet_reserved(subnet_info['range'], subnet_info['reserved'])
         print_subnet(len(used_list), "Used addresses:")
         print_subnet_unused(network.num_addresses - (subnet_info['reserved'] + 2)- len(used_list))
@@ -998,6 +1019,30 @@ class Subnet(CommandBase):
         patch(url, dns_delegated=False)
         cli_info("updated dns_delegated to '{}' for {}".format(False, ip_range), True)
 
+    def opt_set_frozen(self, args: typing.List[str]):
+        """
+        set_frozen <subnet>
+            Freeze a subnet.
+        """
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        patch(url, frozen=True)
+        cli_info("updated frozen to '{}' for {}".format(True, ip_range), True)
+
+    def opt_unset_dns_delegated(self, args: typing.List[str]):
+        """
+        unset_frozen <subnet>
+            Unfreeze a subnet.
+        """
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+        is_valid_subnet(ip_range)
+
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        patch(url, frozen=False)
+        cli_info("updated frozen to '{}' for {}".format(False, ip_range), True)
+
     def opt_set_reserved(self, args: typing.List[str]):
         """
         set_reserved <subnet> <number>
@@ -1036,7 +1081,6 @@ class Subnet(CommandBase):
 
     def opt_import(self, args: typing.List[str]):
         """
-        TODO raise warning if the import changes over 20% of the subnets
         import <file>
             Import subnet data from <file>.
         """
@@ -1114,6 +1158,9 @@ class Subnet(CommandBase):
 
         if ERROR:
             cli_warning("Errors detected during setup. Check subnets_import.log for details")
+
+        if ((len(subnets_delete) + len(subnets_patch)) / len(current_subnets.keys())) > 0.2 and 'y' not in args:
+            cli_warning("WARNING: The import will change over 20% of the subnets. Requires force")
 
         log_file.write("------ API REQUESTS START ------\n".format(input_file))
 

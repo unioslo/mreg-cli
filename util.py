@@ -97,14 +97,20 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
         return host
 
 
-def choose_ip_from_subnet(subnet: str) -> str:
+def choose_ip_from_subnet(subnet: dict) -> str:
     """
     Returns an arbitrary ip from the given subnet.
     Assumes subnet exists.
-    :param subnet: Subnet string. If the subnet is without a net mask then /24 is used.
+    :param subnet: dict with subnet info.
     :return: Ip address string
     """
-    return "12.34.56.78"
+    addresses = list(ipaddress.ip_network(subnet['range']).hosts())
+    addresses = set([str(ip) for ip in addresses[subnet['reserved']:]])
+    addresses_in_use = set(get_subnet_used_list(subnet['range']))
+    possible_addresses = addresses - addresses_in_use
+    if not possible_addresses:
+        cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
+    return possible_addresses.pop()
 
 
 ################################################################################
