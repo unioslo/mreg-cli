@@ -4,6 +4,19 @@ import json
 from log import *
 
 
+# NOTE HISTORY: General notes and shortcomings of history tracking:
+# Not generic.
+#   History must be explicitly recorded in the code where it's needed.
+# Not flexible.
+#   Undo/redo actions need to receive all necessary information when recording an event and there's
+#   no logic for making smart undo/redo actions.
+# No foreign key understanding.
+#   The history got no concept of foreign key/table relations in the database, so all changes in
+#   which a foreign key is involved (directly or indirectly) is problematic.
+# Undo/redo is not RESTfull...
+
+# QUESTION HISTORY: kanskje redo/undo kan løses ved å generere CLI kommandoer som utfører redo/undo operasjonene?
+
 class HistoryEvent:
     def __init__(self, name: str = "", index: int = -1):
         self.requests = []
@@ -13,7 +26,12 @@ class HistoryEvent:
         self.undoable = True
 
     def __str__(self):
-        s = "{:<3} {}:".format(self.index, self.name)
+        s = "{:<3} {} ({} redo, {} undo):".format(
+            self.index,
+            self.name,
+            "can" if self.redoable else "cannot",
+            "can" if self.undoable else "cannot",
+        )
         for request in self.requests:
             s += "\n\t{} {}".format(
                 request["name"],
@@ -41,17 +59,24 @@ class HistoryEvent:
 
     def undo(self):
         """Undo this event"""
+        if not self.undoable:
+            return
         for request in reversed(self.requests):
             if request["name"] == "POST":
-                res = requests.delete(url=request["url"])
+                url = "{}{}".format(request["url"], request["resource_name"])
+                res = requests.delete(url)
+                msg = "deleted {}".format(url)
             elif request["name"] == "PATCH":
                 res = requests.patch(url=request["url"], data=request["old_data"])
+                msg = "patched {}".format(request["url"])
             elif request["name"] == "DELETE":
-                res = requests.post(url=request["url"], data=requests["old_data"])
+                url = request["url"].rsplit(sep='/', maxsplit=1)[0] + "/"
+                res = requests.post(url, data=request["old_data"])
+                msg = "posted {}".format(url)
             else:
                 continue
             if not res.ok:
-                # QUESTION HISTORY: hvordan egentlig håndtere feil under redo av event?
+                # QUESTION HISTORY: hvordan egentlig håndtere feil under undo av event?
                 message = "{} \"{}\": {}: {}".format(
                     request["name"],
                     request["url"],
@@ -65,16 +90,23 @@ class HistoryEvent:
                 else:
                     message += "\n{}".format(json.dumps(body, indent=2))
                 cli_error(message)
+            else:
+                cli_info("{}".format(msg), print_msg=True)
 
     def redo(self):
         """Redo this event"""
+        if not self.redoable:
+            return
         for request in self.requests:
             if request["name"] == "POST":
                 res = requests.post(url=request["url"], data=request["new_data"])
+                msg = "posted {}".format(request["url"])
             elif request["name"] == "PATCH":
                 res = requests.patch(url=request["url"], data=request["new_data"])
+                msg = "patched {}".format(request["url"])
             elif request["name"] == "DELETE":
                 res = requests.delete(url=request["url"])
+                msg = "deleted {}".format(request["url"])
             else:
                 continue
             if not res.ok:
@@ -92,6 +124,8 @@ class HistoryEvent:
                 else:
                     message += "\n{}".format(json.dumps(body, indent=2))
                 cli_error(message)
+            else:
+                cli_info("{}".format(msg), print_msg=True)
 
 
 class History:
@@ -117,27 +151,56 @@ class History:
             # Setting current to a dummy event which will be lost when a new event is started.
             self.current = HistoryEvent()
 
-    def record_post(self, url: str, response: requests.Response, new_data: dict = None) -> None:
+    def record_post(self, url: str, resource_name: str, new_data: dict, redoable: bool = True,
+                    undoable: bool = True) -> None:
         """Record a POST request in the current event"""
-        self.current.add_post(url, response, new_data)
         self.current.add_request(
             name="POST",
             url=url,
-
+            resource_name=resource_name,
+            old_data=dict(),
+            new_data=new_data,
+            redoable=redoable,
+            undoable=undoable,
         )
 
-    def record_patch(self, url: str, response: requests.Response, old_data: dict = None,
-                     new_data: dict = None) -> None:
+    def record_patch(self, url: str, new_data: dict, old_data: dict,
+                     redoable: bool = True, undoable: bool = True) -> None:
         """Record a PATCH request in the current event"""
-        self.current.add_patch(url, response, old_data=old_data, new_data=new_data)
+        self.current.add_request(
+            name="PATCH",
+            url=url,
+            resource_name="",
+            old_data=old_data,
+            new_data=new_data,
+            redoable=redoable,
+            undoable=undoable,
+        )
 
-    def record_delete(self, url: str, response: requests.Response, old_data: dict = None) -> None:
+    def record_delete(self, url: str, old_data: dict, redoable: bool = True,
+                      undoable: bool = True) -> None:
         """Record a DELETE request in the current event"""
-        self.current.add_delete(url, response, old_data)
+        self.current.add_request(
+            name="DELETE",
+            url=url,
+            resource_name="",
+            old_data=old_data,
+            new_data=dict(),
+            redoable=redoable,
+            undoable=undoable,
+        )
 
-    def record_get(self, url: str, response: requests.Response) -> None:
+    def record_get(self, url: str, redoable: bool = True, undoable: bool = True) -> None:
         """Record a GET request in the current event"""
-        self.current.add_get(url, response)
+        self.current.add_request(
+            name="GET",
+            url=url,
+            resource_name="",
+            old_data=dict(),
+            new_data=dict(),
+            redoable=redoable,
+            undoable=undoable,
+        )
 
     def print(self):
         for e in self.events:
