@@ -177,7 +177,7 @@ class Host(CommandBase):
         info = host_info_by_name_or_ip(name_or_ip)
 
         warn_msg = ""
-        # Require force if host has any aliases
+        # Require force if host has any aliases. Delete the aliases if force.
         aliases = aliases_of_host(info["name"])
         if len(aliases):
             if "y" not in args:
@@ -197,7 +197,58 @@ class Host(CommandBase):
         if len(info["ipaddress"]) > 1 and "y" not in args:
             warn_msg += "{} ipaddresses. ".format(len(info["ipaddress"]))
 
-        # TODO FORCE: kreve force hvis host har:  SRV eller NAPTR pekende på seg
+        # TODO FORCE: kreve force hvis host har: NAPTR pekende på seg
+
+        # Require force if host has any SRV records. Delete the SRV records if force
+        url = "http://{}:{}/srvs/?target={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            info["name"],
+        )
+        history.record_get(url)
+        srvs = get(url).json()
+        if len(srvs) > 0:
+            if "y" not in args:
+                warn_msg += "{} SRV records. ".format(len(srvs))
+            else:
+                # QUESTION SRV: remove SRV when removing target host?
+                for srv in srvs:
+                    url = "http://{}:{}/srvs/{}".format(
+                        conf["server_ip"],
+                        conf["server_port"],
+                        srv["srvid"],
+                    )
+                    history.record_delete(url, srv)
+                    delete(url)
+                    cli_info("deleted SRV record {} when removing{}".format(
+                        srv["service"],
+                        info["name"],
+                    ))
+
+        # Require force if host has any PTR records. Delete the PTR records if force
+        url = "http://{}:{}/ptroverrides/?hostid={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            info["hostid"],
+        )
+        ptrs = get(url).json()
+        if len(ptrs) > 0:
+            if "y" not in args:
+                warn_msg += "{} PTR records. ".format(len(ptrs))
+            else:
+                # QUESTION PTR: remove PTR when removing owner host?
+                for ptr in ptrs:
+                    url = "http://{}:{}/ptroverrides/{}".format(
+                        conf["server_ip"],
+                        conf["server_port"],
+                        ptr["id"],
+                    )
+                    history.record_delete(url, ptr, redoable=False, undoable=False)
+                    delete(url)
+                    cli_info("deleted PTR record {} when removing {}".format(
+                        ptr["ipaddress"],
+                        info["name"],
+                    ))
 
         # To be able to undo the delete the ipaddress field of the 'old_data' has to be an ipaddress
         # string
@@ -1244,7 +1295,7 @@ class Host(CommandBase):
     def opt_ptr_show(self, args: typing.List[str]) -> None:
         """
         ptr_show <ipv4|ipv6>
-            Show PTR record.
+            Show PTR record matching given ip (empty input shows all PTR records).
         """
         ip = input("Enter ip address> ") if len(args) < 1 else args[0]
 
@@ -1275,14 +1326,6 @@ class Host(CommandBase):
                               .format(ip, ptr["hostid"]))
                 print_ptr(ptr["ipaddress"], hosts[0]["name"], padding)
         cli_info("showed PTR records matching {}".format(ip))
-
-    def opt_used_list(self, args: typing.List[str]) -> None:
-        """
-        used_list <ip>
-            List addresses used on the subnet which <ip> belongs to.
-        """
-        # TODO: implementer used_list
-        pass
 
 
 class Zone(CommandBase):
