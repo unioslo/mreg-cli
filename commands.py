@@ -899,16 +899,18 @@ class Subnet(CommandBase):
 
         description = input("Enter description>") if len(args) < 2 else args[1]
 
-        vlan = input("Enter VLAN (optional)>") if len(args) < 3 else int(args[2])
-        try:
-            vlan = int(vlan)
-        except ValueError:
-            cli_warning("Not a valid integer")
+        vlan = input("Enter VLAN (optional)>") if len(args) < 3 else args[2]
+
+        if vlan:
+            try:
+                vlan = int(vlan)
+            except ValueError:
+                cli_warning("Not a valid integer")
 
         category = input("Enter category (optional)>") if len(args) < 4 else args[3]
         if category and not is_valid_category_tag(category):
             cli_warning("Not a valid category tag")
-        location = input("Enter location (optional)") if len(args) < 5 else args[4]
+        location = input("Enter location (optional)>") if len(args) < 5 else args[4]
         if location and not is_valid_location_tag(location):
             cli_warning("Not a valid location tag")
 
@@ -946,13 +948,12 @@ class Subnet(CommandBase):
             Set VLAN for subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
+        subnet = get_subnet(ip_range)
         vlan = int(input("Enter new VLAN>") if len(args) < 2 else args[1])
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, vlan=vlan)
-        print("Updated vlan to {} for {}".format(vlan, ip_range))
-        cli_info("updated vlan to {} for {}".format(vlan, ip_range))
+        cli_info("updated vlan to {} for {}".format(vlan, subnet['range']))
 
     def opt_set_description(self, args: typing.List[str]):
         """
@@ -960,12 +961,12 @@ class Subnet(CommandBase):
             Set description for subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
-        description = input("Enter new VLAN>") if len(args) < 2 else args[1]
+        subnet = get_subnet(ip_range)
+        description = input("Enter new description>") if len(args) < 2 else args[1]
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, description=description)
-        cli_info("updated description to '{}' for {}".format(description, ip_range), True)
+        cli_info("updated description to '{}' for {}".format(description, subnet['range']), True)
 
     def opt_set_location(self, args: typing.List[str]):
         """
@@ -973,13 +974,14 @@ class Subnet(CommandBase):
             Set location tag for subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
+        subnet = get_subnet(ip_range)
         location_tag = input("Enter new location tag>") if len(args) < 2 else args[1]
-        is_valid_location_tag(location_tag)
+        if not is_valid_location_tag(location_tag):
+            cli_warning("Not a valid location tag")
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, location=location_tag)
-        cli_info("updated location tag to '{}' for {}".format(location_tag, ip_range), True)
+        cli_info("updated location tag to '{}' for {}".format(location_tag, subnet['range']), True)
 
     def opt_set_category(self, args: typing.List[str]):
         """
@@ -987,13 +989,14 @@ class Subnet(CommandBase):
             Set category tag for subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
+        subnet = get_subnet(ip_range)
         category_tag = input("Enter new category tag>") if len(args) < 2 else args[1]
-        is_valid_category_tag(category_tag)
+        if not is_valid_category_tag(category_tag):
+            cli_warning("Not a valid category tag")
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, category=category_tag)
-        cli_info("updated category tag to '{}' for {}".format(category_tag, ip_range), True)
+        cli_info("updated category tag to '{}' for {}".format(category_tag, subnet['range']), True)
 
     def opt_set_dns_delegated(self, args: typing.List[str]):
         """
@@ -1001,11 +1004,11 @@ class Subnet(CommandBase):
             Set that DNS-administration is being handled elsewhere.
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
+        subnet = get_subnet(ip_range)
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, dns_delegated=True)
-        cli_info("updated dns_delegated to '{}' for {}".format(True, ip_range), True)
+        cli_info("updated dns_delegated to '{}' for {}".format(True, subnet['range']), True)
 
     def opt_unset_dns_delegated(self, args: typing.List[str]):
         """
@@ -1013,11 +1016,11 @@ class Subnet(CommandBase):
             Set that DNS-administration is not being handled elsewhere.
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
+        subnet = get_subnet(ip_range)
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, dns_delegated=False)
-        cli_info("updated dns_delegated to '{}' for {}".format(False, ip_range), True)
+        cli_info("updated dns_delegated to '{}' for {}".format(False, subnet['range']), True)
 
     def opt_set_frozen(self, args: typing.List[str]):
         """
@@ -1025,11 +1028,11 @@ class Subnet(CommandBase):
             Freeze a subnet.
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
+        subnet = get_subnet(ip_range)
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, frozen=True)
-        cli_info("updated frozen to '{}' for {}".format(True, ip_range), True)
+        cli_info("updated frozen to '{}' for {}".format(True, subnet['range']), True)
 
     def opt_unset_frozen(self, args: typing.List[str]):
         """
@@ -1037,11 +1040,11 @@ class Subnet(CommandBase):
             Unfreeze a subnet.
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
+        subnet = get_subnet(ip_range)
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, frozen=False)
-        cli_info("updated frozen to '{}' for {}".format(False, ip_range), True)
+        cli_info("updated frozen to '{}' for {}".format(False, subnet['range']), True)
 
     def opt_set_reserved(self, args: typing.List[str]):
         """
@@ -1049,7 +1052,7 @@ class Subnet(CommandBase):
             Set number of reserved hosts.
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
+        subnet = get_subnet(ip_range)
         reserved = input("Enter number of reserved hosts>")
 
         try:
@@ -1057,22 +1060,26 @@ class Subnet(CommandBase):
         except ValueError:
             cli_warning("Not a valid integer")
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, reserved=reserved)
-        cli_info("updated reserved to '{}' for {}".format(reserved, ip_range), True)
+        cli_info("updated reserved to '{}' for {}".format(reserved, subnet['range']), True)
 
     def opt_list_used_addresses(self, args: typing.List[str]):
         """
-        TODO See if this can be done faster
         list_used_addresses <subnet>
             Lists all the used addresses for a subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        is_valid_subnet(ip_range)
 
-        addresses = get_subnet_used_list(ip_range)
+        if is_valid_ip(ip_range):
+            subnet = get_subnet(ip_range)
+            addresses = get_subnet_used_list(subnet['range'])
+        elif is_valid_subnet(ip_range):
+            addresses = get_subnet_used_list(ip_range)
+        else:
+            cli_warning("Not a valid ip or subnet")
+
         hosts = []
-
         for address in addresses:
             hosts.append(resolve_ip(address))
 
