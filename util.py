@@ -40,7 +40,6 @@ with open(conf['tag_file'], 'r') as file:
             line_number += 1
 
 
-
 def host_exists(name: str) -> bool:
     """Checks if a host with the given name exists"""
     url = "http://{}:{}/hosts/?name={}".format(
@@ -48,6 +47,7 @@ def host_exists(name: str) -> bool:
         conf["server_port"],
         name
     )
+    history.record_get(url)
     hosts = get(url).json()
 
     # Response data sanity checks
@@ -88,6 +88,7 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
     """
     name = resolve_input_name(name)
     url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], name)
+    history.record_get(url)
     host = get(url).json()
     if host["cname"] and follow_cnames:
         if len(host["cname"]) > 1:
@@ -122,7 +123,6 @@ def choose_ip_from_subnet(subnet: dict) -> str:
 
 def post(url: str, **kwargs) -> requests.Response:
     """Uses requests to make a post request. Assumes that all kwargs are data fields"""
-    # TODO HISTORY: Add some history tracking when posting. With undo options.
     p = requests.post(url, data=kwargs)
     if not p.ok:
         message = "POST \"{}\": {}: {}".format(url, p.status_code, p.reason)
@@ -136,9 +136,8 @@ def post(url: str, **kwargs) -> requests.Response:
     return p
 
 
-def patch(url: str, old_data: dict = None, **kwargs) -> requests.Response:
+def patch(url: str, **kwargs) -> requests.Response:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
-    # TODO HISTORY: Add some history tracking when patching. With undo options.
     p = requests.patch(url, data=kwargs)
     if not p.ok:
         message = "PATCH \"{}\": {}: {}".format(url, p.status_code, p.reason)
@@ -152,9 +151,8 @@ def patch(url: str, old_data: dict = None, **kwargs) -> requests.Response:
     return p
 
 
-def delete(url: str, old_data: dict = None) -> requests.Response:
+def delete(url: str) -> requests.Response:
     """Uses requests to make a delete request"""
-    # TODO HISTORY: Add some history tracking when deleting. With undo options.
     d = requests.delete(url)
     if not d.ok:
         message = "DELETE \"{}\": {}: {}".format(url, d.status_code, d.reason)
@@ -196,6 +194,7 @@ def aliases_of_host(name: str) -> typing.List[str]:
         conf["server_port"],
         name
     )
+    history.record_get(url)
     hosts = get(url).json()
     aliases = []
     for host in hosts:
@@ -217,6 +216,7 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
     else:
         return resolve_input_name(name_or_ip)
 
+
 def resolve_ip(ip: str) -> str:
     """Returns host name associated with ip"""
     url = "http://{}:{}/hosts/?ipaddress__ipaddress={}".format(
@@ -224,6 +224,7 @@ def resolve_ip(ip: str) -> str:
         conf["server_port"],
         ip
     )
+    history.record_get(url)
     hosts = get(url).json()
 
     # Response data sanity check
@@ -242,6 +243,7 @@ def resolve_input_name(name: str) -> str:
         conf["server_port"],
         name
     )
+    history.record_get(url)
     hosts = get(url).json()
 
     for host in hosts:
@@ -267,11 +269,13 @@ def is_longform(name: typing.AnyStr) -> bool:
     return True if re.match("^.*\.uio\.no\.?$", name) else False
 
 
-def to_longform(name: typing.AnyStr) -> str:
+def to_longform(name: typing.AnyStr, trailing_dot: bool = False) -> str:
     """Return long form of host name, i.e. append uio.no"""
     if not isinstance(name, str):
         name = str(name)
     s = ".uio.no" if name[len(name) - 1] != "." else "uio.no"
+    if trailing_dot:
+        s += "."
     return name + s
 
 
@@ -283,7 +287,8 @@ def to_longform(name: typing.AnyStr) -> str:
 
 def hinfo_id_to_strings(id: int) -> typing.Tuple[str, str]:
     """Take a hinfo id and return a descriptive string"""
-    assert isinstance(id, int)
+    if not isinstance(id, int):
+        return tuple(("", ""))
     hl = hinfo_list()
     return hl[id - 1]
 
@@ -294,6 +299,7 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
     hinfo id
     """
     url = "http://{}:{}/hinfopresets/".format(conf["server_ip"], conf["server_port"])
+    history.record_get(url)
     hinfo_get = get(url)
     hl = []
     for hinfo in hinfo_get.json():
@@ -301,6 +307,7 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
         # Assuming hinfo preset ids are 1-indexed
         hl.insert(hinfo["hinfoid"] - 1, (hinfo["os"], hinfo["cpu"]))
     return hl
+
 
 ################################################################################
 #                                                                              #
@@ -343,7 +350,8 @@ def get_subnet(ip: str) -> str:
     else:
         cli_warning("Not a valid ip range or ip address")
 
-def get_subnet_used_list(ip_range: str) :
+
+def get_subnet_used_list(ip_range: str):
     "Return a list of the addresses in use on a given subnet"
     url = "http://{}:{}/subnets/{}{}".format(
         conf["server_ip"],
@@ -352,6 +360,7 @@ def get_subnet_used_list(ip_range: str) :
         "?used_list"
     )
     return get(url).json()
+
 
 def get_vlan_mapping():
     """"Get VLAN mapping: subnet - vlan"""
@@ -472,6 +481,18 @@ def print_hinfo_list(hinfos: typing.List[typing.Tuple[str, str]], padding: int =
             "{1:<{0}} -> {2:<{3}} {4}".format(padding, i + 1, hinfos[i][0], max_len, hinfos[i][1]))
 
 
+def print_srv(srv: dict, padding: int = 14) -> None:
+    """Pretty print given srv"""
+    print("{1:<{0}} SRV {2:^6} {3:^6} {4:^6} {5}".format(
+        padding,
+        srv["service"],
+        srv["priority"],
+        srv["weight"],
+        srv["port"],
+        srv["target"],
+    ))
+
+
 def print_loc(loc: str, padding: int = 14) -> None:
     """Pretty print given loc"""
     if loc is None:
@@ -491,6 +512,14 @@ def print_txt(txt: str, padding: int = 14) -> None:
         return
     assert isinstance(txt, str)
     print("{1:<{0}}{2}".format(padding, "TXT:", txt))
+
+
+def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
+    """Pretty print given txt"""
+    assert isinstance(ip, str)
+    assert isinstance(host_name, str)
+    print("{1:<{0}} PTR {2}".format(padding, ip, host_name))
+
 
 def print_subnet_unused(count: int, padding: int = 25) -> None:
     "Pretty print amount of unused addresses"
@@ -583,9 +612,11 @@ def is_valid_loc(loc: str) -> bool:
     # TODO LOC: implement validate loc
     return True
 
+
 def is_valid_location_tag(loc: str) -> bool:
     """Check if valid location tag"""
     return loc in location_tags
+
 
 def is_valid_category_tag(cat: str) -> bool:
     """Check if valid location tag"""

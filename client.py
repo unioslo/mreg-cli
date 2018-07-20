@@ -1,3 +1,4 @@
+import re
 import os
 import cmd
 import traceback
@@ -8,9 +9,45 @@ from commands import *
 from history import history
 
 
+def split_args(arg_str: str) -> typing.List[str]:
+    """Splits a string of arguments on whitespaces, while preserving double quoted string and
+    removing pparentheses
+    """
+    args = []
+    word = ""
+    in_quotes = False
+    for c in arg_str:
+        if c.isspace():
+            if in_quotes:
+                word += c
+            elif word:
+                args.append(word)
+                word = ""
+        elif c == "\"":
+            if in_quotes:
+                args.append(word)
+                word = ""
+                in_quotes = False
+            else:
+                in_quotes = True
+        elif c == "(" or c == ")":
+            continue
+        else:
+            word += c
+    if in_quotes:
+        cli_warning("parsing input: mismatching quotes")
+    if word:
+        args.append(word)
+    return args
+
+
 class ClientShell(cmd.Cmd):
     intro = "Welcome to mreg cli. Type help or ? for help."
     prompt = "mreg> "
+
+    def __init__(self):
+        super(ClientShell, self).__init__()
+        self.stop_on_error = False
 
     #####################################################################
     #   Functions which automatically handles any CommandBase() child   #
@@ -18,8 +55,7 @@ class ClientShell(cmd.Cmd):
 
     def command_do(self, args, command):
         assert isinstance(command, CommandBase)
-        # TODO ARGS: Split the arguments better. Do not split strings inside double quotes
-        args = args.split()
+        args = split_args(args)
         if len(args) < 1:
             print("missing argument(s).")
             return
@@ -34,8 +70,14 @@ class ClientShell(cmd.Cmd):
                 command.method(args[0])(args[1:])
             except CliException as e:
                 print(e)
+                if self.stop_on_error:
+                    self.stop_on_error = False
+                    self.cmdqueue = []
             except Exception:
                 traceback.print_exc()
+                if self.stop_on_error:
+                    self.stop_on_error = False
+                    self.cmdqueue = []
             finally:
                 history.end_event()
 
@@ -70,11 +112,14 @@ class ClientShell(cmd.Cmd):
     ###############################
 
     def do_file(self, args):
-        """Read commands from a file."""
+        """Read commands from a file. If --exit is supplied then it'll stop executing on error.
+    file <file-name> [--exit]
+        """
         args = args.split()
         if len(args) < 1:
             cli_warning("missing file name.")
-            return
+        if "--exit" in args:
+            self.stop_on_error = True
         file_path = Path(args[0])
         if not file_path.exists():
             cli_warning("\"{}\" doesn't exist.".format(file_path))
@@ -99,6 +144,8 @@ class ClientShell(cmd.Cmd):
         words = line.split()
         if len(words) < 2:
             ps = "."
+        elif len(words) == 2 and not text:
+            return ["--exit"]
         else:
             if re.match("^/[^/]*$", words[1]):
                 ps = "/"
@@ -153,7 +200,6 @@ class ClientShell(cmd.Cmd):
 
     def help_history(self):
         self.command_help(History())
-
 
 
 if __name__ == '__main__':
