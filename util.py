@@ -98,20 +98,21 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
         return host
 
 
-def choose_ip_from_subnet(subnet: dict) -> str:
+def available_ips_from_subnet(subnet: dict) -> str:
     """
     Returns an arbitrary ip from the given subnet.
     Assumes subnet exists.
     :param subnet: dict with subnet info.
     :return: Ip address string
     """
+# TODO return sorted list
     addresses = list(ipaddress.ip_network(subnet['range']).hosts())
     addresses = set([str(ip) for ip in addresses[subnet['reserved']:]])
     addresses_in_use = set(get_subnet_used_list(subnet['range']))
     possible_addresses = addresses - addresses_in_use
     if not possible_addresses:
         cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
-    return possible_addresses.pop()
+    return possible_addresses
 
 
 ################################################################################
@@ -232,7 +233,7 @@ def resolve_ip(ip: str) -> str:
         cli_error("resolve ip got multiple matches for ip \"{}\"".format(ip))
 
     if len(hosts) == 0:
-        cli_warning("{} doesnt belong to any host", exception=HostNotFoundWarning)
+        cli_warning("{} doesnt belong to any host".format(ip), exception=HostNotFoundWarning)
     return hosts[0]["name"]
 
 
@@ -315,7 +316,7 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
 #                                                                              #
 ################################################################################
 
-def get_subnet(ip: str) -> str:
+def get_subnet(ip: str) -> dict:
     "Returns subnet associated with given range or IP"
     if is_valid_subnet(ip):
         url = "http://{}:{}/subnets/{}".format(
@@ -330,6 +331,7 @@ def get_subnet(ip: str) -> str:
             conf["server_port"]
         )
         ip_object = ipaddress.ip_address(ip)
+        #resolve_ip(ip)
         subnet = None
         subnet_list = get(url).json()
         subnet_ranges = [ip_range['range'] for ip_range in subnet_list]
@@ -346,7 +348,7 @@ def get_subnet(ip: str) -> str:
                 subnet
             )
             return get(url).json()
-        cli_warning("ip address is not an address in any existing subnet")
+        cli_warning("ip address exists but is not an address in any existing subnet")
     else:
         cli_warning("Not a valid ip range or ip address")
 

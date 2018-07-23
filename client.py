@@ -192,6 +192,15 @@ class ClientShell(cmd.Cmd):
     def help_subnet(self):
         self.command_help(Subnet())
 
+    def do_zone(self, args):
+        self.command_do(args, Zone())
+
+    def complete_zone(self, text, line, begidx, endidx):
+        return self.command_complete(text, line, begidx, endidx, Zone())
+
+    def help_zone(self):
+        self.command_help(Zone())
+
     def do_history(self, args):
         self.command_do(args, History())
 

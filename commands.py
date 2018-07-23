@@ -457,7 +457,7 @@ class Host(CommandBase):
         elif is_valid_subnet(ip_or_subnet):
             # TODO SUBNET: choose random ip (?)
             cli_warning("subnets not implemented")
-            ip = choose_ip_from_subnet(ip_or_subnet)
+            ip = available_ips_from_subnet(ip_or_subnet).pop()
         else:
             cli_warning("invalid ipv4 nor subnet: \"{}\" (target host: {})".format(
                 ip_or_subnet,
@@ -549,7 +549,7 @@ class Host(CommandBase):
         else:
             # TODO SUBNET: choose random ip from subnet
             cli_warning("subnets not implemented")
-            ip = choose_ip_from_subnet(ip_or_subnet)
+            ip = available_ips_from_subnet(ip_or_subnet).pop()
 
         old_data = {"ipaddress": old_ip}
         new_data = {"ipaddress": ip}
@@ -1276,15 +1276,6 @@ class Host(CommandBase):
                 print_ptr(ptr["ipaddress"], hosts[0]["name"], padding)
         cli_info("showed PTR records matching {}".format(ip))
 
-    def opt_used_list(self, args: typing.List[str]) -> None:
-        """
-        used_list <ip>
-            List addresses used on the subnet which <ip> belongs to.
-        """
-        # TODO: implementer used_list
-        pass
-
-
 class Zone(CommandBase):
     """
     Handle zones.
@@ -1293,16 +1284,65 @@ class Zone(CommandBase):
 
     def opt_create(self, args: typing.List[str]):
         """
-        create <zone-name> (<primary-ns> <contact> <serialno> <refresh> <retry> <expire> <ttl>)
+        create <zone-name> (<primary-ns> <contact> <refresh> <retry> <expire> <ttl>)
             Create new zone.
         """
-        pass
+        name = input("Enter zone name>") if len(args) < 1 else args[0]
+        nameservers = []
+
+        if len(args) > 1:
+            nameservers = args[1:]
+
+        nameservers = input("Enter nameserver(s)>").split(' ')
+        if not nameservers:
+            cli_warning("No nameservers supplied")
+
+        url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+        zones = get(url)
+
+        for zone in zones:
+            for nameserver in nameservers:
+                if zone['name'] in nameserver:
+                    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], nameserver)
+                    host = requests.get(url)
+                    if host.status_code == 404:
+                        if 'y' not in args:
+                            cli_warning("{} has no A-record/glue, must force".format(nameserver))
+
+        url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+        post(url, name=name, nameservers=nameservers, contact=contact, refresh=refresh, retry=retry, expire=expire, ttl=ttl)
+        cli_info("created zone {}".format(name), True)
 
     def opt_delete(self, args: typing.List[str]):
+        name = input("Enter zone name>") if len(args) < 1 else args[0]
+        url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
+        zone = get(url)
+
         pass
 
     def opt_set_ns(self, args: typing.List[str]):
-        pass
+        name = input("Enter zone name>") if len(args) < 1 else args[0]
+        nameservers = []
+
+        if len(args) > 1:
+            for arg in args[1:]:
+                if re.match(r".*?\.{no|org|net|com|dk|se|au}?", arg):
+                    nameservers.append(arg)
+
+        url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+        zones = get(url)
+        for zone in zones:
+            for nameserver in nameservers:
+                if zone['name'] in nameserver:
+                    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], nameserver)
+                    host = requests.get(url)
+                    if host.status_code == 404:
+                        if 'y' not in args:
+                            cli_warning("{} has no A-record/glue, must force".format(nameserver))
+
+        url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
+        patch(url, nameservers=nameservers)
+        cli_info("created zone {}".format(name), True)
 
     def opt_set_soa(self, args: typing.List[str]):
         pass
@@ -1541,6 +1581,26 @@ class Subnet(CommandBase):
         for x in range(len(addresses)):
             print("{1:<{0}}{2}".format(25, addresses[x], hosts[x]))
 
+    def opt_list_unused_addresses(self, args: typing.List[str]):
+        """
+        list_used_addresses <subnet>
+            Lists all the used addresses for a subnet
+        """
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+
+        if is_valid_ip(ip_range):
+            subnet = get_subnet(ip_range)
+            addresses = get_subnet_used_list(subnet['range'])
+        elif is_valid_subnet(ip_range):
+            addresses = get_subnet_used_list(ip_range)
+        else:
+            cli_warning("Not a valid ip or subnet")
+
+        unused_addresses = available_ips_from_subnet(subnet)
+
+        for address in unused_addresses:
+            print("{1:<{0}}".format(25, address))
+
     def opt_import(self, args: typing.List[str]):
         """
         import <file>
@@ -1603,7 +1663,7 @@ class Subnet(CommandBase):
         # Check if subnets marked for creation have any overlap with existing subnets
         for subnet_new in subnets_post:
             subnet_object = ipaddress.ip_network(subnet_new)
-            for subnet_existing in subnets_patch:
+            for subnet_existing in subnets_ignore:
                 if subnet_object.overlaps(ipaddress.ip_network(subnet_existing)):
                     ERROR = True
                     log_file.write("ERROR: Overlap found between new subnet {} and existing subnet {}\n".format(subnet_new, subnet_existing))
