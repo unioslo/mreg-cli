@@ -3,10 +3,9 @@
 ################ Subnets setup ################
 
 ################ Family Guy setup ################
-host add familyguy 1.2.3.4 peter@griffin.no -hinfo 1 -comment "Family Guy is too awesome"
+host add familyguy 129.240.69.69 peter@griffin.no -hinfo 1 -comment "Family Guy is too awesome"
 
 # A records
-host a_add familyguy 11.22.33.44
 host a_add familyguy 129.240.6.10
 host a_add familyguy 129.240.6.16
 host a_add familyguy 129.240.171.69
