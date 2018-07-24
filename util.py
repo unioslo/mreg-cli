@@ -623,7 +623,7 @@ def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> No
     "Pretty print ip range and reserved addresses list"
     assert isinstance(ip_range, str)
     assert isinstance(reserved, int)
-    subnet = ipaddress.IPv4Network(ip_range)
+    subnet = ipaddress.ip_network(ip_range)
     hosts = list(subnet.hosts())
     print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address,
                                      subnet.broadcast_address))

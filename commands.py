@@ -294,15 +294,18 @@ class Host(CommandBase):
                 cli_warning("invalid hinfo ({}) when trying to add {}".format(hinfo, name))
 
         # Handle arbitrary ip from subnet if received a subnet
+        subnet = dict()
         if re.match(r"^.*\/$", ip_or_net):
             subnet = get_subnet(ip_or_net[:-1])
-            ip = available_ips_from_subnet(subnet)
+            ip = available_ips_from_subnet(subnet).pop()
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
             ip = available_ips_from_subnet(subnet).pop()
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
             if "y" not in args:
-                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip))
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
+            else:
+                ip = ip_or_net
         else:
             # check that the address given isn't reserved
             subnet = get_subnet(ip_or_net)
@@ -491,26 +494,44 @@ class Host(CommandBase):
         """
         if len(args) < 2:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
-            ip_or_subnet = input("Enter ip/subnet> ")
+            ip_or_net = input("Enter ip/subnet> ")
         else:
             name = args[0]
-            ip_or_subnet = args[1]
+            ip_or_net = args[1]
 
         # Get host info for <name> or its cname
         info = host_info_by_name(name)
 
-        # Verify ip or get ip from subnet
-        if is_valid_ipv4(ip_or_subnet):
-            ip = ip_or_subnet
-        elif is_valid_subnet(ip_or_subnet):
-            # TODO SUBNET: choose random ip (?)
-            cli_warning("subnets not implemented")
-            ip = available_ips_from_subnet(ip_or_subnet).pop()
+        # Handle arbitrary ip from subnet if received a subnet
+        if re.match(r"^.*\/$", ip_or_net):
+            subnet = get_subnet(ip_or_net[:-1])
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_subnet(ip_or_net):
+            subnet = get_subnet(ip_or_net)
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
+            if "y" not in args:
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
+            else:
+                ip = ip_or_net
         else:
-            cli_warning("invalid ipv4 nor subnet: \"{}\" (target host: {})".format(
-                ip_or_subnet,
-                info["name"])
-            )
+            # check that the address given isn't reserved
+            subnet = get_subnet(ip_or_net)
+            network_object = ipaddress.ip_network(subnet['range'])
+            addresses = list(network_object.hosts())
+            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            if ip_or_net in reserved_addresses and 'y' not in args:
+                cli_warning("Address is reserved. Requires force")
+            if ip_or_net == network_object.network_address.exploded:
+                cli_warning("Can't overwrite the network address of the subnet")
+            if ip_or_net == network_object.broadcast_address.exploded:
+                cli_warning("Can't overwrite the broadcast address of the subnet")
+            ip = ip_or_net
+
+        if is_valid_ipv6(ip):
+            cli_warning("got ipv6 address, want ipv4.")
+        if not is_valid_ipv4(ip):
+            cli_warning("not valid ipv4 address: {}".format(ip))
 
         data = {
             "hostid": info["hostid"],
@@ -568,18 +589,17 @@ class Host(CommandBase):
         if len(args) < 3:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
             old_ip = input("Enter old ip> ") if len(args) < 2 else args[1]
-            ip_or_subnet = input("Enter new ip/subnet> ")
+            ip_or_net = input("Enter new ip/subnet> ")
         else:
             name = args[0]
             old_ip = args[1]
-            ip_or_subnet = args[2]
+            ip_or_net = args[2]
 
         # Ip and subnet sanity checks
         if not is_valid_ipv4(old_ip):
             cli_warning("invalid ipv4 \"{}\" (target host {})".format(old_ip, name))
-        elif not is_valid_ipv4(ip_or_subnet) and not is_valid_subnet(ip_or_subnet):
-            cli_warning(
-                "invalid ipv4 nor subnet \"{}\" (target host {})".format(ip_or_subnet, name))
+        elif not is_valid_ipv4(ip_or_net) and not is_valid_subnet(ip_or_net):
+            cli_warning("invalid ipv4 nor subnet \"{}\" (target host {})".format(ip_or_net, name))
 
         # Check that ip belongs to host
         info = host_info_by_name(name)
@@ -592,12 +612,30 @@ class Host(CommandBase):
             cli_warning("{} is not owned by {}".format(old_ip, info["name"]))
 
         # Handle arbitrary ip from subnet if received a subnet
-        if is_valid_ipv4(ip_or_subnet):
-            ip = ip_or_subnet
+        if re.match(r"^.*\/$", ip_or_net):
+            subnet = get_subnet(ip_or_net[:-1])
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_subnet(ip_or_net):
+            subnet = get_subnet(ip_or_net)
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
+            if "y" not in args:
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
+            else:
+                ip = ip_or_net
         else:
-            # TODO SUBNET: choose random ip from subnet
-            cli_warning("subnets not implemented")
-            ip = available_ips_from_subnet(ip_or_subnet).pop()
+            # check that the address given isn't reserved
+            subnet = get_subnet(ip_or_net)
+            network_object = ipaddress.ip_network(subnet['range'])
+            addresses = list(network_object.hosts())
+            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            if ip_or_net in reserved_addresses and 'y' not in args:
+                cli_warning("Address is reserved. Requires force")
+            if ip_or_net == network_object.network_address.exploded:
+                cli_warning("Can't overwrite the network address of the subnet")
+            if ip_or_net == network_object.broadcast_address.exploded:
+                cli_warning("Can't overwrite the broadcast address of the subnet")
+            ip = ip_or_net
 
         old_data = {"ipaddress": old_ip}
         new_data = {"ipaddress": ip}
@@ -626,17 +664,44 @@ class Host(CommandBase):
         """
         if len(args) < 2:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
-            ip = input("Enter ipv6> ")
+            ip_or_net = input("Enter ipv6> ")
         else:
             name = args[0]
-            ip = args[1]
+            ip_or_net = args[1]
 
         # Verify host and get host id
         info = host_info_by_name(name)
 
-        # Verify ip or get ip from subnet
+        # Handle arbitrary ip from subnet if received a subnet
+        if re.match(r"^.*\/$", ip_or_net):
+            subnet = get_subnet(ip_or_net[:-1])
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_subnet(ip_or_net):
+            subnet = get_subnet(ip_or_net)
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
+            if "y" not in args:
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
+            else:
+                ip = ip_or_net
+        else:
+            # check that the address given isn't reserved
+            subnet = get_subnet(ip_or_net)
+            network_object = ipaddress.ip_network(subnet['range'])
+            addresses = list(network_object.hosts())
+            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            if ip_or_net in reserved_addresses and 'y' not in args:
+                cli_warning("Address is reserved. Requires force")
+            if ip_or_net == network_object.network_address.exploded:
+                cli_warning("Can't overwrite the network address of the subnet")
+            if ip_or_net == network_object.broadcast_address.exploded:
+                cli_warning("Can't overwrite the broadcast address of the subnet")
+            ip = ip_or_net
+
+        if is_valid_ipv4(ip):
+            cli_warning("got ipv4 address, want ipv6.")
         if not is_valid_ipv6(ip):
-            cli_warning("not a valid ipv6 \"{}\" (target host {})".format(ip, info["name"]))
+            cli_warning("not valid ipv6 address: {}".format(ip))
 
         data = {
             "hostid": info["hostid"],
@@ -1500,6 +1565,7 @@ class Dhcp(CommandBase):
         history.record_patch(url, new_data={"macaddress": ""}, old_data=ip)
         patch(url, macaddress="")
 
+
 class Zone(CommandBase):
     """
     Handle zones.
@@ -1626,10 +1692,10 @@ class Subnet(CommandBase):
         if not description:
             cli_warning("No description provided")
 
-        vlan=None
-        category=None
-        location=None
-        frozen=False
+        vlan = None
+        category = None
+        location = None
+        frozen = False
 
         if len(args) != 2:
             vlan = input("Enter VLAN (optional)>") if len(args) < 3 else args[2]

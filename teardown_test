@@ -1,7 +1,10 @@
-host remove familyguy 
-host remove stan 
-host remove roger 
-host remove steve 
-host remove francine 
-host remove haley 
-host remove claus 
+host remove familyguy y
+host remove stan y
+host remove roger y
+host remove steve y
+host remove francine y
+host remove haley y
+host remove claus y
+
+subnet remove 129.240.69.0/24 y
+subnet remove 1234::ff00/120 y
