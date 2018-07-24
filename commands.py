@@ -296,10 +296,10 @@ class Host(CommandBase):
         # Handle arbitrary ip from subnet if received a subnet
         if re.match(r"^.*\/$", ip_or_net):
             subnet = get_subnet(ip_or_net[:-1])
-            ip = choose_ip_from_subnet(subnet)
+            ip = available_ips_from_subnet(subnet)
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
-            ip = choose_ip_from_subnet(subnet)
+            ip = available_ips_from_subnet(subnet).pop()
         else:
             # check that the address given isn't reserved
             subnet = get_subnet(ip_or_net)
@@ -1512,34 +1512,31 @@ class Zone(CommandBase):
         create <zone-name> (<nameservers>)
             Create new zone.
         """
-        name = input("Enter zone name>") if len(args) < 1 else args[0]
-        nameservers = []
-
-        if len(args) > 1:
-            nameservers = args[1:]
-
-        nameservers = input("Enter nameserver(s)>").split(' ')
-        if not nameservers:
-            cli_warning("No nameservers supplied")
-
-        for nameserver in nameservers:
-          if zone_mreg_controlled('.'.join(nameserver.split('.').pop(0))):
-              if not host_in_mreg_zone(nameserver):
-                  if 'y' not in args:
-                      cli_warning("{} has no A-record/glue, must force".format(nameserver))
-
-
-        #FIX DAT GLU BUSINESS FIKSES AV NILS
-
-        url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
-        post(url, name=name, nameservers=nameservers)
-        cli_info("created zone {}".format(name), True)
+        # name = input("Enter zone name>") if len(args) < 1 else args[0]
+        # nameservers = []
+        #
+        # if len(args) > 1:
+        #     nameservers = args[1:]
+        #
+        # nameservers = input("Enter nameserver(s)>").split(' ')
+        # if not nameservers:
+        #     cli_warning("No nameservers supplied")
+        #
+        # for nameserver in nameservers:
+        #   if zone_mreg_controlled('.'.join(nameserver.split('.').pop(0))):
+        #       if not host_in_mreg_zone(nameserver):
+        #           if 'y' not in args:
+        #               cli_warning("{} has no A-record/glue, must force".format(nameserver))
+        #
+        # url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+        # post(url, name=name, nameservers=nameservers)
+        # cli_info("created zone {}".format(name), True)
+        pass
 
     def opt_delete(self, args: typing.List[str]):
-        name = input("Enter zone name>") if len(args) < 1 else args[0]
-        url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
-        zone = get(url)
-
+        # name = input("Enter zone name>") if len(args) < 1 else args[0]
+        # url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
+        # zone = get(url)
         pass
 
     def opt_set_ns(self, args: typing.List[str]):
@@ -1547,38 +1544,40 @@ class Zone(CommandBase):
               set_ns <zone-name> (<nameservers>)
                   Update nameservers for an existing zone.
         """
-        name = input("Enter zone name>") if len(args) < 1 else args[0]
-        nameservers = []
-
-        if len(args) > 1:
-            nameservers = args[1:]
-
-        nameservers = input("Enter nameserver(s)>").split(' ')
-        if not nameservers:
-            cli_warning("No nameservers supplied")
-
-        for nameserver in nameservers:
-            if zone_mreg_controlled('.'.join(nameserver.split('.').pop(0))):
-                if not host_in_mreg_zone(nameserver):
-                    if 'y' not in args:
-                        cli_warning("{} has no A-record/glue, must force".format(nameserver))
-
-        # FIX DAT GLU BUSINESS FIKSES AV NILS - "Jeg har en PhD i lim" 23.07.2018
-
-        url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
-        patch(url, nameservers=nameservers)
-        cli_info("created zone {}".format(name), True)
+        # name = input("Enter zone name>") if len(args) < 1 else args[0]
+        # nameservers = []
+        #
+        # if len(args) > 1:
+        #     nameservers = args[1:]
+        #
+        # nameservers = input("Enter nameserver(s)>").split(' ')
+        # if not nameservers:
+        #     cli_warning("No nameservers supplied")
+        #
+        # for nameserver in nameservers:
+        #     if zone_mreg_controlled('.'.join(nameserver.split('.').pop(0))):
+        #         if not host_in_mreg_zone(nameserver):
+        #             if 'y' not in args:
+        #                 cli_warning("{} has no A-record/glue, must force".format(nameserver))
+        #
+        # # FIX DAT GLU BUSINESS FIKSES AV NILS - "Jeg har en PhD i lim" 23.07.2018
+        #
+        # url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+        # patch(url, nameservers=nameservers)
+        # cli_info("created zone {}".format(name), True)
+        pass
 
     def opt_set_soa(self, args: typing.List[str]):
         """
               set_soa <zone-name> (<primary_ns> <email> <serialno> <refresh> <retry> <expire> <ttl>)
                   Updated the SOA of a zone.
         """
-        name = input("Enter zone name>") if len(args) < 1 else args[0]
-        primary_ns = input("Enter primary_ns>") if len(args) < 2 else args[1]
-        email = input("Enter email>") if len(args) < 3 else args[2]
-        serialno = input("Enter serialno>") if len(args) < 4 else args[3]
-        name = input("Enter refresh>") if len(args) < 5 else args[4]
+        # name = input("Enter zone name>") if len(args) < 1 else args[0]
+        # primary_ns = input("Enter primary_ns>") if len(args) < 2 else args[1]
+        # email = input("Enter email>") if len(args) < 3 else args[2]
+        # serialno = input("Enter serialno>") if len(args) < 4 else args[3]
+        # name = input("Enter refresh>") if len(args) < 5 else args[4]
+        pass
 
 
 class Subnet(CommandBase):
@@ -1624,28 +1623,33 @@ class Subnet(CommandBase):
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         if not is_valid_subnet(ip_range): cli_warning("Not a valid netmask")
-
         description = input("Enter description>") if len(args) < 2 else args[1]
+        if not description:
+            cli_warning("No description provided")
 
-        vlan = input("Enter VLAN (optional)>") if len(args) < 3 else args[2]
+        vlan=None
+        category=None
+        location=None
+        frozen=False
 
-        if vlan:
-            try:
-                vlan = int(vlan)
-            except ValueError:
-                cli_warning("Not a valid integer")
+        if len(args) != 2:
+            vlan = input("Enter VLAN (optional)>") if len(args) < 3 else args[2]
+            category = input("Enter category (optional)>") if len(args) < 4 else args[3]
+            location = input("Enter location (optional)>") if len(args) < 5 else args[4]
 
-        category = input("Enter category (optional)>") if len(args) < 4 else args[3]
-        if category and not is_valid_category_tag(category):
-            cli_warning("Not a valid category tag")
-        location = input("Enter location (optional)>") if len(args) < 5 else args[4]
-        if location and not is_valid_location_tag(location):
-            cli_warning("Not a valid location tag")
-
-        frozen = input("Is the subnet frozen? y/n>") if len(args) < 6 else args[5]
-        while frozen != 'y' and frozen != 'n':
-            frozen = input("Is the subnet frozen? y/n>")
-        frozen = True if frozen == 'y' else False
+            if vlan:
+                try:
+                    vlan = int(vlan)
+                except ValueError:
+                    cli_warning("VLAN: Not a valid integer")
+            if category and not is_valid_category_tag(category):
+                cli_warning("Not a valid category tag")
+            if location and not is_valid_location_tag(location):
+                cli_warning("Not a valid location tag")
+            frozen = input("Is the subnet frozen? y/n>") if len(args) < 6 else args[5]
+            while frozen != 'y' and frozen != 'n':
+                frozen = input("Is the subnet frozen? y/n>")
+            frozen = True if frozen == 'y' else False
 
         url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
         post(url, range=ip_range, description=description, vlan=vlan, category=category,
