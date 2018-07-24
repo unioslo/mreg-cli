@@ -300,6 +300,9 @@ class Host(CommandBase):
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
             ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
+            if "y" not in args:
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip))
         else:
             # check that the address given isn't reserved
             subnet = get_subnet(ip_or_net)
@@ -328,20 +331,14 @@ class Host(CommandBase):
         except HostNotFoundWarning:
             pass
         else:
-            if "y" not in args:
-                cli_warning("host {} already exists, must force".format(name))
-            else:
-                url = "http://{}:{}/hosts/{}".format(
-                    conf["server_ip"],
-                    conf["server_port"],
-                    name,
-                )
-                history.record_delete(url, dict(), undoable=False)
-                delete(url)
-                cli_info("deleted existing host {}".format(name))
+            cli_warning("host {} already exists".format(name))
 
         # Always use long form host name
-        name = name if is_longform(name) else to_longform(name)
+        if is_longform(name):
+            if not host_in_mreg_zone(name) and "y" not in args:
+                cli_warning("{} isn't in a zone controlled by MREG, must force".format(name))
+        else:
+            name = to_longform(name)
 
         # Create the new host with an ip address
         url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
@@ -355,6 +352,8 @@ class Host(CommandBase):
         history.record_post(url, resource_name=name, new_data=data)
         post(url, **data)
         cli_info("created host {}".format(name), print_msg=True)
+
+        # TODO PTR: add ptr record when creating new host
 
     def opt_set_contact(self, args: typing.List[str]) -> None:
         """
@@ -1013,7 +1012,7 @@ class Host(CommandBase):
             host_name = resolve_input_name(name)
         except HostNotFoundWarning:
             if "y" not in args:
-                cli_warning("{} doesn't exist. Must force")
+                cli_warning("{} doesn't exist. Must force".format(name))
             host_name = name
 
         sname = sname if is_longform(sname) else to_longform(sname, trailing_dot=True)

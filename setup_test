@@ -1,19 +1,20 @@
 ################ Zones setup ################
 
 ################ Subnets setup ################
+subnet create 129.240.69.0/24 "Seth MacFarlanes subnet!"
+subnet create 1234::ff00/120 "familynet"
 
 ################ Family Guy setup ################
 host add familyguy 129.240.69.69 peter@griffin.no -hinfo 1 -comment "Family Guy is too awesome"
 
 # A records
-host a_add familyguy 129.240.6.10
-host a_add familyguy 129.240.6.16
-host a_add familyguy 129.240.171.69
+host a_add familyguy 129.240.69.0/
+host a_add familyguy 129.240.69.0/24
 
 # AAAA records
-host aaaa_add familyguy 1001:2002:3003:4004:aa:bb:cc:dd
-host aaaa_add familyguy 1234::abcd
-host aaaa_add familyguy 2002:2a34::cd
+host aaaa_add familyguy 1234::ff0f
+host aaaa_add familyguy 1234::ff00/
+host aaaa_add familyguy 1234::ff00/120
 
 # CNAME records
 host cname_add familyguy chris
@@ -25,11 +26,6 @@ host cname_add familyguy brian
 
 # LOC record
 host loc_set familyguy.uio.no "59 56 23 N 10 43 50 E 80m"
-
-# PTR record
-host ptr_set 129.240.189.22 familyguy.uio.no
-host ptr_set 129.240.6.22 familyguy
-host ptr_set 7155::69 familyguy
 
 # TTL record
 host ttl_set familyguy.uio.no 33021
@@ -51,12 +47,12 @@ host txt_add brian "brian, the dog"
 
 
 ################ American Dad setup ################
-host add stan 129.240.1.69 american@dad.no -hinfo 2
-host add roger 129.240.2.69 american@dad.no -hinfo 3
-host add steve 129.240.3.69 american@dad.no
-host add francine 129.240.4.69 american@dad.no
-host add haley 129.240.5.69 american@dad.no
-host add claus 129.240.6.69 american@dad.no
+host add stan 129.240.69.99 american@dad.no -hinfo 2
+host add roger 129.240.69.0/ american@dad.no -hinfo 3
+host add steve 129.240.69.0/ american@dad.no
+host add francine 129.240.69.0/ american@dad.no
+host add haley 129.240.69.0/ american@dad.no
+host add claus 129.240.69.0/ american@dad.no
 
 # SRV record
 host srv_add _tull._udp.familyguy 2 50 4932 stan

@@ -42,7 +42,6 @@ def split_args(arg_str: str) -> typing.List[str]:
 
 
 class ClientShell(cmd.Cmd):
-    intro = "Welcome to mreg cli. Type help or ? for help."
     prompt = "mreg> "
 
     def __init__(self):
@@ -221,4 +220,11 @@ class ClientShell(cmd.Cmd):
 
 
 if __name__ == '__main__':
-    ClientShell().cmdloop()
+    intro = "Welcome to mreg cli. Type help or ? for help."
+    while True:
+        try:
+            ClientShell().cmdloop(intro)
+            break
+        except KeyboardInterrupt:
+            print("\nKeyboardInterrupt")
+            intro = ""
