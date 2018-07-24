@@ -329,7 +329,10 @@ def is_longform(name: typing.AnyStr) -> bool:
     """Check if name ends with uio.no"""
     if not isinstance(name, (str, bytes)):
         return False
-    return True if re.match("^.*\.uio\.no\.?$", name) else False
+    if re.match("^.*((\.uio)?\.no\.?|\.)$", name):
+        return True
+    else:
+        return False
 
 
 def to_longform(name: typing.AnyStr, trailing_dot: bool = False) -> str:
@@ -386,6 +389,7 @@ def get_subnet(ip: str) -> str:
             conf["server_port"],
             ip
         )
+        history.record_get(url)
         return get(url).json()
     elif is_valid_ip(ip):
         url = "http://{}:{}/subnets/".format(
@@ -394,6 +398,7 @@ def get_subnet(ip: str) -> str:
         )
         ip_object = ipaddress.ip_address(ip)
         subnet = None
+        history.record_get(url)
         subnet_list = get(url).json()
         subnet_ranges = [ip_range['range'] for ip_range in subnet_list]
         for ip_range in subnet_ranges:
@@ -408,6 +413,7 @@ def get_subnet(ip: str) -> str:
                 conf["server_port"],
                 subnet
             )
+            history.record_get(url)
             return get(url).json()
         cli_warning("ip address is not an address in any existing subnet")
     else:
@@ -422,6 +428,7 @@ def get_subnet_used_list(ip_range: str):
         ip_range,
         "?used_list"
     )
+    history.record_get(url)
     return get(url).json()
 
 
