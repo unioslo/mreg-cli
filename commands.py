@@ -1595,14 +1595,12 @@ class Zone(CommandBase):
         if not nameservers:
             cli_warning('At least one nameserver is required')
 
-        for nameserver in nameservers:
-            if host_in_mreg_zone(nameserver):
-                url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], nameserver)
-                try:
-                    host = get(url).json()
-                except CliError:
-                    if not force:
-                      cli_warning("{} has no A-record/glue, must force".format(nameserver))
+        for i in range(len(nameservers)):
+            info = host_info_by_name(nameservers[i])
+            if host_in_mreg_zone(info['name']):
+                if not info['ipaddress'] and not force:
+                    cli_warning("{} has no A-record/glue, must force".format(nameservers[i]))
+            nameservers[i] = info['name']
 
         url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
         post(url, name=name, nameservers=nameservers)
@@ -1610,8 +1608,8 @@ class Zone(CommandBase):
 
     def opt_delete(self, args: typing.List[str]):
         """
-              create <zone-name> (<nameservers>)
-                  Create new zone.
+            delete <zone-name>
+                Delete a zone
         """
         name = input("Enter zone name>") if len(args) < 1 else args[0]
 
@@ -1649,14 +1647,12 @@ class Zone(CommandBase):
         if not nameservers:
             cli_warning('At least one nameserver is required')
 
-        for nameserver in nameservers:
-            if host_in_mreg_zone(nameserver):
-                url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], nameserver)
-                try:
-                    host = get(url).json()
-                except CliError:
-                    if not force:
-                        cli_warning("{} has no A-record/glue, must force".format(nameserver))
+        for i in range(len(nameservers)):
+            info = host_info_by_name(nameservers[i])
+            if host_in_mreg_zone(info['name']):
+                if not info['ipaddress'] and not force:
+                    cli_warning("{} has no A-record/glue, must force".format(nameservers[i]))
+            nameservers[i] = info['name']
 
         url = "http://{}:{}/zones/{}/nameservers".format(conf["server_ip"], conf["server_port"], name)
         patch(url, nameservers=nameservers)
