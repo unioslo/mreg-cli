@@ -44,3 +44,14 @@ from the code of command implementations. History is not saved to file.
 Contains `cli_config(config_file, required_fields)`  which reads a simple key=value config
 file and returns a dict. Raises an exception if any of the required_fields are missing.
 
+##### log.py
+Contains functions for handling logging. The log entries are on the format: 
+```
+2018-01-01 15:01:02 username [ERROR] host add: message
+```
+
+The log functions are:
+
+`cli_info(msg, print_msg=False)` - log a [OK] message. Doesn't print to stdout by default.
+`cli_warning(msg, print_msg=True)` - log a [WARNING] message. Print to stdout by default.
+`cli_error(msg, print_msg=True)` - log a [ERROR] message. Print to stdout by default.
