@@ -53,5 +53,7 @@ Contains functions for handling logging. The log entries are on the format:
 The log functions are:
 
 `cli_info(msg, print_msg=False)` - log a [OK] message. Doesn't print to stdout by default.
-`cli_warning(msg, print_msg=True)` - log a [WARNING] message. Print to stdout by default.
-`cli_error(msg, print_msg=True)` - log a [ERROR] message. Print to stdout by default.
+`cli_warning(msg, print_msg=True)` - log a [WARNING] message and raise an exception, the default
+exception is CliWarning. Print to stdout by default.
+`cli_error(msg, print_msg=True)` - log a [ERROR] message and raise an exception, the default
+exception is CliError. Print to stdout by default.
