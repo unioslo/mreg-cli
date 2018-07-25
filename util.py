@@ -15,7 +15,9 @@ from history import history
 from log import *
 
 try:
-    conf = cli_config(required_fields=("server_ip", "server_port", "tag_file", "129_240_file", "158_36_file", "172_16_file", "193_157_file"))
+    conf = cli_config(required_fields=(
+        "server_ip", "server_port", "tag_file", "129_240_file", "158_36_file", "172_16_file",
+        "193_157_file"))
 except Exception as e:
     print("util.py: cli_config:", e)
     traceback.print_exc()
@@ -34,7 +36,8 @@ with open(conf['tag_file'], 'r') as file:
         else:
             match = re.match(r"(?P<category>[a-zA-Z0-9]+)\s+.*", line)
             if not match:
-                print('ERROR in %s, wrong format on line: %d - %s\n', conf['tag_file'], line_number, line)
+                print('ERROR in %s, wrong format on line: %d - %s\n', conf['tag_file'], line_number,
+                      line)
                 sys.exit(-1)
             category_tags.append(match.group('category'))
             line_number += 1
@@ -98,20 +101,81 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
         return host
 
 
-def choose_ip_from_subnet(subnet: dict) -> str:
+def available_ips_from_subnet(subnet: dict) -> str:
     """
     Returns an arbitrary ip from the given subnet.
     Assumes subnet exists.
     :param subnet: dict with subnet info.
     :return: Ip address string
     """
+# TODO return sorted list
     addresses = list(ipaddress.ip_network(subnet['range']).hosts())
     addresses = set([str(ip) for ip in addresses[subnet['reserved']:]])
     addresses_in_use = set(get_subnet_used_list(subnet['range']))
     possible_addresses = addresses - addresses_in_use
     if not possible_addresses:
         cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
-    return possible_addresses.pop()
+    return possible_addresses
+
+
+def zone_mreg_controlled(zone: str) -> bool:
+    """Return true of the zone is controlled by MREG"""
+    assert isinstance(zone, str)
+    url = "http://{}:{}/zones/?name={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        zone,
+    )
+    history.record_get(url)
+    zone = get(url).json()
+    if not len(zone):
+        return False
+    return True
+
+
+def host_in_mreg_zone(host: str) -> bool:
+    """Return true if host is in a MREG controlled zone"""
+    assert isinstance(host, str)
+    splitted = host.split(".")
+    if not len(splitted):
+        return False
+
+    url = "http://{}:{}/zones/".format(
+        conf["server_ip"],
+        conf["server_port"],
+    )
+    history.record_get(url)
+    zones = get(url).json()
+
+    s = ""
+    splitted.reverse()
+    for sub in splitted:
+        s = "{}.{}".format(sub, s) if len(s) else sub
+        for zone in zones:
+            if zone["name"] == s:
+                return True
+
+    return False
+
+
+def ip_in_mreg_net(ip: str) -> bool:
+    """Return true if the ip is in a MREG controlled subnet"""
+    assert isinstance(ip, str)
+    ipaddr = ipaddress.ip_address(ip)
+
+    url = "http://{}:{}/subnets/".format(
+        conf["server_ip"],
+        conf["server_port"],
+    )
+    history.record_get(url)
+    nets = get(url).json()
+
+    for net in nets:
+        n = ipaddress.ip_network(net["range"])
+        if ipaddr in n:
+            return True
+
+    return False
 
 
 ################################################################################
@@ -232,7 +296,7 @@ def resolve_ip(ip: str) -> str:
         cli_error("resolve ip got multiple matches for ip \"{}\"".format(ip))
 
     if len(hosts) == 0:
-        cli_warning("{} doesnt belong to any host", exception=HostNotFoundWarning)
+        cli_warning("{} doesnt belong to any host".format(ip), exception=HostNotFoundWarning)
     return hosts[0]["name"]
 
 
@@ -266,7 +330,10 @@ def is_longform(name: typing.AnyStr) -> bool:
     """Check if name ends with uio.no"""
     if not isinstance(name, (str, bytes)):
         return False
-    return True if re.match("^.*\.uio\.no\.?$", name) else False
+    if re.match("^.*((\.uio)?\.no\.?|\.)$", name):
+        return True
+    else:
+        return False
 
 
 def to_longform(name: typing.AnyStr, trailing_dot: bool = False) -> str:
@@ -315,7 +382,7 @@ def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
 #                                                                              #
 ################################################################################
 
-def get_subnet(ip: str) -> str:
+def get_subnet(ip: str) -> dict:
     "Returns subnet associated with given range or IP"
     if is_valid_subnet(ip):
         url = "http://{}:{}/subnets/{}".format(
@@ -323,6 +390,7 @@ def get_subnet(ip: str) -> str:
             conf["server_port"],
             ip
         )
+        history.record_get(url)
         return get(url).json()
     elif is_valid_ip(ip):
         url = "http://{}:{}/subnets/".format(
@@ -330,7 +398,9 @@ def get_subnet(ip: str) -> str:
             conf["server_port"]
         )
         ip_object = ipaddress.ip_address(ip)
+        #resolve_ip(ip)
         subnet = None
+        history.record_get(url)
         subnet_list = get(url).json()
         subnet_ranges = [ip_range['range'] for ip_range in subnet_list]
         for ip_range in subnet_ranges:
@@ -345,8 +415,9 @@ def get_subnet(ip: str) -> str:
                 conf["server_port"],
                 subnet
             )
+            history.record_get(url)
             return get(url).json()
-        cli_warning("ip address is not an address in any existing subnet")
+        cli_warning("ip address exists but is not an address in any existing subnet")
     else:
         cli_warning("Not a valid ip range or ip address")
 
@@ -359,6 +430,7 @@ def get_subnet_used_list(ip_range: str):
         ip_range,
         "?used_list"
     )
+    history.record_get(url)
     return get(url).json()
 
 
@@ -371,6 +443,7 @@ def get_vlan_mapping():
     get_vlans_from_file(conf['193_157_file'], vlans)
     return vlans
 
+
 def get_vlans_from_file(file: str, vlans: dict):
     "Read VLAN mapping from a file"
     with open(file, 'r') as file:
@@ -378,7 +451,9 @@ def get_vlans_from_file(file: str, vlans: dict):
             if re.match(r"#.*", line):
                 pass
             else:
-                match = re.match(r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+.*?[vlan|VLAN|Vlan]\s*?(?P<vlan>\d+).*", line)
+                match = re.match(
+                    r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+.*?[vlan|VLAN|Vlan]\s*?(?P<vlan>\d+).*",
+                    line)
                 if match:
                     vlans[match.group('vlan')] = match.group('range')
 
@@ -514,6 +589,22 @@ def print_txt(txt: str, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "TXT:", txt))
 
 
+def print_naptr(naptr: dict, host_name: str, padding: int = 14) -> None:
+    """Pretty print given txt"""
+    assert isinstance(naptr, dict)
+    assert isinstance(host_name, str)
+    print("{1:<{0}} NAPTR {2} {3} \"{4}\" \"{5}\" \"{6}\" {7}".format(
+        padding,
+        host_name,
+        naptr["preference"],
+        naptr["orderv"],
+        naptr["flag"],
+        naptr["service"],
+        naptr["regex"] or "",
+        naptr["replacement"],
+    ))
+
+
 def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
     """Pretty print given txt"""
     assert isinstance(ip, str)
@@ -524,20 +615,24 @@ def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
 def print_subnet_unused(count: int, padding: int = 25) -> None:
     "Pretty print amount of unused addresses"
     assert isinstance(count, int)
-    print("{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
+    print(
+        "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
+
 
 def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
     "Pretty print ip range and reserved addresses list"
     assert isinstance(ip_range, str)
     assert isinstance(reserved, int)
-    subnet = ipaddress.IPv4Network(ip_range)
+    subnet = ipaddress.ip_network(ip_range)
     hosts = list(subnet.hosts())
-    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address, subnet.broadcast_address))
+    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address,
+                                     subnet.broadcast_address))
     print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
     for x in range(reserved):
         print("{1:<{0}}{2}".format(padding, "", hosts[x]))
-    print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)" ))
+    print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)"))
+
 
 def print_subnet(info: int, text: str, padding: int = 25) -> None:
     print("{1:<{0}}{2}".format(padding, text, info))
@@ -621,3 +716,8 @@ def is_valid_location_tag(loc: str) -> bool:
 def is_valid_category_tag(cat: str) -> bool:
     """Check if valid location tag"""
     return cat in category_tags
+
+
+def is_valid_mac_addr(addr: str) -> bool:
+    """Check if address is a valid MAC address"""
+    return re.match("^[a-fA-F0-9]{2}([a-fA-F0-9]{10}|(:[a-fA-F0-9]{2}){5})$", addr)

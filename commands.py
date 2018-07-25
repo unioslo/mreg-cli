@@ -177,7 +177,7 @@ class Host(CommandBase):
         info = host_info_by_name_or_ip(name_or_ip)
 
         warn_msg = ""
-        # Require force if host has any aliases
+        # Require force if host has any aliases. Delete the aliases if force.
         aliases = aliases_of_host(info["name"])
         if len(aliases):
             if "y" not in args:
@@ -197,7 +197,81 @@ class Host(CommandBase):
         if len(info["ipaddress"]) > 1 and "y" not in args:
             warn_msg += "{} ipaddresses. ".format(len(info["ipaddress"]))
 
-        # TODO FORCE: kreve force hvis host har:  SRV eller NAPTR pekende på seg
+        # Require force if host has any NAPTR records. Delete the NAPTR records if force
+        url = "http://{}:{}/naptrs/?hostid={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            info["hostid"],
+        )
+        history.record_get(url)
+        naptrs = get(url).json()
+        if len(naptrs) > 0:
+            if "y" not in args:
+                warn_msg += "{} NAPTR records. ".format(len(naptrs))
+            else:
+                for ptr in naptrs:
+                    url = "http://{}:{}/naptrs/{}".format(
+                        conf["server_ip"],
+                        conf["server_port"],
+                        ptr["naptrid"],
+                    )
+                    history.record_delete(url, ptr)
+                    delete(url)
+                    cli_info("deleted NAPTR record {} when removing {}".format(
+                        ptr["replacement"],
+                        info["name"],
+                    ))
+
+        # Require force if host has any SRV records. Delete the SRV records if force
+        url = "http://{}:{}/srvs/?target={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            info["name"],
+        )
+        history.record_get(url)
+        srvs = get(url).json()
+        if len(srvs) > 0:
+            if "y" not in args:
+                warn_msg += "{} SRV records. ".format(len(srvs))
+            else:
+                # QUESTION SRV: remove SRV when removing target host?
+                for srv in srvs:
+                    url = "http://{}:{}/srvs/{}".format(
+                        conf["server_ip"],
+                        conf["server_port"],
+                        srv["srvid"],
+                    )
+                    history.record_delete(url, srv)
+                    delete(url)
+                    cli_info("deleted SRV record {} when removing {}".format(
+                        srv["service"],
+                        info["name"],
+                    ))
+
+        # Require force if host has any PTR records. Delete the PTR records if force
+        url = "http://{}:{}/ptroverrides/?hostid={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            info["hostid"],
+        )
+        ptrs = get(url).json()
+        if len(ptrs) > 0:
+            if "y" not in args:
+                warn_msg += "{} PTR records. ".format(len(ptrs))
+            else:
+                # QUESTION PTR: remove PTR when removing owner host?
+                for ptr in ptrs:
+                    url = "http://{}:{}/ptroverrides/{}".format(
+                        conf["server_ip"],
+                        conf["server_port"],
+                        ptr["id"],
+                    )
+                    history.record_delete(url, ptr, redoable=False, undoable=False)
+                    delete(url)
+                    cli_info("deleted PTR record {} when removing {}".format(
+                        ptr["ipaddress"],
+                        info["name"],
+                    ))
 
         # To be able to undo the delete the ipaddress field of the 'old_data' has to be an ipaddress
         # string
@@ -219,6 +293,9 @@ class Host(CommandBase):
             Add a new host with the given name, ip or subnet and contact. hinfo and comment
             are optional.
         """
+        # NOTE: PTR record not created
+        # NOTE: an A-record forward-zone not controlled by MREG aren't handled
+
         hi_list = hinfo_list()
         if len(args) < 3:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
@@ -242,14 +319,19 @@ class Host(CommandBase):
             if not 0 < hinfo <= len(hi_list):
                 cli_warning("invalid hinfo ({}) when trying to add {}".format(hinfo, name))
 
-
         # Handle arbitrary ip from subnet if received a subnet
+        subnet = dict()
         if re.match(r"^.*\/$", ip_or_net):
             subnet = get_subnet(ip_or_net[:-1])
-            ip = choose_ip_from_subnet(subnet)
+            ip = available_ips_from_subnet(subnet).pop()
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
-            ip = choose_ip_from_subnet(subnet)
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
+            if "y" not in args:
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
+            else:
+                ip = ip_or_net
         else:
             # check that the address given isn't reserved
             subnet = get_subnet(ip_or_net)
@@ -263,7 +345,6 @@ class Host(CommandBase):
             if ip_or_net == network_object.broadcast_address.exploded:
                 cli_warning("Can't overwrite the broadcast address of the subnet")
             ip = ip_or_net
-
 
         # Handle if subnet is frozen
         if 'y' not in args and subnet['frozen']:
@@ -279,20 +360,14 @@ class Host(CommandBase):
         except HostNotFoundWarning:
             pass
         else:
-            if "y" not in args:
-                cli_warning("host {} already exists, must force".format(name))
-            else:
-                url = "http://{}:{}/hosts/{}".format(
-                    conf["server_ip"],
-                    conf["server_port"],
-                    name,
-                )
-                history.record_delete(url, dict(), undoable=False)
-                delete(url)
-                cli_info("deleted existing host {}".format(name))
+            cli_warning("host {} already exists".format(name))
 
         # Always use long form host name
-        name = name if is_longform(name) else to_longform(name)
+        if is_longform(name):
+            if not host_in_mreg_zone(name) and "y" not in args:
+                cli_warning("{} isn't in a zone controlled by MREG, must force".format(name))
+        else:
+            name = to_longform(name)
 
         # Create the new host with an ip address
         url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
@@ -371,40 +446,21 @@ class Host(CommandBase):
 
         old_name = resolve_input_name(old_name)
 
-        # Require force if the new name is already in use
+        # Check if given host exists on either short or long form
         try:
-            info = host_info_by_name(new_name, follow_cnames=False)
+            new_name = resolve_input_name(new_name)
         except HostNotFoundWarning:
             pass
         else:
             if "y" not in args:
-                # QUESTION: should inform if the existing host has any records (like remove)?
-                cli_warning("host {} already exists, must force".format(info["name"]))
-            for alias in aliases_of_host(info["name"]):
-                url = "http://{}:{}/hosts/{}".format(
-                    conf["server_ip"],
-                    conf["server_port"],
-                    alias,
-                )
-                history.record_delete(url, dict(), undoable=False)
-                delete(url)
-                cli_info("deleted alias host {} when removing {} before renaming {}".format(
-                    alias,
-                    info["name"],
-                    old_name,
-                ))
-            # TODO FORCE: check and remove SRV, NAPTR pointing at existing host
-            url = "http://{}:{}/hosts/{}".format(
-                conf["server_ip"],
-                conf["server_port"],
-                info["name"],
-            )
-            history.record_delete(url, dict(), undoable=False)
-            delete(url)
-            cli_info("deleted existing host {}".format(new_name))
+                cli_warning("host {} already exists".format(new_name))
 
         # Always use long form host name
-        new_name = new_name if is_longform(new_name) else to_longform(new_name)
+        if is_longform(new_name):
+            if not host_in_mreg_zone(new_name) and "y" not in args:
+                cli_warning("{} isn't in a zone controlled by MREG, must force".format(new_name))
+        else:
+            new_name = to_longform(new_name)
         old_data = {"name": old_name}
         new_data = {"name": new_name}
 
@@ -413,8 +469,8 @@ class Host(CommandBase):
         # Cannot redo/undo now since it changes name
         history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
         patch(url, name=new_name)
-        cli_info("renamed {} to {}".format(old_name, new_name), print_msg=True)
 
+        # Update all cname records pointing to <old-name>
         url = "http://{}:{}/cnames/?cname={}".format(
             conf["server_ip"],
             conf["server_port"],
@@ -432,9 +488,38 @@ class Host(CommandBase):
             new_data = {"cname": new_name}
             history.record_patch(url, new_data, old_data)
             patch(url, cname=new_name)
+        if len(cnames):
+            cli_info("updated {} CNAME record(s) when renaming {} to {}".format(
+                len(cnames),
+                old_name,
+                new_name,
+            ))
 
-        # TODO SRV: Update all SRV pointing at host when renaming it
-        # TODO NAPTR: Update all NAPTR pointing at host when renaming it
+        # Update all srv records pointing to <old-name>
+        url = "http://{}:{}/srvs/?target={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            old_name,
+        )
+        history.record_get(url)
+        srvs = get(url).json()
+        for srv in srvs:
+            url = "http://{}:{}/srvs/{}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                srv["srvid"],
+            )
+            old_data = {"target": old_name}
+            new_data = {"target": new_name}
+            history.record_patch(url, new_data, old_data)
+            patch(url, target=new_name)
+        if len(srvs):
+            cli_info("updated {} SRV record(s) when renaming {} to {}".format(
+                len(srvs),
+                old_name,
+                new_name,
+            ))
+        cli_info("renamed {} to {}".format(old_name, new_name), print_msg=True)
 
     def opt_a_add(self, args: typing.List[str]) -> None:
         """
@@ -443,26 +528,53 @@ class Host(CommandBase):
         """
         if len(args) < 2:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
-            ip_or_subnet = input("Enter ip/subnet> ")
+            ip_or_net = input("Enter ip/subnet> ")
         else:
             name = args[0]
-            ip_or_subnet = args[1]
+            ip_or_net = args[1]
 
         # Get host info for <name> or its cname
         info = host_info_by_name(name)
 
-        # Verify ip or get ip from subnet
-        if is_valid_ipv4(ip_or_subnet):
-            ip = ip_or_subnet
-        elif is_valid_subnet(ip_or_subnet):
-            # TODO SUBNET: choose random ip (?)
-            cli_warning("subnets not implemented")
-            ip = choose_ip_from_subnet(ip_or_subnet)
+        if len(info["ipaddress"]) and "y" not in args:
+            cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
+
+        # Handle arbitrary ip from subnet if received a subnet
+        if re.match(r"^.*\/$", ip_or_net):
+            subnet = get_subnet(ip_or_net[:-1])
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_subnet(ip_or_net):
+            subnet = get_subnet(ip_or_net)
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
+            if "y" not in args:
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
+            else:
+                ip = ip_or_net
         else:
-            cli_warning("invalid ipv4 nor subnet: \"{}\" (target host: {})".format(
-                ip_or_subnet,
-                info["name"])
-            )
+            # check that the address given isn't reserved
+            subnet = get_subnet(ip_or_net)
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
+            network_object = ipaddress.ip_network(subnet['range'])
+            addresses = list(network_object.hosts())
+            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            if ip_or_net in reserved_addresses and 'y' not in args:
+                cli_warning("Address is reserved. Requires force")
+            if ip_or_net == network_object.network_address.exploded:
+                cli_warning("Can't overwrite the network address of the subnet")
+            if ip_or_net == network_object.broadcast_address.exploded:
+                cli_warning("Can't overwrite the broadcast address of the subnet")
+            ip = ip_or_net
+
+        if is_valid_ipv6(ip):
+            cli_warning("got ipv6 address, want ipv4.")
+        if not is_valid_ipv4(ip):
+            cli_warning("not valid ipv4 address: {}".format(ip))
 
         data = {
             "hostid": info["hostid"],
@@ -520,18 +632,17 @@ class Host(CommandBase):
         if len(args) < 3:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
             old_ip = input("Enter old ip> ") if len(args) < 2 else args[1]
-            ip_or_subnet = input("Enter new ip/subnet> ")
+            ip_or_net = input("Enter new ip/subnet> ")
         else:
             name = args[0]
             old_ip = args[1]
-            ip_or_subnet = args[2]
+            ip_or_net = args[2]
 
         # Ip and subnet sanity checks
         if not is_valid_ipv4(old_ip):
             cli_warning("invalid ipv4 \"{}\" (target host {})".format(old_ip, name))
-        elif not is_valid_ipv4(ip_or_subnet) and not is_valid_subnet(ip_or_subnet):
-            cli_warning(
-                "invalid ipv4 nor subnet \"{}\" (target host {})".format(ip_or_subnet, name))
+        elif not is_valid_ipv4(ip_or_net) and not is_valid_subnet(ip_or_net):
+            cli_warning("invalid ipv4 nor subnet \"{}\" (target host {})".format(ip_or_net, name))
 
         # Check that ip belongs to host
         info = host_info_by_name(name)
@@ -544,12 +655,30 @@ class Host(CommandBase):
             cli_warning("{} is not owned by {}".format(old_ip, info["name"]))
 
         # Handle arbitrary ip from subnet if received a subnet
-        if is_valid_ipv4(ip_or_subnet):
-            ip = ip_or_subnet
+        if re.match(r"^.*\/$", ip_or_net):
+            subnet = get_subnet(ip_or_net[:-1])
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_subnet(ip_or_net):
+            subnet = get_subnet(ip_or_net)
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
+            if "y" not in args:
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
+            else:
+                ip = ip_or_net
         else:
-            # TODO SUBNET: choose random ip from subnet
-            cli_warning("subnets not implemented")
-            ip = choose_ip_from_subnet(ip_or_subnet)
+            # check that the address given isn't reserved
+            subnet = get_subnet(ip_or_net)
+            network_object = ipaddress.ip_network(subnet['range'])
+            addresses = list(network_object.hosts())
+            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            if ip_or_net in reserved_addresses and 'y' not in args:
+                cli_warning("Address is reserved. Requires force")
+            if ip_or_net == network_object.network_address.exploded:
+                cli_warning("Can't overwrite the network address of the subnet")
+            if ip_or_net == network_object.broadcast_address.exploded:
+                cli_warning("Can't overwrite the broadcast address of the subnet")
+            ip = ip_or_net
 
         old_data = {"ipaddress": old_ip}
         new_data = {"ipaddress": ip}
@@ -578,17 +707,53 @@ class Host(CommandBase):
         """
         if len(args) < 2:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
-            ip = input("Enter ipv6> ")
+            ip_or_net = input("Enter ipv6> ")
         else:
             name = args[0]
-            ip = args[1]
+            ip_or_net = args[1]
 
         # Verify host and get host id
         info = host_info_by_name(name)
 
-        # Verify ip or get ip from subnet
+        if len(info["ipaddress"]) and "y" not in args:
+            cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
+
+        # Handle arbitrary ip from subnet if received a subnet
+        if re.match(r"^.*\/$", ip_or_net):
+            subnet = get_subnet(ip_or_net[:-1])
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_subnet(ip_or_net):
+            subnet = get_subnet(ip_or_net)
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
+            ip = available_ips_from_subnet(subnet).pop()
+        elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
+            if "y" not in args:
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
+            else:
+                ip = ip_or_net
+        else:
+            # check that the address given isn't reserved
+            subnet = get_subnet(ip_or_net)
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
+            network_object = ipaddress.ip_network(subnet['range'])
+            addresses = list(network_object.hosts())
+            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            if ip_or_net in reserved_addresses and 'y' not in args:
+                cli_warning("Address is reserved. Requires force")
+            if ip_or_net == network_object.network_address.exploded:
+                cli_warning("Can't overwrite the network address of the subnet")
+            if ip_or_net == network_object.broadcast_address.exploded:
+                cli_warning("Can't overwrite the broadcast address of the subnet")
+            ip = ip_or_net
+
+        if is_valid_ipv4(ip):
+            cli_warning("got ipv4 address, want ipv6.")
         if not is_valid_ipv6(ip):
-            cli_warning("not a valid ipv6 \"{}\" (target host {})".format(ip, info["name"]))
+            cli_warning("not valid ipv6 address: {}".format(ip))
 
         data = {
             "hostid": info["hostid"],
@@ -703,7 +868,7 @@ class Host(CommandBase):
             name = args[0]
             ttl = args[1]
 
-        info = host_info_by_name(name)
+        info = host_info_by_name(name, follow_cnames=False)
 
         # TTL sanity check
         if not is_valid_ttl(ttl):
@@ -847,6 +1012,9 @@ class Host(CommandBase):
             name = args[0]
             loc = " ".join(args[1:])
 
+        if "y" not in args:
+            cli_warning("require force to set location")
+
         info = host_info_by_name(name)
 
         # LOC sanity check
@@ -868,6 +1036,10 @@ class Host(CommandBase):
             Remove location from host. If <name> is an alias the cname host is updated.
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
+
+        if "y" not in args:
+            cli_warning("require force to remove location")
+
         info = host_info_by_name(name)
         old_data = {"loc": info["loc"]}
         new_data = {"loc": ""}
@@ -964,8 +1136,11 @@ class Host(CommandBase):
             host_name = resolve_input_name(name)
         except HostNotFoundWarning:
             if "y" not in args:
-                cli_warning("{} doesn't exist. Must force")
+                cli_warning("{} doesn't exist. Must force".format(name))
             host_name = name
+
+        if not host_in_mreg_zone(host_name) and "y" not in args:
+            cli_warning("{} isn't in a MREG controlled zone, must force".format(host_name))
 
         sname = sname if is_longform(sname) else to_longform(sname, trailing_dot=True)
         url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"], conf["server_port"], sname)
@@ -1148,14 +1323,35 @@ class Host(CommandBase):
 
         if not is_valid_ip(ip):
             cli_warning("invalid ip: {}".format(ip))
+        if not ip_in_mreg_net(ip):
+            cli_warning("{} isn't in a subnet controlled by MREG".format(ip))
 
         info = host_info_by_name(name)
 
+        # check that host haven't got a PTR record already
+        if len(info["ptr_override"]):
+            cli_warning("{} already got a PTR record".format(info["name"]))
+
+        # check that a PTR record with the given ip doesn't exist
+        url = "http://{}:{}/ptroverrides/?ipaddress={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            ip,
+        )
+        history.record_get(url)
+        ptrs = get(url).json()
+        if len(ptrs):
+            cli_warning("{} already exist in a PTR record".format(ip))
+
+        # check if host is in mreg controlled zone, must force if not
+        if not host_in_mreg_zone(info["name"]) and "y" not in args:
+            cli_warning("{} isn't in a zone controlled by MREG, must force".format(info["name"]))
+
+        # create PTR record
         data = {
             "hostid": info["hostid"],
             "ipaddress": ip,
         }
-
         url = "http://{}:{}/ptroverrides/".format(
             conf["server_ip"],
             conf["server_port"],
@@ -1214,26 +1410,26 @@ class Host(CommandBase):
         old_info = host_info_by_name(old_name)
         new_info = host_info_by_name(new_name)
 
-        url = "http://{}:{}/ptroverrides/?hostid={}&ipaddress={}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            old_info["hostid"],
-            ip,
-        )
-        history.record_get(url)
-        ptrs = get(url).json()
-        if len(ptrs) == 0:
-            cli_warning("no PTR record for {} with ip {}".format(info["name"], ip))
+        # check that new host haven't got a ptr record already
+        if len(new_info["ptr_override"]):
+            cli_warning("{} already got a PTR record".format(new_info["name"]))
 
+        # check that old host has a PTR record with the given ip
+        if not len(old_info["ptr_override"]):
+            cli_warning("no PTR record for {} with ip {}".format(old_info["name"], ip))
+        if old_info["ptr_override"][0]["ipaddress"] != ip:
+            cli_warning("{} PTR record doesn't match {}".format(old_info["name"], ip))
+
+        # change PTR record
         data = {
             "hostid": new_info["hostid"],
         }
         url = "http://{}:{}/ptroverrides/{}".format(
             conf["server_ip"],
             conf["server_port"],
-            ptrs[0]["id"],
+            old_info["ptr_override"][0]["id"],
         )
-        history.record_patch(url, data, ptrs[0])
+        history.record_patch(url, data, old_info["ptr_override"][0])
         patch(url, **data)
         cli_info("changed owner of PTR record {} from {} to {}".format(
             ip,
@@ -1244,7 +1440,7 @@ class Host(CommandBase):
     def opt_ptr_show(self, args: typing.List[str]) -> None:
         """
         ptr_show <ipv4|ipv6>
-            Show PTR record.
+            Show PTR record matching given ip (empty input shows all PTR records).
         """
         ip = input("Enter ip address> ") if len(args) < 1 else args[0]
 
@@ -1276,13 +1472,185 @@ class Host(CommandBase):
                 print_ptr(ptr["ipaddress"], hosts[0]["name"], padding)
         cli_info("showed PTR records matching {}".format(ip))
 
-    def opt_used_list(self, args: typing.List[str]) -> None:
+    def opt_naptr_add(self, args: typing.List[str]) -> None:
         """
-        used_list <ip>
-            List addresses used on the subnet which <ip> belongs to.
+        naptr_add <name> <preference> <order> <flagg> <service> <regexp> <replacement>
+            Add a NAPTR record to host.
         """
-        # TODO: implementer used_list
-        pass
+        name = input("Enter host name> ") if len(args) < 1 else args[0]
+        pref = input("Enter preference> ") if len(args) < 2 else args[1]
+        order = input("Enter order> ") if len(args) < 3 else args[2]
+        flag = input("Enter flag> ") if len(args) < 4 else args[3]
+        service = input("Enter service> ") if len(args) < 5 else args[4]
+        regex = input("Enter rexexp> ") if len(args) < 6 else args[5]
+        repl = input("Enter replacement> ") if len(args) < 7 else args[6]
+
+        info = host_info_by_name(name)
+
+        data = {
+            "preference": int(pref),
+            "orderv": int(order),
+            "flag": flag,
+            "service": service,
+            "regex": regex,
+            "replacement": repl,
+            "hostid": info["hostid"],
+        }
+
+        url = "http://{}:{}/naptrs/".format(
+            conf["server_ip"],
+            conf["server_port"],
+        )
+        history.record_post(url, "", data, undoable=False)
+        post(url, **data)
+        cli_info("created NAPTR record for {}".format(info["name"]), print_msg=True)
+
+    def opt_naptr_remove(self, args: typing.List[str]) -> None:
+        """
+        naptr_remove <name> <replacement>
+            Remove NAPTR record.
+        """
+        name = input("Enter host name> ") if len(args) < 1 else args[0]
+        repl = input("Enter replacement> ") if len(args) < 2 else args[1]
+
+        info = host_info_by_name(name)
+
+        # get the hosts NAPTR records where repl is a substring of the replacement field
+        url = "http://{}:{}/naptrs/?replacement__contains={}&hostid={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            repl,
+            info["hostid"]
+        )
+        history.record_get(url)
+        naptrs = get(url).json()
+        if not len(naptrs):
+            cli_warning("{} hasn't got any NAPTR reocrds matching \"{}\"".format(
+                info["name"],
+                repl,
+            ))
+        if len(naptrs) > 1 and "y" not in args:
+            cli_warning("{} got {} NAPTR records matching \"{}\", must force.".format(
+                info["name"],
+                len(naptrs),
+                repl,
+            ))
+
+        for ptr in naptrs:
+            url = "http://{}:{}/naptrs/{}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                ptr["naptrid"],
+            )
+            history.record_delete(url, ptr)
+            delete(url)
+        cli_info("deleted {} NAPTR record(s) for {}".format(len(naptrs), info["name"]),
+                 print_msg=True)
+
+    def opt_naptr_show(self, args: typing.List[str]) -> None:
+        """
+        naptr_show <name>
+            Show all NAPTR records for host.
+        """
+        name = input("Enter host name> ") if len(args) < 1 else args[0]
+        info = host_info_by_name(name)
+        url = "http://{}:{}/naptrs/?hostid={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            info["hostid"],
+        )
+        history.record_get(url)
+        naptrs = get(url).json()
+        for ptr in naptrs:
+            print_naptr(ptr, info["name"])
+        cli_info("showed {} NAPTR records for {}".format(len(naptrs), info["name"]))
+
+
+class Dhcp(CommandBase):
+    """
+    Handle MAC addresses.
+        dhcp <option> <argument(s)>
+    """
+
+    def opt_assoc(self, args: typing.List[str]) -> None:
+        """
+        assoc <name|ip> <mac-addr>
+            Associate MAC address with host. If host got multiple A/AAAA records an IP must be
+            given instead of name.
+        """
+        name_or_ip = input("Enter host name/ip> ") if len(args) < 1 else args[0]
+        addr = input("Enter MAC address> ") if len(args) < 2 else args[1]
+
+        if not is_valid_mac_addr(addr):
+            cli_warning("invalid MAC address: {}".format(addr))
+
+        if is_valid_ip(name_or_ip):
+            url = "http://{}:{}/ipaddresses/{}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                name_or_ip,
+            )
+            history.record_get(url)
+            ip = get(url).json()
+            if not len(ip):
+                cli_warning("ip {} doesn't exist.".format(name_or_ip))
+        else:
+            info = host_info_by_name(name_or_ip)
+            if len(info["ipaddress"]) > 1:
+                cli_warning("{} got {} ip addresses, please enter an ip instead.".format(
+                    info["name"],
+                    len(info["ipaddress"]),
+                ))
+            ip = info["ipaddress"][0]
+
+        url = "http://{}:{}/ipaddresses/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            ip["ipaddress"],
+        )
+        history.record_patch(url, new_data={"macaddress": addr}, old_data=ip)
+        patch(url, macaddress=addr)
+        cli_info("associated mac address {} with ip {}".format(addr, ip["ipaddress"]),
+                 print_msg=True)
+
+    def opt_disassoc(self, args: typing.List[str]) -> None:
+        """
+        disassoc <name|ip>
+            Disassociate MAC address with host/ip. If host got multiple A/AAAA records an IP must be
+            given instead of name
+        """
+        name_or_ip = input("Enter host name/ip> ") if len(args) < 1 else args[0]
+
+        if is_valid_ip(name_or_ip):
+            url = "http://{}:{}/ipaddresses/{}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                name_or_ip,
+            )
+            history.record_get(url)
+            ip = get(url).json()
+            if not len(ip):
+                cli_warning("ip {} doesn't exist.".format(name_or_ip))
+        else:
+            info = host_info_by_name(name_or_ip)
+            if len(info["ipaddress"]) > 1:
+                cli_warning("{} got {} ip addresses, please enter an ip instead.".format(
+                    info["name"],
+                    len(info["ipaddress"]),
+                ))
+            ip = info["ipaddress"][0]
+
+        url = "http://{}:{}/ipaddresses/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            ip["ipaddress"],
+        )
+        history.record_patch(url, new_data={"macaddress": ""}, old_data=ip)
+        patch(url, macaddress="")
+        cli_info("disassociated mac address {} from ip {}".format(
+            ip["macaddress"],
+            ip["ipaddress"]
+        ), print_msg=True)
 
 
 class Zone(CommandBase):
@@ -1293,18 +1661,74 @@ class Zone(CommandBase):
 
     def opt_create(self, args: typing.List[str]):
         """
-        create <zone-name> (<primary-ns> <contact> <serialno> <refresh> <retry> <expire> <ttl>)
+        create <zone-name> (<nameservers>)
             Create new zone.
         """
+        # name = input("Enter zone name>") if len(args) < 1 else args[0]
+        # nameservers = []
+        #
+        # if len(args) > 1:
+        #     nameservers = args[1:]
+        #
+        # nameservers = input("Enter nameserver(s)>").split(' ')
+        # if not nameservers:
+        #     cli_warning("No nameservers supplied")
+        #
+        # for nameserver in nameservers:
+        #   if zone_mreg_controlled('.'.join(nameserver.split('.').pop(0))):
+        #       if not host_in_mreg_zone(nameserver):
+        #           if 'y' not in args:
+        #               cli_warning("{} has no A-record/glue, must force".format(nameserver))
+        #
+        # url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+        # post(url, name=name, nameservers=nameservers)
+        # cli_info("created zone {}".format(name), True)
         pass
 
     def opt_delete(self, args: typing.List[str]):
+        # name = input("Enter zone name>") if len(args) < 1 else args[0]
+        # url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
+        # zone = get(url)
         pass
 
     def opt_set_ns(self, args: typing.List[str]):
+        """
+              set_ns <zone-name> (<nameservers>)
+                  Update nameservers for an existing zone.
+        """
+        # name = input("Enter zone name>") if len(args) < 1 else args[0]
+        # nameservers = []
+        #
+        # if len(args) > 1:
+        #     nameservers = args[1:]
+        #
+        # nameservers = input("Enter nameserver(s)>").split(' ')
+        # if not nameservers:
+        #     cli_warning("No nameservers supplied")
+        #
+        # for nameserver in nameservers:
+        #     if zone_mreg_controlled('.'.join(nameserver.split('.').pop(0))):
+        #         if not host_in_mreg_zone(nameserver):
+        #             if 'y' not in args:
+        #                 cli_warning("{} has no A-record/glue, must force".format(nameserver))
+        #
+        # # FIX DAT GLU BUSINESS FIKSES AV NILS - "Jeg har en PhD i lim" 23.07.2018
+        #
+        # url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+        # patch(url, nameservers=nameservers)
+        # cli_info("created zone {}".format(name), True)
         pass
 
     def opt_set_soa(self, args: typing.List[str]):
+        """
+              set_soa <zone-name> (<primary_ns> <email> <serialno> <refresh> <retry> <expire> <ttl>)
+                  Updated the SOA of a zone.
+        """
+        # name = input("Enter zone name>") if len(args) < 1 else args[0]
+        # primary_ns = input("Enter primary_ns>") if len(args) < 2 else args[1]
+        # email = input("Enter email>") if len(args) < 3 else args[2]
+        # serialno = input("Enter serialno>") if len(args) < 4 else args[3]
+        # name = input("Enter refresh>") if len(args) < 5 else args[4]
         pass
 
 
@@ -1336,11 +1760,12 @@ class Subnet(CommandBase):
         print_subnet(subnet_info['category'], "Category:")
         print_subnet(subnet_info['location'], "Location:")
         print_subnet(subnet_info['vlan'], "VLAN")
-        print_subnet(subnet_info['dns_delegated'] if subnet_info['dns_delegated'] else False, "DNS delegated:")
+        print_subnet(subnet_info['dns_delegated'] if subnet_info['dns_delegated'] else False,
+                     "DNS delegated:")
         print_subnet(subnet_info['frozen'] if subnet_info['frozen'] else False, "Frozen")
         print_subnet_reserved(subnet_info['range'], subnet_info['reserved'])
         print_subnet(len(used_list), "Used addresses:")
-        print_subnet_unused(network.num_addresses - (subnet_info['reserved'] + 2)- len(used_list))
+        print_subnet_unused(network.num_addresses - (subnet_info['reserved'] + 2) - len(used_list))
         cli_info("printed subnet info for {}".format(subnet_info['range']))
 
     def opt_create(self, args: typing.List[str]):
@@ -1350,28 +1775,33 @@ class Subnet(CommandBase):
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         if not is_valid_subnet(ip_range): cli_warning("Not a valid netmask")
-
         description = input("Enter description>") if len(args) < 2 else args[1]
+        if not description:
+            cli_warning("No description provided")
 
-        vlan = input("Enter VLAN (optional)>") if len(args) < 3 else args[2]
+        vlan = None
+        category = None
+        location = None
+        frozen = False
 
-        if vlan:
-            try:
-                vlan = int(vlan)
-            except ValueError:
-                cli_warning("Not a valid integer")
+        if len(args) != 2:
+            vlan = input("Enter VLAN (optional)>") if len(args) < 3 else args[2]
+            category = input("Enter category (optional)>") if len(args) < 4 else args[3]
+            location = input("Enter location (optional)>") if len(args) < 5 else args[4]
 
-        category = input("Enter category (optional)>") if len(args) < 4 else args[3]
-        if category and not is_valid_category_tag(category):
-            cli_warning("Not a valid category tag")
-        location = input("Enter location (optional)>") if len(args) < 5 else args[4]
-        if location and not is_valid_location_tag(location):
-            cli_warning("Not a valid location tag")
-
-        frozen = input("Is the subnet frozen? y/n>") if len(args) < 6 else args[5]
-        while frozen != 'y' and frozen != 'n':
-            frozen = input("Is the subnet frozen? y/n>")
-        frozen = True if frozen == 'y' else False
+            if vlan:
+                try:
+                    vlan = int(vlan)
+                except ValueError:
+                    cli_warning("VLAN: Not a valid integer")
+            if category and not is_valid_category_tag(category):
+                cli_warning("Not a valid category tag")
+            if location and not is_valid_location_tag(location):
+                cli_warning("Not a valid location tag")
+            frozen = input("Is the subnet frozen? y/n>") if len(args) < 6 else args[5]
+            while frozen != 'y' and frozen != 'n':
+                frozen = input("Is the subnet frozen? y/n>")
+            frozen = True if frozen == 'y' else False
 
         url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
         post(url, range=ip_range, description=description, vlan=vlan, category=category,
@@ -1406,7 +1836,8 @@ class Subnet(CommandBase):
         subnet = get_subnet(ip_range)
         vlan = int(input("Enter new VLAN>") if len(args) < 2 else args[1])
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               subnet['range'])
         patch(url, vlan=vlan)
         cli_info("updated vlan to {} for {}".format(vlan, subnet['range']))
 
@@ -1419,7 +1850,8 @@ class Subnet(CommandBase):
         subnet = get_subnet(ip_range)
         description = input("Enter new description>") if len(args) < 2 else args[1]
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               subnet['range'])
         patch(url, description=description)
         cli_info("updated description to '{}' for {}".format(description, subnet['range']), True)
 
@@ -1434,7 +1866,8 @@ class Subnet(CommandBase):
         if not is_valid_location_tag(location_tag):
             cli_warning("Not a valid location tag")
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               subnet['range'])
         patch(url, location=location_tag)
         cli_info("updated location tag to '{}' for {}".format(location_tag, subnet['range']), True)
 
@@ -1449,7 +1882,8 @@ class Subnet(CommandBase):
         if not is_valid_category_tag(category_tag):
             cli_warning("Not a valid category tag")
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               subnet['range'])
         patch(url, category=category_tag)
         cli_info("updated category tag to '{}' for {}".format(category_tag, subnet['range']), True)
 
@@ -1461,7 +1895,8 @@ class Subnet(CommandBase):
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         subnet = get_subnet(ip_range)
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               subnet['range'])
         patch(url, dns_delegated=True)
         cli_info("updated dns_delegated to '{}' for {}".format(True, subnet['range']), True)
 
@@ -1473,7 +1908,8 @@ class Subnet(CommandBase):
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         subnet = get_subnet(ip_range)
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               subnet['range'])
         patch(url, dns_delegated=False)
         cli_info("updated dns_delegated to '{}' for {}".format(False, subnet['range']), True)
 
@@ -1485,7 +1921,8 @@ class Subnet(CommandBase):
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         subnet = get_subnet(ip_range)
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               subnet['range'])
         patch(url, frozen=True)
         cli_info("updated frozen to '{}' for {}".format(True, subnet['range']), True)
 
@@ -1497,7 +1934,8 @@ class Subnet(CommandBase):
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         subnet = get_subnet(ip_range)
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               subnet['range'])
         patch(url, frozen=False)
         cli_info("updated frozen to '{}' for {}".format(False, subnet['range']), True)
 
@@ -1515,7 +1953,8 @@ class Subnet(CommandBase):
         except ValueError:
             cli_warning("Not a valid integer")
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               subnet['range'])
         patch(url, reserved=reserved)
         cli_info("updated reserved to '{}' for {}".format(reserved, subnet['range']), True)
 
@@ -1541,6 +1980,26 @@ class Subnet(CommandBase):
         for x in range(len(addresses)):
             print("{1:<{0}}{2}".format(25, addresses[x], hosts[x]))
 
+    def opt_list_unused_addresses(self, args: typing.List[str]):
+        """
+        list_used_addresses <subnet>
+            Lists all the used addresses for a subnet
+        """
+        ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
+
+        if is_valid_ip(ip_range):
+            subnet = get_subnet(ip_range)
+            addresses = get_subnet_used_list(subnet['range'])
+        elif is_valid_subnet(ip_range):
+            addresses = get_subnet_used_list(ip_range)
+        else:
+            cli_warning("Not a valid ip or subnet")
+
+        unused_addresses = available_ips_from_subnet(subnet)
+
+        for address in unused_addresses:
+            print("{1:<{0}}".format(25, address))
+
     def opt_import(self, args: typing.List[str]):
         """
         import <file>
@@ -1549,7 +2008,7 @@ class Subnet(CommandBase):
         input_file = input("Enter path to import file>") if len(args) < 1 else args[0]
         log_file = open('subnets_import.log', 'w+')
         vlans = get_vlan_mapping()
-        ERROR = False # Flag to check before making requests if something isn't right
+        ERROR = False  # Flag to check before making requests if something isn't right
 
         log_file.write("------ READ FROM {} START ------\n".format(input_file))
 
@@ -1559,7 +2018,8 @@ class Subnet(CommandBase):
             line_number = 0
             for line in file:
                 line_number += 1
-                match = re.match(r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+:(?P<tags>.*):\|(?P<description>.*)", line)
+                match = re.match(
+                    r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+:(?P<tags>.*):\|(?P<description>.*)", line)
                 if match:
                     tags = match.group('tags').split(':')
                     info = {'location': None, 'category': ''}
@@ -1570,7 +2030,9 @@ class Subnet(CommandBase):
                             info['category'] = ('%s %s' % (info['category'], tag)).strip()
                         else:
                             # TODO ERROR = True ?
-                            log_file.write("{}: Invalid tag {}. Valid tags can be found in {}\n".format(line_number, tag, conf['tag_file']))
+                            log_file.write(
+                                "{}: Invalid tag {}. Valid tags can be found in {}\n".format(
+                                    line_number, tag, conf['tag_file']))
                     data = {
                         'range': match.group('range'),
                         'description': match.group('description').strip(),
@@ -1584,7 +2046,8 @@ class Subnet(CommandBase):
         log_file.write("------ READ FROM {} END ------\n".format(input_file))
 
         # Fetch existing subnets from server
-        res = requests.get('http://{}:{}/subnets'.format(conf["server_ip"], conf["server_port"])).json()
+        res = requests.get(
+            'http://{}:{}/subnets'.format(conf["server_ip"], conf["server_port"])).json()
         current_subnets = {subnet['range']: subnet for subnet in res}
 
         subnets_delete = current_subnets.keys() - import_data.keys()
@@ -1597,31 +2060,35 @@ class Subnet(CommandBase):
             used_list = get_subnet_used_list(subnet)
             if used_list:
                 ERROR = True
-                log_file.write("WARNING: {} contains addresses that are in use. Remove hosts before deletion\n".format(
-                    {subnet['range']}))
+                log_file.write(
+                    "WARNING: {} contains addresses that are in use. Remove hosts before deletion\n".format(
+                        {subnet['range']}))
 
         # Check if subnets marked for creation have any overlap with existing subnets
         for subnet_new in subnets_post:
             subnet_object = ipaddress.ip_network(subnet_new)
-            for subnet_existing in subnets_patch:
+            for subnet_existing in subnets_ignore:
                 if subnet_object.overlaps(ipaddress.ip_network(subnet_existing)):
                     ERROR = True
-                    log_file.write("ERROR: Overlap found between new subnet {} and existing subnet {}\n".format(subnet_new, subnet_existing))
+                    log_file.write(
+                        "ERROR: Overlap found between new subnet {} and existing subnet {}\n".format(
+                            subnet_new, subnet_existing))
 
         # Check which existing subnets need to be patched
         for subnet in subnets_ignore:
             current_data = current_subnets[subnet]
             new_data = import_data[subnet]
-            if  (new_data['description'] != current_data['description'] \
-                or new_data['vlan'] != current_data['vlan'] \
-                or new_data['category'] != current_data['category'] \
-                or new_data['location'] != current_data['location']):
+            if (new_data['description'] != current_data['description'] \
+                    or new_data['vlan'] != current_data['vlan'] \
+                    or new_data['category'] != current_data['category'] \
+                    or new_data['location'] != current_data['location']):
                 subnets_patch.add(subnet)
 
         if ERROR:
             cli_warning("Errors detected during setup. Check subnets_import.log for details")
 
-        if ((len(subnets_delete) + len(subnets_patch)) / len(current_subnets.keys())) > 0.2 and 'y' not in args:
+        if ((len(subnets_delete) + len(subnets_patch)) / len(
+                current_subnets.keys())) > 0.2 and 'y' not in args:
             cli_warning("WARNING: The import will change over 20% of the subnets. Requires force")
 
         log_file.write("------ API REQUESTS START ------\n".format(input_file))
@@ -1635,11 +2102,11 @@ class Subnet(CommandBase):
             url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
             data = import_data[subnet]
             post(url, range=data['range'], \
-                description=data['description'], \
-                vlan=data['vlan'], \
-                category=data['category'], \
-                location=data['location'], \
-                frozen=data['frozen'])
+                 description=data['description'], \
+                 vlan=data['vlan'], \
+                 category=data['category'], \
+                 location=data['location'], \
+                 frozen=data['frozen'])
             log_file.write("POST {} - {}\n".format(url, subnet))
 
         for subnet in subnets_patch:

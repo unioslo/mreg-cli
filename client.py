@@ -42,7 +42,6 @@ def split_args(arg_str: str) -> typing.List[str]:
 
 
 class ClientShell(cmd.Cmd):
-    intro = "Welcome to mreg cli. Type help or ? for help."
     prompt = "mreg> "
 
     def __init__(self):
@@ -111,9 +110,9 @@ class ClientShell(cmd.Cmd):
     #   Read commands from file   #
     ###############################
 
-    def do_file(self, args):
+    def do_source(self, args):
         """Read commands from a file. If --exit is supplied then it'll stop executing on error.
-    file <file-name> [--exit]
+    source <file-name> [--exit]
         """
         args = args.split()
         if len(args) < 1:
@@ -140,7 +139,7 @@ class ClientShell(cmd.Cmd):
                     if line:
                         self.cmdqueue.append(line)
 
-    def complete_file(self, text, line, begidx, endidx):
+    def complete_source(self, text, line, begidx, endidx):
         words = line.split()
         if len(words) < 2:
             ps = "."
@@ -192,6 +191,15 @@ class ClientShell(cmd.Cmd):
     def help_subnet(self):
         self.command_help(Subnet())
 
+    def do_zone(self, args):
+        self.command_do(args, Zone())
+
+    def complete_zone(self, text, line, begidx, endidx):
+        return self.command_complete(text, line, begidx, endidx, Zone())
+
+    def help_zone(self):
+        self.command_help(Zone())
+
     def do_history(self, args):
         self.command_do(args, History())
 
@@ -201,6 +209,22 @@ class ClientShell(cmd.Cmd):
     def help_history(self):
         self.command_help(History())
 
+    def do_dhcp(self, args):
+        self.command_do(args, Dhcp())
+
+    def complete_dhcp(self, text, line, begidx, endidx):
+        return self.command_complete(text, line, begidx, endidx, Dhcp())
+
+    def help_dhcp(self):
+        self.command_help(Dhcp())
+
 
 if __name__ == '__main__':
-    ClientShell().cmdloop()
+    intro = "Welcome to mreg cli. Type help or ? for help."
+    while True:
+        try:
+            ClientShell().cmdloop(intro)
+            break
+        except KeyboardInterrupt:
+            print("\nKeyboardInterrupt")
+            intro = ""

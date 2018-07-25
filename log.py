@@ -37,38 +37,41 @@ def _write_log(entry: str, end: str = "\n") -> None:
 
 def cli_error(msg: str, raise_exception: bool = True, exception=CliError) -> None:
     """Write a ERROR log entry."""
+    pre = _prefix_from_stack()
     s = "{} {} [ERROR] {}: {}".format(
         datetime.now().isoformat(sep=' ', timespec="seconds"),
         getpass.getuser(),
-        _prefix_from_stack(),
+        pre,
         msg,
     )
     _write_log(s)
     if raise_exception:
-        raise exception("ERROR: {}".format(msg))
+        raise exception("ERROR: {}: {}".format(pre, msg))
 
 
 def cli_warning(msg: str, raise_exception: bool = True, exception=CliWarning) -> None:
     """Write a WARNING log entry."""
+    pre = _prefix_from_stack()
     s = "{} {} [WARNING] {}: {}".format(
         datetime.now().isoformat(sep=' ', timespec="seconds"),
         getpass.getuser(),
-        _prefix_from_stack(),
+        pre,
         msg,
     )
     _write_log(s)
     if raise_exception:
-        raise exception("WARNING: {}".format(msg))
+        raise exception("WARNING: {}: {}".format(pre, msg))
 
 
 def cli_info(msg: str, print_msg: bool = False) -> None:
     """Write an OK log entry."""
+    pre = _prefix_from_stack()
     s = "{} {} [OK] {}: {}".format(
         datetime.now().isoformat(sep=' ', timespec="seconds"),
         getpass.getuser(),
-        _prefix_from_stack(),
+        pre,
         msg,
     )
     _write_log(s)
     if print_msg:
-        print("OK: {}".format(msg))
+        print("OK: {}: {}".format(pre, msg))
