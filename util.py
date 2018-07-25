@@ -101,14 +101,14 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
         return host
 
 
-def available_ips_from_subnet(subnet: dict) -> str:
+def available_ips_from_subnet(subnet: dict) -> set:
     """
     Returns an arbitrary ip from the given subnet.
     Assumes subnet exists.
     :param subnet: dict with subnet info.
     :return: Ip address string
     """
-# TODO return sorted list
+    # TODO return sorted list
     addresses = list(ipaddress.ip_network(subnet['range']).hosts())
     addresses = set([str(ip) for ip in addresses[subnet['reserved']:]])
     addresses_in_use = set(get_subnet_used_list(subnet['range']))
@@ -456,6 +456,12 @@ def get_vlans_from_file(file: str, vlans: dict):
                     line)
                 if match:
                     vlans[match.group('vlan')] = match.group('range')
+
+def string_to_int(value, error_tag):
+    try:
+        return int(value)
+    except ValueError:
+        cli_warning("%s: Not a valid integer" % error_tag)
 
 
 ################################################################################
