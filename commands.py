@@ -1664,72 +1664,115 @@ class Zone(CommandBase):
         create <zone-name> (<nameservers>)
             Create new zone.
         """
-        # name = input("Enter zone name>") if len(args) < 1 else args[0]
-        # nameservers = []
-        #
-        # if len(args) > 1:
-        #     nameservers = args[1:]
-        #
-        # nameservers = input("Enter nameserver(s)>").split(' ')
-        # if not nameservers:
-        #     cli_warning("No nameservers supplied")
-        #
-        # for nameserver in nameservers:
-        #   if zone_mreg_controlled('.'.join(nameserver.split('.').pop(0))):
-        #       if not host_in_mreg_zone(nameserver):
-        #           if 'y' not in args:
-        #               cli_warning("{} has no A-record/glue, must force".format(nameserver))
-        #
-        # url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
-        # post(url, name=name, nameservers=nameservers)
-        # cli_info("created zone {}".format(name), True)
-        pass
+        # TODO Validation for valid domain names
+        force = False
+        arguments = args
+        if len(args) > 0 and args[-1] == 'y':
+            force = True
+            arguments = args[:-1]
+
+        name = input("Enter zone name>") if len(arguments) < 1 else arguments[0]
+        if not name:
+            cli_warning('Name is required')
+
+        nameservers = input("Enter nameservers>") if len(arguments) < 2 else arguments[1:]
+        if isinstance(nameservers, str):
+            nameservers = nameservers.split(' ')
+
+        if not nameservers:
+            cli_warning('At least one nameserver is required')
+
+        for nameserver in nameservers:
+            if host_in_mreg_zone(nameserver):
+                url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], nameserver)
+                try:
+                    host = get(url).json()
+                except CliError:
+                    if not force:
+                      cli_warning("{} has no A-record/glue, must force".format(nameserver))
+
+        url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+        post(url, name=name, nameservers=nameservers)
+        cli_info("created zone {}".format(name), True)
 
     def opt_delete(self, args: typing.List[str]):
-        # name = input("Enter zone name>") if len(args) < 1 else args[0]
-        # url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
-        # zone = get(url)
-        pass
+        """
+              create <zone-name> (<nameservers>)
+                  Create new zone.
+        """
+        name = input("Enter zone name>") if len(args) < 1 else args[0]
+
+        url_zones = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
+        zone = get(url_zones)
+
+        url_hosts = "http://{}:{}/hosts/?name__endswith={}".format(conf["server_ip"], conf["server_port"], name)
+        hosts = get(url_hosts).json()
+        if hosts and 'y' not in args:
+            cli_warning("Zone has registered entries, must force")
+
+        delete(url_zones)
+        cli_info("deleted zone {}".format(name), True)
 
     def opt_set_ns(self, args: typing.List[str]):
         """
               set_ns <zone-name> (<nameservers>)
                   Update nameservers for an existing zone.
         """
-        # name = input("Enter zone name>") if len(args) < 1 else args[0]
-        # nameservers = []
-        #
-        # if len(args) > 1:
-        #     nameservers = args[1:]
-        #
-        # nameservers = input("Enter nameserver(s)>").split(' ')
-        # if not nameservers:
-        #     cli_warning("No nameservers supplied")
-        #
-        # for nameserver in nameservers:
-        #     if zone_mreg_controlled('.'.join(nameserver.split('.').pop(0))):
-        #         if not host_in_mreg_zone(nameserver):
-        #             if 'y' not in args:
-        #                 cli_warning("{} has no A-record/glue, must force".format(nameserver))
-        #
-        # # FIX DAT GLU BUSINESS FIKSES AV NILS - "Jeg har en PhD i lim" 23.07.2018
-        #
-        # url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
-        # patch(url, nameservers=nameservers)
-        # cli_info("created zone {}".format(name), True)
-        pass
+        # TODO Validation for valid domain names
+        force = False
+        arguments = args
+        if len(args) > 0 and args[-1] == 'y':
+            force = True
+            arguments = args[:-1]
+
+        name = input("Enter zone name>") if len(arguments) < 1 else arguments[0]
+        if not name:
+            cli_warning('Name is required')
+
+        nameservers = input("Enter nameservers>") if len(arguments) < 2 else arguments[1:]
+        if isinstance(nameservers, str):
+            nameservers = nameservers.split(' ')
+
+        if not nameservers:
+            cli_warning('At least one nameserver is required')
+
+        for nameserver in nameservers:
+            if host_in_mreg_zone(nameserver):
+                url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], nameserver)
+                try:
+                    host = get(url).json()
+                except CliError:
+                    if not force:
+                        cli_warning("{} has no A-record/glue, must force".format(nameserver))
+
+        url = "http://{}:{}/zones/{}/nameservers".format(conf["server_ip"], conf["server_port"], name)
+        patch(url, nameservers=nameservers)
+        cli_info("updated nameservers for {}".format(name), True)
 
     def opt_set_soa(self, args: typing.List[str]):
         """
               set_soa <zone-name> (<primary_ns> <email> <serialno> <refresh> <retry> <expire> <ttl>)
                   Updated the SOA of a zone.
         """
-        # name = input("Enter zone name>") if len(args) < 1 else args[0]
-        # primary_ns = input("Enter primary_ns>") if len(args) < 2 else args[1]
-        # email = input("Enter email>") if len(args) < 3 else args[2]
-        # serialno = input("Enter serialno>") if len(args) < 4 else args[3]
-        # name = input("Enter refresh>") if len(args) < 5 else args[4]
-        pass
+        #TODO Validation for valid domain names
+        name = input("Enter zone name>") if len(args) < 1 else args[0]
+        primary_ns = input("Enter primary_ns>") if len(args) < 2 else args[1]
+        email = input("Enter email>") if len(args) < 3 else args[2]
+        serialno = input("Enter serialno>") if len(args) < 4 else args[3]
+        refresh = string_to_int(input("Enter refresh>") if len(args) < 5 else args[4], "refresh")
+        retry = string_to_int(input("Enter retry>") if len(args) < 6 else args[5], "retry")
+        expire = string_to_int(input("Enter expire>") if len(args) < 7 else args[6], "expire")
+        ttl = string_to_int(input("Enter TTL>") if len(args) < 8 else args[7], "ttl")
+
+        url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
+        zone = get(url).json()
+        nameservers = zone['nameservers']
+        if primary_ns not in [nameserver['name'] for nameserver in nameservers]:
+            cli_warning("{} is not one of {}'s nameservers. Add it with set_ns before trying again".format(primary_ns, name))
+
+        url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
+        patch(url, primary_ns=primary_ns, email=email, serialno=serialno, refresh=refresh, retry=retry, expire=expire, ttl=ttl)
+        cli_info("set soa for {}".format(name), True)
 
 
 class Subnet(CommandBase):
@@ -1760,8 +1803,7 @@ class Subnet(CommandBase):
         print_subnet(subnet_info['category'], "Category:")
         print_subnet(subnet_info['location'], "Location:")
         print_subnet(subnet_info['vlan'], "VLAN")
-        print_subnet(subnet_info['dns_delegated'] if subnet_info['dns_delegated'] else False,
-                     "DNS delegated:")
+        print_subnet(subnet_info['dns_delegated'] if subnet_info['dns_delegated'] else False, "DNS delegated:")
         print_subnet(subnet_info['frozen'] if subnet_info['frozen'] else False, "Frozen")
         print_subnet_reserved(subnet_info['range'], subnet_info['reserved'])
         print_subnet(len(used_list), "Used addresses:")
@@ -1774,7 +1816,7 @@ class Subnet(CommandBase):
             Create a new subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        if not is_valid_subnet(ip_range): cli_warning("Not a valid netmask")
+        subnet_new = ipaddress.ip_network(ip_range)
         description = input("Enter description>") if len(args) < 2 else args[1]
         if not description:
             cli_warning("No description provided")
@@ -1790,10 +1832,7 @@ class Subnet(CommandBase):
             location = input("Enter location (optional)>") if len(args) < 5 else args[4]
 
             if vlan:
-                try:
-                    vlan = int(vlan)
-                except ValueError:
-                    cli_warning("VLAN: Not a valid integer")
+                string_to_int(vlan, "VLAN")
             if category and not is_valid_category_tag(category):
                 cli_warning("Not a valid category tag")
             if location and not is_valid_location_tag(location):
@@ -1802,6 +1841,13 @@ class Subnet(CommandBase):
             while frozen != 'y' and frozen != 'n':
                 frozen = input("Is the subnet frozen? y/n>")
             frozen = True if frozen == 'y' else False
+
+        url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
+        subnets_existing =  get(url).json()
+        for subnet in subnets_existing:
+            subnet_object = ipaddress.ip_network(subnet['range'])
+            if subnet_object.overlaps(subnet_new):
+                cli_warning( "Overlap found between new subnet {} and existing subnet {}".format(subnet_new, subnet['range']))
 
         url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
         post(url, range=ip_range, description=description, vlan=vlan, category=category,
@@ -1814,7 +1860,7 @@ class Subnet(CommandBase):
             Remove subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
-        if not is_valid_subnet(ip_range): cli_warning("Not a valid netmask")
+        ipaddress.ip_network(ip_range)
 
         host_list = get_subnet_used_list(ip_range)
         if host_list:
@@ -1834,7 +1880,7 @@ class Subnet(CommandBase):
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         subnet = get_subnet(ip_range)
-        vlan = int(input("Enter new VLAN>") if len(args) < 2 else args[1])
+        vlan = string_to_int(input("Enter new VLAN>") if len(args) < 2 else args[1], "VLAN")
 
         url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
                                                subnet['range'])
@@ -1849,6 +1895,8 @@ class Subnet(CommandBase):
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         subnet = get_subnet(ip_range)
         description = input("Enter new description>") if len(args) < 2 else args[1]
+        if not description:
+            cli_warning("No description")
 
         url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
                                                subnet['range'])
@@ -1946,15 +1994,9 @@ class Subnet(CommandBase):
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         subnet = get_subnet(ip_range)
-        reserved = input("Enter number of reserved hosts>")
+        reserved = string_to_int(input("Enter number of reserved hosts>"), "Reserved")
 
-        try:
-            reserved = int(reserved)
-        except ValueError:
-            cli_warning("Not a valid integer")
-
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
-                                               subnet['range'])
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, reserved=reserved)
         cli_info("updated reserved to '{}' for {}".format(reserved, subnet['range']), True)
 
@@ -2006,6 +2048,8 @@ class Subnet(CommandBase):
             Import subnet data from <file>.
         """
         input_file = input("Enter path to import file>") if len(args) < 1 else args[0]
+        if not input_file:
+            cli_warning("No file path")
         log_file = open('subnets_import.log', 'w+')
         vlans = get_vlan_mapping()
         ERROR = False  # Flag to check before making requests if something isn't right
