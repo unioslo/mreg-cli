@@ -1700,15 +1700,21 @@ class Zone(CommandBase):
         """
         name = input("Enter zone name>") if len(args) < 1 else args[0]
 
-        url_zones = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
-        zone = get(url_zones)
+        url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
+        zone = get(url_zone)
 
         url_hosts = "http://{}:{}/hosts/?name__endswith={}".format(conf["server_ip"], conf["server_port"], name)
+        url_zones = "http://{}:{}/zones/?name__endswith={}".format(conf["server_ip"], conf["server_port"], name)
+
         hosts = get(url_hosts).json()
+        zones = get(url_zones).json()
+
         if hosts and 'y' not in args:
             cli_warning("Zone has registered entries, must force")
+        if zones and 'y' not in args:
+            cli_warning("Zone has registered subzones, must force")
 
-        delete(url_zones)
+        delete(url_zone)
         cli_info("deleted zone {}".format(name), True)
 
     def opt_set_ns(self, args: typing.List[str]):
