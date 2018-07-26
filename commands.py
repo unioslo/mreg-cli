@@ -27,8 +27,8 @@ except Exception as e:
 
 class CommandBase():
     """
-    Base class of all commands for the mreg client. It provide functions which uses insight to
-    auto-generate documentation and cli-info.
+    Base class of all commands for the mreg client. It provide functions which uses inspection to
+    generate documentation and cli-info.
 
     To add a new option to the command create a opt_<option-name> method which takes a list of
     arguments as input.
@@ -60,7 +60,9 @@ class CommandBase():
         return help_str
 
     def options(self) -> typing.List[str]:
-        """Returns all options of this command, identified by function prefix "opt_\""""
+        """Returns all options of this command, identified by function prefix "opt_\" (they are
+        returned without opt_ prefix)
+        """
         options = []
         for method in self._option_methods():
             options.append(method[0].split('_', maxsplit=1)[1])
@@ -96,7 +98,8 @@ class CommandBase():
 
 class History(CommandBase):
     """
-    Show history or redo/undo actions.
+    Redo/undo actions or show history.
+        history <option> [<history-number>]
     """
 
     def opt_print(self, args: typing.List[str]):
@@ -109,7 +112,7 @@ class History(CommandBase):
     def opt_redo(self, args: typing.List[str]):
         """
         redo <history-number>
-            Redo some history request(s) given by <history-number> (GET requests are not redone)
+            Redo some history event given by <history-number> (GET requests are not redone)
         """
         try:
             history.redo(int(args[0]))
@@ -119,7 +122,7 @@ class History(CommandBase):
     def opt_undo(self, args: typing.List[str]):
         """
         undo <history-number>
-            Undo some history request(s) given by <history-number> (GET requests cannot be undone)
+            Undo some history event given by <history-number> (GET requests cannot be undone)
         """
         try:
             history.undo(int(args[0]))
@@ -162,6 +165,8 @@ class Host(CommandBase):
             print_cname(cname, info["name"])
         for txt in info["txt"]:
             print_txt(txt["txt"])
+        for ptr in info["ptr_override"]:
+            print_ptr(ptr["ipaddress"], info["name"])
         cli_info("printed host info for {}".format(info["name"]))
 
     def opt_remove(self, args: typing.List[str]) -> None:
@@ -174,6 +179,7 @@ class Host(CommandBase):
         else:
             name_or_ip = args[0]
 
+        # Get host info or raise exception
         info = host_info_by_name_or_ip(name_or_ip)
 
         warn_msg = ""
@@ -194,6 +200,7 @@ class Host(CommandBase):
                     delete(url)
                     cli_info("deleted alias host {} when removing {}".format(alias, info["name"]))
 
+        # Require force if host has multiple A/AAAA records
         if len(info["ipaddress"]) > 1 and "y" not in args:
             warn_msg += "{} ipaddresses. ".format(len(info["ipaddress"]))
 
@@ -234,7 +241,6 @@ class Host(CommandBase):
             if "y" not in args:
                 warn_msg += "{} SRV records. ".format(len(srvs))
             else:
-                # QUESTION SRV: remove SRV when removing target host?
                 for srv in srvs:
                     url = "http://{}:{}/srvs/{}".format(
                         conf["server_ip"],
@@ -249,18 +255,11 @@ class Host(CommandBase):
                     ))
 
         # Require force if host has any PTR records. Delete the PTR records if force
-        url = "http://{}:{}/ptroverrides/?hostid={}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            info["hostid"],
-        )
-        ptrs = get(url).json()
-        if len(ptrs) > 0:
+        if len(info["ptr_override"]) > 0:
             if "y" not in args:
-                warn_msg += "{} PTR records. ".format(len(ptrs))
+                warn_msg += "{} PTR records. ".format(len(info["ptr_override"]))
             else:
-                # QUESTION PTR: remove PTR when removing owner host?
-                for ptr in ptrs:
+                for ptr in info["ptr_override"]:
                     url = "http://{}:{}/ptroverrides/{}".format(
                         conf["server_ip"],
                         conf["server_port"],
@@ -278,6 +277,7 @@ class Host(CommandBase):
         if len(info["ipaddress"]) > 0:
             info["ipaddress"] = info["ipaddress"][0]["ipaddress"]
 
+        # Warn user and raise exception if any force requirements was found
         if warn_msg:
             cli_warning("{} has: {}Must force".format(info["name"], warn_msg))
 
@@ -296,6 +296,7 @@ class Host(CommandBase):
         # NOTE: PTR record not created
         # NOTE: an A-record forward-zone not controlled by MREG aren't handled
 
+        # Get arguments interactively, if missing required, with HINFO help
         hi_list = hinfo_list()
         if len(args) < 3:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
@@ -319,21 +320,26 @@ class Host(CommandBase):
             if not 0 < hinfo <= len(hi_list):
                 cli_warning("invalid hinfo ({}) when trying to add {}".format(hinfo, name))
 
-        # Handle arbitrary ip from subnet if received a subnet
+        # Handle arbitrary ip from subnet if received a subnet w/o mask
         subnet = dict()
-        if re.match(r"^.*\/$", ip_or_net):
+        if re.match(r"^.*/$", ip_or_net):
             subnet = get_subnet(ip_or_net[:-1])
             ip = available_ips_from_subnet(subnet).pop()
+
+        # Handle arbitrary ip from subnet if received a subnet w/mask
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
             ip = available_ips_from_subnet(subnet).pop()
+
+        # Require force if given valid ip in subnet not controlled by MREG
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
             if "y" not in args:
                 cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
             else:
                 ip = ip_or_net
+
+        # Or else check that the address given isn't reserved
         else:
-            # check that the address given isn't reserved
             subnet = get_subnet(ip_or_net)
             network_object = ipaddress.ip_network(subnet['range'])
             addresses = list(network_object.hosts())
@@ -346,7 +352,7 @@ class Host(CommandBase):
                 cli_warning("Can't overwrite the broadcast address of the subnet")
             ip = ip_or_net
 
-        # Handle if subnet is frozen
+        # Require force if subnet is frozen
         if 'y' not in args and subnet['frozen']:
             cli_warning("Subnet {} is frozen. Requires force".format(subnet['range']))
 
@@ -354,7 +360,7 @@ class Host(CommandBase):
         if not is_valid_email(contact):
             cli_warning("invalid mail address ({}) when trying to add {}".format(contact, name))
 
-        # Check if given host exists on either short or long form
+        # Fail if given host exists on either short or long form
         try:
             name = resolve_input_name(name)
         except HostNotFoundWarning:
@@ -362,7 +368,7 @@ class Host(CommandBase):
         else:
             cli_warning("host {} already exists".format(name))
 
-        # Always use long form host name
+        # Always use long form host name. Require force if FQDN not in MREG zone
         if is_longform(name):
             if not host_in_mreg_zone(name) and "y" not in args:
                 cli_warning("{} isn't in a zone controlled by MREG, must force".format(name))
@@ -398,7 +404,7 @@ class Host(CommandBase):
         if not is_valid_email(contact):
             cli_warning("invalid mail address {} (target host: {})".format(contact, name))
 
-        # Get host info for <name> or its cname
+        # Get host info or raise exception
         info = host_info_by_name(name)
         old_data = {"contact": info["contact"]}
         new_data = {"contact": contact}
@@ -421,7 +427,7 @@ class Host(CommandBase):
             name = args[0]
             comment = " ".join(args[1:])
 
-        # Get host info for <name> or its cname
+        # Get host info or raise exception
         info = host_info_by_name(name)
         old_data = {"comment": info["comment"] or ""}
         new_data = {"comment": comment}
@@ -444,9 +450,10 @@ class Host(CommandBase):
             old_name = args[0]
             new_name = args[1]
 
+        # Get longform name if input on shortform or raise exception if host not found
         old_name = resolve_input_name(old_name)
 
-        # Check if given host exists on either short or long form
+        # Fail if given host exists on either short or long form
         try:
             new_name = resolve_input_name(new_name)
         except HostNotFoundWarning:
@@ -455,7 +462,7 @@ class Host(CommandBase):
             if "y" not in args:
                 cli_warning("host {} already exists".format(new_name))
 
-        # Always use long form host name
+        # Always use long form host name. Require force if host not in MREG zone
         if is_longform(new_name):
             if not host_in_mreg_zone(new_name) and "y" not in args:
                 cli_warning("{} isn't in a zone controlled by MREG, must force".format(new_name))
@@ -533,30 +540,36 @@ class Host(CommandBase):
             name = args[0]
             ip_or_net = args[1]
 
-        # Get host info for <name> or its cname
+        # Get host info for or raise exception
         info = host_info_by_name(name)
 
+        # Require force if host has multiple A/AAAA records
         if len(info["ipaddress"]) and "y" not in args:
             cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
 
-        # Handle arbitrary ip from subnet if received a subnet
-        if re.match(r"^.*\/$", ip_or_net):
+        # Handle arbitrary ip from subnet if received a subnet w/o mask
+        if re.match(r"^.*/$", ip_or_net):
             subnet = get_subnet(ip_or_net[:-1])
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             ip = available_ips_from_subnet(subnet).pop()
+
+        # Handle arbitrary ip from subnet if received a subnet w/mask
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             ip = available_ips_from_subnet(subnet).pop()
+
+        # Require force if given valid ip in subnet not controlled by MREG
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
             if "y" not in args:
                 cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
             else:
                 ip = ip_or_net
+
+        # Or else check that the address given isn't reserved
         else:
-            # check that the address given isn't reserved
             subnet = get_subnet(ip_or_net)
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
@@ -571,6 +584,7 @@ class Host(CommandBase):
                 cli_warning("Can't overwrite the broadcast address of the subnet")
             ip = ip_or_net
 
+        # Fail if input isn't ipv4
         if is_valid_ipv6(ip):
             cli_warning("got ipv6 address, want ipv4.")
         if not is_valid_ipv4(ip):
@@ -654,21 +668,32 @@ class Host(CommandBase):
         if not found:
             cli_warning("{} is not owned by {}".format(old_ip, info["name"]))
 
-        # Handle arbitrary ip from subnet if received a subnet
-        if re.match(r"^.*\/$", ip_or_net):
+        # Handle arbitrary ip from subnet if received a subnet w/o mask
+        if re.match(r"^.*/$", ip_or_net):
             subnet = get_subnet(ip_or_net[:-1])
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             ip = available_ips_from_subnet(subnet).pop()
+
+        # Handle arbitrary ip from subnet if received a subnet w/mask
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             ip = available_ips_from_subnet(subnet).pop()
+
+        # Require force if given valid ip in subnet not controlled by MREG
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
             if "y" not in args:
                 cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
             else:
                 ip = ip_or_net
+
+        # Or else check that the address given isn't reserved
         else:
-            # check that the address given isn't reserved
             subnet = get_subnet(ip_or_net)
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             network_object = ipaddress.ip_network(subnet['range'])
             addresses = list(network_object.hosts())
             reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
@@ -680,12 +705,17 @@ class Host(CommandBase):
                 cli_warning("Can't overwrite the broadcast address of the subnet")
             ip = ip_or_net
 
+        # Fail if input isn't ipv4
+        if is_valid_ipv6(ip):
+            cli_warning("got ipv6 address, want ipv4.")
+        if not is_valid_ipv4(ip):
+            cli_warning("not valid ipv4 address: {}".format(ip))
+
         old_data = {"ipaddress": old_ip}
         new_data = {"ipaddress": ip}
 
         # Update A record ip address
         url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], old_ip)
-        # Cannot redo/undo since resource name changes
         history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
         patch(url, ipaddress=ip)
         cli_info("updated ip {} to {} for {}".format(old_ip, ip, info["name"]), print_msg=True)
@@ -712,30 +742,35 @@ class Host(CommandBase):
             name = args[0]
             ip_or_net = args[1]
 
-        # Verify host and get host id
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
         if len(info["ipaddress"]) and "y" not in args:
             cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
 
-        # Handle arbitrary ip from subnet if received a subnet
-        if re.match(r"^.*\/$", ip_or_net):
+        # Handle arbitrary ip from subnet if received a subnet w/o mask
+        if re.match(r"^.*/$", ip_or_net):
             subnet = get_subnet(ip_or_net[:-1])
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             ip = available_ips_from_subnet(subnet).pop()
+
+        # Handle arbitrary ip from subnet if received a subnet w/mask
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             ip = available_ips_from_subnet(subnet).pop()
+
+        # Require force if given valid ip in subnet not controlled by MREG
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
             if "y" not in args:
                 cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
             else:
                 ip = ip_or_net
+
+        # Or else check that the address given isn't reserved
         else:
-            # check that the address given isn't reserved
             subnet = get_subnet(ip_or_net)
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
@@ -750,6 +785,7 @@ class Host(CommandBase):
                 cli_warning("Can't overwrite the broadcast address of the subnet")
             ip = ip_or_net
 
+        # Fail if input isn't ipv6
         if is_valid_ipv4(ip):
             cli_warning("got ipv4 address, want ipv6.")
         if not is_valid_ipv6(ip):
@@ -778,6 +814,7 @@ class Host(CommandBase):
             name = args[0]
             ip = args[1]
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
         # Ipv6 sanity check
@@ -812,17 +849,57 @@ class Host(CommandBase):
         if len(args) < 3:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
             old_ip = input("Enter old ipv6> ") if len(args) < 2 else args[1]
-            new_ip = input("Enter new ipv6> ")
+            ip_or_net = input("Enter new ipv6> ")
         else:
             name = args[0]
             old_ip = args[1]
-            new_ip = args[2]
+            ip_or_net = args[2]
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
-        # Ipv6 sanity checks
+        # Handle arbitrary ip from subnet if received a subnet w/o mask
+        if re.match(r"^.*/$", ip_or_net):
+            subnet = get_subnet(ip_or_net[:-1])
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
+            new_ip = available_ips_from_subnet(subnet).pop()
+
+        # Handle arbitrary ip from subnet if received a subnet w/mask
+        elif is_valid_subnet(ip_or_net):
+            subnet = get_subnet(ip_or_net)
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
+            new_ip = available_ips_from_subnet(subnet).pop()
+
+        # Require force if given valid ip in subnet not controlled by MREG
+        elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
+            if "y" not in args:
+                cli_warning("{} isn't in a subnet controlled by MREG, must force".format(ip_or_net))
+            else:
+                new_ip = ip_or_net
+
+        # Or else check that the address given isn't reserved
+        else:
+            subnet = get_subnet(ip_or_net)
+            if subnet["frozen"] and "y" not in args:
+                cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
+            network_object = ipaddress.ip_network(subnet['range'])
+            addresses = list(network_object.hosts())
+            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            if ip_or_net in reserved_addresses and 'y' not in args:
+                cli_warning("Address is reserved. Requires force")
+            if ip_or_net == network_object.network_address.exploded:
+                cli_warning("Can't overwrite the network address of the subnet")
+            if ip_or_net == network_object.broadcast_address.exploded:
+                cli_warning("Can't overwrite the broadcast address of the subnet")
+            new_ip = ip_or_net
+
+        # Fail if input isn't ipv6
         if not is_valid_ipv6(old_ip):
             cli_warning("not a valid ipv6 \"{}\" (target host {})".format(old_ip, info["name"]))
+        elif is_valid_ipv4(new_ip):
+            cli_warning("got ipv4 address, want ipv6.")
         elif not is_valid_ipv6(new_ip):
             cli_warning("not a valid ipv6 \"{}\" (target host {})".format(new_ip, info["name"]))
 
@@ -868,6 +945,7 @@ class Host(CommandBase):
             name = args[0]
             ttl = args[1]
 
+        # Get host info or raise exception
         info = host_info_by_name(name, follow_cnames=False)
 
         # TTL sanity check
@@ -922,7 +1000,8 @@ class Host(CommandBase):
             name = args[0]
             alias = args[1]
 
-        host_info = host_info_by_name(name)
+        # Get host info or raise exception
+        info = host_info_by_name(name)
 
         # If alias name already exists the host cannot have any records
         try:
@@ -934,7 +1013,8 @@ class Host(CommandBase):
                     alias_info["loc"] or \
                     alias_info["cname"] or \
                     alias_info["ipaddress"] or \
-                    alias_info["txt"]:
+                    alias_info["txt"] or\
+                    alias_info["ptr_override"]:
                 cli_warning("host {} already exists and has record(s)".format(alias_info["name"]))
 
         # Create cname host if it doesn't exist
@@ -942,7 +1022,7 @@ class Host(CommandBase):
             alias = alias if is_longform(alias) else to_longform(alias)
             data = {
                 "name": alias,
-                "contact": host_info["contact"],
+                "contact": info["contact"],
             }
             url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
             history.record_post(url, alias, data)
@@ -952,8 +1032,8 @@ class Host(CommandBase):
         # Create CNAME record
         url = "http://{}:{}/cnames/".format(conf["server_ip"], conf["server_port"])
         history.record_post(url, "", dict(), redoable=False, undoable=False)
-        post(url, hostid=alias_info["hostid"], cname=host_info["name"])
-        cli_info("Added cname alias {} for {}".format(alias_info["name"], host_info["name"]),
+        post(url, hostid=alias_info["hostid"], cname=info["name"])
+        cli_info("Added cname alias {} for {}".format(alias_info["name"], info["name"]),
                  print_msg=True)
 
     def opt_cname_remove(self, args: typing.List[str]) -> None:
@@ -968,7 +1048,10 @@ class Host(CommandBase):
             name = args[0]
             alias = args[1]
 
+        # Get longform of input name, raise exception if host doesn't exist
         host_name = resolve_input_name(name)
+
+        # Get host info or raise exception
         alias_info = host_info_by_name(alias, follow_cnames=False)
 
         # Check that cname host is an alias for host
@@ -992,10 +1075,7 @@ class Host(CommandBase):
             Show CNAME records for host. If <name> is an alias the cname hosts aliases are shown.
         """
         name = input("Enter name> ") if len(args) < 1 else args[0]
-
-        # Gets the host info of the named host or the cname host if name is an alias
         info = host_info_by_name(name)
-
         for alias in aliases_of_host(info["name"]):
             print_cname(alias, info["name"])
         cli_info("showed cname aliases for {}".format(info["name"]))
@@ -1012,9 +1092,11 @@ class Host(CommandBase):
             name = args[0]
             loc = " ".join(args[1:])
 
+        # LOC always require force
         if "y" not in args:
             cli_warning("require force to set location")
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
         # LOC sanity check
@@ -1037,12 +1119,17 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
 
+        # LOC always require force
         if "y" not in args:
             cli_warning("require force to remove location")
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
+
         old_data = {"loc": info["loc"]}
         new_data = {"loc": ""}
+
+        # Set LOC to null value
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         history.record_patch(url, new_data, old_data)
         patch(url, loc="")
@@ -1079,6 +1166,7 @@ class Host(CommandBase):
         if not 0 < hinfo <= len(hi_list):
             cli_warning("invalid hinfo.")
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
         old_data = {"hinfo": info["hinfo"] or -1}
         new_data = {"hinfo": hinfo}
@@ -1095,9 +1183,14 @@ class Host(CommandBase):
             Remove hinfo for host. If <name> is an alias the cname host is updated.
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
+
+        # Get host info or raise exception
         info = host_info_by_name(name)
+
         old_data = {"hinfo": info["hinfo"]}
         new_data = {"hinfo": -1}
+
+        # Set hinfo to null value
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         history.record_patch(url, new_data, old_data)
         patch(url, hinfo=-1)
@@ -1132,6 +1225,7 @@ class Host(CommandBase):
             port = args[3]
             name = args[4]
 
+        # Require force if target host doesn't exist
         try:
             host_name = resolve_input_name(name)
         except HostNotFoundWarning:
@@ -1139,10 +1233,14 @@ class Host(CommandBase):
                 cli_warning("{} doesn't exist. Must force".format(name))
             host_name = name
 
+        # Require force if target host not in MREG zone
         if not host_in_mreg_zone(host_name) and "y" not in args:
             cli_warning("{} isn't in a MREG controlled zone, must force".format(host_name))
 
+        # Always use longform for service name
         sname = sname if is_longform(sname) else to_longform(sname, trailing_dot=True)
+
+        # Check if a SRV record with identical service exists
         url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"], conf["server_port"], sname)
         history.record_get(url)
         srvs = get(url).json()
@@ -1159,6 +1257,7 @@ class Host(CommandBase):
             "target": host_name,
         }
 
+        # Create new SRV record
         url = "http://{}:{}/srvs/".format(conf["server_ip"], conf["server_port"])
         history.record_post(url, "", data, undoable=False)
         post(url, **data)
@@ -1175,6 +1274,8 @@ class Host(CommandBase):
         """
         sname = input("Enter service name> ") if len(args) < 1 else args[0]
         sname = sname if is_longform(sname) else to_longform(sname, trailing_dot=True)
+
+        # Check if service exist
         url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"], conf["server_port"], sname)
         history.record_get(url)
         srvs = get(url).json()
@@ -1182,6 +1283,8 @@ class Host(CommandBase):
             cli_warning("not service named {}".format(sname))
         elif len(srvs) > 1 and "y" not in args:
             cli_warning("multiple services named {}, must force".format(sname))
+
+        # Remove all SRV records with that service
         for srv in srvs:
             assert isinstance(srv, dict)
             url = "http://{}:{}/srvs/{}".format(
@@ -1197,9 +1300,11 @@ class Host(CommandBase):
     def opt_srv_show(self, args: typing.List[str]) -> None:
         """
         srv_show <service-name>
-            Show SRV show.
+            Show SRV show. An empty input showes all existing SRV records
         """
         sname = input("Enter service name> ") if len(args) < 1 else args[0]
+
+        # Get all matching SRV records
         url = "http://{}:{}/srvs/?service__contains={}".format(
             conf["server_ip"],
             conf["server_port"],
@@ -1210,6 +1315,8 @@ class Host(CommandBase):
         if len(srvs) < 1:
             cli_warning("no service matching {}".format(sname))
         padding = 0
+
+        # Print records
         for srv in srvs:
             if len(srv["service"]) > padding:
                 padding = len(srv["service"])
@@ -1235,6 +1342,7 @@ class Host(CommandBase):
             name = args[0]
             text = args[1]
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
         data = {
@@ -1242,6 +1350,7 @@ class Host(CommandBase):
             "txt": text
         }
 
+        # Add TXT record to host
         url = "http://{}:{}/txts/".format(conf["server_ip"], conf["server_port"])
         history.record_post(url, "", data, undoable=False)
         post(url, **data)
@@ -1259,8 +1368,10 @@ class Host(CommandBase):
             name = args[0]
             text = args[1]
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
+        # Check for matching TXT records for host
         url = "http://{}:{}/txts/?hostid={}&txt__contains={}".format(
             conf["server_ip"],
             conf["server_port"],
@@ -1277,6 +1388,8 @@ class Host(CommandBase):
                 len(args),
                 info["name"],
             ))
+
+        # Remove TXT records
         for txt in txts:
             url = "http://{}:{}/txts/{}".format(
                 conf["server_ip"],
@@ -1321,11 +1434,13 @@ class Host(CommandBase):
             ip = args[0]
             name = args[1]
 
+        # Ip sanity check
         if not is_valid_ip(ip):
             cli_warning("invalid ip: {}".format(ip))
         if not ip_in_mreg_net(ip):
             cli_warning("{} isn't in a subnet controlled by MREG".format(ip))
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
         # check that host haven't got a PTR record already
@@ -1372,24 +1487,20 @@ class Host(CommandBase):
             ip = args[0]
             name = args[1]
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
-        url = "http://{}:{}/ptroverrides/?hostid={}&ipaddress={}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            info["hostid"],
-            ip,
-        )
-        history.record_get(url)
-        ptrs = get(url).json()
-        if len(ptrs) == 0:
+        # Check that host got PTR record (assuming host got at most one record)
+        if len(info["ptr_override"]) == 0:
             cli_warning("no PTR record for {} with ip {}".format(info["name"], ip))
+
+        # Delete record
         url = "http://{}:{}/ptroverrides/{}".format(
             conf["server_ip"],
             conf["server_port"],
-            ptrs[0]["id"],
+            info["ptr_override"][0]["id"],
         )
-        history.record_delete(url, ptrs[0])
+        history.record_delete(url, info["ptr_override"][0])
         delete(url)
         cli_info("deleted PTR record {} for {}".format(ip, info["name"]), print_msg=True)
 
@@ -1407,6 +1518,7 @@ class Host(CommandBase):
             old_name = args[1]
             new_name = args[2]
 
+        # Get host info or raise exception
         old_info = host_info_by_name(old_name)
         new_info = host_info_by_name(new_name)
 
@@ -1485,6 +1597,7 @@ class Host(CommandBase):
         regex = input("Enter rexexp> ") if len(args) < 6 else args[5]
         repl = input("Enter replacement> ") if len(args) < 7 else args[6]
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
         data = {
@@ -1497,6 +1610,7 @@ class Host(CommandBase):
             "hostid": info["hostid"],
         }
 
+        # Create NAPTR record
         url = "http://{}:{}/naptrs/".format(
             conf["server_ip"],
             conf["server_port"],
@@ -1513,6 +1627,7 @@ class Host(CommandBase):
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         repl = input("Enter replacement> ") if len(args) < 2 else args[1]
 
+        # Get host info or raise exception
         info = host_info_by_name(name)
 
         # get the hosts NAPTR records where repl is a substring of the replacement field
@@ -1536,6 +1651,7 @@ class Host(CommandBase):
                 repl,
             ))
 
+        # Delete NAPTR record(s)
         for ptr in naptrs:
             url = "http://{}:{}/naptrs/{}".format(
                 conf["server_ip"],
@@ -1581,9 +1697,11 @@ class Dhcp(CommandBase):
         name_or_ip = input("Enter host name/ip> ") if len(args) < 1 else args[0]
         addr = input("Enter MAC address> ") if len(args) < 2 else args[1]
 
+        # MAC addr sanity check
         if not is_valid_mac_addr(addr):
             cli_warning("invalid MAC address: {}".format(addr))
 
+        # Get A/AAAA record by either ip address or host name
         if is_valid_ip(name_or_ip):
             url = "http://{}:{}/ipaddresses/{}".format(
                 conf["server_ip"],
@@ -1603,6 +1721,7 @@ class Dhcp(CommandBase):
                 ))
             ip = info["ipaddress"][0]
 
+        # Update A/AAAA record
         url = "http://{}:{}/ipaddresses/{}".format(
             conf["server_ip"],
             conf["server_port"],
@@ -1621,6 +1740,7 @@ class Dhcp(CommandBase):
         """
         name_or_ip = input("Enter host name/ip> ") if len(args) < 1 else args[0]
 
+        # Get A/AAAA record by either ip address or host name
         if is_valid_ip(name_or_ip):
             url = "http://{}:{}/ipaddresses/{}".format(
                 conf["server_ip"],
@@ -1640,6 +1760,7 @@ class Dhcp(CommandBase):
                 ))
             ip = info["ipaddress"][0]
 
+        # Update A/AAAA record
         url = "http://{}:{}/ipaddresses/{}".format(
             conf["server_ip"],
             conf["server_port"],
