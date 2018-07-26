@@ -2023,7 +2023,7 @@ class Subnet(CommandBase):
                 ERROR = True
                 log_file.write(
                     "WARNING: {} contains addresses that are in use. Remove hosts before deletion\n".format(
-                        {subnet['range']}))
+                        subnet))
 
         # Check if subnets marked for creation have any overlap with existing subnets
         for subnet_new in subnets_post:
@@ -2046,6 +2046,7 @@ class Subnet(CommandBase):
                 subnets_patch.add(subnet)
 
         if ERROR:
+            log_file.close()
             cli_warning("Errors detected during setup. Check subnets_import.log for details")
 
         if ((len(subnets_delete) + len(subnets_patch)) / len(
@@ -2080,3 +2081,4 @@ class Subnet(CommandBase):
             log_file.write("PATCH {}\n".format(url))
 
         log_file.write("------ API REQUESTS END ------\n".format(input_file))
+        log_file.close()
