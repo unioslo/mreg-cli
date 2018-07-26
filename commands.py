@@ -1627,8 +1627,10 @@ class Zone(CommandBase):
         if zones and 'y' not in args:
             cli_warning("Zone has registered subzones, must force")
 
-        delete(url_zone)
-        cli_info("deleted zone {}".format(name), True)
+        for zone in zones:
+            url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], zone['name'])
+            delete(url_zone)
+            cli_info("deleted zone {}".format(zone['name']), True)
 
     def opt_set_ns(self, args: typing.List[str]):
         """
