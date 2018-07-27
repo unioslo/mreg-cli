@@ -16,8 +16,14 @@ from log import *
 
 try:
     conf = cli_config(required_fields=(
-        "server_ip", "server_port", "tag_file", "129_240_file", "158_36_file", "172_16_file",
-        "193_157_file"))
+        "server_ip",
+        "server_port",
+        "tag_file",
+        "129_240_file",
+        "158_36_file",
+        "172_16_file",
+        "193_157_file",
+    ))
 except Exception as e:
     print("util.py: cli_config:", e)
     traceback.print_exc()
@@ -55,7 +61,7 @@ def host_exists(name: str) -> bool:
 
     # Response data sanity checks
     if len(hosts) > 1:
-        cli_error("host exist check received more than one match for \"{}\"".format(name))
+        cli_error("host exist check received more than one exact match for \"{}\"".format(name))
     if len(hosts) == 0:
         return False
     if hosts[0]["name"] != name:
@@ -89,10 +95,15 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
     then it will return the host with the canonical name instead of the given alias.
     :return: A dict of the JSON object received with the host information
     """
+    # Get longform of name, raise exception if host doesn't exist
     name = resolve_input_name(name)
+
+    # All host info data is returned from the API
     url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], name)
     history.record_get(url)
     host = get(url).json()
+
+    # Follow CNAMEs
     if host["cname"] and follow_cnames:
         if len(host["cname"]) > 1:
             cli_error("{} has multiple CNAME records".format(name))
@@ -101,14 +112,14 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
         return host
 
 
-def available_ips_from_subnet(subnet: dict) -> str:
+def available_ips_from_subnet(subnet: dict) -> set:
     """
     Returns an arbitrary ip from the given subnet.
     Assumes subnet exists.
     :param subnet: dict with subnet info.
     :return: Ip address string
     """
-# TODO return sorted list
+    # TODO return sorted list
     addresses = list(ipaddress.ip_network(subnet['range']).hosts())
     addresses = set([str(ip) for ip in addresses[subnet['reserved']:]])
     addresses_in_use = set(get_subnet_used_list(subnet['range']))
@@ -456,6 +467,12 @@ def get_vlans_from_file(file: str, vlans: dict):
                     line)
                 if match:
                     vlans[match.group('vlan')] = match.group('range')
+
+def string_to_int(value, error_tag):
+    try:
+        return int(value)
+    except ValueError:
+        cli_warning("%s: Not a valid integer" % error_tag)
 
 
 ################################################################################

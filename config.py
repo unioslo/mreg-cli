@@ -2,6 +2,7 @@ from typing import *
 import re
 
 
+# TODO: Rewrite with/use "configparser" from std library instead
 def cli_config(config_file: str = "cli.conf", required_fields: Sequence[str] = []) -> dict:
     conf = dict()
     with open(config_file) as f:

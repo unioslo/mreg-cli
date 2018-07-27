@@ -10,8 +10,8 @@ from history import history
 
 
 def split_args(arg_str: str) -> typing.List[str]:
-    """Splits a string of arguments on whitespaces, while preserving double quoted string and
-    removing pparentheses
+    """Splits a string of arguments on whitespaces, while preserving double quoted strings
+     (without the quotes) and removing parentheses.
     """
     args = []
     word = ""
@@ -59,8 +59,9 @@ class ClientShell(cmd.Cmd):
             print("missing argument(s).")
             return
         elif args[0] == "help":
-            if len(args) < 2:
-                cli_warning("missing help option")
+            if len(args) < 2 or (len(args) == 2 and not args[1]):
+                print("missing help option")
+                return
             else:
                 command.opt_help(args[1])
         else:
@@ -170,7 +171,7 @@ class ClientShell(cmd.Cmd):
         return True
 
     def do_shell(self, args):
-        """Run a normal bash command."""
+        """Run a normal bash command ("!" is a shortcut for "shell")."""
         os.system(args)
 
     def do_host(self, args):
