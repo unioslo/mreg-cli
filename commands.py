@@ -1811,7 +1811,7 @@ class Zone(CommandBase):
             nameservers[i] = info['name']
 
         url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
-        post(url, name=name, nameservers=nameservers)
+        post(url, name=name, primary_ns=nameservers)
         cli_info("created zone {}".format(name), True)
 
     def opt_delete(self, args: typing.List[str]):
@@ -1871,7 +1871,7 @@ class Zone(CommandBase):
             nameservers[i] = info['name']
 
         url = "http://{}:{}/zones/{}/nameservers".format(conf["server_ip"], conf["server_port"], name)
-        patch(url, nameservers=nameservers)
+        patch(url, primary_ns=nameservers)
         cli_info("updated nameservers for {}".format(name), True)
 
     def opt_set_soa(self, args: typing.List[str]):
