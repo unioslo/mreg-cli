@@ -2148,20 +2148,16 @@ class Subnet(CommandBase):
 
     def opt_list_unused_addresses(self, args: typing.List[str]):
         """
-        list_used_addresses <subnet>
-            Lists all the used addresses for a subnet
+        list_unused_addresses <subnet>
+            Lists all the unused addresses for a subnet
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
 
-        if is_valid_ip(ip_range):
+        if is_valid_ip(ip_range) or is_valid_subnet(ip_range):
             subnet = get_subnet(ip_range)
-            addresses = get_subnet_used_list(subnet['range'])
-        elif is_valid_subnet(ip_range):
-            addresses = get_subnet_used_list(ip_range)
+            unused_addresses = available_ips_from_subnet(subnet)
         else:
             cli_warning("Not a valid ip or subnet")
-
-        unused_addresses = available_ips_from_subnet(subnet)
 
         for address in unused_addresses:
             print("{1:<{0}}".format(25, address))
