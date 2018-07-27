@@ -178,9 +178,9 @@ dhcp assoc francine 1a:3d:31:ab:0a:0c
 dhcp disassoc francine
 # Test assoc fail when host got multiple A/AAAA records
 !echo -n "Fails: "
-dhcp assoc sethmacfarlane 15:26:ab:c4:2c:20
-dhcp assoc 129.240.69.69 15:26:ab:c4:2c:20
-dhcp assoc 1234::ff0f 1a:2b:3c:4d:5e:6f
+dhcp assoc sethmacfarlane 15:26:AB:C4:2C:20
+dhcp assoc 129.240.69.69 1526ABC42C20
+dhcp assoc 1234::ff0f 1a2b3c4d5e6f
 dhcp disassoc 1234::ff0f
 
 # Zones creation ###############################################################
