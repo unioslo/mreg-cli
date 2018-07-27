@@ -1603,7 +1603,7 @@ class Zone(CommandBase):
             nameservers[i] = info['name']
 
         url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
-        post(url, name=name, nameservers=nameservers)
+        post(url, name=name, primary_ns=nameservers)
         cli_info("created zone {}".format(name), True)
 
     def opt_delete(self, args: typing.List[str]):
@@ -1663,7 +1663,7 @@ class Zone(CommandBase):
             nameservers[i] = info['name']
 
         url = "http://{}:{}/zones/{}/nameservers".format(conf["server_ip"], conf["server_port"], name)
-        patch(url, nameservers=nameservers)
+        patch(url, primary_ns=nameservers)
         cli_info("updated nameservers for {}".format(name), True)
 
     def opt_set_soa(self, args: typing.List[str]):
@@ -1980,29 +1980,31 @@ class Subnet(CommandBase):
             for line in file:
                 line_number += 1
                 match = re.match(
-                    r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+:(?P<tags>.*):\|(?P<description>.*)", line)
+                    r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+((:(?P<tags>.*):\|(?P<description_tags>.*))|(?P<description_solo>.*))", line)
                 if match:
-                    tags = match.group('tags').split(':')
                     info = {'location': None, 'category': ''}
-                    for tag in tags:
-                        if is_valid_location_tag(tag):
-                            info['location'] = tag
-                        elif is_valid_category_tag(tag):
-                            info['category'] = ('%s %s' % (info['category'], tag)).strip()
-                        else:
-                            # TODO ERROR = True ?
-                            log_file.write(
-                                "{}: Invalid tag {}. Valid tags can be found in {}\n".format(
-                                    line_number, tag, conf['tag_file']))
+                    if match.group('tags'):
+                        tags = match.group('tags').split(':')
+                        for tag in tags:
+                            if is_valid_location_tag(tag):
+                                info['location'] = tag
+                            elif is_valid_category_tag(tag):
+                                info['category'] = ('%s %s' % (info['category'], tag)).strip()
+                            else:
+                                log_file.write(
+                                    "{}: Invalid tag {}. Valid tags can be found in {}\n".format(
+                                        line_number, tag, conf['tag_file']))
                     data = {
                         'range': match.group('range'),
-                        'description': match.group('description').strip(),
+                        'description': match.group('description_tags').strip() if match.group('description_tags') else match.group('description_solo').strip(),
                         'vlan': vlans[match.group('range')] if match.group('range') in vlans else 0,
                         'category': info['category'] if info['category'] else None,
                         'location': info['location'] if info['location'] else None,
                         'frozen': False
                     }
                     import_data['%s' % match.group('range')] = data
+                else:
+                    log_file.write("{}: Could not match string".format(line_number))
 
         log_file.write("------ READ FROM {} END ------\n".format(input_file))
 
@@ -2049,9 +2051,10 @@ class Subnet(CommandBase):
             log_file.close()
             cli_warning("Errors detected during setup. Check subnets_import.log for details")
 
-        if ((len(subnets_delete) + len(subnets_patch)) / len(
-                current_subnets.keys())) > 0.2 and 'y' not in args:
-            cli_warning("WARNING: The import will change over 20% of the subnets. Requires force")
+        if len(subnets_delete) + len(subnets_patch) != 0:
+            if ((len(subnets_delete) + len(subnets_patch)) / len(
+                    current_subnets.keys())) > 2 and 'y' not in args:
+                cli_warning("WARNING: The import will change over 20% of the subnets. Requires force")
 
         log_file.write("------ API REQUESTS START ------\n".format(input_file))
 
