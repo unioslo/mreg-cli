@@ -60,7 +60,8 @@ class ClientShell(cmd.Cmd):
             return
         elif args[0] == "help":
             if len(args) < 2 or (len(args) == 2 and not args[1]):
-                cli_warning("missing help option")
+                print("missing help option")
+                return
             else:
                 command.opt_help(args[1])
         else:
