@@ -170,7 +170,7 @@ class ClientShell(cmd.Cmd):
         return True
 
     def do_shell(self, args):
-        """Run a normal bash command."""
+        """Run a normal bash command ("!" is a shortcut for "shell")."""
         os.system(args)
 
     def do_host(self, args):
