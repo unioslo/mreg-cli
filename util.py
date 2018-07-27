@@ -3,6 +3,8 @@ import json
 import sys
 import getpass
 import ipaddress
+from socket import inet_aton
+import struct
 import traceback
 import typing
 import types
@@ -119,14 +121,14 @@ def available_ips_from_subnet(subnet: dict) -> set:
     :param subnet: dict with subnet info.
     :return: Ip address string
     """
-    # TODO return sorted list
     addresses = list(ipaddress.ip_network(subnet['range']).hosts())
     addresses = set([str(ip) for ip in addresses[subnet['reserved']:]])
     addresses_in_use = set(get_subnet_used_list(subnet['range']))
     possible_addresses = addresses - addresses_in_use
     if not possible_addresses:
         cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
-    return possible_addresses
+    # Sorts the set by converting the IP addresses to long
+    return sorted(possible_addresses, key=lambda ip: struct.unpack("!L", inet_aton(ip))[0])
 
 
 def zone_mreg_controlled(zone: str) -> bool:
