@@ -1785,7 +1785,6 @@ class Zone(CommandBase):
         create <zone-name> (<nameservers>)
             Create new zone.
         """
-        # TODO Validation for valid domain names
         force = False
         arguments = args
         if len(args) > 0 and args[-1] == 'y':
@@ -2212,7 +2211,8 @@ class Subnet(CommandBase):
                     }
                     import_data['%s' % match.group('range')] = data
                 else:
-                    log_file.write("{}: Could not match string".format(line_number))
+                    log_file.write("{}: Could not match string\n".format(line_number))
+                    ERROR = True
 
         log_file.write("------ READ FROM {} END ------\n".format(input_file))
 
