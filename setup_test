@@ -6,12 +6,12 @@ subnet create 129.240.96.0/24 "Frozzzen"                  # frozen subnet
 subnet set_frozen 129.240.96.0/24
 
 # Host creation ################################################################
-host add sethmacfarlane 129.240.69.69 me@griffin.no -hinfo 1 -comment "O.o"
+host add sethmacfarlane 129.240.69.69 me@griffin.no -comment "O.o" #-hinfo 1
 host set_contact sethmacfarlane peter@griffin.no
 host set_comment sethmacfarlane "Family Guy is too awesome"
 
-host add stan 129.240.69.100 american@dad.no -hinfo 2
-host add roger 129.240.69.101 american@dad.no -hinfo 3
+host add stan 129.240.69.100 american@dad.no #-hinfo 2
+host add roger 129.240.69.101 american@dad.no #-hinfo 3
 host add steve 129.240.69.102 american@dad.no
 host add francine 129.240.69.103 american@dad.no
 host add haley 129.240.69.104 american@dad.no
@@ -84,8 +84,8 @@ host cname_add roger brian
 host cname_add sethmacfarlane stan
 
 # HINFO ########################################################################
-host hinfo_remove sethmacfarlane
-host hinfo_set sethmacfarlane 1
+#host hinfo_remove sethmacfarlane
+#host hinfo_set sethmacfarlane 1
 
 # LOC ##########################################################################
 # Test force for all LOC commands
