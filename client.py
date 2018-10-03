@@ -170,6 +170,9 @@ class ClientShell(cmd.Cmd):
         """Exit the mreg cli."""
         return True
 
+    do_exit = do_quit
+    do_EOF = do_quit
+
     def do_shell(self, args):
         """Run a normal bash command ("!" is a shortcut for "shell")."""
         os.system(args)
