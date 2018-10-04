@@ -107,13 +107,18 @@ class ClientShell(cmd.Cmd):
         assert isinstance(command, CommandBase)
         print(command.help())
 
+
+    def emptyline(self):
+        """Do nothing on empty inputs."""
+        pass
+
     ###############################
     #   Read commands from file   #
     ###############################
 
     def do_source(self, args):
-        """Read commands from a file. If --exit is supplied then it'll stop executing on error.
-    source <file-name> [--exit]
+        """Read commands from a file. If --exit is supplied then it'll stop
+        executing on error.  source <file-name> [--exit]
         """
         args = args.split()
         if len(args) < 1:
