@@ -1839,6 +1839,47 @@ class Zone(CommandBase):
             delete(url_zone)
             cli_info("deleted zone {}".format(zone['name']), True)
 
+    def opt_info(self, args: typing.List[str]):
+        """
+            info <zone-name>
+                Show SOA info for a existing zone.
+        """
+
+        def print_soa(info: str, text: str, padding: int = 20) -> None:
+            print("{1:<{0}}{2}".format(padding, info, text))
+        def print_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
+            print("{1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl))
+
+        name = input("Enter zone name>") if len(args) < 1 else args[0]
+        if not name:
+            cli_warning('Name is required')
+        url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
+        zone = get(url_zone).json()
+        print_soa("Zone:", zone["name"])
+        print_ns("Nameservers:", "hostname", "TTL")
+        for ns in zone['nameservers']:
+            ttl = ns['ttl'] if ns['ttl'] else "<not set>"
+            print_ns("", ns['name'], ttl)
+        print_soa("Primary ns:", zone["primary_ns"])
+        print_soa("Email:", zone['email'])
+        print_soa("Serialnumber:", zone["serialno"])
+        print_soa("Refresh:", zone["refresh"])
+        print_soa("Retry:", zone["retry"])
+        print_soa("Expire:", zone["expire"])
+        print_soa("TTL:", zone["ttl"])
+
+    def opt_list(self, args: typing.List[str]):
+        """
+            list
+                List all zones.
+        """
+
+        url_zones = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+        zones = get(url_zones).json()
+        print("Zones:")
+        for zone in sorted(zones, key=lambda kv: kv['name']):
+            print('   {}'.format(zone['name']))
+
     def opt_set_ns(self, args: typing.List[str]):
         """
               set_ns <zone-name> (<nameservers>)
