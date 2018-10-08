@@ -1795,22 +1795,30 @@ class Zone(CommandBase):
         if not name:
             cli_warning('Name is required')
 
-        nameservers = input("Enter nameservers>") if len(arguments) < 2 else arguments[1:]
+        email = input("Enter email address>") if len(arguments) < 2 else arguments[1]
+        if not is_valid_email(email):
+            cli_warning("Email is required")
+
+        nameservers = input("Enter nameservers>") if len(arguments) < 3 else arguments[2:]
         if isinstance(nameservers, str):
             nameservers = nameservers.split(' ')
 
         if not nameservers:
             cli_warning('At least one nameserver is required')
 
-        for i in range(len(nameservers)):
-            info = host_info_by_name(nameservers[i])
-            if host_in_mreg_zone(info['name']):
-                if not info['ipaddress'] and not force:
-                    cli_warning("{} has no A-record/glue, must force".format(nameservers[i]))
-            nameservers[i] = info['name']
+        for nameserver in nameservers:
+            try:
+                info = host_info_by_name(nameserver)
+            except HostNotFoundWarning:
+                if not force:
+                    cli_warning("{} has no A-record/glue, must force".format(nameserver))
+            else:
+                if host_in_mreg_zone(info['name']):
+                    if not info['ipaddress'] and not force:
+                        cli_warning("{} has no A-record/glue, must force".format(nameserver))
 
         url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
-        post(url, name=name, primary_ns=nameservers)
+        post(url, name = name, email = email, primary_ns = nameservers)
         cli_info("created zone {}".format(name), True)
 
     def opt_delete(self, args: typing.List[str]):
@@ -2180,12 +2188,9 @@ class Subnet(CommandBase):
         else:
             cli_warning("Not a valid ip or subnet")
 
-        hosts = []
         for address in addresses:
-            hosts.append(resolve_ip(address))
-
-        for x in range(len(addresses)):
-            print("{1:<{0}}{2}".format(25, addresses[x], hosts[x]))
+            host = resolve_ip(address)
+            print("{1:<{0}}{2}".format(25, address, host))
 
     def opt_list_unused_addresses(self, args: typing.List[str]):
         """
