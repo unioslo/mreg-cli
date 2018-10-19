@@ -114,22 +114,31 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
         return host
 
 
-def available_ips_from_subnet(subnet: dict) -> set:
+def available_ips_from_subnet(subnet: dict) -> list:
     """
-    Returns an arbitrary ip from the given subnet.
+    Returns unsed ips from the given subnet.
+    Assumes subnet exists.
+    :param subnet: dict with subnet info.
+    :return: List of Ip address strings
+    """
+
+    unused = get_subnet_unused_list(subnet['range'])
+    if not unused:
+        cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
+    return unused
+
+def first_unused_ip_from_subnet(subnet: dict) -> str:
+    """
+    Returns the first unused ip from a given subnet.
     Assumes subnet exists.
     :param subnet: dict with subnet info.
     :return: Ip address string
     """
-    addresses = list(ipaddress.ip_network(subnet['range']).hosts())
-    addresses = set([str(ip) for ip in addresses[subnet['reserved']:]])
-    addresses_in_use = set(get_subnet_used_list(subnet['range']))
-    possible_addresses = addresses - addresses_in_use
-    if not possible_addresses:
-        cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
-    # Sorts the set by converting the IP addresses to long
-    return sorted(possible_addresses, key=lambda ip: struct.unpack("!L", inet_aton(ip))[0])
 
+    unused = get_subnet_first_unused(subnet['range'])
+    if not unused:
+        cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
+    return unused
 
 def zone_mreg_controlled(zone: str) -> bool:
     """Return true of the zone is controlled by MREG"""
@@ -446,6 +455,28 @@ def get_subnet_used_list(ip_range: str):
     history.record_get(url)
     return get(url).json()
 
+
+def get_subnet_unused_list(ip_range: str):
+    "Return a list of the unused addresses on a given subnet"
+    url = "http://{}:{}/subnets/{}{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        ip_range,
+        "?unused_list"
+    )
+    history.record_get(url)
+    return get(url).json()
+
+def get_subnet_first_unused(ip_range: str):
+    "Returns the first unused address on a subnet, if any"
+    url = "http://{}:{}/subnets/{}{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        ip_range,
+        "?first_unused"
+    )
+    history.record_get(url)
+    return get(url).json()
 
 def get_vlan_mapping():
     """"Get VLAN mapping: subnet - vlan"""
