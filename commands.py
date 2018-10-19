@@ -324,12 +324,12 @@ class Host(CommandBase):
         subnet = dict()
         if re.match(r"^.*/$", ip_or_net):
             subnet = get_subnet(ip_or_net[:-1])
-            ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Handle arbitrary ip from subnet if received a subnet w/mask
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
-            ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Require force if given valid ip in subnet not controlled by MREG
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
@@ -552,14 +552,14 @@ class Host(CommandBase):
             subnet = get_subnet(ip_or_net[:-1])
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
-            ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Handle arbitrary ip from subnet if received a subnet w/mask
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
-            ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Require force if given valid ip in subnet not controlled by MREG
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
@@ -673,14 +673,14 @@ class Host(CommandBase):
             subnet = get_subnet(ip_or_net[:-1])
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
-            ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Handle arbitrary ip from subnet if received a subnet w/mask
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
-            ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Require force if given valid ip in subnet not controlled by MREG
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
@@ -753,14 +753,14 @@ class Host(CommandBase):
             subnet = get_subnet(ip_or_net[:-1])
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
-            ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Handle arbitrary ip from subnet if received a subnet w/mask
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
-            ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Require force if given valid ip in subnet not controlled by MREG
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
@@ -863,14 +863,14 @@ class Host(CommandBase):
             subnet = get_subnet(ip_or_net[:-1])
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
-            new_ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Handle arbitrary ip from subnet if received a subnet w/mask
         elif is_valid_subnet(ip_or_net):
             subnet = get_subnet(ip_or_net)
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
-            new_ip = available_ips_from_subnet(subnet).pop()
+            ip = first_unused_ip_from_subnet(subnet)
 
         # Require force if given valid ip in subnet not controlled by MREG
         elif is_valid_ip(ip_or_net) and not ip_in_mreg_net(ip_or_net):
@@ -2191,6 +2191,8 @@ class Subnet(CommandBase):
         for address in addresses:
             host = resolve_ip(address)
             print("{1:<{0}}{2}".format(25, address, host))
+        else:
+            print("No used addresses.")
 
     def opt_list_unused_addresses(self, args: typing.List[str]):
         """
