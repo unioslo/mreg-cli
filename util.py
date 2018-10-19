@@ -643,13 +643,12 @@ def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> No
     assert isinstance(ip_range, str)
     assert isinstance(reserved, int)
     subnet = ipaddress.ip_network(ip_range)
-    hosts = list(subnet.hosts())
     print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address,
                                      subnet.broadcast_address))
     print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
-    for x in range(reserved):
-        print("{1:<{0}}{2}".format(padding, "", hosts[x]))
+    for x, host in zip(range(reserved), subnet.hosts()):
+        print("{1:<{0}}{2}".format(padding, "", host))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)"))
 
 
