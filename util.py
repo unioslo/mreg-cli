@@ -478,6 +478,10 @@ def get_subnet_first_unused(ip_range: str):
     history.record_get(url)
     return get(url).json()
 
+def get_subnet_reserved_ips(ip_range: str, reserved: int):
+    subnet = ipaddress.ip_network(ip_range)
+    return [ ip for i, ip in zip(range(reserved), subnet.hosts()) ]
+
 def get_vlan_mapping():
     """"Get VLAN mapping: subnet - vlan"""
     vlans = {}
@@ -678,7 +682,7 @@ def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> No
                                      subnet.broadcast_address))
     print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
-    for x, host in zip(range(reserved), subnet.hosts()):
+    for host in get_subnet_reserved_ips(ip_range, reserved):
         print("{1:<{0}}{2}".format(padding, "", host))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)"))
 
