@@ -342,8 +342,7 @@ class Host(CommandBase):
         else:
             subnet = get_subnet(ip_or_net)
             network_object = ipaddress.ip_network(subnet['range'])
-            addresses = list(network_object.hosts())
-            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
@@ -574,8 +573,7 @@ class Host(CommandBase):
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             network_object = ipaddress.ip_network(subnet['range'])
-            addresses = list(network_object.hosts())
-            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
@@ -695,8 +693,7 @@ class Host(CommandBase):
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             network_object = ipaddress.ip_network(subnet['range'])
-            addresses = list(network_object.hosts())
-            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
@@ -775,8 +772,7 @@ class Host(CommandBase):
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             network_object = ipaddress.ip_network(subnet['range'])
-            addresses = list(network_object.hosts())
-            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
@@ -885,8 +881,7 @@ class Host(CommandBase):
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             network_object = ipaddress.ip_network(subnet['range'])
-            addresses = list(network_object.hosts())
-            reserved_addresses = set([str(ip) for ip in addresses[:subnet['reserved']]])
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
