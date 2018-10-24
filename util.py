@@ -324,21 +324,18 @@ def resolve_ip(ip: str) -> str:
 
 def resolve_input_name(name: str) -> str:
     """Tries to find the named host. Raises an exception if not."""
-    url = "http://{}:{}/hosts/?name__contains={}".format(
+    longname = to_longform(name.lower())
+    url = "http://{}:{}/hosts/?name={}".format(
         conf["server_ip"],
         conf["server_port"],
-        name
+        longname
     )
     history.record_get(url)
     hosts = get(url).json()
 
-    for host in hosts:
-        if name == host["name"]:
-            return name
-    name = to_longform(name)
-    for host in hosts:
-        if name == host["name"]:
-            return name
+    if len(hosts) == 1:
+        assert hosts[0]["name"] == longname
+        return longname
     cli_warning("host not found: {}".format(name), exception=HostNotFoundWarning)
 
 
@@ -349,20 +346,26 @@ def resolve_input_name(name: str) -> str:
 ################################################################################
 
 def is_longform(name: typing.AnyStr) -> bool:
-    """Check if name ends with uio.no"""
+    """Check if name ends with a "." or default domain"""
     if not isinstance(name, (str, bytes)):
         return False
-    if re.match("^.*((\.uio)?\.no\.?|\.)$", name):
+    if name.endswith("."):
         return True
-    else:
-        return False
+    if 'domain' in conf and name.endswith(conf['domain']):
+        return True
+    return False
 
 
 def to_longform(name: typing.AnyStr, trailing_dot: bool = False) -> str:
-    """Return long form of host name, i.e. append uio.no"""
+    """Return long form of host name, i.e. append conf['domain']"""
     if not isinstance(name, str):
         name = str(name)
-    s = ".uio.no" if name[len(name) - 1] != "." else "uio.no"
+    # Assume FQDN when name ends with .
+    if name.endswith("."):
+        return name[:-1]
+    elif 'domain' in conf and not name.endswith(conf['domain']):
+        name += "." + conf['domain']
+    s = ""
     if trailing_dot:
         s += "."
     return name + s
