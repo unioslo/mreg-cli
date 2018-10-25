@@ -3,6 +3,7 @@ import json
 import sys
 import getpass
 import ipaddress
+import operator
 from socket import inet_aton
 import struct
 import traceback
@@ -377,27 +378,32 @@ def to_longform(name: typing.AnyStr, trailing_dot: bool = False) -> str:
 #                                                                              #
 ################################################################################
 
-def hinfo_id_to_strings(id: int) -> typing.Tuple[str, str]:
-    """Take a hinfo id and return a descriptive string"""
-    if not isinstance(id, int):
-        return tuple(("", ""))
-    hl = hinfo_list()
-    return hl[id - 1]
+HinfoTuple = typing.Tuple[str, str]
+HinfoDict = typing.Dict[int, HinfoTuple]
 
+def hinfo_sanify(hid: str, hinfo: HinfoDict):
+    """Check if the requested hinfo is a valid one."""
+    try:
+        hid = int(hid)
+    except ValueError:
+        cli_warning("hinfo {} is not a number".format(hid))
+    if len(hinfo) == 0:
+        cli_warning("Can not set hinfo, as no hinfo presets defined")
+    if not hid in hinfo:
+        cli_warning("Unknown hinfo preset {}".format(hid))
 
-def hinfo_list() -> typing.List[typing.Tuple[str, str]]:
+def hinfo_dict() -> HinfoDict:
     """
-    Return a list with descriptions of available hinfo presets. Their index + 1 corresponds to the
-    hinfo id
+    Return a dict with descriptions of available hinfo presets. The keys
+    are the hinfo ids.
     """
     url = "http://{}:{}/hinfopresets/".format(conf["server_ip"], conf["server_port"])
     history.record_get(url)
     hinfo_get = get(url)
-    hl = []
+    hl = dict()
     for hinfo in hinfo_get.json():
         assert isinstance(hinfo, dict)
-        # Assuming hinfo preset ids are 1-indexed
-        hl.insert(hinfo["hinfoid"] - 1, (hinfo["os"], hinfo["cpu"]))
+        hl[hinfo["hinfoid"]] = (hinfo["os"], hinfo["cpu"])
     return hl
 
 
@@ -589,28 +595,23 @@ def print_ttl(ttl: int, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "TTL:", ttl or "(Default)"))
 
 
-def print_hinfo(hinfo: typing.Tuple[str, str], padding: int = 14) -> None:
-    """Pretty print given hinfo"""
-    if hinfo is None:
-        return
-    assert isinstance(hinfo, tuple)
-    assert len(hinfo) == 2
-    assert isinstance(hinfo[0], str) and isinstance(hinfo[1], str)
+def print_hinfo(hid: int, padding: int = 14) -> None:
+    """Pretty given hinfo id"""
+    hinfos = hinfo_dict()
+    hinfo = hinfos[hid]
     print("{1:<{0}}os={2} cpu={3}".format(padding, "Hinfo:", hinfo[0], hinfo[1]))
 
 
-def print_hinfo_list(hinfos: typing.List[typing.Tuple[str, str]], padding: int = 14) -> None:
-    """Pretty print a list of host infos"""
-    assert isinstance(hinfos, list)
-    max_len = 0
-    for t in hinfos:
-        assert isinstance(t, tuple)
-        assert isinstance(t[0], str) and isinstance(t[1], str)
-        if len(t[0]) > max_len:
-            max_len = len(t[0])
-    for i in range(0, len(hinfos)):
+def print_hinfo_list(hinfos: HinfoDict, padding: int = 14) -> None:
+    """Pretty print a dict of host infos"""
+    if len(hinfos) == 0:
+        print("No hinfo presets.")
+        return
+    max_len = max([len(x[0]) for x in hinfos.values()])
+    for hid in sorted(hinfos.keys()):
+        hinfo = hinfos[hid]
         print(
-            "{1:<{0}} -> {2:<{3}} {4}".format(padding, i + 1, hinfos[i][0], max_len, hinfos[i][1]))
+            "{1:<{0}} -> {2:<{3}} {4}".format(padding, hid, hinfo[0], max_len, hinfo[1]))
 
 
 def print_srv(srv: dict, padding: int = 14) -> None:
