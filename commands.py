@@ -987,8 +987,8 @@ class Host(CommandBase):
             target for <new-alias>.
         """
         if len(args) < 2:
-            name = input("Enter name> ") if len(args) < 1 else args[0]
-            alias = input("Enter alias> ")
+            name = input("Enter existing name> ") if len(args) < 1 else args[0]
+            alias = input("Enter new alias> ")
         else:
             name = args[0]
             alias = args[1]
