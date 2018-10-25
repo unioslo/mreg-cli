@@ -158,7 +158,7 @@ class Host(CommandBase):
         print_ipaddresses(info["ipaddress"])
         print_ttl(info["ttl"])
         if info["hinfo"]:
-            print_hinfo(hinfo_id_to_strings(info["hinfo"]))
+            print_hinfo(info["hinfo"])
         if info["loc"]:
             print_loc(info["loc"])
         for cname in aliases_of_host(info["name"]):
@@ -297,14 +297,14 @@ class Host(CommandBase):
         # NOTE: an A-record forward-zone not controlled by MREG aren't handled
 
         # Get arguments interactively, if missing required, with HINFO help
-        hi_list = hinfo_list()
+        hi_dict = hinfo_dict()
         if len(args) < 3:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
             ip_or_net = input("Enter subnet or ip> ") if len(args) < 2 else args[1]
             contact = input("Enter contact> ")
             hinfo = input("Enter hinfo (optional)> ")
             while hinfo == "?":
-                print_hinfo_list(hi_list)
+                print_hinfo_list(hi_dict)
                 hinfo = input("Enter hinfo (optional)> ")
             comment = input("Enter comment (optional)> ")
         else:
@@ -316,9 +316,7 @@ class Host(CommandBase):
 
         # Verify hinfo id
         if hinfo:
-            hinfo = int(hinfo)
-            if not 0 < hinfo <= len(hi_list):
-                cli_warning("invalid hinfo ({}) when trying to add {}".format(hinfo, name))
+            hinfo_sanify(hinfo, hi_dict)
 
         # Handle arbitrary ip from subnet if received a subnet w/o mask
         subnet = dict()
@@ -1145,21 +1143,18 @@ class Host(CommandBase):
         hinfo_set <name> <hinfo>
             Set hinfo for host. If <name> is an alias the cname host is updated.
         """
-        hi_list = hinfo_list()
+        hi_dict = hinfo_dict()
         if len(args) < 2:
             name = input("Enter host name> ") if len(args) < 1 else args[0]
             hinfo = input("Enter hinfo> ")
             while hinfo == "?":
-                print_hinfo_list(hi_list)
+                print_hinfo_list(hi_dict)
                 hinfo = input("Enter hinfo> ")
         else:
             name = args[0]
             hinfo = args[1]
 
-        # Hinfo sanity check
-        hinfo = int(hinfo)
-        if not 0 < hinfo <= len(hi_list):
-            cli_warning("invalid hinfo.")
+        hinfo_sanify(hinfo, hinfo_dict())
 
         # Get host info or raise exception
         info = host_info_by_name(name)
@@ -1199,7 +1194,9 @@ class Host(CommandBase):
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
         if info["hinfo"]:
-            print_hinfo(hinfo_id_to_strings(info["hinfo"]))
+            print_hinfo(info["hinfo"])
+        else:
+            print("No hinfo for {}".format(name))
         cli_info("showed hinfo for {}".format(info["name"]))
 
     def opt_srv_add(self, args: typing.List[str]) -> None:
