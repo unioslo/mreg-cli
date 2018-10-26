@@ -1167,6 +1167,18 @@ class Host(CommandBase):
         patch(url, hinfo=hinfo)
         cli_info("updated hinfo to {} for {}".format(hinfo, info["name"]), print_msg=True)
 
+    def _hinfo_remove(self, host) -> None:
+        """
+        Helper method to remove hinfo from a host.
+        """
+        old_data = {"hinfo": host["hinfo"]}
+        new_data = {"hinfo": -1}
+
+        # Set hinfo to null value
+        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], host["name"])
+        history.record_patch(url, new_data, old_data)
+        patch(url, hinfo=-1)
+
     def opt_hinfo_remove(self, args: typing.List[str]) -> None:
         """
         hinfo_remove <name>
@@ -1176,14 +1188,7 @@ class Host(CommandBase):
 
         # Get host info or raise exception
         info = host_info_by_name(name)
-
-        old_data = {"hinfo": info["hinfo"]}
-        new_data = {"hinfo": -1}
-
-        # Set hinfo to null value
-        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
-        history.record_patch(url, new_data, old_data)
-        patch(url, hinfo=-1)
+        self._hinfo_remove(info)
         cli_info("removed hinfo for {}".format(info["name"]), print_msg=True)
 
     def opt_hinfo_show(self, args: typing.List[str]) -> None:
@@ -1196,8 +1201,89 @@ class Host(CommandBase):
         if info["hinfo"]:
             print_hinfo(info["hinfo"])
         else:
-            print("No hinfo for {}".format(name))
+            cli_info("No hinfo for {}".format(name), print_msg=True)
         cli_info("showed hinfo for {}".format(info["name"]))
+
+    def opt_hinfopresets_list(self, args: typing.List[str]) -> None:
+        """
+        hinfopresets_list
+            Show hinfopresets.
+        """
+        hi_dict = hinfo_dict()
+        if hi_dict:
+            print_hinfo_list(hi_dict)
+        else:
+            cli_info("No hinfopresets.", print_msg=True)
+
+    def opt_hinfopresets_create(list, args: typing.List[str]) -> None:
+        """
+        hinfopresets_create <cpu> <os>
+            Create a new hinfopreset.
+        """
+        if len(args) != 2:
+            cpu = input("Enter cpu> ")
+            os = input("Enter os> ")
+        else:
+            (cpu, os) = args
+        hi_dict = hinfo_dict()
+        for hid, hinfo in hi_dict.items():
+            if (cpu, os) == hinfo:
+                cli_warning("cpu {} and os {} already defined as set {}".format(cpu, os, hid))
+
+        data = {
+            "cpu": cpu,
+            "os": os
+        }
+        url = "http://{}:{}/hinfopresets/".format(conf["server_ip"], conf["server_port"])
+        history.record_post(url, "", data, undoable=False)
+        post(url, **data)
+        cli_info("Added new hinfopreset with cpu {} and os {}".format(cpu, os), print_msg=True)
+
+
+    def opt_hinfopresets_remove(self, args: typing.List[str]) -> None:
+        """
+        hinfopresets_remove <id>
+            Remove a hinfopreset.
+        """
+
+        if len(args):
+            hid = args.pop(0)
+        else:
+            hid = input("Enter hinfopreset id> ")
+            while hid == "?":
+                print_hinfo_list(hi_dict)
+                hid = input("Enter hinfopreset id> ")
+
+        hi_dict = hinfo_dict()
+        if hid not in hi_dict.keys():
+            cli_info("hinfopreset {} does not exist".format(hid), print_msg=True)
+            return
+
+        # Check for hinfopreset in use
+        url = "http://{}:{}/hosts/?hinfo={}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            hid,
+        )
+        history.record_get(url)
+        hosts = get(url).json()
+        if len(hosts):
+            if args and args[0] == "y":
+                for host in hosts:
+                    info = host_info_by_name(host['name'])
+                    self._hinfo_remove(info)
+                cli_info("Removed hinfopreset {} from {} hosts".format(hid, len(hosts)), print_msg=True)
+            else:
+                cli_warning("hinfopreset {} in use by {} hosts, must force".format(hid, len(hosts)))
+
+        url = "http://{}:{}/hinfopresets/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            hid,
+        )
+        history.record_delete(url, hid)
+        delete(url)
+        cli_info("Removed hinfopreset {}".format(hid), print_msg=True)
 
     def opt_srv_add(self, args: typing.List[str]) -> None:
         """
