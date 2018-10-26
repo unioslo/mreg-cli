@@ -384,7 +384,7 @@ HinfoDict = typing.Dict[int, HinfoTuple]
 def hinfo_sanify(hid: str, hinfo: HinfoDict):
     """Check if the requested hinfo is a valid one."""
     try:
-        hid = int(hid)
+        int(hid)
     except ValueError:
         cli_warning("hinfo {} is not a number".format(hid))
     if len(hinfo) == 0:
@@ -403,7 +403,7 @@ def hinfo_dict() -> HinfoDict:
     hl = dict()
     for hinfo in hinfo_get.json():
         assert isinstance(hinfo, dict)
-        hl[hinfo["hinfoid"]] = (hinfo["os"], hinfo["cpu"])
+        hl[str(hinfo["hinfoid"])] = (hinfo["cpu"], hinfo["os"])
     return hl
 
 
@@ -595,11 +595,12 @@ def print_ttl(ttl: int, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "TTL:", ttl or "(Default)"))
 
 
-def print_hinfo(hid: int, padding: int = 14) -> None:
+def print_hinfo(hid: str, padding: int = 14) -> None:
     """Pretty given hinfo id"""
     hinfos = hinfo_dict()
+    hid = str(hid)
     hinfo = hinfos[hid]
-    print("{1:<{0}}os={2} cpu={3}".format(padding, "Hinfo:", hinfo[0], hinfo[1]))
+    print("{1:<{0}}cpu={2} os={3}".format(padding, "Hinfo:", hinfo[0], hinfo[1]))
 
 
 def print_hinfo_list(hinfos: HinfoDict, padding: int = 14) -> None:
@@ -608,6 +609,7 @@ def print_hinfo_list(hinfos: HinfoDict, padding: int = 14) -> None:
         print("No hinfo presets.")
         return
     max_len = max([len(x[0]) for x in hinfos.values()])
+    print("{1:<{0}}    {2:<{3}} {4}".format(padding, "Id", "CPU", max_len, "OS"))
     for hid in sorted(hinfos.keys()):
         hinfo = hinfos[hid]
         print(
