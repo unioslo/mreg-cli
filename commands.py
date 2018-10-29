@@ -371,6 +371,10 @@ class Host(CommandBase):
         if not host_in_mreg_zone(name) and "y" not in args:
             cli_warning("{} isn't in a zone controlled by MREG, must force".format(name))
 
+        # TODO: only for superusers
+        if "*" in name and "y" not in args:
+            cli_warning("Wildcards must be forced.")
+
         # Create the new host with an ip address
         url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
         data = {
@@ -463,6 +467,10 @@ class Host(CommandBase):
         if not host_in_mreg_zone(new_name) and "y" not in args:
             cli_warning("{} isn't in a zone controlled by MREG, must force".format(new_name))
 
+        # TODO: only for superusers
+        if "*" in name and "y" not in args:
+            cli_warning("Wildcards must be forced.")
+
         old_data = {"name": old_name}
         new_data = {"name": new_name}
 
@@ -537,6 +545,10 @@ class Host(CommandBase):
 
         # Get host info for or raise exception
         info = host_info_by_name(name)
+
+        # TODO: only for superusers
+        if "*" in name and "y" not in args:
+            cli_warning("Wildcards must be forced.")
 
         # Require force if host has multiple A/AAAA records
         if len(info["ipaddress"]) and "y" not in args:
@@ -737,6 +749,10 @@ class Host(CommandBase):
 
         # Get host info or raise exception
         info = host_info_by_name(name)
+
+        # TODO: only for superusers
+        if "*" in name and "y" not in args:
+            cli_warning("Wildcards must be forced.")
 
         if len(info["ipaddress"]) and "y" not in args:
             cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
