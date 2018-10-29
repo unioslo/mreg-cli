@@ -325,18 +325,18 @@ def resolve_ip(ip: str) -> str:
 
 def resolve_input_name(name: str) -> str:
     """Tries to find the named host. Raises an exception if not."""
-    longname = to_longform(name.lower())
+    hostname = clean_hostname(name.lower())
     url = "http://{}:{}/hosts/?name={}".format(
         conf["server_ip"],
         conf["server_port"],
-        longname
+        hostname
     )
     history.record_get(url)
     hosts = get(url).json()
 
     if len(hosts) == 1:
-        assert hosts[0]["name"] == longname
-        return longname
+        assert hosts[0]["name"] == hostname
+        return hostname
     cli_warning("host not found: {}".format(name), exception=HostNotFoundWarning)
 
 
@@ -346,31 +346,21 @@ def resolve_input_name(name: str) -> str:
 #                                                                              #
 ################################################################################
 
-def is_longform(name: typing.AnyStr) -> bool:
-    """Check if name ends with a "." or default domain"""
+def clean_hostname(name: typing.AnyStr) -> str:
+    """ Converts from short to long hostname, if no domain found. """
+    ### bytes?
     if not isinstance(name, (str, bytes)):
-        return False
-    if name.endswith("."):
-        return True
-    if 'domain' in conf and name.endswith(conf['domain']):
-        return True
-    return False
+        cli_warning("Invalid input for hostname: {}".format(name))
 
-
-def to_longform(name: typing.AnyStr, trailing_dot: bool = False) -> str:
-    """Return long form of host name, i.e. append conf['domain']"""
-    if not isinstance(name, str):
-        name = str(name)
-    # Assume FQDN when name ends with .
+    name = name.lower()
+    # Assume user is happy with domain, but strip the punctation mark.
     if name.endswith("."):
         return name[:-1]
-    elif 'domain' in conf and not name.endswith(conf['domain']):
-        name += "." + conf['domain']
-    s = ""
-    if trailing_dot:
-        s += "."
-    return name + s
 
+    # If no domain in conf, not much more can be done
+    if 'domain' in conf and not name.endswith(conf['domain']):
+            return "{}.{}".format(name, conf['domain'])
+    return name
 
 ################################################################################
 #                                                                              #
