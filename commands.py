@@ -357,7 +357,8 @@ class Host(CommandBase):
         if not is_valid_email(contact):
             cli_warning("invalid mail address ({}) when trying to add {}".format(contact, name))
 
-        # Fail if given host exists on either short or long form
+        # Fail if given host exits
+        name = clean_hostname(name)
         try:
             name = resolve_input_name(name)
         except HostNotFoundWarning:
@@ -365,12 +366,9 @@ class Host(CommandBase):
         else:
             cli_warning("host {} already exists".format(name))
 
-        # Always use long form host name. Require force if FQDN not in MREG zone
-        if is_longform(name):
-            if not host_in_mreg_zone(name) and "y" not in args:
-                cli_warning("{} isn't in a zone controlled by MREG, must force".format(name))
-        else:
-            name = to_longform(name)
+        # Require force if FQDN not in MREG zone
+        if not host_in_mreg_zone(name) and "y" not in args:
+            cli_warning("{} isn't in a zone controlled by MREG, must force".format(name))
 
         # Create the new host with an ip address
         url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
@@ -447,10 +445,11 @@ class Host(CommandBase):
             old_name = args[0]
             new_name = args[1]
 
-        # Get longform name if input on shortform or raise exception if host not found
+        # Find old host
         old_name = resolve_input_name(old_name)
 
-        # Fail if given host exists on either short or long form
+        # Make sure new hostname does not exist.
+        new_name = clean_hostname(new_name)
         try:
             new_name = resolve_input_name(new_name)
         except HostNotFoundWarning:
@@ -459,12 +458,10 @@ class Host(CommandBase):
             if "y" not in args:
                 cli_warning("host {} already exists".format(new_name))
 
-        # Always use long form host name. Require force if host not in MREG zone
-        if is_longform(new_name):
-            if not host_in_mreg_zone(new_name) and "y" not in args:
-                cli_warning("{} isn't in a zone controlled by MREG, must force".format(new_name))
-        else:
-            new_name = to_longform(new_name)
+        # Require force if FQDN not in MREG zone
+        if not host_in_mreg_zone(new_name) and "y" not in args:
+            cli_warning("{} isn't in a zone controlled by MREG, must force".format(new_name))
+
         old_data = {"name": old_name}
         new_data = {"name": new_name}
 
@@ -1012,7 +1009,7 @@ class Host(CommandBase):
 
         # Create cname host if it doesn't exist
         if not alias_info:
-            alias = alias if is_longform(alias) else to_longform(alias)
+            alias = clean_hostname(alias)
             data = {
                 "name": alias,
                 "contact": info["contact"],
@@ -1041,7 +1038,7 @@ class Host(CommandBase):
             name = args[0]
             alias = args[1]
 
-        # Get longform of input name, raise exception if host doesn't exist
+        # Find old host
         host_name = resolve_input_name(name)
 
         # Get host info or raise exception
@@ -1304,19 +1301,18 @@ class Host(CommandBase):
             name = args[4]
 
         # Require force if target host doesn't exist
+        host_name = clean_hostname(name)
         try:
             host_name = resolve_input_name(name)
         except HostNotFoundWarning:
             if "y" not in args:
                 cli_warning("{} doesn't exist. Must force".format(name))
-            host_name = name
 
         # Require force if target host not in MREG zone
         if not host_in_mreg_zone(host_name) and "y" not in args:
             cli_warning("{} isn't in a MREG controlled zone, must force".format(host_name))
 
-        # Always use longform for service name
-        sname = sname if is_longform(sname) else to_longform(sname, trailing_dot=True)
+        sname = clean_hostname(sname)
 
         # Check if a SRV record with identical service exists
         url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"], conf["server_port"], sname)
@@ -1351,7 +1347,7 @@ class Host(CommandBase):
             Remove SRV record.
         """
         sname = input("Enter service name> ") if len(args) < 1 else args[0]
-        sname = sname if is_longform(sname) else to_longform(sname, trailing_dot=True)
+        sname = clean_hostname(sname)
 
         # Check if service exist
         url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"], conf["server_port"], sname)
@@ -1381,6 +1377,7 @@ class Host(CommandBase):
             Show SRV show. An empty input showes all existing SRV records
         """
         sname = input("Enter service name> ") if len(args) < 1 else args[0]
+        sname = clean_hostname(sname)
 
         # Get all matching SRV records
         url = "http://{}:{}/srvs/?service__contains={}".format(
