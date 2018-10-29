@@ -5,6 +5,7 @@ import types
 import typing
 import requests
 import ipaddress
+import urllib
 
 from util import *
 from config import *
@@ -2120,7 +2121,8 @@ class Subnet(CommandBase):
         if 'y' not in args:
             cli_warning("Must force (y)")
 
-        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], ip_range)
+        url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
+                                               urllib.parse.quote(ip_range, safe=''))
         delete(url)
         cli_info("removed subnet {}".format(ip_range), True)
 
