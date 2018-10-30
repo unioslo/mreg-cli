@@ -443,6 +443,17 @@ def get_subnet(ip: str) -> dict:
         cli_warning("Not a valid ip range or ip address")
 
 
+def get_subnet_used_count(ip_range: str):
+    "Return a count of the addresses in use on a given subnet"
+    url = "http://{}:{}/subnets/{}{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        ip_range,
+        "?used_count"
+    )
+    history.record_get(url)
+    return get(url).json()
+
 def get_subnet_used_list(ip_range: str):
     "Return a list of the addresses in use on a given subnet"
     url = "http://{}:{}/subnets/{}{}".format(
@@ -454,6 +465,17 @@ def get_subnet_used_list(ip_range: str):
     history.record_get(url)
     return get(url).json()
 
+
+def get_subnet_unused_count(ip_range: str):
+    "Return a count of the unused addresses on a given subnet"
+    url = "http://{}:{}/subnets/{}{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        ip_range,
+        "?unused_count"
+    )
+    history.record_get(url)
+    return get(url).json()
 
 def get_subnet_unused_list(ip_range: str):
     "Return a list of the unused addresses on a given subnet"
@@ -477,9 +499,16 @@ def get_subnet_first_unused(ip_range: str):
     history.record_get(url)
     return get(url).json()
 
-def get_subnet_reserved_ips(ip_range: str, reserved: int):
-    subnet = ipaddress.ip_network(ip_range)
-    return [ ip for i, ip in zip(range(reserved), subnet.hosts()) ]
+def get_subnet_reserved_ips(ip_range: str):
+    "Returns the first unused address on a subnet, if any"
+    url = "http://{}:{}/subnets/{}{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        ip_range,
+        "?reserved_list"
+    )
+    history.record_get(url)
+    return get(url).json()
 
 def get_vlan_mapping():
     """"Get VLAN mapping: subnet - vlan"""
@@ -678,9 +707,16 @@ def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> No
                                      subnet.broadcast_address))
     print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
     print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
-    for host in get_subnet_reserved_ips(ip_range, reserved):
+    res = get_subnet_reserved_ips(ip_range)
+    res.remove(str(subnet.network_address))
+    broadcast = False
+    if str(subnet.broadcast_address) in res:
+        res.remove(str(subnet.broadcast_address))
+        broadcast = True
+    for host in res:
         print("{1:<{0}}{2}".format(padding, "", host))
-    print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)"))
+    if broadcast:
+        print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)"))
 
 
 def print_subnet(info: int, text: str, padding: int = 25) -> None:

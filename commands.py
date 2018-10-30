@@ -341,7 +341,7 @@ class Host(CommandBase):
         else:
             subnet = get_subnet(ip_or_net)
             network_object = ipaddress.ip_network(subnet['range'])
-            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
@@ -569,7 +569,7 @@ class Host(CommandBase):
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             network_object = ipaddress.ip_network(subnet['range'])
-            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
@@ -689,7 +689,7 @@ class Host(CommandBase):
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             network_object = ipaddress.ip_network(subnet['range'])
-            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
@@ -768,7 +768,7 @@ class Host(CommandBase):
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             network_object = ipaddress.ip_network(subnet['range'])
-            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
@@ -877,7 +877,7 @@ class Host(CommandBase):
             if subnet["frozen"] and "y" not in args:
                 cli_warning("subnet {} is frozen, must force".format(subnet["range"]))
             network_object = ipaddress.ip_network(subnet['range'])
-            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'], subnet['reserved'])))
+            reserved_addresses = set(map(str, get_subnet_reserved_ips(subnet['range'])))
             if ip_or_net in reserved_addresses and 'y' not in args:
                 cli_warning("Address is reserved. Requires force")
             if ip_or_net == network_object.network_address.exploded:
@@ -2042,7 +2042,8 @@ class Subnet(CommandBase):
 
         # Get subnet info or raise exception
         subnet_info = get_subnet(ip_range)
-        used_list = get_subnet_used_list(subnet_info['range'])
+        used = get_subnet_used_count(subnet_info['range'])
+        unused = get_subnet_unused_count(subnet_info['range'])
         network = ipaddress.ip_network(subnet_info['range'])
 
         # Pretty print all subnet info
@@ -2055,8 +2056,8 @@ class Subnet(CommandBase):
         print_subnet(subnet_info['dns_delegated'] if subnet_info['dns_delegated'] else False, "DNS delegated:")
         print_subnet(subnet_info['frozen'] if subnet_info['frozen'] else False, "Frozen")
         print_subnet_reserved(subnet_info['range'], subnet_info['reserved'])
-        print_subnet(len(used_list), "Used addresses:")
-        print_subnet_unused(network.num_addresses - (subnet_info['reserved'] + 2) - len(used_list))
+        print_subnet(used, "Used addresses:")
+        print_subnet_unused(unused)
         cli_info("printed subnet info for {}".format(subnet_info['range']))
 
     def opt_create(self, args: typing.List[str]):
@@ -2244,7 +2245,7 @@ class Subnet(CommandBase):
         """
         ip_range = input("Enter subnet>") if len(args) < 1 else args[0]
         subnet = get_subnet(ip_range)
-        reserved = string_to_int(input("Enter number of reserved hosts>"), "Reserved")
+        reserved = string_to_int(input("Enter number of reserved hosts>"), "Reserved")  if len(args) < 2 else args[1]
 
         url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet['range'])
         patch(url, reserved=reserved)
