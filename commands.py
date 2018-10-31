@@ -1921,23 +1921,25 @@ class Zone(CommandBase):
         name = input("Enter zone name>") if len(args) < 1 else args[0]
 
         url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
-        zone = get(url_zone)
+        zone = get(url_zone).json()
 
-        url_hosts = "http://{}:{}/hosts/?name__endswith={}".format(conf["server_ip"], conf["server_port"], name)
+        url_hosts = "http://{}:{}/hosts/?zoneid={}".format(conf["server_ip"], conf["server_port"], zone['zoneid'])
         url_zones = "http://{}:{}/zones/?name__endswith={}".format(conf["server_ip"], conf["server_port"], name)
 
         hosts = get(url_hosts).json()
         zones = get(url_zones).json()
 
+        # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
         if hosts and 'y' not in args:
-            cli_warning("Zone has registered entries, must force")
-        if zones and 'y' not in args:
-            cli_warning("Zone has registered subzones, must force")
+            cli_warning("Zone has {} registered entries, must force".format(len(hosts)))
+        other_zones = [ z['name'] for z in zones if z['name'] != name ]
+        if other_zones:
+            cli_warning("Zone has registered subzones '{}', "
+                        "can not delete".format(", ".join(sorted(other_zones))))
 
-        for zone in zones:
-            url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], zone['name'])
-            delete(url_zone)
-            cli_info("deleted zone {}".format(zone['name']), True)
+        url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], zone['name'])
+        delete(url_zone)
+        cli_info("deleted zone {}".format(zone['name']), True)
 
     def opt_info(self, args: typing.List[str]):
         """
