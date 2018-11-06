@@ -325,6 +325,7 @@ def resolve_ip(ip: str) -> str:
 
 def resolve_input_name(name: str) -> str:
     """Tries to find the named host. Raises an exception if not."""
+    name = name.lower()
     if "." in name:
         hostname = name
     else:
