@@ -325,7 +325,11 @@ def resolve_ip(ip: str) -> str:
 
 def resolve_input_name(name: str) -> str:
     """Tries to find the named host. Raises an exception if not."""
-    hostname = clean_hostname(name.lower())
+    if "." in name:
+        hostname = name
+    else:
+        hostname = clean_hostname(name)
+
     url = "http://{}:{}/hosts/?name={}".format(
         conf["server_ip"],
         conf["server_port"],
