@@ -2314,7 +2314,7 @@ class Subnet(CommandBase):
         input_file = input("Enter path to import file>") if len(args) < 1 else args[0]
         if not input_file:
             cli_warning("No file path")
-        log_file = open('subnets_import.log', 'w+')
+        log_file = open('subnets_import.log', 'a')
         vlans = get_vlan_mapping()
         ERROR = False  # Flag to check before making requests if something isn't right
 
@@ -2420,7 +2420,7 @@ class Subnet(CommandBase):
                  category=data['category'], \
                  location=data['location'], \
                  frozen=data['frozen'])
-            log_file.write("POST {} - {}\n".format(url, subnet))
+            log_file.write("POST {} - {} - {}\n".format(url, subnet, data['description']))
 
         for subnet in subnets_patch:
             url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"], subnet)
