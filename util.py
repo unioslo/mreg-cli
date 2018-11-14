@@ -536,7 +536,7 @@ def get_vlans_from_file(file: str, vlans: dict):
                     r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+.*?[vlan|VLAN|Vlan]\s*?(?P<vlan>\d+).*",
                     line)
                 if match:
-                    vlans[match.group('vlan')] = match.group('range')
+                    vlans[match.group('range')] = int(match.group('vlan'))
 
 def string_to_int(value, error_tag):
     try:
