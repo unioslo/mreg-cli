@@ -163,12 +163,18 @@ if __name__ == '__main__':
         if words[0] not in commands:
             print_formatted_text(HTML('<ansired>Unknown command "%s"</ansired>' % words[0]))
         else:
-            if len(words) < 2 or words[1] != 'info':
+            if len(words) < 2:
                 print_formatted_text(HTML('<ansired>Invalid sub command of "%s".</ansired>' % words[0]))
-            else:
+            elif words[1] == '-h' or words[1] == '--help':
+                commands[words[0]].print_help()
+                commands[words[0]].print_usage()
+            elif words[1] == 'info':
                 # Create a dict of the input arguments
                 args = vars(commands[words[0]].parse_args(words[1:]))
                 print('Executing "%s %s" on:' % (words[0], words[1]))
                 for k in args:
                     for s in args[k]:
                         print_formatted_text(HTML('\t<i>%s</i>' % s))
+            else:
+                print_formatted_text(HTML('<ansired>Invalid sub command of "%s".</ansired>' % words[0]))
+
