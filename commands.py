@@ -657,6 +657,9 @@ class Host(CommandBase):
             old_ip = args[1]
             ip_or_net = args[2]
 
+        if old_ip == ip_or_net:
+            cli_warning("New and old IP are equal")
+
         # Ip and subnet sanity checks
         if not is_valid_ipv4(old_ip):
             cli_warning("invalid ipv4 \"{}\" (target host {})".format(old_ip, name))
@@ -859,6 +862,9 @@ class Host(CommandBase):
             name = args[0]
             old_ip = args[1]
             ip_or_net = args[2]
+
+        if old_ip == ip_or_net:
+            cli_warning("New and old IP are equal")
 
         # Get host info or raise exception
         info = host_info_by_name(name)
@@ -1530,10 +1536,6 @@ class Host(CommandBase):
 
         # Get host info or raise exception
         info = host_info_by_name(name)
-
-        # check that host haven't got a PTR record already
-        if len(info["ptr_override"]):
-            cli_warning("{} already got a PTR record".format(info["name"]))
 
         # check that a PTR record with the given ip doesn't exist
         url = "http://{}:{}/ptroverrides/?ipaddress={}".format(
