@@ -625,12 +625,11 @@ class Host(CommandBase):
 
         # Check that ip belongs to host
         info = host_info_by_name(name)
-        found = False
         for rec in info["ipaddress"]:
             if rec["ipaddress"] == ip:
-                found = True
+                ip_id = rec["id"]
                 break
-        if not found:
+        else:
             cli_warning("{} is not owned by {}".format(ip, info["name"]))
 
         old_data = {
@@ -639,7 +638,7 @@ class Host(CommandBase):
         }
 
         # Remove ip
-        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip)
+        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip_id)
         history.record_delete(url, old_data)
         delete(url)
         cli_info("removed ip {} from {}".format(ip, info["name"]), print_msg=True)
@@ -658,6 +657,9 @@ class Host(CommandBase):
             old_ip = args[1]
             ip_or_net = args[2]
 
+        if old_ip == ip_or_net:
+            cli_warning("New and old IP are equal")
+
         # Ip and subnet sanity checks
         if not is_valid_ipv4(old_ip):
             cli_warning("invalid ipv4 \"{}\" (target host {})".format(old_ip, name))
@@ -666,12 +668,11 @@ class Host(CommandBase):
 
         # Check that ip belongs to host
         info = host_info_by_name(name)
-        found = False
         for rec in info["ipaddress"]:
             if rec["ipaddress"] == old_ip:
-                found = True
+                ip_id = rec["id"]
                 break
-        if not found:
+        else:
             cli_warning("{} is not owned by {}".format(old_ip, info["name"]))
 
         # Handle arbitrary ip from subnet if received a subnet w/o mask
@@ -720,7 +721,7 @@ class Host(CommandBase):
         new_data = {"ipaddress": ip}
 
         # Update A record ip address
-        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], old_ip)
+        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip_id)
         history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
         patch(url, ipaddress=ip)
         cli_info("updated ip {} to {} for {}".format(old_ip, ip, info["name"]), print_msg=True)
@@ -830,12 +831,11 @@ class Host(CommandBase):
             cli_warning("not a valid ipv6 \"{}\" (target host {})".format(ip, info["name"]))
 
         # Check that ip belongs to host
-        found = False
         for rec in info["ipaddress"]:
             if rec["ipaddress"] == ip:
-                found = True
+                ip_id = rec["id"]
                 break
-        if not found:
+        else:
             cli_warning("{} is not owned by {}".format(ip, info["name"]))
 
         old_data = {
@@ -844,7 +844,7 @@ class Host(CommandBase):
         }
 
         # Delete AAAA record
-        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip)
+        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip_id)
         history.record_delete(url, old_data)
         delete(url)
         cli_info("removed {} from {}".format(ip, info["name"]), print_msg=True)
@@ -862,6 +862,9 @@ class Host(CommandBase):
             name = args[0]
             old_ip = args[1]
             ip_or_net = args[2]
+
+        if old_ip == ip_or_net:
+            cli_warning("New and old IP are equal")
 
         # Get host info or raise exception
         info = host_info_by_name(name)
@@ -911,19 +914,18 @@ class Host(CommandBase):
             cli_warning("not a valid ipv6 \"{}\" (target host {})".format(new_ip, info["name"]))
 
         # Check that ip belongs to host
-        found = False
         for rec in info["ipaddress"]:
             if rec["ipaddress"] == old_ip:
-                found = True
+                ip_id = rec["id"]
                 break
-        if not found:
+        else:
             cli_warning("\"{}\" is not owned by {}".format(old_ip, info["name"]))
 
         old_data = {"ipaddress": old_ip}
         new_data = {"ipaddress": new_ip}
 
         # Update AAAA records ip address
-        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], old_ip)
+        url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip_id)
         # Cannot redo/undo since recourse name changes
         history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
         patch(url, ipaddress=new_ip)
@@ -1535,10 +1537,6 @@ class Host(CommandBase):
         # Get host info or raise exception
         info = host_info_by_name(name)
 
-        # check that host haven't got a PTR record already
-        if len(info["ptr_override"]):
-            cli_warning("{} already got a PTR record".format(info["name"]))
-
         # check that a PTR record with the given ip doesn't exist
         url = "http://{}:{}/ptroverrides/?ipaddress={}".format(
             conf["server_ip"],
@@ -1795,7 +1793,7 @@ class Dhcp(CommandBase):
 
         # Get A/AAAA record by either ip address or host name
         if is_valid_ip(name_or_ip):
-            url = "http://{}:{}/ipaddresses/{}".format(
+            url = "http://{}:{}/ipaddresses/?ipaddress={}".format(
                 conf["server_ip"],
                 conf["server_port"],
                 name_or_ip,
@@ -1804,6 +1802,9 @@ class Dhcp(CommandBase):
             ip = get(url).json()
             if not len(ip):
                 cli_warning("ip {} doesn't exist.".format(name_or_ip))
+            elif len(ip) > 1:
+                cli_warning("ip {} is in use by {} hosts".format(name_or_ip, len(ip)))
+            ip = ip[0]
         else:
             info = host_info_by_name(name_or_ip)
             if len(info["ipaddress"]) > 1:
@@ -1812,12 +1813,11 @@ class Dhcp(CommandBase):
                     len(info["ipaddress"]),
                 ))
             ip = info["ipaddress"][0]
-
         # Update A/AAAA record
         url = "http://{}:{}/ipaddresses/{}".format(
             conf["server_ip"],
             conf["server_port"],
-            ip["ipaddress"],
+            ip["id"],
         )
         history.record_patch(url, new_data={"macaddress": addr}, old_data=ip)
         patch(url, macaddress=addr)
@@ -1834,7 +1834,7 @@ class Dhcp(CommandBase):
 
         # Get A/AAAA record by either ip address or host name
         if is_valid_ip(name_or_ip):
-            url = "http://{}:{}/ipaddresses/{}".format(
+            url = "http://{}:{}/ipaddresses/?ipaddress={}".format(
                 conf["server_ip"],
                 conf["server_port"],
                 name_or_ip,
@@ -1843,6 +1843,9 @@ class Dhcp(CommandBase):
             ip = get(url).json()
             if not len(ip):
                 cli_warning("ip {} doesn't exist.".format(name_or_ip))
+            elif len(ip) > 1:
+                cli_warning("ip {} is in use by {} hosts".format(name_or_ip, len(ip)))
+            ip = ip[0]
         else:
             info = host_info_by_name(name_or_ip)
             if len(info["ipaddress"]) > 1:
@@ -1856,7 +1859,7 @@ class Dhcp(CommandBase):
         url = "http://{}:{}/ipaddresses/{}".format(
             conf["server_ip"],
             conf["server_port"],
-            ip["ipaddress"],
+            ip["id"],
         )
         history.record_patch(url, new_data={"macaddress": ""}, old_data=ip)
         patch(url, macaddress="")
