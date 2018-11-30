@@ -5,6 +5,9 @@ subnet create 1234::ff00/120 "familynet"                  # ipv6 subnet
 subnet create 129.240.96.0/24 "Frozzzen"                  # frozen subnet
 subnet set_frozen 129.240.96.0/24
 
+# zone setup
+zone create uio.no hostmaster@example.org ns1.example.org y
+
 # Host creation ################################################################
 host add sethmacfarlane 129.240.69.69 me@griffin.no -comment "O.o" #-hinfo 1
 host set_contact sethmacfarlane peter@griffin.no
@@ -187,10 +190,10 @@ dhcp disassoc 1234::ff0f
 # Test force for NS host without ip in MREG controlled zone
 host a_remove haley 129.240.69.104
 !echo -n "Fails: "
-zone create guy.no (haley)
-zone create guy.no (haley) y
+zone create guy.no hostmaster@example.org (haley.uio.no)
+zone create guy.no hostmaster@example.org (haley.uio.no) y
 
-zone create family.guy.no (claus steve.uio.no)
+zone create family.guy.no hostmaster@example.org (claus.uio.no steve.uio.no)
 host add test1.family.guy.no 129.240.69.120 en@to.no
 
 # Test force for host with entries
@@ -206,4 +209,3 @@ host rename sethmacfarlane familyguy
 host remove am.dad.no y
 host remove daddyo y
 host remove test1.family.guy.no
-

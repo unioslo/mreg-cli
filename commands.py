@@ -156,7 +156,7 @@ class Host(CommandBase):
         print_contact(info["contact"])
         if info["comment"]:
             print_comment(info["comment"])
-        print_ipaddresses(info["ipaddress"])
+        print_ipaddresses(info["ipaddresses"])
         print_ttl(info["ttl"])
         if info["hinfo"]:
             print_hinfo(info["hinfo"])
@@ -164,9 +164,9 @@ class Host(CommandBase):
             print_loc(info["loc"])
         for cname in aliases_of_host(info["name"]):
             print_cname(cname, info["name"])
-        for txt in info["txt"]:
+        for txt in info["txts"]:
             print_txt(txt["txt"])
-        for ptr in info["ptr_override"]:
+        for ptr in info["ptr_overrides"]:
             print_ptr(ptr["ipaddress"], info["name"])
         cli_info("printed host info for {}".format(info["name"]))
 
@@ -202,14 +202,14 @@ class Host(CommandBase):
                     cli_info("deleted alias host {} when removing {}".format(alias, info["name"]))
 
         # Require force if host has multiple A/AAAA records
-        if len(info["ipaddress"]) > 1 and "y" not in args:
-            warn_msg += "{} ipaddresses. ".format(len(info["ipaddress"]))
+        if len(info["ipaddresses"]) > 1 and "y" not in args:
+            warn_msg += "{} ipaddresses. ".format(len(info["ipaddresses"]))
 
         # Require force if host has any NAPTR records. Delete the NAPTR records if force
-        url = "http://{}:{}/naptrs/?hostid={}".format(
+        url = "http://{}:{}/naptrs/?host={}".format(
             conf["server_ip"],
             conf["server_port"],
-            info["hostid"],
+            info["id"],
         )
         history.record_get(url)
         naptrs = get(url).json()
@@ -221,7 +221,7 @@ class Host(CommandBase):
                     url = "http://{}:{}/naptrs/{}".format(
                         conf["server_ip"],
                         conf["server_port"],
-                        ptr["naptrid"],
+                        ptr["id"],
                     )
                     history.record_delete(url, ptr)
                     delete(url)
@@ -234,7 +234,7 @@ class Host(CommandBase):
         url = "http://{}:{}/srvs/?target={}".format(
             conf["server_ip"],
             conf["server_port"],
-            info["name"],
+            info["id"],
         )
         history.record_get(url)
         srvs = get(url).json()
@@ -246,7 +246,7 @@ class Host(CommandBase):
                     url = "http://{}:{}/srvs/{}".format(
                         conf["server_ip"],
                         conf["server_port"],
-                        srv["srvid"],
+                        srv["id"],
                     )
                     history.record_delete(url, srv)
                     delete(url)
@@ -256,11 +256,11 @@ class Host(CommandBase):
                     ))
 
         # Require force if host has any PTR records. Delete the PTR records if force
-        if len(info["ptr_override"]) > 0:
+        if len(info["ptr_overrides"]) > 0:
             if "y" not in args:
-                warn_msg += "{} PTR records. ".format(len(info["ptr_override"]))
+                warn_msg += "{} PTR records. ".format(len(info["ptr_overrides"]))
             else:
-                for ptr in info["ptr_override"]:
+                for ptr in info["ptr_overrides"]:
                     url = "http://{}:{}/ptroverrides/{}".format(
                         conf["server_ip"],
                         conf["server_port"],
@@ -275,8 +275,8 @@ class Host(CommandBase):
 
         # To be able to undo the delete the ipaddress field of the 'old_data' has to be an ipaddress
         # string
-        if len(info["ipaddress"]) > 0:
-            info["ipaddress"] = info["ipaddress"][0]["ipaddress"]
+        if len(info["ipaddresses"]) > 0:
+            info["ipaddress"] = info["ipaddresses"][0]["ipaddress"]
 
         # Warn user and raise exception if any force requirements was found
         if warn_msg:
@@ -468,7 +468,7 @@ class Host(CommandBase):
             cli_warning("{} isn't in a zone controlled by MREG, must force".format(new_name))
 
         # TODO: only for superusers
-        if "*" in name and "y" not in args:
+        if "*" in new_name and "y" not in args:
             cli_warning("Wildcards must be forced.")
 
         old_data = {"name": old_name}
@@ -517,7 +517,7 @@ class Host(CommandBase):
             url = "http://{}:{}/srvs/{}".format(
                 conf["server_ip"],
                 conf["server_port"],
-                srv["srvid"],
+                srv["id"],
             )
             old_data = {"target": old_name}
             new_data = {"target": new_name}
@@ -551,7 +551,7 @@ class Host(CommandBase):
             cli_warning("Wildcards must be forced.")
 
         # Require force if host has multiple A/AAAA records
-        if len(info["ipaddress"]) and "y" not in args:
+        if len(info["ipaddresses"]) and "y" not in args:
             cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
 
         # Handle arbitrary ip from subnet if received a subnet w/o mask
@@ -597,7 +597,7 @@ class Host(CommandBase):
             cli_warning("not valid ipv4 address: {}".format(ip))
 
         data = {
-            "hostid": info["hostid"],
+            "host": info["id"],
             "ipaddress": ip,
         }
 
@@ -625,7 +625,7 @@ class Host(CommandBase):
 
         # Check that ip belongs to host
         info = host_info_by_name(name)
-        for rec in info["ipaddress"]:
+        for rec in info["ipaddresses"]:
             if rec["ipaddress"] == ip:
                 ip_id = rec["id"]
                 break
@@ -633,7 +633,7 @@ class Host(CommandBase):
             cli_warning("{} is not owned by {}".format(ip, info["name"]))
 
         old_data = {
-            "hostid": info["hostid"],
+            "host": info["id"],
             "ipaddress": ip,
         }
 
@@ -668,7 +668,7 @@ class Host(CommandBase):
 
         # Check that ip belongs to host
         info = host_info_by_name(name)
-        for rec in info["ipaddress"]:
+        for rec in info["ipaddresses"]:
             if rec["ipaddress"] == old_ip:
                 ip_id = rec["id"]
                 break
@@ -733,7 +733,7 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
-        print_ipaddresses(info["ipaddress"])
+        print_ipaddresses(info["ipaddresses"])
         cli_info("showed ip addresses for {}".format(info["name"]))
 
     def opt_aaaa_add(self, args: typing.List[str]) -> None:
@@ -755,7 +755,7 @@ class Host(CommandBase):
         if "*" in name and "y" not in args:
             cli_warning("Wildcards must be forced.")
 
-        if len(info["ipaddress"]) and "y" not in args:
+        if len(info["ipaddresses"]) and "y" not in args:
             cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
 
         # Handle arbitrary ip from subnet if received a subnet w/o mask
@@ -801,7 +801,7 @@ class Host(CommandBase):
             cli_warning("not valid ipv6 address: {}".format(ip))
 
         data = {
-            "hostid": info["hostid"],
+            "host": info["id"],
             "ipaddress": ip,
         }
 
@@ -831,7 +831,7 @@ class Host(CommandBase):
             cli_warning("not a valid ipv6 \"{}\" (target host {})".format(ip, info["name"]))
 
         # Check that ip belongs to host
-        for rec in info["ipaddress"]:
+        for rec in info["ipaddresses"]:
             if rec["ipaddress"] == ip:
                 ip_id = rec["id"]
                 break
@@ -839,7 +839,7 @@ class Host(CommandBase):
             cli_warning("{} is not owned by {}".format(ip, info["name"]))
 
         old_data = {
-            "hostid": info["hostid"],
+            "host": info["id"],
             "ipaddress": ip,
         }
 
@@ -914,7 +914,7 @@ class Host(CommandBase):
             cli_warning("not a valid ipv6 \"{}\" (target host {})".format(new_ip, info["name"]))
 
         # Check that ip belongs to host
-        for rec in info["ipaddress"]:
+        for rec in info["ipaddresses"]:
             if rec["ipaddress"] == old_ip:
                 ip_id = rec["id"]
                 break
@@ -938,7 +938,7 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
-        print_ipaddresses(info["ipaddress"])
+        print_ipaddresses(info["ipaddresses"])
         cli_info("showed aaaa records for {}".format(info["name"]))
 
     def opt_ttl_set(self, args: typing.List[str]) -> None:
@@ -1020,10 +1020,10 @@ class Host(CommandBase):
         else:
             if alias_info["hinfo"] or \
                     alias_info["loc"] or \
-                    alias_info["cname"] or \
-                    alias_info["ipaddress"] or \
-                    alias_info["txt"] or\
-                    alias_info["ptr_override"]:
+                    alias_info["cnames"] or \
+                    alias_info["ipaddresses"] or \
+                    alias_info["txts"] or\
+                    alias_info["ptr_overrides"]:
                 cli_warning("host {} already exists and has record(s)".format(alias_info["name"]))
 
         # Create cname host if it doesn't exist
@@ -1041,7 +1041,7 @@ class Host(CommandBase):
         # Create CNAME record
         url = "http://{}:{}/cnames/".format(conf["server_ip"], conf["server_port"])
         history.record_post(url, "", dict(), redoable=False, undoable=False)
-        post(url, hostid=alias_info["hostid"], cname=info["name"])
+        post(url, host=alias_info["id"], cname=info["name"])
         cli_info("Added cname alias {} for {}".format(alias_info["name"], info["name"]),
                  print_msg=True)
 
@@ -1064,7 +1064,7 @@ class Host(CommandBase):
         alias_info = host_info_by_name(alias, follow_cnames=False)
 
         # Check that cname host is an alias for host
-        cnames = alias_info["cname"]
+        cnames = alias_info["cnames"]
         if len(cnames) < 1:
             cli_warning("\"{}\" doesn't have any CNAME records.".format(alias_info["name"]))
         if cnames[0]["cname"] != host_name:
@@ -1383,7 +1383,7 @@ class Host(CommandBase):
             url = "http://{}:{}/srvs/{}".format(
                 conf["server_ip"],
                 conf["server_port"],
-                srv["srvid"],
+                srv["id"],
             )
             history.record_delete(url, srv, redoable=False)
             delete(url)
@@ -1440,7 +1440,7 @@ class Host(CommandBase):
         info = host_info_by_name(name)
 
         data = {
-            "hostid": info["hostid"],
+            "host": info["id"],
             "txt": text
         }
 
@@ -1466,10 +1466,10 @@ class Host(CommandBase):
         info = host_info_by_name(name)
 
         # Check for matching TXT records for host
-        url = "http://{}:{}/txts/?hostid={}&txt__contains={}".format(
+        url = "http://{}:{}/txts/?host={}&txt__contains={}".format(
             conf["server_ip"],
             conf["server_port"],
-            info["hostid"],
+            info["id"],
             text,
         )
         history.record_get(url)
@@ -1488,7 +1488,7 @@ class Host(CommandBase):
             url = "http://{}:{}/txts/{}".format(
                 conf["server_ip"],
                 conf["server_port"],
-                txt["txtid"],
+                txt["id"],
             )
             history.record_delete(url, txt)
             delete(url)
@@ -1505,10 +1505,10 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
-        url = "http://{}:{}/txts/?hostid={}".format(
+        url = "http://{}:{}/txts/?host={}".format(
             conf["server_ip"],
             conf["server_port"],
-            info["hostid"],
+            info["id"],
         )
         history.record_get(url)
         txts = get(url).json()
@@ -1554,7 +1554,7 @@ class Host(CommandBase):
 
         # create PTR record
         data = {
-            "hostid": info["hostid"],
+            "host": info["id"],
             "ipaddress": ip,
         }
         url = "http://{}:{}/ptroverrides/".format(
@@ -1570,6 +1570,7 @@ class Host(CommandBase):
         ptr_remove <ipv4|ipv6> <name>
             Remove PTR record from host.
         """
+        # XXX: broken function by
         if len(args) < 2:
             ip = input("Enter ip> ") if len(args) < 1 else args[0]
             name = input("Enter host name> ")
@@ -1581,14 +1582,14 @@ class Host(CommandBase):
         info = host_info_by_name(name)
 
         # Check that host got PTR record (assuming host got at most one record)
-        if len(info["ptr_override"]) == 0:
+        if len(info["ptr_overrides"]) == 0:
             cli_warning("no PTR record for {} with ip {}".format(info["name"], ip))
 
         # Delete record
         url = "http://{}:{}/ptroverrides/{}".format(
             conf["server_ip"],
             conf["server_port"],
-            info["ptr_override"][0]["id"],
+            info["ptr_overrides"][0]["id"],
         )
         history.record_delete(url, info["ptr_override"][0])
         delete(url)
@@ -1613,25 +1614,25 @@ class Host(CommandBase):
         new_info = host_info_by_name(new_name)
 
         # check that new host haven't got a ptr record already
-        if len(new_info["ptr_override"]):
+        if len(new_info["ptr_overrides"]):
             cli_warning("{} already got a PTR record".format(new_info["name"]))
 
         # check that old host has a PTR record with the given ip
-        if not len(old_info["ptr_override"]):
+        if not len(old_info["ptr_overrides"]):
             cli_warning("no PTR record for {} with ip {}".format(old_info["name"], ip))
-        if old_info["ptr_override"][0]["ipaddress"] != ip:
+        if old_info["ptr_overrides"][0]["ipaddress"] != ip:
             cli_warning("{} PTR record doesn't match {}".format(old_info["name"], ip))
 
         # change PTR record
         data = {
-            "hostid": new_info["hostid"],
+            "host": new_info["id"],
         }
         url = "http://{}:{}/ptroverrides/{}".format(
             conf["server_ip"],
             conf["server_port"],
-            old_info["ptr_override"][0]["id"],
+            old_info["ptr_overrides"][0]["id"],
         )
-        history.record_patch(url, data, old_info["ptr_override"][0])
+        history.record_patch(url, data, old_info["ptr_overrides"][0])
         patch(url, **data)
         cli_info("changed owner of PTR record {} from {} to {}".format(
             ip,
@@ -1697,7 +1698,7 @@ class Host(CommandBase):
             "service": service,
             "regex": regex,
             "replacement": repl,
-            "hostid": info["hostid"],
+            "host": info["id"],
         }
 
         # Create NAPTR record
@@ -1721,11 +1722,11 @@ class Host(CommandBase):
         info = host_info_by_name(name)
 
         # get the hosts NAPTR records where repl is a substring of the replacement field
-        url = "http://{}:{}/naptrs/?replacement__contains={}&hostid={}".format(
+        url = "http://{}:{}/naptrs/?replacement__contains={}&host={}".format(
             conf["server_ip"],
             conf["server_port"],
             repl,
-            info["hostid"]
+            info["id"]
         )
         history.record_get(url)
         naptrs = get(url).json()
@@ -1746,7 +1747,7 @@ class Host(CommandBase):
             url = "http://{}:{}/naptrs/{}".format(
                 conf["server_ip"],
                 conf["server_port"],
-                ptr["naptrid"],
+                ptr["id"],
             )
             history.record_delete(url, ptr)
             delete(url)
@@ -1760,10 +1761,10 @@ class Host(CommandBase):
         """
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
-        url = "http://{}:{}/naptrs/?hostid={}".format(
+        url = "http://{}:{}/naptrs/?host={}".format(
             conf["server_ip"],
             conf["server_port"],
-            info["hostid"],
+            info["host"],
         )
         history.record_get(url)
         naptrs = get(url).json()
@@ -1807,12 +1808,13 @@ class Dhcp(CommandBase):
             ip = ip[0]
         else:
             info = host_info_by_name(name_or_ip)
-            if len(info["ipaddress"]) > 1:
+            if len(info["ipaddresses"]) > 1:
                 cli_warning("{} got {} ip addresses, please enter an ip instead.".format(
                     info["name"],
-                    len(info["ipaddress"]),
+                    len(info["ipaddresses"]),
                 ))
-            ip = info["ipaddress"][0]
+            ip = info["ipaddresses"][0]
+
         # Update A/AAAA record
         url = "http://{}:{}/ipaddresses/{}".format(
             conf["server_ip"],
@@ -1848,12 +1850,12 @@ class Dhcp(CommandBase):
             ip = ip[0]
         else:
             info = host_info_by_name(name_or_ip)
-            if len(info["ipaddress"]) > 1:
+            if len(info["ipaddresses"]) > 1:
                 cli_warning("{} got {} ip addresses, please enter an ip instead.".format(
                     info["name"],
                     len(info["ipaddress"]),
                 ))
-            ip = info["ipaddress"][0]
+            ip = info["ipaddresses"][0]
 
         # Update A/AAAA record
         url = "http://{}:{}/ipaddresses/{}".format(
@@ -1909,7 +1911,7 @@ class Zone(CommandBase):
                     cli_warning("{} has no A-record/glue, must force".format(nameserver))
             else:
                 if host_in_mreg_zone(info['name']):
-                    if not info['ipaddress'] and not force:
+                    if not info['ipaddresses'] and not force:
                         cli_warning("{} has no A-record/glue, must force".format(nameserver))
 
         url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
@@ -1926,7 +1928,7 @@ class Zone(CommandBase):
         url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"], name)
         zone = get(url_zone).json()
 
-        url_hosts = "http://{}:{}/hosts/?zoneid={}".format(conf["server_ip"], conf["server_port"], zone['zoneid'])
+        url_hosts = "http://{}:{}/hosts/?zone={}".format(conf["server_ip"], conf["server_port"], zone['id'])
         url_zones = "http://{}:{}/zones/?name__endswith={}".format(conf["server_ip"], conf["server_port"], name)
 
         hosts = get(url_hosts).json()
@@ -2011,7 +2013,7 @@ class Zone(CommandBase):
         for i in range(len(nameservers)):
             info = host_info_by_name(nameservers[i])
             if host_in_mreg_zone(info['name']):
-                if not info['ipaddress'] and not force:
+                if not info['ipaddresses'] and not force:
                     cli_warning("{} has no A-record/glue, must force".format(nameservers[i]))
             nameservers[i] = info['name']
 

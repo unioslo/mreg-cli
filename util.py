@@ -107,10 +107,10 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
     host = get(url).json()
 
     # Follow CNAMEs
-    if host["cname"] and follow_cnames:
-        if len(host["cname"]) > 1:
+    if host["cnames"] and follow_cnames:
+        if len(host["cnames"]) > 1:
             cli_error("{} has multiple CNAME records".format(name))
-        return host_info_by_name(host["cname"][0]["cname"])
+        return host_info_by_name(host["cnames"][0]["cname"])
     else:
         return host
 
@@ -276,7 +276,7 @@ def get(url: str) -> requests.Response:
 
 def aliases_of_host(name: str) -> typing.List[str]:
     """Finds all aliases for the host"""
-    url = "http://{}:{}/hosts/?cname__cname={}".format(
+    url = "http://{}:{}/hosts/?cnames__cname={}".format(
         conf["server_ip"],
         conf["server_port"],
         name
@@ -306,7 +306,7 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
 
 def resolve_ip(ip: str) -> str:
     """Returns host name associated with ip"""
-    url = "http://{}:{}/hosts/?ipaddress__ipaddress={}".format(
+    url = "http://{}:{}/hosts/?ipaddresses__ipaddress={}".format(
         conf["server_ip"],
         conf["server_port"],
         ip
@@ -398,7 +398,7 @@ def hinfo_dict() -> HinfoDict:
     hl = dict()
     for hinfo in hinfo_get.json():
         assert isinstance(hinfo, dict)
-        hl[str(hinfo["hinfoid"])] = (hinfo["cpu"], hinfo["os"])
+        hl[str(hinfo["id"])] = (hinfo["cpu"], hinfo["os"])
     return hl
 
 
