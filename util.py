@@ -810,4 +810,10 @@ def is_valid_category_tag(cat: str) -> bool:
 
 def is_valid_mac_addr(addr: str) -> bool:
     """Check if address is a valid MAC address"""
-    return re.match("^[a-fA-F0-9]{2}([a-fA-F0-9]{10}|(:[a-fA-F0-9]{2}){5})$", addr)
+    return re.match("^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", addr)
+
+def format_mac(mac: str) -> str:
+    """Create a strict 'aa:bb:cc:11:22:33' MAC address.
+    Replaces any other delimiters with a colon and turns it into all lower case."""
+    mac = re.sub('[.:-]', '', mac).lower()
+    return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])
