@@ -1786,11 +1786,13 @@ class Dhcp(CommandBase):
             given instead of name.
         """
         name_or_ip = input("Enter host name/ip> ") if len(args) < 1 else args[0]
-        addr = input("Enter MAC address> ") if len(args) < 2 else args[1]
+        mac = input("Enter MAC address> ") if len(args) < 2 else args[1]
 
         # MAC addr sanity check
-        if not is_valid_mac_addr(addr):
-            cli_warning("invalid MAC address: {}".format(addr))
+        if is_valid_mac_addr(mac):
+            mac = format_mac(mac)
+        else:
+            cli_warning("invalid MAC address: {}".format(mac))
 
         # Get A/AAAA record by either ip address or host name
         if is_valid_ip(name_or_ip):
@@ -1821,9 +1823,9 @@ class Dhcp(CommandBase):
             conf["server_port"],
             ip["id"],
         )
-        history.record_patch(url, new_data={"macaddress": addr}, old_data=ip)
-        patch(url, macaddress=addr)
-        cli_info("associated mac address {} with ip {}".format(addr, ip["ipaddress"]),
+        history.record_patch(url, new_data={"macaddress": mac}, old_data=ip)
+        patch(url, macaddress=mac)
+        cli_info("associated mac address {} with ip {}".format(mac, ip["ipaddress"]),
                  print_msg=True)
 
     def opt_disassoc(self, args: typing.List[str]) -> None:
