@@ -1438,12 +1438,13 @@ class Host(CommandBase):
 
         # Get host info or raise exception
         info = host_info_by_name(name)
+        if any(text == i["txt"] for i in info["txts"]):
+            cli_warning("The TXT record already exists for {}".format(info["name"]))
 
         data = {
             "host": info["id"],
             "txt": text
         }
-
         # Add TXT record to host
         url = "http://{}:{}/txts/".format(conf["server_ip"], conf["server_port"])
         history.record_post(url, "", data, undoable=False)
