@@ -1343,7 +1343,7 @@ class Host(CommandBase):
             entry_exists = False
 
         data = {
-            "service": sname,
+            "name": sname,
             "priority": pri,
             "weight": weight,
             "port": port,
@@ -1387,7 +1387,7 @@ class Host(CommandBase):
             )
             history.record_delete(url, srv, redoable=False)
             delete(url)
-            cli_info("removed SRV record {} with target {}".format(srv["service"], srv["target"]),
+            cli_info("removed SRV record {} with target {}".format(srv["name"], srv["target"]),
                      print_msg=True)
 
     def opt_srv_show(self, args: typing.List[str]) -> None:
@@ -1399,7 +1399,7 @@ class Host(CommandBase):
         sname = clean_hostname(sname)
 
         # Get all matching SRV records
-        url = "http://{}:{}/srvs/?service__contains={}".format(
+        url = "http://{}:{}/srvs/?name__contains={}".format(
             conf["server_ip"],
             conf["server_port"],
             sname,
@@ -1412,14 +1412,14 @@ class Host(CommandBase):
 
         # Print records
         for srv in srvs:
-            if len(srv["service"]) > padding:
-                padding = len(srv["service"])
+            if len(srv["name"]) > padding:
+                padding = len(srv["name"])
         prev_name = ""
-        for srv in sorted(srvs, key=lambda k: k["service"]):
-            if prev_name == srv["service"]:
-                srv["service"] = ""
+        for srv in sorted(srvs, key=lambda k: k["name"]):
+            if prev_name == srv["name"]:
+                srv["name"] = ""
             else:
-                prev_name = srv["service"]
+                prev_name = srv["name"]
             print_srv(srv, padding)
         cli_info("showed entries for SRV {}".format(sname))
 
@@ -1765,7 +1765,7 @@ class Host(CommandBase):
         url = "http://{}:{}/naptrs/?host={}".format(
             conf["server_ip"],
             conf["server_port"],
-            info["host"],
+            info["id"],
         )
         history.record_get(url)
         naptrs = get(url).json()

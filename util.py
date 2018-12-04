@@ -644,7 +644,7 @@ def print_srv(srv: dict, padding: int = 14) -> None:
     """Pretty print given srv"""
     print("{1:<{0}} SRV {2:^6} {3:^6} {4:^6} {5}".format(
         padding,
-        srv["service"],
+        srv["name"],
         srv["priority"],
         srv["weight"],
         srv["port"],
