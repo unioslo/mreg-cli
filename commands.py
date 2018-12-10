@@ -961,8 +961,8 @@ class Host(CommandBase):
         if not is_valid_ttl(ttl):
             cli_warning("invalid TTL value: {} (target host {})".format(ttl, info["name"]))
 
-        old_data = {"ttl": info["ttl"] or -1}
-        new_data = {"ttl": ttl if ttl != "default" else -1}
+        old_data = {"ttl": info["ttl"] or ""}
+        new_data = {"ttl": ttl if ttl != "default" else ""}
 
         # Update TTL
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
@@ -978,12 +978,12 @@ class Host(CommandBase):
         name = input("Enter host name> ") if len(args) < 1 else args[0]
         info = host_info_by_name(name)
         old_data = {"ttl": info["ttl"]}
-        new_data = {"ttl": -1}
+        new_data = {"ttl": ""}
 
         # Remove TTL value
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
         history.record_patch(url, new_data, old_data)
-        patch(url, ttl=-1)
+        patch(url, ttl="")
         cli_info("removed TTL for {}".format(info["name"]), print_msg=True)
 
     def opt_ttl_show(self, args: typing.List[str]) -> None:
@@ -1174,7 +1174,7 @@ class Host(CommandBase):
 
         # Get host info or raise exception
         info = host_info_by_name(name)
-        old_data = {"hinfo": info["hinfo"] or -1}
+        old_data = {"hinfo": info["hinfo"] or ""}
         new_data = {"hinfo": hinfo}
 
         # Update hinfo
@@ -1188,12 +1188,12 @@ class Host(CommandBase):
         Helper method to remove hinfo from a host.
         """
         old_data = {"hinfo": host["hinfo"]}
-        new_data = {"hinfo": -1}
+        new_data = {"hinfo": ""}
 
         # Set hinfo to null value
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], host["name"])
         history.record_patch(url, new_data, old_data)
-        patch(url, hinfo=-1)
+        patch(url, hinfo="")
 
     def opt_hinfo_remove(self, args: typing.List[str]) -> None:
         """

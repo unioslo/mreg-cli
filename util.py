@@ -773,7 +773,7 @@ def is_valid_subnet(net: str) -> bool:
 
 def is_valid_ttl(ttl: typing.Union[int, str, bytes]) -> bool:  # int?
     """Check application specific ttl restrictions."""
-    if ttl == "default":
+    if ttl in ("", "default"):
         return True
     if not isinstance(ttl, int):
         try:
