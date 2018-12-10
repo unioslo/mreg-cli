@@ -1694,7 +1694,7 @@ class Host(CommandBase):
 
         data = {
             "preference": int(pref),
-            "orderv": int(order),
+            "order": int(order),
             "flag": flag,
             "service": service,
             "regex": regex,
