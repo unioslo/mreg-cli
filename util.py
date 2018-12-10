@@ -681,7 +681,7 @@ def print_naptr(naptr: dict, host_name: str, padding: int = 14) -> None:
         padding,
         host_name,
         naptr["preference"],
-        naptr["orderv"],
+        naptr["order"],
         naptr["flag"],
         naptr["service"],
         naptr["regex"] or "",
