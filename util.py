@@ -89,12 +89,11 @@ def host_info_by_name_or_ip(name_or_ip: str) -> dict:
     return host_info_by_name(name)
 
 
-def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
+def host_info_by_name(name: str) -> dict:
     """
     Return a dict with host information about the given host.
 
     :param name: A host name on either short or long form.
-    :param follow_cnames: Indicate whether or not to follow cname relations. If True (default)
     then it will return the host with the canonical name instead of the given alias.
     :return: A dict of the JSON object received with the host information
     """
@@ -104,15 +103,8 @@ def host_info_by_name(name: str, follow_cnames: bool = True) -> dict:
     # All host info data is returned from the API
     url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], name)
     history.record_get(url)
-    host = get(url).json()
 
-    # Follow CNAMEs
-    if host["cnames"] and follow_cnames:
-        if len(host["cnames"]) > 1:
-            cli_error("{} has multiple CNAME records".format(name))
-        return host_info_by_name(host["cnames"][0]["cname"])
-    else:
-        return host
+    return get(url).json()
 
 
 def available_ips_from_subnet(subnet: dict) -> list:
@@ -273,20 +265,6 @@ def get(url: str) -> requests.Response:
 #   Cname utilities                                                            #
 #                                                                              #
 ################################################################################
-
-def aliases_of_host(name: str) -> typing.List[str]:
-    """Finds all aliases for the host"""
-    url = "http://{}:{}/hosts/?cnames__cname={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        name
-    )
-    history.record_get(url)
-    hosts = get(url).json()
-    aliases = []
-    for host in hosts:
-        aliases.append(host["name"])
-    return aliases
 
 
 ################################################################################

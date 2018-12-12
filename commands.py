@@ -162,8 +162,8 @@ class Host(CommandBase):
             print_hinfo(info["hinfo"])
         if info["loc"]:
             print_loc(info["loc"])
-        for cname in aliases_of_host(info["name"]):
-            print_cname(cname, info["name"])
+        for cname in info["cnames"]:
+            print_cname(cname["name"], info["name"])
         for txt in info["txts"]:
             print_txt(txt["txt"])
         for ptr in info["ptr_overrides"]:
@@ -173,7 +173,7 @@ class Host(CommandBase):
     def opt_remove(self, args: typing.List[str]) -> None:
         """
         remove <name|ip>
-            Remove host. If <name> is an alias the cname host is removed.
+            Remove host.
         """
         if len(args) < 1:
             name_or_ip = input("Enter name or ip> ")
@@ -184,22 +184,11 @@ class Host(CommandBase):
         info = host_info_by_name_or_ip(name_or_ip)
 
         warn_msg = ""
-        # Require force if host has any aliases. Delete the aliases if force.
-        aliases = aliases_of_host(info["name"])
-        if len(aliases):
+        # Require force if host has any cnames.
+        cnames = info["cnames"]
+        if len(cnames):
             if "y" not in args:
-                warn_msg += "{} aliases. ".format(len(aliases))
-            else:
-                for alias in aliases:
-                    url = "http://{}:{}/hosts/{}".format(
-                        conf["server_ip"],
-                        conf["server_port"],
-                        alias,
-                    )
-                    # Cannot undo delete because of hosts CNAME record
-                    history.record_delete(url, old_data=dict(), undoable=False)
-                    delete(url)
-                    cli_info("deleted alias host {} when removing {}".format(alias, info["name"]))
+                warn_msg += "{} cnames. ".format(len(cnames))
 
         # Require force if host has multiple A/AAAA records
         if len(info["ipaddresses"]) > 1 and "y" not in args:
@@ -294,7 +283,6 @@ class Host(CommandBase):
             Add a new host with the given name, ip or subnet and contact. hinfo and comment
             are optional.
         """
-        # NOTE: PTR record not created
         # NOTE: an A-record forward-zone not controlled by MREG aren't handled
 
         # Get arguments interactively, if missing required, with HINFO help
@@ -479,31 +467,6 @@ class Host(CommandBase):
         # Cannot redo/undo now since it changes name
         history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
         patch(url, name=new_name)
-
-        # Update all cname records pointing to <old-name>
-        url = "http://{}:{}/cnames/?cname={}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            old_name,
-        )
-        history.record_get(url)
-        cnames = get(url).json()
-        for cname in cnames:
-            url = "http://{}:{}/cnames/{}".format(
-                conf["server_ip"],
-                conf["server_port"],
-                cname["id"],
-            )
-            old_data = {"cname": old_name}
-            new_data = {"cname": new_name}
-            history.record_patch(url, new_data, old_data)
-            patch(url, cname=new_name)
-        if len(cnames):
-            cli_info("updated {} CNAME record(s) when renaming {} to {}".format(
-                len(cnames),
-                old_name,
-                new_name,
-            ))
 
         # Update all srv records pointing to <old-name>
         url = "http://{}:{}/srvs/?target={}".format(
@@ -955,7 +918,7 @@ class Host(CommandBase):
             ttl = args[1]
 
         # Get host info or raise exception
-        info = host_info_by_name(name, follow_cnames=False)
+        info = host_info_by_name(name)
 
         # TTL sanity check
         if not is_valid_ttl(ttl):
@@ -996,11 +959,11 @@ class Host(CommandBase):
         print_ttl(info["ttl"])
         cli_info("showed TTL for {}".format(info["name"]))
 
+
     def opt_cname_add(self, args: typing.List[str]) -> None:
         """
         cname_add <existing-name> <new-alias>
-            Add a CNAME record to host. If <existing-name> is an alias the cname host is used as
-            target for <new-alias>.
+            Add a CNAME record to host.
         """
         if len(args) < 2:
             name = input("Enter existing name> ") if len(args) < 1 else args[0]
@@ -1011,38 +974,28 @@ class Host(CommandBase):
 
         # Get host info or raise exception
         info = host_info_by_name(name)
+        alias = clean_hostname(alias)
 
-        # If alias name already exists the host cannot have any records
+        # If alias name already exist as host, abort.
         try:
-            alias_info = host_info_by_name(alias)
+            host_info_by_name(alias)
+            cli_warning("The alias name is in use by an existing host. Find a new alias.")
         except HostNotFoundWarning:
-            alias_info = None
-        else:
-            if alias_info["hinfo"] or \
-                    alias_info["loc"] or \
-                    alias_info["cnames"] or \
-                    alias_info["ipaddresses"] or \
-                    alias_info["txts"] or\
-                    alias_info["ptr_overrides"]:
-                cli_warning("host {} already exists and has record(s)".format(alias_info["name"]))
+            pass
 
-        # Create cname host if it doesn't exist
-        if not alias_info:
-            alias = clean_hostname(alias)
-            data = {
-                "name": alias,
-                "contact": info["contact"],
-            }
-            url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
-            history.record_post(url, alias, data)
-            post(url, **data)
-            alias_info = host_info_by_name(alias)
+        # Check if cname already in use
+        url = "http://{}:{}/cnames/?name={}".format(conf["server_ip"], conf["server_port"], alias)
+        history.record_get(url)
+        if len(get(url).json()):
+            cli_warning("The alias is already in use.")
 
+        data = {'host': info['id'],
+                'name': alias }
         # Create CNAME record
         url = "http://{}:{}/cnames/".format(conf["server_ip"], conf["server_port"])
-        history.record_post(url, "", dict(), redoable=False, undoable=False)
-        post(url, host=alias_info["id"], cname=info["name"])
-        cli_info("Added cname alias {} for {}".format(alias_info["name"], info["name"]),
+        history.record_post(url, "", data, undoable=False)
+        post(url, **data)
+        cli_info("Added cname alias {} for {}".format(alias, info["name"]),
                  print_msg=True)
 
     def opt_cname_remove(self, args: typing.List[str]) -> None:
@@ -1057,25 +1010,25 @@ class Host(CommandBase):
             name = args[0]
             alias = args[1]
 
-        # Find old host
-        host_name = resolve_input_name(name)
+        info = host_info_by_name(name)
+        hostname = info['name']
+        alias = clean_hostname(alias)
 
-        # Get host info or raise exception
-        alias_info = host_info_by_name(alias, follow_cnames=False)
+        if not info['cnames']:
+            cli_warning("\"{}\" doesn't have any CNAME records.".format(hostname))
 
-        # Check that cname host is an alias for host
-        cnames = alias_info["cnames"]
-        if len(cnames) < 1:
-            cli_warning("\"{}\" doesn't have any CNAME records.".format(alias_info["name"]))
-        if cnames[0]["cname"] != host_name:
-            cli_warning("\"{}\" is not an alias for \"{}\"".format(alias_info["name"], host_name))
+        for cname in info['cnames']:
+            if cname['name'] == alias:
+                break
+        else:
+            cli_warning("\"{}\" is not an alias for \"{}\"".format(alias, hostname))
 
         # Delete CNAME host
-        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
-                                             alias_info["name"])
+        url = "http://{}:{}/cnames/{}".format(conf["server_ip"], conf["server_port"],
+                                             alias)
         history.record_delete(url, dict(), undoable=False)
         delete(url)
-        cli_info("Removed cname alias {} for {}".format(alias_info["name"], host_name),
+        cli_info("Removed cname alias {} for {}".format(alias, hostname),
                  print_msg=True)
 
     def opt_cname_show(self, args: typing.List[str]) -> None:
@@ -1084,10 +1037,25 @@ class Host(CommandBase):
             Show CNAME records for host. If <name> is an alias the cname hosts aliases are shown.
         """
         name = input("Enter name> ") if len(args) < 1 else args[0]
-        info = host_info_by_name(name)
-        for alias in aliases_of_host(info["name"]):
-            print_cname(alias, info["name"])
-        cli_info("showed cname aliases for {}".format(info["name"]))
+        try:
+            info = host_info_by_name(name)
+            for cname in info["cnames"]:
+                print_cname(cname["name"], info["name"])
+            cli_info("showed cname aliases for {}".format(info["name"]))
+            return
+        except HostNotFoundWarning:
+            # Try again with the alias
+            pass
+
+        name = clean_hostname(name)
+        url = "http://{}:{}/hosts/?cnames__name={}".format(conf["server_ip"], conf["server_port"], name)
+        history.record_get(url)
+        hosts = get(url).json()
+        if len(hosts):
+            print_cname(name, hosts[0]["name"])
+        else:
+            cli_warning("No cname found for {}".format(name))
+
 
     def opt_loc_set(self, args: typing.List[str]) -> None:
         """
