@@ -1760,12 +1760,7 @@ class Dhcp(CommandBase):
         """
         name_or_ip = input("Enter host name/ip> ") if len(args) < 1 else args[0]
         mac = input("Enter MAC address> ") if len(args) < 2 else args[1]
-
-        # MAC addr sanity check
-        if is_valid_mac_addr(mac):
-            mac = format_mac(mac)
-        else:
-            cli_warning("invalid MAC address: {}".format(mac))
+        force = True if len(args) == 3 and args[2] == 'y' else False
 
         # Get A/AAAA record by either ip address or host name
         if is_valid_ip(name_or_ip):
@@ -1790,13 +1785,39 @@ class Dhcp(CommandBase):
                 ))
             ip = info["ipaddresses"][0]
 
-        # Update A/AAAA record
+        # MAC addr sanity check
+        if is_valid_mac_addr(mac):
+            new_mac = format_mac(mac)
+            url = "http://{}:{}/ipaddresses/?macaddress={}&ordering=ipaddress".format(
+                conf["server_ip"],
+                conf["server_port"],
+                new_mac,
+            )
+            history.record_get(url)
+            macs = get(url).json()
+            ips = ", ".join([ i['ipaddress'] for i in macs ])
+            if len(macs) and not force:
+                cli_warning("mac {} already in use by: {}. "
+                            "Use force to add {} -> {} as well.".format(
+                                mac, ips, ip['ipaddress'], mac))
+        else:
+            cli_warning("invalid MAC address: {}".format(mac))
+
+        old_mac = ip.get('macaddress')
+        if old_mac == new_mac:
+            cli_info("new and old mac are identical. Ignoring.", print_msg=True)
+            return
+        elif old_mac and not force:
+            cli_warning("ip {} has existing mac {}. Use force to replace.".format(
+                ip['ipaddress'], old_mac))
+
+        # Update Ipaddress with a mac
         url = "http://{}:{}/ipaddresses/{}".format(
             conf["server_ip"],
             conf["server_port"],
             ip["id"],
         )
-        history.record_patch(url, new_data={"macaddress": mac}, old_data=ip)
+        history.record_patch(url, new_data={"macaddress": new_mac}, old_data=ip)
         patch(url, macaddress=mac)
         cli_info("associated mac address {} with ip {}".format(mac, ip["ipaddress"]),
                  print_msg=True)
@@ -1832,18 +1853,22 @@ class Dhcp(CommandBase):
                 ))
             ip = info["ipaddresses"][0]
 
-        # Update A/AAAA record
-        url = "http://{}:{}/ipaddresses/{}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            ip["id"],
-        )
-        history.record_patch(url, new_data={"macaddress": ""}, old_data=ip)
-        patch(url, macaddress="")
-        cli_info("disassociated mac address {} from ip {}".format(
-            ip["macaddress"],
-            ip["ipaddress"]
-        ), print_msg=True)
+        if ip.get('macaddress'):
+            # Update ipaddress
+            url = "http://{}:{}/ipaddresses/{}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                ip["id"],
+            )
+            history.record_patch(url, new_data={"macaddress": ""}, old_data=ip)
+            patch(url, macaddress="")
+            cli_info("disassociated mac address {} from ip {}".format(
+                ip["macaddress"],
+                ip["ipaddress"]
+            ), print_msg=True)
+        else:
+            cli_info("ipaddress {} has no associated mac address".format(ip["ipaddress"]),
+                print_msg=True)
 
 
 class Zone(CommandBase):
@@ -2134,7 +2159,7 @@ class Subnet(CommandBase):
         url = "http://{}:{}/subnets/{}".format(conf["server_ip"], conf["server_port"],
                                                subnet['range'])
         patch(url, vlan=vlan)
-        cli_info("updated vlan to {} for {}".format(vlan, subnet['range']))
+        cli_info("updated vlan to {} for {}".format(vlan, subnet['range']), True)
 
     def opt_set_description(self, args: typing.List[str]):
         """
