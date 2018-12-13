@@ -355,6 +355,9 @@ class Host(CommandBase):
         else:
             cli_warning("host {} already exists".format(name))
 
+        if cname_exists(name):
+            cli_warning("the name is already in use by a cname")
+
         # Require force if FQDN not in MREG zone
         if not host_in_mreg_zone(name) and "y" not in args:
             cli_warning("{} isn't in a zone controlled by MREG, must force".format(name))
@@ -450,6 +453,9 @@ class Host(CommandBase):
         else:
             if "y" not in args:
                 cli_warning("host {} already exists".format(new_name))
+
+        if cname_exists(name):
+            cli_warning("the name is already in use by a cname")
 
         # Require force if FQDN not in MREG zone
         if not host_in_mreg_zone(new_name) and "y" not in args:
@@ -984,9 +990,7 @@ class Host(CommandBase):
             pass
 
         # Check if cname already in use
-        url = "http://{}:{}/cnames/?name={}".format(conf["server_ip"], conf["server_port"], alias)
-        history.record_get(url)
-        if len(get(url).json()):
+        if cname_exists(alias):
             cli_warning("The alias is already in use.")
 
         data = {'host': info['id'],
