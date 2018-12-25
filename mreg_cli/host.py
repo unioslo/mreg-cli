@@ -281,7 +281,7 @@ host.add_command(
              metavar='NAME/IP'),
         Flag('-force',
              action='count',
-             description='Enable force.')
+             description='Enable force.'),
     ]
 )
 
@@ -339,7 +339,68 @@ host.add_command(
 ############################################
 
 def rename(args):
-    print('Renaming.')
+    # args.old_name, args.new_name
+    """Rename host. If <old-name> is an alias then the alias is renamed.
+    """
+
+    # Find old host
+    old_name = resolve_input_name(args.old_name)
+
+    # Make sure new hostname does not exist.
+    new_name = clean_hostname(args.new_name)
+    try:
+        new_name = resolve_input_name(new_name)
+    except HostNotFoundWarning:
+        pass
+    else:
+        if not args.force:
+            cli_warning("host {} already exists".format(new_name))
+
+    if cname_exists(name):
+        cli_warning("the name is already in use by a cname")
+
+    # Require force if FQDN not in MREG zone
+    if not host_in_mreg_zone(new_name) and not args.force:
+        cli_warning("{} isn't in a zone controlled by MREG, must force".format(new_name))
+
+    # TODO: only for superusers
+    if "*" in new_name and not args.force:
+        cli_warning("Wildcards must be forced.")
+
+    old_data = {"name": old_name}
+    new_data = {"name": new_name}
+
+    # Rename host
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], old_name)
+    # Cannot redo/undo now since it changes name
+    history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
+    patch(url, name=new_name)
+
+    # Update all srv records pointing to <old-name>
+    url = "http://{}:{}/srvs/?target={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        old_name,
+    )
+    history.record_get(url)
+    srvs = get(url).json()
+    for srv in srvs:
+        url = "http://{}:{}/srvs/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            srv["id"],
+        )
+        old_data = {"target": old_name}
+        new_data = {"target": new_name}
+        history.record_patch(url, new_data, old_data)
+        patch(url, target=new_name)
+    if len(srvs):
+        cli_info("updated {} SRV record(s) when renaming {} to {}".format(
+            len(srvs),
+            old_name,
+            new_name,
+        ))
+    cli_info("renamed {} to {}".format(old_name, new_name), print_msg=True)
 
 
 # Add 'rename' as a sub command to the 'host' command
@@ -358,7 +419,10 @@ host.add_command(
         Flag('new_name',
              description='New name for the host, or alias.',
              short_desc='New name',
-             metavar='NEW')
+             metavar='NEW'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
