@@ -34,7 +34,6 @@ host = cli.add_command(
 #########################################
 
 def add(args):
-    # args.name, args.ip, args.contact, args.hinfo, args.comment
     """Add a new host with the given name, ip or subnet and contact. hinfo and
     comment are optional.
     """
@@ -125,7 +124,6 @@ def add(args):
     history.record_post(url, resource_name=name, new_data=data)
     post(url, **data)
     cli_info("created host {}".format(name), print_msg=True)
-    print('Adding: {}\n{}'.format(args.name, args))
 
 
 # Add 'add' as a sub command to the 'host' command
@@ -168,10 +166,107 @@ host.add_command(
 ############################################
 
 def remove(args):
-    if args.force:
-        print('Removing "{}" with force'.format(args.name))
-    else:
-        print('Removing "{}" without force'.format(args.name))
+    # args.name, args.force
+    """Remove host."""
+
+    # Get host info or raise exception
+    info = host_info_by_name_or_ip(args.name)
+
+    warn_msg = ""
+    # Require force if host has any cnames.
+    cnames = info["cnames"]
+    if len(cnames):
+        if not args.force:
+            warn_msg += "{} cnames. ".format(len(cnames))
+
+    # Require force if host has multiple A/AAAA records
+    if len(info["ipaddresses"]) > 1 and not args.force:
+        warn_msg += "{} ipaddresses. ".format(len(info["ipaddresses"]))
+
+    # Require force if host has any NAPTR records. Delete the NAPTR records if
+    # force
+    url = "http://{}:{}/naptrs/?host={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        info["id"],
+    )
+    history.record_get(url)
+    naptrs = get(url).json()
+    if len(naptrs) > 0:
+        if not args.force:
+            warn_msg += "{} NAPTR records. ".format(len(naptrs))
+        else:
+            for ptr in naptrs:
+                url = "http://{}:{}/naptrs/{}".format(
+                    conf["server_ip"],
+                    conf["server_port"],
+                    ptr["id"],
+                )
+                history.record_delete(url, ptr)
+                delete(url)
+                cli_info("deleted NAPTR record {} when removing {}".format(
+                    ptr["replacement"],
+                    info["name"],
+                ))
+
+    # Require force if host has any SRV records. Delete the SRV records if force
+    url = "http://{}:{}/srvs/?target={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        info["id"],
+    )
+    history.record_get(url)
+    srvs = get(url).json()
+    if len(srvs) > 0:
+        if not args.force:
+            warn_msg += "{} SRV records. ".format(len(srvs))
+        else:
+            for srv in srvs:
+                url = "http://{}:{}/srvs/{}".format(
+                    conf["server_ip"],
+                    conf["server_port"],
+                    srv["id"],
+                )
+                history.record_delete(url, srv)
+                delete(url)
+                cli_info("deleted SRV record {} when removing {}".format(
+                    srv["service"],
+                    info["name"],
+                ))
+
+    # Require force if host has any PTR records. Delete the PTR records if force
+    if len(info["ptr_overrides"]) > 0:
+        if not args.force:
+            warn_msg += "{} PTR records. ".format(len(info["ptr_overrides"]))
+        else:
+            for ptr in info["ptr_overrides"]:
+                url = "http://{}:{}/ptroverrides/{}".format(
+                    conf["server_ip"],
+                    conf["server_port"],
+                    ptr["id"],
+                )
+                history.record_delete(url, ptr, redoable=False, undoable=False)
+                delete(url)
+                cli_info("deleted PTR record {} when removing {}".format(
+                    ptr["ipaddress"],
+                    info["name"],
+                ))
+
+    # To be able to undo the delete the ipaddress field of the 'old_data' has to
+    # be an ipaddress string
+    if len(info["ipaddresses"]) > 0:
+        info["ipaddress"] = info["ipaddresses"][0]["ipaddress"]
+
+    # Warn user and raise exception if any force requirements was found
+    if warn_msg:
+        cli_warning("{} has: {}Must force".format(info["name"], warn_msg))
+
+    # Delete host
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
+                                         info["name"])
+    history.record_delete(url, old_data=info)
+    delete(url)
+    cli_info("removed {}".format(info["name"]), print_msg=True)
 
 
 # Add 'remove' as a sub command to the 'host' command
