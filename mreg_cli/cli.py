@@ -92,7 +92,7 @@ class Command(Completer):
         try:
             args = self.parser.parse_args(args)
             # If the command has a callback function, call it.
-            if 'func' in vars(args):
+            if 'func' in vars(args) and args.func:
                 args.func(args)
 
         except SystemExit as e:
