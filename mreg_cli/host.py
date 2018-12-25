@@ -1,4 +1,16 @@
+import urllib
+
+from util import *
+from log import *
 from cli import cli, Flag
+from history import history
+
+try:
+    conf = cli_config(required_fields=("server_ip", "server_port"))
+except Exception as e:
+    print("commands.py: cli_config:", e)
+    traceback.print_exc()
+    sys.exit(1)
 
 #################################
 #  Add the main command 'host'  #
@@ -22,6 +34,97 @@ host = cli.add_command(
 #########################################
 
 def add(args):
+    # args.name, args.ip, args.contact, args.hinfo, args.comment
+    """Add a new host with the given name, ip or subnet and contact. hinfo and
+    comment are optional.
+    """
+    # NOTE: an A-record forward-zone not controlled by MREG aren't handled
+
+    hi_dict = hinfo_dict()
+
+    # Verify hinfo id
+    if args.hinfo:
+        hinfo_sanify(args.hinfo, hi_dict)
+
+    # Handle arbitrary ip from subnet if received a subnet w/o mask
+    subnet = dict()
+    if re.match(r"^.*/$", args.ip):
+        subnet = get_subnet(args.ip[:-1])
+        ip = first_unused_ip_from_subnet(subnet)
+
+    # Handle arbitrary ip from subnet if received a subnet w/mask
+    elif is_valid_subnet(args.ip):
+        subnet = get_subnet(args.ip)
+        ip = first_unused_ip_from_subnet(subnet)
+
+    # Require force if given valid ip in subnet not controlled by MREG
+    elif is_valid_ip(args.ip) and not ip_in_mreg_net(args.ip):
+        if not args.force:
+            cli_warning(
+                "{} isn't in a subnet controlled by MREG, must force".format(
+                    args.ip))
+        else:
+            ip = args.ip
+
+    # Or else check that the address given isn't reserved
+    else:
+        subnet = get_subnet(args.ip)
+        network_object = ipaddress.ip_network(subnet['range'])
+        reserved_addresses = set(
+            map(str, get_subnet_reserved_ips(subnet['range'])))
+        if args.ip in reserved_addresses and not args.force:
+            cli_warning("Address is reserved. Requires force")
+        if args.ip == network_object.network_address.exploded:
+            cli_warning("Can't overwrite the network address of the subnet")
+        if args.ip == network_object.broadcast_address.exploded:
+            cli_warning("Can't overwrite the broadcast address of the subnet")
+        ip = args.ip
+
+    # Require force if subnet is frozen
+    if not args.force and subnet['frozen']:
+        cli_warning(
+            "Subnet {} is frozen. Requires force".format(subnet['range']))
+
+    # Contact sanity check
+    if not is_valid_email(args.contact):
+        cli_warning(
+            "invalid mail address ({}) when trying to add {}".format(
+                args.contact,
+                args.name))
+
+    # Fail if given host exits
+    name = clean_hostname(args.name)
+    try:
+        name = resolve_input_name(name)
+    except HostNotFoundWarning:
+        pass
+    else:
+        cli_warning("host {} already exists".format(name))
+
+    if cname_exists(name):
+        cli_warning("the name is already in use by a cname")
+
+    # Require force if FQDN not in MREG zone
+    if not host_in_mreg_zone(name) and not args.force:
+        cli_warning(
+            "{} isn't in a zone controlled by MREG, must force".format(name))
+
+    # TODO: only for superusers
+    if "*" in name and not args.force:
+        cli_warning("Wildcards must be forced.")
+
+    # Create the new host with an ip address
+    url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
+    data = {
+        "name": name,
+        "ipaddress": ip,
+        "contact": args.contact,
+        "hinfo": args.hinfo or None,
+        "comment": args.comment or None,
+    }
+    history.record_post(url, resource_name=name, new_data=data)
+    post(url, **data)
+    cli_info("created host {}".format(name), print_msg=True)
     print('Adding: {}\n{}'.format(args.name, args))
 
 
@@ -53,6 +156,9 @@ host.add_command(
         Flag('-comment',
              short_desc='A comment.',
              description='A comment.'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ]
 )
 
@@ -831,7 +937,7 @@ host.add_command(
 #############################################
 
 def ptr_set(args):
-    print('set PTR:', args. ip)
+    print('set PTR:', args.ip)
 
 
 # Add 'ptr_set' as a sub command to the 'host' command
