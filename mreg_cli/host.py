@@ -291,7 +291,31 @@ host.add_command(
 ##########################################
 
 def info(args):
-    print('Printing info for host(s): {}'.format(args.hosts))
+    """Print information about host. If <name> is an alias the cname hosts info
+    is shown.
+    """
+    for name_or_ip in args.hosts:
+        # Get host info or raise exception
+        info = host_info_by_name_or_ip(name_or_ip)
+
+        # Pretty print all host info
+        print_host_name(info["name"])
+        print_contact(info["contact"])
+        if info["comment"]:
+            print_comment(info["comment"])
+        print_ipaddresses(info["ipaddresses"])
+        print_ttl(info["ttl"])
+        if info["hinfo"]:
+            print_hinfo(info["hinfo"])
+        if info["loc"]:
+            print_loc(info["loc"])
+        for cname in info["cnames"]:
+            print_cname(cname["name"], info["name"])
+        for txt in info["txts"]:
+            print_txt(txt["txt"])
+        for ptr in info["ptr_overrides"]:
+            print_ptr(ptr["ipaddress"], info["name"])
+        cli_info("printed host info for {}".format(info["name"]))
 
 
 # Add 'info' as a sub command to the 'host' command
