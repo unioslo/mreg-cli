@@ -1,0 +1,55 @@
+1x      : Kablet nett, autentisert med 802.1x
+astro   : Plassering: Astro
+bi      : Nett med ulik bygningsinfrastruktur
+bio     : Plassering: Biologi
+dn      : Nett delt mellom flere enheter
+dr      : Driftsnett, med klienter brukt av driftspersonale
+en      : Nett spesielt for eksamen
+fys     : Plassering: Fysikk
+geo     : Plassering: Geologi
+hf      : Plassering: HF
+ifi     : Plassering: Ifi
+jus     : Plassering: Jus
+kjemi   : Plassering: Kjemi
+fsat    : Plassring fsat
+silur   : Plassering Silurveien 2
+its     : Plassering: Institutt for teknologisystemer, Kjeller (aka UniK)
+kn      : Standard klientnett
+la      : Labnett, med spesielle restriksjoner
+lo      : Loopback, internt for nett-drift
+matnat  : Plassering: MatNat
+matte   : Plassering: Matte
+med     : Plassering: Medisin
+mn      : Management-nett, typisk iDRAC- og iLO-kort
+mus     : Plassering: Museum
+nm      : Nett for intern nett-management
+nn      : Nett med spesiell sikring
+odont   : Plassering: Odontologi
+pn      : Publikumsnett
+pr      : Nett spesielt for printere
+rn      : Router-nett, smÃ¥nett mellom routere og nettbokser
+s1      : Servernett kategori 1
+s2      : Servernett kategori 2
+s3      : Servernett kategori 3
+s4      : Servernett kategori 4
+s5      : Servernett kategori 5
+sadm    : Plassering: Sentraladministrasjonen
+sb      : Servernett utenfor USIT
+si      : Servernett i Kristen Nygaards Hus (ifi-1)
+sk      : Servernett i Lucy Smiths Hus (adminbygget)
+sn      : Generelt servernett
+so      : Servernett i Ole Johan Dahls Hus (ifi-2)
+svfak   : Plassering: SV
+te      : Testnett, oftest internt for nett-drift
+tekn    : Plassering: Teknisk Avdeling
+tf      : Plassering: TF
+tl      : Telefonnett, gamle PABX-sentraler osv.
+tn      : TrÃ¥dlÃ¸st nett
+toyen   : Plassering: TÃ¸yen
+ts      : Terminalstue-nett
+ub      : Plassering: Universitetsbiblioteket
+usit    : Plassering: USIT
+uv      : Plassering: UV
+vn      : Vanlig nett (kontornett)
+vo      : VOIP-nett, nytt telefonsystem
+wm      : Nett for WLAN-management

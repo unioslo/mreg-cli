@@ -1,0 +1,7 @@
+# In test kildefil
+host add -name oeu.no -ip 123.0.0.1 -contact aoeu@aoeu.oaeu
+host a_show oeu.noeu
+
+host remove 
+
+host info oeu.oeu oeuo.uoeu.o
