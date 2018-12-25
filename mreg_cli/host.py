@@ -339,7 +339,6 @@ host.add_command(
 ############################################
 
 def rename(args):
-    # args.old_name, args.new_name
     """Rename host. If <old-name> is an alias then the alias is renamed.
     """
 
@@ -432,7 +431,20 @@ host.add_command(
 #################################################
 
 def set_comment(args):
-    print('Comment:', args.comment)
+    """Set comment for host. If <name> is an alias the cname host is updated.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    old_data = {"comment": info["comment"] or ""}
+    new_data = {"comment": args.comment}
+
+    # Update comment
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+    history.record_patch(url, new_data, old_data)
+    patch(url, comment=args.comment)
+    cli_info("updated comment of {} to \"{}\"".format(info["name"],
+                                                      args.comment),
+             print_msg=True)
 
 
 # Add 'set_comment' as a sub command to the 'host' command
