@@ -526,7 +526,78 @@ host.add_command(
 ###########################################
 
 def a_add(args):
-    print('Ip:', args.ip)
+    # args.name args.ip
+    """Add an A record to host. If <name> is an alias the cname host is used.
+    """
+    # Get host info for or raise exception
+    info = host_info_by_name(args.name)
+
+    # TODO: only for superusers
+    if "*" in args.name and not args.force:
+        cli_warning("Wildcards must be forced.")
+
+    # Require force if host has multiple A/AAAA records
+    if len(info["ipaddresses"]) and not args.force:
+        cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
+
+    # Handle arbitrary ip from subnet if received a subnet w/o mask
+    if re.match(r"^.*/$", args.ip):
+        subnet = get_subnet(args.ip[:-1])
+        if subnet["frozen"] and not args.force:
+            cli_warning(
+                "subnet {} is frozen, must force".format(subnet["range"]))
+        ip = first_unused_ip_from_subnet(subnet)
+
+    # Handle arbitrary ip from subnet if received a subnet w/mask
+    elif is_valid_subnet(args.ip):
+        subnet = get_subnet(args.ip)
+        if subnet["frozen"] and not args.force:
+            cli_warning(
+                "subnet {} is frozen, must force".format(subnet["range"]))
+        ip = first_unused_ip_from_subnet(subnet)
+
+    # Require force if given valid ip in subnet not controlled by MREG
+    elif is_valid_ip(args.ip) and not ip_in_mreg_net(args.ip):
+        if not args.force:
+            cli_warning(
+                "{} isn't in a subnet controlled by MREG, must force".format(
+                    args.ip))
+        else:
+            ip = args.ip
+
+    # Or else check that the address given isn't reserved
+    else:
+        subnet = get_subnet(args.ip)
+        if subnet["frozen"] and not args.force:
+            cli_warning(
+                "subnet {} is frozen, must force".format(subnet["range"]))
+        network_object = ipaddress.ip_network(subnet['range'])
+        reserved_addresses = set(
+            map(str, get_subnet_reserved_ips(subnet['range'])))
+        if args.ip in reserved_addresses and not args.force:
+            cli_warning("Address is reserved. Requires force")
+        if args.ip == network_object.network_address.exploded:
+            cli_warning("Can't overwrite the network address of the subnet")
+        if args.ip == network_object.broadcast_address.exploded:
+            cli_warning("Can't overwrite the broadcast address of the subnet")
+        ip = args.ip
+
+    # Fail if input isn't ipv4
+    if is_valid_ipv6(ip):
+        cli_warning("got ipv6 address, want ipv4.")
+    if not is_valid_ipv4(ip):
+        cli_warning("not valid ipv4 address: {}".format(ip))
+
+    data = {
+        "host": info["id"],
+        "ipaddress": ip,
+    }
+
+    # Add A record
+    url = "http://{}:{}/ipaddresses/".format(conf["server_ip"], conf["server_port"])
+    history.record_post(url, ip, data)
+    post(url, **data)
+    cli_info("added ip {} to {}".format(ip, info["name"]), print_msg=True)
 
 
 # Add 'a_add' as a sub command to the 'host' command
@@ -544,7 +615,10 @@ host.add_command(
              description='The IP of new A record. May also be a subnet, '
                          'in which case a random IP address from that subnet '
                          'is chosen.',
-             metavar='IP/SUBNET')
+             metavar='IP/SUBNET'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
