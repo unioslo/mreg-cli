@@ -1,5 +1,6 @@
 import argparse
 
+from exceptions import CliError, CliWarning
 from prompt_toolkit import HTML, print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
 
@@ -100,6 +101,12 @@ class Command(Completer):
             # argparse; Argparse calls sys.exit when it detects an error or
             # after it prints a help msg.
             self.last_errno = e.code
+
+        except CliWarning as e:
+            print(HTML(f'<i>{e}</i>'))
+
+        except CliError as e:
+            print(HTML(f'<ansired>{e}</ansired>'))
 
         except CliExit:
             from sys import exit
