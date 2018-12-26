@@ -360,7 +360,8 @@ def rename(args):
 
     # Require force if FQDN not in MREG zone
     if not host_in_mreg_zone(new_name) and not args.force:
-        cli_warning("{} isn't in a zone controlled by MREG, must force".format(new_name))
+        cli_warning("{} isn't in a zone controlled by MREG, must force".format(
+            new_name))
 
     # TODO: only for superusers
     if "*" in new_name and not args.force:
@@ -370,9 +371,11 @@ def rename(args):
     new_data = {"name": new_name}
 
     # Rename host
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], old_name)
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
+                                         old_name)
     # Cannot redo/undo now since it changes name
-    history.record_patch(url, new_data, old_data, redoable=False, undoable=False)
+    history.record_patch(url, new_data, old_data, redoable=False,
+                         undoable=False)
     patch(url, name=new_name)
 
     # Update all srv records pointing to <old-name>
@@ -439,12 +442,13 @@ def set_comment(args):
     new_data = {"comment": args.comment}
 
     # Update comment
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], info["name"])
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"],
+                                         conf["server_port"],
+                                         info["name"])
     history.record_patch(url, new_data, old_data)
     patch(url, comment=args.comment)
-    cli_info("updated comment of {} to \"{}\"".format(info["name"],
-                                                      args.comment),
-             print_msg=True)
+    cli_info("updated comment of {} to \"{}\""
+             .format(info["name"], args.comment), print_msg=True)
 
 
 # Add 'set_comment' as a sub command to the 'host' command
@@ -471,7 +475,25 @@ host.add_command(
 #################################################
 
 def set_contact(args):
-    print('Contact:', args.contact)
+    """Set contact for host. If <name> is an alias the cname host is updated.
+    """
+    # Contact sanity check
+    if not is_valid_email(args.contact):
+        cli_warning("invalid mail address {} (target host: {})".format(
+            args.contact, args.name))
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    old_data = {"contact": info["contact"]}
+    new_data = {"contact": args.contact}
+
+    # Update contact information
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
+                                         info["name"])
+    history.record_patch(url, new_data, old_data)
+    patch(url, contact=args.contact)
+    cli_info("Updated contact of {} to {}".format(info["name"], args.contact),
+             print_msg=True)
 
 
 # Add 'set_contact' as a sub command to the 'host' command
