@@ -1150,7 +1150,32 @@ host.add_command(
 ###############################################
 
 def cname_add(args):
-    print('add cname:', args.alias)
+    """Add a CNAME record to host.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    alias = clean_hostname(args.alias)
+
+    # If alias name already exist as host, abort.
+    try:
+        host_info_by_name(alias)
+        cli_warning("The alias name is in use by an existing host. "
+                    "Find a new alias.")
+    except HostNotFoundWarning:
+        pass
+
+    # Check if cname already in use
+    if cname_exists(alias):
+        cli_warning("The alias is already in use.")
+
+    data = {'host': info['id'],
+            'name': alias}
+    # Create CNAME record
+    url = "http://{}:{}/cnames/".format(conf["server_ip"], conf["server_port"])
+    history.record_post(url, "", data, undoable=False)
+    post(url, **data)
+    cli_info("Added cname alias {} for {}".format(alias, info["name"]),
+             print_msg=True)
 
 
 # Add 'cname_add' as a sub command to the 'host' command
@@ -1176,7 +1201,28 @@ host.add_command(
 ##################################################
 
 def cname_remove(args):
-    print('remove:', args.name)
+    """Remove CNAME record.
+    """
+    info = host_info_by_name(args.name)
+    hostname = info['name']
+    alias = clean_hostname(args.alias)
+
+    if not info['cnames']:
+        cli_warning("\"{}\" doesn't have any CNAME records.".format(hostname))
+
+    for cname in info['cnames']:
+        if cname['name'] == alias:
+            break
+    else:
+        cli_warning("\"{}\" is not an alias for \"{}\"".format(alias, hostname))
+
+    # Delete CNAME host
+    url = "http://{}:{}/cnames/{}".format(conf["server_ip"],
+                                          conf["server_port"], alias)
+    history.record_delete(url, dict(), undoable=False)
+    delete(url)
+    cli_info("Removed cname alias {} for {}".format(alias, hostname),
+             print_msg=True)
 
 
 # Add 'cname_remove' as a sub command to the 'host' command
@@ -1200,7 +1246,29 @@ host.add_command(
 ################################################
 
 def cname_show(args):
-    print('showing cnames:', args.name)
+    """Show CNAME records for host. If <name> is an alias the cname hosts
+    aliases are shown.
+    """
+    try:
+        info = host_info_by_name(args.name)
+        for cname in info["cnames"]:
+            print_cname(cname["name"], info["name"])
+        cli_info("showed cname aliases for {}".format(info["name"]))
+        return
+    except HostNotFoundWarning:
+        # Try again with the alias
+        pass
+
+    name = clean_hostname(args.name)
+    url = "http://{}:{}/hosts/?cnames__name={}".format(conf["server_ip"],
+                                                       conf["server_port"],
+                                                       name)
+    history.record_get(url)
+    hosts = get(url).json()
+    if len(hosts):
+        print_cname(name, hosts[0]["name"])
+    else:
+        cli_warning("No cname found for {}".format(name))
 
 
 # Add 'cname_show' as a sub command to the 'host' command
