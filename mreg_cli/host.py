@@ -1116,7 +1116,11 @@ host.add_command(
 ###############################################
 
 def aaaa_show(args):
-    print('showing:', args.name)
+    """Show hosts ipaddresses. If <name> is an alias the cname host is used.
+    """
+    info = host_info_by_name(args.name)
+    print_ipaddresses(info["ipaddresses"])
+    cli_info("showed aaaa records for {}".format(info["name"]))
 
 
 # Add 'aaaa_show' as a sub command to the 'host' command
