@@ -1061,7 +1061,36 @@ host.add_command(
 #################################################
 
 def aaaa_remove(args):
-    print('removing:', args.ip)
+    """Remove AAAA record from host. If <name> is an alias the cname host is
+    used.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    # Ipv6 sanity check
+    if not is_valid_ipv6(args.ip):
+        cli_warning("not a valid ipv6 \"{}\" (target host {})"
+                    .format(args.ip, info["name"]))
+
+    # Check that ip belongs to host
+    for rec in info["ipaddresses"]:
+        if rec["ipaddress"] == args.ip:
+            ip_id = rec["id"]
+            break
+    else:
+        cli_warning("{} is not owned by {}".format(args.ip, info["name"]))
+
+    old_data = {
+        "host": info["id"],
+        "ipaddress": args.ip,
+    }
+
+    # Delete AAAA record
+    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"],
+                                               conf["server_port"], ip_id)
+    history.record_delete(url, old_data)
+    delete(url)
+    cli_info("removed {} from {}".format(args.ip, info["name"]), print_msg=True)
 
 
 # Add 'aaaa_remove' as a sub command to the 'host' command
