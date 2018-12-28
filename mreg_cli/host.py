@@ -1675,7 +1675,29 @@ host.add_command(
 ###############################################
 
 def naptr_add(args):
-    print('add NAPTR:', args.name)
+    """Add a NAPTR record to host.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    data = {
+        "preference": int(args.preference),
+        "order": int(args.order),
+        "flag": args.flag,
+        "service": args.service,
+        "regex": args.regexp,
+        "replacement": args.replacement,
+        "host": info["id"],
+    }
+
+    # Create NAPTR record
+    url = "http://{}:{}/naptrs/".format(
+        conf["server_ip"],
+        conf["server_port"],
+    )
+    history.record_post(url, "", data, undoable=False)
+    post(url, **data)
+    cli_info("created NAPTR record for {}".format(info["name"]), print_msg=True)
 
 
 # Add 'naptr_add' as a sub command to the 'host' command
@@ -1691,10 +1713,12 @@ host.add_command(
              metavar='NAME'),
         Flag('-preference',
              description='NAPTR preference.',
+             type=int,
              required=True,
              metavar='PREFERENCE'),
         Flag('-order',
              description='NAPTR order.',
+             type=int,
              required=True,
              metavar='ORDER'),
         Flag('-flag',
@@ -1722,7 +1746,47 @@ host.add_command(
 ##################################################
 
 def naptr_remove(args):
-    print('removet NAPTR:', args.name)
+    """
+    naptr_remove <name> <replacement>
+        Remove NAPTR record.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    # get the hosts NAPTR records where repl is a substring of the replacement
+    # field
+    url = "http://{}:{}/naptrs/?replacement__contains={}&host={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        args.replacement,
+        info["id"]
+    )
+    history.record_get(url)
+    naptrs = get(url).json()
+    if not len(naptrs):
+        cli_warning("{} hasn't got any NAPTR reocrds matching \"{}\"".format(
+            info["name"],
+            args.replacement,
+        ))
+    if len(naptrs) > 1 and not args.force:
+        cli_warning(
+            "{} got {} NAPTR records matching \"{}\", must force.".format(
+                info["name"],
+                len(naptrs),
+                args.replacement,
+            ))
+
+    # Delete NAPTR record(s)
+    for ptr in naptrs:
+        url = "http://{}:{}/naptrs/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            ptr["id"],
+        )
+        history.record_delete(url, ptr)
+        delete(url)
+    cli_info("deleted {} NAPTR record(s) for {}"
+             .format(len(naptrs), info["name"]), print_msg=True)
 
 
 # Add 'naptr_remove' as a sub command to the 'host' command
@@ -1737,6 +1801,9 @@ host.add_command(
         Flag('replacement',
              description='NAPTR replacement.',
              metavar='REPLACEMENT'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
@@ -1746,7 +1813,19 @@ host.add_command(
 ################################################
 
 def naptr_show(args):
-    print('show NAPTR:', args.name)
+    """Show all NAPTR records for host.
+    """
+    info = host_info_by_name(args.name)
+    url = "http://{}:{}/naptrs/?host={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        info["id"],
+    )
+    history.record_get(url)
+    naptrs = get(url).json()
+    for ptr in naptrs:
+        print_naptr(ptr, info["name"])
+    cli_info("showed {} NAPTR records for {}".format(len(naptrs), info["name"]))
 
 
 # Add 'naptr_show' as a sub command to the 'host' command
