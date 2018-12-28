@@ -2,6 +2,7 @@ import urllib
 
 from util import *
 from log import *
+# noinspection PyUnresolvedReferences
 from cli import cli, Flag
 from history import history
 
@@ -39,6 +40,7 @@ def add(args):
     """
     # NOTE: an A-record forward-zone not controlled by MREG aren't handled
 
+    ip = None
     hi_dict = hinfo_dict()
 
     # Verify hinfo id
@@ -290,7 +292,7 @@ host.add_command(
 #  Implementation of sub command 'info'  #
 ##########################################
 
-def info(args):
+def info_(args):
     """Print information about host. If <name> is an alias the cname hosts info
     is shown.
     """
@@ -323,7 +325,7 @@ host.add_command(
     prog='info',
     description='Print info about one or more hosts.',
     short_desc='Print info about one or more hosts.',
-    callback=info,
+    callback=info_,
     flags=[
         Flag('hosts',
              description='One or more hosts given by their name or ip.',
@@ -528,6 +530,8 @@ host.add_command(
 def a_add(args):
     """Add an A record to host. If <name> is an alias the cname host is used.
     """
+
+    ip = None
     # Get host info for or raise exception
     info = host_info_by_name(args.name)
 
@@ -629,7 +633,89 @@ host.add_command(
 ##############################################
 
 def a_change(args):
-    print('new ip:', args.newip)
+    """Change A record. If <name> is an alias the cname host is used.
+    """
+
+    ip, ip_id = None, None
+
+    if args.old == args.new:
+        cli_warning("New and old IP are equal")
+
+    # Ip and subnet sanity checks
+    if not is_valid_ipv4(args.old):
+        cli_warning("invalid ipv4 \"{}\" (target host {})"
+                    .format(args.old, args.name))
+    elif not is_valid_ipv4(args.new) and not is_valid_subnet(args.new):
+        cli_warning("invalid ipv4 nor subnet \"{}\" (target host {})"
+                    .format(args.new, args.name))
+
+    # Check that ip belongs to host
+    info = host_info_by_name(args.name)
+    for rec in info["ipaddresses"]:
+        if rec["ipaddress"] == args.old:
+            ip_id = rec["id"]
+            break
+    else:
+        cli_warning("{} is not owned by {}".format(args.old, info["name"]))
+
+    # Handle arbitrary ip from subnet if received a subnet w/o mask
+    if re.match(r"^.*/$", args.new):
+        subnet = get_subnet(args.new[:-1])
+        if subnet["frozen"] and not args.force:
+            cli_warning("subnet {} is frozen, must force"
+                        .format(subnet["range"]))
+        ip = first_unused_ip_from_subnet(subnet)
+
+    # Handle arbitrary ip from subnet if received a subnet w/mask
+    elif is_valid_subnet(args.new):
+        subnet = get_subnet(args.new)
+        if subnet["frozen"] and not args.force:
+            cli_warning("subnet {} is frozen, must force"
+                        .format(subnet["range"]))
+        ip = first_unused_ip_from_subnet(subnet)
+
+    # Require force if given valid ip in subnet not controlled by MREG
+    elif is_valid_ip(args.new) and not ip_in_mreg_net(args.new):
+        if not args.force:
+            cli_warning("{} isn't in a subnet controlled by MREG, must force"
+                        .format(args.new))
+        else:
+            ip = args.new
+
+    # Or else check that the address given isn't reserved
+    else:
+        subnet = get_subnet(args.new)
+        if subnet["frozen"] and not args.force:
+            cli_warning(
+                "subnet {} is frozen, must force".format(subnet["range"]))
+        network_object = ipaddress.ip_network(subnet['range'])
+        reserved_addresses = \
+            set(map(str, get_subnet_reserved_ips(subnet['range'])))
+        if args.new in reserved_addresses and not args.force:
+            cli_warning("Address is reserved. Requires force")
+        if args.new == network_object.network_address.exploded:
+            cli_warning("Can't overwrite the network address of the subnet")
+        if args.new == network_object.broadcast_address.exploded:
+            cli_warning("Can't overwrite the broadcast address of the subnet")
+        ip = args.new
+
+    # Fail if input isn't ipv4
+    if is_valid_ipv6(ip):
+        cli_warning("got ipv6 address, want ipv4.")
+    if not is_valid_ipv4(ip):
+        cli_warning("not valid ipv4 address: {}".format(ip))
+
+    old_data = {"ipaddress": args.old}
+    new_data = {"ipaddress": ip}
+
+    # Update A record ip address
+    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"],
+                                               conf["server_port"], ip_id)
+    history.record_patch(url, new_data, old_data, redoable=False,
+                         undoable=False)
+    patch(url, ipaddress=ip)
+    cli_info("updated ip {} to {} for {}".format(args.old, ip, info["name"]),
+             print_msg=True)
 
 
 # Add 'a_change' as a sub command to the 'host' command
@@ -670,6 +756,9 @@ host.add_command(
 def a_remove(args):
     """Remove A record from host. If <name> is an alias the cname host is used.
     """
+
+    ip_id = None
+
     # Ip sanity check
     if not is_valid_ipv4(args.ip):
         cli_warning("not a valid ipv4: \"{}\"".format(args.ip))
@@ -689,7 +778,8 @@ def a_remove(args):
     }
 
     # Remove ip
-    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip_id)
+    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"],
+                                               conf["server_port"], ip_id)
     history.record_delete(url, old_data)
     delete(url)
     cli_info("removed ip {} from {}".format(args.ip, info["name"]),
@@ -718,7 +808,11 @@ host.add_command(
 ############################################
 
 def a_show(args):
-    print('showing:', args.name)
+    """Show hosts ipaddresses. If <name> is an alias the cname host is used.
+    """
+    info = host_info_by_name(args.name)
+    print_ipaddresses(info["ipaddresses"])
+    cli_info("showed ip addresses for {}".format(info["name"]))
 
 
 # Add 'a_show' as a sub command to the 'host' command
