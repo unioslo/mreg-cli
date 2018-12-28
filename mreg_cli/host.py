@@ -1292,13 +1292,33 @@ host.add_command(
 #                                                                              #
 ################################################################################
 
+def _hinfo_remove(host_) -> None:
+    """
+    Helper method to remove hinfo from a host.
+    """
+    old_data = {"hinfo": host_["hinfo"]}
+    new_data = {"hinfo": ""}
+
+    # Set hinfo to null value
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"],
+                                         conf["server_port"], host_["name"])
+    history.record_patch(url, new_data, old_data)
+    patch(url, hinfo="")
+
 
 ##################################################
 #  Implementation of sub command 'hinfo_remove'  #
 ##################################################
 
 def hinfo_remove(args):
-    print('hinfo remove:', args.name)
+    """
+    hinfo_remove <name>
+        Remove hinfo for host. If <name> is an alias the cname host is updated.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    _hinfo_remove(info)
+    cli_info("removed hinfo for {}".format(info["name"]), print_msg=True)
 
 
 # Add 'hinfo_remove' as a sub command to the 'host' command
@@ -1321,7 +1341,23 @@ host.add_command(
 ###############################################
 
 def hinfo_set(args):
-    print('set hinfo:', args.hinfo)
+    # .name .hinfo
+    """Set hinfo for host. If <name> is an alias the cname host is updated.
+    """
+    hinfo_sanify(args.hinfo, hinfo_dict())
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    old_data = {"hinfo": info["hinfo"] or ""}
+    new_data = {"hinfo": args.hinfo}
+
+    # Update hinfo
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"],
+                                         conf["server_port"], info["name"])
+    history.record_patch(url, new_data, old_data)
+    patch(url, hinfo=args.hinfo)
+    cli_info("updated hinfo to {} for {}".format(args.hinfo, info["name"]),
+             print_msg=True)
 
 
 # Add 'hinfo_set' as a sub command to the 'host' command
@@ -1347,7 +1383,15 @@ host.add_command(
 ################################################
 
 def hinfo_show(args):
-    print('show hinfo:', args.name)
+    """Show hinfo for host. If <name> is an alias the cname hosts hinfo is
+    shown.
+    """
+    info = host_info_by_name(args.name)
+    if info["hinfo"]:
+        print_hinfo(info["hinfo"])
+    else:
+        cli_info("No hinfo for {}".format(args.name), print_msg=True)
+    cli_info("showed hinfo for {}".format(info["name"]))
 
 
 # Add 'hinfo_show' as a sub command to the 'host' command
@@ -1361,6 +1405,130 @@ host.add_command(
         Flag('name',
              description='Name of the target host.',
              metavar='NAME'),
+    ],
+)
+
+
+#######################################################
+#  Implementation of sub command 'hinfopresets_list'  #
+#######################################################
+
+def hinfopresets_list(args):
+    """Show hinfopresets.
+    """
+    hi_dict = hinfo_dict()
+    if hi_dict:
+        print_hinfo_list(hi_dict)
+    else:
+        cli_info("No hinfopresets.", print_msg=True)
+
+
+# Add 'hinfopresets_list' as a sub command to the 'host' command
+host.add_command(
+    prog='hinfopresets_list',
+    description='Show hinfopresets.',
+    short_desc='Show hinfopresets.',
+    callback=hinfopresets_list,
+)
+
+
+#########################################################
+#  Implementation of sub command 'hinfopresets_create'  #
+#########################################################
+
+def hinfopresets_create(args):
+    """Create a new hinfopreset.
+    """
+    hi_dict = hinfo_dict()
+    for hid, hinfo in hi_dict.items():
+        if (args.cpu, args.os) == hinfo:
+            cli_warning("cpu {} and os {} already defined as set {}".format(
+                args.cpu, args.os, hid))
+
+    data = {
+        "cpu": args.cpu,
+        "os": args.os
+    }
+    url = "http://{}:{}/hinfopresets/".format(conf["server_ip"],
+                                              conf["server_port"])
+    history.record_post(url, "", data, undoable=False)
+    post(url, **data)
+    cli_info("Added new hinfopreset with cpu {} and os {}"
+             .format(args.cpu, args.os), print_msg=True)
+
+
+# Add 'hinfopresets_create' as a sub command to the 'host' command
+host.add_command(
+    prog='hinfopresets_create',
+    description='Create a new hinfopreset.',
+    short_desc='Create a new hinfopreset.',
+    callback=hinfopresets_create,
+    flags=[
+        Flag('cpu',
+             description='CPU of hinfopreset.',
+             metavar='CPU'),
+        Flag('os',
+             description='OS of hinfopreset.',
+             metavar='OS'),
+    ],
+)
+
+
+#########################################################
+#  Implementation of sub command 'hinfopresets_remove'  #
+#########################################################
+
+def hinfopresets_remove(args):
+    """Remove a hinfopreset.
+    """
+    hi_dict = hinfo_dict()
+    if args.id not in hi_dict.keys():
+        cli_info("hinfopreset {} does not exist".format(args.id),
+                 print_msg=True)
+        return
+
+    # Check for hinfopreset in use
+    url = "http://{}:{}/hosts/?hinfo={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        args.id,
+    )
+    history.record_get(url)
+    hosts = get(url).json()
+    if len(hosts):
+        if args.force:
+            for host in hosts:
+                info = host_info_by_name(host['name'])
+                _hinfo_remove(info)
+            cli_info("Removed hinfopreset {} from {} hosts"
+                     .format(args.id, len(hosts)), print_msg=True)
+        else:
+            cli_warning("hinfopreset {} in use by {} hosts, must force".format(
+                args.id, len(hosts)))
+
+    url = "http://{}:{}/hinfopresets/{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        args.id,
+    )
+    history.record_delete(url, args.id)
+    delete(url)
+    cli_info("Removed hinfopreset {}".format(args.id), print_msg=True)
+
+
+# Add 'hinfo_show' as a sub command to the 'host' command
+host.add_command(
+    prog='hinfopresets_remove',
+    description='Remove a hinfopreset.',
+    short_desc='Remove a hinfopreset.',
+    callback=hinfopresets_remove,
+    flags=[
+        Flag('id',
+             description='Hinfopreset id.',
+             metavar='ID'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
