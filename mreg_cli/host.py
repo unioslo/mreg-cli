@@ -355,7 +355,7 @@ def rename(args):
         if not args.force:
             cli_warning("host {} already exists".format(new_name))
 
-    if cname_exists(name):
+    if cname_exists(new_name):
         cli_warning("the name is already in use by a cname")
 
     # Require force if FQDN not in MREG zone
@@ -526,7 +526,6 @@ host.add_command(
 ###########################################
 
 def a_add(args):
-    # args.name args.ip
     """Add an A record to host. If <name> is an alias the cname host is used.
     """
     # Get host info for or raise exception
@@ -538,7 +537,8 @@ def a_add(args):
 
     # Require force if host has multiple A/AAAA records
     if len(info["ipaddresses"]) and not args.force:
-        cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
+        cli_warning("{} already has A/AAAA record(s), must force"
+                    .format(info["name"]))
 
     # Handle arbitrary ip from subnet if received a subnet w/o mask
     if re.match(r"^.*/$", args.ip):
@@ -594,7 +594,8 @@ def a_add(args):
     }
 
     # Add A record
-    url = "http://{}:{}/ipaddresses/".format(conf["server_ip"], conf["server_port"])
+    url = "http://{}:{}/ipaddresses/".format(conf["server_ip"],
+                                             conf["server_port"])
     history.record_post(url, ip, data)
     post(url, **data)
     cli_info("added ip {} to {}".format(ip, info["name"]), print_msg=True)
@@ -654,7 +655,10 @@ host.add_command(
                          'case a random IP from that subnet is chosen.',
              short_desc='New IP.',
              required=True,
-             metavar='IP/SUBNET')
+             metavar='IP/SUBNET'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
@@ -664,7 +668,32 @@ host.add_command(
 ##############################################
 
 def a_remove(args):
-    print('removing:', args.ip)
+    """Remove A record from host. If <name> is an alias the cname host is used.
+    """
+    # Ip sanity check
+    if not is_valid_ipv4(args.ip):
+        cli_warning("not a valid ipv4: \"{}\"".format(args.ip))
+
+    # Check that ip belongs to host
+    info = host_info_by_name(args.name)
+    for rec in info["ipaddresses"]:
+        if rec["ipaddress"] == args.ip:
+            ip_id = rec["id"]
+            break
+    else:
+        cli_warning("{} is not owned by {}".format(args.ip, info["name"]))
+
+    old_data = {
+        "host": info["id"],
+        "ipaddress": args.ip,
+    }
+
+    # Remove ip
+    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"], conf["server_port"], ip_id)
+    history.record_delete(url, old_data)
+    delete(url)
+    cli_info("removed ip {} from {}".format(args.ip, info["name"]),
+             print_msg=True)
 
 
 # Add 'a_remove' as a sub command to the 'host' command
@@ -679,7 +708,7 @@ host.add_command(
              metavar='NAME'),
         Flag('ip',
              description='IP to remove.',
-             metavar='IP')
+             metavar='IP'),
     ],
 )
 
@@ -735,7 +764,7 @@ host.add_command(
              metavar='NAME'),
         Flag('ip',
              description='The IPv6 to add to target host.',
-             metavar='IPv6')
+             metavar='IPv6'),
     ],
 )
 
@@ -770,7 +799,7 @@ host.add_command(
              description='The new IPv6 address.',
              short_desc='New IPv6.',
              required=True,
-             metavar='IPv6')
+             metavar='IPv6'),
     ],
 )
 
@@ -796,7 +825,7 @@ host.add_command(
              metavar='NAME'),
         Flag('ip',
              description='IPv6 to remove.',
-             metavar='IPv6')
+             metavar='IPv6'),
     ],
 )
 
@@ -852,7 +881,7 @@ host.add_command(
              metavar='NAME'),
         Flag('alias',
              description='Name of CNAME host.',
-             metavar='ALIAS')
+             metavar='ALIAS'),
     ],
 )
 
@@ -876,7 +905,7 @@ host.add_command(
              metavar='NAME'),
         Flag('alias',
              description='Name of CNAME to remove.',
-             metavar='CNAME')
+             metavar='CNAME'),
     ],
 )
 
