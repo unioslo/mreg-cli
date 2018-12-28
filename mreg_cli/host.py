@@ -943,7 +943,87 @@ host.add_command(
 #################################################
 
 def aaaa_change(args):
-    print('change ipv6:', args.oldip)
+    """Change AAAA record. If <name> is an alias the cname host is used.
+    """
+    if args.old == args.new:
+        cli_warning("New and old IP are equal")
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    # Handle arbitrary ip from subnet if received a subnet w/o mask
+    if re.match(r"^.*/$", args.new):
+        subnet = get_subnet(args.new[:-1])
+        if subnet["frozen"] and not args.force:
+            cli_warning(
+                "subnet {} is frozen, must force".format(subnet["range"]))
+        new_ip = first_unused_ip_from_subnet(subnet)
+
+    # Handle arbitrary ip from subnet if received a subnet w/mask
+    elif is_valid_subnet(args.new):
+        subnet = get_subnet(args.new)
+        if subnet["frozen"] and not args.force:
+            cli_warning(
+                "subnet {} is frozen, must force".format(subnet["range"]))
+        new_ip = first_unused_ip_from_subnet(subnet)
+
+    # Require force if given valid ip in subnet not controlled by MREG
+    elif is_valid_ip(args.new) and not ip_in_mreg_net(args.new):
+        if not args.force:
+            cli_warning(
+                "{} isn't in a subnet controlled by MREG, must force".format(
+                    args.new))
+        else:
+            new_ip = args.new
+
+    # Or else check that the address given isn't reserved
+    else:
+        subnet = get_subnet(args.new)
+        if subnet["frozen"] and not args.force:
+            cli_warning(
+                "subnet {} is frozen, must force".format(subnet["range"]))
+        network_object = ipaddress.ip_network(subnet['range'])
+        reserved_addresses = \
+            set(map(str, get_subnet_reserved_ips(subnet['range'])))
+        if args.new in reserved_addresses and not args.force:
+            cli_warning("Address is reserved. Requires force")
+        if args.new == network_object.network_address.exploded:
+            cli_warning("Can't overwrite the network address of the subnet")
+        if args.new == network_object.broadcast_address.exploded:
+            cli_warning("Can't overwrite the broadcast address of the subnet")
+        new_ip = args.new
+
+    # Fail if input isn't ipv6
+    if not is_valid_ipv6(args.old):
+        cli_warning("not a valid ipv6 \"{}\" (target host {})"
+                    .format(args.old, info["name"]))
+    elif is_valid_ipv4(new_ip):
+        cli_warning("got ipv4 address, want ipv6.")
+    elif not is_valid_ipv6(new_ip):
+        cli_warning("not a valid ipv6 \"{}\" (target host {})"
+                    .format(new_ip, info["name"]))
+
+    # Check that ip belongs to host
+    for rec in info["ipaddresses"]:
+        if rec["ipaddress"] == args.old:
+            ip_id = rec["id"]
+            break
+    else:
+        cli_warning("\"{}\" is not owned by {}".format(args.old, info["name"]))
+
+    old_data = {"ipaddress": args.old}
+    new_data = {"ipaddress": new_ip}
+
+    # Update AAAA records ip address
+    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"],
+                                               conf["server_port"], ip_id)
+    # Cannot redo/undo since recourse name changes
+    history.record_patch(url, new_data, old_data, redoable=False,
+                         undoable=False)
+    patch(url, ipaddress=new_ip)
+    cli_info(
+        "changed ip {} to {} for {}".format(args.old, new_ip, info["name"]),
+        print_msg=True)
 
 
 # Add 'aaaa_change' as a sub command to the 'host' command
@@ -969,6 +1049,9 @@ host.add_command(
              short_desc='New IPv6.',
              required=True,
              metavar='IPv6'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
