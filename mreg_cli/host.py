@@ -1341,7 +1341,6 @@ host.add_command(
 ###############################################
 
 def hinfo_set(args):
-    # .name .hinfo
     """Set hinfo for host. If <name> is an alias the cname host is updated.
     """
     hinfo_sanify(args.hinfo, hinfo_dict())
@@ -1545,7 +1544,25 @@ host.add_command(
 ################################################
 
 def loc_remove(args):
-    print('remove loc:', args.name)
+    """Remove location from host. If <name> is an alias the cname host is
+    updated.
+    """
+    # LOC always require force
+    if not args.force:
+        cli_warning("require force to remove location")
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    old_data = {"loc": info["loc"]}
+    new_data = {"loc": ""}
+
+    # Set LOC to null value
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
+                                         info["name"])
+    history.record_patch(url, new_data, old_data)
+    patch(url, loc="")
+    cli_info("removed LOC for {}".format(info["name"]), print_msg=True)
 
 
 # Add 'loc_remove' as a sub command to the 'host' command
@@ -1559,6 +1576,9 @@ host.add_command(
         Flag('name',
              description='Name of the target host.',
              metavar='NAME'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
@@ -1568,7 +1588,30 @@ host.add_command(
 #############################################
 
 def loc_set(args):
-    print('set loc:', args.loc)
+    """Set location of host. If <name> is an alias the cname host is updated.
+    """
+    # LOC always require force
+    if not args.force:
+        cli_warning("require force to set location")
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    # LOC sanity check
+    if not is_valid_loc(args.loc):
+        cli_warning("invalid LOC \"{}\" (target host {})"
+                    .format(args.loc, info["name"]))
+
+    old_data = {"loc": info["loc"] or ""}
+    new_data = {"loc": args.loc}
+
+    # Update LOC
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
+                                         info["name"])
+    history.record_patch(url, new_data, old_data)
+    patch(url, loc=args.loc)
+    cli_info("updated LOC to {} for {}".format(args.loc, info["name"]),
+             print_msg=True)
 
 
 # Add 'loc_set' as a sub command to the 'host' command
@@ -1585,6 +1628,9 @@ host.add_command(
         Flag('loc',
              description='New LOC.',
              metavar='LOC'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
@@ -1594,7 +1640,12 @@ host.add_command(
 ##############################################
 
 def loc_show(args):
-    print('show LOC:', args.name)
+    """Show location of host. If <name> is an alias the cname hosts LOC is
+    shown.
+    """
+    info = host_info_by_name(args.name)
+    print_loc(info["loc"])
+    cli_info("showed LOC for {}".format(info["name"]))
 
 
 # Add 'loc_show' as a sub command to the 'host' command
