@@ -2083,7 +2083,52 @@ host.add_command(
 #############################################
 
 def srv_add(args):
-    print('add srv:', args.service)
+    """Add SRV record.
+    """
+
+    # Require force if target host doesn't exist
+    host_name = clean_hostname(args.name)
+    try:
+        host_name = resolve_input_name(args.name)
+    except HostNotFoundWarning:
+        if not args.force:
+            cli_warning("{} doesn't exist. Must force".format(args.name))
+
+    # Require force if target host not in MREG zone
+    if not host_in_mreg_zone(host_name) and not args.force:
+        cli_warning(
+            "{} isn't in a MREG controlled zone, must force".format(host_name))
+
+    sname = clean_hostname(args.service)
+
+    # Check if a SRV record with identical service exists
+    url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"],
+                                                 conf["server_port"], sname)
+    history.record_get(url)
+    srvs = get(url).json()
+    if len(srvs) > 0:
+        entry_exists = True
+    else:
+        entry_exists = False
+
+    data = {
+        "name": sname,
+        "priority": args.pri,
+        "weight": args.weight,
+        "port": args.port,
+        "target": host_name,
+    }
+
+    # Create new SRV record
+    url = "http://{}:{}/srvs/".format(conf["server_ip"], conf["server_port"])
+    history.record_post(url, "", data, undoable=False)
+    post(url, **data)
+    if entry_exists:
+        cli_info("Added SRV record {} with target {} to existing entry."
+                 .format(sname, host_name), print_msg=True)
+    else:
+        cli_info("Added SRV record {} with target {}".format(sname, host_name),
+                 print_msg=True)
 
 
 # Add 'srv_add' as a sub command to the 'host' command
@@ -2112,6 +2157,9 @@ host.add_command(
              description='Host target name.',
              required=True,
              metavar='NAME'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
@@ -2121,7 +2169,33 @@ host.add_command(
 ################################################
 
 def srv_remove(args):
-    print('remove srv:', args.name)
+    """Remove SRV record.
+    """
+    sname = clean_hostname(args.service)
+
+    # Check if service exist
+    url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"],
+                                                 conf["server_port"], sname)
+    history.record_get(url)
+    srvs = get(url).json()
+    if len(srvs) == 0:
+        cli_warning("not service named {}".format(sname))
+    elif len(srvs) > 1 and not args.force:
+        cli_warning("multiple services named {}, must force".format(sname))
+
+    # Remove all SRV records with that service
+    for srv in srvs:
+        assert isinstance(srv, dict)
+        url = "http://{}:{}/srvs/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            srv["id"],
+        )
+        history.record_delete(url, srv, redoable=False)
+        delete(url)
+        cli_info("removed SRV record {} with target {}".format(srv["name"],
+                                                               srv["target"]),
+                 print_msg=True)
 
 
 # Add 'srv_remove' as a sub command to the 'host' command
@@ -2133,6 +2207,9 @@ host.add_command(
         Flag('service',
              description='Host target name.',
              metavar='SERVICE'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
@@ -2142,7 +2219,35 @@ host.add_command(
 ##############################################
 
 def srv_show(args):
-    print('show srv:', args.service)
+    """Show SRV. An empty input shows all existing SRV records
+    """
+
+    sname = clean_hostname(args.service)
+
+    # Get all matching SRV records
+    url = "http://{}:{}/srvs/?name__contains={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        sname,
+    )
+    history.record_get(url)
+    srvs = get(url).json()
+    if len(srvs) < 1:
+        cli_warning("no service matching {}".format(sname))
+    padding = 0
+
+    # Print records
+    for srv in srvs:
+        if len(srv["name"]) > padding:
+            padding = len(srv["name"])
+    prev_name = ""
+    for srv in sorted(srvs, key=lambda k: k["name"]):
+        if prev_name == srv["name"]:
+            srv["name"] = ""
+        else:
+            prev_name = srv["name"]
+        print_srv(srv, padding)
+    cli_info("showed entries for SRV {}".format(sname))
 
 
 # Add 'srv_show' as a sub command to the 'host' command
