@@ -1,4 +1,15 @@
+from util import *
+from log import *
+# noinspection PyUnresolvedReferences
 from cli import cli, Flag
+from history import history
+
+try:
+    conf = cli_config(required_fields=("server_ip", "server_port"))
+except Exception as e:
+    print("commands.py: cli_config:", e)
+    traceback.print_exc()
+    sys.exit(1)
 
 #################################
 #  Add the main command 'zone'  #
@@ -15,7 +26,27 @@ zone = cli.add_command(
 ##########################################
 
 def create(args):
-    print('create:', args.zone)
+    """Create new zone.
+    """
+    if not args.ns:
+        cli_warning('At least one nameserver is required')
+
+    for nameserver in args.ns:
+        try:
+            info = host_info_by_name(nameserver)
+        except HostNotFoundWarning:
+            if not args.force:
+                cli_warning(
+                    "{} has no A-record/glue, must force".format(nameserver))
+        else:
+            if host_in_mreg_zone(info['name']):
+                if not info['ipaddresses'] and not args.force:
+                    cli_warning("{} has no A-record/glue, must force".format(
+                        nameserver))
+
+    url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
+    post(url, name=args.zone, email=args.email, primary_ns=args.ns)
+    cli_info("created zone {}".format(args.zone), True)
 
 
 zone.add_command(
@@ -27,10 +58,16 @@ zone.add_command(
         Flag('zone',
              description='Zone name.',
              metavar='ZONE'),
+        Flag('email',
+             description='Contact email.',
+             metavar='EMAIL'),
         Flag('ns',
              description='Nameservers of the zone.',
              nargs='+',
              metavar='NS'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ]
 )
 
@@ -40,7 +77,34 @@ zone.add_command(
 ##########################################
 
 def delete(args):
-    print('delete:', args.zone)
+    """Delete a zone
+    """
+    url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"],
+                                              conf["server_port"], args.zone)
+    zone = get(url_zone).json()
+
+    url_hosts = "http://{}:{}/hosts/?zone={}".format(conf["server_ip"],
+                                                     conf["server_port"],
+                                                     zone['id'])
+    url_zones = "http://{}:{}/zones/?name__endswith={}".format(
+        conf["server_ip"], conf["server_port"], args.zone)
+
+    hosts = get(url_hosts).json()
+    zones = get(url_zones).json()
+
+    # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
+    if hosts and not args.force:
+        cli_warning(
+            "Zone has {} registered entries, must force".format(len(hosts)))
+    other_zones = [z['name'] for z in zones if z['name'] != args.zone]
+    if other_zones:
+        cli_warning("Zone has registered subzones '{}', "
+                    "can not delete".format(", ".join(sorted(other_zones))))
+
+    url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"],
+                                              conf["server_port"], zone['name'])
+    delete(url_zone)
+    cli_info("deleted zone {}".format(zone['name']), True)
 
 
 zone.add_command(
@@ -52,7 +116,81 @@ zone.add_command(
         Flag('zone',
              description='Zone name.',
              metavar='ZONE'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ]
+)
+
+
+##########################################
+# Implementation of sub command 'info' #
+##########################################
+
+def info(args):
+    """Show SOA info for a existing zone.
+    """
+
+    def print_soa(info: str, text: str, padding: int = 20) -> None:
+        print("{1:<{0}}{2}".format(padding, info, text))
+
+    def print_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
+        print("{1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl))
+
+    if not args.zone:
+        cli_warning('Name is required')
+    url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"],
+                                              conf["server_port"],
+                                              args.zone)
+    zone = get(url_zone).json()
+    print_soa("Zone:", zone["name"])
+    print_ns("Nameservers:", "hostname", "TTL")
+    for ns in zone['nameservers']:
+        ttl = ns['ttl'] if ns['ttl'] else "<not set>"
+        print_ns("", ns['name'], ttl)
+    print_soa("Primary ns:", zone["primary_ns"])
+    print_soa("Email:", zone['email'])
+    print_soa("Serialnumber:", zone["serialno"])
+    print_soa("Refresh:", zone["refresh"])
+    print_soa("Retry:", zone["retry"])
+    print_soa("Expire:", zone["expire"])
+    print_soa("TTL:", zone["ttl"])
+
+
+zone.add_command(
+    prog='info',
+    description='Delete a zone',
+    short_desc='Delete a zone',
+    callback=info,
+    flags=[
+        Flag('zone',
+             description='Zone name.',
+             metavar='ZONE'),
+    ]
+)
+
+
+##########################################
+# Implementation of sub command 'list' #
+##########################################
+
+def list_(args):
+    """List all zones.
+    """
+
+    url_zones = "http://{}:{}/zones/".format(conf["server_ip"],
+                                             conf["server_port"])
+    zones = get(url_zones).json()
+    print("Zones:")
+    for zone in sorted(zones, key=lambda kv: kv['name']):
+        print('   {}'.format(zone['name']))
+
+
+zone.add_command(
+    prog='list',
+    description='Delete a zone',
+    short_desc='Delete a zone',
+    callback=list_,
 )
 
 
@@ -61,7 +199,25 @@ zone.add_command(
 ##########################################
 
 def set_ns(args):
-    print('set_ns:', args.zone)
+    """Update nameservers for an existing zone.
+    """
+    # TODO Validation for valid domain names
+    if not args.ns:
+        cli_warning('At least one nameserver is required')
+
+    for i in range(len(args.ns)):
+        info = host_info_by_name(args.ns[i])
+        if host_in_mreg_zone(info['name']):
+            if not info['ipaddresses'] and not args.force:
+                cli_warning("{} has no A-record/glue, must force".format(
+                    args.ns[i]))
+        args.ns[i] = info['name']
+
+    url = "http://{}:{}/zones/{}/nameservers".format(conf["server_ip"],
+                                                     conf["server_port"],
+                                                     args.zone)
+    patch(url, primary_ns=args.ns)
+    cli_info("updated nameservers for {}".format(args.zone), True)
 
 
 zone.add_command(
@@ -77,6 +233,9 @@ zone.add_command(
              description='Nameservers of the zone.',
              nargs='+',
              metavar='NS'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ]
 )
 
@@ -86,7 +245,24 @@ zone.add_command(
 ###########################################
 
 def set_soa(args):
-    print('set_soa:', args.zone)
+    # .zone .ns .email .serialno .retry .expire .ttl
+    """Updated the SOA of a zone.
+    """
+    # TODO Validation for valid domain names
+    url = "http://{}:{}/zones/{}".format(conf["server_ip"],
+                                         conf["server_port"], args.zone)
+    zone = get(url).json()
+    nameservers = zone['nameservers']
+    if args.ns not in [nameserver['name'] for nameserver in nameservers]:
+        cli_warning("{} is not one of {}'s nameservers. Add it with set_ns "
+                    "before trying again".format(args.ns, args.zone))
+
+    url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"],
+                                         args.zone)
+    patch(url, primary_ns=args.ns, email=args.email, serialno=args.serialno,
+          refresh=args.refresh, retry=args.retry, expire=args.expire,
+          ttl=args.ttl)
+    cli_info("set soa for {}".format(args.zone), True)
 
 
 zone.add_command(
@@ -111,15 +287,24 @@ zone.add_command(
              description='Serial number.',
              required=True,
              metavar='SERIALNO'),
+        Flag('-refresh',
+             description='Refresh time.',
+             type=int,
+             required=True,
+             metavar='REFRESH'),
         Flag('-retry',
              description='Retry time.',
+             type=int,
+             required=True,
              metavar='RETRY'),
         Flag('-expire',
              description='Expire time.',
+             type=int,
              required=True,
              metavar='EXPIRE'),
         Flag('-ttl',
              description='Time To Live.',
+             type=int,
              required=True,
              metavar='TTL'),
     ]
