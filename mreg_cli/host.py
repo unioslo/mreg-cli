@@ -2393,7 +2393,23 @@ host.add_command(
 #############################################
 
 def txt_add(args):
-    print('add txt:', args.text)
+    """Add a txt record to host. <text> must be enclosed in double quotes if it
+    contains more than one word.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    if any(args.text == i["txt"] for i in info["txts"]):
+        cli_warning("The TXT record already exists for {}".format(info["name"]))
+
+    data = {
+        "host": info["id"],
+        "txt": args.text
+    }
+    # Add TXT record to host
+    url = "http://{}:{}/txts/".format(conf["server_ip"], conf["server_port"])
+    history.record_post(url, "", data, undoable=False)
+    post(url, **data)
+    cli_info("Added TXT record to {}".format(info["name"]), print_msg=True)
 
 
 # Add 'txt_add' as a sub command to the 'host' command
@@ -2419,7 +2435,45 @@ host.add_command(
 ################################################
 
 def txt_remove(args):
-    print('remove txt:', args.text)
+    """Remove TXT record for host matching <text>.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    # Check for matching TXT records for host
+    url = "http://{}:{}/txts/?host={}&txt__contains={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        info["id"],
+        args.text,
+    )
+    history.record_get(url)
+    txts = get(url).json()
+    if len(txts) == 0:
+        cli_warning(
+            "{} hasn't got any TXT records matching \"{}\"".format(info["name"],
+                                                                   args.text))
+    if len(txts) > 1 and not args.force:
+        cli_warning("\"{}\" matched {} of {} TXT records. Must force.".format(
+            args.text,
+            len(args),
+            info["name"],
+        ))
+
+    # Remove TXT records
+    for txt in txts:
+        url = "http://{}:{}/txts/{}".format(
+            conf["server_ip"],
+            conf["server_port"],
+            txt["id"],
+        )
+        history.record_delete(url, txt)
+        delete(url)
+    cli_info("deleted {} of {} TXT records matching \"{}\"".format(
+        len(args),
+        info["name"],
+        args.text
+    ))
 
 
 # Add 'txt_remove' as a sub command to the 'host' command
@@ -2435,6 +2489,9 @@ host.add_command(
         Flag('text',
              description='TXT record text. Must be quoted if contains spaces.',
              metavar='TEXT'),
+        Flag('-force',
+             action='count',
+             description='Enable force.'),
     ],
 )
 
@@ -2444,7 +2501,19 @@ host.add_command(
 ##############################################
 
 def txt_show(args):
-    print('show txt:', args.name)
+    """Show all TXT records for host.
+    """
+    info = host_info_by_name(args.name)
+    url = "http://{}:{}/txts/?host={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        info["id"],
+    )
+    history.record_get(url)
+    txts = get(url).json()
+    for txt in txts:
+        print_txt(txt["txt"], padding=5)
+    cli_info("showed TXT records for {}".format(info["name"]))
 
 
 # Add 'txt_show' as a sub command to the 'host' command
