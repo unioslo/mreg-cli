@@ -1854,7 +1854,40 @@ host.add_command(
 ################################################
 
 def ptr_change(args):
-    print('change PTR:', args.ip)
+    """Move PTR record from <old-name> to <new-name>.
+    """
+    # Get host info or raise exception
+    old_info = host_info_by_name(args.old)
+    new_info = host_info_by_name(args.new)
+
+    # check that new host haven't got a ptr record already
+    if len(new_info["ptr_overrides"]):
+        cli_warning("{} already got a PTR record".format(new_info["name"]))
+
+    # check that old host has a PTR record with the given ip
+    if not len(old_info["ptr_overrides"]):
+        cli_warning("no PTR record for {} with ip {}".format(old_info["name"],
+                                                             args.ip))
+    if old_info["ptr_overrides"][0]["ipaddress"] != args.ip:
+        cli_warning("{} PTR record doesn't match {}".format(old_info["name"],
+                                                            args.ip))
+
+    # change PTR record
+    data = {
+        "host": new_info["id"],
+    }
+    url = "http://{}:{}/ptroverrides/{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        old_info["ptr_overrides"][0]["id"],
+    )
+    history.record_patch(url, data, old_info["ptr_overrides"][0])
+    patch(url, **data)
+    cli_info("changed owner of PTR record {} from {} to {}".format(
+        args.ip,
+        old_info["name"],
+        new_info["name"],
+    ), print_msg=True)
 
 
 # Add 'ptr_change' as a sub command to the 'host' command
@@ -1883,7 +1916,27 @@ host.add_command(
 ################################################
 
 def ptr_remove(args):
-    print('remove PTR:', args.ip)
+    """Remove PTR record from host.
+    """
+    # XXX: broken function by
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    # Check that host got PTR record (assuming host got at most one record)
+    if len(info["ptr_overrides"]) == 0:
+        cli_warning("no PTR record for {} with ip {}".format(info["name"],
+                                                             args.ip))
+
+    # Delete record
+    url = "http://{}:{}/ptroverrides/{}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        info["ptr_overrides"][0]["id"],
+    )
+    history.record_delete(url, info["ptr_override"][0])
+    delete(url)
+    cli_info("deleted PTR record {} for {}".format(args.ip, info["name"]),
+             print_msg=True)
 
 
 # Add 'ptr_remove' as a sub command to the 'host' command
@@ -1908,7 +1961,46 @@ host.add_command(
 #############################################
 
 def ptr_set(args):
-    print('set PTR:', args.ip)
+    """Create a PTR record for host.
+    """
+    # Ip sanity check
+    if not is_valid_ip(args.ip):
+        cli_warning("invalid ip: {}".format(args.ip))
+    if not ip_in_mreg_net(args.ip):
+        cli_warning("{} isn't in a subnet controlled by MREG".format(args.ip))
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    # check that a PTR record with the given ip doesn't exist
+    url = "http://{}:{}/ptroverrides/?ipaddress={}".format(
+        conf["server_ip"],
+        conf["server_port"],
+        args.ip,
+    )
+    history.record_get(url)
+    ptrs = get(url).json()
+    if len(ptrs):
+        cli_warning("{} already exist in a PTR record".format(args.ip))
+
+    # check if host is in mreg controlled zone, must force if not
+    if not host_in_mreg_zone(info["name"]) and not args.force:
+        cli_warning("{} isn't in a zone controlled by MREG, must force"
+                    .format(info["name"]))
+
+    # create PTR record
+    data = {
+        "host": info["id"],
+        "ipaddress": args.ip,
+    }
+    url = "http://{}:{}/ptroverrides/".format(
+        conf["server_ip"],
+        conf["server_port"],
+    )
+    history.record_post(url, "", data, undoable=False)
+    post(url, **data)
+    cli_info("Added PTR record {} to {}".format(args.ip, info["name"]),
+             print_msg=True)
 
 
 # Add 'ptr_set' as a sub command to the 'host' command
@@ -1933,7 +2025,35 @@ host.add_command(
 ##############################################
 
 def ptr_show(args):
-    print('show PTR:', args.ip)
+    """Show PTR record matching given ip (empty input shows all PTR records).
+    """
+    url = "http://{}:{}/ptroverrides/".format(
+        conf["server_ip"],
+        conf["server_port"],
+    )
+    history.record_get(url)
+    ptrs = get(url).json()
+
+    padding = 0
+    for ptr in ptrs:
+        if args.ip in ptr["ipaddress"]:
+            if len(ptr["ipaddress"]) > padding:
+                padding = len(ptr["ipaddress"])
+
+    for ptr in ptrs:
+        if args.ip in ptr["ipaddress"]:
+            url = "http://{}:{}/hosts/?hostid={}".format(
+                conf["server_ip"],
+                conf["server_port"],
+                ptr["hostid"],
+            )
+            history.record_get(url)
+            hosts = get(url).json()
+            if not hosts:
+                cli_error("{} PTR records host (hostid: {}) doesn't exist."
+                          .format(args.ip, ptr["hostid"]))
+            print_ptr(ptr["ipaddress"], hosts[0]["name"], padding)
+    cli_info("showed PTR records matching {}".format(args.ip))
 
 
 # Add 'ptr_show' as a sub command to the 'host' command
