@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from exceptions import CliError, CliWarning
 from prompt_toolkit import HTML, print_formatted_text as print
@@ -207,6 +208,11 @@ def _source(args):
     for file in args.files:
         with open(file) as f:
             for i, l in enumerate(f):
+                # Shell commands can be called from scripts. They start with '!'
+                if l.startswith('!'):
+                    os.system(l[1:])
+                    continue
+
                 # With comments=True shlex will remove comments from the line
                 # when splitting. Comment symbol is #
                 s = shlex.split(l, comments=True)
