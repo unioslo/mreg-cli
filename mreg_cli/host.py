@@ -2277,7 +2277,19 @@ host.add_command(
 ################################################
 
 def ttl_remove(args):
-    print('remove ttl:', args.name)
+    """Remove explicit TTL for host. If <name> is an alias the alias host is
+    updated.
+    """
+    info = host_info_by_name(args.name)
+    old_data = {"ttl": info["ttl"]}
+    new_data = {"ttl": ""}
+
+    # Remove TTL value
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
+                                         info["name"])
+    history.record_patch(url, new_data, old_data)
+    patch(url, ttl="")
+    cli_info("removed TTL for {}".format(info["name"]), print_msg=True)
 
 
 # Add 'ttl_remove' as a sub command to the 'host' command
@@ -2300,7 +2312,28 @@ host.add_command(
 #############################################
 
 def ttl_set(args):
-    print('set ttl:', args.ttl)
+    """Set ttl for host. Valid values are 300 <= TTL <= 68400 or "default". If
+    <name> is an alias the alias host is updated.
+    """
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    # TTL sanity check
+    if not is_valid_ttl(args.ttl):
+        cli_warning(
+            "invalid TTL value: {} (target host {})".format(args.ttl,
+                                                            info["name"]))
+
+    old_data = {"ttl": info["ttl"] or ""}
+    new_data = {"ttl": args.ttl if args.ttl != "default" else ""}
+
+    # Update TTL
+    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
+                                         info["name"])
+    history.record_patch(url, new_data, old_data)
+    patch(url, **new_data)
+    cli_info("updated TTL for {}".format(info["name"]), print_msg=True)
 
 
 # Add 'ttl_set' as a sub command to the 'host' command
@@ -2326,7 +2359,11 @@ host.add_command(
 ##############################################
 
 def ttl_show(args):
-    print('show TTL:', args.name)
+    """Show ttl for host. If <name> is an alias the alias hosts TTL is shown.
+    """
+    info = host_info_by_name(args.name)
+    print_ttl(info["ttl"])
+    cli_info("showed TTL for {}".format(info["name"]))
 
 
 # Add 'ttl_show' as a sub command to the 'host' command
