@@ -1,73 +1,73 @@
-# Subnets setup ################################################################
-subnet create 129.240.69.0/24 "Seth MacFarlanes subnet!"  # ipv4 subnet
-subnet create 1234::ff00/120 "familynet"                  # ipv6 subnet
+ Subnets setup ################################################################
+subnet create -subnet 129.240.69.0/24 -desc "Seth MacFarlanes subnet!"  # ipv4 subnet
+subnet create -subnet 1234::ff00/120 -desc "familynet"                  # ipv6 subnet
 
-subnet create 129.240.96.0/24 "Frozzzen"                  # frozen subnet
+subnet create -subnet 129.240.96.0/24 -desc "Frozzzen"                  # frozen subnet
 subnet set_frozen 129.240.96.0/24
 
 # zone setup
-zone create uio.no hostmaster@example.org ns1.example.org y
+zone create uio.no hostmaster@example.org ns1.example.org -force
 
 # Host creation ################################################################
-host add sethmacfarlane 129.240.69.69 me@griffin.no -comment "O.o" #-hinfo 1
+host add -name sethmacfarlane -ip 129.240.69.69 -contact me@griffin.no -comment "O.o" #-hinfo 1
 host set_contact sethmacfarlane peter@griffin.no
 host set_comment sethmacfarlane "Family Guy is too awesome"
 
-host add stan 129.240.69.100 american@dad.no #-hinfo 2
-host add roger 129.240.69.101 american@dad.no #-hinfo 3
-host add steve 129.240.69.102 american@dad.no
-host add francine 129.240.69.103 american@dad.no
-host add haley 129.240.69.104 american@dad.no
-host add claus 129.240.69.105 american@dad.no
+host add -name stan -ip 129.240.69.100 -contact american@dad.no #-hinfo 2
+host add -name roger -ip 129.240.69.101 -contact american@dad.no #-hinfo 3
+host add -name steve -ip 129.240.69.102 -contact american@dad.no
+host add -name francine -ip 129.240.69.103 -contact american@dad.no
+host add -name haley -ip 129.240.69.104 -contact american@dad.no
+host add -name claus -ip 129.240.69.105 -contact american@dad.no
 
 # Test force when creating host in zone not controlled by MREG
-!echo -n "Fails: "
-host add am.dad.no 129.240.69.106 am@dad.no
-host add am.dad.no 129.240.69.106 am@dad.no y
+!echo -n "$ Fails: "
+host add -name am.dad.no -ip 129.240.69.106 -contact am@dad.no
+host add -name am.dad.no -ip 129.240.69.106 -contact am@dad.no -force
 
 # Test force when creating host with ip in net not controlled by MREG
-!echo -n "Fails: "
-host add daddyo 129.42.69.106 am@dad.no
-host add daddyo 129.42.69.106 am@dad.no y
+!echo -n "$ Fails: "
+host add -name daddyo -ip 129.42.69.106 -contact am@dad.no
+host add -name daddyo -ip 129.42.69.106 -contact am@dad.no -force
 
 # A ############################################################################
-host a_change sethmacfarlane 129.240.69.69 129.240.69.123
+host a_change -name sethmacfarlane -old 129.240.69.69 -new 129.240.69.123
 host a_remove sethmacfarlane 129.240.69.123
 
 # Test force when adding A record in frozen subnet
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host a_add sethmacfarlane 129.240.96.69
-host a_add sethmacfarlane 129.240.96.69 y
+host a_add sethmacfarlane 129.240.96.69 -force
 
 # Test force when adding A record to host with existing A records
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host a_add sethmacfarlane 129.240.69.69
-host a_add sethmacfarlane 129.240.69.69 y
-host a_add sethmacfarlane 129.240.69.0/ y
-host a_add sethmacfarlane 129.240.69.0/24 y
+host a_add sethmacfarlane 129.240.69.69 -force
+host a_add sethmacfarlane 129.240.69.0/ -force
+host a_add sethmacfarlane 129.240.69.0/24 -force
 
 # Test force when adding ip in frozen subnet
 host a_remove am.dad.no 129.240.69.106
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host a_add am.dad.no 129.240.96.106
-host a_add am.dad.no 129.240.96.106 y
+host a_add am.dad.no 129.240.96.106 -force
 
 # Test force when adding ip not in MREG controlled subnet
 host a_remove daddyo 129.42.69.106
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host a_add daddyo 129.42.69.106
-host a_add daddyo 129.42.69.106 y
+host a_add daddyo 129.42.69.106 -force
 
 # AAAA #########################################################################
 # Test force when adding AAAA record to host with existing A/AAAA record
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host aaaa_add sethmacfarlane 1234::ff0f
-host aaaa_add sethmacfarlane 1234::ff0f y
+host aaaa_add sethmacfarlane 1234::ff0f -force
 host aaaa_change sethmacfarlane 1234::ff0f 1234::ffab
 host aaaa_remove sethmacfarlane 1234::ffab
-host aaaa_add sethmacfarlane 1234::ff0f y
-host aaaa_add sethmacfarlane 1234::ff00/ y
-host aaaa_add sethmacfarlane 1234::ff00/120 y
+host aaaa_add sethmacfarlane 1234::ff0f -force
+host aaaa_add sethmacfarlane 1234::ff00/ -force
+host aaaa_add sethmacfarlane 1234::ff00/120 -force
 
 # CNAME ########################################################################
 host cname_add sethmacfarlane chris
@@ -79,11 +79,11 @@ host cname_add sethmacfarlane brian
 host cname_remove sethmacfarlane meg
 
 # Test only one CNAME record is allowed
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host cname_add roger brian
 
 # Test cannot have any other records than CNAME
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host cname_add sethmacfarlane stan
 
 # HINFO ########################################################################
@@ -92,63 +92,63 @@ host cname_add sethmacfarlane stan
 
 # LOC ##########################################################################
 # Test force for all LOC commands
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host loc_set sethmacfarlane.uio.no "59 56 23 N 10 43 50 E 80m"
-host loc_set sethmacfarlane.uio.no "59 56 23 N 10 43 50 E 80m" y
-!echo -n "Fails: "
+host loc_set sethmacfarlane.uio.no "59 56 23 N 10 43 50 E 80m" -force
+!echo -n "$ Fails: "
 host loc_remove sethmacfarlane
-host loc_remove sethmacfarlane y
-host loc_set sethmacfarlane.uio.no "59 56 23 N 10 43 50 E 80m" y
+host loc_remove sethmacfarlane -force
+host loc_set sethmacfarlane.uio.no "59 56 23 N 10 43 50 E 80m" -force
 
 # NAPTR ########################################################################
-host naptr_add sethmacfarlane 3 10 s SIP+D2U "" _sip._udp.sbc2.void.uio.no.
-host naptr_add sethmacfarlane 3 20 s SIP+D2U "" _sip._tcp.sbc2.void.uio.no.
+host naptr_add -name sethmacfarlane -preference 3 -order 10 -flag s -service SIP+D2U -regexp "" -replacement _sip._udp.sbc2.void.uio.no.
+host naptr_add -name sethmacfarlane -preference 3 -order 20 -flag s -service SIP+D2U -regexp "" -replacement _sip._tcp.sbc2.void.uio.no.
 host naptr_remove sethmacfarlane _sip._udp.sbc2.void.uio.no.
-host naptr_add sethmacfarlane 3 10 s SIP+D2U "" _sip._udp.sbc2.void.uio.no.
+host naptr_add -name sethmacfarlane -preference 3 -order 10 -flag s -service SIP+D2U -regexp "" -replacement _sip._udp.sbc2.void.uio.no.
 
 # PTR ##########################################################################
 host ptr_set 129.240.69.110 sethmacfarlane
 host ptr_change 129.240.69.110 sethmacfarlane stan
 
 # Test error for ip in net not controlled by MREG
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host ptr_set 129.42.69.110 sethmacfarlane
 
 # Test error for adding ptr record to host already with a ptr record
 host ptr_set 129.240.69.111 sethmacfarlane
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host ptr_set 1234::ff0a sethmacfarlane
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host ptr_change 129.240.69.111 sethmacfarlane stan
 
 # Test error for ip already used in ptr record
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host ptr_set 129.240.69.110 roger
 
 # Test force for host in zone not controlled by MREG
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host ptr_set 1234::ff0a am.dad.no
-host ptr_set 1234::ff0a am.dad.no y
+host ptr_set 1234::ff0a am.dad.no -force
 
 # SRV ##########################################################################
-host srv_add _tull._tcp.familyguy 2 50 4932 sethmacfarlane
-host srv_add _tull._udp.familyguy 2 50 4932 sethmacfarlane
-host srv_add _tull._udp.sethmacfarlane 2 50 4932 stan
-host srv_add _tull._udp.sethmacfarlane 1 34 4932 roger
-host srv_add _xxx._udp.sethmacfarlane 1 11 4932 steve
+host srv_add -service _tull._tcp.familyguy -pri 2 -weight 50 -port 4932 -name sethmacfarlane
+host srv_add -service _tull._udp.familyguy -pri 2 -weight 50 -port 4932 -name sethmacfarlane
+host srv_add -service _tull._udp.sethmacfarlane -pri 2 -weight 50 -port 4932 -name stan
+host srv_add -service _tull._udp.sethmacfarlane -pri 1 -weight 34 -port 4932 -name roger
+host srv_add -service _xxx._udp.sethmacfarlane -pri 1 -weight 11 -port 4932 -name steve
 host srv_remove _xxx._udp.sethmacfarlane
 
 # Test force if target name doesn't exist
-!echo -n "Fails: "
-host srv_add _test._udp.failing 2 50 4932 uklar.uio.no
-host srv_add _test._udp.failing 2 50 4932 uklar.uio.no y
+!echo -n "$ Fails: "
+host srv_add -service _test._udp.failing -pri 2 -weight 50 -port 4932 -name uklar.uio.no
+host srv_add -service _test._udp.failing -pri 2 -weight 50 -port 4932 -name uklar.uio.no -force
 
 # Test force if host not in MREG controlled zone
-!echo -n "Fails: "
-host srv_add _test._udp.failing 2 50 4932 am.dad.no
-host srv_add _test._udp.failing 2 50 4932 am.dad.no y
+!echo -n "$ Fails: "
+host srv_add -service _test._udp.failing -pri 2 -weight 50 -port 4932 -name am.dad.no
+host srv_add -service _test._udp.failing -pri 2 -weight 50 -port 4932 -name am.dad.no -force
 
-host srv_remove _test._udp.failing y
+host srv_remove _test._udp.failing -force
 
 # TTL ##########################################################################
 host ttl_set sethmacfarlane.uio.no 33021
@@ -159,9 +159,9 @@ host ttl_set louis "default"
 host ttl_set brian 666
 
 # Test value limits 300 <= TTL <= 68400
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host ttl_set louis 69
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 host ttl_set louis 70000
 
 host ttl_remove peter
@@ -180,7 +180,7 @@ dhcp assoc stan 15:26:AB:C4:2C:20
 dhcp assoc francine 1a:3d:31:ab:0a:0c
 dhcp disassoc francine
 # Test assoc fail when host got multiple A/AAAA records
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 dhcp assoc sethmacfarlane 12:34:56:78:90:ab
 dhcp assoc 129.240.69.69 1526ABC42C20
 dhcp assoc 1234::ff0f 1a2b3c4d5e6f
@@ -189,23 +189,23 @@ dhcp disassoc 1234::ff0f
 # Zones creation ###############################################################
 # Test force for NS host without ip in MREG controlled zone
 host a_remove haley 129.240.69.104
-!echo -n "Fails: "
-zone create guy.no hostmaster@example.org (haley.uio.no)
-zone create guy.no hostmaster@example.org (haley.uio.no) y
+!echo -n "$ Fails: "
+zone create guy.no hostmaster@example.org haley.uio.no
+zone create guy.no hostmaster@example.org haley.uio.no -force
 
-zone create family.guy.no hostmaster@example.org (claus.uio.no steve.uio.no)
-host add test1.family.guy.no 129.240.69.120 en@to.no
+zone create family.guy.no hostmaster@example.org claus.uio.no steve.uio.no
+host add -name test1.family.guy.no -ip 129.240.69.120 -contact en@to.no
 
 # Test force for host with entries
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 zone delete family.guy.no
-!echo -n "Fails: "
+!echo -n "$ Fails: "
 zone delete guy.no
-zone delete guy.no y
+zone delete guy.no -force
 
 
 # Cleanup ######################################################################
 host rename sethmacfarlane familyguy
-host remove am.dad.no y
-host remove daddyo y
+host remove am.dad.no -force
+host remove daddyo -force
 host remove test1.family.guy.no

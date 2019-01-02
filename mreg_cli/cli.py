@@ -204,6 +204,7 @@ def _source(args):
     The files may contain comments. The comment symbol is #
     """
     import shlex
+    import html
 
     for file in args.files:
         with open(file) as f:
@@ -219,7 +220,7 @@ def _source(args):
 
                 # In verbose mode all commands are printed before execution.
                 if args.verbose and s:
-                    print(HTML(f'<i>> {l.strip()}</i>'))
+                    print(HTML(f'<i>> {html.escape(l.strip())}</i>'))
                 cli.parse(s)
                 if cli.last_errno != 0:
                     print(HTML(f'<ansired><i>{file}</i>: '
