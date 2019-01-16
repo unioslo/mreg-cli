@@ -2469,7 +2469,7 @@ def txt_remove(args):
         history.record_delete(url, txt)
         delete(url)
     cli_info("deleted {} of {} TXT records matching \"{}\"".format(
-        len(args),
+        len(txts),
         info["name"],
         args.text
     ))
