@@ -76,7 +76,7 @@ zone.add_command(
 # Implementation of sub command 'delete' #
 ##########################################
 
-def delete(args):
+def _delete(args):
     """Delete a zone
     """
     url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"],
@@ -111,7 +111,7 @@ zone.add_command(
     prog='delete',
     description='Delete a zone',
     short_desc='Delete a zone',
-    callback=delete,
+    callback=_delete,
     flags=[
         Flag('zone',
              description='Zone name.',
