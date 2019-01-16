@@ -100,7 +100,6 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
     """
 
     def _get_host(name):
-        print(f"_get_host: {name}")
         url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], name)
         history.record_get(url)
         host = get(url).json()
