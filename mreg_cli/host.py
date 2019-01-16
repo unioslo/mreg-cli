@@ -136,10 +136,9 @@ host.add_command(
     short_desc='Add a new host',
     callback=add,
     flags=[
-        Flag('-name',
+        Flag('name',
              short_desc='Name of new host (req)',
-             description='Name of new host (req)',
-             required=True),
+             description='Name of new host (req)'),
         Flag('-ip',
              short_desc='An ip or net (req)',
              description='The hosts ip or a net. If it\'s a net a random ip is '

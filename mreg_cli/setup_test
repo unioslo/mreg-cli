@@ -1,4 +1,4 @@
- Subnets setup ################################################################
+# Subnets setup ################################################################
 subnet create -subnet 129.240.69.0/24 -desc "Seth MacFarlanes subnet!"  # ipv4 subnet
 subnet create -subnet 1234::ff00/120 -desc "familynet"                  # ipv6 subnet
 
@@ -9,26 +9,26 @@ subnet set_frozen 129.240.96.0/24
 zone create uio.no hostmaster@example.org ns1.example.org -force
 
 # Host creation ################################################################
-host add -name sethmacfarlane -ip 129.240.69.69 -contact me@griffin.no -comment "O.o" #-hinfo 1
+host add sethmacfarlane -ip 129.240.69.69 -contact me@griffin.no -comment "O.o" #-hinfo 1
 host set_contact sethmacfarlane peter@griffin.no
 host set_comment sethmacfarlane "Family Guy is too awesome"
 
-host add -name stan -ip 129.240.69.100 -contact american@dad.no #-hinfo 2
-host add -name roger -ip 129.240.69.101 -contact american@dad.no #-hinfo 3
-host add -name steve -ip 129.240.69.102 -contact american@dad.no
-host add -name francine -ip 129.240.69.103 -contact american@dad.no
-host add -name haley -ip 129.240.69.104 -contact american@dad.no
-host add -name claus -ip 129.240.69.105 -contact american@dad.no
+host add stan -ip 129.240.69.100 -contact american@dad.no #-hinfo 2
+host add roger -ip 129.240.69.101 -contact american@dad.no #-hinfo 3
+host add steve -ip 129.240.69.102 -contact american@dad.no
+host add francine -ip 129.240.69.103 -contact american@dad.no
+host add haley -ip 129.240.69.104 -contact american@dad.no
+host add claus -ip 129.240.69.105 -contact american@dad.no
 
 # Test force when creating host in zone not controlled by MREG
 !echo -n "$ Fails: "
-host add -name am.dad.no -ip 129.240.69.106 -contact am@dad.no
-host add -name am.dad.no -ip 129.240.69.106 -contact am@dad.no -force
+host add am.dad.no -ip 129.240.69.106 -contact am@dad.no
+host add am.dad.no -ip 129.240.69.106 -contact am@dad.no -force
 
 # Test force when creating host with ip in net not controlled by MREG
 !echo -n "$ Fails: "
-host add -name daddyo -ip 129.42.69.106 -contact am@dad.no
-host add -name daddyo -ip 129.42.69.106 -contact am@dad.no -force
+host add daddyo -ip 129.42.69.106 -contact am@dad.no
+host add daddyo -ip 129.42.69.106 -contact am@dad.no -force
 
 # A ############################################################################
 host a_change -name sethmacfarlane -old 129.240.69.69 -new 129.240.69.123
@@ -194,7 +194,7 @@ zone create guy.no hostmaster@example.org haley.uio.no
 zone create guy.no hostmaster@example.org haley.uio.no -force
 
 zone create family.guy.no hostmaster@example.org claus.uio.no steve.uio.no
-host add -name test1.family.guy.no -ip 129.240.69.120 -contact en@to.no
+host add test1.family.guy.no -ip 129.240.69.120 -contact en@to.no
 
 # Test force for host with entries
 !echo -n "$ Fails: "
