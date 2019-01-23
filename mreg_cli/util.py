@@ -201,11 +201,11 @@ def result_check(result, type, url):
             pass
         else:
             message += "\n{}".format(json.dumps(body, indent=2))
-        error(message)
+        cli_warning(message)
 
 
 def _request_wrapper(type, path, first=True, **data):
-    url = requests.compat.urljoin(mregurl, path)
+    url = requests.compat.urljoin(conf['mregurl'], path)
     result = getattr(session, type)(url, data=data)
 
     if first and result.status_code == 401:
@@ -392,38 +392,38 @@ def get_subnet(ip: str) -> dict:
 
 def get_subnet_used_count(ip_range: str):
     "Return a count of the addresses in use on a given subnet"
-    url = "/subnets/{ip_range}?used_count"
+    url = f"/subnets/{ip_range}?used_count"
     history.record_get(url)
     return get(url).json()
 
 def get_subnet_used_list(ip_range: str):
     "Return a list of the addresses in use on a given subnet"
-    url = "/subnets/{ip_range}?used_list"
+    url = f"/subnets/{ip_range}?used_list"
     history.record_get(url)
     return get(url).json()
 
 
 def get_subnet_unused_count(ip_range: str):
     "Return a count of the unused addresses on a given subnet"
-    url = "/subnets/{ip_range}?unused_cound"
+    url = f"/subnets/{ip_range}?unused_count"
     history.record_get(url)
     return get(url).json()
 
 def get_subnet_unused_list(ip_range: str):
     "Return a list of the unused addresses on a given subnet"
-    url = "/subnets/{ip_range}?unused_list"
+    url = f"/subnets/{ip_range}?unused_list"
     history.record_get(url)
     return get(url).json()
 
 def get_subnet_first_unused(ip_range: str):
     "Returns the first unused address on a subnet, if any"
-    url = "/subnets/{ip_range}?first_list"
+    url = f"/subnets/{ip_range}?first_unused"
     history.record_get(url)
     return get(url).json()
 
 def get_subnet_reserved_ips(ip_range: str):
     "Returns the first unused address on a subnet, if any"
-    url = "/subnets/{ip_range}?reserved_list"
+    url = f"/subnets/{ip_range}?reserved_list"
     history.record_get(url)
     return get(url).json()
 
