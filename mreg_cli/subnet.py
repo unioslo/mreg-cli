@@ -29,8 +29,7 @@ def create(args):
     if args.location and not is_valid_location_tag(args.location):
         cli_warning("Not a valid location tag")
 
-    url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
-    subnets_existing = get(url).json()
+    subnets_existing = get("/subnets/").json()
     for subnet in subnets_existing:
         subnet_object = ipaddress.ip_network(subnet['range'])
         if subnet_object.overlaps(ipaddress.ip_network(args.subnet)):
@@ -38,8 +37,7 @@ def create(args):
                         "subnet {}".format(ipaddress.ip_network(args.subnet),
                                            subnet['range']))
 
-    url = "http://{}:{}/subnets/".format(conf["server_ip"], conf["server_port"])
-    post(url, range=args.subnet, description=args.desc, vlan=args.vlan,
+    post("/subnets/", range=args.subnet, description=args.desc, vlan=args.vlan,
          category=args.category, location=args.location, frozen=frozen)
     cli_info("created subnet {}".format(args.subnet), True)
 
@@ -356,8 +354,6 @@ subnet.add_command(
 def remove(args):
     """Remove subnet
     """
-    import urllib
-
     ipaddress.ip_network(args.subnet)
     host_list = get_subnet_used_list(args.subnet)
     if host_list:
@@ -367,11 +363,7 @@ def remove(args):
     if not args.force:
         cli_warning("Must force.")
 
-    url = "http://{}:{}/subnets/{}".format(
-        conf["server_ip"], conf["server_port"],
-        urllib.parse.quote(args.subnet, safe='')
-    )
-    delete(url)
+    delete(f"/subnets/{args.subnet}")
     cli_info("removed subnet {}".format(args.subnet), True)
 
 
@@ -402,10 +394,7 @@ def set_category(args):
     if not is_valid_category_tag(args.category):
         cli_warning("Not a valid category tag")
 
-    url = "http://{}:{}/subnets/{}".format(conf["server_ip"],
-                                           conf["server_port"],
-                                           subnet['range'])
-    patch(url, category=args.category)
+    patch("/subnets/{subnet['range']}", category=args.category)
     cli_info("updated category tag to '{}' for {}"
              .format(args.category, subnet['range']), True)
 
@@ -434,10 +423,7 @@ def set_description(args):
     """Set description for subnet
     """
     subnet = get_subnet(args.subnet)
-    url = "http://{}:{}/subnets/{}".format(conf["server_ip"],
-                                           conf["server_port"],
-                                           subnet['range'])
-    patch(url, description=args.description)
+    patch(f"/subnets/{subnet['range']}", description=args.description)
     cli_info("updated description to '{}' for {}".format(args.description,
                                                          subnet['range']), True)
 
@@ -466,11 +452,7 @@ def set_dns_delegated(args):
     """Set that DNS-administration is being handled elsewhere.
     """
     subnet = get_subnet(args.subnet)
-
-    url = "http://{}:{}/subnets/{}".format(conf["server_ip"],
-                                           conf["server_port"],
-                                           subnet['range'])
-    patch(url, dns_delegated=True)
+    patch(f"/subnets/{subnet['range']}", dns_delegated=True)
     cli_info("updated dns_delegated to '{}' for {}"
              .format(True, subnet['range']), print_msg=True)
 
@@ -496,10 +478,7 @@ def set_frozen(args):
     """Freeze a subnet.
     """
     subnet = get_subnet(args.subnet)
-    url = "http://{}:{}/subnets/{}".format(conf["server_ip"],
-                                           conf["server_port"],
-                                           subnet['range'])
-    patch(url, frozen=True)
+    patch(f"/subnets/{subnet['range']}", frozen=True)
     cli_info("updated frozen to '{}' for {}"
              .format(True, subnet['range']), print_msg=True)
 
@@ -528,10 +507,7 @@ def set_location(args):
     if not is_valid_location_tag(args.location):
         cli_warning("Not a valid location tag")
 
-    url = "http://{}:{}/subnets/{}".format(conf["server_ip"],
-                                           conf["server_port"],
-                                           subnet['range'])
-    patch(url, location=args.location)
+    patch(f"/subnets/{subnet['range']}", location=args.location)
     cli_info("updated location tag to '{}' for {}"
              .format(args.location, subnet['range']), True)
 
@@ -561,9 +537,7 @@ def set_reserved(args):
     """
     subnet = get_subnet(args.subnet)
     reserved = args.number
-    url = "http://{}:{}/subnets/{}".format(conf["server_ip"],
-                                           conf["server_port"], subnet['range'])
-    patch(url, reserved=reserved)
+    patch(f"/subnets/{subnet['range']}", reserved=reserved)
     cli_info("updated reserved to '{}' for {}"
              .format(reserved, subnet['range']), print_msg=True)
 
@@ -593,10 +567,7 @@ def set_vlan(args):
     """Set VLAN for subnet
     """
     subnet = get_subnet(args.subnet)
-    url = "http://{}:{}/subnets/{}".format(conf["server_ip"],
-                                           conf["server_port"],
-                                           subnet['range'])
-    patch(url, vlan=args.vlan)
+    patch(f"/subnets/{subnet['range']}", vlan=args.vlan)
     cli_info("updated vlan to {} for {}".format(args.vlan, subnet['range']),
              print_msg=True)
 
@@ -626,10 +597,7 @@ def unset_dns_delegated(args):
     """Set that DNS-administration is not being handled elsewhere.
     """
     subnet = get_subnet(args.subnet)
-    url = "http://{}:{}/subnets/{}".format(conf["server_ip"],
-                                           conf["server_port"],
-                                           subnet['range'])
-    patch(url, dns_delegated=False)
+    patch(f"/subnets/{subnet['range']}", dns_delegated=False)
     cli_info("updated dns_delegated to '{}' for {}"
              .format(False, subnet['range']), print_msg=True)
 
@@ -655,10 +623,7 @@ def unset_frozen(args):
     """Unfreeze a subnet.
     """
     subnet = get_subnet(args.subnet)
-    url = "http://{}:{}/subnets/{}".format(conf["server_ip"],
-                                           conf["server_port"],
-                                           subnet['range'])
-    patch(url, frozen=False)
+    patch(f"/subnets/{subnet['range']}", frozen=False)
     cli_info("updated frozen to '{}' for {}"
              .format(False, subnet['range']), print_msg=True)
 
