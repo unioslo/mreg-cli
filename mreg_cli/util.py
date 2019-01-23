@@ -19,13 +19,9 @@ from log import *
 
 try:
     conf = cli_config(required_fields=(
-        "server_ip",
-        "server_port",
-        "tag_file",
-        "129_240_file",
-        "158_36_file",
-        "172_16_file",
-        "193_157_file",
+        "mregurl",
+        "username",
+        "password",
     ))
 except Exception as e:
     print("util.py: cli_config:", e)
@@ -34,23 +30,7 @@ except Exception as e:
 
 location_tags = []
 category_tags = []
-
-with open(conf['tag_file'], 'r') as file:
-    line_number = 1
-    for line in file:
-        match = re.match(r"(?P<location>[a-zA-Z0-9]+)\s+:\s+Plassering:.*", line)
-        if match:
-            location_tags.append(match.group('location'))
-            line_number += 1
-        else:
-            match = re.match(r"(?P<category>[a-zA-Z0-9]+)\s+.*", line)
-            if not match:
-                print('ERROR in %s, wrong format on line: %d - %s\n', conf['tag_file'], line_number,
-                      line)
-                sys.exit(-1)
-            category_tags.append(match.group('category'))
-            line_number += 1
-
+session = requests.Session()
 
 def host_exists(name: str) -> bool:
     """Checks if a host with the given name exists"""
@@ -215,65 +195,60 @@ def ip_in_mreg_net(ip: str) -> bool:
 #                                                                              #
 ################################################################################
 
+mregurl = "http://localhost:8000/"
 
-def post(url: str, **kwargs) -> requests.Response:
+def update_token():
+    tokenurl = requests.compat.urljoin(mregurl, "/api/token-auth/")
+    username = conf['username']
+    password = conf['password']
+    result = requests.post(tokenurl, {'username': username,
+                                      'password': password})
+    result_check(result, "post", tokenurl)
+    token = result.json()['token']
+    session.headers.update({"Authorization": f"Token {token}"})
+
+
+def result_check(result, type, url):
+    if not result.ok:
+        message = f"{type} \"{url}\": {result.status_code}: {result.reason}"
+        try:
+            body = result.json()
+        except ValueError:
+            pass
+        else:
+            message += "\n{}".format(json.dumps(body, indent=2))
+        error(message)
+
+
+def _request_wrapper(type, path, first=True, **data):
+    url = requests.compat.urljoin(mregurl, path)
+    result = getattr(session, type)(url, data=data)
+
+    if first and result.status_code == 401:
+        update_token()
+        return _request_wrapper(type, path, first=False, **data)
+
+    result_check(result, type.upper(), url)
+    return result
+
+def get(path: str) -> requests.Response:
+    """Uses requests to make a get request."""
+    return _request_wrapper("get", path)
+
+
+def post(path: str, **kwargs) -> requests.Response:
     """Uses requests to make a post request. Assumes that all kwargs are data fields"""
-    p = requests.post(url, data=kwargs)
-    if not p.ok:
-        message = "POST \"{}\": {}: {}".format(url, p.status_code, p.reason)
-        try:
-            body = p.json()
-        except ValueError:
-            pass
-        else:
-            message += "\n{}".format(json.dumps(body, indent=2))
-        cli_error(message)
-    return p
+    return _request_wrapper("post", path, **kwargs)
 
 
-def patch(url: str, **kwargs) -> requests.Response:
+def patch(path: str, **kwargs) -> requests.Response:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
-    p = requests.patch(url, data=kwargs)
-    if not p.ok:
-        message = "PATCH \"{}\": {}: {}".format(url, p.status_code, p.reason)
-        try:
-            body = p.json()
-        except ValueError:
-            pass
-        else:
-            message += "\n{}".format(json.dumps(body, indent=2))
-        cli_error(message)
-    return p
+    return _request_wrapper("patch", path, **kwargs)
 
 
-def delete(url: str) -> requests.Response:
-    """Uses requests to make a delete request"""
-    d = requests.delete(url)
-    if not d.ok:
-        message = "DELETE \"{}\": {}: {}".format(url, d.status_code, d.reason)
-        try:
-            body = d.json()
-        except ValueError:
-            pass
-        else:
-            message += "\n{}".format(json.dumps(body, indent=2))
-        cli_error(message)
-    return d
-
-
-def get(url: str) -> requests.Response:
-    """Uses requests to make a get request"""
-    g = requests.get(url)
-    if not g.ok:
-        message = "GET \"{}\": {}: {}".format(url, g.status_code, g.reason)
-        try:
-            body = g.json()
-        except ValueError:
-            pass
-        else:
-            message += "\n{}".format(json.dumps(body, indent=2))
-        cli_error(message)
-    return g
+def delete(path: str) -> requests.Response:
+    """Uses requests to make a delete request."""
+    return _request_wrapper("delete", path)
 
 
 ################################################################################
