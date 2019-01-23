@@ -34,11 +34,7 @@ session = requests.Session()
 
 def host_exists(name: str) -> bool:
     """Checks if a host with the given name exists"""
-    url = "http://{}:{}/hosts/?name={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        name
-    )
+    url = f"/hosts/?name={name}"
     history.record_get(url)
     hosts = get(url).json()
 
@@ -80,7 +76,7 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
     """
 
     def _get_host(name):
-        url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"], name)
+        url = f"/hosts/{name}"
         history.record_get(url)
         host = get(url).json()
         return host
@@ -92,8 +88,7 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
         return _get_host(name)
     elif follow_cname:
         # All host info data is returned from the API
-        url = "http://{}:{}/hosts/?cnames__name={}".format(conf["server_ip"],
-                                                           conf["server_port"], name)
+        url = f"/hosts/?cnames__name={name}"
         history.record_get(url)
         host = get(url).json()
         if len(host):
@@ -132,11 +127,7 @@ def first_unused_ip_from_subnet(subnet: dict) -> str:
 def zone_mreg_controlled(zone: str) -> bool:
     """Return true of the zone is controlled by MREG"""
     assert isinstance(zone, str)
-    url = "http://{}:{}/zones/?name={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        zone,
-    )
+    url = f"/zones/?name={zone}"
     history.record_get(url)
     zone = get(url).json()
     if not len(zone):
@@ -151,10 +142,7 @@ def host_in_mreg_zone(host: str) -> bool:
     if not len(splitted):
         return False
 
-    url = "http://{}:{}/zones/".format(
-        conf["server_ip"],
-        conf["server_port"],
-    )
+    url = "/zones/"
     history.record_get(url)
     zones = get(url).json()
 
@@ -171,13 +159,11 @@ def host_in_mreg_zone(host: str) -> bool:
 
 def ip_in_mreg_net(ip: str) -> bool:
     """Return true if the ip is in a MREG controlled subnet"""
+    # XXX: mreg#96
     assert isinstance(ip, str)
     ipaddr = ipaddress.ip_address(ip)
 
-    url = "http://{}:{}/subnets/".format(
-        conf["server_ip"],
-        conf["server_port"],
-    )
+    url = "/subnets/"
     history.record_get(url)
     nets = get(url).json()
 
@@ -195,10 +181,8 @@ def ip_in_mreg_net(ip: str) -> bool:
 #                                                                              #
 ################################################################################
 
-mregurl = "http://localhost:8000/"
-
 def update_token():
-    tokenurl = requests.compat.urljoin(mregurl, "/api/token-auth/")
+    tokenurl = requests.compat.urljoin(conf['mregurl'], '/api/token-auth/')
     username = conf['username']
     password = conf['password']
     result = requests.post(tokenurl, {'username': username,
@@ -259,8 +243,7 @@ def delete(path: str) -> requests.Response:
 
 def cname_exists(cname: str) -> bool:
     """Check if a cname exists"""
-    url = "http://{}:{}/cnames/?name={}".format(conf["server_ip"], conf["server_port"], cname)
-    if len(get(url).json()):
+    if len(get(f"/cnames/?name={cname}").json()):
         return True
     else:
         return False
@@ -284,11 +267,7 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
 
 def resolve_ip(ip: str) -> str:
     """Returns host name associated with ip"""
-    url = "http://{}:{}/hosts/?ipaddresses__ipaddress={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        ip
-    )
+    url = f"/hosts/?ipaddresses__ipaddress={ip}"
     history.record_get(url)
     hosts = get(url).json()
 
@@ -309,11 +288,7 @@ def resolve_input_name(name: str) -> str:
     else:
         hostname = clean_hostname(name)
 
-    url = "http://{}:{}/hosts/?name={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        hostname
-    )
+    url = f"/hosts/?name={hostname}"
     history.record_get(url)
     hosts = get(url).json()
 
@@ -370,7 +345,7 @@ def hinfo_dict() -> HinfoDict:
     Return a dict with descriptions of available hinfo presets. The keys
     are the hinfo ids.
     """
-    url = "http://{}:{}/hinfopresets/".format(conf["server_ip"], conf["server_port"])
+    url = "/hinfopresets/"
     history.record_get(url)
     hinfo_get = get(url)
     hl = dict()
@@ -389,18 +364,11 @@ def hinfo_dict() -> HinfoDict:
 def get_subnet(ip: str) -> dict:
     "Returns subnet associated with given range or IP"
     if is_valid_subnet(ip):
-        url = "http://{}:{}/subnets/{}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            ip
-        )
+        url = f"/subnets/{ip}"
         history.record_get(url)
         return get(url).json()
     elif is_valid_ip(ip):
-        url = "http://{}:{}/subnets/".format(
-            conf["server_ip"],
-            conf["server_port"]
-        )
+        url = "/subnets/"
         ip_object = ipaddress.ip_address(ip)
         #resolve_ip(ip)
         subnet = None
@@ -414,11 +382,7 @@ def get_subnet(ip: str) -> dict:
                 break
 
         if subnet:
-            url = "http://{}:{}/subnets/{}".format(
-                conf["server_ip"],
-                conf["server_port"],
-                subnet
-            )
+            url = f"/subnets/{subnet}"
             history.record_get(url)
             return get(url).json()
         cli_warning("ip address exists but is not an address in any existing subnet")
@@ -428,68 +392,38 @@ def get_subnet(ip: str) -> dict:
 
 def get_subnet_used_count(ip_range: str):
     "Return a count of the addresses in use on a given subnet"
-    url = "http://{}:{}/subnets/{}{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        ip_range,
-        "?used_count"
-    )
+    url = "/subnets/{ip_range}?used_count"
     history.record_get(url)
     return get(url).json()
 
 def get_subnet_used_list(ip_range: str):
     "Return a list of the addresses in use on a given subnet"
-    url = "http://{}:{}/subnets/{}{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        ip_range,
-        "?used_list"
-    )
+    url = "/subnets/{ip_range}?used_list"
     history.record_get(url)
     return get(url).json()
 
 
 def get_subnet_unused_count(ip_range: str):
     "Return a count of the unused addresses on a given subnet"
-    url = "http://{}:{}/subnets/{}{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        ip_range,
-        "?unused_count"
-    )
+    url = "/subnets/{ip_range}?unused_cound"
     history.record_get(url)
     return get(url).json()
 
 def get_subnet_unused_list(ip_range: str):
     "Return a list of the unused addresses on a given subnet"
-    url = "http://{}:{}/subnets/{}{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        ip_range,
-        "?unused_list"
-    )
+    url = "/subnets/{ip_range}?unused_list"
     history.record_get(url)
     return get(url).json()
 
 def get_subnet_first_unused(ip_range: str):
     "Returns the first unused address on a subnet, if any"
-    url = "http://{}:{}/subnets/{}{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        ip_range,
-        "?first_unused"
-    )
+    url = "/subnets/{ip_range}?first_list"
     history.record_get(url)
     return get(url).json()
 
 def get_subnet_reserved_ips(ip_range: str):
     "Returns the first unused address on a subnet, if any"
-    url = "http://{}:{}/subnets/{}{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        ip_range,
-        "?reserved_list"
-    )
+    url = "/subnets/{ip_range}?reserved_list"
     history.record_get(url)
     return get(url).json()
 
