@@ -132,7 +132,7 @@ def disassoc(args):
 
     if ip.get('macaddress'):
         # Update ipaddress
-        url = f"/ipaddresses/ip['id']"
+        url = f"/ipaddresses/{ip['id']}"
         history.record_patch(url, new_data={"macaddress": ""}, old_data=ip)
         patch(url, macaddress="")
         cli_info("disassociated mac address {} from ip {}".format(
