@@ -427,28 +427,6 @@ def get_subnet_reserved_ips(ip_range: str):
     history.record_get(url)
     return get(url).json()
 
-def get_vlan_mapping():
-    """"Get VLAN mapping: subnet - vlan"""
-    vlans = {}
-    get_vlans_from_file(conf['129_240_file'], vlans)
-    get_vlans_from_file(conf['158_36_file'], vlans)
-    get_vlans_from_file(conf['172_16_file'], vlans)
-    get_vlans_from_file(conf['193_157_file'], vlans)
-    return vlans
-
-
-def get_vlans_from_file(file: str, vlans: dict):
-    "Read VLAN mapping from a file"
-    with open(file, 'r') as file:
-        for line in file:
-            if re.match(r"#.*", line):
-                pass
-            else:
-                match = re.match(
-                    r"(?P<range>\d+.\d+.\d+.\d+\/\d+)\s+.*?[vlan|VLAN|Vlan]\s*?(?P<vlan>\d+).*",
-                    line)
-                if match:
-                    vlans[match.group('range')] = int(match.group('vlan'))
 
 def string_to_int(value, error_tag):
     try:
