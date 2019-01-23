@@ -5,7 +5,7 @@ from cli import cli, Flag
 from history import history
 
 try:
-    conf = cli_config(required_fields=("server_ip", "server_port"))
+    conf = cli_config(required_fields=("mregurl",))
 except Exception as e:
     print("commands.py: cli_config:", e)
     traceback.print_exc()
@@ -32,11 +32,7 @@ def assoc(args):
     """
     # Get A/AAAA record by either ip address or host name
     if is_valid_ip(args.name):
-        url = "http://{}:{}/ipaddresses/?ipaddress={}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            args.name,
-        )
+        url = f"/ipaddresses/?ipaddress={args.name}"
         history.record_get(url)
         ip = get(url).json()
         if not len(ip):
@@ -58,11 +54,7 @@ def assoc(args):
     # MAC addr sanity check
     if is_valid_mac_addr(args.mac):
         new_mac = format_mac(args.mac)
-        url = "http://{}:{}/ipaddresses/?macaddress={}&ordering=ipaddress".format(
-            conf["server_ip"],
-            conf["server_port"],
-            new_mac,
-        )
+        url = f"/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
         history.record_get(url)
         macs = get(url).json()
         ips = ", ".join([i['ipaddress'] for i in macs])
@@ -82,11 +74,7 @@ def assoc(args):
             ip['ipaddress'], old_mac))
 
     # Update Ipaddress with a mac
-    url = "http://{}:{}/ipaddresses/{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        ip["id"],
-    )
+    url = f"/ipaddresses/{ip['id']}"
     history.record_patch(url, new_data={"macaddress": new_mac}, old_data=ip)
     patch(url, macaddress=new_mac)
     cli_info("associated mac address {} with ip {}"
@@ -123,11 +111,7 @@ def disassoc(args):
     """
     # Get A/AAAA record by either ip address or host name
     if is_valid_ip(args.name):
-        url = "http://{}:{}/ipaddresses/?ipaddress={}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            args.name,
-        )
+        url = f"/ipaddresses/?ipaddress={args.name}"
         history.record_get(url)
         ip = get(url).json()
         if not len(ip):
@@ -148,11 +132,7 @@ def disassoc(args):
 
     if ip.get('macaddress'):
         # Update ipaddress
-        url = "http://{}:{}/ipaddresses/{}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            ip["id"],
-        )
+        url = f"/ipaddresses/ip['id']"
         history.record_patch(url, new_data={"macaddress": ""}, old_data=ip)
         patch(url, macaddress="")
         cli_info("disassociated mac address {} from ip {}".format(
