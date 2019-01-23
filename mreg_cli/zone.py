@@ -44,8 +44,7 @@ def create(args):
                     cli_warning("{} has no A-record/glue, must force".format(
                         nameserver))
 
-    url = "http://{}:{}/zones/".format(conf["server_ip"], conf["server_port"])
-    post(url, name=args.zone, email=args.email, primary_ns=args.ns)
+    post("/zones/", name=args.zone, email=args.email, primary_ns=args.ns)
     cli_info("created zone {}".format(args.zone), True)
 
 
@@ -178,9 +177,7 @@ def list_(args):
     """List all zones.
     """
 
-    url_zones = "http://{}:{}/zones/".format(conf["server_ip"],
-                                             conf["server_port"])
-    zones = get(url_zones).json()
+    zones = get("/zones/").json()
     print("Zones:")
     for zone in sorted(zones, key=lambda kv: kv['name']):
         print('   {}'.format(zone['name']))
@@ -213,10 +210,7 @@ def set_ns(args):
                     args.ns[i]))
         args.ns[i] = info['name']
 
-    url = "http://{}:{}/zones/{}/nameservers".format(conf["server_ip"],
-                                                     conf["server_port"],
-                                                     args.zone)
-    patch(url, primary_ns=args.ns)
+    patch(f"/zones/{args.zone}/nameservers", primary_ns=args.ns)
     cli_info("updated nameservers for {}".format(args.zone), True)
 
 
@@ -249,19 +243,15 @@ def set_soa(args):
     """Updated the SOA of a zone.
     """
     # TODO Validation for valid domain names
-    url = "http://{}:{}/zones/{}".format(conf["server_ip"],
-                                         conf["server_port"], args.zone)
-    zone = get(url).json()
+    zone = get(f"/zones/{args.zone}").json()
     nameservers = zone['nameservers']
     if args.ns not in [nameserver['name'] for nameserver in nameservers]:
         cli_warning("{} is not one of {}'s nameservers. Add it with set_ns "
                     "before trying again".format(args.ns, args.zone))
 
-    url = "http://{}:{}/zones/{}".format(conf["server_ip"], conf["server_port"],
-                                         args.zone)
-    patch(url, primary_ns=args.ns, email=args.email, serialno=args.serialno,
-          refresh=args.refresh, retry=args.retry, expire=args.expire,
-          ttl=args.ttl)
+    patch(f"/zones/{args.zone}", primary_ns=args.ns, email=args.email,
+            serialno=args.serialno, refresh=args.refresh, retry=args.retry,
+            expire=args.expire, ttl=args.ttl)
     cli_info("set soa for {}".format(args.zone), True)
 
 
@@ -271,9 +261,8 @@ zone.add_command(
     short_desc='Updated the SOA of a zone.',
     callback=set_soa,
     flags=[
-        Flag('-zone',
+        Flag('zone',
              description='Zone name.',
-             required=True,
              metavar='ZONE'),
         Flag('-ns',
              description='Primary nameserver.',
