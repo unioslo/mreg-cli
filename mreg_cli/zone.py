@@ -5,7 +5,7 @@ from cli import cli, Flag
 from history import history
 
 try:
-    conf = cli_config(required_fields=("server_ip", "server_port"))
+    conf = cli_config(required_fields=("mregurl",))
 except Exception as e:
     print("commands.py: cli_config:", e)
     traceback.print_exc()
@@ -78,18 +78,10 @@ zone.add_command(
 def _delete(args):
     """Delete a zone
     """
-    url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"],
-                                              conf["server_port"], args.zone)
-    zone = get(url_zone).json()
+    zone = get(f"/zones/{args.zone}").json()
 
-    url_hosts = "http://{}:{}/hosts/?zone={}".format(conf["server_ip"],
-                                                     conf["server_port"],
-                                                     zone['id'])
-    url_zones = "http://{}:{}/zones/?name__endswith={}".format(
-        conf["server_ip"], conf["server_port"], args.zone)
-
-    hosts = get(url_hosts).json()
-    zones = get(url_zones).json()
+    hosts = get(f"/hosts/?zone={zone['id']}").json()
+    zones = get(f"/zones/?name__endswith=.{args.zone}").json()
 
     # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
     if hosts and not args.force:
@@ -100,9 +92,7 @@ def _delete(args):
         cli_warning("Zone has registered subzones '{}', "
                     "can not delete".format(", ".join(sorted(other_zones))))
 
-    url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"],
-                                              conf["server_port"], zone['name'])
-    delete(url_zone)
+    delete(f"/zones/{args.zone}")
     cli_info("deleted zone {}".format(zone['name']), True)
 
 
@@ -138,10 +128,8 @@ def info(args):
 
     if not args.zone:
         cli_warning('Name is required')
-    url_zone = "http://{}:{}/zones/{}".format(conf["server_ip"],
-                                              conf["server_port"],
-                                              args.zone)
-    zone = get(url_zone).json()
+
+    zone = get(f"/zones/{args.zone}").json()
     print_soa("Zone:", zone["name"])
     print_ns("Nameservers:", "hostname", "TTL")
     for ns in zone['nameservers']:
