@@ -32,9 +32,9 @@ def assoc(args):
     """
     # Get A/AAAA record by either ip address or host name
     if is_valid_ip(args.name):
-        url = f"/ipaddresses/?ipaddress={args.name}"
-        history.record_get(url)
-        ip = get(url).json()
+        path = f"/ipaddresses/?ipaddress={args.name}"
+        history.record_get(path)
+        ip = get(path).json()
         if not len(ip):
             cli_warning("ip {} doesn't exist.".format(args.name))
         elif len(ip) > 1:
@@ -54,9 +54,9 @@ def assoc(args):
     # MAC addr sanity check
     if is_valid_mac_addr(args.mac):
         new_mac = format_mac(args.mac)
-        url = f"/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
-        history.record_get(url)
-        macs = get(url).json()
+        path = f"/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
+        history.record_get(path)
+        macs = get(path).json()
         ips = ", ".join([i['ipaddress'] for i in macs])
         if len(macs) and not args.force:
             cli_warning("mac {} already in use by: {}. "
@@ -74,9 +74,9 @@ def assoc(args):
             ip['ipaddress'], old_mac))
 
     # Update Ipaddress with a mac
-    url = f"/ipaddresses/{ip['id']}"
-    history.record_patch(url, new_data={"macaddress": new_mac}, old_data=ip)
-    patch(url, macaddress=new_mac)
+    path = f"/ipaddresses/{ip['id']}"
+    history.record_patch(path, new_data={"macaddress": new_mac}, old_data=ip)
+    patch(path, macaddress=new_mac)
     cli_info("associated mac address {} with ip {}"
              .format(args.mac, ip["ipaddress"]), print_msg=True)
 
@@ -111,9 +111,9 @@ def disassoc(args):
     """
     # Get A/AAAA record by either ip address or host name
     if is_valid_ip(args.name):
-        url = f"/ipaddresses/?ipaddress={args.name}"
-        history.record_get(url)
-        ip = get(url).json()
+        path = f"/ipaddresses/?ipaddress={args.name}"
+        history.record_get(path)
+        ip = get(path).json()
         if not len(ip):
             cli_warning("ip {} doesn't exist.".format(args.name))
         elif len(ip) > 1:
@@ -132,9 +132,9 @@ def disassoc(args):
 
     if ip.get('macaddress'):
         # Update ipaddress
-        url = f"/ipaddresses/{ip['id']}"
-        history.record_patch(url, new_data={"macaddress": ""}, old_data=ip)
-        patch(url, macaddress="")
+        path = f"/ipaddresses/{ip['id']}"
+        history.record_patch(path, new_data={"macaddress": ""}, old_data=ip)
+        patch(path, macaddress="")
         cli_info("disassociated mac address {} from ip {}".format(
             ip["macaddress"],
             ip["ipaddress"]
