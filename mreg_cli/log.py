@@ -9,7 +9,7 @@ from exceptions import *
 from config import cli_config
 
 try:
-    conf = cli_config(required_fields=("server_ip", "server_port", "log_file"))
+    conf = cli_config(required_fields=("log_file",))
 except Exception as e:
     print("util.py: cli_config:", e)
     traceback.print_exc()
