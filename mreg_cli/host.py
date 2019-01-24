@@ -1,5 +1,3 @@
-import urllib
-
 from util import *
 from log import *
 # noinspection PyUnresolvedReferences
@@ -7,7 +5,7 @@ from cli import cli, Flag
 from history import history
 
 try:
-    conf = cli_config(required_fields=("server_ip", "server_port"))
+    conf = cli_config(required_fields=("mregurl",))
 except Exception as e:
     print("commands.py: cli_config:", e)
     traceback.print_exc()
@@ -115,7 +113,7 @@ def add(args):
         cli_warning("Wildcards must be forced.")
 
     # Create the new host with an ip address
-    url = "http://{}:{}/hosts/".format(conf["server_ip"], conf["server_port"])
+    path = "/hosts/"
     data = {
         "name": name,
         "ipaddress": ip,
@@ -123,8 +121,8 @@ def add(args):
         "hinfo": args.hinfo or None,
         "comment": args.comment or None,
     }
-    history.record_post(url, resource_name=name, new_data=data)
-    post(url, **data)
+    history.record_post(path, resource_name=name, new_data=data)
+    post(path, **data)
     cli_info("created host {}".format(name), print_msg=True)
 
 
@@ -186,50 +184,34 @@ def remove(args):
 
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
-    url = "http://{}:{}/naptrs/?host={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        info["id"],
-    )
-    history.record_get(url)
-    naptrs = get(url).json()
+    path = f"/naptrs/?host={info['id']}"
+    history.record_get(path)
+    naptrs = get(path).json()
     if len(naptrs) > 0:
         if not args.force:
             warn_msg += "{} NAPTR records. ".format(len(naptrs))
         else:
-            for ptr in naptrs:
-                url = "http://{}:{}/naptrs/{}".format(
-                    conf["server_ip"],
-                    conf["server_port"],
-                    ptr["id"],
-                )
-                history.record_delete(url, ptr)
-                delete(url)
+            for naptr in naptrs:
+                path = f"/naptrs/{naptr['id']}"
+                history.record_delete(path, naptr)
+                delete(path)
                 cli_info("deleted NAPTR record {} when removing {}".format(
                     ptr["replacement"],
                     info["name"],
                 ))
 
     # Require force if host has any SRV records. Delete the SRV records if force
-    url = "http://{}:{}/srvs/?target={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        info["id"],
-    )
-    history.record_get(url)
-    srvs = get(url).json()
+    path = f"/srvs/?target={info['id']}"
+    history.record_get(path)
+    srvs = get(path).json()
     if len(srvs) > 0:
         if not args.force:
             warn_msg += "{} SRV records. ".format(len(srvs))
         else:
             for srv in srvs:
-                url = "http://{}:{}/srvs/{}".format(
-                    conf["server_ip"],
-                    conf["server_port"],
-                    srv["id"],
-                )
-                history.record_delete(url, srv)
-                delete(url)
+                path = f"/srvs/?target={srv['id']}"
+                history.record_delete(path, srv)
+                delete(path)
                 cli_info("deleted SRV record {} when removing {}".format(
                     srv["service"],
                     info["name"],
@@ -241,13 +223,9 @@ def remove(args):
             warn_msg += "{} PTR records. ".format(len(info["ptr_overrides"]))
         else:
             for ptr in info["ptr_overrides"]:
-                url = "http://{}:{}/ptroverrides/{}".format(
-                    conf["server_ip"],
-                    conf["server_port"],
-                    ptr["id"],
-                )
-                history.record_delete(url, ptr, redoable=False, undoable=False)
-                delete(url)
+                path = f"/ptroverrides/{ptr['id']}"
+                history.record_delete(path, ptr, redoable=False, undoable=False)
+                delete(path)
                 cli_info("deleted PTR record {} when removing {}".format(
                     ptr["ipaddress"],
                     info["name"],
@@ -263,10 +241,9 @@ def remove(args):
         cli_warning("{} has: {}Must force".format(info["name"], warn_msg))
 
     # Delete host
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
-                                         info["name"])
-    history.record_delete(url, old_data=info)
-    delete(url)
+    path = f"/hosts/{info['name']}"
+    history.record_delete(path, old_data=info)
+    delete(path)
     cli_info("removed {}".format(info["name"]), print_msg=True)
 
 
@@ -372,31 +349,22 @@ def rename(args):
     new_data = {"name": new_name}
 
     # Rename host
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
-                                         old_name)
+    path = f"/hosts/{old_name}"
     # Cannot redo/undo now since it changes name
-    history.record_patch(url, new_data, old_data, redoable=False,
+    history.record_patch(path, new_data, old_data, redoable=False,
                          undoable=False)
-    patch(url, name=new_name)
+    patch(path, name=new_name)
 
     # Update all srv records pointing to <old-name>
-    url = "http://{}:{}/srvs/?target={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        old_name,
-    )
-    history.record_get(url)
-    srvs = get(url).json()
+    path = f"/srvs/?target={old_name}"
+    history.record_get(path)
+    srvs = get(path).json()
     for srv in srvs:
-        url = "http://{}:{}/srvs/{}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            srv["id"],
-        )
+        path = f"/srvs/{srv['id']}"
         old_data = {"target": old_name}
         new_data = {"target": new_name}
-        history.record_patch(url, new_data, old_data)
-        patch(url, target=new_name)
+        history.record_patch(path, new_data, old_data)
+        patch(path, target=new_name)
     if len(srvs):
         cli_info("updated {} SRV record(s) when renaming {} to {}".format(
             len(srvs),
@@ -443,11 +411,9 @@ def set_comment(args):
     new_data = {"comment": args.comment}
 
     # Update comment
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"],
-                                         conf["server_port"],
-                                         info["name"])
-    history.record_patch(url, new_data, old_data)
-    patch(url, comment=args.comment)
+    path = f"/hosts/{info['name']}"
+    history.record_patch(path, new_data, old_data)
+    patch(path, comment=args.comment)
     cli_info("updated comment of {} to \"{}\""
              .format(info["name"], args.comment), print_msg=True)
 
@@ -489,10 +455,9 @@ def set_contact(args):
     new_data = {"contact": args.contact}
 
     # Update contact information
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
-                                         info["name"])
-    history.record_patch(url, new_data, old_data)
-    patch(url, contact=args.contact)
+    path = f"/hosts/{info['name']}"
+    history.record_patch(path, new_data, old_data)
+    patch(path, contact=args.contact)
     cli_info("Updated contact of {} to {}".format(info["name"], args.contact),
              print_msg=True)
 
@@ -597,10 +562,9 @@ def a_add(args):
     }
 
     # Add A record
-    url = "http://{}:{}/ipaddresses/".format(conf["server_ip"],
-                                             conf["server_port"])
-    history.record_post(url, ip, data)
-    post(url, **data)
+    path = "/ipaddresses/"
+    history.record_post(path, ip, data)
+    post(path, **data)
     cli_info("added ip {} to {}".format(ip, info["name"]), print_msg=True)
 
 
@@ -708,11 +672,10 @@ def a_change(args):
     new_data = {"ipaddress": ip}
 
     # Update A record ip address
-    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"],
-                                               conf["server_port"], ip_id)
-    history.record_patch(url, new_data, old_data, redoable=False,
+    path = f"/ipaddresses/{ip_id}"
+    history.record_patch(path, new_data, old_data, redoable=False,
                          undoable=False)
-    patch(url, ipaddress=ip)
+    patch(path, ipaddress=ip)
     cli_info("updated ip {} to {} for {}".format(args.old, ip, info["name"]),
              print_msg=True)
 
@@ -777,10 +740,9 @@ def a_remove(args):
     }
 
     # Remove ip
-    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"],
-                                               conf["server_port"], ip_id)
-    history.record_delete(url, old_data)
-    delete(url)
+    path = f"/ipaddresses/{ip_id}"
+    history.record_delete(path, old_data)
+    delete(path)
     cli_info("removed ip {} from {}".format(args.ip, info["name"]),
              print_msg=True)
 
@@ -909,10 +871,9 @@ def aaaa_add(args):
     }
 
     # Create AAAA records
-    url = "http://{}:{}/ipaddresses/".format(conf["server_ip"],
-                                             conf["server_port"])
-    history.record_post(url, ip, data)
-    post(url, **data)
+    path = "/ipaddresses/"
+    history.record_post(path, ip, data)
+    post(path, **data)
     cli_info("added ip {} to {}".format(ip, info["name"]), print_msg=True)
 
 
@@ -1014,12 +975,11 @@ def aaaa_change(args):
     new_data = {"ipaddress": new_ip}
 
     # Update AAAA records ip address
-    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"],
-                                               conf["server_port"], ip_id)
+    path = f"/ipaddresses/{ip_id}"
     # Cannot redo/undo since recourse name changes
-    history.record_patch(url, new_data, old_data, redoable=False,
+    history.record_patch(path, new_data, old_data, redoable=False,
                          undoable=False)
-    patch(url, ipaddress=new_ip)
+    patch(path, ipaddress=new_ip)
     cli_info(
         "changed ip {} to {} for {}".format(args.old, new_ip, info["name"]),
         print_msg=True)
@@ -1085,10 +1045,9 @@ def aaaa_remove(args):
     }
 
     # Delete AAAA record
-    url = "http://{}:{}/ipaddresses/{}".format(conf["server_ip"],
-                                               conf["server_port"], ip_id)
-    history.record_delete(url, old_data)
-    delete(url)
+    path = f"/ipaddresses/{ip_id}"
+    history.record_delete(path, old_data)
+    delete(path)
     cli_info("removed {} from {}".format(args.ip, info["name"]), print_msg=True)
 
 
@@ -1170,9 +1129,9 @@ def cname_add(args):
     data = {'host': info['id'],
             'name': alias}
     # Create CNAME record
-    url = "http://{}:{}/cnames/".format(conf["server_ip"], conf["server_port"])
-    history.record_post(url, "", data, undoable=False)
-    post(url, **data)
+    path = "/cnames/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
     cli_info("Added cname alias {} for {}".format(alias, info["name"]),
              print_msg=True)
 
@@ -1216,10 +1175,9 @@ def cname_remove(args):
         cli_warning("\"{}\" is not an alias for \"{}\"".format(alias, hostname))
 
     # Delete CNAME host
-    url = "http://{}:{}/cnames/{}".format(conf["server_ip"],
-                                          conf["server_port"], alias)
-    history.record_delete(url, dict(), undoable=False)
-    delete(url)
+    path = f"/cnames/{alias}"
+    history.record_delete(path, dict(), undoable=False)
+    delete(path)
     cli_info("Removed cname alias {} for {}".format(alias, hostname),
              print_msg=True)
 
@@ -1259,11 +1217,9 @@ def cname_show(args):
         pass
 
     name = clean_hostname(args.name)
-    url = "http://{}:{}/hosts/?cnames__name={}".format(conf["server_ip"],
-                                                       conf["server_port"],
-                                                       name)
-    history.record_get(url)
-    hosts = get(url).json()
+    path = f"/hosts/?cnames_name={name}"
+    history.record_get(path)
+    hosts = get(path).json()
     if len(hosts):
         print_cname(name, hosts[0]["name"])
     else:
@@ -1299,10 +1255,9 @@ def _hinfo_remove(host_) -> None:
     new_data = {"hinfo": ""}
 
     # Set hinfo to null value
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"],
-                                         conf["server_port"], host_["name"])
-    history.record_patch(url, new_data, old_data)
-    patch(url, hinfo="")
+    path = f"/hosts/{host_['name']}"
+    history.record_patch(path, new_data, old_data)
+    patch(path, hinfo="")
 
 
 ##################################################
@@ -1350,10 +1305,9 @@ def hinfo_set(args):
     new_data = {"hinfo": args.hinfo}
 
     # Update hinfo
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"],
-                                         conf["server_port"], info["name"])
-    history.record_patch(url, new_data, old_data)
-    patch(url, hinfo=args.hinfo)
+    path = f"/hosts/{info['name']}"
+    history.record_patch(path, new_data, old_data)
+    patch(path, hinfo=args.hinfo)
     cli_info("updated hinfo to {} for {}".format(args.hinfo, info["name"]),
              print_msg=True)
 
@@ -1447,10 +1401,9 @@ def hinfopresets_create(args):
         "cpu": args.cpu,
         "os": args.os
     }
-    url = "http://{}:{}/hinfopresets/".format(conf["server_ip"],
-                                              conf["server_port"])
-    history.record_post(url, "", data, undoable=False)
-    post(url, **data)
+    path = "/hinfopresets/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
     cli_info("Added new hinfopreset with cpu {} and os {}"
              .format(args.cpu, args.os), print_msg=True)
 
@@ -1486,13 +1439,9 @@ def hinfopresets_remove(args):
         return
 
     # Check for hinfopreset in use
-    url = "http://{}:{}/hosts/?hinfo={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        args.id,
-    )
-    history.record_get(url)
-    hosts = get(url).json()
+    path = f"/hosts/?hinfo={args.id}"
+    history.record_get(path)
+    hosts = get(path).json()
     if len(hosts):
         if args.force:
             for host in hosts:
@@ -1504,13 +1453,9 @@ def hinfopresets_remove(args):
             cli_warning("hinfopreset {} in use by {} hosts, must force".format(
                 args.id, len(hosts)))
 
-    url = "http://{}:{}/hinfopresets/{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        args.id,
-    )
-    history.record_delete(url, args.id)
-    delete(url)
+    path = f"/hinfopresets/{args.id}"
+    history.record_delete(path, args.id)
+    delete(path)
     cli_info("Removed hinfopreset {}".format(args.id), print_msg=True)
 
 
@@ -1557,10 +1502,9 @@ def loc_remove(args):
     new_data = {"loc": ""}
 
     # Set LOC to null value
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
-                                         info["name"])
-    history.record_patch(url, new_data, old_data)
-    patch(url, loc="")
+    path = f"/hosts/{info['name']}"
+    history.record_patch(path, new_data, old_data)
+    patch(path, loc="")
     cli_info("removed LOC for {}".format(info["name"]), print_msg=True)
 
 
@@ -1605,10 +1549,9 @@ def loc_set(args):
     new_data = {"loc": args.loc}
 
     # Update LOC
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
-                                         info["name"])
-    history.record_patch(url, new_data, old_data)
-    patch(url, loc=args.loc)
+    path = f"/hosts/{info['name']}"
+    history.record_patch(path, new_data, old_data)
+    patch(path, loc=args.loc)
     cli_info("updated LOC to {} for {}".format(args.loc, info["name"]),
              print_msg=True)
 
@@ -1690,12 +1633,9 @@ def naptr_add(args):
     }
 
     # Create NAPTR record
-    url = "http://{}:{}/naptrs/".format(
-        conf["server_ip"],
-        conf["server_port"],
-    )
-    history.record_post(url, "", data, undoable=False)
-    post(url, **data)
+    path = "/naptrs/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
     cli_info("created NAPTR record for {}".format(info["name"]), print_msg=True)
 
 
@@ -1754,14 +1694,9 @@ def naptr_remove(args):
 
     # get the hosts NAPTR records where repl is a substring of the replacement
     # field
-    url = "http://{}:{}/naptrs/?replacement__contains={}&host={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        args.replacement,
-        info["id"]
-    )
-    history.record_get(url)
-    naptrs = get(url).json()
+    path = f"/naptrs/?replacement__contains={args.replacement}&host={info['id']}"
+    history.record_get(path)
+    naptrs = get(path).json()
     if not len(naptrs):
         cli_warning("{} hasn't got any NAPTR reocrds matching \"{}\"".format(
             info["name"],
@@ -1776,14 +1711,10 @@ def naptr_remove(args):
             ))
 
     # Delete NAPTR record(s)
-    for ptr in naptrs:
-        url = "http://{}:{}/naptrs/{}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            ptr["id"],
-        )
-        history.record_delete(url, ptr)
-        delete(url)
+    for naptr in naptrs:
+        path = f"/naptrs/{naptr['id']}"
+        history.record_delete(path, naptr)
+        delete(path)
     cli_info("deleted {} NAPTR record(s) for {}"
              .format(len(naptrs), info["name"]), print_msg=True)
 
@@ -1815,13 +1746,9 @@ def naptr_show(args):
     """Show all NAPTR records for host.
     """
     info = host_info_by_name(args.name)
-    url = "http://{}:{}/naptrs/?host={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        info["id"],
-    )
-    history.record_get(url)
-    naptrs = get(url).json()
+    path = f"/naptrs/?host={info['id']}"
+    history.record_get(path)
+    naptrs = get(path).json()
     for ptr in naptrs:
         print_naptr(ptr, info["name"])
     cli_info("showed {} NAPTR records for {}".format(len(naptrs), info["name"]))
@@ -1875,13 +1802,10 @@ def ptr_change(args):
     data = {
         "host": new_info["id"],
     }
-    url = "http://{}:{}/ptroverrides/{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        old_info["ptr_overrides"][0]["id"],
-    )
-    history.record_patch(url, data, old_info["ptr_overrides"][0])
-    patch(url, **data)
+
+    path = "/ptroverrides/{}".format(old_info["ptr_overrides"][0]["id"])
+    history.record_patch(path, data, old_info["ptr_overrides"][0])
+    patch(path, **data)
     cli_info("changed owner of PTR record {} from {} to {}".format(
         args.ip,
         old_info["name"],
@@ -1927,13 +1851,9 @@ def ptr_remove(args):
                                                              args.ip))
 
     # Delete record
-    url = "http://{}:{}/ptroverrides/{}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        info["ptr_overrides"][0]["id"],
-    )
-    history.record_delete(url, info["ptr_override"][0])
-    delete(url)
+    path = "/ptroverrides/{}".format(info["ptr_overrides"][0]["id"])
+    history.record_delete(path, info["ptr_override"][0])
+    delete(path)
     cli_info("deleted PTR record {} for {}".format(args.ip, info["name"]),
              print_msg=True)
 
@@ -1972,13 +1892,9 @@ def ptr_set(args):
     info = host_info_by_name(args.name)
 
     # check that a PTR record with the given ip doesn't exist
-    url = "http://{}:{}/ptroverrides/?ipaddress={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        args.ip,
-    )
-    history.record_get(url)
-    ptrs = get(url).json()
+    path = f"/ptroverrides/?ipaddress={args.ip}"
+    history.record_get(path)
+    ptrs = get(path).json()
     if len(ptrs):
         cli_warning("{} already exist in a PTR record".format(args.ip))
 
@@ -1992,12 +1908,9 @@ def ptr_set(args):
         "host": info["id"],
         "ipaddress": args.ip,
     }
-    url = "http://{}:{}/ptroverrides/".format(
-        conf["server_ip"],
-        conf["server_port"],
-    )
-    history.record_post(url, "", data, undoable=False)
-    post(url, **data)
+    path = "/ptroverrides/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
     cli_info("Added PTR record {} to {}".format(args.ip, info["name"]),
              print_msg=True)
 
@@ -2026,12 +1939,9 @@ host.add_command(
 def ptr_show(args):
     """Show PTR record matching given ip (empty input shows all PTR records).
     """
-    url = "http://{}:{}/ptroverrides/".format(
-        conf["server_ip"],
-        conf["server_port"],
-    )
-    history.record_get(url)
-    ptrs = get(url).json()
+    path = "/ptroverrides/"
+    history.record_get(path)
+    ptrs = get(path).json()
 
     padding = 0
     for ptr in ptrs:
@@ -2041,16 +1951,12 @@ def ptr_show(args):
 
     for ptr in ptrs:
         if args.ip in ptr["ipaddress"]:
-            url = "http://{}:{}/hosts/?hostid={}".format(
-                conf["server_ip"],
-                conf["server_port"],
-                ptr["hostid"],
-            )
-            history.record_get(url)
-            hosts = get(url).json()
-            if not hosts:
-                cli_error("{} PTR records host (hostid: {}) doesn't exist."
-                          .format(args.ip, ptr["hostid"]))
+            path = f"/hosts/?id={ptr['host']}"
+            history.record_get(path)
+            host = get(path).json()
+            if not host:
+                cli_error("{} PTR records host (host: {}) doesn't exist."
+                          .format(args.ip, ptr["host"]))
             print_ptr(ptr["ipaddress"], hosts[0]["name"], padding)
     cli_info("showed PTR records matching {}".format(args.ip))
 
@@ -2101,10 +2007,9 @@ def srv_add(args):
     sname = clean_hostname(args.service)
 
     # Check if a SRV record with identical service exists
-    url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"],
-                                                 conf["server_port"], sname)
-    history.record_get(url)
-    srvs = get(url).json()
+    path = f"/srvs/?service={sname}"
+    history.record_get(path)
+    srvs = get(path).json()
     if len(srvs) > 0:
         entry_exists = True
     else:
@@ -2119,9 +2024,9 @@ def srv_add(args):
     }
 
     # Create new SRV record
-    url = "http://{}:{}/srvs/".format(conf["server_ip"], conf["server_port"])
-    history.record_post(url, "", data, undoable=False)
-    post(url, **data)
+    path = "/srvs/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
     if entry_exists:
         cli_info("Added SRV record {} with target {} to existing entry."
                  .format(sname, host_name), print_msg=True)
@@ -2173,10 +2078,9 @@ def srv_remove(args):
     sname = clean_hostname(args.service)
 
     # Check if service exist
-    url = "http://{}:{}/srvs/?service={}".format(conf["server_ip"],
-                                                 conf["server_port"], sname)
-    history.record_get(url)
-    srvs = get(url).json()
+    path = f"/srvs/?service={sname}"
+    history.record_get(path)
+    srvs = get(path).json()
     if len(srvs) == 0:
         cli_warning("not service named {}".format(sname))
     elif len(srvs) > 1 and not args.force:
@@ -2185,13 +2089,9 @@ def srv_remove(args):
     # Remove all SRV records with that service
     for srv in srvs:
         assert isinstance(srv, dict)
-        url = "http://{}:{}/srvs/{}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            srv["id"],
-        )
-        history.record_delete(url, srv, redoable=False)
-        delete(url)
+        path = f"/srvs/{srv['id']}"
+        history.record_delete(path, srv, redoable=False)
+        delete(path)
         cli_info("removed SRV record {} with target {}".format(srv["name"],
                                                                srv["target"]),
                  print_msg=True)
@@ -2224,13 +2124,9 @@ def srv_show(args):
     sname = clean_hostname(args.service)
 
     # Get all matching SRV records
-    url = "http://{}:{}/srvs/?name__contains={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        sname,
-    )
-    history.record_get(url)
-    srvs = get(url).json()
+    path = f"/srvs/?name={sname}"
+    history.record_get(path)
+    srvs = get(path).json()
     if len(srvs) < 1:
         cli_warning("no service matching {}".format(sname))
     padding = 0
@@ -2284,10 +2180,9 @@ def ttl_remove(args):
     new_data = {"ttl": ""}
 
     # Remove TTL value
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
-                                         info["name"])
-    history.record_patch(url, new_data, old_data)
-    patch(url, ttl="")
+    path = f"/hosts/{info['name']}"
+    history.record_patch(path, new_data, old_data)
+    patch(path, ttl="")
     cli_info("removed TTL for {}".format(info["name"]), print_msg=True)
 
 
@@ -2328,10 +2223,9 @@ def ttl_set(args):
     new_data = {"ttl": args.ttl if args.ttl != "default" else ""}
 
     # Update TTL
-    url = "http://{}:{}/hosts/{}".format(conf["server_ip"], conf["server_port"],
-                                         info["name"])
-    history.record_patch(url, new_data, old_data)
-    patch(url, **new_data)
+    path = f"/hosts/{info['name']}"
+    history.record_patch(path, new_data, old_data)
+    patch(path, **new_data)
     cli_info("updated TTL for {}".format(info["name"]), print_msg=True)
 
 
@@ -2405,9 +2299,9 @@ def txt_add(args):
         "txt": args.text
     }
     # Add TXT record to host
-    url = "http://{}:{}/txts/".format(conf["server_ip"], conf["server_port"])
-    history.record_post(url, "", data, undoable=False)
-    post(url, **data)
+    path = "/txts/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
     cli_info("Added TXT record to {}".format(info["name"]), print_msg=True)
 
 
@@ -2440,14 +2334,12 @@ def txt_remove(args):
     info = host_info_by_name(args.name)
 
     # Check for matching TXT records for host
-    url = "http://{}:{}/txts/?host={}&txt__contains={}".format(
-        conf["server_ip"],
-        conf["server_port"],
+    path = "/txts/?host={}&txt__contains={}".format(
         info["id"],
         args.text,
     )
-    history.record_get(url)
-    txts = get(url).json()
+    history.record_get(path)
+    txts = get(path).json()
     if len(txts) == 0:
         cli_warning(
             "{} hasn't got any TXT records matching \"{}\"".format(info["name"],
@@ -2461,13 +2353,9 @@ def txt_remove(args):
 
     # Remove TXT records
     for txt in txts:
-        url = "http://{}:{}/txts/{}".format(
-            conf["server_ip"],
-            conf["server_port"],
-            txt["id"],
-        )
-        history.record_delete(url, txt)
-        delete(url)
+        path = f"/txts/{txt['id']}"
+        history.record_delete(path, txt)
+        delete(path)
     cli_info("deleted {} of {} TXT records matching \"{}\"".format(
         len(txts),
         info["name"],
@@ -2503,13 +2391,9 @@ def txt_show(args):
     """Show all TXT records for host.
     """
     info = host_info_by_name(args.name)
-    url = "http://{}:{}/txts/?host={}".format(
-        conf["server_ip"],
-        conf["server_port"],
-        info["id"],
-    )
-    history.record_get(url)
-    txts = get(url).json()
+    path = f"/txts/?host={info['id']}"
+    history.record_get(path)
+    txts = get(path).json()
     for txt in txts:
         print_txt(txt["txt"], padding=5)
     cli_info("showed TXT records for {}".format(info["name"]))
