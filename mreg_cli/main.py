@@ -1,5 +1,10 @@
 if __name__ == '__main__':
 
+    # Will ask for password
+    import util
+    util.update_token()
+
+
     # shlex is a lexical analyser which handles quotes automatically, and
     # will allow handling of comments in input if necessary
     import shlex

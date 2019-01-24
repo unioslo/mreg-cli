@@ -12,6 +12,8 @@ import types
 import inspect
 import requests
 
+from prompt_toolkit import prompt
+
 from config import cli_config
 from exceptions import *
 from history import history
@@ -21,7 +23,6 @@ try:
     conf = cli_config(required_fields=(
         "mregurl",
         "username",
-        "password",
     ))
 except Exception as e:
     print("util.py: cli_config:", e)
@@ -184,7 +185,7 @@ def ip_in_mreg_net(ip: str) -> bool:
 def update_token():
     tokenurl = requests.compat.urljoin(conf['mregurl'], '/api/token-auth/')
     username = conf['username']
-    password = conf['password']
+    password = prompt('Enter password: ', is_password=True)
     result = requests.post(tokenurl, {'username': username,
                                       'password': password})
     result_check(result, "post", tokenurl)
