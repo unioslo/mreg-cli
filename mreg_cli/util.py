@@ -131,9 +131,7 @@ def zone_mreg_controlled(zone: str) -> bool:
     path = f"/zones/?name={zone}"
     history.record_get(path)
     zone = get(path).json()
-    if not len(zone):
-        return False
-    return True
+    return bool(len(zone))
 
 
 def host_in_mreg_zone(host: str) -> bool:
@@ -160,20 +158,8 @@ def host_in_mreg_zone(host: str) -> bool:
 
 def ip_in_mreg_net(ip: str) -> bool:
     """Return true if the ip is in a MREG controlled subnet"""
-    # XXX: mreg#96
-    assert isinstance(ip, str)
-    ipaddr = ipaddress.ip_address(ip)
-
-    path = "/subnets/"
-    history.record_get(path)
-    nets = get(path).json()
-
-    for net in nets:
-        n = ipaddress.ip_network(net["range"])
-        if ipaddr in n:
-            return True
-
-    return False
+    net = get_subnet_by_ip(ip)
+    return bool(net)
 
 
 ################################################################################
@@ -205,20 +191,22 @@ def result_check(result, type, url):
         cli_warning(message)
 
 
-def _request_wrapper(type, path, first=True, **data):
+def _request_wrapper(type, path, ok404=False, first=True, **data):
     url = requests.compat.urljoin(conf['mregurl'], path)
     result = getattr(session, type)(url, data=data)
 
     if first and result.status_code == 401:
         update_token()
         return _request_wrapper(type, path, first=False, **data)
+    elif result.status_code == 404 and ok404:
+        return None
 
     result_check(result, type.upper(), url)
     return result
 
-def get(path: str) -> requests.Response:
+def get(path: str, ok404=False) -> requests.Response:
     """Uses requests to make a get request."""
-    return _request_wrapper("get", path)
+    return _request_wrapper("get", path, ok404=ok404)
 
 
 def post(path: str, **kwargs) -> requests.Response:
@@ -362,6 +350,17 @@ def hinfo_dict() -> HinfoDict:
 #                                                                              #
 ################################################################################
 
+def get_subnet_by_ip(ip: str) -> dict:
+    if is_valid_ip(ip):
+        path = f"/subnets/ip/{ip}"
+        net = get(path, ok404=True)
+        if net:
+            return net.json()
+        else:
+            return {}
+    else:
+        cli_warning("Not a valid ip address")
+
 def get_subnet(ip: str) -> dict:
     "Returns subnet associated with given range or IP"
     if is_valid_subnet(ip):
@@ -369,23 +368,9 @@ def get_subnet(ip: str) -> dict:
         history.record_get(path)
         return get(path).json()
     elif is_valid_ip(ip):
-        path = "/subnets/"
-        ip_object = ipaddress.ip_address(ip)
-        #resolve_ip(ip)
-        subnet = None
-        history.record_get(path)
-        subnet_list = get(path).json()
-        subnet_ranges = [ip_range['range'] for ip_range in subnet_list]
-        for ip_range in subnet_ranges:
-            ip_network = ipaddress.ip_network(ip_range)
-            if ip_object in ip_network:
-                subnet = ip_range
-                break
-
-        if subnet:
-            path = f"/subnets/{subnet}"
-            history.record_get(path)
-            return get(path).json()
+        net = get_subnet_by_ip(ip)
+        if net:
+            return net
         cli_warning("ip address exists but is not an address in any existing subnet")
     else:
         cli_warning("Not a valid ip range or ip address")
@@ -393,38 +378,38 @@ def get_subnet(ip: str) -> dict:
 
 def get_subnet_used_count(ip_range: str):
     "Return a count of the addresses in use on a given subnet"
-    path = f"/subnets/{ip_range}?used_count"
+    path = f"/subnets/{ip_range}/used_count"
     history.record_get(path)
     return get(path).json()
 
 def get_subnet_used_list(ip_range: str):
     "Return a list of the addresses in use on a given subnet"
-    path = f"/subnets/{ip_range}?used_list"
+    path = f"/subnets/{ip_range}/used_list"
     history.record_get(path)
     return get(path).json()
 
 
 def get_subnet_unused_count(ip_range: str):
     "Return a count of the unused addresses on a given subnet"
-    path = f"/subnets/{ip_range}?unused_count"
+    path = f"/subnets/{ip_range}/unused_count"
     history.record_get(path)
     return get(path).json()
 
 def get_subnet_unused_list(ip_range: str):
     "Return a list of the unused addresses on a given subnet"
-    path = f"/subnets/{ip_range}?unused_list"
+    path = f"/subnets/{ip_range}/unused_list"
     history.record_get(path)
     return get(path).json()
 
 def get_subnet_first_unused(ip_range: str):
     "Returns the first unused address on a subnet, if any"
-    path = f"/subnets/{ip_range}?first_unused"
+    path = f"/subnets/{ip_range}/first_unused"
     history.record_get(path)
     return get(path).json()
 
 def get_subnet_reserved_ips(ip_range: str):
     "Returns the first unused address on a subnet, if any"
-    path = f"/subnets/{ip_range}?reserved_list"
+    path = f"/subnets/{ip_range}/reserved_list"
     history.record_get(path)
     return get(path).json()
 
