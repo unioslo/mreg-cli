@@ -1937,28 +1937,24 @@ host.add_command(
 ##############################################
 
 def ptr_show(args):
-    """Show PTR record matching given ip (empty input shows all PTR records).
+    """Show PTR record matching given ip.
     """
-    path = "/ptroverrides/"
+
+    if not is_valid_ip(args.ip):
+        cli_warning(f"{args.ip} is not a valid IP")
+
+    path = f"/hosts/?ptr_overrides__ipaddress={args.ip}"
     history.record_get(path)
-    ptrs = get(path).json()
+    host = get(path, ok404=True).json()
 
-    padding = 0
-    for ptr in ptrs:
-        if args.ip in ptr["ipaddress"]:
-            if len(ptr["ipaddress"]) > padding:
-                padding = len(ptr["ipaddress"])
-
-    for ptr in ptrs:
-        if args.ip in ptr["ipaddress"]:
-            path = f"/hosts/?id={ptr['host']}"
-            history.record_get(path)
-            host = get(path).json()
-            if not host:
-                cli_error("{} PTR records host (host: {}) doesn't exist."
-                          .format(args.ip, ptr["host"]))
-            print_ptr(ptr["ipaddress"], hosts[0]["name"], padding)
-    cli_info("showed PTR records matching {}".format(args.ip))
+    if host:
+        host = host[0]
+        for ptr in host["ptr_overrides"]:
+            if args.ip == ptr["ipaddress"]:
+                padding = len(args.ip)
+                print_ptr(args.ip, host["name"], padding)
+    else:
+        print(f"No PTR found for IP '{args.ip}'")
 
 
 # Add 'ptr_show' as a sub command to the 'host' command
