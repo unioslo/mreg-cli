@@ -3,6 +3,7 @@ if __name__ == '__main__':
     # Will ask for password
     import util
     util.update_token()
+    print(util.session.headers["Authorization"])
 
 
     # shlex is a lexical analyser which handles quotes automatically, and
@@ -16,9 +17,9 @@ if __name__ == '__main__':
 
     # Must import the commands, for the side effects of creating the commands
     # when importing.
-    import host
-    import subnet
     import dhcp
+    import host
+    import network
     import zone
     import history
 
