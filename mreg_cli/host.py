@@ -33,7 +33,7 @@ host = cli.add_command(
 #########################################
 
 def add(args):
-    """Add a new host with the given name, ip or subnet and contact. hinfo and
+    """Add a new host with the given name, ip or network and contact. hinfo and
     comment are optional.
     """
     # NOTE: an A-record forward-zone not controlled by MREG aren't handled
@@ -45,44 +45,44 @@ def add(args):
     if args.hinfo:
         hinfo_sanify(args.hinfo, hi_dict)
 
-    # Handle arbitrary ip from subnet if received a subnet w/o mask
-    subnet = dict()
+    # Handle arbitrary ip from network if received a network w/o mask
+    network = dict()
     if re.match(r"^.*/$", args.ip):
-        subnet = get_subnet(args.ip[:-1])
-        ip = first_unused_ip_from_subnet(subnet)
+        network = get_network(args.ip[:-1])
+        ip = first_unused_ip_from_network(network)
 
-    # Handle arbitrary ip from subnet if received a subnet w/mask
-    elif is_valid_subnet(args.ip):
-        subnet = get_subnet(args.ip)
-        ip = first_unused_ip_from_subnet(subnet)
+    # Handle arbitrary ip from network if received a network w/mask
+    elif is_valid_network(args.ip):
+        network = get_network(args.ip)
+        ip = first_unused_ip_from_network(network)
 
-    # Require force if given valid ip in subnet not controlled by MREG
+    # Require force if given valid ip in network not controlled by MREG
     elif is_valid_ip(args.ip) and not ip_in_mreg_net(args.ip):
         if not args.force:
             cli_warning(
-                "{} isn't in a subnet controlled by MREG, must force".format(
+                "{} isn't in a network controlled by MREG, must force".format(
                     args.ip))
         else:
             ip = args.ip
 
     # Or else check that the address given isn't reserved
     else:
-        subnet = get_subnet(args.ip)
-        network_object = ipaddress.ip_network(subnet['range'])
+        network = get_network(args.ip)
+        network_object = ipaddress.ip_network(network['range'])
         reserved_addresses = set(
-            map(str, get_subnet_reserved_ips(subnet['range'])))
+            map(str, get_network_reserved_ips(network['range'])))
         if args.ip in reserved_addresses and not args.force:
             cli_warning("Address is reserved. Requires force")
         if args.ip == network_object.network_address.exploded:
-            cli_warning("Can't overwrite the network address of the subnet")
+            cli_warning("Can't overwrite the network address of the network")
         if args.ip == network_object.broadcast_address.exploded:
-            cli_warning("Can't overwrite the broadcast address of the subnet")
+            cli_warning("Can't overwrite the broadcast address of the network")
         ip = args.ip
 
-    # Require force if subnet is frozen
-    if not args.force and subnet['frozen']:
+    # Require force if network is frozen
+    if not args.force and network['frozen']:
         cli_warning(
-            "Subnet {} is frozen. Requires force".format(subnet['range']))
+            "Network {} is frozen. Requires force".format(network['range']))
 
     # Contact sanity check
     if not is_valid_email(args.contact):
@@ -129,7 +129,7 @@ def add(args):
 # Add 'add' as a sub command to the 'host' command
 host.add_command(
     prog='add',
-    description='Add a new host with the given name, ip or subnet and contact. '
+    description='Add a new host with the given name, ip or network and contact. '
                 'hinfo and comment are optional.',
     short_desc='Add a new host',
     callback=add,
@@ -196,12 +196,12 @@ def remove(args):
                 history.record_delete(path, naptr)
                 delete(path)
                 cli_info("deleted NAPTR record {} when removing {}".format(
-                    ptr["replacement"],
+                    naptr["replacement"],
                     info["name"],
                 ))
 
     # Require force if host has any SRV records. Delete the SRV records if force
-    path = f"/srvs/?target={info['id']}"
+    path = f"/srvs/?target={info['name']}"
     history.record_get(path)
     srvs = get(path).json()
     if len(srvs) > 0:
@@ -209,11 +209,11 @@ def remove(args):
             warn_msg += "{} SRV records. ".format(len(srvs))
         else:
             for srv in srvs:
-                path = f"/srvs/?target={srv['id']}"
+                path = f"/srvs/{srv['id']}"
                 history.record_delete(path, srv)
                 delete(path)
                 cli_info("deleted SRV record {} when removing {}".format(
-                    srv["service"],
+                    srv["name"],
                     info["name"],
                 ))
 
@@ -509,46 +509,46 @@ def a_add(args):
         cli_warning("{} already has A/AAAA record(s), must force"
                     .format(info["name"]))
 
-    # Handle arbitrary ip from subnet if received a subnet w/o mask
+    # Handle arbitrary ip from network if received a network w/o mask
     if re.match(r"^.*/$", args.ip):
-        subnet = get_subnet(args.ip[:-1])
-        if subnet["frozen"] and not args.force:
+        network = get_network(args.ip[:-1])
+        if network["frozen"] and not args.force:
             cli_warning(
-                "subnet {} is frozen, must force".format(subnet["range"]))
-        ip = first_unused_ip_from_subnet(subnet)
+                "network {} is frozen, must force".format(network["range"]))
+        ip = first_unused_ip_from_network(network)
 
-    # Handle arbitrary ip from subnet if received a subnet w/mask
-    elif is_valid_subnet(args.ip):
-        subnet = get_subnet(args.ip)
-        if subnet["frozen"] and not args.force:
+    # Handle arbitrary ip from network if received a network w/mask
+    elif is_valid_network(args.ip):
+        network = get_network(args.ip)
+        if network["frozen"] and not args.force:
             cli_warning(
-                "subnet {} is frozen, must force".format(subnet["range"]))
-        ip = first_unused_ip_from_subnet(subnet)
+                "network {} is frozen, must force".format(network["range"]))
+        ip = first_unused_ip_from_network(network)
 
-    # Require force if given valid ip in subnet not controlled by MREG
+    # Require force if given valid ip in network not controlled by MREG
     elif is_valid_ip(args.ip) and not ip_in_mreg_net(args.ip):
         if not args.force:
             cli_warning(
-                "{} isn't in a subnet controlled by MREG, must force".format(
+                "{} isn't in a network controlled by MREG, must force".format(
                     args.ip))
         else:
             ip = args.ip
 
     # Or else check that the address given isn't reserved
     else:
-        subnet = get_subnet(args.ip)
-        if subnet["frozen"] and not args.force:
+        network = get_network(args.ip)
+        if network["frozen"] and not args.force:
             cli_warning(
-                "subnet {} is frozen, must force".format(subnet["range"]))
-        network_object = ipaddress.ip_network(subnet['range'])
+                "network {} is frozen, must force".format(network["range"]))
+        network_object = ipaddress.ip_network(network['range'])
         reserved_addresses = set(
-            map(str, get_subnet_reserved_ips(subnet['range'])))
+            map(str, get_network_reserved_ips(network['range'])))
         if args.ip in reserved_addresses and not args.force:
             cli_warning("Address is reserved. Requires force")
         if args.ip == network_object.network_address.exploded:
-            cli_warning("Can't overwrite the network address of the subnet")
+            cli_warning("Can't overwrite the network address of the network")
         if args.ip == network_object.broadcast_address.exploded:
-            cli_warning("Can't overwrite the broadcast address of the subnet")
+            cli_warning("Can't overwrite the broadcast address of the network")
         ip = args.ip
 
     # Fail if input isn't ipv4
@@ -581,10 +581,10 @@ host.add_command(
              description='Name of the target host.',
              metavar='NAME'),
         Flag('ip',
-             description='The IP of new A record. May also be a subnet, '
-                         'in which case a random IP address from that subnet '
+             description='The IP of new A record. May also be a network, '
+                         'in which case a random IP address from that network '
                          'is chosen.',
-             metavar='IP/SUBNET'),
+             metavar='IP/network'),
         Flag('-force',
              action='count',
              description='Enable force.'),
@@ -605,12 +605,12 @@ def a_change(args):
     if args.old == args.new:
         cli_warning("New and old IP are equal")
 
-    # Ip and subnet sanity checks
+    # Ip and network sanity checks
     if not is_valid_ipv4(args.old):
         cli_warning("invalid ipv4 \"{}\" (target host {})"
                     .format(args.old, args.name))
-    elif not is_valid_ipv4(args.new) and not is_valid_subnet(args.new):
-        cli_warning("invalid ipv4 nor subnet \"{}\" (target host {})"
+    elif not is_valid_ipv4(args.new) and not is_valid_network(args.new):
+        cli_warning("invalid ipv4 nor network \"{}\" (target host {})"
                     .format(args.new, args.name))
 
     # Check that ip belongs to host
@@ -622,45 +622,45 @@ def a_change(args):
     else:
         cli_warning("{} is not owned by {}".format(args.old, info["name"]))
 
-    # Handle arbitrary ip from subnet if received a subnet w/o mask
+    # Handle arbitrary ip from network if received a network w/o mask
     if re.match(r"^.*/$", args.new):
-        subnet = get_subnet(args.new[:-1])
-        if subnet["frozen"] and not args.force:
-            cli_warning("subnet {} is frozen, must force"
-                        .format(subnet["range"]))
-        ip = first_unused_ip_from_subnet(subnet)
+        network = get_network(args.new[:-1])
+        if network["frozen"] and not args.force:
+            cli_warning("network {} is frozen, must force"
+                        .format(network["range"]))
+        ip = first_unused_ip_from_network(network)
 
-    # Handle arbitrary ip from subnet if received a subnet w/mask
-    elif is_valid_subnet(args.new):
-        subnet = get_subnet(args.new)
-        if subnet["frozen"] and not args.force:
-            cli_warning("subnet {} is frozen, must force"
-                        .format(subnet["range"]))
-        ip = first_unused_ip_from_subnet(subnet)
+    # Handle arbitrary ip from network if received a network w/mask
+    elif is_valid_network(args.new):
+        network = get_network(args.new)
+        if network["frozen"] and not args.force:
+            cli_warning("network {} is frozen, must force"
+                        .format(network["range"]))
+        ip = first_unused_ip_from_network(network)
 
-    # Require force if given valid ip in subnet not controlled by MREG
+    # Require force if given valid ip in network not controlled by MREG
     elif is_valid_ip(args.new) and not ip_in_mreg_net(args.new):
         if not args.force:
-            cli_warning("{} isn't in a subnet controlled by MREG, must force"
+            cli_warning("{} isn't in a network controlled by MREG, must force"
                         .format(args.new))
         else:
             ip = args.new
 
     # Or else check that the address given isn't reserved
     else:
-        subnet = get_subnet(args.new)
-        if subnet["frozen"] and not args.force:
+        network = get_network(args.new)
+        if network["frozen"] and not args.force:
             cli_warning(
-                "subnet {} is frozen, must force".format(subnet["range"]))
-        network_object = ipaddress.ip_network(subnet['range'])
+                "network {} is frozen, must force".format(network["range"]))
+        network_object = ipaddress.ip_network(network['range'])
         reserved_addresses = \
-            set(map(str, get_subnet_reserved_ips(subnet['range'])))
+            set(map(str, get_network_reserved_ips(network['range'])))
         if args.new in reserved_addresses and not args.force:
             cli_warning("Address is reserved. Requires force")
         if args.new == network_object.network_address.exploded:
-            cli_warning("Can't overwrite the network address of the subnet")
+            cli_warning("Can't overwrite the network address of the network")
         if args.new == network_object.broadcast_address.exploded:
-            cli_warning("Can't overwrite the broadcast address of the subnet")
+            cli_warning("Can't overwrite the broadcast address of the network")
         ip = args.new
 
     # Fail if input isn't ipv4
@@ -700,11 +700,11 @@ host.add_command(
              required=True,
              metavar='IP'),
         Flag('-new',
-             description='The new IP address. May also be a subnet, in which '
-                         'case a random IP from that subnet is chosen.',
+             description='The new IP address. May also be a network, in which '
+                         'case a random IP from that network is chosen.',
              short_desc='New IP.',
              required=True,
-             metavar='IP/SUBNET'),
+             metavar='IP/network'),
         Flag('-force',
              action='count',
              description='Enable force.'),
@@ -819,45 +819,45 @@ def aaaa_add(args):
         cli_warning("{} already has A/AAAA record(s), must force"
                     .format(info["name"]))
 
-    # Handle arbitrary ip from subnet if received a subnet w/o mask
+    # Handle arbitrary ip from network if received a network w/o mask
     if re.match(r"^.*/$", args.ip):
-        subnet = get_subnet(args.ip[:-1])
-        if subnet["frozen"] and not args.force:
-            cli_warning("subnet {} is frozen, must force"
-                        .format(subnet["range"]))
-        ip = first_unused_ip_from_subnet(subnet)
+        network = get_network(args.ip[:-1])
+        if network["frozen"] and not args.force:
+            cli_warning("network {} is frozen, must force"
+                        .format(network["range"]))
+        ip = first_unused_ip_from_network(network)
 
-    # Handle arbitrary ip from subnet if received a subnet w/mask
-    elif is_valid_subnet(args.ip):
-        subnet = get_subnet(args.ip)
-        if subnet["frozen"] and not args.force:
-            cli_warning("subnet {} is frozen, must force"
-                        .format(subnet["range"]))
-        ip = first_unused_ip_from_subnet(subnet)
+    # Handle arbitrary ip from network if received a network w/mask
+    elif is_valid_network(args.ip):
+        network = get_network(args.ip)
+        if network["frozen"] and not args.force:
+            cli_warning("network {} is frozen, must force"
+                        .format(network["range"]))
+        ip = first_unused_ip_from_network(network)
 
-    # Require force if given valid ip in subnet not controlled by MREG
+    # Require force if given valid ip in network not controlled by MREG
     elif is_valid_ip(args.ip) and not ip_in_mreg_net(args.ip):
         if not args.force:
-            cli_warning("{} isn't in a subnet controlled by MREG, must force"
+            cli_warning("{} isn't in a network controlled by MREG, must force"
                         .format(args.ip))
         else:
             ip = args.ip
 
     # Or else check that the address given isn't reserved
     else:
-        subnet = get_subnet(args.ip)
-        if subnet["frozen"] and not args.force:
-            cli_warning("subnet {} is frozen, must force"
-                        .format(subnet["range"]))
-        network_object = ipaddress.ip_network(subnet['range'])
+        network = get_network(args.ip)
+        if network["frozen"] and not args.force:
+            cli_warning("network {} is frozen, must force"
+                        .format(network["range"]))
+        network_object = ipaddress.ip_network(network['range'])
         reserved_addresses = \
-            set(map(str, get_subnet_reserved_ips(subnet['range'])))
+            set(map(str, get_network_reserved_ips(network['range'])))
         if args.ip in reserved_addresses and 'y' not in args:
             cli_warning("Address is reserved. Requires force")
         if args.ip == network_object.network_address.exploded:
-            cli_warning("Can't overwrite the network address of the subnet")
+            cli_warning("Can't overwrite the network address of the network")
         if args.ip == network_object.broadcast_address.exploded:
-            cli_warning("Can't overwrite the broadcast address of the subnet")
+            cli_warning("Can't overwrite the broadcast address of the network")
         ip = args.ip
 
     # Fail if input isn't ipv6
@@ -912,46 +912,46 @@ def aaaa_change(args):
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    # Handle arbitrary ip from subnet if received a subnet w/o mask
+    # Handle arbitrary ip from network if received a network w/o mask
     if re.match(r"^.*/$", args.new):
-        subnet = get_subnet(args.new[:-1])
-        if subnet["frozen"] and not args.force:
+        network = get_network(args.new[:-1])
+        if network["frozen"] and not args.force:
             cli_warning(
-                "subnet {} is frozen, must force".format(subnet["range"]))
-        new_ip = first_unused_ip_from_subnet(subnet)
+                "network {} is frozen, must force".format(network["range"]))
+        new_ip = first_unused_ip_from_network(network)
 
-    # Handle arbitrary ip from subnet if received a subnet w/mask
-    elif is_valid_subnet(args.new):
-        subnet = get_subnet(args.new)
-        if subnet["frozen"] and not args.force:
+    # Handle arbitrary ip from network if received a network w/mask
+    elif is_valid_network(args.new):
+        network = get_network(args.new)
+        if network["frozen"] and not args.force:
             cli_warning(
-                "subnet {} is frozen, must force".format(subnet["range"]))
-        new_ip = first_unused_ip_from_subnet(subnet)
+                "network {} is frozen, must force".format(network["range"]))
+        new_ip = first_unused_ip_from_network(network)
 
-    # Require force if given valid ip in subnet not controlled by MREG
+    # Require force if given valid ip in network not controlled by MREG
     elif is_valid_ip(args.new) and not ip_in_mreg_net(args.new):
         if not args.force:
             cli_warning(
-                "{} isn't in a subnet controlled by MREG, must force".format(
+                "{} isn't in a network controlled by MREG, must force".format(
                     args.new))
         else:
             new_ip = args.new
 
     # Or else check that the address given isn't reserved
     else:
-        subnet = get_subnet(args.new)
-        if subnet["frozen"] and not args.force:
+        network = get_network(args.new)
+        if network["frozen"] and not args.force:
             cli_warning(
-                "subnet {} is frozen, must force".format(subnet["range"]))
-        network_object = ipaddress.ip_network(subnet['range'])
+                "network {} is frozen, must force".format(network["range"]))
+        network_object = ipaddress.ip_network(network['range'])
         reserved_addresses = \
-            set(map(str, get_subnet_reserved_ips(subnet['range'])))
+            set(map(str, get_network_reserved_ips(network['range'])))
         if args.new in reserved_addresses and not args.force:
             cli_warning("Address is reserved. Requires force")
         if args.new == network_object.network_address.exploded:
-            cli_warning("Can't overwrite the network address of the subnet")
+            cli_warning("Can't overwrite the network address of the network")
         if args.new == network_object.broadcast_address.exploded:
-            cli_warning("Can't overwrite the broadcast address of the subnet")
+            cli_warning("Can't overwrite the broadcast address of the network")
         new_ip = args.new
 
     # Fail if input isn't ipv6
@@ -1896,7 +1896,7 @@ def ptr_set(args):
     if not is_valid_ip(args.ip):
         cli_warning("invalid ip: {}".format(args.ip))
     if not ip_in_mreg_net(args.ip):
-        cli_warning("{} isn't in a subnet controlled by MREG".format(args.ip))
+        cli_warning("{} isn't in a network controlled by MREG".format(args.ip))
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)

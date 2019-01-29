@@ -1,9 +1,9 @@
-# Subnets setup ################################################################
-subnet create -subnet 129.240.69.0/24 -desc "Seth MacFarlanes subnet!"  # ipv4 subnet
-subnet create -subnet 1234::ff00/120 -desc "familynet"                  # ipv6 subnet
+# networks setup ################################################################
+network create -network 129.240.69.0/24 -desc "Seth MacFarlanes network!"  # ipv4 network
+network create -network 1234::ff00/120 -desc "familynet"                  # ipv6 network
 
-subnet create -subnet 129.240.96.0/24 -desc "Frozzzen"                  # frozen subnet
-subnet set_frozen 129.240.96.0/24
+network create -network 129.240.96.0/24 -desc "Frozzzen"                  # frozen network
+network set_frozen 129.240.96.0/24
 
 # zone setup
 zone create uio.no hostmaster@example.org ns1.example.org -force
@@ -34,7 +34,7 @@ host add daddyo -ip 129.42.69.106 -contact am@dad.no -force
 host a_change -name sethmacfarlane -old 129.240.69.69 -new 129.240.69.123
 host a_remove sethmacfarlane 129.240.69.123
 
-# Test force when adding A record in frozen subnet
+# Test force when adding A record in frozen network
 !echo -n "$ Fails: "
 host a_add sethmacfarlane 129.240.96.69
 host a_add sethmacfarlane 129.240.96.69 -force
@@ -46,13 +46,13 @@ host a_add sethmacfarlane 129.240.69.69 -force
 host a_add sethmacfarlane 129.240.69.0/ -force
 host a_add sethmacfarlane 129.240.69.0/24 -force
 
-# Test force when adding ip in frozen subnet
+# Test force when adding ip in frozen network
 host a_remove am.dad.no 129.240.69.106
 !echo -n "$ Fails: "
 host a_add am.dad.no 129.240.96.106
 host a_add am.dad.no 129.240.96.106 -force
 
-# Test force when adding ip not in MREG controlled subnet
+# Test force when adding ip not in MREG controlled network
 host a_remove daddyo 129.42.69.106
 !echo -n "$ Fails: "
 host a_add daddyo 129.42.69.106

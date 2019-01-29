@@ -99,30 +99,30 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
     cli_warning("host not found: {}".format(name), exception=HostNotFoundWarning)
 
 
-def available_ips_from_subnet(subnet: dict) -> list:
+def available_ips_from_network(network: dict) -> list:
     """
-    Returns unsed ips from the given subnet.
-    Assumes subnet exists.
-    :param subnet: dict with subnet info.
+    Returns unsed ips from the given network.
+    Assumes network exists.
+    :param network: dict with network info.
     :return: List of Ip address strings
     """
 
-    unused = get_subnet_unused_list(subnet['range'])
+    unused = get_network_unused_list(network['range'])
     if not unused:
-        cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
+        cli_warning("No free addresses remaining on network {}".format(network['range']))
     return unused
 
-def first_unused_ip_from_subnet(subnet: dict) -> str:
+def first_unused_ip_from_network(network: dict) -> str:
     """
-    Returns the first unused ip from a given subnet.
-    Assumes subnet exists.
-    :param subnet: dict with subnet info.
+    Returns the first unused ip from a given network.
+    Assumes network exists.
+    :param network: dict with network info.
     :return: Ip address string
     """
 
-    unused = get_subnet_first_unused(subnet['range'])
+    unused = get_network_first_unused(network['range'])
     if not unused:
-        cli_warning("No free addresses remaining on subnet {}".format(subnet['range']))
+        cli_warning("No free addresses remaining on network {}".format(network['range']))
     return unused
 
 def zone_mreg_controlled(zone: str) -> bool:
@@ -157,8 +157,8 @@ def host_in_mreg_zone(host: str) -> bool:
 
 
 def ip_in_mreg_net(ip: str) -> bool:
-    """Return true if the ip is in a MREG controlled subnet"""
-    net = get_subnet_by_ip(ip)
+    """Return true if the ip is in a MREG controlled network"""
+    net = get_network_by_ip(ip)
     return bool(net)
 
 
@@ -346,13 +346,13 @@ def hinfo_dict() -> HinfoDict:
 
 ################################################################################
 #                                                                              #
-#   Subnet utility                                                             #
+#   Network utility                                                             #
 #                                                                              #
 ################################################################################
 
-def get_subnet_by_ip(ip: str) -> dict:
+def get_network_by_ip(ip: str) -> dict:
     if is_valid_ip(ip):
-        path = f"/subnets/ip/{ip}"
+        path = f"/networks/ip/{ip}"
         net = get(path, ok404=True)
         if net:
             return net.json()
@@ -361,55 +361,55 @@ def get_subnet_by_ip(ip: str) -> dict:
     else:
         cli_warning("Not a valid ip address")
 
-def get_subnet(ip: str) -> dict:
-    "Returns subnet associated with given range or IP"
-    if is_valid_subnet(ip):
-        path = f"/subnets/{ip}"
+def get_network(ip: str) -> dict:
+    "Returns network associated with given range or IP"
+    if is_valid_network(ip):
+        path = f"/networks/{ip}"
         history.record_get(path)
         return get(path).json()
     elif is_valid_ip(ip):
-        net = get_subnet_by_ip(ip)
+        net = get_network_by_ip(ip)
         if net:
             return net
-        cli_warning("ip address exists but is not an address in any existing subnet")
+        cli_warning("ip address exists but is not an address in any existing network")
     else:
         cli_warning("Not a valid ip range or ip address")
 
 
-def get_subnet_used_count(ip_range: str):
-    "Return a count of the addresses in use on a given subnet"
-    path = f"/subnets/{ip_range}/used_count"
+def get_network_used_count(ip_range: str):
+    "Return a count of the addresses in use on a given network"
+    path = f"/networks/{ip_range}/used_count"
     history.record_get(path)
     return get(path).json()
 
-def get_subnet_used_list(ip_range: str):
-    "Return a list of the addresses in use on a given subnet"
-    path = f"/subnets/{ip_range}/used_list"
+def get_network_used_list(ip_range: str):
+    "Return a list of the addresses in use on a given network"
+    path = f"/networks/{ip_range}/used_list"
     history.record_get(path)
     return get(path).json()
 
 
-def get_subnet_unused_count(ip_range: str):
-    "Return a count of the unused addresses on a given subnet"
-    path = f"/subnets/{ip_range}/unused_count"
+def get_network_unused_count(ip_range: str):
+    "Return a count of the unused addresses on a given network"
+    path = f"/networks/{ip_range}/unused_count"
     history.record_get(path)
     return get(path).json()
 
-def get_subnet_unused_list(ip_range: str):
-    "Return a list of the unused addresses on a given subnet"
-    path = f"/subnets/{ip_range}/unused_list"
+def get_network_unused_list(ip_range: str):
+    "Return a list of the unused addresses on a given network"
+    path = f"/networks/{ip_range}/unused_list"
     history.record_get(path)
     return get(path).json()
 
-def get_subnet_first_unused(ip_range: str):
-    "Returns the first unused address on a subnet, if any"
-    path = f"/subnets/{ip_range}/first_unused"
+def get_network_first_unused(ip_range: str):
+    "Returns the first unused address on a network, if any"
+    path = f"/networks/{ip_range}/first_unused"
     history.record_get(path)
     return get(path).json()
 
-def get_subnet_reserved_ips(ip_range: str):
-    "Returns the first unused address on a subnet, if any"
-    path = f"/subnets/{ip_range}/reserved_list"
+def get_network_reserved_ips(ip_range: str):
+    "Returns the first unused address on a network, if any"
+    path = f"/networks/{ip_range}/reserved_list"
     history.record_get(path)
     return get(path).json()
 
@@ -572,35 +572,35 @@ def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
     print("{1:<{0}} PTR {2}".format(padding, ip, host_name))
 
 
-def print_subnet_unused(count: int, padding: int = 25) -> None:
+def print_network_unused(count: int, padding: int = 25) -> None:
     "Pretty print amount of unused addresses"
     assert isinstance(count, int)
     print(
         "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
 
 
-def print_subnet_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
+def print_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
     "Pretty print ip range and reserved addresses list"
     assert isinstance(ip_range, str)
     assert isinstance(reserved, int)
-    subnet = ipaddress.ip_network(ip_range)
-    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", subnet.network_address,
-                                     subnet.broadcast_address))
+    network = ipaddress.ip_network(ip_range)
+    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", network.network_address,
+                                     network.broadcast_address))
     print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
-    print("{1:<{0}}{2}{3}".format(padding, "", subnet.network_address, " (net)"))
-    res = get_subnet_reserved_ips(ip_range)
-    res.remove(str(subnet.network_address))
+    print("{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)"))
+    res = get_network_reserved_ips(ip_range)
+    res.remove(str(network.network_address))
     broadcast = False
-    if str(subnet.broadcast_address) in res:
-        res.remove(str(subnet.broadcast_address))
+    if str(network.broadcast_address) in res:
+        res.remove(str(network.broadcast_address))
         broadcast = True
     for host in res:
         print("{1:<{0}}{2}".format(padding, "", host))
     if broadcast:
-        print("{1:<{0}}{2}{3}".format(padding, "", subnet.broadcast_address, " (broadcast)"))
+        print("{1:<{0}}{2}{3}".format(padding, "", network.broadcast_address, " (broadcast)"))
 
 
-def print_subnet(info: int, text: str, padding: int = 25) -> None:
+def print_network(info: int, text: str, padding: int = 25) -> None:
     print("{1:<{0}}{2}".format(padding, text, info))
 
 
@@ -636,8 +636,8 @@ def is_valid_ipv6(ip: str) -> bool:
         return True
 
 
-def is_valid_subnet(net: str) -> bool:
-    """Check if net is a valid subnet"""
+def is_valid_network(net: str) -> bool:
+    """Check if net is a valid network"""
     if is_valid_ip(net):
         return False
     try:
