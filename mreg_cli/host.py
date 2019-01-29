@@ -293,6 +293,7 @@ def info_(args):
             print_txt(txt["txt"])
         for ptr in info["ptr_overrides"]:
             print_ptr(ptr["ipaddress"], info["name"])
+        _naptr_show(info)
         cli_info("printed host info for {}".format(info["name"]))
 
 
@@ -1742,15 +1743,24 @@ host.add_command(
 #  Implementation of sub command 'naptr_show'  #
 ################################################
 
+def _naptr_show(info):
+    path = f"/naptrs/?host={info['id']}"
+    history.record_get(path)
+    naptrs = get(path).json()
+    if naptrs:
+        print("{1:<{0}} {2} {3} {4} {5} {6} {7}".format(
+            14, info["name"], "Preference", "Order", "Flag", "Service",
+            "Regex", "Replacement"))
+        for ptr in naptrs:
+            print_naptr(ptr, info["name"])
+    return len(naptrs)
+
 def naptr_show(args):
     """Show all NAPTR records for host.
     """
     info = host_info_by_name(args.name)
-    path = f"/naptrs/?host={info['id']}"
-    history.record_get(path)
-    naptrs = get(path).json()
-    for ptr in naptrs:
-        print_naptr(ptr, info["name"])
+    if not _naptr_show(info):
+        print(f"No naptrs for info['name']")
     cli_info("showed {} NAPTR records for {}".format(len(naptrs), info["name"]))
 
 
