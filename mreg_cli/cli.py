@@ -247,10 +247,10 @@ cli.add_command(
              description='Stop command execution on error. Default is to '
                          'continue execution on error.',
              short_desc='Stop on error.',
-             action='count'),
+             action='store_true'),
         Flag('-verbose',
              description='Verbose output.',
-             action='count'),
+             action='store_true'),
     ]
 )
 
