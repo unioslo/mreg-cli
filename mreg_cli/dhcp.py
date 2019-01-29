@@ -95,7 +95,7 @@ dhcp.add_command(
              description='Mac address.',
              metavar='MACADDRESS'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ]
 )

@@ -70,7 +70,7 @@ network.add_command(
              metavar='LOCATION'),
         Flag('-frozen',
              description='Set frozen network.',
-             action='count'),
+             action='store_true'),
     ]
 )
 
@@ -215,7 +215,7 @@ network.add_command(
              description='Network.',
              metavar='NETWORK'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ]
 )

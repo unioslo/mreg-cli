@@ -154,7 +154,7 @@ host.add_command(
              short_desc='A comment.',
              description='A comment.'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ]
 )
@@ -258,7 +258,7 @@ host.add_command(
              description='Name of host or an ip belonging to the host.',
              metavar='NAME/IP'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ]
 )
@@ -393,7 +393,7 @@ host.add_command(
              short_desc='New name',
              metavar='NEW'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -586,7 +586,7 @@ host.add_command(
                          'is chosen.',
              metavar='IP/network'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -706,7 +706,7 @@ host.add_command(
              required=True,
              metavar='IP/network'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -893,7 +893,7 @@ host.add_command(
              description='The IPv6 to add to target host.',
              metavar='IPv6'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -1010,7 +1010,7 @@ host.add_command(
              required=True,
              metavar='IPv6'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -1471,7 +1471,7 @@ host.add_command(
              description='Hinfopreset id.',
              metavar='ID'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -1521,7 +1521,7 @@ host.add_command(
              description='Name of the target host.',
              metavar='NAME'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -1572,7 +1572,7 @@ host.add_command(
              description='New LOC.',
              metavar='LOC'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -1733,7 +1733,7 @@ host.add_command(
              description='NAPTR replacement.',
              metavar='REPLACEMENT'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -2076,7 +2076,7 @@ host.add_command(
              required=True,
              metavar='NAME'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -2121,7 +2121,7 @@ host.add_command(
              description='Host target name.',
              metavar='SERVICE'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )
@@ -2391,7 +2391,7 @@ host.add_command(
              description='TXT record text. Must be quoted if contains spaces.',
              metavar='TEXT'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ],
 )

@@ -65,7 +65,7 @@ zone.add_command(
              nargs='+',
              metavar='NS'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ]
 )
@@ -106,7 +106,7 @@ zone.add_command(
              description='Zone name.',
              metavar='ZONE'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ]
 )
@@ -216,7 +216,7 @@ zone.add_command(
              nargs='+',
              metavar='NS'),
         Flag('-force',
-             action='count',
+             action='store_true',
              description='Enable force.'),
     ]
 )
