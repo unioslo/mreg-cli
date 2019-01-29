@@ -1913,6 +1913,11 @@ def ptr_set(args):
         cli_warning("{} isn't in a zone controlled by MREG, must force"
                     .format(info["name"]))
 
+    network = get_network_by_ip(args.ip)
+    reserved_addresses = get_network_reserved_ips(network['range'])
+    if args.ip in reserved_addresses and not args.force:
+        cli_warning("Address is reserved. Requires force")
+
     # create PTR record
     data = {
         "host": info["id"],
@@ -1938,6 +1943,9 @@ host.add_command(
         Flag('name',
              description='Name of host.',
              metavar='NAME'),
+        Flag('-force',
+             action='store_true',
+             description='Enable force.'),
     ],
 )
 
