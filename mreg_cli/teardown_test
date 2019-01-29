@@ -1,0 +1,12 @@
+
+host remove stan -force
+host remove roger -force
+host remove steve -force
+host remove francine -force
+host remove haley -force
+host remove claus -force
+
+subnet remove 129.240.69.0/24 -force
+subnet remove 1234::ff00/120 -force
+subnet remove 129.240.96.0/24 -force
+
