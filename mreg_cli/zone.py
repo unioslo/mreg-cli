@@ -20,6 +20,21 @@ zone = cli.add_command(
     description='Manage zones.',
 )
 
+def _verify_nameservers(nameservers, force):
+    if not nameservers:
+        cli_warning('At least one nameserver is required')
+
+    for nameserver in nameservers:
+        try:
+            info = host_info_by_name(nameserver)
+        except HostNotFoundWarning:
+            if not force:
+                cli_warning(
+                    f"{nameserver} has no A-record/glue, must force")
+        else:
+            if host_in_mreg_zone(info['name']):
+                if not info['ipaddresses'] and not force:
+                    cli_warning("{nameserver} has no A-record/glue, must force")
 
 ##########################################
 # Implementation of sub command 'create' #
@@ -28,22 +43,7 @@ zone = cli.add_command(
 def create(args):
     """Create new zone.
     """
-    if not args.ns:
-        cli_warning('At least one nameserver is required')
-
-    for nameserver in args.ns:
-        try:
-            info = host_info_by_name(nameserver)
-        except HostNotFoundWarning:
-            if not args.force:
-                cli_warning(
-                    "{} has no A-record/glue, must force".format(nameserver))
-        else:
-            if host_in_mreg_zone(info['name']):
-                if not info['ipaddresses'] and not args.force:
-                    cli_warning("{} has no A-record/glue, must force".format(
-                        nameserver))
-
+    _verify_nameservers(args.ns, args.force)
     post("/zones/", name=args.zone, email=args.email, primary_ns=args.ns)
     cli_info("created zone {}".format(args.zone), True)
 
@@ -70,12 +70,53 @@ zone.add_command(
     ]
 )
 
+#####################################################
+# Implementation of sub command 'delegation_create' #
+#####################################################
+
+
+def delegation_create(args):
+    """Create a new zone delegation. """
+    zone = get(f"/zones/{args.zone}", ok404=True)
+    if zone is None:
+        cli_warning(f"Zone '{args.zone}' does not exist")
+    if not args.delegation.endswith(f".{args.zone}"):
+        cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
+    _verify_nameservers(args.ns, args.force)
+    post(f"/zones/{args.zone}/delegations/",
+         name=args.delegation,
+         nameservers=args.ns)
+    cli_info("created zone delegation {}".format(args.delegation), True)
+
+
+zone.add_command(
+    prog='delegation_create',
+    description='Create new zone delegation.',
+    short_desc='Create new zone delegation.',
+    callback=delegation_create,
+    flags=[
+        Flag('zone',
+             description='Zone name.',
+             metavar='ZONE'),
+        Flag('delegation',
+             description='Delegation',
+             metavar='DELEGATION'),
+        Flag('ns',
+             description='Nameservers for the delegation.',
+             nargs='+',
+             metavar='NS'),
+        Flag('-force',
+             action='store_true',
+             description='Enable force.'),
+    ]
+)
 
 ##########################################
 # Implementation of sub command 'delete' #
 ##########################################
 
-def _delete(args):
+
+def zone_delete(args):
     """Delete a zone
     """
     zone = get(f"/zones/{args.zone}").json()
@@ -100,7 +141,7 @@ zone.add_command(
     prog='delete',
     description='Delete a zone',
     short_desc='Delete a zone',
-    callback=_delete,
+    callback=zone_delete,
     flags=[
         Flag('zone',
              description='Zone name.',
@@ -112,6 +153,36 @@ zone.add_command(
 )
 
 
+#####################################################
+# Implementation of sub command 'delegation_delete' #
+#####################################################
+
+
+def delegation_delete(args):
+    """Delete a zone delegation. """
+    zone = get(f"/zones/{args.zone}", ok404=True)
+    if zone is None:
+        cli_warning(f"Zone '{args.zone}' does not exist")
+    if not args.delegation.endswith(f".{args.zone}"):
+        cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
+    delete(f"/zones/{args.zone}/delegations/{args.delegation}")
+    cli_info("Removed zone delegation {}".format(args.delegation), True)
+
+zone.add_command(
+    prog='delegation_delete',
+    description='Delete a zone delegation',
+    short_desc='Delete a zone delegation',
+    callback=delegation_delete,
+    flags=[
+        Flag('zone',
+             description='Zone name.',
+             metavar='ZONE'),
+        Flag('delegation',
+             description='Delegation',
+             metavar='DELEGATION'),
+        ]
+)
+
 ##########################################
 # Implementation of sub command 'info' #
 ##########################################
@@ -122,9 +193,6 @@ def info(args):
 
     def print_soa(info: str, text: str, padding: int = 20) -> None:
         print("{1:<{0}}{2}".format(padding, info, text))
-
-    def print_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
-        print("{1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl))
 
     if not args.zone:
         cli_warning('Name is required')
@@ -161,21 +229,65 @@ zone.add_command(
 # Implementation of sub command 'list' #
 ##########################################
 
-def list_(args):
+def zone_list(args):
     """List all zones.
     """
 
     zones = get("/zones/").json()
-    print("Zones:")
-    for zone in sorted(zones, key=lambda kv: kv['name']):
-        print('   {}'.format(zone['name']))
+    if zones:
+        print("Zones:")
+        for zone in sorted(zones, key=lambda kv: kv['name']):
+            print('   {}'.format(zone['name']))
+    else:
+        print("No zones found.")
 
 
 zone.add_command(
     prog='list',
-    description='Delete a zone',
-    short_desc='Delete a zone',
-    callback=list_,
+    description='List all zones',
+    short_desc='List all zones',
+    callback=zone_list,
+)
+
+
+##########################################
+# Implementation of sub command 'delegation_list' #
+##########################################
+
+def zone_delegation_list(args):
+    """List a zone's delegations
+    """
+
+    def print_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
+        print("        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl))
+
+
+    zone = get(f"/zones/{args.zone}", ok404=True)
+    if zone is None:
+        cli_warning(f"Zone '{args.zone}' does not exist")
+    delegations = get(f"/zones/{args.zone}/delegations/").json()
+    if delegations:
+        print("Delegations:")
+        for i in sorted(delegations, key=lambda kv: kv['name']):
+            print('    {}'.format(i['name']))
+            print_ns("Nameservers:", "hostname", "TTL")
+            for ns in i['nameservers']:
+                ttl = ns['ttl'] if ns['ttl'] else "<not set>"
+                print_ns("", ns['name'], ttl)
+    else:
+        cli_info(f"No delegations for {args.zone}", True)
+
+
+zone.add_command(
+    prog='delegation_list',
+    description="List a zone's delegations",
+    short_desc="List a zone's delegations",
+    callback=zone_delegation_list,
+    flags=[
+        Flag('zone',
+             description='Zone name.',
+             metavar='ZONE'),
+        ]
 )
 
 
@@ -190,8 +302,8 @@ def set_ns(args):
     if not args.ns:
         cli_warning('At least one nameserver is required')
 
-    for i in range(len(args.ns)):
-        info = host_info_by_name(args.ns[i])
+    for i, ns in enumerate(args.ns):
+        info = host_info_by_name(ns)
         if host_in_mreg_zone(info['name']):
             if not info['ipaddresses'] and not args.force:
                 cli_warning("{} has no A-record/glue, must force".format(
