@@ -1,5 +1,4 @@
-if __name__ == '__main__':
-
+def main():
     # Will ask for password
     import util
     util.update_token()
@@ -37,5 +36,13 @@ if __name__ == '__main__':
 
     # The app runs in an infinite loop and is expected to exit using sys.exit()
     while True:
-        line = session.prompt()
-        cli.parse(shlex.split(line))
+        try:
+            lines = session.prompt()
+        except KeyboardInterrupt:
+            continue
+        except EOFError:
+            break
+        for line in lines.splitlines():
+            cli.parse(shlex.split(line))
+
+main()
