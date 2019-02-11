@@ -206,27 +206,33 @@ def _source(args):
     import shlex
     import html
 
-    for file in args.files:
-        with open(file) as f:
-            for i, l in enumerate(f):
-                # Shell commands can be called from scripts. They start with '!'
-                if l.startswith('!'):
-                    os.system(l[1:])
-                    continue
+    for filename in args.files:
+        try:
+            with open(filename) as f:
+                for i, l in enumerate(f):
+                    # Shell commands can be called from scripts. They start with '!'
+                    if l.startswith('!'):
+                        os.system(l[1:])
+                        continue
 
-                # With comments=True shlex will remove comments from the line
-                # when splitting. Comment symbol is #
-                s = shlex.split(l, comments=True)
+                    # With comments=True shlex will remove comments from the line
+                    # when splitting. Comment symbol is #
+                    s = shlex.split(l, comments=True)
 
-                # In verbose mode all commands are printed before execution.
-                if args.verbose and s:
-                    print(HTML(f'<i>> {html.escape(l.strip())}</i>'))
-                cli.parse(s)
-                if cli.last_errno != 0:
-                    print(HTML(f'<ansired><i>{file}</i>: '
-                               f'Error on line {i + 1}</ansired>'))
-                    if args.stop:
-                        return
+                    # In verbose mode all commands are printed before execution.
+                    if args.verbose and s:
+                        print(HTML(f'<i>> {html.escape(l.strip())}</i>'))
+                    cli.parse(s)
+                    if cli.last_errno != 0:
+                        print(HTML(f'<ansired><i>{file}</i>: '
+                                   f'Error on line {i + 1}</ansired>'))
+                        if args.stop:
+                            return
+        except FileNotFoundError:
+            print(f"No such file: '{filename}'")
+        except PermissionError:
+            print(f"Permission denied: '{filename}'")
+
 
 
 # Always need the source command.
