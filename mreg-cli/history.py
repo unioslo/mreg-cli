@@ -1,7 +1,7 @@
 import requests
 import json
 
-from log import *
+from log import cli_error, cli_info, cli_warning
 from cli import cli, Flag
 
 
