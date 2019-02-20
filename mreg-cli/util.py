@@ -93,19 +93,6 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
     cli_warning("host not found: {}".format(name), exception=HostNotFoundWarning)
 
 
-def available_ips_from_network(network: dict) -> list:
-    """
-    Returns unsed ips from the given network.
-    Assumes network exists.
-    :param network: dict with network info.
-    :return: List of Ip address strings
-    """
-
-    unused = get_network_unused_list(network['range'])
-    if not unused:
-        cli_warning("No free addresses remaining on network {}".format(network['range']))
-    return unused
-
 def first_unused_ip_from_network(network: dict) -> str:
     """
     Returns the first unused ip from a given network.
@@ -564,38 +551,6 @@ def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
     assert isinstance(ip, str)
     assert isinstance(host_name, str)
     print("{1:<{0}} PTR {2}".format(padding, ip, host_name))
-
-
-def print_network_unused(count: int, padding: int = 25) -> None:
-    "Pretty print amount of unused addresses"
-    assert isinstance(count, int)
-    print(
-        "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
-
-
-def print_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
-    "Pretty print ip range and reserved addresses list"
-    assert isinstance(ip_range, str)
-    assert isinstance(reserved, int)
-    network = ipaddress.ip_network(ip_range)
-    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", network.network_address,
-                                     network.broadcast_address))
-    print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
-    print("{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)"))
-    res = get_network_reserved_ips(ip_range)
-    res.remove(str(network.network_address))
-    broadcast = False
-    if str(network.broadcast_address) in res:
-        res.remove(str(network.broadcast_address))
-        broadcast = True
-    for host in res:
-        print("{1:<{0}}{2}".format(padding, "", host))
-    if broadcast:
-        print("{1:<{0}}{2}{3}".format(padding, "", network.broadcast_address, " (broadcast)"))
-
-
-def print_network(info: int, text: str, padding: int = 25) -> None:
-    print("{1:<{0}}{2}".format(padding, text, info))
 
 
 ################################################################################
