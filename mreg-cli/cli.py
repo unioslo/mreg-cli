@@ -207,6 +207,8 @@ def _source(args):
     import html
 
     for filename in args.files:
+        if filename.startswith('~'):
+            filename = os.path.expanduser(filename)
         try:
             with open(filename) as f:
                 for i, l in enumerate(f):
