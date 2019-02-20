@@ -1,23 +1,17 @@
-import re
-import json
-import sys
-import getpass
 import ipaddress
-import operator
-from socket import inet_aton
-import struct
+import json
+import re
+import requests
+import sys
 import traceback
 import typing
-import types
-import inspect
-import requests
 
 from prompt_toolkit import prompt
 
 from config import cli_config
 from exceptions import HostNotFoundWarning
 from history import history
-from log import cli_error, cli_info, cli_warning
+from log import cli_error, cli_warning
 
 try:
     conf = cli_config(required_fields=(
@@ -686,7 +680,7 @@ def is_valid_category_tag(cat: str) -> bool:
 
 def is_valid_mac_addr(addr: str) -> bool:
     """Check if address is a valid MAC address"""
-    return re.match("^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", addr)
+    return re.match(r"^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", addr)
 
 def format_mac(mac: str) -> str:
     """Create a strict 'aa:bb:cc:11:22:33' MAC address.
