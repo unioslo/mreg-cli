@@ -5,7 +5,8 @@ import sys
 import traceback
 
 from datetime import datetime
-from exceptions import *
+from exceptions import CliError, CliWarning
+
 from config import cli_config
 
 try:
