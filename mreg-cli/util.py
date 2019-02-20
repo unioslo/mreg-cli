@@ -15,9 +15,9 @@ import requests
 from prompt_toolkit import prompt
 
 from config import cli_config
-from exceptions import *
+from exceptions import HostNotFoundWarning
 from history import history
-from log import *
+from log import cli_error, cli_info, cli_warning
 
 try:
     conf = cli_config(required_fields=(
