@@ -1,8 +1,12 @@
-from util import *
-from log import *
-# noinspection PyUnresolvedReferences
+import re
+import sys
+import traceback
+
+from config import cli_config
+from log import cli_info, cli_warning
 from cli import cli, Flag
 from history import history
+from util import get, is_valid_ip, host_info_by_name, patch
 
 try:
     conf = cli_config(required_fields=("mregurl",))
@@ -30,6 +34,16 @@ def assoc(args):
     """Associate MAC address with host. If host got multiple A/AAAA records an
     IP must be given instead of name.
     """
+
+    def format_mac(mac: str) -> str:
+        """
+        Create a strict 'aa:bb:cc:11:22:33' MAC address.
+        Replaces any other delimiters with a colon and turns it into all lower
+        case.
+        """
+        mac = re.sub('[.:-]', '', mac).lower()
+        return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])
+
     # Get A/AAAA record by either ip address or host name
     if is_valid_ip(args.name):
         path = f"/ipaddresses/?ipaddress={args.name}"
@@ -52,7 +66,7 @@ def assoc(args):
         ip = info["ipaddresses"][0]
 
     # MAC addr sanity check
-    if is_valid_mac_addr(args.mac):
+    if re.match(r"^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", args.mac):
         new_mac = format_mac(args.mac)
         path = f"/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
         history.record_get(path)

@@ -1,8 +1,14 @@
-from util import *
-from log import *
-# noinspection PyUnresolvedReferences
+import ipaddress
+
 from cli import cli, Flag
 from history import history
+from log import cli_error, cli_info, cli_warning
+from util import delete, get, patch, post, string_to_int, is_valid_ip, \
+                 is_valid_network, is_valid_location_tag, is_valid_category_tag, \
+                 get_network, \
+                 get_network_used_count, get_network_used_list, \
+                 get_network_unused_count, get_network_unused_list, \
+                 get_network_reserved_ips, resolve_ip
 
 ###################################
 #  Add the main command 'network'  #
@@ -12,6 +18,38 @@ network = cli.add_command(
     prog='network',
     description='Manage networks.',
 )
+
+# helper methods
+def print_network_unused(count: int, padding: int = 25) -> None:
+    "Pretty print amount of unused addresses"
+    assert isinstance(count, int)
+    print(
+        "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
+
+
+def print_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
+    "Pretty print ip range and reserved addresses list"
+    assert isinstance(ip_range, str)
+    assert isinstance(reserved, int)
+    network = ipaddress.ip_network(ip_range)
+    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", network.network_address,
+                                     network.broadcast_address))
+    print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
+    print("{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)"))
+    res = get_network_reserved_ips(ip_range)
+    res.remove(str(network.network_address))
+    broadcast = False
+    if str(network.broadcast_address) in res:
+        res.remove(str(network.broadcast_address))
+        broadcast = True
+    for host in res:
+        print("{1:<{0}}{2}".format(padding, "", host))
+    if broadcast:
+        print("{1:<{0}}{2}{3}".format(padding, "", network.broadcast_address, " (broadcast)"))
+
+
+def print_network(info: int, text: str, padding: int = 25) -> None:
+    print("{1:<{0}}{2}".format(padding, text, info))
 
 
 ##########################################
@@ -129,11 +167,13 @@ def list_unused_addresses(args):
     """
     if is_valid_ip(args.network) or is_valid_network(args.network):
         network = get_network(args.network)
-        unused_addresses = available_ips_from_network(network)
+        unused = get_network_unused_list(network["range"])
+        if not unused:
+            cli_warning("No free addresses remaining on network {}".format(network['range']))
     else:
         cli_warning("Not a valid ip or network")
 
-    for address in unused_addresses:
+    for address in unused:
         print("{1:<{0}}".format(25, address))
 
 

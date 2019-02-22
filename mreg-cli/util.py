@@ -1,23 +1,17 @@
-import re
-import json
-import sys
-import getpass
 import ipaddress
-import operator
-from socket import inet_aton
-import struct
+import json
+import re
+import requests
+import sys
 import traceback
 import typing
-import types
-import inspect
-import requests
 
 from prompt_toolkit import prompt
 
 from config import cli_config
-from exceptions import *
+from exceptions import HostNotFoundWarning
 from history import history
-from log import *
+from log import cli_error, cli_warning
 
 try:
     conf = cli_config(required_fields=(
@@ -98,19 +92,6 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
 
     cli_warning("host not found: {}".format(name), exception=HostNotFoundWarning)
 
-
-def available_ips_from_network(network: dict) -> list:
-    """
-    Returns unsed ips from the given network.
-    Assumes network exists.
-    :param network: dict with network info.
-    :return: List of Ip address strings
-    """
-
-    unused = get_network_unused_list(network['range'])
-    if not unused:
-        cli_warning("No free addresses remaining on network {}".format(network['range']))
-    return unused
 
 def first_unused_ip_from_network(network: dict) -> str:
     """
@@ -309,40 +290,6 @@ def clean_hostname(name: typing.AnyStr) -> str:
             return "{}.{}".format(name, conf['domain'])
     return name
 
-################################################################################
-#                                                                              #
-#   Hinfo utility                                                              #
-#                                                                              #
-################################################################################
-
-HinfoTuple = typing.Tuple[str, str]
-HinfoDict = typing.Dict[int, HinfoTuple]
-
-def hinfo_sanify(hid: str, hinfo: HinfoDict):
-    """Check if the requested hinfo is a valid one."""
-    try:
-        int(hid)
-    except ValueError:
-        cli_warning("hinfo {} is not a number".format(hid))
-    if len(hinfo) == 0:
-        cli_warning("Can not set hinfo, as no hinfo presets defined")
-    if not hid in hinfo:
-        cli_warning("Unknown hinfo preset {}".format(hid))
-
-def hinfo_dict() -> HinfoDict:
-    """
-    Return a dict with descriptions of available hinfo presets. The keys
-    are the hinfo ids.
-    """
-    path = "/hinfopresets/"
-    history.record_get(path)
-    hinfo_get = get(path)
-    hl = dict()
-    for hinfo in hinfo_get.json():
-        assert isinstance(hinfo, dict)
-        hl[str(hinfo["id"])] = (hinfo["cpu"], hinfo["os"])
-    return hl
-
 
 ################################################################################
 #                                                                              #
@@ -423,189 +370,6 @@ def string_to_int(value, error_tag):
 
 ################################################################################
 #                                                                              #
-#   Pretty printing                                                            #
-#                                                                              #
-################################################################################
-
-
-def print_host_name(name: str, padding: int = 14) -> None:
-    """Pretty print given name."""
-    if name is None:
-        return
-    assert isinstance(name, str)
-    print("{1:<{0}}{2}".format(padding, "Name:", name))
-
-
-def print_contact(contact: str, padding: int = 14) -> None:
-    """Pretty print given contact."""
-    if contact is None:
-        return
-    assert isinstance(contact, str)
-    print("{1:<{0}}{2}".format(padding, "Contact:", contact))
-
-
-def print_comment(comment: str, padding: int = 14) -> None:
-    """Pretty print given comment."""
-    if comment is None:
-        return
-    assert isinstance(comment, str)
-    print("{1:<{0}}{2}".format(padding, "Comment:", comment))
-
-
-def print_ipaddresses(ipaddresses: typing.Iterable[dict], padding: int = 14) -> None:
-    """Pretty print given ip addresses"""
-    if ipaddresses is None:
-        return
-    a_records = []
-    aaaa_records = []
-    len_ip = 0
-    for record in ipaddresses:
-        if is_valid_ipv4(record["ipaddress"]):
-            a_records.append(record)
-            if len(record["ipaddress"]) > len_ip:
-                len_ip = len(record["ipaddress"])
-        elif is_valid_ipv6(record["ipaddress"]):
-            aaaa_records.append(record)
-            if len(record["ipaddress"]) > len_ip:
-                len_ip = len(record["ipaddress"])
-    len_ip += 2
-    if a_records:
-        print("{1:<{0}}{2:<{3}}{4}".format(padding, "A_Records:", "IP", len_ip, "MAC"))
-        for record in a_records:
-            ip = record["ipaddress"]
-            mac = record["macaddress"]
-            print("{1:<{0}}{2:<{3}}{4}".format(
-                padding, "", ip if ip else "<not set>", len_ip,
-                mac if mac else "<not set>"))
-
-    # print aaaa records
-    if aaaa_records:
-        print("{1:<{0}}{2:<{3}}{4}".format(padding, "AAAA_Records:", "IP", len_ip, "MAC"))
-        for record in aaaa_records:
-            ip = record["ipaddress"]
-            mac = record["macaddress"]
-            print("{1:<{0}}{2:<{3}}{4}".format(
-                padding, "", ip if ip else "<not set>", len_ip,
-                mac if mac else "<not set>"))
-
-
-def print_ttl(ttl: int, padding: int = 14) -> None:
-    """Pretty print given ttl"""
-    assert isinstance(ttl, int) or ttl is None
-    print("{1:<{0}}{2}".format(padding, "TTL:", ttl or "(Default)"))
-
-
-def print_hinfo(hid: str, padding: int = 14) -> None:
-    """Pretty given hinfo id"""
-    hinfos = hinfo_dict()
-    hid = str(hid)
-    hinfo = hinfos[hid]
-    print("{1:<{0}}cpu={2} os={3}".format(padding, "Hinfo:", hinfo[0], hinfo[1]))
-
-
-def print_hinfo_list(hinfos: HinfoDict, padding: int = 14) -> None:
-    """Pretty print a dict of host infos"""
-    if len(hinfos) == 0:
-        print("No hinfo presets.")
-        return
-    max_len = max([len(x[0]) for x in hinfos.values()])
-    print("{1:<{0}}    {2:<{3}} {4}".format(padding, "Id", "CPU", max_len, "OS"))
-    for hid in sorted(hinfos.keys()):
-        hinfo = hinfos[hid]
-        print(
-            "{1:<{0}} -> {2:<{3}} {4}".format(padding, hid, hinfo[0], max_len, hinfo[1]))
-
-
-def print_srv(srv: dict, padding: int = 14) -> None:
-    """Pretty print given srv"""
-    print("{1:<{0}} SRV {2:^6} {3:^6} {4:^6} {5}".format(
-        padding,
-        srv["name"],
-        srv["priority"],
-        srv["weight"],
-        srv["port"],
-        srv["target"],
-    ))
-
-
-def print_loc(loc: str, padding: int = 14) -> None:
-    """Pretty print given loc"""
-    if loc is None:
-        return
-    assert isinstance(loc, str)
-    print("{1:<{0}}{2}".format(padding, "Loc:", loc))
-
-
-def print_cname(cname: str, host: str, padding: int = 14) -> None:
-    """Pretty print given cname"""
-    print("{1:<{0}}{2} -> {3}".format(padding, "Cname:", cname, host))
-
-
-def print_txt(txt: str, padding: int = 14) -> None:
-    """Pretty print given txt"""
-    if txt is None:
-        return
-    assert isinstance(txt, str)
-    print("{1:<{0}}{2}".format(padding, "TXT:", txt))
-
-
-def print_naptr(naptr: dict, host_name: str, padding: int = 14) -> None:
-    """Pretty print given txt"""
-    assert isinstance(naptr, dict)
-    assert isinstance(host_name, str)
-    print("{1:<{0}} NAPTR {2} {3} \"{4}\" \"{5}\" \"{6}\" {7}".format(
-        padding,
-        host_name,
-        naptr["preference"],
-        naptr["order"],
-        naptr["flag"],
-        naptr["service"],
-        naptr["regex"] or "",
-        naptr["replacement"],
-    ))
-
-
-def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
-    """Pretty print given txt"""
-    assert isinstance(ip, str)
-    assert isinstance(host_name, str)
-    print("{1:<{0}} PTR {2}".format(padding, ip, host_name))
-
-
-def print_network_unused(count: int, padding: int = 25) -> None:
-    "Pretty print amount of unused addresses"
-    assert isinstance(count, int)
-    print(
-        "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
-
-
-def print_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
-    "Pretty print ip range and reserved addresses list"
-    assert isinstance(ip_range, str)
-    assert isinstance(reserved, int)
-    network = ipaddress.ip_network(ip_range)
-    print("{1:<{0}}{2} - {3}".format(padding, "IP-range:", network.network_address,
-                                     network.broadcast_address))
-    print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
-    print("{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)"))
-    res = get_network_reserved_ips(ip_range)
-    res.remove(str(network.network_address))
-    broadcast = False
-    if str(network.broadcast_address) in res:
-        res.remove(str(network.broadcast_address))
-        broadcast = True
-    for host in res:
-        print("{1:<{0}}{2}".format(padding, "", host))
-    if broadcast:
-        print("{1:<{0}}{2}{3}".format(padding, "", network.broadcast_address, " (broadcast)"))
-
-
-def print_network(info: int, text: str, padding: int = 25) -> None:
-    print("{1:<{0}}{2}".format(padding, text, info))
-
-
-################################################################################
-#                                                                              #
 #   Validation functions                                                       #
 #                                                                              #
 ################################################################################
@@ -669,11 +433,6 @@ def is_valid_email(email: typing.AnyStr) -> bool:
     return True if re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email) else False
 
 
-def is_valid_loc(loc: str) -> bool:
-    # TODO LOC: implement validate loc
-    return True
-
-
 def is_valid_location_tag(loc: str) -> bool:
     """Check if valid location tag"""
     return loc in location_tags
@@ -682,14 +441,3 @@ def is_valid_location_tag(loc: str) -> bool:
 def is_valid_category_tag(cat: str) -> bool:
     """Check if valid location tag"""
     return cat in category_tags
-
-
-def is_valid_mac_addr(addr: str) -> bool:
-    """Check if address is a valid MAC address"""
-    return re.match("^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", addr)
-
-def format_mac(mac: str) -> str:
-    """Create a strict 'aa:bb:cc:11:22:33' MAC address.
-    Replaces any other delimiters with a colon and turns it into all lower case."""
-    mac = re.sub('[.:-]', '', mac).lower()
-    return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])

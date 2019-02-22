@@ -1,8 +1,12 @@
-from util import *
-from log import *
-# noinspection PyUnresolvedReferences
+import traceback
+import sys
+
+from config import cli_config
+from exceptions import HostNotFoundWarning
 from cli import cli, Flag
-from history import history
+from log import cli_info, cli_warning
+from util import delete, get, host_info_by_name, host_in_mreg_zone, \
+                 patch, post
 
 try:
     conf = cli_config(required_fields=("mregurl",))
@@ -35,6 +39,12 @@ def _verify_nameservers(nameservers, force):
             if host_in_mreg_zone(info['name']):
                 if not info['ipaddresses'] and not force:
                     cli_warning("{nameserver} has no A-record/glue, must force")
+
+
+def print_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
+    print("        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl))
+
+
 
 ##########################################
 # Implementation of sub command 'create' #
@@ -257,9 +267,6 @@ zone.add_command(
 def zone_delegation_list(args):
     """List a zone's delegations
     """
-
-    def print_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
-        print("        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl))
 
 
     zone = get(f"/zones/{args.zone}", ok404=True)
