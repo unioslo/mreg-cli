@@ -118,21 +118,18 @@ def zone_mreg_controlled(zone: str) -> bool:
 def host_in_mreg_zone(host: str) -> bool:
     """Return true if host is in a MREG controlled zone"""
     assert isinstance(host, str)
-    splitted = host.split(".")
-    if not len(splitted):
+    if "." not in host:
         return False
+    splitted = host.split(".")
 
     path = "/zones/"
     history.record_get(path)
-    zones = get(path).json()
+    zonenames = set([zone['name'] for zone in get(path).json()])
 
-    s = ""
-    splitted.reverse()
-    for sub in splitted:
-        s = "{}.{}".format(sub, s) if len(s) else sub
-        for zone in zones:
-            if zone["name"] == s:
-                return True
+    for i in range(len(splitted)):
+        name = ".".join(splitted[i:])
+        if name in zonenames:
+            return True
 
     return False
 
