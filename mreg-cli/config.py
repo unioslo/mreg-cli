@@ -1,28 +1,49 @@
-from typing import Sequence
-import re
+import logging
+import os
+import sys
+
+logger = logging.getLogger(__name__)
+
+# Config file locations
+DEFAULT_CONFIG_PATH = tuple((
+    'cli.conf',
+    os.path.expanduser('~/.config/mreg-cli'),
+    '/etc/mreg-cli',
+    os.path.join(sys.prefix, 'local', 'share', 'mreg-cli'),
+    os.path.join(sys.prefix, 'share', 'mreg-cli'),
+))
+
+# Default logging format
+# TODO: Support logging config
+LOGGING_FORMAT = "%(levelname)s - %(name)s - %(message)s"
+
+# Verbosity count to logging level
+LOGGING_VERBOSITY = tuple((
+    logging.ERROR,
+    logging.WARNING,
+    logging.INFO,
+    logging.DEBUG,
+))
 
 
-# TODO: Rewrite with/use "configparser" from std library instead
-def cli_config(config_file: str = "cli.conf", required_fields: Sequence[str] = []) -> dict:
-    conf = dict()
-    with open(config_file) as f:
-        num = 0
-        while True:
-            line = f.readline()
-            if not line:
-                break
-            num += 1
-            m = re.match("^\s*(?P<key>\w[\w\d-]*)\s*=\s*(?P<value>.+)\s*(#.*)?$", line)
-            if m:
-                conf[m.group("key")] = m.group("value")
+def get_verbosity(verbosity):
+    """
+    Translate verbosity to logging level.
 
-    missing_field = False
-    for field in required_fields:
-        try:
-            conf[field]
-        except KeyError:
-            print("Missing field in config file: {}".format(field))
-            missing_field = True
-    if missing_field:
-        raise Exception("Invalid config file: missing required field(s).")
-    return conf
+    Levels are traslated according to :py:const:`LOGGING_VERBOSITY`.
+
+    :param int verbosity: verbosity level
+
+    :rtype: int
+    """
+    level = LOGGING_VERBOSITY[min(len(LOGGING_VERBOSITY) - 1, verbosity)]
+    return level
+
+
+def configure_logging(level):
+    """
+    Enable and configure logging.
+
+    :param int level: logging level
+    """
+    logging.basicConfig(level=level, format=LOGGING_FORMAT)
