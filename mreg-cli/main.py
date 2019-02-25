@@ -1,6 +1,5 @@
 import argparse
 import configparser
-import getpass
 import shlex
 
 from collections import ChainMap
@@ -22,16 +21,13 @@ def main():
     connect_args = parser.add_argument_group('connection settings')
     connect_args.add_argument(
         '--url',
-        default="https://localhost:8000",
-        help="use mreg server at %(metavar)s"
-             " (default: %(default)s)",
+        help="use mreg server at %(metavar)s",
         metavar='URL',
     )
 
     connect_args.add_argument(
         '-u', '--user',
-        default=getpass.getuser(),
-        help="authenticate as %(metavar)s (default: %(default)s)",
+        help="authenticate as %(metavar)s",
         metavar='USER',
     )
 
@@ -52,6 +48,13 @@ def main():
 
     util.set_config(config)
     log.logfile = config["log_file"]
+
+    if "user" not in config:
+        print("Username not set in config or as argument")
+        return
+    elif "url" not in config:
+        print("mreg url not set in config or as argument")
+        return
 
     util.login(config["user"], config["url"])
     print(util.session.headers["Authorization"])
