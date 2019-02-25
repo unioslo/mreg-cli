@@ -121,7 +121,6 @@ class Command(Completer):
     def get_completions(self, document, complete_event):
         cur = document.get_word_before_cursor()
         words = document.text.strip().split(' ')
-        # NOTE: 'yield from' require python >= 3.3
         yield from self.complete(cur, words)
 
     def complete(self, cur, words):
@@ -152,7 +151,6 @@ class Command(Completer):
 
         # if the line starts with one of the sub commands, pass it along
         if words[0] in self.children:
-            # NOTE: 'yield from' require python >= 3.3
             yield from self.children[words[0]].complete(cur, words[1:])
             return
 
