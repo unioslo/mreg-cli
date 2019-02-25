@@ -1,19 +1,8 @@
-import traceback
-import sys
-
-from config import cli_config
 from exceptions import HostNotFoundWarning
 from cli import cli, Flag
 from log import cli_info, cli_warning
 from util import delete, get, host_info_by_name, host_in_mreg_zone, \
                  patch, post
-
-try:
-    conf = cli_config(required_fields=("mregurl",))
-except Exception as e:
-    print("commands.py: cli_config:", e)
-    traceback.print_exc()
-    sys.exit(1)
 
 #################################
 #  Add the main command 'zone'  #
@@ -28,17 +17,19 @@ def _verify_nameservers(nameservers, force):
     if not nameservers:
         cli_warning('At least one nameserver is required')
 
+    errors = []
     for nameserver in nameservers:
         try:
             info = host_info_by_name(nameserver)
         except HostNotFoundWarning:
             if not force:
-                cli_warning(
-                    f"{nameserver} has no A-record/glue, must force")
+                errors.append(f"{nameserver} is not in mreg, must force")
         else:
             if host_in_mreg_zone(info['name']):
                 if not info['ipaddresses'] and not force:
-                    cli_warning("{nameserver} has no A-record/glue, must force")
+                    errors.append("{nameserver} has no A-record/glue, must force")
+    if errors:
+        cli_warning("\n".join(errors))
 
 
 def print_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
@@ -305,18 +296,7 @@ zone.add_command(
 def set_ns(args):
     """Update nameservers for an existing zone.
     """
-    # TODO Validation for valid domain names
-    if not args.ns:
-        cli_warning('At least one nameserver is required')
-
-    for i, ns in enumerate(args.ns):
-        info = host_info_by_name(ns)
-        if host_in_mreg_zone(info['name']):
-            if not info['ipaddresses'] and not args.force:
-                cli_warning("{} has no A-record/glue, must force".format(
-                    args.ns[i]))
-        args.ns[i] = info['name']
-
+    _verify_nameservers(args.ns, args.force)
     patch(f"/zones/{args.zone}/nameservers", primary_ns=args.ns)
     cli_info("updated nameservers for {}".format(args.zone), True)
 
@@ -350,17 +330,20 @@ def set_soa(args):
     """Updated the SOA of a zone.
     """
     # TODO Validation for valid domain names
-    zone = get(f"/zones/{args.zone}").json()
-    nameservers = zone['nameservers']
-    if args.ns not in [nameserver['name'] for nameserver in nameservers]:
-        cli_warning("{} is not one of {}'s nameservers. Add it with set_ns "
-                    "before trying again".format(args.ns, args.zone))
+    get(f"/zones/{args.zone}").json()
+    data = {}
+    for i in ('email', 'expire', 'refresh', 'retry', 'serialno', 'ttl'):
+        value = getattr(args, i, None)
+        if value is not None:
+            data[i] = value
+    if args.ns:
+        data['primary_ns'] = args.ns
 
-    patch(f"/zones/{args.zone}", primary_ns=args.ns, email=args.email,
-            serialno=args.serialno, refresh=args.refresh, retry=args.retry,
-            expire=args.expire, ttl=args.ttl)
-    cli_info("set soa for {}".format(args.zone), True)
-
+    if data:
+        patch(f"/zones/{args.zone}", **data)
+        cli_info("set soa for {}".format(args.zone), True)
+    else:
+        cli_info("No options set, so unchanged.", True)
 
 zone.add_command(
     prog='set_soa',
@@ -372,36 +355,30 @@ zone.add_command(
              description='Zone name.',
              metavar='ZONE'),
         Flag('-ns',
-             description='Primary nameserver.',
-             required=True,
+             description='Primary nameserver (SOA MNAME).',
              metavar='PRIMARY-NS'),
         Flag('-email',
              description='Zone contact email.',
-             required=True,
              metavar='EMAIL'),
         Flag('-serialno',
              description='Serial number.',
-             required=True,
+             type=int,
              metavar='SERIALNO'),
         Flag('-refresh',
              description='Refresh time.',
              type=int,
-             required=True,
              metavar='REFRESH'),
         Flag('-retry',
              description='Retry time.',
              type=int,
-             required=True,
              metavar='RETRY'),
         Flag('-expire',
              description='Expire time.',
              type=int,
-             required=True,
              metavar='EXPIRE'),
         Flag('-ttl',
              description='Time To Live.',
              type=int,
-             required=True,
              metavar='TTL'),
     ]
 )

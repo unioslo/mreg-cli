@@ -3,29 +3,22 @@ import json
 import re
 import requests
 import sys
-import traceback
 import typing
 
 from prompt_toolkit import prompt
 
-from config import cli_config
-from exceptions import HostNotFoundWarning
+from exceptions import CliError, HostNotFoundWarning
 from history import history
 from log import cli_error, cli_warning
-
-try:
-    conf = cli_config(required_fields=(
-        "mregurl",
-        "username",
-    ))
-except Exception as e:
-    print("util.py: cli_config:", e)
-    traceback.print_exc()
-    sys.exit(1)
 
 location_tags = []
 category_tags = []
 session = requests.Session()
+
+def set_config(cfg):
+    global config
+    config = cfg
+
 
 def host_exists(name: str) -> bool:
     """Checks if a host with the given name exists"""
@@ -118,21 +111,18 @@ def zone_mreg_controlled(zone: str) -> bool:
 def host_in_mreg_zone(host: str) -> bool:
     """Return true if host is in a MREG controlled zone"""
     assert isinstance(host, str)
-    splitted = host.split(".")
-    if not len(splitted):
+    if "." not in host:
         return False
+    splitted = host.split(".")
 
     path = "/zones/"
     history.record_get(path)
-    zones = get(path).json()
+    zonenames = set([zone['name'] for zone in get(path).json()])
 
-    s = ""
-    splitted.reverse()
-    for sub in splitted:
-        s = "{}.{}".format(sub, s) if len(s) else sub
-        for zone in zones:
-            if zone["name"] == s:
-                return True
+    for i in range(len(splitted)):
+        name = ".".join(splitted[i:])
+        if name in zonenames:
+            return True
 
     return False
 
@@ -149,13 +139,42 @@ def ip_in_mreg_net(ip: str) -> bool:
 #                                                                              #
 ################################################################################
 
+def login(user, url):
+    global mregurl, username
+    mregurl = url
+    username = user
+    print(f"Connecting to {url}")
+    # get url
+    password = prompt(f"Password for {username}: ", is_password=True)
+    try:
+        _update_token(username, password)
+    except CliError as e:
+        print(e)
+        sys.exit(1)
+    except requests.exceptions.SSLError as e:
+        print(e)
+        sys.exit(1)
+
 def update_token():
-    tokenurl = requests.compat.urljoin(conf['mregurl'], '/api/token-auth/')
-    username = conf['username']
-    password = prompt('Enter password: ', is_password=True)
+    password = prompt("You need to re-autenticate\nEnter password: ",
+                      is_password=True)
+    try:
+        _update_token(username, password)
+    except CliError as e:
+        print(e)
+        sys.exit(1)
+
+def _update_token(username, password):
+    tokenurl = requests.compat.urljoin(mregurl, '/api/token-auth/')
     result = requests.post(tokenurl, {'username': username,
                                       'password': password})
-    result_check(result, "post", tokenurl)
+    if not result.ok:
+        res = result.json()
+        if result.status_code == 400:
+            if 'non_field_errors' in res:
+                cli_error("Invalid username/password")
+        else:
+            cli_error(res)
     token = result.json()['token']
     session.headers.update({"Authorization": f"Token {token}"})
 
@@ -173,7 +192,7 @@ def result_check(result, type, url):
 
 
 def _request_wrapper(type, path, ok404=False, first=True, **data):
-    url = requests.compat.urljoin(conf['mregurl'], path)
+    url = requests.compat.urljoin(mregurl, path)
     result = getattr(session, type)(url, data=data)
 
     if first and result.status_code == 401:
@@ -285,9 +304,9 @@ def clean_hostname(name: typing.AnyStr) -> str:
     if name.endswith("."):
         return name[:-1]
 
-    # If no domain in conf, not much more can be done
-    if 'domain' in conf and not name.endswith(conf['domain']):
-            return "{}.{}".format(name, conf['domain'])
+    # Append domain name if in config and it does not end with it
+    if 'domain' in config and not name.endswith(config['domain']):
+            return "{}.{}".format(name, config['domain'])
     return name
 
 

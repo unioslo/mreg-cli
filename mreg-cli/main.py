@@ -1,26 +1,68 @@
+import argparse
+import configparser
+import getpass
+import shlex
+
+from collections import ChainMap
+
+from prompt_toolkit import HTML
+from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
+
+
+import log
+import util
+
+from cli import cli
+
+
 def main():
-    # Will ask for password
-    import util
-    util.update_token()
+    parser = argparse.ArgumentParser(
+        description="The MREG cli")
+
+    connect_args = parser.add_argument_group('connection settings')
+    connect_args.add_argument(
+        '--url',
+        default="https://localhost:8000",
+        help="use mreg server at %(metavar)s"
+             " (default: %(default)s)",
+        metavar='URL',
+    )
+
+    connect_args.add_argument(
+        '-u', '--user',
+        default=getpass.getuser(),
+        help="authenticate as %(metavar)s (default: %(default)s)",
+        metavar='USER',
+    )
+
+    connect_args.add_argument(
+        '--timeout',
+        type=float,
+        default=None,
+        help="set connection timeout to %(metavar)s seconds"
+             " (default: no timeout)",
+        metavar="N",
+    )
+
+    args = parser.parse_args()
+    command_line_args = {k: v for k, v in vars(args).items() if v}
+    cfg = configparser.ConfigParser()
+    cfg.read("cli.conf")
+    config = ChainMap(command_line_args, dict(cfg["mreg"].items()))
+
+    util.set_config(config)
+    log.logfile = config["log_file"]
+
+    util.login(config["user"], config["url"])
     print(util.session.headers["Authorization"])
-
-
-    # shlex is a lexical analyser which handles quotes automatically, and
-    # will allow handling of comments in input if necessary
-    import shlex
-
-    from prompt_toolkit import HTML
-    from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
-
-    from cli import cli
 
     # Must import the commands, for the side effects of creating the commands
     # when importing.
     import dhcp
+    import history
     import host
     import network
     import zone
-    import history
 
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the
@@ -42,7 +84,11 @@ def main():
             continue
         except EOFError:
             break
-        for line in lines.splitlines():
-            cli.parse(shlex.split(line))
+        try:
+            for line in lines.splitlines():
+                cli.parse(shlex.split(line))
+        except ValueError as e:
+            print(e)
+
 
 main()

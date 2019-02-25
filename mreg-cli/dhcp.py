@@ -1,19 +1,10 @@
 import re
-import sys
-import traceback
 
-from config import cli_config
 from log import cli_info, cli_warning
 from cli import cli, Flag
 from history import history
 from util import get, is_valid_ip, host_info_by_name, patch
 
-try:
-    conf = cli_config(required_fields=("mregurl",))
-except Exception as e:
-    print("commands.py: cli_config:", e)
-    traceback.print_exc()
-    sys.exit(1)
 
 #################################
 #  Add the main command 'dhcp'  #

@@ -1,21 +1,11 @@
 import getpass
 import inspect
 import re
-import sys
-import traceback
 
 from datetime import datetime
 from exceptions import CliError, CliWarning
 
-from config import cli_config
-
-try:
-    conf = cli_config(required_fields=("log_file",))
-except Exception as e:
-    print("util.py: cli_config:", e)
-    traceback.print_exc()
-    sys.exit(1)
-
+logfile = None
 
 def _prefix_from_stack() -> str:
     stack = inspect.stack()
@@ -32,7 +22,7 @@ def _prefix_from_stack() -> str:
 
 
 def _write_log(entry: str, end: str = "\n") -> None:
-    with open(conf["log_file"], "a+") as f:
+    with open(logfile, "a+") as f:
         f.write(entry + end)
 
 
