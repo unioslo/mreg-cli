@@ -1,9 +1,6 @@
 import ipaddress
-import sys
-import traceback
 import typing
 
-from config import cli_config
 from cli import cli, Flag
 from exceptions import HostNotFoundWarning
 from history import history
@@ -15,13 +12,6 @@ from util import delete, get, patch, post, \
                  ip_in_mreg_net, \
                  is_valid_email, is_valid_ip, is_valid_ipv4, is_valid_ipv6, \
                  is_valid_network, is_valid_ttl, resolve_input_name
-
-try:
-    conf = cli_config(required_fields=("mregurl",))
-except Exception as e:
-    print("commands.py: cli_config:", e)
-    traceback.print_exc()
-    sys.exit(1)
 
 #################################
 #  Add the main command 'host'  #

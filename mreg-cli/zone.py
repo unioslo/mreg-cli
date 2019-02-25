@@ -1,19 +1,8 @@
-import traceback
-import sys
-
-from config import cli_config
 from exceptions import HostNotFoundWarning
 from cli import cli, Flag
 from log import cli_info, cli_warning
 from util import delete, get, host_info_by_name, host_in_mreg_zone, \
                  patch, post
-
-try:
-    conf = cli_config(required_fields=("mregurl",))
-except Exception as e:
-    print("commands.py: cli_config:", e)
-    traceback.print_exc()
-    sys.exit(1)
 
 #################################
 #  Add the main command 'zone'  #
