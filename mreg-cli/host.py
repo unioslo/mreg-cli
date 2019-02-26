@@ -408,7 +408,7 @@ def print_cname(cname: str, host: str, padding: int = 14) -> None:
 
 def print_mx(mxs: dict, padding: int = 14) -> None:
     """Pretty print all MXs"""
-    if mxs is None:
+    if not mxs:
         return
     len_pri = len("Priority")
     print("{1:<{0}}{2} {3}".format(padding, "MX:", "Priority", "Server"))
