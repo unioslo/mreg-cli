@@ -359,36 +359,21 @@ def print_ipaddresses(ipaddresses: typing.Iterable[dict], padding: int = 14) -> 
         return
     a_records = []
     aaaa_records = []
-    len_ip = 0
+    len_ip = max([len(i['ipaddress']) for i in ipaddresses])
     for record in ipaddresses:
         if is_valid_ipv4(record["ipaddress"]):
             a_records.append(record)
-            if len(record["ipaddress"]) > len_ip:
-                len_ip = len(record["ipaddress"])
         elif is_valid_ipv6(record["ipaddress"]):
             aaaa_records.append(record)
-            if len(record["ipaddress"]) > len_ip:
-                len_ip = len(record["ipaddress"])
-    len_ip += 2
-    if a_records:
-        print("{1:<{0}}{2:<{3}}{4}".format(padding, "A_Records:", "IP", len_ip, "MAC"))
-        for record in a_records:
-            ip = record["ipaddress"]
-            mac = record["macaddress"]
-            print("{1:<{0}}{2:<{3}}{4}".format(
-                padding, "", ip if ip else "<not set>", len_ip,
-                mac if mac else "<not set>"))
-
-    # print aaaa records
-    if aaaa_records:
-        print("{1:<{0}}{2:<{3}}{4}".format(padding, "AAAA_Records:", "IP", len_ip, "MAC"))
-        for record in aaaa_records:
-            ip = record["ipaddress"]
-            mac = record["macaddress"]
-            print("{1:<{0}}{2:<{3}}{4}".format(
-                padding, "", ip if ip else "<not set>", len_ip,
-                mac if mac else "<not set>"))
-
+    for records, text in ((a_records, 'A_Records'), (aaaa_records, 'AAAA_Records')):
+        if records:
+            print("{1:<{0}} {2:<{3}} {4}".format(padding, text, "IP", len_ip, "MAC"))
+            for record in records:
+                ip = record["ipaddress"]
+                mac = record["macaddress"]
+                print("{1:<{0}} {2:<{3}} {4}".format(
+                    padding, "", ip if ip else "<not set>", len_ip,
+                    mac if mac else "<not set>"))
 
 def print_ttl(ttl: int, padding: int = 14) -> None:
     """Pretty print given ttl"""
