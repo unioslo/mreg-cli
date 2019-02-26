@@ -367,11 +367,11 @@ def print_ipaddresses(ipaddresses: typing.Iterable[dict], padding: int = 14) -> 
             aaaa_records.append(record)
     for records, text in ((a_records, 'A_Records'), (aaaa_records, 'AAAA_Records')):
         if records:
-            print("{1:<{0}} {2:<{3}} {4}".format(padding, text, "IP", len_ip, "MAC"))
+            print("{1:<{0}}{2:<{3}}  {4}".format(padding, text, "IP", len_ip, "MAC"))
             for record in records:
                 ip = record["ipaddress"]
                 mac = record["macaddress"]
-                print("{1:<{0}} {2:<{3}} {4}".format(
+                print("{1:<{0}}{2:<{3}}  {4}".format(
                     padding, "", ip if ip else "<not set>", len_ip,
                     mac if mac else "<not set>"))
 
