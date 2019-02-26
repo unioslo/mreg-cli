@@ -359,36 +359,21 @@ def print_ipaddresses(ipaddresses: typing.Iterable[dict], padding: int = 14) -> 
         return
     a_records = []
     aaaa_records = []
-    len_ip = 0
+    len_ip = max([len(i['ipaddress']) for i in ipaddresses])
     for record in ipaddresses:
         if is_valid_ipv4(record["ipaddress"]):
             a_records.append(record)
-            if len(record["ipaddress"]) > len_ip:
-                len_ip = len(record["ipaddress"])
         elif is_valid_ipv6(record["ipaddress"]):
             aaaa_records.append(record)
-            if len(record["ipaddress"]) > len_ip:
-                len_ip = len(record["ipaddress"])
-    len_ip += 2
-    if a_records:
-        print("{1:<{0}}{2:<{3}}{4}".format(padding, "A_Records:", "IP", len_ip, "MAC"))
-        for record in a_records:
-            ip = record["ipaddress"]
-            mac = record["macaddress"]
-            print("{1:<{0}}{2:<{3}}{4}".format(
-                padding, "", ip if ip else "<not set>", len_ip,
-                mac if mac else "<not set>"))
-
-    # print aaaa records
-    if aaaa_records:
-        print("{1:<{0}}{2:<{3}}{4}".format(padding, "AAAA_Records:", "IP", len_ip, "MAC"))
-        for record in aaaa_records:
-            ip = record["ipaddress"]
-            mac = record["macaddress"]
-            print("{1:<{0}}{2:<{3}}{4}".format(
-                padding, "", ip if ip else "<not set>", len_ip,
-                mac if mac else "<not set>"))
-
+    for records, text in ((a_records, 'A_Records'), (aaaa_records, 'AAAA_Records')):
+        if records:
+            print("{1:<{0}} {2:<{3}} {4}".format(padding, text, "IP", len_ip, "MAC"))
+            for record in records:
+                ip = record["ipaddress"]
+                mac = record["macaddress"]
+                print("{1:<{0}} {2:<{3}} {4}".format(
+                    padding, "", ip if ip else "<not set>", len_ip,
+                    mac if mac else "<not set>"))
 
 def print_ttl(ttl: int, padding: int = 14) -> None:
     """Pretty print given ttl"""
@@ -421,12 +406,14 @@ def print_cname(cname: str, host: str, padding: int = 14) -> None:
     print("{1:<{0}}{2} -> {3}".format(padding, "Cname:", cname, host))
 
 
-def print_txt(txt: str, padding: int = 14) -> None:
-    """Pretty print given txt"""
-    if txt is None:
+def print_mx(mxs: dict, padding: int = 14) -> None:
+    """Pretty print all MXs"""
+    if not mxs:
         return
-    assert isinstance(txt, str)
-    print("{1:<{0}}{2}".format(padding, "TXT:", txt))
+    len_pri = len("Priority")
+    print("{1:<{0}}{2} {3}".format(padding, "MX:", "Priority", "Server"))
+    for mx in sorted(mxs, key=lambda i: i['priority']):
+        print("{1:<{0}}{2:>{3}} {4}".format(padding, "", mx['priority'], len_pri, mx['mx']))
 
 
 def print_naptr(naptr: dict, host_name: str, padding: int = 14) -> None:
@@ -452,6 +439,14 @@ def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
     print("{1:<{0}} PTR {2}".format(padding, ip, host_name))
 
 
+def print_txt(txt: str, padding: int = 14) -> None:
+    """Pretty print given txt"""
+    if txt is None:
+        return
+    assert isinstance(txt, str)
+    print("{1:<{0}}{2}".format(padding, "TXT:", txt))
+
+
 def info_(args):
     """Print information about host. If <name> is an alias the cname hosts info
     is shown.
@@ -467,6 +462,7 @@ def info_(args):
             print_comment(info["comment"])
         print_ipaddresses(info["ipaddresses"])
         print_ttl(info["ttl"])
+        print_mx(info['mxs'])
         if info["hinfo"]:
             print_hinfo(info["hinfo"])
         if info["loc"]:
@@ -1625,6 +1621,136 @@ host.add_command(
     flags=[
         Flag('name',
              description='Name of the target host.',
+             metavar='NAME'),
+    ],
+)
+
+
+###############################################################################
+#                                                                             #
+#                                 MX records                                  #
+#                                                                             #
+###############################################################################
+
+def _mx_in_mxs(mxs, priority, mx):
+    for info in mxs:
+        if info['priority'] == priority and info['mx'] == mx:
+            return info['id']
+    return None
+
+
+#############################################
+#  Implementation of sub command 'mx_add'  #
+#############################################
+
+def mx_add(args):
+    """Add a mx record to host. <text> must be enclosed in double quotes if it
+    contains more than one word.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    if _mx_in_mxs(info['mxs'], args.priority, args.mx):
+        cli_warning("{} already has that MX defined".format(info['name']))
+
+    data = {
+        "host": info["id"],
+        "priority": args.priority,
+        "mx": args.mx
+    }
+    # Add MX record to host
+    path = "/mxs/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
+    cli_info("Added MX record to {}".format(info["name"]), print_msg=True)
+
+
+# Add 'mx_add' as a sub command to the 'host' command
+host.add_command(
+    prog='mx_add',
+    description='Add a MX record to host.',
+    short_desc='Add MX record.',
+    callback=mx_add,
+    flags=[
+        Flag('name',
+             description='Host target name.',
+             metavar='NAME'),
+        Flag('priority',
+             description='Priority',
+             type=int,
+             metavar='PRIORITY'),
+        Flag('mx',
+             description='Mail Server',
+             metavar='TEXT'),
+    ],
+)
+
+
+################################################
+#  Implementation of sub command 'mx_remove'  #
+################################################
+
+def mx_remove(args):
+    """Remove MX record for host.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    mx_id = _mx_in_mxs(info['mxs'], args.priority, args.mx)
+    if mx_id is None:
+        "NOT FOUND"
+        cli_warning("{} has not MX records with priority {} and mail exhange {}".format(
+                    info['name'], args.priority, args.mx))
+    path = f"/mxs/{mx_id}"
+    history.record_delete(path, mx_id)
+    delete(path)
+    cli_info("deleted MX from {}".format(info['name']), True)
+
+
+# Add 'mx_remove' as a sub command to the 'host' command
+host.add_command(
+    prog='mx_remove',
+    description=' Remove MX record for host.',
+    short_desc='Remove MX record.',
+    callback=mx_remove,
+    flags=[
+        Flag('name',
+             description='Host target name.',
+             metavar='NAME'),
+        Flag('priority',
+             description='Priority',
+             type=int,
+             metavar='PRIORITY'),
+        Flag('mx',
+             description='Mail Server',
+             metavar='TEXT'),
+    ],
+)
+
+
+##############################################
+#  Implementation of sub command 'mx_show'  #
+##############################################
+
+def mx_show(args):
+    """Show all MX records for host.
+    """
+    info = host_info_by_name(args.name)
+    path = f"/mxs/?host={info['id']}"
+    history.record_get(path)
+    mxs = get(path).json()
+    print_mx(mxs, padding=5)
+    cli_info("showed MX records for {}".format(info['name']))
+
+
+# Add 'mx_show' as a sub command to the 'host' command
+host.add_command(
+    prog='mx_show',
+    description='Show all MX records for host.',
+    short_desc='Show MX records.',
+    callback=mx_show,
+    flags=[
+        Flag('name',
+             description='Host target name.',
              metavar='NAME'),
     ],
 )
