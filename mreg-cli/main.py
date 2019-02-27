@@ -56,7 +56,10 @@ def main():
         print("mreg url not set in config or as argument")
         return
 
-    util.login(config["user"], config["url"])
+    try:
+        util.login(config["user"], config["url"])
+    except (EOFError, KeyboardInterrupt):
+        return
     print(util.session.headers["Authorization"])
 
     # Must import the commands, for the side effects of creating the commands
