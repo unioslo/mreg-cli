@@ -1,9 +1,9 @@
 import re
 
-from log import cli_info, cli_warning
-from cli import cli, Flag
-from history import history
-from util import get, is_valid_ip, host_info_by_name, patch
+from .log import cli_info, cli_warning
+from .cli import cli, Flag
+from .history import history
+from .util import get, is_valid_ip, host_info_by_name, patch
 
 
 #################################
@@ -64,9 +64,10 @@ def assoc(args):
         macs = get(path).json()
         ips = ", ".join([i['ipaddress'] for i in macs])
         if len(macs) and not args.force:
-            cli_warning("mac {} already in use by: {}. "
-                        "Use force to add {} -> {} as well.".format(
-                args.mac, ips, ip['ipaddress'], args.mac))
+            cli_warning(
+                "mac {} already in use by: {}. "
+                "Use force to add {} -> {} as well.".format(
+                    args.mac, ips, ip['ipaddress'], args.mac))
     else:
         cli_warning("invalid MAC address: {}".format(args.mac))
 

@@ -1,17 +1,18 @@
 import ipaddress
 import typing
 
-from cli import cli, Flag
-from exceptions import HostNotFoundWarning
-from history import history
-from log import cli_info, cli_warning
-from util import delete, get, patch, post, \
-                 clean_hostname, cname_exists, first_unused_ip_from_network, \
-                 get_network_by_ip, get_network, get_network_reserved_ips, \
-                 host_info_by_name, host_info_by_name_or_ip, host_in_mreg_zone, \
-                 ip_in_mreg_net, \
-                 is_valid_email, is_valid_ip, is_valid_ipv4, is_valid_ipv6, \
-                 is_valid_network, is_valid_ttl, resolve_input_name
+from .cli import cli, Flag
+from .exceptions import HostNotFoundWarning
+from .history import history
+from .log import cli_info, cli_warning
+from .util import delete, get, patch, post, \
+                  clean_hostname, cname_exists, first_unused_ip_from_network, \
+                  get_network_by_ip, get_network, get_network_reserved_ips, \
+                  host_info_by_name, host_info_by_name_or_ip, host_in_mreg_zone, \
+                  ip_in_mreg_net, \
+                  is_valid_email, is_valid_ip, is_valid_ipv4, is_valid_ipv6, \
+                  is_valid_network, is_valid_ttl, resolve_input_name
+
 
 #################################
 #  Add the main command 'host'  #
@@ -25,6 +26,7 @@ host = cli.add_command(
 # helper methods
 HinfoTuple = typing.Tuple[str, str]
 HinfoDict = typing.Dict[int, HinfoTuple]
+
 
 def hinfo_sanify(hid: str, hinfo: HinfoDict):
     """Check if the requested hinfo is a valid one."""

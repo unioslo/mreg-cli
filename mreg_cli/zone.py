@@ -1,8 +1,9 @@
-from exceptions import HostNotFoundWarning
-from cli import cli, Flag
-from log import cli_info, cli_warning
-from util import delete, get, host_info_by_name, host_in_mreg_zone, \
-                 patch, post
+from .exceptions import HostNotFoundWarning
+from .cli import cli, Flag
+from .log import cli_info, cli_warning
+from .util import delete, get, host_info_by_name, host_in_mreg_zone, \
+                  patch, post
+
 
 #################################
 #  Add the main command 'zone'  #
@@ -12,6 +13,7 @@ zone = cli.add_command(
     prog='zone',
     description='Manage zones.',
 )
+
 
 def _verify_nameservers(nameservers, force):
     if not nameservers:
@@ -34,7 +36,6 @@ def _verify_nameservers(nameservers, force):
 
 def print_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
     print("        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl))
-
 
 
 ##########################################
@@ -71,10 +72,10 @@ zone.add_command(
     ]
 )
 
+
 #####################################################
 # Implementation of sub command 'delegation_create' #
 #####################################################
-
 
 def delegation_create(args):
     """Create a new zone delegation. """
@@ -112,10 +113,10 @@ zone.add_command(
     ]
 )
 
+
 ##########################################
 # Implementation of sub command 'delete' #
 ##########################################
-
 
 def zone_delete(args):
     """Delete a zone
@@ -158,7 +159,6 @@ zone.add_command(
 # Implementation of sub command 'delegation_delete' #
 #####################################################
 
-
 def delegation_delete(args):
     """Delete a zone delegation. """
     zone = get(f"/zones/{args.zone}", ok404=True)
@@ -168,6 +168,7 @@ def delegation_delete(args):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
     delete(f"/zones/{args.zone}/delegations/{args.delegation}")
     cli_info("Removed zone delegation {}".format(args.delegation), True)
+
 
 zone.add_command(
     prog='delegation_delete',
@@ -183,6 +184,7 @@ zone.add_command(
              metavar='DELEGATION'),
         ]
 )
+
 
 ##########################################
 # Implementation of sub command 'info' #
@@ -344,6 +346,7 @@ def set_soa(args):
         cli_info("set soa for {}".format(args.zone), True)
     else:
         cli_info("No options set, so unchanged.", True)
+
 
 zone.add_command(
     prog='set_soa',

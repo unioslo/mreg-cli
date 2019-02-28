@@ -7,13 +7,14 @@ import typing
 
 from prompt_toolkit import prompt
 
-from exceptions import CliError, HostNotFoundWarning
-from history import history
-from log import cli_error, cli_warning
+from .exceptions import CliError, HostNotFoundWarning
+from .history import history
+from .log import cli_error, cli_warning
 
 location_tags = []
 category_tags = []
 session = requests.Session()
+
 
 def set_config(cfg):
     global config
@@ -99,6 +100,7 @@ def first_unused_ip_from_network(network: dict) -> str:
         cli_warning("No free addresses remaining on network {}".format(network['range']))
     return unused
 
+
 def zone_mreg_controlled(zone: str) -> bool:
     """Return true of the zone is controlled by MREG"""
     assert isinstance(zone, str)
@@ -155,6 +157,7 @@ def login(user, url):
         print(e)
         sys.exit(1)
 
+
 def update_token():
     password = prompt("You need to re-autenticate\nEnter password: ",
                       is_password=True)
@@ -163,6 +166,7 @@ def update_token():
     except CliError as e:
         print(e)
         sys.exit(1)
+
 
 def _update_token(username, password):
     tokenurl = requests.compat.urljoin(mregurl, '/api/token-auth/')
@@ -204,6 +208,7 @@ def _request_wrapper(type, path, ok404=False, first=True, **data):
     result_check(result, type.upper(), url)
     return result
 
+
 def get(path: str, ok404=False) -> requests.Response:
     """Uses requests to make a get request."""
     return _request_wrapper("get", path, ok404=ok404)
@@ -238,13 +243,11 @@ def cname_exists(cname: str) -> bool:
         return False
 
 
-
 ################################################################################
 #                                                                              #
 #   Host resolving utilities                                                   #
 #                                                                              #
 ################################################################################
-
 
 def resolve_name_or_ip(name_or_ip: str) -> str:
     """Tries to find a host from the given name/ip. Raises an exception if not."""
@@ -327,6 +330,7 @@ def get_network_by_ip(ip: str) -> dict:
     else:
         cli_warning("Not a valid ip address")
 
+
 def get_network(ip: str) -> dict:
     "Returns network associated with given range or IP"
     if is_valid_network(ip):
@@ -348,6 +352,7 @@ def get_network_used_count(ip_range: str):
     history.record_get(path)
     return get(path).json()
 
+
 def get_network_used_list(ip_range: str):
     "Return a list of the addresses in use on a given network"
     path = f"/networks/{ip_range}/used_list"
@@ -361,17 +366,20 @@ def get_network_unused_count(ip_range: str):
     history.record_get(path)
     return get(path).json()
 
+
 def get_network_unused_list(ip_range: str):
     "Return a list of the unused addresses on a given network"
     path = f"/networks/{ip_range}/unused_list"
     history.record_get(path)
     return get(path).json()
 
+
 def get_network_first_unused(ip_range: str):
     "Returns the first unused address on a network, if any"
     path = f"/networks/{ip_range}/first_unused"
     history.record_get(path)
     return get(path).json()
+
 
 def get_network_reserved_ips(ip_range: str):
     "Returns the first unused address on a network, if any"
@@ -392,7 +400,6 @@ def string_to_int(value, error_tag):
 #   Validation functions                                                       #
 #                                                                              #
 ################################################################################
-
 
 def is_valid_ip(ip: str) -> bool:
     """Check if ip is valid ipv4 og ipv6."""

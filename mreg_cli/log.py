@@ -1,11 +1,12 @@
 import getpass
 import inspect
 import re
-
 from datetime import datetime
-from exceptions import CliError, CliWarning
+
+from .exceptions import CliError, CliWarning
 
 logfile = None
+
 
 def _prefix_from_stack() -> str:
     stack = inspect.stack()

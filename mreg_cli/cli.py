@@ -1,9 +1,10 @@
 import argparse
 import os
 
-from exceptions import CliError, CliWarning
 from prompt_toolkit import HTML, print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
+
+from .exceptions import CliError, CliWarning
 
 
 class CliExit(Exception):
@@ -259,4 +260,3 @@ cli.add_command(
              action='store_true'),
     ]
 )
-
