@@ -155,6 +155,15 @@ def login(user, url):
         print(e)
         sys.exit(1)
 
+def logout():
+    path = requests.compat.urljoin(mregurl, '/api/logout/')
+    # Try to logout, and ignore errors
+    try:
+        session.post(path)
+    except requests.exceptions.ConnectionError:
+        pass
+
+
 def update_token():
     password = prompt("You need to re-autenticate\nEnter password: ",
                       is_password=True)

@@ -5,6 +5,8 @@ from exceptions import CliError, CliWarning
 from prompt_toolkit import HTML, print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
 
+import util
+
 
 class CliExit(Exception):
     pass
@@ -183,6 +185,7 @@ cli = Command(_top_parser, list(), '')
 
 
 def _quit(args):
+    util.logout()
     raise CliExit
 
 
