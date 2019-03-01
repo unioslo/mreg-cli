@@ -5,10 +5,11 @@ from history import history
 from log import cli_error, cli_info, cli_warning
 from util import delete, get, patch, post, string_to_int, is_valid_ip, \
                  is_valid_network, is_valid_location_tag, is_valid_category_tag, \
+                 ipsort, \
                  get_network, \
                  get_network_used_count, get_network_used_list, \
                  get_network_unused_count, get_network_unused_list, \
-                 get_network_reserved_ips, resolve_ip
+                 get_network_reserved_ips
 
 ###################################
 #  Add the main command 'network'  #
@@ -199,18 +200,34 @@ def list_used_addresses(args):
     """
     if is_valid_ip(args.network):
         network = get_network(args.network)
-        addresses = get_network_used_list(network['range'])
+        ip_range = network['range']
     elif is_valid_network(args.network):
-        addresses = get_network_used_list(args.network)
+        ip_range = args.network
     else:
         cli_warning("Not a valid ip or network")
 
-    if addresses:
-        for address in addresses:
-            host = resolve_ip(address)
-            print("{1:<{0}}{2}".format(25, address, host))
-    else:
-        print("No used addresses.")
+    path = f"/networks/{ip_range}/used_host_list"
+    history.record_get(path)
+    ip2host = get(path).json()
+    path = f"/networks/{ip_range}/ptroverride_host_list"
+    history.record_get(path)
+    ptr2host = get(path).json()
+
+    ips = ipsort(set(list(ip2host.keys()) + list(ptr2host.keys())))
+    if not ips:
+        print(f"No used addresses on {ip_range}")
+        return
+
+    for ip in ips:
+        if ip in ptr2host:
+            print("{1:<{0}}{2} (ptr override)".format(25, ip, ptr2host[ip]))
+        elif ip in ip2host:
+            if len(ip2host[ip]) > 1:
+                hosts = ",".join(ip2host[ip])
+                host = f"{hosts} (NO ptr override!!)"
+            else:
+                host = ip2host[ip][0]
+            print("{1:<{0}}{2}".format(25, ip, host))
 
 
 network.add_command(
