@@ -205,9 +205,10 @@ def list_used_addresses(args):
     else:
         cli_warning("Not a valid ip or network")
 
-    for address in addresses:
-        host = resolve_ip(address)
-        print("{1:<{0}}{2}".format(25, address, host))
+    if addresses:
+        for address in addresses:
+            host = resolve_ip(address)
+            print("{1:<{0}}{2}".format(25, address, host))
     else:
         print("No used addresses.")
 
