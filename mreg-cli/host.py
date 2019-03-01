@@ -182,7 +182,7 @@ def add(args):
     }
     history.record_post(path, resource_name=name, new_data=data)
     post(path, **data)
-    cli_info("created host {}".format(name), print_msg=True)
+    cli_info("created host {} with IP {}".format(name, ip), print_msg=True)
 
 
 # Add 'add' as a sub command to the 'host' command
