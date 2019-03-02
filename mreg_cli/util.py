@@ -160,7 +160,7 @@ def login(user, url):
 
 
 def logout():
-    path = requests.compat.urljoin(mregurl, '/api/logout/')
+    path = requests.compat.urljoin(mregurl, '/api/token-logout/')
     # Try to logout, and ignore errors
     try:
         session.post(path)
