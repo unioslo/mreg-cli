@@ -31,7 +31,6 @@ def get_network_range_from_input(net):
     else:
         cli_warning("Not a valid ip or network")
 
-
 # helper methods
 def print_network_unused(count: int, padding: int = 25) -> None:
     "Pretty print amount of unused addresses"
@@ -179,6 +178,7 @@ network.add_command(
 def list_unused_addresses(args):
     """Lists all the unused addresses for a network
     """
+
     ip_range = get_network_range_from_input(args.network)
     unused = get_network_unused_list(ip_range)
     if not unused:
@@ -208,7 +208,6 @@ network.add_command(
 def list_used_addresses(args):
     """Lists all the used addresses for a network
     """
-
     ip_range = get_network_range_from_input(args.network)
 
     path = f"/networks/{ip_range}/used_host_list"
@@ -233,7 +232,6 @@ def list_used_addresses(args):
             else:
                 host = ip2host[ip][0]
             print("{1:<{0}}{2}".format(25, ip, host))
-
 
 network.add_command(
     prog='list_used_addresses',
@@ -352,11 +350,12 @@ network.add_command(
 def set_dns_delegated(args):
     """Set that DNS-administration is being handled elsewhere.
     """
+
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     patch(f"/networks/{ip_range}", dns_delegated=True)
     cli_info(f"updated dns_delegated to 'True' for {ip_range}", print_msg=True)
-
+          
 
 network.add_command(
     prog='set_dns_delegated',
@@ -378,6 +377,7 @@ network.add_command(
 def set_frozen(args):
     """Freeze a network.
     """
+
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     patch(f"/networks/{ip_range}", frozen=True)
@@ -404,6 +404,7 @@ network.add_command(
 def set_location(args):
     """Set location tag for network
     """
+
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     if not is_valid_location_tag(args.location):
@@ -412,6 +413,7 @@ def set_location(args):
     patch(f"/networks/{ip_range}", location=args.location)
     cli_info("updated location tag to '{}' for {}"
              .format(args.location, ip_range), True)
+
 
 
 network.add_command(
@@ -437,6 +439,7 @@ network.add_command(
 def set_reserved(args):
     """Set number of reserved hosts.
     """
+
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     reserved = args.number
@@ -469,11 +472,11 @@ network.add_command(
 def set_vlan(args):
     """Set VLAN for network
     """
+
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     patch(f"/networks/{ip_range}", vlan=args.vlan)
     cli_info(f"updated vlan to {args.vlan} for {ip_range}", print_msg=True)
-
 
 network.add_command(
     prog='set_vlan',  # <network> <vlan>
@@ -499,6 +502,7 @@ network.add_command(
 def unset_dns_delegated(args):
     """Set that DNS-administration is not being handled elsewhere.
     """
+
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     patch(f"/networks/{ip_range}", dns_delegated=False)
@@ -525,10 +529,12 @@ network.add_command(
 def unset_frozen(args):
     """Unfreeze a network.
     """
+
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     patch(f"/networks/{ip_range}", frozen=False)
     cli_info(f"updated frozen to 'False' for {ip_range}", print_msg=True)
+
 
 
 network.add_command(
