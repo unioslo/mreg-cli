@@ -158,6 +158,16 @@ def login(user, url):
         sys.exit(1)
 
 
+
+def logout():
+    path = requests.compat.urljoin(mregurl, '/api/logout/')
+    # Try to logout, and ignore errors
+    try:
+        session.post(path)
+    except requests.exceptions.ConnectionError:
+        pass
+
+
 def update_token():
     password = prompt("You need to re-autenticate\nEnter password: ",
                       is_password=True)
@@ -318,6 +328,11 @@ def clean_hostname(name: typing.AnyStr) -> str:
 #   Network utility                                                             #
 #                                                                              #
 ################################################################################
+
+
+def ipsort(ips: list) -> list:
+    return sorted(ips, key=lambda i: ipaddress.ip_address(i))
+
 
 def get_network_by_ip(ip: str) -> dict:
     if is_valid_ip(ip):

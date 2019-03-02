@@ -87,6 +87,7 @@ def main():
         except KeyboardInterrupt:
             continue
         except EOFError:
+            util.logout()
             break
         try:
             for line in lines.splitlines():
