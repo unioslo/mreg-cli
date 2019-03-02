@@ -1,8 +1,8 @@
 import requests
 import json
 
-from log import cli_error, cli_info, cli_warning
-from cli import cli, Flag
+from .log import cli_error, cli_info, cli_warning
+from .cli import cli, Flag
 
 
 # NOTE HISTORY: General notes and shortcomings of history tracking:
@@ -262,6 +262,7 @@ history_.add_command(
     short_desc='Print the history',
     callback=print_,
 )
+
 
 ########################################
 # Implementation of sub command 'redo' #

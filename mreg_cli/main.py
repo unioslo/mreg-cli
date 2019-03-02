@@ -7,11 +7,9 @@ from collections import ChainMap
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
-
-import log
-import util
-
-from cli import cli
+from . import log
+from . import util
+from .cli import cli
 
 
 def main():
@@ -64,11 +62,11 @@ def main():
 
     # Must import the commands, for the side effects of creating the commands
     # when importing.
-    import dhcp
-    import history
-    import host
-    import network
-    import zone
+    from . import dhcp      # noqa: F401
+    from . import history   # noqa: F401
+    from . import host      # noqa: F401
+    from . import network   # noqa: F401
+    from . import zone      # noqa: F401
 
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the
@@ -98,4 +96,5 @@ def main():
             print(e)
 
 
-main()
+if __name__ == '__main__':
+    main()

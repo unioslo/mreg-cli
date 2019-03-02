@@ -1,15 +1,15 @@
 import ipaddress
 
-from cli import cli, Flag
-from history import history
-from log import cli_error, cli_info, cli_warning
-from util import delete, get, patch, post, string_to_int, is_valid_ip, \
-                 is_valid_network, is_valid_location_tag, is_valid_category_tag, \
-                 ipsort, \
-                 get_network, \
-                 get_network_used_count, get_network_used_list, \
-                 get_network_unused_count, get_network_unused_list, \
-                 get_network_reserved_ips
+from .cli import cli, Flag
+from .history import history
+from .log import cli_error, cli_info, cli_warning
+from .util import delete, get, patch, post, string_to_int, is_valid_ip, \
+                  is_valid_network, is_valid_location_tag, is_valid_category_tag, \
+                  ipsort, \
+                  get_network, \
+                  get_network_used_count, get_network_used_list, \
+                  get_network_unused_count, get_network_unused_list, \
+                  get_network_reserved_ips, resolve_ip
 
 ###################################
 #  Add the main command 'network'  #
@@ -86,7 +86,7 @@ def create(args):
         if network_object.overlaps(ipaddress.ip_network(args.network)):
             cli_warning("Overlap found between new network {} and existing "
                         "network {}".format(ipaddress.ip_network(args.network),
-                                           network['range']))
+                                            network['range']))
 
     post("/networks/", range=args.network, description=args.desc, vlan=args.vlan,
          category=args.category, location=args.location, frozen=frozen)
@@ -149,9 +149,9 @@ def info(args):
         print_network(network_info['location'], "Location:")
         print_network(network_info['vlan'], "VLAN")
         print_network(network_info['dns_delegated'] if
-                     network_info['dns_delegated'] else False, "DNS delegated:")
+                      network_info['dns_delegated'] else False, "DNS delegated:")
         print_network(network_info['frozen'] if network_info['frozen'] else False,
-                     "Frozen")
+                      "Frozen")
         print_network_reserved(network_info['range'], network_info['reserved'])
         print_network(used, "Used addresses:")
         print_network_unused(unused)
