@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import setuptools
+import sys
 
+if sys.version_info < (3,6):
+    sys.exit('Python < 3.6 is not supported')
 
 install_requirements = [
     'prompt_toolkit',
@@ -10,6 +13,7 @@ install_requirements = [
 
 def main():
     setuptools.setup(
+        python_requires='>=3.6',
         entry_points={
             'console_scripts': [
                 'mreg-cli = mreg_cli.main:main',
