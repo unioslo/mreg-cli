@@ -3,7 +3,7 @@ import ipaddress
 from .cli import cli, Flag
 from .history import history
 from .log import cli_error, cli_info, cli_warning
-from .util import delete, get, patch, post, string_to_int, is_valid_ip, \
+from .util import delete, get, get_list, patch, post, string_to_int, is_valid_ip, \
                   is_valid_network, is_valid_location_tag, is_valid_category_tag, \
                   ipsort, \
                   get_network, \
@@ -79,7 +79,7 @@ def create(args):
     if args.location and not is_valid_location_tag(args.location):
         cli_warning("Not a valid location tag")
 
-    networks_existing = get("/networks/").json()
+    networks_existing = get_list("/networks/")
     for network in networks_existing:
         network_object = ipaddress.ip_network(network['range'])
         if network_object.overlaps(ipaddress.ip_network(args.network)):
