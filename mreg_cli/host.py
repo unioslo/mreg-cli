@@ -5,7 +5,7 @@ from .cli import cli, Flag
 from .exceptions import HostNotFoundWarning
 from .history import history
 from .log import cli_info, cli_warning
-from .util import delete, get, patch, post, \
+from .util import delete, get, get_list, patch, post, \
                   clean_hostname, cname_exists, first_unused_ip_from_network, \
                   get_network_by_ip, get_network, get_network_reserved_ips, \
                   host_info_by_name, host_info_by_name_or_ip, host_in_mreg_zone, \
@@ -247,7 +247,7 @@ def remove(args):
     # force
     path = f"/naptrs/?host={info['id']}"
     history.record_get(path)
-    naptrs = get(path).json()
+    naptrs = get_list(path)
     if len(naptrs) > 0:
         if not args.force:
             warn_msg += "{} NAPTR records. ".format(len(naptrs))
@@ -264,7 +264,7 @@ def remove(args):
     # Require force if host has any SRV records. Delete the SRV records if force
     path = f"/srvs/?target={info['name']}"
     history.record_get(path)
-    srvs = get(path).json()
+    srvs = get_list(path)
     if len(srvs) > 0:
         if not args.force:
             warn_msg += "{} SRV records. ".format(len(srvs))
@@ -541,7 +541,7 @@ def rename(args):
     # Update all srv records pointing to <old-name>
     path = f"/srvs/?target={old_name}"
     history.record_get(path)
-    srvs = get(path).json()
+    srvs = get_list(path)
     for srv in srvs:
         path = f"/srvs/{srv['id']}"
         old_data = {"target": old_name}
@@ -1223,7 +1223,7 @@ def cname_show(args):
     name = clean_hostname(args.name)
     path = f"/hosts/?cnames_name={name}"
     history.record_get(path)
-    hosts = get(path).json()
+    hosts = get_list(path)
     if len(hosts):
         print_cname(name, hosts[0]["name"])
     else:
@@ -1459,7 +1459,7 @@ def hinfopresets_remove(args):
     # Check for hinfopreset in use
     path = f"/hosts/?hinfo={args.id}"
     history.record_get(path)
-    hosts = get(path).json()
+    hosts = get_list(path)
     if len(hosts):
         if args.force:
             for host in hosts:
@@ -1739,7 +1739,7 @@ def mx_show(args):
     info = host_info_by_name(args.name)
     path = f"/mxs/?host={info['id']}"
     history.record_get(path)
-    mxs = get(path).json()
+    mxs = get_list(path)
     print_mx(mxs, padding=5)
     cli_info("showed MX records for {}".format(info['name']))
 
@@ -1849,7 +1849,7 @@ def naptr_remove(args):
     # field
     path = f"/naptrs/?replacement__contains={args.replacement}&host={info['id']}"
     history.record_get(path)
-    naptrs = get(path).json()
+    naptrs = get_list(path)
     if not len(naptrs):
         cli_warning("{} hasn't got any NAPTR reocrds matching \"{}\"".format(
             info["name"],
@@ -1898,7 +1898,7 @@ host.add_command(
 def _naptr_show(info):
     path = f"/naptrs/?host={info['id']}"
     history.record_get(path)
-    naptrs = get(path).json()
+    naptrs = get_list(path)
     if naptrs:
         print("{1:<{0}} {2} {3} {4} {5} {6} {7}".format(
             14, info["name"], "Preference", "Order", "Flag", "Service",
@@ -2057,7 +2057,7 @@ def ptr_set(args):
     # check that a PTR record with the given ip doesn't exist
     path = f"/ptroverrides/?ipaddress={args.ip}"
     history.record_get(path)
-    ptrs = get(path).json()
+    ptrs = get_list(path)
     if len(ptrs):
         cli_warning("{} already exist in a PTR record".format(args.ip))
 
@@ -2116,7 +2116,7 @@ def ptr_show(args):
 
     path = f"/hosts/?ptr_overrides__ipaddress={args.ip}"
     history.record_get(path)
-    host = get(path, ok404=True).json()
+    host = get_list(path)
 
     if host:
         host = host[0]
@@ -2176,7 +2176,7 @@ def srv_add(args):
     # Check if a SRV record with identical service exists
     path = f"/srvs/?service={sname}"
     history.record_get(path)
-    srvs = get(path).json()
+    srvs = get_list(path)
     if len(srvs) > 0:
         entry_exists = True
     else:
@@ -2247,7 +2247,7 @@ def srv_remove(args):
     # Check if service exist
     path = f"/srvs/?service={sname}"
     history.record_get(path)
-    srvs = get(path).json()
+    srvs = get_list(path)
     if len(srvs) == 0:
         cli_warning("not service named {}".format(sname))
     elif len(srvs) > 1 and not args.force:
@@ -2293,7 +2293,7 @@ def srv_show(args):
     # Get all matching SRV records
     path = f"/srvs/?name={sname}"
     history.record_get(path)
-    srvs = get(path).json()
+    srvs = get_list(path)
     if len(srvs) < 1:
         cli_warning("no service matching {}".format(sname))
     padding = 0
@@ -2506,7 +2506,7 @@ def txt_remove(args):
         args.text,
     )
     history.record_get(path)
-    txts = get(path).json()
+    txts = get_list(path)
     if len(txts) == 0:
         cli_warning(
             "{} hasn't got any TXT records matching \"{}\"".format(info["name"],
@@ -2560,7 +2560,7 @@ def txt_show(args):
     info = host_info_by_name(args.name)
     path = f"/txts/?host={info['id']}"
     history.record_get(path)
-    txts = get(path).json()
+    txts = get_list(path)
     for txt in txts:
         print_txt(txt["txt"], padding=5)
     cli_info("showed TXT records for {}".format(info["name"]))

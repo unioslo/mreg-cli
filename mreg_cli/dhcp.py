@@ -3,7 +3,7 @@ import re
 from .log import cli_info, cli_warning
 from .cli import cli, Flag
 from .history import history
-from .util import get, is_valid_ip, host_info_by_name, patch
+from .util import get, get_list, is_valid_ip, host_info_by_name, patch
 
 
 #################################
@@ -39,7 +39,7 @@ def assoc(args):
     if is_valid_ip(args.name):
         path = f"/ipaddresses/?ipaddress={args.name}"
         history.record_get(path)
-        ip = get(path).json()
+        ip = get_list(path)
         if not len(ip):
             cli_warning("ip {} doesn't exist.".format(args.name))
         elif len(ip) > 1:
@@ -61,7 +61,7 @@ def assoc(args):
         new_mac = format_mac(args.mac)
         path = f"/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
         history.record_get(path)
-        macs = get(path).json()
+        macs = get_list(path)
         ips = ", ".join([i['ipaddress'] for i in macs])
         if len(macs) and not args.force:
             cli_warning(
@@ -119,7 +119,7 @@ def disassoc(args):
     if is_valid_ip(args.name):
         path = f"/ipaddresses/?ipaddress={args.name}"
         history.record_get(path)
-        ip = get(path).json()
+        ip = get_list(path)
         if not len(ip):
             cli_warning("ip {} doesn't exist.".format(args.name))
         elif len(ip) > 1:

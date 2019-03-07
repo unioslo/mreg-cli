@@ -25,7 +25,7 @@ def host_exists(name: str) -> bool:
     """Checks if a host with the given name exists"""
     path = f"/hosts/?name={name}"
     history.record_get(path)
-    hosts = get(path).json()
+    hosts = get_list(path)
 
     # Response data sanity checks
     if len(hosts) > 1:
@@ -79,7 +79,7 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
         # All host info data is returned from the API
         path = f"/hosts/?cnames__name={name}"
         history.record_get(path)
-        host = get(path).json()
+        host = get_list(path)
         if len(host):
             assert len(host) == 1
             return _get_host(host[0]['name'])
@@ -224,6 +224,20 @@ def get(path: str, ok404=False) -> requests.Response:
     return _request_wrapper("get", path, ok404=ok404)
 
 
+def get_list(path: str) -> requests.Response:
+    """Uses requests to make a get request.
+       Will iterate over paginated results and return result as list."""
+    ret = []
+    while path:
+        result = _request_wrapper("get", path).json()
+        if 'next' in result:
+            path = result['next']
+            ret.extend(result['results'])
+        else:
+            path = None
+    return ret
+
+
 def post(path: str, **kwargs) -> requests.Response:
     """Uses requests to make a post request. Assumes that all kwargs are data fields"""
     return _request_wrapper("post", path, **kwargs)
@@ -247,7 +261,7 @@ def delete(path: str) -> requests.Response:
 
 def cname_exists(cname: str) -> bool:
     """Check if a cname exists"""
-    if len(get(f"/cnames/?name={cname}").json()):
+    if len(get_list(f"/cnames/?name={cname}")):
         return True
     else:
         return False
@@ -271,7 +285,7 @@ def resolve_ip(ip: str) -> str:
     """Returns host name associated with ip"""
     path = f"/hosts/?ipaddresses__ipaddress={ip}"
     history.record_get(path)
-    hosts = get(path).json()
+    hosts = get_list(path)
 
     # Response data sanity check
     if len(hosts) > 1:
@@ -292,7 +306,7 @@ def resolve_input_name(name: str) -> str:
 
     path = f"/hosts/?name={hostname}"
     history.record_get(path)
-    hosts = get(path).json()
+    hosts = get_list(path)
 
     if len(hosts) == 1:
         assert hosts[0]["name"] == hostname
