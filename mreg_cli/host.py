@@ -2383,19 +2383,15 @@ host.add_command(
     flags=[
         Flag('name',
              description='Host target name.',
-             required=True,
              metavar='NAME'),
         Flag('algorithm',
              description='SSH algorithm.',
-             required=True,
              metavar='ALGORITHM'),
         Flag('hash_type',
              description='Hash type.',
-             required=True,
              metavar='HASH_TYPE'),
         Flag('fingerprint',
              description='Hexadecimal fingerprint.',
-             required=True,
              metavar='FINGERPRINT'),
     ],
 )
@@ -2441,7 +2437,6 @@ host.add_command(
              metavar='NAME'),
         Flag('fingerprint',
              description='Hexadecimal fingerprint.',
-             required=True,
              metavar='FINGERPRINT'),
     ],
 )
