@@ -111,7 +111,7 @@ def network_add(args):
     path = "/permissions/netgroupregex/"
     history.record_get(path, "", data)
     post(path, **data)
-    cli_info("Added permission to {args.range}", True)
+    cli_info(f"Added permission to {args.range}", True)
 
 
 permission.add_command(
