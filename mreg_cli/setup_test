@@ -150,6 +150,17 @@ host srv_add -service _test._udp.failing -pri 2 -weight 50 -port 4932 -name am.d
 
 host srv_remove _test._udp.failing -force
 
+# SSHFP ########################################################################
+
+host sshfp_add stan 1 2 1234567890ABCDEFFEDCBA09876543211234567890ABCDEFFEDCBA0987654321
+host sshfp_add roger 4 2 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+# Test error for the host that does not exist
+!echo -n "$ Fails: "
+host sshfp_add homer 3 1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+host sshfp_remove stan
+
 # TTL ##########################################################################
 host ttl_set sethmacfarlane.uio.no 33021
 host ttl_set chris 300

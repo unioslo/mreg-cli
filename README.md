@@ -10,6 +10,7 @@ Command Line Interface for Mreg
         - [NAPTR](#naptr)
         - [PTR](#ptr)
         - [SRV](#srv)
+        - [SSHFP](#sshfp)
         - [TTL](#ttl)
         - [TXT](#txt)
         - [DHCP](#dhcp)
@@ -169,6 +170,18 @@ Require force if a host with <target-name> doesn't exist.
        
    host srv_show <service-name>
        Show SRV show. An empty input showes all existing SRV records
+```
+
+#### SSHFP
+```
+   host sshfp_add <name> <algorithm> <hash_type> <fingerprint>
+       Add SSHFP record for the host.
+
+   host sshfp_remove <name> <fingerprint>
+       Remove SSHFP record from host.
+
+   host sshfp_show <name>
+       Show SSHFP records for the given host.
 ```
 
 #### TTL

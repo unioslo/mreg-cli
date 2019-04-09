@@ -395,6 +395,17 @@ def print_srv(srv: dict, padding: int = 14) -> None:
     ))
 
 
+def print_sshfp(sshfp: dict, padding: int = 14) -> None:
+    """Pretty print given sshfp"""
+    print("{1:<{0}} SSHFP {2:^6} {3:^6} {4}".format(
+        padding,
+        sshfp["host"],
+        sshfp["algorithm"],
+        sshfp["hash_type"],
+        sshfp["fingerprint"],
+    ))
+
+
 def print_loc(loc: str, padding: int = 14) -> None:
     """Pretty print given loc"""
     if loc is None:
@@ -2315,7 +2326,7 @@ def srv_show(args):
 # Add 'srv_show' as a sub command to the 'host' command
 host.add_command(
     prog='srv_show',
-    description='Show SRV show. An empty input showes all existing SRV '
+    description='Show SRV. An empty input shows all existing SRV '
                 'records.',
     short_desc='Show SRV record.',
     callback=srv_show,
@@ -2323,6 +2334,162 @@ host.add_command(
         Flag('service',
              description='Host target name.',
              metavar='SERVICE'),
+    ],
+)
+
+
+################################################################################
+#                                                                              #
+#                                 SSHFP records                                #
+#                                                                              #
+################################################################################
+
+
+#############################################
+# Implementation of sub command 'sshfp_add' #
+#############################################
+
+def sshfp_add(args):
+    """Add SSHFP record.
+    """
+
+    # Reject if target host doesn't exist
+    host_name = clean_hostname(args.name)
+    try:
+        host_name = resolve_input_name(args.name)
+    except HostNotFoundWarning:
+        cli_warning("{} doesn't exist".format(args.name))
+
+    data = {
+        "algorithm": args.algorithm,
+        "hash_type": args.hash_type,
+        "fingerprint": args.fingerprint,
+        "host": host_name,
+    }
+
+    # Create new SSHFP record
+    path = "/sshfps/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
+    cli_info("Added SSHFP record {} for host {}."
+                 .format(args.fingerprint, host_name), print_msg=True)
+
+
+# Add 'sshfp_add' as a sub command to the 'host' command
+host.add_command(
+    prog='sshfp_add',
+    description='Add SSHFP record.',
+    callback=sshfp_add,
+    flags=[
+        Flag('name',
+             description='Host target name.',
+             required=True,
+             metavar='NAME'),
+        Flag('algorithm',
+             description='SSH algorithm.',
+             required=True,
+             metavar='ALGORITHM'),
+        Flag('hash_type',
+             description='Hash type.',
+             required=True,
+             metavar='HASH_TYPE'),
+        Flag('fingerprint',
+             description='Hexadecimal fingerprint.',
+             required=True,
+             metavar='FINGERPRINT'),
+    ],
+)
+
+
+################################################
+# Implementation of sub command 'sshfp_remove' #
+################################################
+
+def sshfp_remove(args):
+    """Remove SSHFP record.
+    """
+    host_name = clean_hostname(args.name)
+
+    # Check if the host exist
+    path = f"/srvs/?service={sname}"
+    history.record_get(path)
+    srvs = get_list(path)
+    if len(srvs) == 0:
+        cli_warning("not service named {}".format(sname))
+    elif len(srvs) > 1 and not args.force:
+        cli_warning("multiple services named {}, must force".format(sname))
+
+    # Remove all SRV records with that service
+    for srv in srvs:
+        assert isinstance(srv, dict)
+        path = f"/srvs/{srv['id']}"
+        history.record_delete(path, srv, redoable=False)
+        delete(path)
+        cli_info("removed SRV record {} with target {}".format(srv["name"],
+                                                               srv["target"]),
+                 print_msg=True)
+
+
+# Add 'sshfp_remove' as a sub command to the 'host' command
+host.add_command(
+    prog='sshfp_remove',
+    description='Remove SSHFP record.',
+    callback=sshfp_remove,
+    flags=[
+        Flag('name',
+             description='Host target name.',
+             metavar='NAME'),
+        Flag('fingerprint',
+             description='Hexadecimal fingerprint.',
+             required=True,
+             metavar='FINGERPRINT'),
+    ],
+)
+
+
+##############################################
+# Implementation of sub command 'sshfp_show' #
+##############################################
+
+def sshfp_show(args):
+    """Show SSHFP. An empty input shows all existing SSHFP records
+    """
+
+    hname = clean_hostname(args.name)
+
+    # Get all matching SSHFP records
+    path = f"/sshfps/?host={hname}"
+    history.record_get(path)
+    sshfps = get_list(path)
+    if len(sshfps) < 1:
+        cli_warning("no SSHFP records matching {}".format(hname))
+    padding = 0
+
+    # Print records
+    for sshfp in sshfps:
+        if len(sshfp["host"]) > padding:
+            padding = len(sshfp["host"])
+    prev_name = ""
+    for sshfp in sorted(sshfps, key=lambda k: k["host"]):
+        if prev_name == sshfp["host"]:
+            sshfp["host"] = ""
+        else:
+            prev_name = sshfp["host"]
+        print_sshfp(sshfp, padding)
+    cli_info("showed entries for SSHFP {}".format(hname))
+
+
+# Add 'sshfp_show' as a sub command to the 'host' command
+host.add_command(
+    prog='sshfp_show',
+    description='Show SSHFP. An empty input shows all existing SSHFP '
+                'records.',
+    short_desc='Show SSHFP record.',
+    callback=sshfp_show,
+    flags=[
+        Flag('name',
+             description='Host target name.',
+             metavar='NAME'),
     ],
 )
 
