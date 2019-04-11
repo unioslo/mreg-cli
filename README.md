@@ -178,7 +178,8 @@ Require force if a host with <target-name> doesn't exist.
        Add SSHFP record for the host.
 
    host sshfp_remove <name> <fingerprint>
-       Remove SSHFP record from host.
+       Remove SSHFP record with a given fingerprint from the host.
+       A missing fingerprint removes all SSHFP records for the host.
 
    host sshfp_show <name>
        Show SSHFP records. An empty input showes all existing SSHFP records

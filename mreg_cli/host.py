@@ -138,7 +138,7 @@ def add(args):
     comment are optional.
     """
 
-    # Fail if given host exits
+    # Fail if given host exists
     name = clean_hostname(args.name)
     try:
         name = resolve_input_name(name)
@@ -2398,40 +2398,55 @@ host.add_command(
 ################################################
 
 def sshfp_remove(args):
-    """Remove SSHFP record.
+    """Remove SSHFP record with a given fingerprint from the host.
+       A missing fingerprint removes all SSHFP records for the host.
     """
-    host_name = clean_hostname(args.name)
 
-    # Check if the host exist
-    path = f"/srvs/?service={sname}"
-    history.record_get(path)
-    srvs = get_list(path)
-    if len(srvs) == 0:
-        cli_warning("not service named {}".format(sname))
-    elif len(srvs) > 1 and not args.force:
-        cli_warning("multiple services named {}, must force".format(sname))
-
-    # Remove all SRV records with that service
-    for srv in srvs:
-        assert isinstance(srv, dict)
-        path = f"/srvs/{srv['id']}"
-        history.record_delete(path, srv, redoable=False)
+    def _delete_sshfp_record(sshfp: dict, hname: str):
+        path = f"/sshfps/{sshfp['id']}"
+        history.record_delete(path, sshfp, redoable=False)
         delete(path)
-        cli_info("removed SRV record {} with target {}".format(srv["name"],
-                                                               srv["target"]),
-                 print_msg=True)
+        cli_info("removed SSHFP record with fingerprint {} for {}".format(sshfp["fingerprint"],
+                                                               hname),
+            print_msg=True)
 
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    hid = info["id"]
+
+    # Get all matching SSHFP records
+    path = f"/sshfps/?host={hid}"
+    history.record_get(path)
+    sshfps = get_list(path)
+    if len(sshfps) < 1:
+        cli_warning("no SSHFP records matching {}".format(info["name"]))
+
+    if args.fingerprint:
+        found = False
+        for sshfp in sshfps:
+            if sshfp["fingerprint"] == args.fingerprint:
+                _delete_sshfp_record(sshfp, info["name"])
+                found = True
+        if not found:
+            cli_info("found no SSHFP record with fingerprint {} for {}".format(args.fingerprint,
+                                                               info["name"]),
+                 print_msg=True)
+    else:
+        for sshfp in sshfps:
+            _delete_sshfp_record(sshfp, info["name"])
+            
 
 # Add 'sshfp_remove' as a sub command to the 'host' command
 host.add_command(
     prog='sshfp_remove',
-    description='Remove SSHFP record.',
+    description='Remove SSHFP record with a given fingerprint from the host. '
+                'A missing fingerprint removes all SSHFP records for the host.',
     callback=sshfp_remove,
     flags=[
         Flag('name',
              description='Host target name.',
              metavar='NAME'),
-        Flag('fingerprint',
+        Flag('-fingerprint',
              description='Hexadecimal fingerprint.',
              metavar='FINGERPRINT'),
     ],
