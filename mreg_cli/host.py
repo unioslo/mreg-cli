@@ -2353,18 +2353,14 @@ def sshfp_add(args):
     """Add SSHFP record.
     """
 
-    # Reject if target host doesn't exist
-    host_name = clean_hostname(args.name)
-    try:
-        host_name = resolve_input_name(args.name)
-    except HostNotFoundWarning:
-        cli_warning("{} doesn't exist".format(args.name))
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
 
     data = {
         "algorithm": args.algorithm,
         "hash_type": args.hash_type,
         "fingerprint": args.fingerprint,
-        "host": host_name,
+        "host": info['id'],
     }
 
     # Create new SSHFP record
@@ -2372,7 +2368,7 @@ def sshfp_add(args):
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("Added SSHFP record {} for host {}."
-                 .format(args.fingerprint, host_name), print_msg=True)
+                 .format(args.fingerprint, info['name']), print_msg=True)
 
 
 # Add 'sshfp_add' as a sub command to the 'host' command
