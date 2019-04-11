@@ -42,7 +42,7 @@ def host_exists(name: str) -> bool:
 
 def host_info_by_id(id: int) -> dict:
     """
-    Return a dict with host information about the given host, or the host having the given id.
+    Return a dict with host information of the host having the given id.
 
     :param id: id of the host in the datbase.
     :return: A dict of the JSON object received with the host information
