@@ -40,6 +40,19 @@ def host_exists(name: str) -> bool:
     return True
 
 
+def host_info_by_id(id: int) -> dict:
+    """
+    Return a dict with host information about the given host, or the host having the given id.
+
+    :param id: id of the host in the datbase.
+    :return: A dict of the JSON object received with the host information
+    """
+    path = f"/hosts/?id={id}"
+    history.record_get(path)
+    host = get(path).json()
+    return host["results"][0]
+
+
 def host_info_by_name_or_ip(name_or_ip: str) -> dict:
     """
     Return a dict with host information about the given host, or the host owning the given ip.

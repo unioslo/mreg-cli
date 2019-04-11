@@ -181,7 +181,7 @@ Require force if a host with <target-name> doesn't exist.
        Remove SSHFP record from host.
 
    host sshfp_show <name>
-       Show SSHFP records for the given host.
+       Show SSHFP records. An empty input showes all existing SSHFP records
 ```
 
 #### TTL
