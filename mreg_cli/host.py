@@ -2353,9 +2353,9 @@ def sshfp_add(args):
     """Add SSHFP record.
     """
 
-    # Get host info or the exception if it does not exist
+    # Get host info or raise exception
     info = host_info_by_name(args.name)
-    
+
     data = {
         "algorithm": args.algorithm,
         "hash_type": args.hash_type,
