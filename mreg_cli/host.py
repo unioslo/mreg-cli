@@ -8,8 +8,8 @@ from .log import cli_info, cli_warning
 from .util import delete, get, get_list, patch, post, \
                   clean_hostname, cname_exists, first_unused_ip_from_network, \
                   get_network_by_ip, get_network, get_network_reserved_ips, \
-                  host_info_by_name, host_info_by_name_or_ip, host_in_mreg_zone, \
-                  ip_in_mreg_net, \
+                  host_info_by_name, host_info_by_name_or_ip, \
+                  host_in_mreg_zone, ip_in_mreg_net, \
                   is_valid_email, is_valid_ip, is_valid_ipv4, is_valid_ipv6, \
                   is_valid_network, is_valid_ttl, resolve_input_name
 
@@ -138,7 +138,7 @@ def add(args):
     comment are optional.
     """
 
-    # Fail if given host exits
+    # Fail if given host exists
     name = clean_hostname(args.name)
     try:
         name = resolve_input_name(name)
@@ -392,6 +392,17 @@ def print_srv(srv: dict, padding: int = 14) -> None:
         srv["weight"],
         srv["port"],
         srv["target"],
+    ))
+
+
+def print_sshfp(sshfp: dict, padding: int = 14) -> None:
+    """Pretty print given sshfp"""
+    print("{1:<{0}} SSHFP {2:^6} {3:^6} {4}".format(
+        padding,
+        sshfp["name"],
+        sshfp["algorithm"],
+        sshfp["hash_type"],
+        sshfp["fingerprint"],
     ))
 
 
@@ -2315,7 +2326,7 @@ def srv_show(args):
 # Add 'srv_show' as a sub command to the 'host' command
 host.add_command(
     prog='srv_show',
-    description='Show SRV show. An empty input showes all existing SRV '
+    description='Show SRV. An empty input shows all existing SRV '
                 'records.',
     short_desc='Show SRV record.',
     callback=srv_show,
@@ -2323,6 +2334,164 @@ host.add_command(
         Flag('service',
              description='Host target name.',
              metavar='SERVICE'),
+    ],
+)
+
+
+################################################################################
+#                                                                              #
+#                                 SSHFP records                                #
+#                                                                              #
+################################################################################
+
+
+#############################################
+# Implementation of sub command 'sshfp_add' #
+#############################################
+
+def sshfp_add(args):
+    """Add SSHFP record.
+    """
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    data = {
+        "algorithm": args.algorithm,
+        "hash_type": args.hash_type,
+        "fingerprint": args.fingerprint,
+        "host": info["id"],
+    }
+
+    # Create new SSHFP record
+    path = "/sshfps/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
+    cli_info("Added SSHFP record {} for host {}"
+                 .format(args.fingerprint, info["name"]), print_msg=True)
+
+
+# Add 'sshfp_add' as a sub command to the 'host' command
+host.add_command(
+    prog='sshfp_add',
+    description='Add SSHFP record.',
+    callback=sshfp_add,
+    flags=[
+        Flag('name',
+             description='Host target name.',
+             metavar='NAME'),
+        Flag('algorithm',
+             description='SSH algorithm.',
+             metavar='ALGORITHM'),
+        Flag('hash_type',
+             description='Hash type.',
+             metavar='HASH_TYPE'),
+        Flag('fingerprint',
+             description='Hexadecimal fingerprint.',
+             metavar='FINGERPRINT'),
+    ],
+)
+
+
+################################################
+# Implementation of sub command 'sshfp_remove' #
+################################################
+
+def sshfp_remove(args):
+    """Remove SSHFP record with a given fingerprint from the host.
+       A missing fingerprint removes all SSHFP records for the host.
+    """
+
+    def _delete_sshfp_record(sshfp: dict, hname: str):
+        path = f"/sshfps/{sshfp['id']}"
+        history.record_delete(path, sshfp, redoable=False)
+        delete(path)
+        cli_info("removed SSHFP record with fingerprint {} for {}".format(sshfp["fingerprint"],
+                                                               hname),
+            print_msg=True)
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    hid = info["id"]
+
+    # Get all matching SSHFP records
+    path = f"/sshfps/?host={hid}"
+    history.record_get(path)
+    sshfps = get_list(path)
+    if len(sshfps) < 1:
+        cli_warning("no SSHFP records matching {}".format(info["name"]))
+
+    if args.fingerprint:
+        found = False
+        for sshfp in sshfps:
+            if sshfp["fingerprint"] == args.fingerprint:
+                _delete_sshfp_record(sshfp, info["name"])
+                found = True
+        if not found:
+            cli_info("found no SSHFP record with fingerprint {} for {}".format(args.fingerprint,
+                                                               info["name"]),
+                 print_msg=True)
+    else:
+        for sshfp in sshfps:
+            _delete_sshfp_record(sshfp, info["name"])
+            
+
+# Add 'sshfp_remove' as a sub command to the 'host' command
+host.add_command(
+    prog='sshfp_remove',
+    description='Remove SSHFP record with a given fingerprint from the host. '
+                'A missing fingerprint removes all SSHFP records for the host.',
+    callback=sshfp_remove,
+    flags=[
+        Flag('name',
+             description='Host target name.',
+             metavar='NAME'),
+        Flag('-fingerprint',
+             description='Hexadecimal fingerprint.',
+             metavar='FINGERPRINT'),
+    ],
+)
+
+
+##############################################
+# Implementation of sub command 'sshfp_show' #
+##############################################
+
+def sshfp_show(args):
+    """Show SSHFP records for the host.
+    """
+
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    hid = info["id"]
+    hname = info["name"]
+
+    # Get all matching SSHFP records
+    path = f"/sshfps/?host={hid}"
+    history.record_get(path)
+    sshfps = get_list(path)
+    if len(sshfps) < 1:
+        cli_warning("no SSHFP records matching {}".format(hname))
+    
+    padding = len(hname)
+    sshfps[0]["name"] = hname
+    print_sshfp(sshfps[0], padding)
+    for sshfp in sshfps[1:]:
+        sshfp["name"] = ""
+        print_sshfp(sshfp, padding)
+    cli_info("showed all SSHFP entries for {}".format(hname), print_msg=True)
+    
+
+# Add 'sshfp_show' as a sub command to the 'host' command
+host.add_command(
+    prog='sshfp_show',
+    description='Show SSHFP records for the host.',
+    short_desc='Show SSHFP record.',
+    callback=sshfp_show,
+    flags=[
+        Flag('name',
+             description='Host target name.',
+             metavar='NAME'),
     ],
 )
 
