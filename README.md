@@ -182,7 +182,7 @@ Require force if a host with <target-name> doesn't exist.
        A missing fingerprint removes all SSHFP records for the host.
 
    host sshfp_show <name>
-       Show SSHFP records. An empty input showes all existing SSHFP records
+       Show SSHFP records for the host.
 ```
 
 #### TTL

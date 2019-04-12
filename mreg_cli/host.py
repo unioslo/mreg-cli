@@ -8,7 +8,7 @@ from .log import cli_info, cli_warning
 from .util import delete, get, get_list, patch, post, \
                   clean_hostname, cname_exists, first_unused_ip_from_network, \
                   get_network_by_ip, get_network, get_network_reserved_ips, \
-                  host_info_by_id, host_info_by_name, host_info_by_name_or_ip, \
+                  host_info_by_name, host_info_by_name_or_ip, \
                   host_in_mreg_zone, ip_in_mreg_net, \
                   is_valid_email, is_valid_ip, is_valid_ipv4, is_valid_ipv6, \
                   is_valid_network, is_valid_ttl, resolve_input_name
@@ -2458,56 +2458,38 @@ host.add_command(
 ##############################################
 
 def sshfp_show(args):
-    """Show SSHFP records. An empty input showes all existing SSHFP records
+    """Show SSHFP records for the host.
     """
 
-    if args.name:
-        # Get host info or raise exception
-        info = host_info_by_name(args.name)
-        hid = info["id"]
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+    hid = info["id"]
+    hname = info["name"]
 
-        # Get all matching SSHFP records
-        path = f"/sshfps/?host={hid}"
-        history.record_get(path)
-        sshfps = get_list(path)
-        if len(sshfps) < 1:
-            cli_warning("no SSHFP records matching {}".format(info["name"]))
-    else:
-        # Get all SSHFPs
-        path = f"/sshfps/"
-        history.record_get(path)
-        sshfps = get_list(path)
-        if len(sshfps) < 1:
-            cli_warning("SSHFP records are not found")
+    # Get all matching SSHFP records
+    path = f"/sshfps/?host={hid}"
+    history.record_get(path)
+    sshfps = get_list(path)
+    if len(sshfps) < 1:
+        cli_warning("no SSHFP records matching {}".format(hname))
     
-    padding = 0
-    prev_name = ""
-    for sshfp in sorted(sshfps, key=lambda k: k["host"]):
-        host_info = host_info_by_id(sshfp["host"])
-        hname = host_info["name"]
-        if len(hname) > padding:
-            padding = len(hname)
-        if prev_name == hname:
-            sshfp["name"] = ""
-        else:
-            sshfp["name"] = hname
-            prev_name = hname
+    padding = len(hname)
+    sshfps[0]["name"] = hname
+    print_sshfp(sshfps[0], padding)
+    for sshfp in sshfps[1:]:
+        sshfp["name"] = ""
         print_sshfp(sshfp, padding)
-    if args.name:
-        cli_info("showed all SSHFP entries for {}".format(hname), print_msg=True)
-    else:
-        cli_info("showed all SSHFP entries", print_msg=True)
-
+    cli_info("showed all SSHFP entries for {}".format(hname), print_msg=True)
+    
 
 # Add 'sshfp_show' as a sub command to the 'host' command
 host.add_command(
     prog='sshfp_show',
-    description='Show SSHFP. An empty input shows all existing SSHFP '
-                'records.',
+    description='Show SSHFP records for the host.',
     short_desc='Show SSHFP record.',
     callback=sshfp_show,
     flags=[
-        Flag('-name',
+        Flag('name',
              description='Host target name.',
              metavar='NAME'),
     ],
