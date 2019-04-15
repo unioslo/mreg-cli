@@ -2296,7 +2296,7 @@ host.add_command(
 ##############################################
 
 def srv_show(args):
-    """Show SRV. An empty input shows all existing SRV records
+    """Show SRV records for the service.
     """
 
     sname = clean_hostname(args.service)
@@ -2326,9 +2326,8 @@ def srv_show(args):
 # Add 'srv_show' as a sub command to the 'host' command
 host.add_command(
     prog='srv_show',
-    description='Show SRV. An empty input shows all existing SRV '
-                'records.',
-    short_desc='Show SRV record.',
+    description='Show SRV records for the service.',
+    short_desc='Show SRV records.',
     callback=srv_show,
     flags=[
         Flag('service',

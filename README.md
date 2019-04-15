@@ -169,7 +169,7 @@ Require force if a host with <target-name> doesn't exist.
        Remove SRV record.
        
    host srv_show <service-name>
-       Show SRV show. An empty input showes all existing SRV records
+       Show SRV records for the service.
 ```
 
 #### SSHFP
