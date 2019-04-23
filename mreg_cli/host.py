@@ -99,7 +99,7 @@ def _get_ip_from_args(ip, force, ipversion=None):
     else:
         cli_warning(f"Could not determine network for {ip}")
 
-    network_object = ipaddress.ip_network(network['range'])
+    network_object = ipaddress.ip_network(network['network'])
     if ipversion:
         if network_object.version != ipversion:
             if ipversion == 4:
@@ -109,8 +109,8 @@ def _get_ip_from_args(ip, force, ipversion=None):
 
     if network["frozen"] and not force:
         cli_warning("network {} is frozen, must force"
-                    .format(network["range"]))
-    reserved_addresses = get_network_reserved_ips(network['range'])
+                    .format(network["network"]))
+    reserved_addresses = get_network_reserved_ips(network['network'])
     if ip in reserved_addresses and not force:
         cli_warning("Address is reserved. Requires force")
     if network_object.num_addresses > 2:
@@ -2067,7 +2067,7 @@ def ptr_set(args):
                     .format(info["name"]))
 
     network = get_network_by_ip(args.ip)
-    reserved_addresses = get_network_reserved_ips(network['range'])
+    reserved_addresses = get_network_reserved_ips(network['network'])
     if args.ip in reserved_addresses and not args.force:
         cli_warning("Address is reserved. Requires force")
 

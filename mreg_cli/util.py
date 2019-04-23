@@ -95,9 +95,9 @@ def first_unused_ip_from_network(network: dict) -> str:
     :return: Ip address string
     """
 
-    unused = get_network_first_unused(network['range'])
+    unused = get_network_first_unused(network['network'])
     if not unused:
-        cli_warning("No free addresses remaining on network {}".format(network['range']))
+        cli_warning("No free addresses remaining on network {}".format(network['network']))
     return unused
 
 
@@ -217,7 +217,6 @@ def _request_wrapper(type, path, ok404=False, first=True, **data):
 
     result_check(result, type.upper(), url)
     return result
-
 
 def get(path: str, ok404=False) -> requests.Response:
     """Uses requests to make a get request."""

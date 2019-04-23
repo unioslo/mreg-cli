@@ -25,7 +25,7 @@ def get_network_range_from_input(net):
         net = net[:-1]
     if is_valid_ip(net):
         network = get_network(net)
-        return network['range']
+        return network['network']
     elif is_valid_network(net):
         return net
     else:
@@ -81,13 +81,13 @@ def create(args):
 
     networks_existing = get_list("/networks/")
     for network in networks_existing:
-        network_object = ipaddress.ip_network(network['range'])
+        network_object = ipaddress.ip_network(network['network'])
         if network_object.overlaps(ipaddress.ip_network(args.network)):
             cli_warning("Overlap found between new network {} and existing "
                         "network {}".format(ipaddress.ip_network(args.network),
-                                            network['range']))
+                                            network['network']))
 
-    post("/networks/", range=args.network, description=args.desc, vlan=args.vlan,
+    post("/networks/", network=args.network, description=args.desc, vlan=args.vlan,
          category=args.category, location=args.location, frozen=frozen)
     cli_info("created network {}".format(args.network), True)
 
@@ -141,7 +141,7 @@ def info(args):
         network = ipaddress.ip_network(ip_range)
 
         # Pretty print all network info
-        print_network(network_info['range'], "Network:")
+        print_network(network_info['network'], "Network:")
         print_network(network.netmask.exploded, "Netmask:")
         print_network(network_info['description'], "Description:")
         print_network(network_info['category'], "Category:")
@@ -151,7 +151,7 @@ def info(args):
                       network_info['dns_delegated'] else False, "DNS delegated:")
         print_network(network_info['frozen'] if network_info['frozen'] else False,
                       "Frozen")
-        print_network_reserved(network_info['range'], network_info['reserved'])
+        print_network_reserved(network_info['network'], network_info['reserved'])
         print_network(used, "Used addresses:")
         print_network_unused(unused)
         cli_info(f"printed network info for {ip_range}")
@@ -293,9 +293,9 @@ def set_category(args):
     if not is_valid_category_tag(args.category):
         cli_warning("Not a valid category tag")
 
-    patch("/networks/{network['range']}", category=args.category)
+    patch("/networks/{network['network']}", category=args.category)
     cli_info("updated category tag to '{}' for {}"
-             .format(args.category, network['range']), True)
+             .format(args.category, network['network']), True)
 
 
 network.add_command(
@@ -322,9 +322,9 @@ def set_description(args):
     """Set description for network
     """
     network = get_network(args.network)
-    patch(f"/networks/{network['range']}", description=args.description)
+    patch(f"/networks/{network['network']}", description=args.description)
     cli_info("updated description to '{}' for {}".format(args.description,
-                                                         network['range']), True)
+                                                         network['network']), True)
 
 
 network.add_command(
