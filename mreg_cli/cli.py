@@ -227,7 +227,7 @@ def _source(args):
                         print(HTML(f'<i>> {html.escape(l.strip())}</i>'))
                     cli.parse(s)
                     if cli.last_errno != 0:
-                        print(HTML(f'<ansired><i>{file}</i>: '
+                        print(HTML(f'<ansired><i>{filename}</i>: '
                                    f'Error on line {i + 1}</ansired>'))
                         if args.stop:
                             return
