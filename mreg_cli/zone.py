@@ -1,7 +1,7 @@
 from .exceptions import HostNotFoundWarning
 from .cli import cli, Flag
 from .log import cli_info, cli_warning
-from .util import delete, get, host_info_by_name, host_in_mreg_zone, \
+from .util import delete, get, get_list, host_info_by_name, host_in_mreg_zone, \
                   patch, post
 
 
@@ -265,7 +265,7 @@ def zone_delegation_list(args):
     zone = get(f"/zones/{args.zone}", ok404=True)
     if zone is None:
         cli_warning(f"Zone '{args.zone}' does not exist")
-    delegations = get(f"/zones/{args.zone}/delegations/").json()
+    delegations = get_list(f"/zones/{args.zone}/delegations/")
     if delegations:
         print("Delegations:")
         for i in sorted(delegations, key=lambda kv: kv['name']):
