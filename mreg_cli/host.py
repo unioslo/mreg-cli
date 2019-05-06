@@ -9,7 +9,7 @@ from .util import delete, get, get_list, patch, post, \
                   clean_hostname, cname_exists, first_unused_ip_from_network, \
                   get_network_by_ip, get_network, get_network_reserved_ips, \
                   host_info_by_name, host_info_by_name_or_ip, \
-                  host_in_mreg_zone, ip_in_mreg_net, \
+                  ip_in_mreg_net, \
                   is_valid_email, is_valid_ip, is_valid_ipv4, is_valid_ipv6, \
                   is_valid_network, is_valid_ttl, resolve_input_name
 
@@ -61,6 +61,29 @@ def print_hinfo(hid: str, padding: int = 14) -> None:
     hid = str(hid)
     hinfo = hinfos[hid]
     print("{1:<{0}}cpu={2} os={3}".format(padding, "Hinfo:", hinfo[0], hinfo[1]))
+
+
+def zoneinfo_for_hostname(host: str) -> dict:
+    """Return zoneinfo for a hostname, or None if not found or invalid"""
+    if "." not in host:
+        return None
+
+    path = f"/zones/hostname/{host}"
+    history.record_get(path)
+    zoneinfo = get(path, ok404=True)
+    return None if zoneinfo is None else zoneinfo.json()
+
+
+def check_zone_for_hostname(host: str, force: bool)
+    # Require force if FQDN not in MREG zone
+    zoneinfo = zoneinfo_for_hostname(name)
+    if zoneinfo is None and not force:
+        cli_warning(
+            f"{name} isn't in a zone controlled by MREG, must force")
+    elif 'delegation' in zoneinfo and not force:
+        delegation = zoneinfo['delegation']['name']
+        cli_warning(
+            f"{name} is in zone delegation {delegation}, must force")
 
 
 def _get_ip_from_args(ip, force, ipversion=None):
@@ -151,6 +174,8 @@ def add(args):
     if "*" in name and not args.force:
         cli_warning("Wildcards must be forced.")
 
+    check_zone_for_hostname(name, args.force)
+
     if cname_exists(name):
         cli_warning("the name is already in use by a cname")
 
@@ -167,11 +192,6 @@ def add(args):
     if args.hinfo:
         hi_dict = hinfo_dict()
         hinfo_sanify(args.hinfo, hi_dict)
-
-    # Require force if FQDN not in MREG zone
-    if not host_in_mreg_zone(name) and not args.force:
-        cli_warning(
-            "{} isn't in a zone controlled by MREG, must force".format(name))
 
     # Create the new host with an ip address
     path = "/hosts/"
@@ -531,9 +551,7 @@ def rename(args):
         cli_warning("the name is already in use by a cname")
 
     # Require force if FQDN not in MREG zone
-    if not host_in_mreg_zone(new_name) and not args.force:
-        cli_warning("{} isn't in a zone controlled by MREG, must force".format(
-            new_name))
+    check_zone_for_hostname(new_name, args.force)
 
     # TODO: only for superusers
     if "*" in new_name and not args.force:
@@ -2073,7 +2091,7 @@ def ptr_set(args):
         cli_warning("{} already exist in a PTR record".format(args.ip))
 
     # check if host is in mreg controlled zone, must force if not
-    if not host_in_mreg_zone(info["name"]) and not args.force:
+    if info['name']['zone'] is None and not args.force:
         cli_warning("{} isn't in a zone controlled by MREG, must force"
                     .format(info["name"]))
 
@@ -2178,9 +2196,7 @@ def srv_add(args):
             cli_warning("{} doesn't exist. Must force".format(args.name))
 
     # Require force if target host not in MREG zone
-    if not host_in_mreg_zone(host_name) and not args.force:
-        cli_warning(
-            "{} isn't in a MREG controlled zone, must force".format(host_name))
+    check_zone_for_hostname(host_name, args.force)
 
     sname = clean_hostname(args.service)
 
