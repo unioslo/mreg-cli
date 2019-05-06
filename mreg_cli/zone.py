@@ -1,7 +1,7 @@
 from .exceptions import HostNotFoundWarning
 from .cli import cli, Flag
 from .log import cli_info, cli_warning
-from .util import delete, get, get_list, host_info_by_name, host_in_mreg_zone, \
+from .util import delete, get, get_list, host_info_by_name, \
                   patch, post
 
 
@@ -27,7 +27,7 @@ def _verify_nameservers(nameservers, force):
             if not force:
                 errors.append(f"{nameserver} is not in mreg, must force")
         else:
-            if host_in_mreg_zone(info['name']):
+            if info['zone'] is not None:
                 if not info['ipaddresses'] and not force:
                     errors.append("{nameserver} has no A-record/glue, must force")
     if errors:
