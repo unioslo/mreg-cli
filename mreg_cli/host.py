@@ -47,9 +47,8 @@ def hinfo_dict() -> HinfoDict:
     """
     path = "/hinfopresets/"
     history.record_get(path)
-    hinfo_get = get(path)
     hl = dict()
-    for hinfo in hinfo_get.json():
+    for hinfo in get_list(path):
         assert isinstance(hinfo, dict)
         hl[str(hinfo["id"])] = (hinfo["cpu"], hinfo["os"])
     return hl
