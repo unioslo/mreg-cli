@@ -110,25 +110,6 @@ def zone_mreg_controlled(zone: str) -> bool:
     return bool(len(zone))
 
 
-def host_in_mreg_zone(host: str) -> bool:
-    """Return true if host is in a MREG controlled zone"""
-    assert isinstance(host, str)
-    if "." not in host:
-        return False
-    splitted = host.split(".")
-
-    path = "/zones/"
-    history.record_get(path)
-    zonenames = set([zone['name'] for zone in get(path).json()])
-
-    for i in range(len(splitted)):
-        name = ".".join(splitted[i:])
-        if name in zonenames:
-            return True
-
-    return False
-
-
 def ip_in_mreg_net(ip: str) -> bool:
     """Return true if the ip is in a MREG controlled network"""
     net = get_network_by_ip(ip)
