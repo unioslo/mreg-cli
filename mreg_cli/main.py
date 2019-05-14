@@ -64,6 +64,7 @@ def main():
     # when importing.
     from . import dhcp      # noqa: F401
     from . import history   # noqa: F401
+    from . import group      # noqa: F401
     from . import host      # noqa: F401
     from . import network   # noqa: F401
     from . import permission # noqa: F401
