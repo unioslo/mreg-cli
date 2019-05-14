@@ -73,7 +73,7 @@ def zoneinfo_for_hostname(host: str) -> dict:
     return None if zoneinfo is None else zoneinfo.json()
 
 
-def check_zone_for_hostname(host: str, force: bool)
+def check_zone_for_hostname(host: str, force: bool):
     # Require force if FQDN not in MREG zone
     zoneinfo = zoneinfo_for_hostname(name)
     if zoneinfo is None and not force:
