@@ -35,7 +35,7 @@ def create(args):
     Create a new host group
     """
 
-    ret = get_list(f'/hostgroups/?name={name}')
+    ret = get_list(f'/hostgroups/?name={args.name}')
     if ret:
         cli_error(f'Groupname "{args.name}" already in use')
     
