@@ -73,16 +73,15 @@ def zoneinfo_for_hostname(host: str) -> dict:
     return None if zoneinfo is None else zoneinfo.json()
 
 
-def check_zone_for_hostname(host: str, force: bool):
+def check_zone_for_hostname(name: str, force: bool):
     # Require force if FQDN not in MREG zone
     zoneinfo = zoneinfo_for_hostname(name)
-    if zoneinfo is None and not force:
-        cli_warning(
-            f"{name} isn't in a zone controlled by MREG, must force")
+    if zoneinfo is None:
+        if not force:
+            cli_warning(f"{name} isn't in a zone controlled by MREG, must force")
     elif 'delegation' in zoneinfo and not force:
         delegation = zoneinfo['delegation']['name']
-        cli_warning(
-            f"{name} is in zone delegation {delegation}, must force")
+        cli_warning(f"{name} is in zone delegation {delegation}, must force")
 
 
 def _get_ip_from_args(ip, force, ipversion=None):
@@ -178,10 +177,11 @@ def add(args):
     if cname_exists(name):
         cli_warning("the name is already in use by a cname")
 
-    ip = _get_ip_from_args(args.ip, args.force)
+    if args.ip:
+        ip = _get_ip_from_args(args.ip, args.force)
 
     # Contact sanity check
-    if not is_valid_email(args.contact):
+    if args.contact and not is_valid_email(args.contact):
         cli_warning(
             "invalid mail address ({}) when trying to add {}".format(
                 args.contact,
@@ -196,14 +196,20 @@ def add(args):
     path = "/hosts/"
     data = {
         "name": name,
-        "ipaddress": ip,
-        "contact": args.contact,
         "hinfo": args.hinfo or None,
         "comment": args.comment or None,
     }
+    if args.contact:
+        data['contact'] = args.contact
+    if args.ip:
+        data['ipaddress'] = ip
+
     history.record_post(path, resource_name=name, new_data=data)
     post(path, **data)
-    cli_info("created host {} with IP {}".format(name, ip), print_msg=True)
+    msg = f"created host {name}"
+    if args.ip:
+        msg += f" with IP {ip}"
+    cli_info(msg, print_msg=True)
 
 
 # Add 'add' as a sub command to the 'host' command
@@ -218,15 +224,13 @@ host.add_command(
              short_desc='Name of new host (req)',
              description='Name of new host (req)'),
         Flag('-ip',
-             short_desc='An ip or net (req)',
+             short_desc='An ip or net',
              description='The hosts ip or a net. If it\'s a net a random ip is '
-                         'selected from the net (req)',
-             required=True,
+                         'selected from the net',
              metavar='IP/NET'),
         Flag('-contact',
-             short_desc='Contact mail for the host (req)',
-             description='Contact mail for the host (req)',
-             required=True),
+             short_desc='Contact mail for the host',
+             description='Contact mail for the host'),
         Flag('-hinfo',
              short_desc='Host information.',
              description='Host information.'),
@@ -376,7 +380,7 @@ def print_comment(comment: str, padding: int = 14) -> None:
 
 def print_ipaddresses(ipaddresses: typing.Iterable[dict], padding: int = 14) -> None:
     """Pretty print given ip addresses"""
-    if ipaddresses is None:
+    if not ipaddresses:
         return
     a_records = []
     aaaa_records = []
