@@ -196,11 +196,10 @@ def add(args):
     path = "/hosts/"
     data = {
         "name": name,
+        "contact": args.contact or None,
         "hinfo": args.hinfo or None,
         "comment": args.comment or None,
     }
-    if args.contact:
-        data['contact'] = args.contact
     if args.ip:
         data['ipaddress'] = ip
 
