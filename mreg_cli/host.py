@@ -2091,9 +2091,8 @@ def ptr_set(args):
     ptrs = get_list(path)
     if len(ptrs):
         cli_warning("{} already exist in a PTR record".format(args.ip))
-
     # check if host is in mreg controlled zone, must force if not
-    if info['name']['zone'] is None and not args.force:
+    if info['zone'] is None and not args.force:
         cli_warning("{} isn't in a zone controlled by MREG, must force"
                     .format(info["name"]))
 
@@ -2203,7 +2202,7 @@ def srv_add(args):
     sname = clean_hostname(args.service)
 
     # Check if a SRV record with identical service exists
-    path = f"/srvs/?service={sname}"
+    path = f"/srvs/?name={sname}"
     history.record_get(path)
     srvs = get_list(path)
     if len(srvs) > 0:
@@ -2274,7 +2273,7 @@ def srv_remove(args):
     sname = clean_hostname(args.service)
 
     # Check if service exist
-    path = f"/srvs/?service={sname}"
+    path = f"/srvs/?name={sname}"
     history.record_get(path)
     srvs = get_list(path)
     if len(srvs) == 0:
