@@ -278,11 +278,7 @@ def resolve_ip(ip: str) -> str:
 
 def resolve_input_name(name: str) -> str:
     """Tries to find the named host. Raises an exception if not."""
-    name = name.lower()
-    if "." in name:
-        hostname = name
-    else:
-        hostname = clean_hostname(name)
+    hostname = clean_hostname(name)
 
     path = f"/hosts/?name={hostname}"
     history.record_get(path)
@@ -307,9 +303,13 @@ def clean_hostname(name: typing.AnyStr) -> str:
         cli_warning("Invalid input for hostname: {}".format(name))
 
     name = name.lower()
-    # Assume user is happy with domain, but strip the punctation mark.
+    # Assume user is happy with domain, but strip the dot.
     if name.endswith("."):
         return name[:-1]
+
+    # If a dot in name, assume long name.
+    if '.' in name:
+        return name
 
     # Append domain name if in config and it does not end with it
     if 'domain' in config and not name.endswith(config['domain']):
