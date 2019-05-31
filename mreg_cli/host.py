@@ -4,7 +4,7 @@ import typing
 from .cli import cli, Flag
 from .exceptions import HostNotFoundWarning
 from .history import history
-from .log import cli_info, cli_warning
+from .log import cli_error, cli_info, cli_warning
 from .util import delete, get, get_list, patch, post, \
                   clean_hostname, cname_exists, first_unused_ip_from_network, \
                   get_network_by_ip, get_network, get_network_reserved_ips, \
@@ -73,10 +73,12 @@ def zoneinfo_for_hostname(host: str) -> dict:
     return None if zoneinfo is None else zoneinfo.json()
 
 
-def check_zone_for_hostname(name: str, force: bool):
+def check_zone_for_hostname(name: str, force: bool, require_zone: bool = False):
     # Require force if FQDN not in MREG zone
     zoneinfo = zoneinfo_for_hostname(name)
     if zoneinfo is None:
+        if require_zone:
+            cli_warning(f"{name} isn't in a zone controlled by MREG.")
         if not force:
             cli_warning(f"{name} isn't in a zone controlled by MREG, must force")
     elif 'delegation' in zoneinfo and not force:
@@ -405,18 +407,6 @@ def print_ttl(ttl: int, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "TTL:", ttl or "(Default)"))
 
 
-def print_srv(srv: dict, padding: int = 14) -> None:
-    """Pretty print given srv"""
-    print("{1:<{0}} SRV {2:^6} {3:^6} {4:^6} {5}".format(
-        padding,
-        srv["name"],
-        srv["priority"],
-        srv["weight"],
-        srv["port"],
-        srv["target"],
-    ))
-
-
 def print_sshfp(sshfp: dict, padding: int = 14) -> None:
     """Pretty print given sshfp"""
     print("{1:<{0}} SSHFP {2:^6} {3:^6} {4}".format(
@@ -471,7 +461,7 @@ def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
     """Pretty print given txt"""
     assert isinstance(ip, str)
     assert isinstance(host_name, str)
-    print("{1:<{0}} PTR {2}".format(padding, ip, host_name))
+    print("{1:<{0}}{2} -> {3}".format(padding, 'PTR override:', ip, host_name))
 
 
 def print_txt(txt: str, padding: int = 14) -> None:
@@ -496,6 +486,8 @@ def info_(args):
         if info["comment"]:
             print_comment(info["comment"])
         print_ipaddresses(info["ipaddresses"])
+        for ptr in info["ptr_overrides"]:
+            print_ptr(ptr["ipaddress"], info["name"])
         print_ttl(info["ttl"])
         print_mx(info['mxs'])
         if info["hinfo"]:
@@ -506,8 +498,7 @@ def info_(args):
             print_cname(cname["name"], info["name"])
         for txt in info["txts"]:
             print_txt(txt["txt"])
-        for ptr in info["ptr_overrides"]:
-            print_ptr(ptr["ipaddress"], info["name"])
+        _srv_show(host_id=info['id'])
         _naptr_show(info)
         cli_info("printed host info for {}".format(info["name"]))
 
@@ -569,22 +560,6 @@ def rename(args):
                          undoable=False)
     patch(path, name=new_name)
 
-    # Update all srv records pointing to <old-name>
-    path = f"/srvs/?target={old_name}"
-    history.record_get(path)
-    srvs = get_list(path)
-    for srv in srvs:
-        path = f"/srvs/{srv['id']}"
-        old_data = {"target": old_name}
-        new_data = {"target": new_name}
-        history.record_patch(path, new_data, old_data)
-        patch(path, target=new_name)
-    if len(srvs):
-        cli_info("updated {} SRV record(s) when renaming {} to {}".format(
-            len(srvs),
-            old_name,
-            new_name,
-        ))
     cli_info("renamed {} to {}".format(old_name, new_name), print_msg=True)
 
 
@@ -777,7 +752,7 @@ def a_change(args):
     info = host_info_by_name(args.name)
 
     # Fail if input isn't ipv4
-    if not is_valid_ipv6(args.old):
+    if not is_valid_ipv4(args.old):
         cli_warning("not a valid ipv4 \"{}\" (target host {})"
                     .format(args.old, info["name"]))
 
@@ -1028,10 +1003,9 @@ host.add_command(
     short_desc='Change AAAA record.',
     callback=aaaa_change,
     flags=[
-        Flag('-name',
+        Flag('name',
              description='Name of the target host.',
              short_desc='Host name.',
-             required=True,
              metavar='NAME'),
         Flag('-old',
              description='The existing IPv6 that should be changed.',
@@ -1152,8 +1126,7 @@ def cname_add(args):
     # If alias name already exist as host, abort.
     try:
         host_info_by_name(alias)
-        cli_warning("The alias name is in use by an existing host. "
-                    "Find a new alias.")
+        cli_error("The alias name is in use by an existing host. Find a new alias.")
     except HostNotFoundWarning:
         pass
 
@@ -1807,11 +1780,11 @@ def naptr_add(args):
     info = host_info_by_name(args.name)
 
     data = {
-        "preference": int(args.preference),
-        "order": int(args.order),
+        "preference": args.preference,
+        "order": args.order,
         "flag": args.flag,
         "service": args.service,
-        "regex": args.regexp,
+        "regex": args.regex,
         "replacement": args.replacement,
         "host": info["id"],
     }
@@ -1852,7 +1825,7 @@ host.add_command(
              description='NAPTR service.',
              required=True,
              metavar='SERVICE'),
-        Flag('-regexp',
+        Flag('-regex',
              description='NAPTR regexp.',
              required=True,
              metavar='REGEXP'),
@@ -1881,26 +1854,21 @@ def naptr_remove(args):
     path = f"/naptrs/?replacement__contains={args.replacement}&host={info['id']}"
     history.record_get(path)
     naptrs = get_list(path)
-    if not len(naptrs):
-        cli_warning("{} hasn't got any NAPTR reocrds matching \"{}\"".format(
-            info["name"],
-            args.replacement,
-        ))
-    if len(naptrs) > 1 and not args.force:
-        cli_warning(
-            "{} got {} NAPTR records matching \"{}\", must force.".format(
-                info["name"],
-                len(naptrs),
-                args.replacement,
-            ))
 
-    # Delete NAPTR record(s)
+    data = None
+    attrs = ('preference', 'order', 'flag', 'service', 'regex', 'replacement',)
     for naptr in naptrs:
-        path = f"/naptrs/{naptr['id']}"
-        history.record_delete(path, naptr)
-        delete(path)
-    cli_info("deleted {} NAPTR record(s) for {}"
-             .format(len(naptrs), info["name"]), print_msg=True)
+        if all(naptr[attr] == getattr(args, attr) for attr in attrs):
+            data = naptr
+
+    if data is None:
+        cli_warning("Did not find any matching NAPTR record.")
+
+    # Delete NAPTR record
+    path = f"/naptrs/{data['id']}"
+    history.record_delete(path, data)
+    delete(path)
+    cli_info("deleted NAPTR record for {}".format(info["name"]), print_msg=True)
 
 
 # Add 'naptr_remove' as a sub command to the 'host' command
@@ -1909,15 +1877,36 @@ host.add_command(
     description='Remove NAPTR record.',
     callback=naptr_remove,
     flags=[
-        Flag('name',
+        Flag('-name',
              description='Name of the target host.',
+             required=True,
              metavar='NAME'),
-        Flag('replacement',
+        Flag('-preference',
+             description='NAPTR preference.',
+             type=int,
+             required=True,
+             metavar='PREFERENCE'),
+        Flag('-order',
+             description='NAPTR order.',
+             type=int,
+             required=True,
+             metavar='ORDER'),
+        Flag('-flag',
+             description='NAPTR flag.',
+             required=True,
+             metavar='FLAG'),
+        Flag('-service',
+             description='NAPTR service.',
+             required=True,
+             metavar='SERVICE'),
+        Flag('-regex',
+             description='NAPTR regexp.',
+             required=True,
+             metavar='REGEXP'),
+        Flag('-replacement',
              description='NAPTR replacement.',
+             required=True,
              metavar='REPLACEMENT'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
     ],
 )
 
@@ -1932,7 +1921,7 @@ def _naptr_show(info):
     naptrs = get_list(path)
     if naptrs:
         print("{1:<{0}} {2} {3} {4} {5} {6} {7}".format(
-            14, info["name"], "Preference", "Order", "Flag", "Service",
+            14, "Name", "Preference", "Order", "Flag", "Service",
             "Regex", "Replacement"))
         for ptr in naptrs:
             print_naptr(ptr, info["name"])
@@ -2024,6 +2013,9 @@ host.add_command(
         Flag('-new',
              description='Name of new host.',
              metavar='NAME'),
+        Flag('-force',
+             action='store_true',
+             description='Enable force.'),
     ],
 )
 
@@ -2188,46 +2180,29 @@ def srv_add(args):
     """Add SRV record.
     """
 
-    # Require force if target host doesn't exist
-    host_name = clean_hostname(args.name)
-    try:
-        host_name = resolve_input_name(args.name)
-    except HostNotFoundWarning:
-        if not args.force:
-            cli_warning("{} doesn't exist. Must force".format(args.name))
+    sname = clean_hostname(args.name)
+    check_zone_for_hostname(sname, False, require_zone=True)
+
+    # Require host target
+    info = host_info_by_name(args.host)
 
     # Require force if target host not in MREG zone
-    check_zone_for_hostname(host_name, args.force)
-
-    sname = clean_hostname(args.service)
-
-    # Check if a SRV record with identical service exists
-    path = f"/srvs/?name={sname}"
-    history.record_get(path)
-    srvs = get_list(path)
-    if len(srvs) > 0:
-        entry_exists = True
-    else:
-        entry_exists = False
+    check_zone_for_hostname(info['name'], args.force)
 
     data = {
         "name": sname,
-        "priority": args.pri,
+        "priority": args.priority,
         "weight": args.weight,
         "port": args.port,
-        "target": host_name,
+        "host": info['id'],
     }
 
     # Create new SRV record
     path = "/srvs/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
-    if entry_exists:
-        cli_info("Added SRV record {} with target {} to existing entry."
-                 .format(sname, host_name), print_msg=True)
-    else:
-        cli_info("Added SRV record {} with target {}".format(sname, host_name),
-                 print_msg=True)
+    cli_info("Added SRV record {} with target {}".format(sname, info['name']),
+             print_msg=True)
 
 
 # Add 'srv_add' as a sub command to the 'host' command
@@ -2236,14 +2211,14 @@ host.add_command(
     description='Add SRV record.',
     callback=srv_add,
     flags=[
-        Flag('-service',
+        Flag('-name',
              description='SRV service.',
              required=True,
              metavar='SERVICE'),
-        Flag('-pri',
+        Flag('-priority',
              description='SRV priority.',
              required=True,
-             metavar='PRI'),
+             metavar='PRIORITY'),
         Flag('-weight',
              description='SRV weight.',
              required=True,
@@ -2252,7 +2227,7 @@ host.add_command(
              description='SRV port.',
              required=True,
              metavar='PORT'),
-        Flag('-name',
+        Flag('-host',
              description='Host target name.',
              required=True,
              metavar='NAME'),
@@ -2270,26 +2245,31 @@ host.add_command(
 def srv_remove(args):
     """Remove SRV record.
     """
-    sname = clean_hostname(args.service)
+    info = host_info_by_name(args.host)
+    sname = clean_hostname(args.name)
 
     # Check if service exist
-    path = f"/srvs/?name={sname}"
+    path = f"/srvs/?name={sname}&host={info['id']}"
+    print(path)
     history.record_get(path)
     srvs = get_list(path)
     if len(srvs) == 0:
-        cli_warning("not service named {}".format(sname))
-    elif len(srvs) > 1 and not args.force:
-        cli_warning("multiple services named {}, must force".format(sname))
+        cli_warning("no service named {}".format(sname))
 
-    # Remove all SRV records with that service
+    data = None
+    attrs = ('name', 'priority', 'weight', 'port',)
     for srv in srvs:
-        assert isinstance(srv, dict)
-        path = f"/srvs/{srv['id']}"
-        history.record_delete(path, srv, redoable=False)
-        delete(path)
-        cli_info("removed SRV record {} with target {}".format(srv["name"],
-                                                               srv["target"]),
-                 print_msg=True)
+        if all(srv[attr] == getattr(args, attr) for attr in attrs):
+            data = srv
+
+    if data is None:
+        cli_warning("Did not find any matching SRV records.")
+
+    # Delete NAPTR record
+    path = f"/naptrs/{data['id']}"
+    history.record_delete(path, data)
+    delete(path)
+    cli_info("deleted SRV record for {}".format(info["name"]), print_msg=True)
 
 
 # Add 'srv_remove' as a sub command to the 'host' command
@@ -2298,12 +2278,26 @@ host.add_command(
     description='Remove SRV record.',
     callback=srv_remove,
     flags=[
-        Flag('service',
-             description='Host target name.',
+        Flag('-name',
+             description='SRV service.',
+             required=True,
              metavar='SERVICE'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag('-priority',
+             description='SRV priority.',
+             required=True,
+             metavar='PRIORITY'),
+        Flag('-weight',
+             description='SRV weight.',
+             required=True,
+             metavar='WEIGHT'),
+        Flag('-port',
+             description='SRV port.',
+             required=True,
+             metavar='PORT'),
+        Flag('-host',
+             description='Host target name.',
+             required=True,
+             metavar='NAME'),
     ],
 )
 
@@ -2311,6 +2305,52 @@ host.add_command(
 ##############################################
 #  Implementation of sub command 'srv_show'  #
 ##############################################
+
+def _srv_show(srvs=None, host_id=None):
+    assert srvs is not None or host_id is not None
+    hostid2name = dict()
+    host_ids = set()
+
+    def print_srv(srv: dict, hostname: str, padding: int = 14) -> None:
+        """Pretty print given srv"""
+        print("SRV: {1:<{0}} {2:^6} {3:^6} {4:^6} {5}".format(
+            padding,
+            srv["name"],
+            srv["priority"],
+            srv["weight"],
+            srv["port"],
+            hostname,
+        ))
+
+    if srvs is None:
+        path = f"/srvs/?host={host_id}"
+        history.record_get(path)
+        srvs = get_list(path)
+
+    if len(srvs) == 0:
+        return
+
+    padding = 0
+
+    # Print records
+    for srv in srvs:
+        if len(srv["name"]) > padding:
+            padding = len(srv["name"])
+        host_ids.add(str(srv['host']))
+
+    arg = ','.join(host_ids)
+    hosts = get_list(f'/hosts/?id__in={arg}')
+    for host in hosts:
+        hostid2name[host['id']] = host['name']
+
+    prev_name = ""
+    for srv in srvs:
+        if prev_name == srv["name"]:
+            srv["name"] = ""
+        else:
+            prev_name = srv["name"]
+        print_srv(srv, hostid2name[srv['host']], padding)
+
 
 def srv_show(args):
     """Show SRV records for the service.
@@ -2322,21 +2362,10 @@ def srv_show(args):
     path = f"/srvs/?name={sname}"
     history.record_get(path)
     srvs = get_list(path)
-    if len(srvs) < 1:
+    if len(srvs) == 0:
         cli_warning("no service matching {}".format(sname))
-    padding = 0
-
-    # Print records
-    for srv in srvs:
-        if len(srv["name"]) > padding:
-            padding = len(srv["name"])
-    prev_name = ""
-    for srv in sorted(srvs, key=lambda k: k["name"]):
-        if prev_name == srv["name"]:
-            srv["name"] = ""
-        else:
-            prev_name = srv["name"]
-        print_srv(srv, padding)
+    else:
+        _srv_show(srvs=srvs)
     cli_info("showed entries for SRV {}".format(sname))
 
 
@@ -2709,10 +2738,7 @@ def txt_remove(args):
         history.record_delete(path, txt)
         delete(path)
     cli_info("deleted {} of {} TXT records matching \"{}\"".format(
-        len(txts),
-        info["name"],
-        args.text
-    ))
+        len(txts), info["name"], args.text), print_msg=True)
 
 
 # Add 'txt_remove' as a sub command to the 'host' command
