@@ -61,11 +61,11 @@ host a_add daddyo 10.1.0.1 -force
 # AAAA #########################################################################
 # Test force when adding AAAA record to host with existing A/AAAA record
 !echo -n "$ Fails: "
-host aaaa_add sethmacfarlane 2001:db8::1
-host aaaa_add sethmacfarlane 2001:db8::1 -force
-host aaaa_change sethmacfarlane -old  2001:db8::1 -new  2001:db8::2
-host aaaa_remove sethmacfarlane  2001:db8::2
-host aaaa_add sethmacfarlane  2001:db8::1 -force
+host aaaa_add sethmacfarlane 2001:db8::10
+host aaaa_add sethmacfarlane 2001:db8::10 -force
+host aaaa_change sethmacfarlane -old  2001:db8::10 -new  2001:db8::20
+host aaaa_remove sethmacfarlane  2001:db8::20
+host aaaa_add sethmacfarlane  2001:db8::10 -force
 host aaaa_add sethmacfarlane 2001:db8::/ -force
 host aaaa_add sethmacfarlane 2001:db8::/64 -force
 
@@ -131,11 +131,11 @@ host ptr_set 1234::ff0a am.dad.no
 host ptr_set 1234::ff0a am.dad.no -force
 
 # SRV ##########################################################################
-host srv_add -name _tull._tcp.familyguy -priority 2 -weight 50 -port 4932 -host sethmacfarlane
-host srv_add -name _tull._udp.familyguy -priority 2 -weight 50 -port 4932 -host sethmacfarlane
-host srv_add -name _tull._udp.sethmacfarlane -priority 2 -weight 50 -port 4932 -host stan
-host srv_add -name _tull._udp.sethmacfarlane -priority 1 -weight 34 -port 4932 -host roger
-host srv_add -name _xxx._udp.sethmacfarlane -priority 1 -weight 11 -port 4932 -host steve
+host srv_add -name _tull._tcp.familyguy.example.org -priority 2 -weight 50 -port 4932 -host sethmacfarlane
+host srv_add -name _tull._udp.familyguy.example.org -priority 2 -weight 50 -port 4932 -host sethmacfarlane
+host srv_add -name _tull._udp.sethmacfarlane.example.org -priority 2 -weight 50 -port 4932 -host stan
+host srv_add -name _tull._udp.sethmacfarlane.example.org -priority 1 -weight 34 -port 4932 -host roger
+host srv_add -name _xxx._udp.sethmacfarlane.example.org -priority 1 -weight 11 -port 4932 -host steve
 host srv_remove -name _xxx._udp.sethmacfarlane.example.org -priority 1 -weight 11 -port 4932 -host steve
 
 # Test force if target name doesn't exist
