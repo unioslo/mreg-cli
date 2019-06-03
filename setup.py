@@ -7,7 +7,7 @@ if sys.version_info < (3,6):
 
 install_requirements = [
     'prompt_toolkit',
-    'requests==2.21.0',
+    'requests==2.22.0',
 ]
 
 
