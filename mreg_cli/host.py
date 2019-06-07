@@ -286,7 +286,7 @@ def remove(args):
                 ))
 
     # Require force if host has any SRV records. Delete the SRV records if force
-    path = f"/srvs/?target={info['name']}"
+    path = f"/srvs/?host__name={info['name']}"
     history.record_get(path)
     srvs = get_list(path)
     if len(srvs) > 0:
