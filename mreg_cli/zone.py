@@ -328,13 +328,14 @@ zone.add_command(
 ###########################################
 
 def set_soa(args):
-    # .zone .ns .email .serialno .retry .expire .ttl
+    # .zone .ns .email .serialno .retry .expire .soa_ttl .default_ttl
     """Updated the SOA of a zone.
     """
     # TODO Validation for valid domain names
     get(f"/zones/{args.zone}").json()
     data = {}
-    for i in ('email', 'expire', 'refresh', 'retry', 'serialno', 'ttl'):
+    for i in ('email', 'expire', 'refresh', 'retry', 'serialno',
+              'soa_ttl', 'default_ttl',):
         value = getattr(args, i, None)
         if value is not None:
             data[i] = value
@@ -379,8 +380,12 @@ zone.add_command(
              description='Expire time.',
              type=int,
              metavar='EXPIRE'),
-        Flag('-ttl',
-             description='Time To Live.',
+        Flag('-soa-ttl',
+             description='SOA Time To Live',
+             type=int,
+             metavar='TTL'),
+        Flag('-default-ttl',
+             description='Default Time To Live.',
              type=int,
              metavar='TTL'),
     ]
