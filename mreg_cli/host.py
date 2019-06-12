@@ -379,26 +379,37 @@ def print_comment(comment: str, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "Comment:", comment))
 
 
-def print_ipaddresses(ipaddresses: typing.Iterable[dict], padding: int = 14) -> None:
+def print_ipaddresses(ipaddresses: typing.Iterable[dict], names: bool = False,
+                      padding: int = 14) -> None:
     """Pretty print given ip addresses"""
+    def _find_padding(lst, attr):
+        return max(padding, max([len(i[attr]) for i in lst])+1)
     if not ipaddresses:
         return
     a_records = []
     aaaa_records = []
-    len_ip = max([len(i['ipaddress']) for i in ipaddresses])
+    len_ip = _find_padding(ipaddresses, 'ipaddress')
     for record in ipaddresses:
         if is_valid_ipv4(record["ipaddress"]):
             a_records.append(record)
         elif is_valid_ipv6(record["ipaddress"]):
             aaaa_records.append(record)
+    if names:
+        len_names = _find_padding(ipaddresses, 'name')
+    else:
+        len_names = padding
     for records, text in ((a_records, 'A_Records'), (aaaa_records, 'AAAA_Records')):
         if records:
-            print("{1:<{0}}{2:<{3}}  {4}".format(padding, text, "IP", len_ip, "MAC"))
+            print("{1:<{0}}{2:<{3}}  {4}".format(len_names, text, "IP", len_ip, "MAC"))
             for record in records:
                 ip = record["ipaddress"]
                 mac = record["macaddress"]
+                if names:
+                    name = record["name"]
+                else:
+                    name = ""
                 print("{1:<{0}}{2:<{3}}  {4}".format(
-                    padding, "", ip if ip else "<not set>", len_ip,
+                    len_names, name, ip if ip else "<not set>", len_ip,
                     mac if mac else "<not set>"))
 
 def print_ttl(ttl: int, padding: int = 14) -> None:
@@ -472,35 +483,64 @@ def print_txt(txt: str, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "TXT:", txt))
 
 
+def _print_host_info(name):
+    # Pretty print all host info
+    info = host_info_by_name(name)
+    print_host_name(info["name"])
+    print_contact(info["contact"])
+    if info["comment"]:
+        print_comment(info["comment"])
+    print_ipaddresses(info["ipaddresses"])
+    for ptr in info["ptr_overrides"]:
+        print_ptr(ptr["ipaddress"], info["name"])
+    print_ttl(info["ttl"])
+    print_mx(info['mxs'])
+    if info["hinfo"]:
+        print_hinfo(info["hinfo"])
+    if info["loc"]:
+        print_loc(info["loc"])
+    for cname in info["cnames"]:
+        print_cname(cname["name"], info["name"])
+    for txt in info["txts"]:
+        print_txt(txt["txt"])
+    _srv_show(host_id=info['id'])
+    _naptr_show(info)
+    cli_info("printed host info for {}".format(info["name"]))
+
+
+def _print_ip_info(ip):
+    """Print all hosts which have a given IP. Also print out PTR override, if any."""
+    path = f"/hosts/?ipaddresses__ipaddress={ip}&ordering=name"
+    ip = ip.lower()
+    history.record_get(path)
+    hosts = get_list(path)
+    ipaddresses = []
+    ptrhost = 'default'
+    for info in hosts:
+        for i in info['ipaddresses']:
+            if i['ipaddress'] == ip:
+                i['name'] = info['name']
+                ipaddresses.append(i)
+        for i in info['ptr_overrides']:
+            if i['ipaddress'] == ip:
+                ptrhost = info['name']
+
+    print_ipaddresses(ipaddresses, names=True)
+    if len(ipaddresses) > 1 and ptrhost == 'default':
+        cli_warning(f'IP {ip} used by {len(ipaddresses)} hosts, but no PTR override')
+    print_ptr(ip, ptrhost)
+
+
 def info_(args):
     """Print information about host. If <name> is an alias the cname hosts info
     is shown.
     """
     for name_or_ip in args.hosts:
         # Get host info or raise exception
-        info = host_info_by_name_or_ip(name_or_ip)
-
-        # Pretty print all host info
-        print_host_name(info["name"])
-        print_contact(info["contact"])
-        if info["comment"]:
-            print_comment(info["comment"])
-        print_ipaddresses(info["ipaddresses"])
-        for ptr in info["ptr_overrides"]:
-            print_ptr(ptr["ipaddress"], info["name"])
-        print_ttl(info["ttl"])
-        print_mx(info['mxs'])
-        if info["hinfo"]:
-            print_hinfo(info["hinfo"])
-        if info["loc"]:
-            print_loc(info["loc"])
-        for cname in info["cnames"]:
-            print_cname(cname["name"], info["name"])
-        for txt in info["txts"]:
-            print_txt(txt["txt"])
-        _srv_show(host_id=info['id'])
-        _naptr_show(info)
-        cli_info("printed host info for {}".format(info["name"]))
+        if is_valid_ip(name_or_ip):
+            _print_ip_info(name_or_ip)
+        else:
+            _print_host_info(name_or_ip)
 
 
 # Add 'info' as a sub command to the 'host' command
