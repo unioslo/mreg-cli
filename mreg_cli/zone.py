@@ -212,7 +212,8 @@ def info(args):
     print_soa("Refresh:", zone["refresh"])
     print_soa("Retry:", zone["retry"])
     print_soa("Expire:", zone["expire"])
-    print_soa("TTL:", zone["ttl"])
+    print_soa("SOA TTL:", zone["soa_ttl"])
+    print_soa("Default TTL:", zone["default_ttl"])
 
 
 zone.add_command(
