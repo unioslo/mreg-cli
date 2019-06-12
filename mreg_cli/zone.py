@@ -329,14 +329,13 @@ zone.add_command(
 ###########################################
 
 def set_soa(args):
-    # .zone .ns .email .serialno .retry .expire .soa_ttl .default_ttl
+    # .zone .ns .email .serialno .retry .expire .soa_ttl
     """Updated the SOA of a zone.
     """
     # TODO Validation for valid domain names
-    get(f"/zones/{args.zone}").json()
+    get(f"/zones/{args.zone}")
     data = {}
-    for i in ('email', 'expire', 'refresh', 'retry', 'serialno',
-              'soa_ttl', 'default_ttl',):
+    for i in ('email', 'expire', 'refresh', 'retry', 'serialno', 'soa_ttl',):
         value = getattr(args, i, None)
         if value is not None:
             data[i] = value
@@ -385,9 +384,38 @@ zone.add_command(
              description='SOA Time To Live',
              type=int,
              metavar='TTL'),
-        Flag('-default-ttl',
+    ]
+)
+
+###################################################
+# Implementation of sub command 'set_default_ttl' #
+###################################################
+
+
+def set_default_ttl(args):
+    # .zone .ttl
+    """Update the default TTL of a zone.
+    """
+
+    get(f"/zones/{args.zone}")
+    data = {'default_ttl': args.ttl}
+
+    patch(f"/zones/{args.zone}", **data)
+    cli_info("set default TTL for {}".format(args.zone), True)
+
+
+zone.add_command(
+    prog='set_default_ttl',
+    description='Set the default TTL of a zone.',
+    short_desc='Set the default TTL of a zone.',
+    callback=set_default_ttl,
+    flags=[
+        Flag('zone',
+             description='Zone name.',
+             metavar='ZONE'),
+        Flag('ttl',
              description='Default Time To Live.',
              type=int,
              metavar='TTL'),
-    ]
+        ]
 )
