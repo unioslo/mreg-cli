@@ -64,25 +64,19 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
     :return: A dict of the JSON object received with the host information
     """
 
-    def _get_host(name):
-        path = f"/hosts/{name}"
-        history.record_get(path)
-        host = get(path).json()
-        return host
-
     # Get longform of name
     name = clean_hostname(name)
+    hostinfo = get(f"/hosts/{name}", ok404=True)
 
-    if host_exists(name):
-        return _get_host(name)
+    if hostinfo:
+        return hostinfo.json()
     elif follow_cname:
         # All host info data is returned from the API
         path = f"/hosts/?cnames__name={name}"
         history.record_get(path)
-        host = get_list(path)
-        if len(host):
-            assert len(host) == 1
-            return _get_host(host[0]['name'])
+        hosts = get_list(path)
+        if len(hosts) == 1:
+            return hosts[0]
 
     cli_warning("host not found: {}".format(name), exception=HostNotFoundWarning)
 
