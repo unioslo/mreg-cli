@@ -715,6 +715,50 @@ host.add_command(
 #                                                                              #
 ################################################################################
 
+def _ip_add(args, ipversion):
+    info = None
+
+    # TODO: only for superusers
+    if "*" in args.name and not args.force:
+        cli_warning("Wildcards must be forced.")
+
+    ip = _get_ip_from_args(args.ip, args.force, ipversion=ipversion)
+
+    try:
+        # Get host info for or raise exception
+        info = host_info_by_name(args.name)
+    except HostNotFoundWarning:
+        pass
+
+    if info is None:
+        hostname = clean_hostname(args.name)
+        data = {'name': hostname,
+                'ipaddress': ip}
+        # Create new host with IP
+        path = "/hosts/"
+        history.record_post(path, ip, data)
+        post(path, **data)
+        cli_info(f"Created host {hostname} with ip {ip}", print_msg=True)
+    else:
+        # Require force if host has multiple A/AAAA records
+        if len(info["ipaddresses"]) and not args.force:
+            cli_warning("{} already has A/AAAA record(s), must force"
+                        .format(info["name"]))
+
+        if any(args.ip == i["ipaddress"] for i in info["ipaddresses"]):
+            cli_warning(f"Host already has IP {args.ip}")
+
+        data = {
+            "host": info["id"],
+            "ipaddress": ip,
+        }
+
+        # Add IP
+        path = "/ipaddresses/"
+        history.record_post(path, ip, data)
+        post(path, **data)
+        cli_info(f"added ip {ip} to {info['name']}", print_msg=True)
+
 
 ###########################################
 #  Implementation of sub command 'a_add'  #
@@ -723,35 +767,8 @@ host.add_command(
 def a_add(args):
     """Add an A record to host. If <name> is an alias the cname host is used.
     """
+    _ip_add(args, 4)
 
-    ip = None
-    # Get host info for or raise exception
-    info = host_info_by_name(args.name)
-
-    # TODO: only for superusers
-    if "*" in args.name and not args.force:
-        cli_warning("Wildcards must be forced.")
-
-    # Require force if host has multiple A/AAAA records
-    if len(info["ipaddresses"]) and not args.force:
-        cli_warning("{} already has A/AAAA record(s), must force"
-                    .format(info["name"]))
-
-    if any(args.ip == i["ipaddress"] for i in info["ipaddresses"]):
-        cli_warning(f"Host already has IP {args.ip}")
-
-    ip = _get_ip_from_args(args.ip, args.force, ipversion=4)
-
-    data = {
-        "host": info["id"],
-        "ipaddress": ip,
-    }
-
-    # Add A record
-    path = "/ipaddresses/"
-    history.record_post(path, ip, data)
-    post(path, **data)
-    cli_info("added ip {} to {}".format(ip, info["name"]), print_msg=True)
 
 
 # Add 'a_add' as a sub command to the 'host' command
@@ -944,34 +961,7 @@ host.add_command(
 def aaaa_add(args):
     """Add an AAAA record to host. If <name> is an alias the cname host is used.
     """
-
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-
-    # TODO: only for superusers
-    if "*" in args.name and not args.force:
-        cli_warning("Wildcards must be forced.")
-
-    if len(info["ipaddresses"]) and not args.force:
-        cli_warning("{} already has A/AAAA record(s), must force"
-                    .format(info["name"]))
-
-    if any(args.ip == i["ipaddress"] for i in info["ipaddresses"]):
-        cli_warning(f"Host already has IP {args.ip}")
-
-    ip = _get_ip_from_args(args.ip, args.force, ipversion=6)
-
-    data = {
-        "host": info["id"],
-        "ipaddress": ip,
-    }
-
-    # Create AAAA records
-    path = "/ipaddresses/"
-    history.record_post(path, ip, data)
-    post(path, **data)
-    cli_info("added ip {} to {}".format(ip, info["name"]), print_msg=True)
-
+    _ip_add(args, 6)
 
 # Add 'aaaa_add' as a sub command to the 'host' command
 host.add_command(
