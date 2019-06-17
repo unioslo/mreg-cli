@@ -37,7 +37,7 @@ def assoc(args):
 
     # Get A/AAAA record by either ip address or host name
     if is_valid_ip(args.name):
-        path = f"/ipaddresses/?ipaddress={args.name}"
+        path = f"/api/v1/ipaddresses/?ipaddress={args.name}"
         history.record_get(path)
         ip = get_list(path)
         if not len(ip):
@@ -59,7 +59,7 @@ def assoc(args):
     # MAC addr sanity check
     if re.match(r"^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", args.mac):
         new_mac = format_mac(args.mac)
-        path = f"/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
+        path = f"/api/v1/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
         history.record_get(path)
         macs = get_list(path)
         ips = ", ".join([i['ipaddress'] for i in macs])
@@ -80,7 +80,7 @@ def assoc(args):
             ip['ipaddress'], old_mac))
 
     # Update Ipaddress with a mac
-    path = f"/ipaddresses/{ip['id']}"
+    path = f"/api/v1/ipaddresses/{ip['id']}"
     history.record_patch(path, new_data={"macaddress": new_mac}, old_data=ip)
     patch(path, macaddress=new_mac)
     cli_info("associated mac address {} with ip {}"
@@ -117,7 +117,7 @@ def disassoc(args):
     """
     # Get A/AAAA record by either ip address or host name
     if is_valid_ip(args.name):
-        path = f"/ipaddresses/?ipaddress={args.name}"
+        path = f"/api/v1/ipaddresses/?ipaddress={args.name}"
         history.record_get(path)
         ip = get_list(path)
         if not len(ip):
@@ -138,7 +138,7 @@ def disassoc(args):
 
     if ip.get('macaddress'):
         # Update ipaddress
-        path = f"/ipaddresses/{ip['id']}"
+        path = f"/api/v1/ipaddresses/{ip['id']}"
         history.record_patch(path, new_data={"macaddress": ""}, old_data=ip)
         patch(path, macaddress="")
         cli_info("disassociated mac address {} from ip {}".format(

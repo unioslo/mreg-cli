@@ -23,7 +23,7 @@ def set_config(cfg):
 
 def host_exists(name: str) -> bool:
     """Checks if a host with the given name exists"""
-    path = f"/hosts/?name={name}"
+    path = f"/api/v1/hosts/?name={name}"
     history.record_get(path)
     hosts = get_list(path)
 
@@ -66,13 +66,13 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
 
     # Get longform of name
     name = clean_hostname(name)
-    hostinfo = get(f"/hosts/{name}", ok404=True)
+    hostinfo = get(f"/api/v1/hosts/{name}", ok404=True)
 
     if hostinfo:
         return hostinfo.json()
     elif follow_cname:
         # All host info data is returned from the API
-        path = f"/hosts/?cnames__name={name}"
+        path = f"/api/v1/hosts/?cnames__name={name}"
         history.record_get(path)
         hosts = get_list(path)
         if len(hosts) == 1:
@@ -98,7 +98,7 @@ def first_unused_ip_from_network(network: dict) -> str:
 def zone_mreg_controlled(zone: str) -> bool:
     """Return true of the zone is controlled by MREG"""
     assert isinstance(zone, str)
-    path = f"/zones/?name={zone}"
+    path = f"/api/v1/zones/?name={zone}"
     history.record_get(path)
     zone = get(path).json()
     return bool(len(zone))
@@ -257,7 +257,7 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
 
 def resolve_ip(ip: str) -> str:
     """Returns host name associated with ip"""
-    path = f"/hosts/?ipaddresses__ipaddress={ip}"
+    path = f"/api/v1/hosts/?ipaddresses__ipaddress={ip}"
     history.record_get(path)
     hosts = get_list(path)
 
@@ -274,7 +274,7 @@ def resolve_input_name(name: str) -> str:
     """Tries to find the named host. Raises an exception if not."""
     hostname = clean_hostname(name)
 
-    path = f"/hosts/?name={hostname}"
+    path = f"/api/v1/hosts/?name={hostname}"
     history.record_get(path)
     hosts = get_list(path)
 
@@ -324,7 +324,7 @@ def ipsort(ips: list) -> list:
 
 def get_network_by_ip(ip: str) -> dict:
     if is_valid_ip(ip):
-        path = f"/networks/ip/{ip}"
+        path = f"/api/v1/networks/ip/{ip}"
         net = get(path, ok404=True)
         if net:
             return net.json()
@@ -337,7 +337,7 @@ def get_network_by_ip(ip: str) -> dict:
 def get_network(ip: str) -> dict:
     "Returns network associated with given range or IP"
     if is_valid_network(ip):
-        path = f"/networks/{ip}"
+        path = f"/api/v1/networks/{ip}"
         history.record_get(path)
         return get(path).json()
     elif is_valid_ip(ip):
@@ -351,42 +351,42 @@ def get_network(ip: str) -> dict:
 
 def get_network_used_count(ip_range: str):
     "Return a count of the addresses in use on a given network"
-    path = f"/networks/{ip_range}/used_count"
+    path = f"/api/v1/networks/{ip_range}/used_count"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_used_list(ip_range: str):
     "Return a list of the addresses in use on a given network"
-    path = f"/networks/{ip_range}/used_list"
+    path = f"/api/v1/networks/{ip_range}/used_list"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_unused_count(ip_range: str):
     "Return a count of the unused addresses on a given network"
-    path = f"/networks/{ip_range}/unused_count"
+    path = f"/api/v1/networks/{ip_range}/unused_count"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_unused_list(ip_range: str):
     "Return a list of the unused addresses on a given network"
-    path = f"/networks/{ip_range}/unused_list"
+    path = f"/api/v1/networks/{ip_range}/unused_list"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_first_unused(ip_range: str):
     "Returns the first unused address on a network, if any"
-    path = f"/networks/{ip_range}/first_unused"
+    path = f"/api/v1/networks/{ip_range}/first_unused"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_reserved_ips(ip_range: str):
     "Returns the first unused address on a network, if any"
-    path = f"/networks/{ip_range}/reserved_list"
+    path = f"/api/v1/networks/{ip_range}/reserved_list"
     history.record_get(path)
     return get(path).json()
 

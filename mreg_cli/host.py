@@ -45,7 +45,7 @@ def hinfo_dict() -> HinfoDict:
     Return a dict with descriptions of available hinfo presets. The keys
     are the hinfo ids.
     """
-    path = "/hinfopresets/"
+    path = "/api/v1/hinfopresets/"
     history.record_get(path)
     hl = dict()
     for hinfo in get_list(path):
@@ -67,7 +67,7 @@ def zoneinfo_for_hostname(host: str) -> dict:
     if "." not in host:
         return None
 
-    path = f"/zones/hostname/{host}"
+    path = f"/api/v1/zones/hostname/{host}"
     history.record_get(path)
     zoneinfo = get(path, ok404=True)
     return None if zoneinfo is None else zoneinfo.json()
@@ -195,7 +195,7 @@ def add(args):
         hinfo_sanify(args.hinfo, hi_dict)
 
     # Create the new host with an ip address
-    path = "/hosts/"
+    path = "/api/v1/hosts/"
     data = {
         "name": name,
         "contact": args.contact or None,
@@ -269,7 +269,7 @@ def remove(args):
 
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
-    path = f"/naptrs/?host={info['id']}"
+    path = f"/api/v1/naptrs/?host={info['id']}"
     history.record_get(path)
     naptrs = get_list(path)
     if len(naptrs) > 0:
@@ -277,16 +277,13 @@ def remove(args):
             warn_msg += "{} NAPTR records. ".format(len(naptrs))
         else:
             for naptr in naptrs:
-                path = f"/naptrs/{naptr['id']}"
-                history.record_delete(path, naptr)
-                delete(path)
                 cli_info("deleted NAPTR record {} when removing {}".format(
                     naptr["replacement"],
                     info["name"],
                 ))
 
     # Require force if host has any SRV records. Delete the SRV records if force
-    path = f"/srvs/?host__name={info['name']}"
+    path = f"/api/v1/srvs/?host__name={info['name']}"
     history.record_get(path)
     srvs = get_list(path)
     if len(srvs) > 0:
@@ -294,9 +291,6 @@ def remove(args):
             warn_msg += "{} SRV records. ".format(len(srvs))
         else:
             for srv in srvs:
-                path = f"/srvs/{srv['id']}"
-                history.record_delete(path, srv)
-                delete(path)
                 cli_info("deleted SRV record {} when removing {}".format(
                     srv["name"],
                     info["name"],
@@ -308,9 +302,6 @@ def remove(args):
             warn_msg += "{} PTR records. ".format(len(info["ptr_overrides"]))
         else:
             for ptr in info["ptr_overrides"]:
-                path = f"/ptroverrides/{ptr['id']}"
-                history.record_delete(path, ptr, redoable=False, undoable=False)
-                delete(path)
                 cli_info("deleted PTR record {} when removing {}".format(
                     ptr["ipaddress"],
                     info["name"],
@@ -326,7 +317,7 @@ def remove(args):
         cli_warning("{} has: {}Must force".format(info["name"], warn_msg))
 
     # Delete host
-    path = f"/hosts/{info['name']}"
+    path = f"/api/v1/hosts/{info['name']}"
     history.record_delete(path, old_data=info)
     delete(path)
     cli_info("removed {}".format(info["name"]), print_msg=True)
@@ -510,7 +501,7 @@ def _print_host_info(name):
 
 def _print_ip_info(ip):
     """Print all hosts which have a given IP. Also print out PTR override, if any."""
-    path = f"/hosts/?ipaddresses__ipaddress={ip}&ordering=name"
+    path = f"/api/v1/hosts/?ipaddresses__ipaddress={ip}&ordering=name"
     ip = ip.lower()
     history.record_get(path)
     hosts = get_list(path)
@@ -594,7 +585,7 @@ def rename(args):
     new_data = {"name": new_name}
 
     # Rename host
-    path = f"/hosts/{old_name}"
+    path = f"/api/v1/hosts/{old_name}"
     # Cannot redo/undo now since it changes name
     history.record_patch(path, new_data, old_data, redoable=False,
                          undoable=False)
@@ -640,7 +631,7 @@ def set_comment(args):
     new_data = {"comment": args.comment}
 
     # Update comment
-    path = f"/hosts/{info['name']}"
+    path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, comment=args.comment)
     cli_info("updated comment of {} to \"{}\""
@@ -684,7 +675,7 @@ def set_contact(args):
     new_data = {"contact": args.contact}
 
     # Update contact information
-    path = f"/hosts/{info['name']}"
+    path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, contact=args.contact)
     cli_info("Updated contact of {} to {}".format(info["name"], args.contact),
@@ -735,7 +726,7 @@ def _ip_add(args, ipversion):
         data = {'name': hostname,
                 'ipaddress': ip}
         # Create new host with IP
-        path = "/hosts/"
+        path = "/api/v1/hosts/"
         history.record_post(path, ip, data)
         post(path, **data)
         cli_info(f"Created host {hostname} with ip {ip}", print_msg=True)
@@ -754,7 +745,7 @@ def _ip_add(args, ipversion):
         }
 
         # Add IP
-        path = "/ipaddresses/"
+        path = "/api/v1/ipaddresses/"
         history.record_post(path, ip, data)
         post(path, **data)
         cli_info(f"added ip {ip} to {info['name']}", print_msg=True)
@@ -826,7 +817,7 @@ def a_change(args):
     new_data = {"ipaddress": new_ip}
 
     # Update A records ip address
-    path = f"/ipaddresses/{ip_id}"
+    path = f"/api/v1/ipaddresses/{ip_id}"
     # Cannot redo/undo since recourse name changes
     history.record_patch(path, new_data, old_data, redoable=False,
                          undoable=False)
@@ -896,7 +887,7 @@ def a_remove(args):
     }
 
     # Remove ip
-    path = f"/ipaddresses/{ip_id}"
+    path = f"/api/v1/ipaddresses/{ip_id}"
     history.record_delete(path, old_data)
     delete(path)
     cli_info("removed ip {} from {}".format(args.ip, info["name"]),
@@ -1015,7 +1006,7 @@ def aaaa_change(args):
     new_data = {"ipaddress": new_ip}
 
     # Update AAAA records ip address
-    path = f"/ipaddresses/{ip_id}"
+    path = f"/api/v1/ipaddresses/{ip_id}"
     # Cannot redo/undo since recourse name changes
     history.record_patch(path, new_data, old_data, redoable=False,
                          undoable=False)
@@ -1084,7 +1075,7 @@ def aaaa_remove(args):
     }
 
     # Delete AAAA record
-    path = f"/ipaddresses/{ip_id}"
+    path = f"/api/v1/ipaddresses/{ip_id}"
     history.record_delete(path, old_data)
     delete(path)
     cli_info("removed {} from {}".format(args.ip, info["name"]), print_msg=True)
@@ -1167,7 +1158,7 @@ def cname_add(args):
     data = {'host': info['id'],
             'name': alias}
     # Create CNAME record
-    path = "/cnames/"
+    path = "/api/v1/cnames/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("Added cname alias {} for {}".format(alias, info["name"]),
@@ -1213,7 +1204,7 @@ def cname_remove(args):
         cli_warning("\"{}\" is not an alias for \"{}\"".format(alias, hostname))
 
     # Delete CNAME host
-    path = f"/cnames/{alias}"
+    path = f"/api/v1/cnames/{alias}"
     history.record_delete(path, dict(), undoable=False)
     delete(path)
     cli_info("Removed cname alias {} for {}".format(alias, hostname),
@@ -1255,7 +1246,7 @@ def cname_show(args):
         pass
 
     name = clean_hostname(args.name)
-    path = f"/hosts/?cnames_name={name}"
+    path = f"/api/v1/hosts/?cnames_name={name}"
     history.record_get(path)
     hosts = get_list(path)
     if len(hosts):
@@ -1293,7 +1284,7 @@ def _hinfo_remove(host_) -> None:
     new_data = {"hinfo": ""}
 
     # Set hinfo to null value
-    path = f"/hosts/{host_['name']}"
+    path = f"/api/v1/hosts/{host_['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, hinfo="")
 
@@ -1343,7 +1334,7 @@ def hinfo_set(args):
     new_data = {"hinfo": args.hinfo}
 
     # Update hinfo
-    path = f"/hosts/{info['name']}"
+    path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, hinfo=args.hinfo)
     cli_info("updated hinfo to {} for {}".format(args.hinfo, info["name"]),
@@ -1453,7 +1444,7 @@ def hinfopresets_create(args):
         "cpu": args.cpu,
         "os": args.os
     }
-    path = "/hinfopresets/"
+    path = "/api/v1/hinfopresets/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("Added new hinfopreset with cpu {} and os {}"
@@ -1491,7 +1482,7 @@ def hinfopresets_remove(args):
         return
 
     # Check for hinfopreset in use
-    path = f"/hosts/?hinfo={args.id}"
+    path = f"/api/v1/hosts/?hinfo={args.id}"
     history.record_get(path)
     hosts = get_list(path)
     if len(hosts):
@@ -1505,7 +1496,7 @@ def hinfopresets_remove(args):
             cli_warning("hinfopreset {} in use by {} hosts, must force".format(
                 args.id, len(hosts)))
 
-    path = f"/hinfopresets/{args.id}"
+    path = f"/api/v1/hinfopresets/{args.id}"
     history.record_delete(path, args.id)
     delete(path)
     cli_info("Removed hinfopreset {}".format(args.id), print_msg=True)
@@ -1554,7 +1545,7 @@ def loc_remove(args):
     new_data = {"loc": ""}
 
     # Set LOC to null value
-    path = f"/hosts/{info['name']}"
+    path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, loc="")
     cli_info("removed LOC for {}".format(info["name"]), print_msg=True)
@@ -1606,7 +1597,7 @@ def loc_set(args):
     new_data = {"loc": args.loc}
 
     # Update LOC
-    path = f"/hosts/{info['name']}"
+    path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, loc=args.loc)
     cli_info("updated LOC to {} for {}".format(args.loc, info["name"]),
@@ -1694,7 +1685,7 @@ def mx_add(args):
         "mx": args.mx
     }
     # Add MX record to host
-    path = "/mxs/"
+    path = "/api/v1/mxs/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("Added MX record to {}".format(info["name"]), print_msg=True)
@@ -1736,7 +1727,7 @@ def mx_remove(args):
         "NOT FOUND"
         cli_warning("{} has not MX records with priority {} and mail exhange {}".format(
                     info['name'], args.priority, args.mx))
-    path = f"/mxs/{mx_id}"
+    path = f"/api/v1/mxs/{mx_id}"
     history.record_delete(path, mx_id)
     delete(path)
     cli_info("deleted MX from {}".format(info['name']), True)
@@ -1771,7 +1762,7 @@ def mx_show(args):
     """Show all MX records for host.
     """
     info = host_info_by_name(args.name)
-    path = f"/mxs/?host={info['id']}"
+    path = f"/api/v1/mxs/?host={info['id']}"
     history.record_get(path)
     mxs = get_list(path)
     print_mx(mxs, padding=5)
@@ -1820,7 +1811,7 @@ def naptr_add(args):
     }
 
     # Create NAPTR record
-    path = "/naptrs/"
+    path = "/api/v1/naptrs/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("created NAPTR record for {}".format(info["name"]), print_msg=True)
@@ -1881,7 +1872,7 @@ def naptr_remove(args):
 
     # get the hosts NAPTR records where repl is a substring of the replacement
     # field
-    path = f"/naptrs/?replacement__contains={args.replacement}&host={info['id']}"
+    path = f"/api/v1/naptrs/?replacement__contains={args.replacement}&host={info['id']}"
     history.record_get(path)
     naptrs = get_list(path)
 
@@ -1895,7 +1886,7 @@ def naptr_remove(args):
         cli_warning("Did not find any matching NAPTR record.")
 
     # Delete NAPTR record
-    path = f"/naptrs/{data['id']}"
+    path = f"/api/v1/naptrs/{data['id']}"
     history.record_delete(path, data)
     delete(path)
     cli_info("deleted NAPTR record for {}".format(info["name"]), print_msg=True)
@@ -1946,7 +1937,7 @@ host.add_command(
 ################################################
 
 def _naptr_show(info):
-    path = f"/naptrs/?host={info['id']}"
+    path = f"/api/v1/naptrs/?host={info['id']}"
     history.record_get(path)
     naptrs = get_list(path)
     if naptrs:
@@ -2016,7 +2007,7 @@ def ptr_change(args):
         "host": new_info["id"],
     }
 
-    path = "/ptroverrides/{}".format(old_info["ptr_overrides"][0]["id"])
+    path = "/api/v1/ptroverrides/{}".format(old_info["ptr_overrides"][0]["id"])
     history.record_patch(path, data, old_info["ptr_overrides"][0])
     patch(path, **data)
     cli_info("changed owner of PTR record {} from {} to {}".format(
@@ -2067,7 +2058,7 @@ def ptr_remove(args):
                                                              args.ip))
 
     # Delete record
-    path = "/ptroverrides/{}".format(info["ptr_overrides"][0]["id"])
+    path = "/api/v1/ptroverrides/{}".format(info["ptr_overrides"][0]["id"])
     history.record_delete(path, info["ptr_override"][0])
     delete(path)
     cli_info("deleted PTR record {} for {}".format(args.ip, info["name"]),
@@ -2108,7 +2099,7 @@ def ptr_set(args):
     info = host_info_by_name(args.name)
 
     # check that a PTR record with the given ip doesn't exist
-    path = f"/ptroverrides/?ipaddress={args.ip}"
+    path = f"/api/v1/ptroverrides/?ipaddress={args.ip}"
     history.record_get(path)
     ptrs = get_list(path)
     if len(ptrs):
@@ -2128,7 +2119,7 @@ def ptr_set(args):
         "host": info["id"],
         "ipaddress": args.ip,
     }
-    path = "/ptroverrides/"
+    path = "/api/v1/ptroverrides/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("Added PTR record {} to {}".format(args.ip, info["name"]),
@@ -2166,7 +2157,7 @@ def ptr_show(args):
     if not is_valid_ip(args.ip):
         cli_warning(f"{args.ip} is not a valid IP")
 
-    path = f"/hosts/?ptr_overrides__ipaddress={args.ip}"
+    path = f"/api/v1/hosts/?ptr_overrides__ipaddress={args.ip}"
     history.record_get(path)
     host = get_list(path)
 
@@ -2228,7 +2219,7 @@ def srv_add(args):
     }
 
     # Create new SRV record
-    path = "/srvs/"
+    path = "/api/v1/srvs/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("Added SRV record {} with target {}".format(sname, info['name']),
@@ -2279,7 +2270,7 @@ def srv_remove(args):
     sname = clean_hostname(args.name)
 
     # Check if service exist
-    path = f"/srvs/?name={sname}&host={info['id']}"
+    path = f"/api/v1/srvs/?name={sname}&host={info['id']}"
     print(path)
     history.record_get(path)
     srvs = get_list(path)
@@ -2295,8 +2286,8 @@ def srv_remove(args):
     if data is None:
         cli_warning("Did not find any matching SRV records.")
 
-    # Delete NAPTR record
-    path = f"/naptrs/{data['id']}"
+    # Delete SRV record
+    path = f"/api/v1/srv/{data['id']}"
     history.record_delete(path, data)
     delete(path)
     cli_info("deleted SRV record for {}".format(info["name"]), print_msg=True)
@@ -2353,7 +2344,7 @@ def _srv_show(srvs=None, host_id=None):
         ))
 
     if srvs is None:
-        path = f"/srvs/?host={host_id}"
+        path = f"/api/v1/srvs/?host={host_id}"
         history.record_get(path)
         srvs = get_list(path)
 
@@ -2369,7 +2360,7 @@ def _srv_show(srvs=None, host_id=None):
         host_ids.add(str(srv['host']))
 
     arg = ','.join(host_ids)
-    hosts = get_list(f'/hosts/?id__in={arg}')
+    hosts = get_list(f'/api/v1/hosts/?id__in={arg}')
     for host in hosts:
         hostid2name[host['id']] = host['name']
 
@@ -2389,7 +2380,7 @@ def srv_show(args):
     sname = clean_hostname(args.service)
 
     # Get all matching SRV records
-    path = f"/srvs/?name={sname}"
+    path = f"/api/v1/srvs/?name={sname}"
     history.record_get(path)
     srvs = get_list(path)
     if len(srvs) == 0:
@@ -2439,7 +2430,7 @@ def sshfp_add(args):
     }
 
     # Create new SSHFP record
-    path = "/sshfps/"
+    path = "/api/v1/sshfps/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("Added SSHFP record {} for host {}"
@@ -2478,7 +2469,7 @@ def sshfp_remove(args):
     """
 
     def _delete_sshfp_record(sshfp: dict, hname: str):
-        path = f"/sshfps/{sshfp['id']}"
+        path = f"/api/v1/sshfps/{sshfp['id']}"
         history.record_delete(path, sshfp, redoable=False)
         delete(path)
         cli_info("removed SSHFP record with fingerprint {} for {}".format(sshfp["fingerprint"],
@@ -2490,7 +2481,7 @@ def sshfp_remove(args):
     hid = info["id"]
 
     # Get all matching SSHFP records
-    path = f"/sshfps/?host={hid}"
+    path = f"/api/v1/sshfps/?host={hid}"
     history.record_get(path)
     sshfps = get_list(path)
     if len(sshfps) < 1:
@@ -2542,7 +2533,7 @@ def sshfp_show(args):
     hname = info["name"]
 
     # Get all matching SSHFP records
-    path = f"/sshfps/?host={hid}"
+    path = f"/api/v1/sshfps/?host={hid}"
     history.record_get(path)
     sshfps = get_list(path)
     if len(sshfps) < 1:
@@ -2591,7 +2582,7 @@ def ttl_remove(args):
     new_data = {"ttl": ""}
 
     # Remove TTL value
-    path = f"/hosts/{info['name']}"
+    path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, ttl="")
     cli_info("removed TTL for {}".format(info["name"]), print_msg=True)
@@ -2634,7 +2625,7 @@ def ttl_set(args):
     new_data = {"ttl": args.ttl if args.ttl != "default" else ""}
 
     # Update TTL
-    path = f"/hosts/{info['name']}"
+    path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, **new_data)
     cli_info("updated TTL for {}".format(info["name"]), print_msg=True)
@@ -2710,7 +2701,7 @@ def txt_add(args):
         "txt": args.text
     }
     # Add TXT record to host
-    path = "/txts/"
+    path = "/api/v1/txts/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("Added TXT record to {}".format(info["name"]), print_msg=True)
@@ -2745,7 +2736,7 @@ def txt_remove(args):
     info = host_info_by_name(args.name)
 
     # Check for matching TXT records for host
-    path = "/txts/?host={}&txt__contains={}".format(
+    path = "/api/v1/txts/?host={}&txt__contains={}".format(
         info["id"],
         args.text,
     )
@@ -2764,7 +2755,7 @@ def txt_remove(args):
 
     # Remove TXT records
     for txt in txts:
-        path = f"/txts/{txt['id']}"
+        path = f"/api/v1/txts/{txt['id']}"
         history.record_delete(path, txt)
         delete(path)
     cli_info("deleted {} of {} TXT records matching \"{}\"".format(
@@ -2799,7 +2790,7 @@ def txt_show(args):
     """Show all TXT records for host.
     """
     info = host_info_by_name(args.name)
-    path = f"/txts/?host={info['id']}"
+    path = f"/api/v1/txts/?host={info['id']}"
     history.record_get(path)
     txts = get_list(path)
     for txt in txts:

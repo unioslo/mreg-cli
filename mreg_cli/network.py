@@ -210,10 +210,10 @@ def list_used_addresses(args):
     """
     ip_range = get_network_range_from_input(args.network)
 
-    path = f"/networks/{ip_range}/used_host_list"
+    path = f"/api/v1/networks/{ip_range}/used_host_list"
     history.record_get(path)
     ip2host = get(path).json()
-    path = f"/networks/{ip_range}/ptroverride_host_list"
+    path = f"/api/v1/networks/{ip_range}/ptroverride_host_list"
     history.record_get(path)
     ptr2host = get(path).json()
 
@@ -292,8 +292,9 @@ def set_category(args):
     network = get_network(args.network)
     if not is_valid_category_tag(args.category):
         cli_warning("Not a valid category tag")
-
-    patch("/networks/{network['network']}", category=args.category)
+    
+    path = f"/api/v1/networks/{network['network']}"
+    patch(path, category=args.category)
     cli_info("updated category tag to '{}' for {}"
              .format(args.category, network['network']), True)
 
@@ -322,7 +323,8 @@ def set_description(args):
     """Set description for network
     """
     network = get_network(args.network)
-    patch(f"/networks/{network['network']}", description=args.description)
+    path = f"/api/v1/networks/{network['network']}"
+    patch(path, description=args.description)
     cli_info("updated description to '{}' for {}".format(args.description,
                                                          network['network']), True)
 
@@ -353,7 +355,8 @@ def set_dns_delegated(args):
 
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
-    patch(f"/networks/{ip_range}", dns_delegated=True)
+    path = f"/api/v1/networks/{ip_range}"
+    patch(path, dns_delegated=True)
     cli_info(f"updated dns_delegated to 'True' for {ip_range}", print_msg=True)
           
 
@@ -380,7 +383,8 @@ def set_frozen(args):
 
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
-    patch(f"/networks/{ip_range}", frozen=True)
+    path = f"/api/v1/networks/{ip_range}"
+    patch(path, frozen=True)
     cli_info(f"updated frozen to 'True' for {ip_range}", print_msg=True)
 
 
@@ -410,7 +414,8 @@ def set_location(args):
     if not is_valid_location_tag(args.location):
         cli_warning("Not a valid location tag")
 
-    patch(f"/networks/{ip_range}", location=args.location)
+    path = f"/api/v1/networks/{ip_range}"
+    patch(path, location=args.location)
     cli_info("updated location tag to '{}' for {}"
              .format(args.location, ip_range), True)
 
@@ -443,7 +448,8 @@ def set_reserved(args):
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     reserved = args.number
-    patch(f"/networks/{ip_range}", reserved=reserved)
+    path = f"/api/v1/networks/{ip_range}"
+    patch(path, reserved=reserved)
     cli_info(f"updated reserved to '{reserved}' for {ip_range}",
              print_msg=True)
 
@@ -475,7 +481,8 @@ def set_vlan(args):
 
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
-    patch(f"/networks/{ip_range}", vlan=args.vlan)
+    path = f"/api/v1/networks/{ip_range}"
+    patch(path, vlan=args.vlan)
     cli_info(f"updated vlan to {args.vlan} for {ip_range}", print_msg=True)
 
 network.add_command(
@@ -505,7 +512,8 @@ def unset_dns_delegated(args):
 
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
-    patch(f"/networks/{ip_range}", dns_delegated=False)
+    path = f"/api/v1/networks/{ip_range}"
+    patch(path, dns_delegated=False)
     cli_info(f"updated dns_delegated to 'False' for {ip_range}", print_msg=True)
 
 
@@ -532,7 +540,8 @@ def unset_frozen(args):
 
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
-    patch(f"/networks/{ip_range}", frozen=False)
+    path = f"/api/v1/networks/{ip_range}"
+    patch(path, frozen=False)
     cli_info(f"updated frozen to 'False' for {ip_range}", print_msg=True)
 
 

@@ -46,7 +46,7 @@ def create(args):
     """Create new zone.
     """
     _verify_nameservers(args.ns, args.force)
-    post("/zones/", name=args.zone, email=args.email, primary_ns=args.ns)
+    post("/api/v1/zones/", name=args.zone, email=args.email, primary_ns=args.ns)
     cli_info("created zone {}".format(args.zone), True)
 
 
@@ -79,13 +79,13 @@ zone.add_command(
 
 def delegation_create(args):
     """Create a new zone delegation. """
-    zone = get(f"/zones/{args.zone}", ok404=True)
+    zone = get(f"/api/v1/zones/{args.zone}", ok404=True)
     if zone is None:
         cli_warning(f"Zone '{args.zone}' does not exist")
     if not args.delegation.endswith(f".{args.zone}"):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
     _verify_nameservers(args.ns, args.force)
-    post(f"/zones/{args.zone}/delegations/",
+    post(f"/api/v1/zones/{args.zone}/delegations/",
          name=args.delegation,
          nameservers=args.ns)
     cli_info("created zone delegation {}".format(args.delegation), True)
@@ -121,10 +121,10 @@ zone.add_command(
 def zone_delete(args):
     """Delete a zone
     """
-    zone = get(f"/zones/{args.zone}").json()
+    zone = get(f"/api/v1/zones/{args.zone}").json()
 
-    hosts = get(f"/hosts/?zone={zone['id']}").json()
-    zones = get(f"/zones/?name__endswith=.{args.zone}").json()
+    hosts = get(f"/api/v1/hosts/?zone={zone['id']}").json()
+    zones = get(f"/api/v1/zones/?name__endswith=.{args.zone}").json()
 
     # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
     if hosts and not args.force:
@@ -135,7 +135,7 @@ def zone_delete(args):
         cli_warning("Zone has registered subzones '{}', "
                     "can not delete".format(", ".join(sorted(other_zones))))
 
-    delete(f"/zones/{args.zone}")
+    delete(f"/api/v1/zones/{args.zone}")
     cli_info("deleted zone {}".format(zone['name']), True)
 
 
@@ -161,12 +161,12 @@ zone.add_command(
 
 def delegation_delete(args):
     """Delete a zone delegation. """
-    zone = get(f"/zones/{args.zone}", ok404=True)
+    zone = get(f"/api/v1/zones/{args.zone}", ok404=True)
     if zone is None:
         cli_warning(f"Zone '{args.zone}' does not exist")
     if not args.delegation.endswith(f".{args.zone}"):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
-    delete(f"/zones/{args.zone}/delegations/{args.delegation}")
+    delete(f"/api/v1/zones/{args.zone}/delegations/{args.delegation}")
     cli_info("Removed zone delegation {}".format(args.delegation), True)
 
 
@@ -200,7 +200,7 @@ def info(args):
     if not args.zone:
         cli_warning('Name is required')
 
-    zone = get(f"/zones/{args.zone}").json()
+    zone = get(f"/api/v1/zones/{args.zone}").json()
     print_soa("Zone:", zone["name"])
     print_ns("Nameservers:", "hostname", "TTL")
     for ns in zone['nameservers']:
@@ -237,7 +237,7 @@ def zone_list(args):
     """List all zones.
     """
 
-    zones = get("/zones/").json()
+    zones = get("/api/v1/zones/").json()
     if zones:
         print("Zones:")
         for zone in sorted(zones, key=lambda kv: kv['name']):
@@ -263,10 +263,10 @@ def zone_delegation_list(args):
     """
 
 
-    zone = get(f"/zones/{args.zone}", ok404=True)
+    zone = get(f"/api/v1/zones/{args.zone}", ok404=True)
     if zone is None:
         cli_warning(f"Zone '{args.zone}' does not exist")
-    delegations = get_list(f"/zones/{args.zone}/delegations/")
+    delegations = get_list(f"/api/v1/zones/{args.zone}/delegations/")
     if delegations:
         print("Delegations:")
         for i in sorted(delegations, key=lambda kv: kv['name']):
@@ -300,7 +300,7 @@ def set_ns(args):
     """Update nameservers for an existing zone.
     """
     _verify_nameservers(args.ns, args.force)
-    patch(f"/zones/{args.zone}/nameservers", primary_ns=args.ns)
+    patch(f"/api/v1/zones/{args.zone}/nameservers", primary_ns=args.ns)
     cli_info("updated nameservers for {}".format(args.zone), True)
 
 
@@ -333,7 +333,7 @@ def set_soa(args):
     """Updated the SOA of a zone.
     """
     # TODO Validation for valid domain names
-    get(f"/zones/{args.zone}")
+    get(f"/api/v1/zones/{args.zone}")
     data = {}
     for i in ('email', 'expire', 'refresh', 'retry', 'serialno', 'soa_ttl',):
         value = getattr(args, i, None)
@@ -343,7 +343,7 @@ def set_soa(args):
         data['primary_ns'] = args.ns
 
     if data:
-        patch(f"/zones/{args.zone}", **data)
+        patch(f"/api/v1/zones/{args.zone}", **data)
         cli_info("set soa for {}".format(args.zone), True)
     else:
         cli_info("No options set, so unchanged.", True)
@@ -397,10 +397,10 @@ def set_default_ttl(args):
     """Update the default TTL of a zone.
     """
 
-    get(f"/zones/{args.zone}")
+    get(f"/api/v1/zones/{args.zone}")
     data = {'default_ttl': args.ttl}
 
-    patch(f"/zones/{args.zone}", **data)
+    patch(f"/api/v1/zones/{args.zone}", **data)
     cli_info("set default TTL for {}".format(args.zone), True)
 
 

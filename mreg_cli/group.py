@@ -18,7 +18,7 @@ group = cli.add_command(
 ### Utils
 
 def get_hostgroup(name):
-    ret = get_list(f'/hostgroups/?name={name}')
+    ret = get_list(f'/api/v1/hostgroups/?name={name}')
     if not ret:
         cli_warning(f'Group "{name}" does not exist')
     return ret[0]
@@ -35,7 +35,7 @@ def create(args):
     Create a new host group
     """
 
-    ret = get_list(f'/hostgroups/?name={args.name}')
+    ret = get_list(f'/api/v1/hostgroups/?name={args.name}')
     if ret:
         cli_error(f'Groupname "{args.name}" already in use')
     
@@ -44,7 +44,7 @@ def create(args):
         'description': args.description
     }
 
-    path = '/hostgroups/'
+    path = '/api/v1/hostgroups/'
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info(f"Created new group {args.name}", print_msg=True)
@@ -171,7 +171,7 @@ def _delete(args):
         cli_error('Group contains %d host(s) and %d group(s), must force'
                   % (len(info['hosts']), len('groups')))
     
-    path = f'/hostgroups/{args.name}'
+    path = f'/api/v1/hostgroups/{args.name}'
     history.record_delete(path, dict())
     delete(path)
     cli_info(f"Deleted group {args.name}", print_msg=True)
@@ -209,7 +209,7 @@ def group_add(args):
             'name': src,
         }
 
-        path = f'/hostgroups/{args.dstgroup}/groups/'
+        path = f'/api/v1/hostgroups/{args.dstgroup}/groups/'
         history.record_post(path, "", data, undoable=False)
         post(path, **data)
         cli_info(f"Added {src} to {args.dstgroup}", print_msg=True)
@@ -247,7 +247,7 @@ def group_remove(args):
             cli_warning(f"'{name}' not a group member in {args.dstgroup}")
 
     for src in args.srcgroup:
-        path = f'/hostgroups/{args.dstgroup}/groups/{src}'
+        path = f'/api/v1/hostgroups/{args.dstgroup}/groups/{src}'
         history.record_delete(path, dict())
         delete(path)
         cli_info(f"Removed '{src}' from {args.dstgroup}", print_msg=True)
@@ -278,7 +278,6 @@ def host_add(args):
     Add host(s) to group
     """
 
-    
     get_hostgroup(args.group)
     info = []
     for name in args.hosts:
@@ -289,7 +288,7 @@ def host_add(args):
         data = {
             'name': name,
         }
-        path = f'/hostgroups/{args.group}/hosts/'
+        path = f'/api/v1/hostgroups/{args.group}/hosts/'
         history.record_post(path, "", data, undoable=False)
         post(path, **data)
         cli_info(f"Added {name} to {args.group}", print_msg=True)
@@ -327,7 +326,7 @@ def host_remove(args):
 
     for i in info:
         name = i['name']
-        path = f'/hostgroups/{args.group}/hosts/{name}'
+        path = f'/api/v1/hostgroups/{args.group}/hosts/{name}'
         history.record_delete(path, dict())
         delete(path)
         cli_info(f"Removed '{name}' from {args.group}", print_msg=True)
@@ -365,7 +364,7 @@ def owner_remove(args):
             cli_warning(f"'{i}' not a owner of {args.group}")
 
     for i in args.owners:
-        path = f'/hostgroups/{args.group}/owners/{i}'
+        path = f'/api/v1/hostgroups/{args.group}/owners/{i}'
         history.record_delete(path, dict())
         delete(path)
         cli_info(f"Removed '{i}' from {args.group}", print_msg=True)
