@@ -15,7 +15,8 @@ group = cli.add_command(
     description='Manage hostgroups',
 )
 
-### Utils
+# Utils
+
 
 def get_hostgroup(name):
     ret = get_list(f'/api/v1/hostgroups/?name={name}')
@@ -24,10 +25,10 @@ def get_hostgroup(name):
     return ret[0]
 
 
+"""
+Implementation of sub command 'create'
+"""
 
-##########################################
-# Implementation of sub command 'create' #
-##########################################
 
 def create(args):
     # .name .description
@@ -38,7 +39,7 @@ def create(args):
     ret = get_list(f'/api/v1/hostgroups/?name={args.name}')
     if ret:
         cli_error(f'Groupname "{args.name}" already in use')
-    
+
     data = {
         'name': args.name,
         'description': args.description
@@ -85,10 +86,10 @@ def info(args):
         _print('Description:', info['description'])
         members = []
         count = len(info['hosts'])
-        if count > 0:
+        if count:
             members.append('{} host{}'.format(count, 's' if count > 1 else ''))
-        ngroups = len(info['groups'])
-        if count > 0:
+        count = len(info['groups'])
+        if count:
             members.append('{} group{}'.format(count, 's' if count > 1 else ''))
         _print('Members:', ', '.join(members))
         if len(info['owners']):
@@ -121,9 +122,11 @@ def _list(args):
 
     def _print(key, value, source='', padding=14):
         print("{1:<{0}} {2:<{0}} {3}".format(padding, key, value, source))
+
     def _print_hosts(hosts, source=''):
         for host in hosts:
             _print('host', host['name'], source=source)
+
     def _expand_group(groupname):
         info = get(f'/hostgroups/{groupname}').json()
         _print_hosts(info['hosts'], source=groupname)
@@ -144,6 +147,7 @@ def _list(args):
         else:
             _print('group', group['name'])
 
+
 group.add_command(
     prog='list',
     description='List group members',
@@ -159,6 +163,7 @@ group.add_command(
     ]
 )
 
+
 def _delete(args):
     # .name .force
     """
@@ -170,7 +175,7 @@ def _delete(args):
     if len(info['hosts']) or len(info['groups']) and not args.force:
         cli_error('Group contains %d host(s) and %d group(s), must force'
                   % (len(info['hosts']), len('groups')))
-    
+
     path = f'/api/v1/hostgroups/{args.name}'
     history.record_delete(path, dict())
     delete(path)
@@ -187,14 +192,15 @@ group.add_command(
              description='Group name',
              metavar='NAME'),
         Flag('-force',
-            action='store_true',
-            description='Enable force'),
+             action='store_true',
+             description='Enable force'),
     ]
 )
 
 #############################################
 # Implementation of sub command 'group_add' #
 #############################################
+
 
 def group_add(args):
     """
@@ -235,6 +241,7 @@ group.add_command(
 # Implementation of sub command 'group_remove' #
 ################################################
 
+
 def group_remove(args):
     """
     Remove group(s) from group
@@ -272,6 +279,7 @@ group.add_command(
 ############################################
 # Implementation of sub command 'host_add' #
 ############################################
+
 
 def host_add(args):
     """
@@ -314,6 +322,7 @@ group.add_command(
 # Implementation of sub command 'host_remove' #
 ###############################################
 
+
 def host_remove(args):
     """
     Remove host(s) from group
@@ -351,6 +360,7 @@ group.add_command(
 ################################################
 # Implementation of sub command 'owner_remove' #
 ################################################
+
 
 def owner_remove(args):
     """
@@ -390,10 +400,11 @@ group.add_command(
 # Implementation of sub command 'set_description' #
 ###################################################
 
+
 def set_description(args):
     """Set description for group
     """
-    group = get_hostgroup(args.name)
+    get_hostgroup(args.name)
     patch(f"/hostgroups/{args.name}", description=args.description)
     cli_info("updated description to '{}' for {}".format(args.description,
                                                          args.name), True)

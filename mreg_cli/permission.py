@@ -3,11 +3,10 @@ import operator
 
 from urllib.parse import urlencode
 
-from .exceptions import HostNotFoundWarning
 from .cli import cli, Flag
 from .history import history
 from .log import cli_info, cli_warning
-from .util import delete, get, get_list, patch, post, is_valid_network
+from .util import delete, get_list, post, is_valid_network
 
 ###################################
 #  Add the main command 'access'  #

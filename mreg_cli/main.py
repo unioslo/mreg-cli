@@ -67,9 +67,8 @@ def main():
     from . import group      # noqa: F401
     from . import host      # noqa: F401
     from . import network   # noqa: F401
-    from . import permission # noqa: F401
+    from . import permission  # noqa: F401
     from . import zone      # noqa: F401
-
 
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the

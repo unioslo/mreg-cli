@@ -50,7 +50,7 @@ class Command(Completer):
                 self.flags[flag.name.lstrip('-')] = flag
 
     def add_command(self, prog, description, short_desc='', epilog=None,
-                    callback=None, flags = []):
+                    callback=None, flags=[]):
         """
         :param flags: a list of Flag objects. NB: must be handled as read-only,
         since the default value is [].
@@ -162,7 +162,7 @@ class Command(Completer):
         if not cur:
             return
         # If the current word is - then it is the beginning of a flag
-        if cur is '-':
+        if cur == '-':
             cur = ''
         # If current word doesn't start with - then it isn't a flag being typed
         elif ('-' + cur) not in words:
@@ -235,7 +235,6 @@ def _source(args):
             print(f"No such file: '{filename}'")
         except PermissionError:
             print(f"Permission denied: '{filename}'")
-
 
 
 # Always need the source command.

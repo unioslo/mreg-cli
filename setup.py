@@ -2,7 +2,7 @@
 import setuptools
 import sys
 
-if sys.version_info < (3,6):
+if sys.version_info < (3, 6):
     sys.exit('Python < 3.6 is not supported')
 
 install_requirements = [

@@ -403,6 +403,7 @@ def print_ipaddresses(ipaddresses: typing.Iterable[dict], names: bool = False,
                     len_names, name, ip if ip else "<not set>", len_ip,
                     mac if mac else "<not set>"))
 
+
 def print_ttl(ttl: int, padding: int = 14) -> None:
     """Pretty print given ttl"""
     assert isinstance(ttl, int) or ttl is None
@@ -761,7 +762,6 @@ def a_add(args):
     _ip_add(args, 4)
 
 
-
 # Add 'a_add' as a sub command to the 'host' command
 host.add_command(
     prog='a_add',
@@ -953,6 +953,7 @@ def aaaa_add(args):
     """Add an AAAA record to host. If <name> is an alias the cname host is used.
     """
     _ip_add(args, 6)
+
 
 # Add 'aaaa_add' as a sub command to the 'host' command
 host.add_command(
@@ -1948,6 +1949,7 @@ def _naptr_show(info):
             print_naptr(ptr, info["name"])
     return len(naptrs)
 
+
 def naptr_show(args):
     """Show all NAPTR records for host.
     """
@@ -2434,7 +2436,7 @@ def sshfp_add(args):
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info("Added SSHFP record {} for host {}"
-                 .format(args.fingerprint, info["name"]), print_msg=True)
+             .format(args.fingerprint, info["name"]), print_msg=True)
 
 
 # Add 'sshfp_add' as a sub command to the 'host' command
@@ -2473,8 +2475,8 @@ def sshfp_remove(args):
         history.record_delete(path, sshfp, redoable=False)
         delete(path)
         cli_info("removed SSHFP record with fingerprint {} for {}".format(sshfp["fingerprint"],
-                                                               hname),
-            print_msg=True)
+                                                                          hname),
+                 print_msg=True)
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -2495,12 +2497,12 @@ def sshfp_remove(args):
                 found = True
         if not found:
             cli_info("found no SSHFP record with fingerprint {} for {}".format(args.fingerprint,
-                                                               info["name"]),
-                 print_msg=True)
+                                                                               info["name"]),
+                     print_msg=True)
     else:
         for sshfp in sshfps:
             _delete_sshfp_record(sshfp, info["name"])
-            
+
 
 # Add 'sshfp_remove' as a sub command to the 'host' command
 host.add_command(
@@ -2538,7 +2540,7 @@ def sshfp_show(args):
     sshfps = get_list(path)
     if len(sshfps) < 1:
         cli_warning("no SSHFP records matching {}".format(hname))
-    
+
     padding = len(hname)
     sshfps[0]["name"] = hname
     print_sshfp(sshfps[0], padding)
@@ -2546,7 +2548,7 @@ def sshfp_show(args):
         sshfp["name"] = ""
         print_sshfp(sshfp, padding)
     cli_info("showed all SSHFP entries for {}".format(hname), print_msg=True)
-    
+
 
 # Add 'sshfp_show' as a sub command to the 'host' command
 host.add_command(

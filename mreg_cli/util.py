@@ -133,7 +133,6 @@ def login(user, url):
         sys.exit(1)
 
 
-
 def logout():
     path = requests.compat.urljoin(mregurl, '/api/token-logout/')
     # Try to logout, and ignore errors
@@ -155,8 +154,12 @@ def update_token():
 
 def _update_token(username, password):
     tokenurl = requests.compat.urljoin(mregurl, '/api/token-auth/')
-    result = requests.post(tokenurl, {'username': username,
-                                      'password': password})
+    try:
+        result = requests.post(tokenurl, {'username': username,
+                                          'password': password})
+    except requests.exceptions.ConnectionError as err:
+        print(err)
+        sys.exit(1)
     if not result.ok:
         res = result.json()
         if result.status_code == 400:
@@ -192,6 +195,7 @@ def _request_wrapper(type, path, ok404=False, first=True, **data):
 
     result_check(result, type.upper(), url)
     return result
+
 
 def get(path: str, ok404=False) -> requests.Response:
     """Uses requests to make a get request."""
@@ -292,7 +296,7 @@ def resolve_input_name(name: str) -> str:
 
 def clean_hostname(name: typing.AnyStr) -> str:
     """ Converts from short to long hostname, if no domain found. """
-    ### bytes?
+    # bytes?
     if not isinstance(name, (str, bytes)):
         cli_warning("Invalid input for hostname: {}".format(name))
 
@@ -307,9 +311,8 @@ def clean_hostname(name: typing.AnyStr) -> str:
 
     # Append domain name if in config and it does not end with it
     if 'domain' in config and not name.endswith(config['domain']):
-            return "{}.{}".format(name, config['domain'])
+        return "{}.{}".format(name, config['domain'])
     return name
-
 
 ################################################################################
 #                                                                              #

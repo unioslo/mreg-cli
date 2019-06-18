@@ -262,7 +262,6 @@ def zone_delegation_list(args):
     """List a zone's delegations
     """
 
-
     zone = get(f"/api/v1/zones/{args.zone}", ok404=True)
     if zone is None:
         cli_warning(f"Zone '{args.zone}' does not exist")

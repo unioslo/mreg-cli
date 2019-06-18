@@ -2,14 +2,14 @@ import ipaddress
 
 from .cli import cli, Flag
 from .history import history
-from .log import cli_error, cli_info, cli_warning
+from .log import cli_info, cli_warning
 from .util import delete, get, get_list, patch, post, string_to_int, is_valid_ip, \
                   is_valid_network, is_valid_location_tag, is_valid_category_tag, \
                   ipsort, \
                   get_network, \
                   get_network_used_count, get_network_used_list, \
                   get_network_unused_count, get_network_unused_list, \
-                  get_network_reserved_ips, resolve_ip
+                  get_network_reserved_ips
 
 ###################################
 #  Add the main command 'network'  #
@@ -19,6 +19,7 @@ network = cli.add_command(
     prog='network',
     description='Manage networks.',
 )
+
 
 def get_network_range_from_input(net):
     if net.endswith("/"):
@@ -30,6 +31,7 @@ def get_network_range_from_input(net):
         return net
     else:
         cli_warning("Not a valid ip or network")
+
 
 # helper methods
 def print_network_unused(count: int, padding: int = 25) -> None:
@@ -233,6 +235,7 @@ def list_used_addresses(args):
                 host = ip2host[ip][0]
             print("{1:<{0}}{2}".format(25, ip, host))
 
+
 network.add_command(
     prog='list_used_addresses',
     description='Lists all the used addresses for a network',
@@ -292,7 +295,7 @@ def set_category(args):
     network = get_network(args.network)
     if not is_valid_category_tag(args.category):
         cli_warning("Not a valid category tag")
-    
+
     path = f"/api/v1/networks/{network['network']}"
     patch(path, category=args.category)
     cli_info("updated category tag to '{}' for {}"
@@ -358,7 +361,7 @@ def set_dns_delegated(args):
     path = f"/api/v1/networks/{ip_range}"
     patch(path, dns_delegated=True)
     cli_info(f"updated dns_delegated to 'True' for {ip_range}", print_msg=True)
-          
+
 
 network.add_command(
     prog='set_dns_delegated',
@@ -418,7 +421,6 @@ def set_location(args):
     patch(path, location=args.location)
     cli_info("updated location tag to '{}' for {}"
              .format(args.location, ip_range), True)
-
 
 
 network.add_command(
@@ -485,6 +487,7 @@ def set_vlan(args):
     patch(path, vlan=args.vlan)
     cli_info(f"updated vlan to {args.vlan} for {ip_range}", print_msg=True)
 
+
 network.add_command(
     prog='set_vlan',  # <network> <vlan>
     description='Set VLAN for network',
@@ -543,7 +546,6 @@ def unset_frozen(args):
     path = f"/api/v1/networks/{ip_range}"
     patch(path, frozen=False)
     cli_info(f"updated frozen to 'False' for {ip_range}", print_msg=True)
-
 
 
 network.add_command(
