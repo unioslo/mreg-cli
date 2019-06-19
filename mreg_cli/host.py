@@ -132,8 +132,7 @@ def _get_ip_from_args(ip, force, ipversion=None):
         if not network:
             if force:
                 return ip
-            else:
-                cli_warning(f"{ip} isn't in a network controlled by MREG, must force")
+            cli_warning(f"{ip} isn't in a network controlled by MREG, must force")
     else:
         cli_warning(f"Could not determine network for {ip}")
 
@@ -1751,7 +1750,6 @@ def mx_remove(args):
 
     mx_id = _mx_in_mxs(info['mxs'], args.priority, args.mx)
     if mx_id is None:
-        "NOT FOUND"
         cli_warning("{} has not MX records with priority {} and mail exhange {}".format(
                     info['name'], args.priority, args.mx))
     path = f"/api/v1/mxs/{mx_id}"
