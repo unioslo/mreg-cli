@@ -507,7 +507,7 @@ def _print_ip_info(ip):
     history.record_get(path)
     hosts = get_list(path)
     ipaddresses = []
-    ptrhost = 'default'
+    ptrhost = None
     for info in hosts:
         for i in info['ipaddresses']:
             if i['ipaddress'] == ip:
@@ -518,8 +518,19 @@ def _print_ip_info(ip):
                 ptrhost = info['name']
 
     print_ipaddresses(ipaddresses, names=True)
-    if len(ipaddresses) > 1 and ptrhost == 'default':
-        cli_warning(f'IP {ip} used by {len(ipaddresses)} hosts, but no PTR override')
+    if len(ipaddresses) > 1 and ptrhost is None:
+        cli_info(f'IP {ip} used by {len(ipaddresses)} hosts, but no PTR override', msg=True)
+        return
+    if ptrhost is None:
+        path = f"/api/v1/hosts/?ptr_overrides__ipaddress={ip}"
+        history.record_get(path)
+        hosts = get_list(path)
+        if hosts:
+            ptrhost = hosts[0]['name']
+        elif ipaddresses:
+            ptrhost = 'default'
+    if not ipaddresses and ptrhost is None:
+        cli_warning(f'Found no hosts or ptr override matching IP {ip}')
     print_ptr(ip, ptrhost)
 
 
