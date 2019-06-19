@@ -1,9 +1,7 @@
+from .cli import Flag, cli
 from .exceptions import HostNotFoundWarning
-from .cli import cli, Flag
 from .log import cli_info, cli_warning
-from .util import delete, get, get_list, host_info_by_name, \
-                  patch, post
-
+from .util import delete, get, get_list, host_info_by_name, patch, post
 
 #################################
 #  Add the main command 'zone'  #

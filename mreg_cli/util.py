@@ -1,9 +1,10 @@
 import ipaddress
 import json
 import re
-import requests
 import sys
 import typing
+
+import requests
 
 from prompt_toolkit import prompt
 

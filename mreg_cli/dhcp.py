@@ -1,10 +1,9 @@
 import re
 
-from .log import cli_info, cli_warning
-from .cli import cli, Flag
+from .cli import Flag, cli
 from .history import history
-from .util import get_list, is_valid_ip, host_info_by_name, patch
-
+from .log import cli_info, cli_warning
+from .util import get_list, host_info_by_name, is_valid_ip, patch
 
 #################################
 #  Add the main command 'dhcp'  #

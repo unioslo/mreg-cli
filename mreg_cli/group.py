@@ -1,10 +1,9 @@
 from itertools import chain
 
-from .log import cli_error, cli_info, cli_warning
-from .cli import cli, Flag
+from .cli import Flag, cli
 from .history import history
+from .log import cli_error, cli_info, cli_warning
 from .util import delete, get, get_list, host_info_by_name, patch, post
-
 
 ##################################
 #  Add the main command 'group'  #

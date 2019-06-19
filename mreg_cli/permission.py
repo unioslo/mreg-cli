@@ -1,12 +1,11 @@
 import ipaddress
 import operator
-
 from urllib.parse import urlencode
 
-from .cli import cli, Flag
+from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
-from .util import delete, get_list, post, is_valid_network
+from .util import delete, get_list, is_valid_network, post
 
 ###################################
 #  Add the main command 'access'  #

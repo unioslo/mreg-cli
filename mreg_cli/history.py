@@ -1,9 +1,9 @@
-import requests
 import json
 
-from .log import cli_error, cli_info, cli_warning
-from .cli import cli, Flag
+import requests
 
+from .cli import Flag, cli
+from .log import cli_error, cli_info, cli_warning
 
 # NOTE HISTORY: General notes and shortcomings of history tracking:
 # Not generic.
@@ -17,6 +17,7 @@ from .cli import cli, Flag
 # Undo/redo is not RESTfull...
 
 # QUESTION HISTORY: kanskje redo/undo kan løses ved å generere CLI kommandoer som utfører redo/undo operasjonene?
+
 
 class HistoryEvent:
     def __init__(self, name: str = "", index: int = -1):

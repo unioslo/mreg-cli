@@ -1,7 +1,8 @@
 import argparse
 import os
 
-from prompt_toolkit import HTML, print_formatted_text as print
+from prompt_toolkit import HTML
+from prompt_toolkit import print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
 
 from . import util

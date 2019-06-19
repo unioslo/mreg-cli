@@ -1,14 +1,12 @@
 import argparse
 import configparser
 import shlex
-
 from collections import ChainMap
 
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
-from . import log
-from . import util
+from . import log, util
 from .cli import cli
 
 

@@ -1,15 +1,27 @@
 import ipaddress
 
-from .cli import cli, Flag
+from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
-from .util import delete, get, get_list, patch, post, string_to_int, is_valid_ip, \
-                  is_valid_network, is_valid_location_tag, is_valid_category_tag, \
-                  ipsort, \
-                  get_network, \
-                  get_network_used_count, get_network_used_list, \
-                  get_network_unused_count, get_network_unused_list, \
-                  get_network_reserved_ips
+from .util import (
+    delete,
+    get,
+    get_list,
+    get_network,
+    get_network_reserved_ips,
+    get_network_unused_count,
+    get_network_unused_list,
+    get_network_used_count,
+    get_network_used_list,
+    ipsort,
+    is_valid_category_tag,
+    is_valid_ip,
+    is_valid_location_tag,
+    is_valid_network,
+    patch,
+    post,
+    string_to_int,
+)
 
 ###################################
 #  Add the main command 'network'  #

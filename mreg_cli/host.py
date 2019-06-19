@@ -1,18 +1,33 @@
 import ipaddress
 import typing
 
-from .cli import cli, Flag
+from .cli import Flag, cli
 from .exceptions import HostNotFoundWarning
 from .history import history
 from .log import cli_error, cli_info, cli_warning
-from .util import delete, get, get_list, patch, post, \
-                  clean_hostname, cname_exists, first_unused_ip_from_network, \
-                  get_network_by_ip, get_network, get_network_reserved_ips, \
-                  host_info_by_name, host_info_by_name_or_ip, \
-                  ip_in_mreg_net, \
-                  is_valid_email, is_valid_ip, is_valid_ipv4, is_valid_ipv6, \
-                  is_valid_network, is_valid_ttl, resolve_input_name
-
+from .util import (
+    clean_hostname,
+    cname_exists,
+    delete,
+    first_unused_ip_from_network,
+    get,
+    get_list,
+    get_network,
+    get_network_by_ip,
+    get_network_reserved_ips,
+    host_info_by_name,
+    host_info_by_name_or_ip,
+    ip_in_mreg_net,
+    is_valid_email,
+    is_valid_ip,
+    is_valid_ipv4,
+    is_valid_ipv6,
+    is_valid_network,
+    is_valid_ttl,
+    patch,
+    post,
+    resolve_input_name,
+)
 
 #################################
 #  Add the main command 'host'  #
