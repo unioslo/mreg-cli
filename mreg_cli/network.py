@@ -81,7 +81,7 @@ def create(args):
     if args.location and not is_valid_location_tag(args.location):
         cli_warning("Not a valid location tag")
 
-    networks_existing = get_list("/networks/")
+    networks_existing = get_list("/api/v1/networks/")
     for network in networks_existing:
         network_object = ipaddress.ip_network(network['network'])
         if network_object.overlaps(ipaddress.ip_network(args.network)):
@@ -89,7 +89,7 @@ def create(args):
                         "network {}".format(ipaddress.ip_network(args.network),
                                             network['network']))
 
-    post("/networks/", network=args.network, description=args.desc, vlan=args.vlan,
+    post("/api/v1/networks/", network=args.network, description=args.desc, vlan=args.vlan,
          category=args.category, location=args.location, frozen=frozen)
     cli_info("created network {}".format(args.network), True)
 
@@ -265,7 +265,7 @@ def remove(args):
     if not args.force:
         cli_warning("Must force.")
 
-    delete(f"/networks/{args.network}")
+    delete(f"/api/v1/networks/{args.network}")
     cli_info("removed network {}".format(args.network), True)
 
 
