@@ -239,7 +239,7 @@ def delete(path: str) -> requests.Response:
 
 def cname_exists(cname: str) -> bool:
     """Check if a cname exists"""
-    if len(get_list(f"/cnames/?name={cname}")):
+    if len(get_list(f"/api/v1/cnames/?name={cname}")):
         return True
     else:
         return False
