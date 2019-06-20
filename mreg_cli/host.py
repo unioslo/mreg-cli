@@ -164,6 +164,18 @@ def _get_ip_from_args(ip, force, ipversion=None):
     return ip
 
 
+def _check_ipversion(ip, ipversion):
+    # Ip sanity check
+    if ipversion == 4:
+        if not is_valid_ipv4(ip):
+            cli_warning(f'not a valid ipv4: {ip}')
+    elif ipversion == 6:
+        if not is_valid_ipv6(args.ip):
+            cli_warning(f'not a valid ipv6: {ip}')
+    else:
+        cli_warning(f'Unknown ipversion: {ipversion}')
+
+
 ################################################################################
 #                                                                              #
 #                              Host manipulation                               #
@@ -819,20 +831,14 @@ host.add_command(
 #  Implementation of sub command 'a_change'  #
 ##############################################
 
-def a_change(args):
-    """Change A record. If <name> is an alias the cname host is used.
-    """
-
+def _ip_change(args, ipversion):
     if args.old == args.new:
         cli_warning("New and old IP are equal")
 
+    _check_ipversion(args.old, ipversion)
+
     # Get host info or raise exception
     info = host_info_by_name(args.name)
-
-    # Fail if input isn't ipv4
-    if not is_valid_ipv4(args.old):
-        cli_warning("not a valid ipv4 \"{}\" (target host {})"
-                    .format(args.old, info["name"]))
 
     for i in info["ipaddresses"]:
         if i["ipaddress"] == args.old:
@@ -841,12 +847,12 @@ def a_change(args):
     else:
         cli_warning("\"{}\" is not owned by {}".format(args.old, info["name"]))
 
-    new_ip = _get_ip_from_args(args.new, args.force, ipversion=4)
+    new_ip = _get_ip_from_args(args.new, args.force, ipversion=ipversion)
 
     old_data = {"ipaddress": args.old}
     new_data = {"ipaddress": new_ip}
 
-    # Update A records ip address
+    # Update A/AAAA records ip address
     path = f"/api/v1/ipaddresses/{ip_id}"
     # Cannot redo/undo since recourse name changes
     history.record_patch(path, new_data, old_data, redoable=False,
@@ -855,6 +861,13 @@ def a_change(args):
     cli_info(
         "changed ip {} to {} for {}".format(args.old, new_ip, info["name"]),
         print_msg=True)
+
+def a_change(args):
+    """Change A record. If <name> is an alias the cname host is used.
+    """
+
+    _ip_change(args, 4)
+
 
 
 # Add 'a_change' as a sub command to the 'host' command
@@ -892,16 +905,10 @@ host.add_command(
 #  Implementation of sub command 'a_remove'  #
 ##############################################
 
-def _ip_remove(args, version):
+def _ip_remove(args, ipversion):
     ip_id = None
 
-    # Ip sanity check
-    if version == 4:
-        if not is_valid_ipv4(args.ip):
-            cli_warning(f'not a valid ipv4: {args.ip}')
-    else:
-        if not is_valid_ipv6(args.ip):
-            cli_warning(f'not a valid ipv6: {args.ip}')
+    _check_ipversion(args.ip, ipversion)
 
     # Check that ip belongs to host
     info = host_info_by_name(args.name)
@@ -1021,38 +1028,8 @@ host.add_command(
 def aaaa_change(args):
     """Change AAAA record. If <name> is an alias the cname host is used.
     """
-    if args.old == args.new:
-        cli_warning("New and old IP are equal")
 
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-
-    # Fail if input isn't ipv6
-    if not is_valid_ipv6(args.old):
-        cli_warning("not a valid ipv6 \"{}\" (target host {})"
-                    .format(args.old, info["name"]))
-
-    for i in info["ipaddresses"]:
-        if i["ipaddress"] == args.old:
-            ip_id = i["id"]
-            break
-    else:
-        cli_warning("\"{}\" is not owned by {}".format(args.old, info["name"]))
-
-    new_ip = _get_ip_from_args(args.new, args.force, ipversion=6)
-
-    old_data = {"ipaddress": args.old}
-    new_data = {"ipaddress": new_ip}
-
-    # Update AAAA records ip address
-    path = f"/api/v1/ipaddresses/{ip_id}"
-    # Cannot redo/undo since recourse name changes
-    history.record_patch(path, new_data, old_data, redoable=False,
-                         undoable=False)
-    patch(path, ipaddress=new_ip)
-    cli_info(
-        "changed ip {} to {} for {}".format(args.old, new_ip, info["name"]),
-        print_msg=True)
+    _ip_change(args, 6)
 
 
 # Add 'aaaa_change' as a sub command to the 'host' command
