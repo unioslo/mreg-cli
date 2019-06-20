@@ -48,7 +48,7 @@ def network_list(args):
         query['group'] = args.group
     if query:
         params = "&{}".format(urlencode(query))
-    permissions = get_list("/permissions/netgroupregex/?ordering=group{}".format(params))
+    permissions = get_list(f"/api/v1/permissions/netgroupregex/?ordering=group{params}")
 
     data = []
     if args.range is not None:
@@ -106,7 +106,7 @@ def network_add(args):
         'group': args.group,
         'regex': args.regex,
     }
-    path = "/permissions/netgroupregex/"
+    path = "/api/v1/permissions/netgroupregex/"
     history.record_get(path, "", data)
     post(path, **data)
     cli_info(f"Added permission to {args.range}", True)
@@ -154,7 +154,7 @@ def network_remove(args):
 
     assert len(permissions) == 1, "Should only match one permission"
     id = permissions[0]['id']
-    path = f"/permissions/netgroupregex/{id}"
+    path = f"/api/v1/permissions/netgroupregex/{id}"
     history.record_delete(path, dict(), undoable=False)
     delete(path)
     cli_info(f"Removed permission for {args.range}", True)
