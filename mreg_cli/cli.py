@@ -230,7 +230,7 @@ def _source(args):
                     if cli.last_errno != 0:
                         print(HTML(f'<ansired><i>{filename}</i>: '
                                    f'Error on line {i + 1}</ansired>'))
-                        if args.stop:
+                        if not args.ignore_errors:
                             return
         except FileNotFoundError:
             print(f"No such file: '{filename}'")
@@ -252,9 +252,9 @@ cli.add_command(
              short_desc='File names',
              nargs='+',
              metavar='SOURCE'),
-        Flag('-stop',
-             description='Stop command execution on error. Default is to '
-                         'continue execution on error.',
+        Flag('-ignore-errors',
+             description='Continue command execution on error. Default is to '
+                         'stop execution on error.',
              short_desc='Stop on error.',
              action='store_true'),
         Flag('-verbose',
