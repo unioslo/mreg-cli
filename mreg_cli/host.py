@@ -126,8 +126,12 @@ def _get_ip_from_args(ip, force, ipversion=None):
     elif is_valid_network(ip):
         network = get_network(ip)
         ip = first_unused_ip_from_network(network)
-    # Or else check that the address given isn't reserved
     elif is_valid_ip(ip):
+        path = f"/api/v1/hosts/?ipaddresses__ipaddress={ip}"
+        hosts = get_list(path)
+        if hosts and not force:
+            hostnames = ','.join([i['name'] for i in hosts])
+            cli_warning(f'{ip} already in use by: {hostnames}. Must force')
         network = get_network_by_ip(ip)
         if not network:
             if force:
@@ -147,6 +151,7 @@ def _get_ip_from_args(ip, force, ipversion=None):
     if network["frozen"] and not force:
         cli_warning("network {} is frozen, must force"
                     .format(network["network"]))
+    # Chat the address given isn't reserved
     reserved_addresses = get_network_reserved_ips(network['network'])
     if ip in reserved_addresses and not force:
         cli_warning("Address is reserved. Requires force")
