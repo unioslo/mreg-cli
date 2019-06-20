@@ -509,6 +509,9 @@ def print_txt(txt: str, padding: int = 14) -> None:
 def _print_host_info(name):
     # Pretty print all host info
     info = host_info_by_name(name)
+    name = clean_hostname(name)
+    if any(cname['name'] == name for cname in info['cnames']):
+        print(f'{name} is a CNAME for {info["name"]}')
     print_host_name(info["name"])
     print_contact(info["contact"])
     if info["comment"]:
