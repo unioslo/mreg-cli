@@ -146,7 +146,7 @@ def network_remove(args):
         'regex': args.regex,
     }
     params = "{}".format(urlencode(query))
-    permissions = get_list("/permissions/netgroupregex/?{}".format(params))
+    permissions = get_list("/api/v1/permissions/netgroupregex/?{}".format(params))
 
     if not permissions:
         cli_warning("No matching permission found", True)
