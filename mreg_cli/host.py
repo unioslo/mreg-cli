@@ -892,15 +892,16 @@ host.add_command(
 #  Implementation of sub command 'a_remove'  #
 ##############################################
 
-def a_remove(args):
-    """Remove A record from host. If <name> is an alias the cname host is used.
-    """
-
+def _ip_remove(args, version):
     ip_id = None
 
     # Ip sanity check
-    if not is_valid_ipv4(args.ip):
-        cli_warning("not a valid ipv4: \"{}\"".format(args.ip))
+    if version == 4:
+        if not is_valid_ipv4(args.ip):
+            cli_warning(f'not a valid ipv4: {args.ip}')
+    else:
+        if not is_valid_ipv6(args.ip):
+            cli_warning(f'not a valid ipv6: {args.ip}')
 
     # Check that ip belongs to host
     info = host_info_by_name(args.name)
@@ -922,6 +923,13 @@ def a_remove(args):
     delete(path)
     cli_info("removed ip {} from {}".format(args.ip, info["name"]),
              print_msg=True)
+
+
+def a_remove(args):
+    """Remove A record from host. If <name> is an alias the cname host is used.
+    """
+
+    _ip_remove(args, 4)
 
 
 # Add 'a_remove' as a sub command to the 'host' command
@@ -1084,32 +1092,7 @@ def aaaa_remove(args):
     """Remove AAAA record from host. If <name> is an alias the cname host is
     used.
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-
-    # Ipv6 sanity check
-    if not is_valid_ipv6(args.ip):
-        cli_warning("not a valid ipv6 \"{}\" (target host {})"
-                    .format(args.ip, info["name"]))
-
-    # Check that ip belongs to host
-    for rec in info["ipaddresses"]:
-        if rec["ipaddress"] == args.ip:
-            ip_id = rec["id"]
-            break
-    else:
-        cli_warning("{} is not owned by {}".format(args.ip, info["name"]))
-
-    old_data = {
-        "host": info["id"],
-        "ipaddress": args.ip,
-    }
-
-    # Delete AAAA record
-    path = f"/api/v1/ipaddresses/{ip_id}"
-    history.record_delete(path, old_data)
-    delete(path)
-    cli_info("removed {} from {}".format(args.ip, info["name"]), print_msg=True)
+    _ip_remove(args, 6)
 
 
 # Add 'aaaa_remove' as a sub command to the 'host' command
