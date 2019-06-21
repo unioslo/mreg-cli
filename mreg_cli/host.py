@@ -170,7 +170,7 @@ def _check_ipversion(ip, ipversion):
         if not is_valid_ipv4(ip):
             cli_warning(f'not a valid ipv4: {ip}')
     elif ipversion == 6:
-        if not is_valid_ipv6(args.ip):
+        if not is_valid_ipv6(ip):
             cli_warning(f'not a valid ipv6: {ip}')
     else:
         cli_warning(f'Unknown ipversion: {ipversion}')
@@ -201,7 +201,6 @@ def add(args):
     else:
         cli_warning("host {} already exists".format(name))
 
-    # TODO: only for superusers
     if "*" in name and not args.force:
         cli_warning("Wildcards must be forced.")
 
@@ -623,7 +622,6 @@ def rename(args):
     # Require force if FQDN not in MREG zone
     check_zone_for_hostname(new_name, args.force)
 
-    # TODO: only for superusers
     if "*" in new_name and not args.force:
         cli_warning("Wildcards must be forced.")
 
@@ -755,7 +753,6 @@ host.add_command(
 def _ip_add(args, ipversion):
     info = None
 
-    # TODO: only for superusers
     if "*" in args.name and not args.force:
         cli_warning("Wildcards must be forced.")
 
@@ -865,12 +862,12 @@ def _ip_change(args, ipversion):
         "changed ip {} to {} for {}".format(args.old, new_ip, info["name"]),
         print_msg=True)
 
+
 def a_change(args):
     """Change A record. If <name> is an alias the cname host is used.
     """
 
     _ip_change(args, 4)
-
 
 
 # Add 'a_change' as a sub command to the 'host' command
@@ -900,6 +897,65 @@ host.add_command(
         Flag('-force',
              action='store_true',
              description='Enable force.'),
+    ],
+)
+
+############################################
+#  Implementation of sub command 'a_move'  #
+############################################
+
+
+def _ip_move(args, ipversion):
+    _check_ipversion(args.ip, ipversion)
+    frominfo = host_info_by_name(args.fromhost)
+    toinfo = host_info_by_name(args.tohost)
+    ip_id = None
+    for ip in frominfo['ipaddresses']:
+        if ip['ipaddress'] == args.ip:
+            ip_id = ip['id']
+    ptr_id = None
+    for ptr in frominfo['ptr_overrides']:
+        if ptr['ipaddress'] == args.ip:
+            ptr_id = ptr['id']
+    if ip_id is None and ptr_id is None:
+        cli_warning(f'Host {frominfo["name"]} have no IP or PTR with address {args.ip}')
+    msg = ""
+    if ip_id:
+        path = f'/api/v1/ipaddresses/{ip_id}'
+        patch(path, host=toinfo['id'])
+        msg = f'Moved ipaddresses {args.ip}. '
+    else:
+        msg += f'No ipaddresses matched. '
+    if ptr_id:
+        path = f'/api/v1/ptroverrides/{ptr_id}'
+        patch(path, host=toinfo['id'])
+        msg += 'Moved PTR override.'
+    cli_info(msg, print_msg=True)
+
+
+def a_move(args):
+    """Move an IP from a host to another host. Will move also move the PTR, if any.
+    """
+
+    _ip_move(args, 4)
+
+
+# Add 'a_remove' as a sub command to the 'host' command
+host.add_command(
+    prog='a_move',
+    description='Move A record from a host to another host',
+    short_desc='Move A record',
+    callback=a_move,
+    flags=[
+        Flag('-ip',
+             description='IP to move',
+             metavar='IP'),
+        Flag('-fromhost',
+             description='Name of source host',
+             metavar='NAME'),
+        Flag('-tohost',
+             description='Name of destination host',
+             metavar='NAME'),
     ],
 )
 
@@ -1060,6 +1116,37 @@ host.add_command(
         Flag('-force',
              action='store_true',
              description='Enable force.'),
+    ],
+)
+
+###############################################
+#  Implementation of sub command 'aaaa_move'  #
+###############################################
+
+
+def aaaa_move(args):
+    """Move an IP from a host to another host. Will move also move the PTR, if any.
+    """
+
+    _ip_move(args, 6)
+
+
+# Add 'a_remove' as a sub command to the 'host' command
+host.add_command(
+    prog='aaaa_move',
+    description='Move AAAA record from a host to another host',
+    short_desc='Move AAAA record',
+    callback=aaaa_move,
+    flags=[
+        Flag('-ip',
+             description='IP to move',
+             metavar='IP'),
+        Flag('-fromhost',
+             description='Name of source host',
+             metavar='NAME'),
+        Flag('-tohost',
+             description='Name of destination host',
+             metavar='NAME'),
     ],
 )
 
