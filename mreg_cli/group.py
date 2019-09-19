@@ -356,6 +356,44 @@ group.add_command(
     ]
 )
 
+############################################
+# Implementation of sub command 'owner_add' #
+############################################
+
+
+def owner_add(args):
+    """
+    Add owner(s) to group
+    """
+
+    get_hostgroup(args.group)
+
+    for name in args.owners:
+        data = {
+            'name': name,
+        }
+        path = f'/api/v1/hostgroups/{args.group}/owners/'
+        history.record_post(path, "", data, undoable=False)
+        post(path, **data)
+        cli_info(f"Added {name} to {args.group}", print_msg=True)
+
+
+group.add_command(
+    prog='owner_add',
+    description='Add owner(s) to group',
+    short_desc='Add owner(s) to group',
+    callback=owner_add,
+    flags=[
+        Flag('group',
+             description='group',
+             metavar='GROUP'),
+        Flag('owners',
+             description='owners',
+             nargs='+',
+             metavar='OWNER'),
+    ]
+)
+
 ################################################
 # Implementation of sub command 'owner_remove' #
 ################################################
