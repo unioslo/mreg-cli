@@ -442,7 +442,7 @@ def set_description(args):
     """Set description for group
     """
     get_hostgroup(args.name)
-    patch(f"/hostgroups/{args.name}", description=args.description)
+    patch(f"/api/v1/hostgroups/{args.name}", description=args.description)
     cli_info("updated description to '{}' for {}".format(args.description,
                                                          args.name), True)
 
