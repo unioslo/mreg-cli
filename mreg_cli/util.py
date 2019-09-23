@@ -1,5 +1,6 @@
 import ipaddress
 import json
+import os
 import re
 import sys
 import typing
@@ -15,6 +16,7 @@ from .log import cli_error, cli_warning
 location_tags = []
 category_tags = []
 session = requests.Session()
+mreg_auth_token_file = os.path.join(os.getenv('HOME'), '.mreg-cli_auth_token')
 
 
 def set_config(cfg):
@@ -117,11 +119,29 @@ def ip_in_mreg_net(ip: str) -> bool:
 #                                                                              #
 ################################################################################
 
-def login(user, url):
+
+def login1(user, url):
     global mregurl, username
     mregurl = url
     username = user
+
+    if os.path.isfile(mreg_auth_token_file):
+        try:
+            with open(mreg_auth_token_file) as tokenfile:
+                token = tokenfile.readline()
+                session.headers.update({"Authorization": f"Token {token}"})
+        except PermissionError:
+            pass
+
+    # Find a better URL.. but so far so good
+    ret = session.get(requests.compat.urljoin(mregurl, '/api/v1/hosts/?page_size=1'))
+    if ret.status_code == 401:
+        login(user, url)
+
+
+def login(user, url):
     print(f"Connecting to {url}")
+
     # get url
     password = prompt(f"Password for {username}: ", is_password=True)
     try:
@@ -135,6 +155,8 @@ def login(user, url):
 
 
 def logout():
+    # XXX: logout should exit client or actually logout and invalidate token?
+    return
     path = requests.compat.urljoin(mregurl, '/api/token-logout/')
     # Try to logout, and ignore errors
     try:
@@ -170,6 +192,11 @@ def _update_token(username, password):
             cli_error(res)
     token = result.json()['token']
     session.headers.update({"Authorization": f"Token {token}"})
+    try:
+        with open(mreg_auth_token_file, 'w') as tokenfile:
+            tokenfile.write(token)
+    except PermissionError:
+        pass
 
 
 def result_check(result, type, url):

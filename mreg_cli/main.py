@@ -53,7 +53,7 @@ def main():
         return
 
     try:
-        util.login(config["user"], config["url"])
+        util.login1(config["user"], config["url"])
     except (EOFError, KeyboardInterrupt):
         return
     print(util.session.headers["Authorization"])
@@ -66,6 +66,7 @@ def main():
     from . import host      # noqa: F401
     from . import network   # noqa: F401
     from . import permission  # noqa: F401
+    from . import policy  # noqa: F401
     from . import zone      # noqa: F401
 
     # session is a PromptSession object from prompt_toolkit which handles
