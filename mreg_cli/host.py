@@ -82,7 +82,7 @@ def zoneinfo_for_hostname(host: str) -> dict:
     if "." not in host:
         return None
 
-    path = f"/api/v1/zones/hostname/{host}"
+    path = f"/api/v1/zones/forward/hostname/{host}"
     history.record_get(path)
     zoneinfo = get(path, ok404=True)
     return None if zoneinfo is None else zoneinfo.json()
