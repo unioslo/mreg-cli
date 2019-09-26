@@ -171,9 +171,9 @@ def _delete(args):
 
     info = get_hostgroup(args.name)
 
-    if len(info['hosts']) or len(info['groups']) and not args.force:
+    if (len(info['hosts']) or len(info['groups'])) and not args.force:
         cli_error('Group contains %d host(s) and %d group(s), must force'
-                  % (len(info['hosts']), len('groups')))
+                  % (len(info['hosts']), len(info['groups'])))
 
     path = f'/api/v1/hostgroups/{args.name}'
     history.record_delete(path, dict())
