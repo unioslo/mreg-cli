@@ -7,7 +7,7 @@ if sys.version_info < (3, 6):
     sys.exit('Python < 3.6 is not supported')
 
 install_requirements = [
-    'prompt_toolkit',
+    'prompt_toolkit>=2',
     'requests',
 ]
 
