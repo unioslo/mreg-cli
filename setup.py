@@ -20,6 +20,7 @@ def main():
                 'mreg-cli = mreg_cli.main:main',
             ],
         },
+        setup_requires=['wheel'],
         install_requires=install_requirements,
         packages=setuptools.find_packages(
             '.', include=('mreg_cli', 'mreg_cli.*')),
