@@ -23,8 +23,9 @@ def _prefix_from_stack() -> str:
 
 
 def _write_log(entry: str, end: str = "\n") -> None:
-    with open(logfile, "a+") as f:
-        f.write(entry + end)
+    if logfile is not None:
+        with open(logfile, "a+") as f:
+            f.write(entry + end)
 
 
 def cli_error(msg: str, raise_exception: bool = True, exception=CliError) -> None:

@@ -43,7 +43,8 @@ def main():
     config = ChainMap(command_line_args, dict(cfg["mreg"].items()))
 
     util.set_config(config)
-    log.logfile = config["log_file"]
+    if 'log_file' in config:
+        log.logfile = config['log_file']
 
     if "user" not in config:
         print("Username not set in config or as argument")
