@@ -23,6 +23,7 @@ def main():
         install_requires=install_requirements,
         packages=setuptools.find_packages(
             '.', include=('mreg_cli', 'mreg_cli.*')),
+        data_files=[('config', ['data/mreg-cli.conf'])],
     )
 
 

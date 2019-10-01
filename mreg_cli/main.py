@@ -1,62 +1,91 @@
 import argparse
 import configparser
+import getpass
+import logging
 import shlex
 from collections import ChainMap
 
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
-from . import log, util
+from . import config, log, util
 from .cli import cli
+
+logger = logging.getLogger(__name__)
+
+
+def setup_logging(verbosity):
+    """ configure logging if verbosity is not None """
+    if verbosity is None:
+        root = logging.getLogger()
+        root.addHandler(logging.NullHandler())
+    else:
+        level = config.get_verbosity(int(verbosity) - 1)
+        config.configure_logging(level)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="The MREG cli")
+    parser = argparse.ArgumentParser(description="The MREG cli")
 
     connect_args = parser.add_argument_group('connection settings')
     connect_args.add_argument(
         '--url',
-        help="use mreg server at %(metavar)s",
+        default=config.get_default_url(),
+        help="use mreg server at %(metavar)s (default: %(default)s)",
         metavar='URL',
     )
 
     connect_args.add_argument(
         '-u', '--user',
-        help="authenticate as %(metavar)s",
+        default=getpass.getuser(),
+        help="authenticate as %(metavar)s (default: %(default)s)",
         metavar='USER',
     )
 
-    connect_args.add_argument(
-        '--timeout',
-        type=float,
+    output_args = parser.add_argument_group('output settings')
+    output_args.add_argument(
+        '-v', '--verbosity',
+        dest='verbosity',
+        action='count',
         default=None,
-        help="set connection timeout to %(metavar)s seconds"
-             " (default: no timeout)",
-        metavar="N",
+        help="show debug messages on stderr",
+    )
+    output_args.add_argument(
+        '-l', '--logfile',
+        dest='logfile',
+        help="write log to %(metavar)s",
+        metavar='LOGFILE',
     )
 
     args = parser.parse_args()
+    setup_logging(args.verbosity)
+    logger.debug(f'args: {args}')
     command_line_args = {k: v for k, v in vars(args).items() if v}
-    cfg = configparser.ConfigParser()
-    cfg.read("cli.conf")
-    config = ChainMap(command_line_args, dict(cfg["mreg"].items()))
 
-    util.set_config(config)
-    if 'log_file' in config:
-        log.logfile = config['log_file']
+    configpath = config.get_config_file()
+    if configpath is None:
+        conf = command_line_args
+    else:
+        cfgparser = configparser.ConfigParser()
+        cfgparser.read(configpath)
+        conf = ChainMap(command_line_args, dict(cfgparser["mreg"].items()))
 
-    if "user" not in config:
+    util.set_config(conf)
+    if 'logfile' in conf:
+        log.logfile = conf['logfile']
+
+    if "user" not in conf:
         print("Username not set in config or as argument")
         return
-    elif "url" not in config:
+    elif "url" not in conf:
         print("mreg url not set in config or as argument")
         return
 
     try:
-        util.login1(config["user"], config["url"])
+        util.login1(conf["user"], conf["url"])
     except (EOFError, KeyboardInterrupt):
-        return
+        print('')
+        raise SystemExit()
     print(util.session.headers["Authorization"])
 
     # Must import the commands, for the side effects of creating the commands
@@ -90,7 +119,7 @@ def main():
             continue
         except EOFError:
             util.logout()
-            break
+            raise SystemExit()
         try:
             for line in lines.splitlines():
                 cli.parse(shlex.split(line))

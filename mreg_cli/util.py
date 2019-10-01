@@ -1,5 +1,6 @@
 import ipaddress
 import json
+import logging
 import os
 import re
 import sys
@@ -17,6 +18,8 @@ location_tags = []
 category_tags = []
 session = requests.Session()
 mreg_auth_token_file = os.path.join(os.getenv('HOME'), '.mreg-cli_auth_token')
+
+logger = logging.getLogger(__name__)
 
 
 def set_config(cfg):
@@ -119,8 +122,9 @@ def login1(user, url):
     if os.path.isfile(mreg_auth_token_file):
         try:
             with open(mreg_auth_token_file) as tokenfile:
-                token = tokenfile.readline()
-                session.headers.update({"Authorization": f"Token {token}"})
+                tokenuser, token = tokenfile.readline().split('¤')
+                if tokenuser == user:
+                    session.headers.update({"Authorization": f"Token {token}"})
         except PermissionError:
             pass
 
@@ -185,7 +189,7 @@ def _update_token(username, password):
     session.headers.update({"Authorization": f"Token {token}"})
     try:
         with open(mreg_auth_token_file, 'w') as tokenfile:
-            tokenfile.write(token)
+            tokenfile.write(f'{username}¤{token}')
     except PermissionError:
         pass
 
