@@ -98,15 +98,6 @@ def first_unused_ip_from_network(network: dict) -> str:
     return unused
 
 
-def zone_mreg_controlled(zone: str) -> bool:
-    """Return true of the zone is controlled by MREG"""
-    assert isinstance(zone, str)
-    path = f"/api/v1/zones/?name={zone}"
-    history.record_get(path)
-    zone = get(path).json()
-    return bool(len(zone))
-
-
 def ip_in_mreg_net(ip: str) -> bool:
     """Return true if the ip is in a MREG controlled network"""
     net = get_network_by_ip(ip)
@@ -230,12 +221,12 @@ def get(path: str, ok404=False) -> requests.Response:
     return _request_wrapper("get", path, ok404=ok404)
 
 
-def get_list(path: str) -> requests.Response:
+def get_list(path: str, ok404=False) -> requests.Response:
     """Uses requests to make a get request.
        Will iterate over paginated results and return result as list."""
     ret = []
     while path:
-        result = _request_wrapper("get", path).json()
+        result = get(path, ok404=ok404).json()
         if 'next' in result:
             path = result['next']
             ret.extend(result['results'])
