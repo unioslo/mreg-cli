@@ -31,6 +31,7 @@ DEFAULT_CONFIG_PATH = tuple((
 ))
 
 DEFAULT_URL = None
+DEFAULT_DOMAIN = None
 
 # Default logging format
 # TODO: Support logging config
@@ -81,6 +82,11 @@ def get_config_file():
             return path
     logger.warn('config file found in config paths')
     return None
+
+
+def get_default_domain():
+    return DEFAULT_DOMAIN
+
 
 def get_default_url():
     for url in (os.environ.get('MREGCLI_DEFAULT_URL'), DEFAULT_URL):

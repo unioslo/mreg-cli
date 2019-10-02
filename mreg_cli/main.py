@@ -3,7 +3,6 @@ import configparser
 import getpass
 import logging
 import shlex
-from collections import ChainMap
 
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
@@ -25,21 +24,38 @@ def setup_logging(verbosity):
 
 
 def main():
+
+    # Read config file first, to provide defaults
+    conf = {}
+    configpath = config.get_config_file()
+    if configpath is not None:
+        cfgparser = configparser.ConfigParser()
+        cfgparser.read(configpath)
+        conf = dict(cfgparser["mreg"].items())
+
     parser = argparse.ArgumentParser(description="The MREG cli")
 
     connect_args = parser.add_argument_group('connection settings')
     connect_args.add_argument(
         '--url',
-        default=config.get_default_url(),
+        default=conf.get('url', config.get_default_url()),
         help="use mreg server at %(metavar)s (default: %(default)s)",
         metavar='URL',
     )
 
     connect_args.add_argument(
         '-u', '--user',
-        default=getpass.getuser(),
+        default=conf.get('user', getpass.getuser()),
         help="authenticate as %(metavar)s (default: %(default)s)",
         metavar='USER',
+    )
+
+    mreg_args = parser.add_argument_group('mreg settings')
+    mreg_args.add_argument(
+        '-d', '--domain',
+        default=conf.get('domain', config.get_default_domain()),
+        help="default %(metavar)s (default: %(default)s)",
+        metavar='DOMAIN',
     )
 
     output_args = parser.add_argument_group('output settings')
@@ -60,15 +76,7 @@ def main():
     args = parser.parse_args()
     setup_logging(args.verbosity)
     logger.debug(f'args: {args}')
-    command_line_args = {k: v for k, v in vars(args).items() if v}
-
-    configpath = config.get_config_file()
-    if configpath is None:
-        conf = command_line_args
-    else:
-        cfgparser = configparser.ConfigParser()
-        cfgparser.read(configpath)
-        conf = ChainMap(command_line_args, dict(cfgparser["mreg"].items()))
+    conf = {k: v for k, v in vars(args).items() if v}
 
     util.set_config(conf)
     if 'logfile' in conf:
