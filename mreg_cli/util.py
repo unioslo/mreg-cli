@@ -21,6 +21,13 @@ mreg_auth_token_file = os.path.join(os.getenv('HOME'), '.mreg-cli_auth_token')
 
 logger = logging.getLogger(__name__)
 
+HTTP_TIMEOUT = 20
+
+
+def error(msg, code=os.EX_UNAVAILABLE):
+    print(f"ERROR: {msg}", file=sys.stderr)
+    sys.exit(code)
+
 
 def set_config(cfg):
     global config
@@ -129,7 +136,12 @@ def login1(user, url):
             pass
 
     # Find a better URL.. but so far so good
-    ret = session.get(requests.compat.urljoin(mregurl, '/api/v1/hosts/?page_size=1'))
+    try:
+        ret = session.get(requests.compat.urljoin(mregurl, '/api/v1/hosts/?page_size=1'),
+                          timeout=5)
+    except requests.exceptions.ConnectionError as e:
+        error(f"Could not connect to {url}")
+
     if ret.status_code == 401:
         login(user, url)
 
@@ -142,11 +154,7 @@ def login(user, url):
     try:
         _update_token(username, password)
     except CliError as e:
-        print(e)
-        sys.exit(1)
-    except requests.exceptions.SSLError as e:
-        print(e)
-        sys.exit(1)
+        error(e)
 
 
 def logout():
@@ -166,8 +174,7 @@ def update_token():
     try:
         _update_token(username, password)
     except CliError as e:
-        print(e)
-        sys.exit(1)
+        error(e)
 
 
 def _update_token(username, password):
@@ -176,8 +183,9 @@ def _update_token(username, password):
         result = requests.post(tokenurl, {'username': username,
                                           'password': password})
     except requests.exceptions.ConnectionError as err:
-        print(err)
-        sys.exit(1)
+        error(err)
+    except requests.exceptions.SSLError as e:
+        error(e)
     if not result.ok:
         res = result.json()
         if result.status_code == 400:
@@ -208,7 +216,7 @@ def result_check(result, type, url):
 
 def _request_wrapper(type, path, ok404=False, first=True, **data):
     url = requests.compat.urljoin(mregurl, path)
-    result = getattr(session, type)(url, data=data)
+    result = getattr(session, type)(url, data=data, timeout=HTTP_TIMEOUT)
 
     if first and result.status_code == 401:
         update_token()
