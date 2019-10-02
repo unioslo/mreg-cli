@@ -38,43 +38,12 @@ host = cli.add_command(
     description='Manage hosts.',
 )
 
-# helper methods
-HinfoTuple = typing.Tuple[str, str]
-HinfoDict = typing.Dict[int, HinfoTuple]
 
-
-def hinfo_sanify(hid: str, hinfo: HinfoDict):
-    """Check if the requested hinfo is a valid one."""
-    try:
-        int(hid)
-    except ValueError:
-        cli_warning("hinfo {} is not a number".format(hid))
-    if len(hinfo) == 0:
-        cli_warning("Can not set hinfo, as no hinfo presets defined")
-    if hid not in hinfo:
-        cli_warning("Unknown hinfo preset {}".format(hid))
-
-
-def hinfo_dict() -> HinfoDict:
-    """
-    Return a dict with descriptions of available hinfo presets. The keys
-    are the hinfo ids.
-    """
-    path = "/api/v1/hinfopresets/"
-    history.record_get(path)
-    hl = dict()
-    for hinfo in get_list(path):
-        assert isinstance(hinfo, dict)
-        hl[str(hinfo["id"])] = (hinfo["cpu"], hinfo["os"])
-    return hl
-
-
-def print_hinfo(hid: str, padding: int = 14) -> None:
+def print_hinfo(hinfo: dict, padding: int = 14) -> None:
     """Pretty given hinfo id"""
-    hinfos = hinfo_dict()
-    hid = str(hid)
-    hinfo = hinfos[hid]
-    print("{1:<{0}}cpu={2} os={3}".format(padding, "Hinfo:", hinfo[0], hinfo[1]))
+    if hinfo is None:
+        return
+    print("{1:<{0}}cpu={2} os={3}".format(padding, "Hinfo:", hinfo['cpu'], hinfo['os']))
 
 
 def zoneinfo_for_hostname(host: str) -> dict:
@@ -188,8 +157,8 @@ def _check_ipversion(ip, ipversion):
 #########################################
 
 def add(args):
-    """Add a new host with the given name, ip or network and contact. hinfo and
-    comment are optional.
+    """Add a new host with the given name.
+       ip/network, comment and contact are optional.
     """
 
     # Fail if given host exists
@@ -219,17 +188,11 @@ def add(args):
                 args.contact,
                 args.name))
 
-    # Verify hinfo id
-    if args.hinfo:
-        hi_dict = hinfo_dict()
-        hinfo_sanify(args.hinfo, hi_dict)
-
     # Create the new host with an ip address
     path = "/api/v1/hosts/"
     data = {
         "name": name,
         "contact": args.contact or None,
-        "hinfo": args.hinfo or None,
         "comment": args.comment or None,
     }
     if args.ip:
@@ -247,7 +210,7 @@ def add(args):
 host.add_command(
     prog='add',
     description='Add a new host with the given name, ip or network and contact. '
-                'hinfo and comment are optional.',
+                'comment are optional.',
     short_desc='Add a new host',
     callback=add,
     flags=[
@@ -256,15 +219,12 @@ host.add_command(
              description='Name of new host (req)'),
         Flag('-ip',
              short_desc='An ip or net',
-             description='The hosts ip or a net. If it\'s a net a random ip is '
-                         'selected from the net',
+             description="The hosts ip or a network. If it's a network the first free IP is "
+                         "selected from the network",
              metavar='IP/NET'),
         Flag('-contact',
              short_desc='Contact mail for the host',
              description='Contact mail for the host'),
-        Flag('-hinfo',
-             short_desc='Host information.',
-             description='Host information.'),
         Flag('-comment',
              short_desc='A comment.',
              description='A comment.'),
@@ -451,12 +411,12 @@ def print_sshfp(sshfp: dict, padding: int = 14) -> None:
     ))
 
 
-def print_loc(loc: str, padding: int = 14) -> None:
+def print_loc(loc: dict, padding: int = 14) -> None:
     """Pretty print given loc"""
     if loc is None:
         return
-    assert isinstance(loc, str)
-    print("{1:<{0}}{2}".format(padding, "Loc:", loc))
+    assert isinstance(loc, dict)
+    print("{1:<{0}}{2}".format(padding, "Loc:", loc['loc']))
 
 
 def print_cname(cname: str, host: str, padding: int = 14) -> None:
@@ -520,8 +480,7 @@ def _print_host_info(name):
         print_ptr(ptr["ipaddress"], info["name"])
     print_ttl(info["ttl"])
     print_mx(info['mxs'])
-    if info["hinfo"]:
-        print_hinfo(info["hinfo"])
+    print_hinfo(info['hinfo'])
     if info["loc"]:
         print_loc(info["loc"])
     for cname in info["cnames"]:
@@ -1370,6 +1329,52 @@ def _hinfo_remove(host_) -> None:
     patch(path, hinfo="")
 
 
+
+###############################################
+#  Implementation of sub command 'hinfo_add'  #
+###############################################
+
+def hinfo_add(args):
+    """Add hinfo for host. If <name> is an alias the cname host is updated.
+    """
+    # Get host info or raise exception
+    info = host_info_by_name(args.name)
+
+    if info['hinfo']:
+        cli_warning(f"{info['name']} already has hinfo set.")
+
+    data = {
+        "host": info["id"],
+        "cpu": args.cpu,
+        "os": args.os
+    }
+    # Add HINFO record to host
+    path = "/api/v1/hinfos/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
+    cli_info("Added HINFO record to {}".format(info["name"]), print_msg=True)
+
+
+host.add_command(
+    prog='hinfo_add',
+    description='Add HINFO for host. If NAME is an alias the cname host is '
+                'updated.',
+    short_desc='Set HINFO.',
+    callback=hinfo_add,
+    flags=[
+        Flag('name',
+             description='Name of the target host.',
+             metavar='NAME'),
+        Flag('cpu',
+             description='CPU/hardware',
+             metavar='CPU'),
+        Flag('os',
+             description='Operating system',
+             metavar='OS'),
+    ],
+)
+
+
 ##################################################
 #  Implementation of sub command 'hinfo_remove'  #
 ##################################################
@@ -1381,8 +1386,14 @@ def hinfo_remove(args):
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
-    _hinfo_remove(info)
-    cli_info("removed hinfo for {}".format(info["name"]), print_msg=True)
+
+    if not info['hinfo']:
+        cli_warning(f"{info['name']} already has no hinfo set.")
+    host_id = info['id']
+    path = f"/api/v1/hinfos/{host_id}"
+    history.record_delete(path, host_id)
+    delete(path)
+    cli_info("deleted HINFO from {}".format(info['name']), True)
 
 
 # Add 'hinfo_remove' as a sub command to the 'host' command
@@ -1399,45 +1410,6 @@ host.add_command(
     ],
 )
 
-
-###############################################
-#  Implementation of sub command 'hinfo_set'  #
-###############################################
-
-def hinfo_set(args):
-    """Set hinfo for host. If <name> is an alias the cname host is updated.
-    """
-    hinfo_sanify(args.hinfo, hinfo_dict())
-
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    old_data = {"hinfo": info["hinfo"] or ""}
-    new_data = {"hinfo": args.hinfo}
-
-    # Update hinfo
-    path = f"/api/v1/hosts/{info['name']}"
-    history.record_patch(path, new_data, old_data)
-    patch(path, hinfo=args.hinfo)
-    cli_info("updated hinfo to {} for {}".format(args.hinfo, info["name"]),
-             print_msg=True)
-
-
-# Add 'hinfo_set' as a sub command to the 'host' command
-host.add_command(
-    prog='hinfo_set',
-    description='Set HINFO for host. If NAME is an alias the cname host is '
-                'updated.',
-    short_desc='Set HINFO.',
-    callback=hinfo_set,
-    flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('hinfo',
-             description='New HINFO.',
-             metavar='HINFO'),
-    ],
-)
 
 
 ################################################
@@ -1471,135 +1443,6 @@ host.add_command(
 )
 
 
-#######################################################
-#  Implementation of sub command 'hinfopresets_list'  #
-#######################################################
-
-def hinfopresets_list(args):
-    """Show hinfopresets.
-    """
-
-    def print_hinfo_list(hinfos: HinfoDict, padding: int = 14) -> None:
-        """Pretty print a dict of host infos"""
-        if len(hinfos) == 0:
-            print("No hinfo presets.")
-            return
-        max_len = max([len(x[0]) for x in hinfos.values()])
-        print("{1:<{0}}    {2:<{3}} {4}".format(padding, "Id", "CPU", max_len, "OS"))
-        for hid in sorted(hinfos.keys()):
-            hinfo = hinfos[hid]
-            print(
-                "{1:<{0}} -> {2:<{3}} {4}".format(padding, hid, hinfo[0],
-                                                  max_len, hinfo[1]))
-
-    hi_dict = hinfo_dict()
-    if hi_dict:
-        print_hinfo_list(hi_dict)
-    else:
-        cli_info("No hinfopresets.", print_msg=True)
-
-
-# Add 'hinfopresets_list' as a sub command to the 'host' command
-host.add_command(
-    prog='hinfopresets_list',
-    description='Show hinfopresets.',
-    short_desc='Show hinfopresets.',
-    callback=hinfopresets_list,
-)
-
-
-#########################################################
-#  Implementation of sub command 'hinfopresets_create'  #
-#########################################################
-
-def hinfopresets_create(args):
-    """Create a new hinfopreset.
-    """
-    hi_dict = hinfo_dict()
-    for hid, hinfo in hi_dict.items():
-        if (args.cpu, args.os) == hinfo:
-            cli_warning("cpu {} and os {} already defined as set {}".format(
-                args.cpu, args.os, hid))
-
-    data = {
-        "cpu": args.cpu,
-        "os": args.os
-    }
-    path = "/api/v1/hinfopresets/"
-    history.record_post(path, "", data, undoable=False)
-    post(path, **data)
-    cli_info("Added new hinfopreset with cpu {} and os {}"
-             .format(args.cpu, args.os), print_msg=True)
-
-
-# Add 'hinfopresets_create' as a sub command to the 'host' command
-host.add_command(
-    prog='hinfopresets_create',
-    description='Create a new hinfopreset.',
-    short_desc='Create a new hinfopreset.',
-    callback=hinfopresets_create,
-    flags=[
-        Flag('cpu',
-             description='CPU of hinfopreset.',
-             metavar='CPU'),
-        Flag('os',
-             description='OS of hinfopreset.',
-             metavar='OS'),
-    ],
-)
-
-
-#########################################################
-#  Implementation of sub command 'hinfopresets_remove'  #
-#########################################################
-
-def hinfopresets_remove(args):
-    """Remove a hinfopreset.
-    """
-    hi_dict = hinfo_dict()
-    if args.id not in hi_dict.keys():
-        cli_info("hinfopreset {} does not exist".format(args.id),
-                 print_msg=True)
-        return
-
-    # Check for hinfopreset in use
-    path = f"/api/v1/hosts/?hinfo={args.id}"
-    history.record_get(path)
-    hosts = get_list(path)
-    if len(hosts):
-        if args.force:
-            for host in hosts:
-                info = host_info_by_name(host['name'])
-                _hinfo_remove(info)
-            cli_info("Removed hinfopreset {} from {} hosts"
-                     .format(args.id, len(hosts)), print_msg=True)
-        else:
-            cli_warning("hinfopreset {} in use by {} hosts, must force".format(
-                args.id, len(hosts)))
-
-    path = f"/api/v1/hinfopresets/{args.id}"
-    history.record_delete(path, args.id)
-    delete(path)
-    cli_info("Removed hinfopreset {}".format(args.id), print_msg=True)
-
-
-# Add 'hinfo_show' as a sub command to the 'host' command
-host.add_command(
-    prog='hinfopresets_remove',
-    description='Remove a hinfopreset.',
-    short_desc='Remove a hinfopreset.',
-    callback=hinfopresets_remove,
-    flags=[
-        Flag('id',
-             description='Hinfopreset id.',
-             metavar='ID'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
-    ],
-)
-
-
 ################################################################################
 #                                                                              #
 #                                 LOC records                                  #
@@ -1615,20 +1458,16 @@ def loc_remove(args):
     """Remove location from host. If <name> is an alias the cname host is
     updated.
     """
-    # LOC always require force
-    if not args.force:
-        cli_warning("require force to remove location")
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)
+    if not info['loc']:
+        cli_warning(f"{info['name']} already has no loc set.")
+    host_id = info['id']
+    path = f"/api/v1/locs/{host_id}"
+    history.record_delete(path, host_id)
+    delete(path)
 
-    old_data = {"loc": info["loc"]}
-    new_data = {"loc": ""}
-
-    # Set LOC to null value
-    path = f"/api/v1/hosts/{info['name']}"
-    history.record_patch(path, new_data, old_data)
-    patch(path, loc="")
     cli_info("removed LOC for {}".format(info["name"]), print_msg=True)
 
 
@@ -1643,55 +1482,41 @@ host.add_command(
         Flag('name',
              description='Name of the target host.',
              metavar='NAME'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
     ],
 )
 
 
 #############################################
-#  Implementation of sub command 'loc_set'  #
+#  Implementation of sub command 'loc_add'  #
 #############################################
 
-def loc_set(args):
+def loc_add(args):
     """Set location of host. If <name> is an alias the cname host is updated.
     """
-
-    def is_valid_loc(loc: str) -> bool:
-        # TODO LOC: implement validate loc
-        return True
-
-    # LOC always require force
-    if not args.force:
-        cli_warning("require force to set location")
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    # LOC sanity check
-    if not is_valid_loc(args.loc):
-        cli_warning("invalid LOC \"{}\" (target host {})"
-                    .format(args.loc, info["name"]))
+    if info['loc']:
+        cli_warning(f"{info['name']} already has loc set.")
 
-    old_data = {"loc": info["loc"] or ""}
-    new_data = {"loc": args.loc}
-
-    # Update LOC
-    path = f"/api/v1/hosts/{info['name']}"
-    history.record_patch(path, new_data, old_data)
-    patch(path, loc=args.loc)
-    cli_info("updated LOC to {} for {}".format(args.loc, info["name"]),
+    data = {
+        "host": info["id"],
+        "loc": args.loc
+    }
+    path = "/api/v1/locs/"
+    history.record_post(path, "", data, undoable=False)
+    post(path, **data)
+    cli_info("added LOC '{}' for {}".format(args.loc, info["name"]),
              print_msg=True)
 
 
-# Add 'loc_set' as a sub command to the 'host' command
 host.add_command(
-    prog='loc_set',
+    prog='loc_add',
     description='Set location of host. If NAME is an alias the cname host is '
                 'updated.',
     short_desc='Set LOC record.',
-    callback=loc_set,
+    callback=loc_add,
     flags=[
         Flag('name',
              description='Name of the target host.',
@@ -1699,9 +1524,6 @@ host.add_command(
         Flag('loc',
              description='New LOC.',
              metavar='LOC'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
     ],
 )
 
@@ -1715,7 +1537,10 @@ def loc_show(args):
     shown.
     """
     info = host_info_by_name(args.name)
-    print_loc(info["loc"])
+    if info["loc"]:
+        print_loc(info["loc"])
+    else:
+        cli_info("No LOC for {}".format(args.name), print_msg=True)
     cli_info("showed LOC for {}".format(info["name"]))
 
 
@@ -1805,7 +1630,7 @@ def mx_remove(args):
 
     mx_id = _mx_in_mxs(info['mxs'], args.priority, args.mx)
     if mx_id is None:
-        cli_warning("{} has not MX records with priority {} and mail exhange {}".format(
+        cli_warning("{} has no MX records with priority {} and mail exhange {}".format(
                     info['name'], args.priority, args.mx))
     path = f"/api/v1/mxs/{mx_id}"
     history.record_delete(path, mx_id)
