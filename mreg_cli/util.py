@@ -198,6 +198,8 @@ def _update_token(username, password):
     try:
         with open(mreg_auth_token_file, 'w') as tokenfile:
             tokenfile.write(f'{username}¤{token}')
+    except FileNotFoundError:
+        pass
     except PermissionError:
         pass
 
