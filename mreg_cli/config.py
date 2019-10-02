@@ -80,7 +80,7 @@ def get_config_file():
         if os.path.isfile(path):
             logger.info('found config in %r', path)
             return path
-    logger.warn('config file found in config paths')
+    logger.debug('no config file found in config paths')
     return None
 
 
