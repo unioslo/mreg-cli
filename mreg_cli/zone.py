@@ -27,7 +27,7 @@ def _verify_nameservers(nameservers, force):
         else:
             if info['zone'] is not None:
                 if not info['ipaddresses'] and not force:
-                    errors.append("{nameserver} has no A-record/glue, must force")
+                    errors.append(f"{nameserver} has no A-record/glue, must force")
     if errors:
         cli_warning("\n".join(errors))
 
