@@ -882,7 +882,7 @@ def _ip_move(args, ipversion):
     if ip_id:
         path = f'/api/v1/ipaddresses/{ip_id}'
         patch(path, host=toinfo['id'])
-        msg = f'Moved ipaddresses {args.ip}. '
+        msg = f'Moved ipaddress {args.ip}. '
     else:
         msg += f'No ipaddresses matched. '
     if ptr_id:
@@ -899,7 +899,7 @@ def a_move(args):
     _ip_move(args, 4)
 
 
-# Add 'a_remove' as a sub command to the 'host' command
+# Add 'a_move' as a sub command to the 'host' command
 host.add_command(
     prog='a_move',
     description='Move A record from a host to another host',
@@ -908,12 +908,15 @@ host.add_command(
     flags=[
         Flag('-ip',
              description='IP to move',
+             required=True,
              metavar='IP'),
         Flag('-fromhost',
              description='Name of source host',
+             required=True,
              metavar='NAME'),
         Flag('-tohost',
              description='Name of destination host',
+             required=True,
              metavar='NAME'),
     ],
 )
@@ -1090,7 +1093,7 @@ def aaaa_move(args):
     _ip_move(args, 6)
 
 
-# Add 'a_remove' as a sub command to the 'host' command
+# Add 'aaaa_move' as a sub command to the 'host' command
 host.add_command(
     prog='aaaa_move',
     description='Move AAAA record from a host to another host',
@@ -1099,12 +1102,15 @@ host.add_command(
     flags=[
         Flag('-ip',
              description='IP to move',
+             required=True,
              metavar='IP'),
         Flag('-fromhost',
              description='Name of source host',
+             required=True,
              metavar='NAME'),
         Flag('-tohost',
              description='Name of destination host',
+             required=True,
              metavar='NAME'),
     ],
 )
