@@ -837,10 +837,9 @@ host.add_command(
     short_desc='Change A record.',
     callback=a_change,
     flags=[
-        Flag('-name',
+        Flag('name',
              description='Name of the target host.',
              short_desc='Host name.',
-             required=True,
              metavar='NAME'),
         Flag('-old',
              description='The existing IP that should be changed.',
