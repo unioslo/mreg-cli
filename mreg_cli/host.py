@@ -882,7 +882,7 @@ def _ip_move(args, ipversion):
     if ip_id:
         path = f'/api/v1/ipaddresses/{ip_id}'
         patch(path, host=toinfo['id'])
-        msg = f'Moved ipaddress {args.ip}. '
+        msg = f'Moved ipaddress {args.ip}'
     else:
         msg += f'No ipaddresses matched. '
     if ptr_id:
