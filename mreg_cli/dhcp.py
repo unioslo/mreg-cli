@@ -14,6 +14,30 @@ dhcp = cli.add_command(
     description='Manage dhcp.',
 )
 
+def _dhcp_get_ip_by_arg(arg):
+    """Get A/AAAA record by either ip address or host name"""
+    if is_valid_ip(arg):
+        path = f"/api/v1/ipaddresses/?ipaddress={arg}"
+        history.record_get(path)
+        ip = get_list(path)
+        if not len(ip):
+            cli_warning(f"ip {arg} doesn't exist.")
+        elif len(ip) > 1:
+            cli_warning(
+                "ip {} is in use by {} hosts".format(arg, len(ip)))
+        ip = ip[0]
+    else:
+        info = host_info_by_name(arg)
+        if len(info["ipaddresses"]) > 1:
+            cli_warning(
+                "{} got {} ip addresses, please enter an ip instead.".format(
+                    info["name"],
+                    len(info["ipaddresses"]),
+                ))
+        ip = info["ipaddresses"][0]
+    return ip
+
+
 
 #########################################
 # Implementation of sub command 'assoc' #
@@ -34,26 +58,7 @@ def assoc(args):
         mac = re.sub('[.:-]', '', mac).lower()
         return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])
 
-    # Get A/AAAA record by either ip address or host name
-    if is_valid_ip(args.name):
-        path = f"/api/v1/ipaddresses/?ipaddress={args.name}"
-        history.record_get(path)
-        ip = get_list(path)
-        if not len(ip):
-            cli_warning("ip {} doesn't exist.".format(args.name))
-        elif len(ip) > 1:
-            cli_warning(
-                "ip {} is in use by {} hosts".format(args.name, len(ip)))
-        ip = ip[0]
-    else:
-        info = host_info_by_name(args.name)
-        if len(info["ipaddresses"]) > 1:
-            cli_warning(
-                "{} got {} ip addresses, please enter an ip instead.".format(
-                    info["name"],
-                    len(info["ipaddresses"]),
-                ))
-        ip = info["ipaddresses"][0]
+    ip = _dhcp_get_ip_by_arg(args.name)
 
     # MAC addr sanity check
     if re.match(r"^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", args.mac):
@@ -114,26 +119,8 @@ def disassoc(args):
     """Disassociate MAC address with host/ip. If host got multiple A/AAAA
     records an IP must be given instead of name
     """
-    # Get A/AAAA record by either ip address or host name
-    if is_valid_ip(args.name):
-        path = f"/api/v1/ipaddresses/?ipaddress={args.name}"
-        history.record_get(path)
-        ip = get_list(path)
-        if not len(ip):
-            cli_warning("ip {} doesn't exist.".format(args.name))
-        elif len(ip) > 1:
-            cli_warning(
-                "ip {} is in use by {} hosts".format(args.name, len(ip)))
-        ip = ip[0]
-    else:
-        info = host_info_by_name(args.name)
-        if len(info["ipaddresses"]) > 1:
-            cli_warning(
-                "{} got {} ip addresses, please enter an ip instead.".format(
-                    info["name"],
-                    len(info["ipaddress"]),
-                ))
-        ip = info["ipaddresses"][0]
+
+    ip = _dhcp_get_ip_by_arg(args.name)
 
     if ip.get('macaddress'):
         # Update ipaddress
