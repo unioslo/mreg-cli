@@ -2182,23 +2182,23 @@ def srv_remove(args):
 
     # Check if service exist
     path = f"/api/v1/srvs/?name={sname}&host={info['id']}"
-    print(path)
     history.record_get(path)
     srvs = get_list(path)
     if len(srvs) == 0:
-        cli_warning("no service named {}".format(sname))
+        cli_warning(f"no service named {sname}")
 
     data = None
     attrs = ('name', 'priority', 'weight', 'port',)
     for srv in srvs:
         if all(srv[attr] == getattr(args, attr) for attr in attrs):
             data = srv
+            break
 
     if data is None:
         cli_warning("Did not find any matching SRV records.")
 
     # Delete SRV record
-    path = f"/api/v1/srv/{data['id']}"
+    path = f"/api/v1/srvs/{data['id']}"
     history.record_delete(path, data)
     delete(path)
     cli_info("deleted SRV record for {}".format(info["name"]), print_msg=True)
@@ -2216,14 +2216,17 @@ host.add_command(
              metavar='SERVICE'),
         Flag('-priority',
              description='SRV priority.',
+             type=int,
              required=True,
              metavar='PRIORITY'),
         Flag('-weight',
              description='SRV weight.',
+             type=int,
              required=True,
              metavar='WEIGHT'),
         Flag('-port',
              description='SRV port.',
+             type=int,
              required=True,
              metavar='PORT'),
         Flag('-host',
@@ -2539,7 +2542,7 @@ def ttl_set(args):
     path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, **new_data)
-    cli_info("updated TTL for {}".format(info["name"]), print_msg=True)
+    cli_info("updated TTL to {} for {}".format(args.ttl, info["name"]), print_msg=True)
 
 
 # Add 'ttl_set' as a sub command to the 'host' command
