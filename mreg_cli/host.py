@@ -400,16 +400,6 @@ def print_ttl(ttl: int, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "TTL:", ttl or "(Default)"))
 
 
-def print_sshfp(sshfp: dict, padding: int = 14) -> None:
-    """Pretty print given sshfp"""
-    print("{1:<{0}} SSHFP {2:^6} {3:^6} {4}".format(
-        padding,
-        sshfp["name"],
-        sshfp["algorithm"],
-        sshfp["hash_type"],
-        sshfp["fingerprint"],
-    ))
-
 
 def print_loc(loc: dict, padding: int = 14) -> None:
     """Pretty print given loc"""
@@ -438,16 +428,6 @@ def print_naptr(naptr: dict, host_name: str, padding: int = 14) -> None:
     """Pretty print given txt"""
     assert isinstance(naptr, dict)
     assert isinstance(host_name, str)
-    print("{1:<{0}} NAPTR {2} {3} \"{4}\" \"{5}\" \"{6}\" {7}".format(
-        padding,
-        host_name,
-        naptr["preference"],
-        naptr["order"],
-        naptr["flag"],
-        naptr["service"],
-        naptr["regex"] or "",
-        naptr["replacement"],
-    ))
 
 
 def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
@@ -489,6 +469,7 @@ def _print_host_info(name):
         print_txt(txt["txt"])
     _srv_show(host_id=info['id'])
     _naptr_show(info)
+    _sshfp_show(info)
     cli_info("printed host info for {}".format(info["name"]))
 
 
@@ -1850,12 +1831,20 @@ def _naptr_show(info):
     path = f"/api/v1/naptrs/?host={info['id']}"
     history.record_get(path)
     naptrs = get_list(path)
+    headers = ("NAPTRs:", "Preference", "Order", "Flag", "Service", "Regex", "Replacement")
+    row_format = '{:<14}' * len(headers) 
     if naptrs:
-        print("{1:<{0}} {2} {3} {4} {5} {6} {7}".format(
-            14, "Name", "Preference", "Order", "Flag", "Service",
-            "Regex", "Replacement"))
-        for ptr in naptrs:
-            print_naptr(ptr, info["name"])
+        print(row_format.format(*headers))
+        for naptr in naptrs:
+            print(row_format.format(
+                '',
+                naptr["preference"],
+                naptr["order"],
+                naptr["flag"],
+                naptr["service"],
+                naptr["regex"] or '""',
+                naptr["replacement"],
+            ))
     return len(naptrs)
 
 
@@ -1865,7 +1854,7 @@ def naptr_show(args):
     info = host_info_by_name(args.name)
     num_naptrs = _naptr_show(info)
     if num_naptrs == 0:
-        print(f"No naptrs for info['name']")
+        print(f"No naptrs for {info['name']}")
     cli_info("showed {} NAPTR records for {}".format(num_naptrs, info["name"]))
 
 
@@ -2437,29 +2426,32 @@ host.add_command(
 # Implementation of sub command 'sshfp_show' #
 ##############################################
 
+def _sshfp_show(info):
+    path = f"/api/v1/sshfps/?host={info['id']}"
+    history.record_get(path)
+    sshfps = get_list(path)
+    headers = ("SSHFPs:", "Algorithm", "Type", "Fingerprint")
+    row_format = '{:<14}' * len(headers)
+    if sshfps:
+        print(row_format.format(*headers))
+        for sshfp in sshfps:
+            print(row_format.format(
+                '',
+                sshfp["algorithm"],
+                sshfp["hash_type"],
+                sshfp["fingerprint"],
+            ))
+    return len(sshfps)
+
 def sshfp_show(args):
     """Show SSHFP records for the host.
     """
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)
-    hid = info["id"]
-    hname = info["name"]
-
-    # Get all matching SSHFP records
-    path = f"/api/v1/sshfps/?host={hid}"
-    history.record_get(path)
-    sshfps = get_list(path)
-    if len(sshfps) < 1:
-        cli_warning("no SSHFP records matching {}".format(hname))
-
-    padding = len(hname)
-    sshfps[0]["name"] = hname
-    print_sshfp(sshfps[0], padding)
-    for sshfp in sshfps[1:]:
-        sshfp["name"] = ""
-        print_sshfp(sshfp, padding)
-    cli_info("showed all SSHFP entries for {}".format(hname), print_msg=True)
+    num_sshfps = _sshfp_show(info)
+    if num_sshfps == 0:
+        cli_warning(f"no SSHFP records for {info['name']}")
 
 
 # Add 'sshfp_show' as a sub command to the 'host' command
