@@ -492,8 +492,7 @@ def _print_ip_info(ip):
 
     print_ipaddresses(ipaddresses, names=True)
     if len(ipaddresses) > 1 and ptrhost is None:
-        cli_info(f'IP {ip} used by {len(ipaddresses)} hosts, but no PTR override', msg=True)
-        return
+        cli_warning(f'IP {ip} used by {len(ipaddresses)} hosts, but no PTR override')
     if ptrhost is None:
         path = f"/api/v1/hosts/?ptr_overrides__ipaddress={ip}"
         history.record_get(path)
@@ -1948,18 +1947,20 @@ host.add_command(
 def ptr_remove(args):
     """Remove PTR record from host.
     """
-    # XXX: broken function by
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    # Check that host got PTR record (assuming host got at most one record)
-    if len(info["ptr_overrides"]) == 0:
+    for ptr in info['ptr_overrides']:
+        if ptr['ipaddress'] == args.ip:
+            ptr_id = ptr['id']
+            break
+    else:
         cli_warning("no PTR record for {} with ip {}".format(info["name"],
                                                              args.ip))
 
     # Delete record
-    path = "/api/v1/ptroverrides/{}".format(info["ptr_overrides"][0]["id"])
-    history.record_delete(path, info["ptr_override"][0])
+    path = f"/api/v1/ptroverrides/{ptr_id}"
+    history.record_delete(path, ptr_id)
     delete(path)
     cli_info("deleted PTR record {} for {}".format(args.ip, info["name"]),
              print_msg=True)
@@ -1983,10 +1984,10 @@ host.add_command(
 
 
 #############################################
-#  Implementation of sub command 'ptr_set'  #
+#  Implementation of sub command 'ptr_add'  #
 #############################################
 
-def ptr_set(args):
+def ptr_add(args):
     """Create a PTR record for host.
     """
     # Ip sanity check
@@ -2026,12 +2027,12 @@ def ptr_set(args):
              print_msg=True)
 
 
-# Add 'ptr_set' as a sub command to the 'host' command
+# Add 'ptr_add' as a sub command to the 'host' command
 host.add_command(
-    prog='ptr_set',
+    prog='ptr_add',
     description='Create a PTR record for host.',
-    short_desc='Set PTR record.',
-    callback=ptr_set,
+    short_desc='Add PTR record.',
+    callback=ptr_add,
     flags=[
         Flag('ip',
              description='IP of PTR record. May be IPv4 or IPv6.',
