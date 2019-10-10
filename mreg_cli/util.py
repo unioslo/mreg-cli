@@ -476,6 +476,11 @@ def is_valid_network(net: str) -> bool:
         return False
 
 
+def is_valid_mac(mac: str) -> bool:
+    """Check if mac is a valid MAC address"""
+    return bool(re.match(r"^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", mac))
+
+
 def is_valid_ttl(ttl: typing.Union[int, str, bytes]) -> bool:  # int?
     """Check application specific ttl restrictions."""
     if ttl in ("", "default"):
@@ -506,3 +511,13 @@ def is_valid_location_tag(loc: str) -> bool:
 def is_valid_category_tag(cat: str) -> bool:
     """Check if valid location tag"""
     return cat in category_tags
+
+
+def format_mac(mac: str) -> str:
+    """
+    Create a strict 'aa:bb:cc:11:22:33' MAC address.
+    Replaces any other delimiters with a colon and turns it into all lower
+    case.
+    """
+    mac = re.sub('[.:-]', '', mac).lower()
+    return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])

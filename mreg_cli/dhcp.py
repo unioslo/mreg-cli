@@ -1,9 +1,7 @@
-import re
-
 from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
-from .util import get_list, host_info_by_name, is_valid_ip, patch
+from .util import format_mac, get_list, host_info_by_name, is_valid_ip, is_valid_mac, patch
 
 #################################
 #  Add the main command 'dhcp'  #
@@ -49,19 +47,10 @@ def assoc(args):
     IP must be given instead of name.
     """
 
-    def format_mac(mac: str) -> str:
-        """
-        Create a strict 'aa:bb:cc:11:22:33' MAC address.
-        Replaces any other delimiters with a colon and turns it into all lower
-        case.
-        """
-        mac = re.sub('[.:-]', '', mac).lower()
-        return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])
-
     ip = _dhcp_get_ip_by_arg(args.name)
 
     # MAC addr sanity check
-    if re.match(r"^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", args.mac):
+    if is_valid_mac(args.mac):
         new_mac = format_mac(args.mac)
         path = f"/api/v1/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
         history.record_get(path)
@@ -88,7 +77,7 @@ def assoc(args):
     history.record_patch(path, new_data={"macaddress": new_mac}, old_data=ip)
     patch(path, macaddress=new_mac)
     cli_info("associated mac address {} with ip {}"
-             .format(args.mac, ip["ipaddress"]), print_msg=True)
+             .format(new_mac, ip["ipaddress"]), print_msg=True)
 
 
 dhcp.add_command(

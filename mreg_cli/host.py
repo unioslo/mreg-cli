@@ -10,6 +10,7 @@ from .util import (
     cname_exists,
     delete,
     first_unused_ip_from_network,
+    format_mac,
     get,
     get_list,
     get_network,
@@ -22,6 +23,7 @@ from .util import (
     is_valid_ip,
     is_valid_ipv4,
     is_valid_ipv6,
+    is_valid_mac,
     is_valid_network,
     is_valid_ttl,
     patch,
@@ -445,12 +447,8 @@ def print_txt(txt: str, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "TXT:", txt))
 
 
-def _print_host_info(name):
+def _print_host_info(info):
     # Pretty print all host info
-    info = host_info_by_name(name)
-    name = clean_hostname(name)
-    if any(cname['name'] == name for cname in info['cnames']):
-        print(f'{name} is a CNAME for {info["name"]}')
     print_host_name(info["name"])
     print_contact(info["contact"])
     if info["comment"]:
@@ -514,8 +512,19 @@ def info_(args):
         # Get host info or raise exception
         if is_valid_ip(name_or_ip):
             _print_ip_info(name_or_ip)
+        elif is_valid_mac(name_or_ip):
+            mac = format_mac(name_or_ip)
+            ret = get_list(f'api/v1/hosts/?ipaddresses__macaddress={mac}')
+            if ret:
+                _print_host_info(ret[0])
+            else:
+                cli_warning(f'Found no host with macaddress: {mac}')
         else:
-            _print_host_info(name_or_ip)
+            info = host_info_by_name(name_or_ip)
+            name = clean_hostname(name_or_ip)
+            if any(cname['name'] == name for cname in info['cnames']):
+                print(f'{name} is a CNAME for {info["name"]}')
+            _print_host_info(info)
 
 
 # Add 'info' as a sub command to the 'host' command
