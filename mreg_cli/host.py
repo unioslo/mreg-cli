@@ -535,10 +535,10 @@ host.add_command(
     callback=info_,
     flags=[
         Flag('hosts',
-             description='One or more hosts given by their name or ip.',
-             short_desc='One or more names and/or ips.',
+             description='One or more hosts given by their name, ip or mac.',
+             short_desc='One or more names, ips or macs.',
              nargs='+',
-             metavar='NAME/IP')
+             metavar='NAME/IP/MAC')
     ]
 )
 
