@@ -2,7 +2,7 @@ import ipaddress
 
 from .cli import Flag, cli
 from .history import history
-from .log import cli_info, cli_warning
+from .log import cli_info, cli_warning, cli_error
 from .util import (
     delete,
     get,
@@ -293,6 +293,92 @@ network.add_command(
         Flag('-force',
              action='store_true',
              description='Enable force.'),
+    ]
+)
+
+
+######################################################
+# Implementation of sub command 'add_excluded_range' #
+######################################################
+
+def add_excluded_range(args):
+    """Add an excluded range to a network"""
+    info = get_network(args.network)
+    network = info['network']
+    if not is_valid_ip(args.start_ip):
+        cli_error(f"Start ipaddress {args.start_ip} not valid")
+    if not is_valid_ip(args.end_ip):
+        cli_error(f"End ipaddress {args.end_ip} not valid")
+
+    path = f"/api/v1/networks/{network}/excluded_ranges/"
+    data = {'network': info['id'],
+            'start_ip': args.start_ip,
+            'end_ip': args.end_ip}
+    post(path, **data)
+    cli_info(f"Added exclude range to {network}", True)
+
+
+network.add_command(
+    prog='add_excluded_range',
+    description='Add an excluded range to a network',
+    short_desc='Add an excluded range to a network',
+    callback=add_excluded_range,
+    flags=[
+        Flag('network',
+             description='Network.',
+             metavar='NETWORK'),
+        Flag('start_ip',
+             description='Start ipaddress',
+             metavar='STARTIP'),
+        Flag('end_ip',
+             description='End ipaddress',
+             metavar='ENDIP'),
+    ]
+)
+
+
+#########################################################
+# Implementation of sub command 'remove_excluded_range' #
+#########################################################
+
+def remove_excluded_range(args):
+    """Remove an excluded range to a network"""
+    info = get_network(args.network)
+    network = info['network']
+
+    if not is_valid_ip(args.start_ip):
+        cli_error(f"Start ipaddress {args.start_ip} not valid")
+    if not is_valid_ip(args.end_ip):
+        cli_error(f"End ipaddress {args.end_ip} not valid")
+
+    if not info['excluded_ranges']:
+        cli_error(f'Network {network} has no excluded ranges')
+
+    for i in info['excluded_ranges']:
+        if i['start_ip'] == args.start_ip and i['end_ip'] == args.end_ip:
+            path = f"/api/v1/networks/{network}/excluded_ranges/{i['id']}"
+            break
+    else:
+        cli_error('Found no matching exclude range.')
+    delete(path)
+    cli_info(f"Removed exclude range from {network}", True)
+
+
+network.add_command(
+    prog='remove_excluded_range',
+    description='Remove an excluded range to a network',
+    short_desc='Remove an excluded range to a network',
+    callback=remove_excluded_range,
+    flags=[
+        Flag('network',
+             description='Network.',
+             metavar='NETWORK'),
+        Flag('start_ip',
+             description='Start ipaddress',
+             metavar='STARTIP'),
+        Flag('end_ip',
+             description='End ipaddress',
+             metavar='ENDIP'),
     ]
 )
 
