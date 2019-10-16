@@ -53,6 +53,21 @@ def print_network_unused(count: int, padding: int = 25) -> None:
         "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)"))
 
 
+def print_network_excluded_ranges(info: dict, padding: int = 25) -> None:
+    if not info:
+        return
+    count = 0
+    for i in info:
+        start_ip = ipaddress.ip_address(i['start_ip'])
+        end_ip = ipaddress.ip_address(i['end_ip'])
+        count += int(end_ip) - int(start_ip)
+        if end_ip == start_ip:
+            count += 1
+    print("{1:<{0}}{2} ipaddresses".format(padding, "Excluded ranges:", count))
+    for i in info:
+        print("{1:<{0}}{2} -> {3}".format(padding, '', i['start_ip'], i['end_ip']))
+
+
 def print_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
     "Pretty print ip range and reserved addresses list"
     assert isinstance(ip_range, str)
@@ -166,6 +181,7 @@ def info(args):
         print_network(network_info['frozen'] if network_info['frozen'] else False,
                       "Frozen")
         print_network_reserved(network_info['network'], network_info['reserved'])
+        print_network_excluded_ranges(network_info['excluded_ranges'])
         print_network(used, "Used addresses:")
         print_network_unused(unused)
         cli_info(f"printed network info for {ip_range}")
