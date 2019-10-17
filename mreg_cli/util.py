@@ -158,8 +158,6 @@ def login(user, url):
 
 
 def logout():
-    # XXX: logout should exit client or actually logout and invalidate token?
-    return
     path = requests.compat.urljoin(mregurl, '/api/token-logout/')
     # Try to logout, and ignore errors
     try:

@@ -186,7 +186,6 @@ cli = Command(_top_parser, list(), '')
 
 
 def _quit(args):
-    util.logout()
     raise CliExit
 
 
@@ -196,6 +195,17 @@ cli.add_command(
     description='Exit application.',
     short_desc='Exit application.',
     callback=_quit,
+)
+
+def logout(args):
+    util.logout()
+    raise CliExit
+
+cli.add_command(
+    prog='logout',
+    description='Logout from mreg and exit. Will delete token',
+    short_desc='Logout from mreg and exit.',
+    callback=logout,
 )
 
 

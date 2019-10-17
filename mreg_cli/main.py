@@ -126,7 +126,6 @@ def main():
         except KeyboardInterrupt:
             continue
         except EOFError:
-            util.logout()
             raise SystemExit()
         try:
             for line in lines.splitlines():
