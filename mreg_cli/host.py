@@ -8,6 +8,7 @@ from .log import cli_error, cli_info, cli_warning
 from .util import (
     clean_hostname,
     cname_exists,
+    convert_wildcard_to_filter,
     delete,
     first_unused_ip_from_network,
     format_mac,
@@ -539,6 +540,70 @@ host.add_command(
              short_desc='One or more names, ips or macs.',
              nargs='+',
              metavar='NAME/IP/MAC')
+    ]
+)
+
+
+def find(args):
+    """List hosts maching search criteria
+    """
+
+    def _add_param(param, value):
+        if '*' not in value:
+            value = f'*{value}*'
+
+        params.append(convert_wildcard_to_filter(param, value))
+
+    if not any([args.name, args.comment, args.contact]):
+        cli_warning('Need at least one search critera')
+
+    params = []
+
+    for param in ('contact', 'comment', 'name'):
+        value = getattr(args, param)
+        if value:
+            _add_param(param, value)
+
+    path = '/api/v1/hosts/?ordering=name&' + '&'.join(params)
+    ret = get(path + '&page_size=1').json()
+
+    if ret['count'] == 0:
+        cli_info('No hosts found.', print_msg=True)
+        return
+    elif ret['count'] > 500:
+        cli_warning(f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.')
+
+    ret = get_list(path)
+    max_name = max_contact = 20
+    for i in ret:
+        max_name = max(max_name, len(i['name']))
+        max_contact = max(max_contact, len(i['contact']))
+
+    def _print(name, contact, comment):
+        print("{0:<{1}} {2:<{3}} {4}".format(name, max_name, contact, max_contact, comment))
+
+    _print('Name', 'Contact', 'Comment')
+    for i in ret:
+        _print(i['name'], i['contact'], i['comment'])
+
+host.add_command(
+    prog='find',
+    description='Lists hosts matching search criteria',
+    short_desc='Lists hosts matching search criteria',
+    callback=find,
+    flags=[
+        Flag('-name',
+             description='Name or part of name',
+             short_desc='Name or part of name',
+             metavar='NAME'),
+        Flag('-comment',
+             description='Comment or part of comment',
+             short_desc='Comment or part of comment',
+             metavar='CONTACT'),
+        Flag('-contact',
+             description='Contact or part of contact',
+             short_desc='Contact or part of contact',
+             metavar='CONTACT')
     ]
 )
 
