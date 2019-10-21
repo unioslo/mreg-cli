@@ -3,7 +3,8 @@ from itertools import chain
 from .cli import Flag, cli
 from .history import history
 from .log import cli_error, cli_info, cli_warning
-from .util import delete, get, get_list, host_info_by_name, patch, post
+from .util import (convert_wildcard_to_filter, delete, get, get_list, host_info_by_name,
+                   patch, post)
 
 ##################################
 #  Add the main command 'policy'  #
@@ -327,29 +328,6 @@ policy.add_command(
     ]
 )
 
-def convert_wildcard_to_filter(arg):
-    """
-    Convert wildcard filter "foo*bar*" to something DRF will understand.
-
-    E.g. "foo*bar*" -> "?name__starswith=foo&name__contains=bar"
-
-    """
-    if '*' not in arg:
-        return f'?name={arg}'
-
-    args = arg.split('*')
-    args_len = len(args) - 1
-    parts = []
-    for i, piece in enumerate(args):
-        if i == 0 and piece:
-            parts.append(f'name__startswith={piece}')
-        elif i == args_len and piece:
-            parts.append(f'name__endswith={piece}')
-        elif piece:
-            parts.append(f'name__contains={piece}')
-
-    return '?' + '&'.join(parts)
-
 def list_atoms(args):
     """
     List all atoms by given filters
@@ -358,8 +336,8 @@ def list_atoms(args):
     def _print(key, value, padding=14):
         print("{1:<{0}} {2}".format(padding, key, value))
     
-    filter = convert_wildcard_to_filter(args.name)
-    info = get_list(f'/api/v1/hostpolicy/atoms/{filter}')
+    filter = convert_wildcard_to_filter('name', args.name)
+    info = get_list(f'/api/v1/hostpolicy/atoms/?{filter}')
     if info:
         for i in info:
             _print(i['name'], i['description'])
@@ -388,8 +366,8 @@ def list_roles(args):
     def _print(key, value, padding=14):
         print("{1:<{0}} {2}".format(padding, key, value))
     
-    filter = convert_wildcard_to_filter(args.name)
-    info = get_list(f'/api/v1/hostpolicy/roles/{filter}')
+    filter = convert_wildcard_to_filter('name', args.name)
+    info = get_list(f'/api/v1/hostpolicy/roles/?{filter}')
     if info:
         for i in info:
             _print(i['name'], i['description'])

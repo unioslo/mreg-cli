@@ -519,3 +519,27 @@ def format_mac(mac: str) -> str:
     """
     mac = re.sub('[.:-]', '', mac).lower()
     return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])
+
+
+def convert_wildcard_to_filter(param, arg):
+    """
+    Convert wildcard filter "foo*bar*" to something DRF will understand.
+
+    E.g. "foo*bar*" -> "?name__starswith=foo&name__contains=bar"
+
+    """
+    if '*' not in arg:
+        return f'?{param}={arg}'
+
+    args = arg.split('*')
+    args_len = len(args) - 1
+    parts = []
+    for i, piece in enumerate(args):
+        if i == 0 and piece:
+            parts.append(f'{param}__startswith={piece}')
+        elif i == args_len and piece:
+            parts.append(f'{param}__endswith={piece}')
+        elif piece:
+            parts.append(f'{param}__contains={piece}')
+
+    return '&'.join(parts)
