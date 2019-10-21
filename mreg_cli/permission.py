@@ -26,29 +26,13 @@ def network_list(args):
     Lists permissions for networks
     """
 
-    def _networksort(data):
-        # Since we can not get mreg to sort by networks, do it here
-        v4 = []
-        v6 = []
-        for i in data:
-            net = ipaddress.ip_network(i['range'])
-            i['range'] = net
-            if net.version == 4:
-                v4.append(i)
-            else:
-                v6.append(i)
-        v4.sort(key=operator.itemgetter('range'))
-        v6.sort(key=operator.itemgetter('range'))
-        v4.extend(v6)
-        return v4
-
     query = {}
     params = ""
     if args.group is not None:
         query['group'] = args.group
     if query:
         params = "&{}".format(urlencode(query))
-    permissions = get_list(f"/api/v1/permissions/netgroupregex/?ordering=group{params}")
+    permissions = get_list(f"/api/v1/permissions/netgroupregex/?ordering=range,group{params}")
 
     data = []
     if args.range is not None:
@@ -69,7 +53,7 @@ def network_list(args):
         print("{0:<{1}}{2:<{3}} {4}".format(range, 20, group, 16, regex))
 
     print_perm("Range", "Group", "Regex")
-    for i in _networksort(data):
+    for i in data:
         print_perm(str(i['range']), i['group'], i['regex'])
 
 
