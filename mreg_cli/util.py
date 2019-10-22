@@ -525,7 +525,7 @@ def convert_wildcard_to_filter(param, arg):
     """
     Convert wildcard filter "foo*bar*" to something DRF will understand.
 
-    E.g. "foo*bar*" -> "?name__starswith=foo&name__contains=bar"
+    E.g. "foo*bar*" -> "?name__startswith=foo&name__contains=bar"
 
     """
     if '*' not in arg:
