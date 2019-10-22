@@ -1345,7 +1345,7 @@ def cname_show(args):
         pass
 
     name = clean_hostname(args.name)
-    path = f"/api/v1/hosts/?cnames_name={name}"
+    path = f"/api/v1/hosts/?cnames__name={name}"
     history.record_get(path)
     hosts = get_list(path)
     if len(hosts):
