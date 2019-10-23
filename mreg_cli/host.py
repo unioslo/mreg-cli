@@ -8,7 +8,7 @@ from .log import cli_error, cli_info, cli_warning
 from .util import (
     clean_hostname,
     cname_exists,
-    convert_wildcard_to_filter,
+    convert_wildcard_to_regex,
     delete,
     first_unused_ip_from_network,
     format_mac,
@@ -552,7 +552,7 @@ def find(args):
         if '*' not in value:
             value = f'*{value}*'
 
-        params.append(convert_wildcard_to_filter(param, value))
+        params.append(convert_wildcard_to_regex(param, value))
 
     if not any([args.name, args.comment, args.contact]):
         cli_warning('Need at least one search critera')
@@ -568,8 +568,7 @@ def find(args):
     ret = get(path + '&page_size=1').json()
 
     if ret['count'] == 0:
-        cli_info('No hosts found.', print_msg=True)
-        return
+        cli_warning('No hosts found.')
     elif ret['count'] > 500:
         cli_warning(f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.')
 

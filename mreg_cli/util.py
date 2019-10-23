@@ -543,3 +543,26 @@ def convert_wildcard_to_filter(param, arg):
             parts.append(f'{param}__contains={piece}')
 
     return '&'.join(parts)
+
+def convert_wildcard_to_regex(param, arg):
+    """
+    Convert wildcard filter "foo*bar*" to something DRF will understand.
+
+    E.g. "foo*bar*" -> "?name__regex=$foo.*bar.*"
+
+    """
+    if '*' not in arg:
+        return f'?{param}={arg}'
+
+    args = arg.split('*')
+    args_len = len(args) - 1
+    regex = ''
+    for i, piece in enumerate(args):
+        if i == 0 and piece:
+            regex += f'^{piece}'
+        elif i == args_len and piece:
+            regex += f'{piece}$'
+        elif piece:
+            regex += f'.*{piece}.*'
+
+    return f'{param}__regex={regex}'
