@@ -1,6 +1,6 @@
 from .cli import Flag, cli
 from .exceptions import HostNotFoundWarning
-from .log import cli_info, cli_warning
+from .log import cli_error, cli_info, cli_warning
 from .util import delete, get, get_list, host_info_by_name, patch, post
 
 #################################
@@ -97,7 +97,8 @@ def delegation_create(args):
     _verify_nameservers(args.ns, args.force)
     post(f"{path}/delegations/",
          name=args.delegation,
-         nameservers=args.ns)
+         nameservers=args.ns,
+         comment=args.comment)
     cli_info("created zone delegation {}".format(args.delegation), True)
 
 
@@ -117,6 +118,9 @@ zone.add_command(
              description='Nameservers for the delegation.',
              nargs='+',
              metavar='NS'),
+        Flag('-comment',
+             description='Comment with a description',
+             metavar='COMMENT'),
         Flag('-force',
              action='store_true',
              description='Enable force.'),
@@ -289,9 +293,9 @@ zone.add_command(
 )
 
 
-##########################################
+###################################################
 # Implementation of sub command 'delegation_list' #
-##########################################
+###################################################
 
 def zone_delegation_list(args):
     """List a zone's delegations
@@ -306,6 +310,8 @@ def zone_delegation_list(args):
         print("Delegations:")
         for i in sorted(delegations, key=lambda kv: kv['name']):
             print('    {}'.format(i['name']))
+            if i['comment']:
+                print('        Comment: {}'.format(i['comment']))
             print_ns("Nameservers:", "hostname", "TTL")
             for ns in i['nameservers']:
                 ttl = ns['ttl'] if ns['ttl'] else "<not set>"
@@ -323,6 +329,73 @@ zone.add_command(
         Flag('zone',
              description='Zone name.',
              metavar='ZONE'),
+        ]
+)
+
+##########################################################
+# Implementation of sub command 'delegation_comment_set' #
+##########################################################
+
+def _get_delegation_path(zone, delegation):
+    if not delegation.endswith(f".{zone}"):
+        cli_warning(f"Delegation '{delegation}' is not in '{zone}'")
+    path = zone_path(zone)
+    zone = get(path, ok404=True)
+    if zone is None:
+        cli_warning(f"Zone '{zone}' does not exist")
+    for i in get_list(f"{path}/delegations/"):
+        if delegation == i["name"]:
+            return f"{path}/delegations/{delegation}"
+    else:
+        cli_error('Delegation {delegation} not found')
+
+
+def zone_delegation_comment_set(args):
+    """Set a delegation's comment"""
+
+    path = _get_delegation_path(args.zone, args.delegation)
+    patch(path, comment=args.comment)
+    cli_info(f"Updated comment for {args.delegation}", True)
+
+
+zone.add_command(
+    prog='delegation_comment_set',
+    description="Set a comment for zone delegation",
+    short_desc="Set a comment for zone delegation",
+    callback=zone_delegation_comment_set,
+    flags=[
+        Flag('zone',
+             description='Zone name',
+             metavar='ZONE'),
+        Flag('delegation',
+             description='Delegation',
+             metavar='DELEGATION'),
+        Flag('comment',
+             description='Comment',
+             metavar='COMMENT'),
+        ]
+)
+
+def zone_delegation_comment_remove(args):
+    """Set a delegation's comment"""
+
+    path = _get_delegation_path(args.zone, args.delegation)
+    patch(path, comment='')
+    cli_info(f"Removed comment for {args.delegation}", True)
+
+
+zone.add_command(
+    prog='delegation_comment_remove',
+    description="Remove a comment for zone delegation",
+    short_desc="Remove a comment for zone delegation",
+    callback=zone_delegation_comment_remove,
+    flags=[
+        Flag('zone',
+             description='Zone name',
+             metavar='ZONE'),
+        Flag('delegation',
+             description='Delegation',
+             metavar='DELEGATION'),
         ]
 )
 
