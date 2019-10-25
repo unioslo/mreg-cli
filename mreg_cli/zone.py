@@ -42,8 +42,17 @@ def zone_basepath(name):
         return f'{basepath}reverse/'
     return f'{basepath}forward/'
 
+
 def zone_path(name):
     return zone_basepath(name) + name
+
+
+def get_zone(name):
+    path = zone_path(name)
+    zone = get(path, ok404=True)
+    if zone is None:
+        cli_warning(f"Zone '{zone}' does not exist")
+    return zone.json(), path
 
 
 ##########################################
@@ -88,10 +97,7 @@ zone.add_command(
 
 def delegation_create(args):
     """Create a new zone delegation. """
-    path = zone_path(args.zone)
-    zone = get(path, ok404=True)
-    if zone is None:
-        cli_warning(f"Zone '{args.zone}' does not exist")
+    _, path = get_zone(args.zone)
     if not args.delegation.endswith(f".{args.zone}"):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
     _verify_nameservers(args.ns, args.force)
@@ -136,8 +142,7 @@ def zone_delete(args):
     """Delete a zone
     """
 
-    path = zone_path(args.zone)
-    zone = get(path).json()
+    zone, path = get_zone(args.zone)
     hosts = get_list(f"/api/v1/hosts/?zone={zone['id']}")
     zones = get_list(zone_path(f'?name__endswith=.{args.zone}'))
 
@@ -176,10 +181,7 @@ zone.add_command(
 
 def delegation_delete(args):
     """Delete a zone delegation. """
-    path = zone_path(args.zone)
-    zone = get(path, ok404=True)
-    if zone is None:
-        cli_warning(f"Zone '{args.zone}' does not exist")
+    zone, path = get_zone(args.zone)
     if not args.delegation.endswith(f".{args.zone}"):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
     delete(f"{path}/delegations/{args.delegation}")
@@ -216,7 +218,7 @@ def info(args):
     if not args.zone:
         cli_warning('Name is required')
 
-    zone = get(zone_path(args.zone)).json()
+    zone, _ = get_zone(args.zone)
     print_soa("Zone:", zone["name"])
     print_ns("Nameservers:", "hostname", "TTL")
     for ns in zone['nameservers']:
@@ -301,10 +303,7 @@ def zone_delegation_list(args):
     """List a zone's delegations
     """
 
-    path = zone_path(args.zone)
-    zone = get(path, ok404=True)
-    if zone is None:
-        cli_warning(f"Zone '{args.zone}' does not exist")
+    _, path = get_zone(args.zone)
     delegations = get_list(f"{path}/delegations/")
     if delegations:
         print("Delegations:")
@@ -339,13 +338,11 @@ zone.add_command(
 def _get_delegation_path(zone, delegation):
     if not delegation.endswith(f".{zone}"):
         cli_warning(f"Delegation '{delegation}' is not in '{zone}'")
-    path = zone_path(zone)
-    zone = get(path, ok404=True)
-    if zone is None:
-        cli_warning(f"Zone '{zone}' does not exist")
-    for i in get_list(f"{path}/delegations/"):
-        if delegation == i["name"]:
-            return f"{path}/delegations/{delegation}"
+    _, path = get_zone(zone)
+    path = f"{path}/delegations/{delegation}"
+    delegation = get(path, ok404=True)
+    if delegation is not None:
+        return path
     else:
         cli_error('Delegation {delegation} not found')
 
@@ -408,7 +405,7 @@ def set_ns(args):
     """Update nameservers for an existing zone.
     """
     _verify_nameservers(args.ns, args.force)
-    path = zone_path(args.zone)
+    zone, path = get_zone(args.zone)
     patch(f"{path}/nameservers", primary_ns=args.ns)
     cli_info("updated nameservers for {}".format(args.zone), True)
 
@@ -441,10 +438,7 @@ def set_soa(args):
     # .zone .ns .email .serialno .retry .expire .soa_ttl
     """Updated the SOA of a zone.
     """
-    # TODO Validation for valid domain names
-
-    path = zone_path(args.zone)
-    get(path)
+    _, path = get_zone(args.zone)
     data = {}
     for i in ('email', 'expire', 'refresh', 'retry', 'serialno', 'soa_ttl',):
         value = getattr(args, i, None)
@@ -507,11 +501,8 @@ def set_default_ttl(args):
     # .zone .ttl
     """Update the default TTL of a zone.
     """
-
-    path = zone_path(args.zone)
-    get(path)
+    _, path = get_zone(args.zone)
     data = {'default_ttl': args.ttl}
-
     patch(path, **data)
     cli_info("set default TTL for {}".format(args.zone), True)
 
