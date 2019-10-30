@@ -2710,36 +2710,27 @@ host.add_command(
 ################################################
 
 def txt_remove(args):
-    """Remove TXT record for host matching <text>.
+    """Remove TXT record for host with <text>.
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
+    hostname = info["name"]
 
     # Check for matching TXT records for host
-    path = "/api/v1/txts/?host={}&txt__contains={}".format(
+    path = "/api/v1/txts/?host={}&txt={}".format(
         info["id"],
         args.text,
     )
     history.record_get(path)
     txts = get_list(path)
     if len(txts) == 0:
-        cli_warning(
-            "{} hasn't got any TXT records matching \"{}\"".format(info["name"],
-                                                                   args.text))
-    if len(txts) > 1 and not args.force:
-        cli_warning("\"{}\" matched {} of {} TXT records. Must force.".format(
-            args.text,
-            len(args),
-            info["name"],
-        ))
+        cli_warning(f"{hostname} has no TXT records equal: {args.text}")
 
-    # Remove TXT records
-    for txt in txts:
-        path = f"/api/v1/txts/{txt['id']}"
-        history.record_delete(path, txt)
-        delete(path)
-    cli_info("deleted {} of {} TXT records matching \"{}\"".format(
-        len(txts), info["name"], args.text), print_msg=True)
+    txt = txts[0]
+    path = f"/api/v1/txts/{txt['id']}"
+    history.record_delete(path, txt)
+    delete(path)
+    cli_info(f"deleted TXT records from {hostname}", print_msg=True)
 
 
 # Add 'txt_remove' as a sub command to the 'host' command
