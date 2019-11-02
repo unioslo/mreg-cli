@@ -73,6 +73,14 @@ def main():
         metavar='LOGFILE',
     )
 
+    output_args.add_argument(
+        '--show-token',
+        dest='show_token',
+        action='store_true',
+        help="show API token after login",
+    )
+
+
     args = parser.parse_args()
     setup_logging(args.verbosity)
     logger.debug(f'args: {args}')
@@ -94,7 +102,8 @@ def main():
     except (EOFError, KeyboardInterrupt):
         print('')
         raise SystemExit()
-    print(util.session.headers["Authorization"])
+    if args.show_token:
+        print(util.session.headers["Authorization"])
 
     # Must import the commands, for the side effects of creating the commands
     # when importing.
