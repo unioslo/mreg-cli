@@ -128,7 +128,7 @@ def login1(user, url):
 
     if os.path.isfile(mreg_auth_token_file):
         try:
-            with open(mreg_auth_token_file) as tokenfile:
+            with open(mreg_auth_token_file, encoding='utf-8') as tokenfile:
                 tokenuser, token = tokenfile.readline().split('¤')
                 if tokenuser == user:
                     session.headers.update({"Authorization": f"Token {token}"})
@@ -194,7 +194,7 @@ def _update_token(username, password):
     token = result.json()['token']
     session.headers.update({"Authorization": f"Token {token}"})
     try:
-        with open(mreg_auth_token_file, 'w') as tokenfile:
+        with open(mreg_auth_token_file, 'w', encoding='utf-8') as tokenfile:
             tokenfile.write(f'{username}¤{token}')
     except FileNotFoundError:
         pass
