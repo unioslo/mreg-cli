@@ -110,6 +110,35 @@ group.add_command(
 )
 
 
+##########################################
+# Implementation of sub command 'rename' #
+##########################################
+
+
+def rename(args):
+    """Rename group
+    """
+    get_hostgroup(args.oldname)
+    patch(f"/api/v1/hostgroups/{args.oldname}", name=args.newname)
+    cli_info(f"Renamed group {args.oldname} to {args.newname}", True)
+
+
+group.add_command(
+    prog='rename',
+    description='Rename a group',
+    short_desc='Rename a group',
+    callback=rename,
+    flags=[
+        Flag('oldname',
+             description='Existing name',
+             metavar='OLDNAME'),
+        Flag('newname',
+             description='New name',
+             metavar='NEWNAME'),
+    ]
+)
+
+
 ########################################
 # Implementation of sub command 'list' #
 ########################################
