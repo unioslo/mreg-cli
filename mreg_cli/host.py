@@ -1,5 +1,8 @@
+import dateutil.parser
 import ipaddress
+import json
 import typing
+
 
 from .cli import Flag, cli
 from .exceptions import HostNotFoundWarning
@@ -1500,6 +1503,64 @@ host.add_command(
     ],
 )
 
+def _history(args):
+    """Show host history for name"""
+    hostname = clean_hostname(args.name)
+
+    def _remove_unneded_keys(data):
+        for key in ('id', 'created_at', 'updated_at',):
+            data.pop(key, None)
+
+    # First check if any model id with the name exists
+    base_path = "/api/v1/history/?resource=host"
+    ret = get(f"{base_path}&name={hostname}&page_size=1").json()
+    if ret["count"] == 0:
+        cli_info(f"No history found for {hostname}", True)
+        return
+    model_id = ret["results"][0]["model_id"]
+    ret = get_list(f"{base_path}&model_id={model_id}")
+    for i in ret:
+        timestamp = dateutil.parser.parse(i['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+        msg = ''
+        data = json.loads(i['data'])
+        action = i['action']
+        model = i['model']
+        if action == 'create':
+            msg = ', '.join(f"{k} = '{v}'" for k,v in data.items())
+        elif action == 'update':
+            if model in ('Ipaddress', ):
+                msg = data['current_data']['ipaddress'] + ', '
+            changes = []
+            for key, newval in data['update'].items():
+                oldval = data["current_data"][key] or 'not set'
+                newval = newval or 'not set'
+                changes.append(f"{key}: {oldval} -> {newval}")
+            msg += ','.join(changes)
+        elif action == 'destroy':
+            _remove_unneded_keys(data)
+            if model == 'Host':
+                msg = "deleted " + i["name"]
+            else:
+                msg = ', '.join(f"{k} = '{v}'" for k,v in data.items())
+        else:
+            cli_warning(f'Unhandled history entry: {i}')
+
+        print(f"{timestamp} [{i['user']}]: {model} {action}: {msg}")
+
+
+host.add_command(
+    prog='history',
+    description='Show history for hostname',
+    short_desc='Show history for hostname',
+    callback=_history,
+    flags=[
+        Flag('name',
+             description='Hostname',
+             metavar='NAME'),
+    ],
+)
+
+
 
 ################################################################################
 #                                                                              #
@@ -1671,7 +1732,7 @@ host.add_command(
              metavar='PRIORITY'),
         Flag('mx',
              description='Mail Server',
-             metavar='TEXT'),
+             metavar='MX'),
     ],
 )
 
@@ -1999,12 +2060,15 @@ host.add_command(
         Flag('-ip',
              description='IP of PTR record. May be IPv4 or IPv6.',
              short_desc='IP of PTR record.',
+             required=True,
              metavar='IP'),
         Flag('-old',
              description='Name of old host.',
+             required=True,
              metavar='NAME'),
         Flag('-new',
              description='Name of new host.',
+             required=True,
              metavar='NAME'),
         Flag('-force',
              action='store_true',
