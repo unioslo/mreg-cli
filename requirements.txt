@@ -1,2 +1,3 @@
+python-dateutil
 prompt_toolkit>=2
 requests

@@ -7,6 +7,7 @@ if sys.version_info < (3, 6):
     sys.exit('Python < 3.6 is not supported')
 
 install_requirements = [
+    'python-dateutil',
     'prompt_toolkit>=2',
     'requests',
 ]
