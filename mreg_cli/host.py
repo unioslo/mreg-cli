@@ -1513,12 +1513,14 @@ def _history(args):
 
     # First check if any model id with the name exists
     base_path = "/api/v1/history/?resource=host"
-    ret = get(f"{base_path}&name={hostname}&page_size=1").json()
-    if ret["count"] == 0:
+    ret = get_list(f"{base_path}&name={hostname}")
+    if len(ret) == 0:
         cli_info(f"No history found for {hostname}", True)
         return
-    model_id = ret["results"][0]["model_id"]
-    ret = get_list(f"{base_path}&model_id={model_id}")
+    # Get all model ids, a host gets a new one when deleted and created again
+    model_ids = { str(i["model_id"]) for i in ret }
+    model_ids = ",".join(model_ids)
+    ret = get_list(f"{base_path}&model_id__in={model_ids}")
     for i in ret:
         timestamp = dateutil.parser.parse(i['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
         msg = ''
