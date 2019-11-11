@@ -1,12 +1,10 @@
-import dateutil.parser
 import ipaddress
-import json
 import typing
-
 
 from .cli import Flag, cli
 from .exceptions import HostNotFoundWarning
 from .history import history
+from .history_log import get_history_items, print_history_items
 from .log import cli_error, cli_info, cli_warning
 from .util import (
     clean_hostname,
@@ -1506,58 +1504,17 @@ host.add_command(
 def _history(args):
     """Show host history for name"""
     hostname = clean_hostname(args.name)
-
-    def _remove_unneded_keys(data):
-        for key in ('id', 'created_at', 'updated_at',):
-            data.pop(key, None)
-
-    # First check if any model id with the name exists
-    base_path = "/api/v1/history/?resource=host"
-    ret = get_list(f"{base_path}&name={hostname}")
-    if len(ret) == 0:
-        cli_info(f"No history found for {hostname}", True)
-        return
-    # Get all model ids, a host gets a new one when deleted and created again
-    model_ids = { str(i["model_id"]) for i in ret }
-    model_ids = ",".join(model_ids)
-    ret = get_list(f"{base_path}&model_id__in={model_ids}")
-    for i in ret:
-        timestamp = dateutil.parser.parse(i['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
-        msg = ''
-        data = json.loads(i['data'])
-        action = i['action']
-        model = i['model']
-        if action == 'create':
-            msg = ', '.join(f"{k} = '{v}'" for k,v in data.items())
-        elif action == 'update':
-            if model in ('Ipaddress', ):
-                msg = data['current_data']['ipaddress'] + ', '
-            changes = []
-            for key, newval in data['update'].items():
-                oldval = data["current_data"][key] or 'not set'
-                newval = newval or 'not set'
-                changes.append(f"{key}: {oldval} -> {newval}")
-            msg += ','.join(changes)
-        elif action == 'destroy':
-            _remove_unneded_keys(data)
-            if model == 'Host':
-                msg = "deleted " + i["name"]
-            else:
-                msg = ', '.join(f"{k} = '{v}'" for k,v in data.items())
-        else:
-            cli_warning(f'Unhandled history entry: {i}')
-
-        print(f"{timestamp} [{i['user']}]: {model} {action}: {msg}")
-
+    items = get_history_items(hostname, 'host', data_relation='hosts')
+    print_history_items(hostname, items)
 
 host.add_command(
     prog='history',
-    description='Show history for hostname',
-    short_desc='Show history for hostname',
+    description='Show history for host name',
+    short_desc='Show history for host name',
     callback=_history,
     flags=[
         Flag('name',
-             description='Hostname',
+             description='Host name',
              metavar='NAME'),
     ],
 )

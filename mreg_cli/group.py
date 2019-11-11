@@ -2,6 +2,7 @@ from itertools import chain
 
 from .cli import Flag, cli
 from .history import history
+from .history_log import get_history_items, print_history_items
 from .log import cli_error, cli_info, cli_warning
 from .util import delete, get, get_list, host_info_by_name, patch, post
 
@@ -224,6 +225,25 @@ group.add_command(
              description='Enable force'),
     ]
 )
+
+
+def _history(args):
+    """Show host history for name"""
+    items = get_history_items(args.name, 'group', data_relation='groups')
+    print_history_items(args.name, items)
+
+group.add_command(
+    prog='history',
+    description='Show history for group name',
+    short_desc='Show history for group name',
+    callback=_history,
+    flags=[
+        Flag('name',
+             description='Group name',
+             metavar='NAME'),
+    ],
+)
+
 
 #############################################
 # Implementation of sub command 'group_add' #
