@@ -763,7 +763,7 @@ host.add_command(
 #                                                                              #
 ################################################################################
 
-def _ip_add(args, ipversion):
+def _ip_add(args, ipversion, macaddress=None):
     info = None
 
     if "*" in args.name and not args.force:
@@ -776,6 +776,12 @@ def _ip_add(args, ipversion):
         info = host_info_by_name(args.name)
     except HostNotFoundWarning:
         pass
+
+    if macaddress is not None:
+        if is_valid_mac(macaddress):
+            macaddress = format_mac(macaddress)
+        else:
+            cli_error("Invalid macaddress: {macaddress}")
 
     if info is None:
         hostname = clean_hostname(args.name)
@@ -799,6 +805,8 @@ def _ip_add(args, ipversion):
             "host": info["id"],
             "ipaddress": ip,
         }
+        if macaddress is not None:
+            data['macaddress'] = macaddress
 
         # Add IP
         path = "/api/v1/ipaddresses/"
@@ -814,7 +822,7 @@ def _ip_add(args, ipversion):
 def a_add(args):
     """Add an A record to host. If <name> is an alias the cname host is used.
     """
-    _ip_add(args, 4)
+    _ip_add(args, 4, macaddress=args.macaddress)
 
 
 # Add 'a_add' as a sub command to the 'host' command
@@ -833,6 +841,9 @@ host.add_command(
                          'in which case a random IP address from that network '
                          'is chosen.',
              metavar='IP/network'),
+        Flag('-macaddress',
+             description='Mac address',
+             metavar='MACADDRESS'),
         Flag('-force',
              action='store_true',
              description='Enable force.'),
@@ -1071,7 +1082,7 @@ host.add_command(
 def aaaa_add(args):
     """Add an AAAA record to host. If <name> is an alias the cname host is used.
     """
-    _ip_add(args, 6)
+    _ip_add(args, 6, macaddress=args.macaddress)
 
 
 # Add 'aaaa_add' as a sub command to the 'host' command
@@ -1088,6 +1099,9 @@ host.add_command(
         Flag('ip',
              description='The IPv6 to add to target host.',
              metavar='IPv6'),
+        Flag('-macaddress',
+             description='Mac address',
+             metavar='MACADDRESS'),
         Flag('-force',
              action='store_true',
              description='Enable force.'),
