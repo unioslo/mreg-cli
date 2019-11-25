@@ -258,7 +258,7 @@ def zone_list(args):
     all_zones = []
     def _get_zone_list(zonetype):
         zones = get_list(f"/api/v1/zones/{zonetype}/")
-        all_zones.extend(sorted(zones, key=lambda kv: kv['name']))
+        all_zones.extend(zones)
 
     if not (args.forward or args.reverse):
         cli_warning('Add either -forward or -reverse as argument')
