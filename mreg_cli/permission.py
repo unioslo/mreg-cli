@@ -49,13 +49,18 @@ def network_list(args):
         cli_info("No permissions found", True)
         return
 
-    def print_perm(range, group, regex):
-        print("{0:<{1}}{2:<{3}} {4}".format(range, 20, group, 16, regex))
+    headers = ("Range", "Group", "Regex")
+    keys = ('range', 'group', 'regex')
+    raw_format = ''
+    for key, header in zip(keys, headers):
+        longest = len(header)
+        for d in data:
+            longest = max(longest, len(d[key]))
+        raw_format += '{:<%d} ' % longest
 
-    print_perm("Range", "Group", "Regex")
-    for i in data:
-        print_perm(str(i['range']), i['group'], i['regex'])
-
+    print(raw_format.format(*headers))
+    for d in data:
+        print(raw_format.format(*[d[key] for key in keys]))
 
 permission.add_command(
     prog='network_list',
