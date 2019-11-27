@@ -2,6 +2,7 @@ import ipaddress
 import typing
 
 from .cli import Flag, cli
+from .dhcp import assoc_mac_to_ip
 from .exceptions import HostNotFoundWarning
 from .history import history
 from .history_log import get_history_items, print_history_items
@@ -204,6 +205,10 @@ def add(args):
 
     history.record_post(path, resource_name=name, new_data=data)
     post(path, **data)
+    if args.macaddress is not None:
+            # It can only be one, as it was just created.
+            ipdata = get(f"{path}{name}").json()['ipaddresses'][0]
+            assoc_mac_to_ip(args.macaddress, ipdata, force=args.force)
     msg = f"created host {name}"
     if args.ip:
         msg += f" with IP {ip}"
@@ -232,6 +237,9 @@ host.add_command(
         Flag('-comment',
              short_desc='A comment.',
              description='A comment.'),
+        Flag('-macaddress',
+             description='Mac address',
+             metavar='MACADDRESS'),
         Flag('-force',
              action='store_true',
              description='Enable force.'),
@@ -792,6 +800,11 @@ def _ip_add(args, ipversion, macaddress=None):
         history.record_post(path, ip, data)
         post(path, **data)
         cli_info(f"Created host {hostname} with ip {ip}", print_msg=True)
+        if macaddress is not None:
+            # It can only be one, as it was just created.
+            ip = get(f"{path}{hostname}").json()['ipaddresses'][0]
+            assoc_mac_to_ip(macaddress, ip, force=args.force)
+
     else:
         # Require force if host has multiple A/AAAA records
         if len(info["ipaddresses"]) and not args.force:
