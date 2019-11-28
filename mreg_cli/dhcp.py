@@ -35,6 +35,35 @@ def _dhcp_get_ip_by_arg(arg):
         ip = info["ipaddresses"][0]
     return ip
 
+def assoc_mac_to_ip(mac, ip, force=False):
+    # MAC addr sanity check
+    if is_valid_mac(mac):
+        new_mac = format_mac(mac)
+        path = f"/api/v1/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
+        history.record_get(path)
+        macs = get_list(path)
+        ips = ", ".join([i['ipaddress'] for i in macs])
+        if len(macs) and not force:
+            cli_warning(
+                "mac {} already in use by: {}. "
+                "Use force to add {} -> {} as well.".format(
+                    mac, ips, ip['ipaddress'], mac))
+    else:
+        cli_warning("invalid MAC address: {}".format(mac))
+
+    old_mac = ip.get('macaddress')
+    if old_mac == new_mac:
+        cli_info("new and old mac are identical. Ignoring.", print_msg=True)
+        return
+    elif old_mac and not force:
+        cli_warning("ip {} has existing mac {}. Use force to replace.".format(
+            ip['ipaddress'], old_mac))
+
+    # Update Ipaddress with a mac
+    path = f"/api/v1/ipaddresses/{ip['id']}"
+    history.record_patch(path, new_data={"macaddress": new_mac}, old_data=ip)
+    patch(path, macaddress=new_mac)
+    return new_mac
 
 
 #########################################
@@ -48,34 +77,8 @@ def assoc(args):
     """
 
     ip = _dhcp_get_ip_by_arg(args.name)
+    new_mac = assoc_mac_to_ip(args.mac, ip, force=args.force)
 
-    # MAC addr sanity check
-    if is_valid_mac(args.mac):
-        new_mac = format_mac(args.mac)
-        path = f"/api/v1/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
-        history.record_get(path)
-        macs = get_list(path)
-        ips = ", ".join([i['ipaddress'] for i in macs])
-        if len(macs) and not args.force:
-            cli_warning(
-                "mac {} already in use by: {}. "
-                "Use force to add {} -> {} as well.".format(
-                    args.mac, ips, ip['ipaddress'], args.mac))
-    else:
-        cli_warning("invalid MAC address: {}".format(args.mac))
-
-    old_mac = ip.get('macaddress')
-    if old_mac == new_mac:
-        cli_info("new and old mac are identical. Ignoring.", print_msg=True)
-        return
-    elif old_mac and not args.force:
-        cli_warning("ip {} has existing mac {}. Use force to replace.".format(
-            ip['ipaddress'], old_mac))
-
-    # Update Ipaddress with a mac
-    path = f"/api/v1/ipaddresses/{ip['id']}"
-    history.record_patch(path, new_data={"macaddress": new_mac}, old_data=ip)
-    patch(path, macaddress=new_mac)
     cli_info("associated mac address {} with ip {}"
              .format(new_mac, ip["ipaddress"]), print_msg=True)
 
