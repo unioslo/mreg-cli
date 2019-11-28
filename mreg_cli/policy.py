@@ -26,7 +26,7 @@ def _get_atom(name):
 def get_atom(name):
     ret = _get_atom(name)
     if not ret:
-        cli_warning(f'Atom "{name}" does not exist')
+        cli_warning(f'Atom {name!r} does not exist')
     return ret[0]
 
 
@@ -37,7 +37,7 @@ def _get_role(name):
 def get_role(name):
     ret = _get_role(name)
     if not ret:
-        cli_warning(f'Role "{name}" does not exist')
+        cli_warning(f'Role {name!r} does not exist')
     return ret[0]
 
 def get_atom_or_role(name):
@@ -47,7 +47,7 @@ def get_atom_or_role(name):
     role = _get_role(name)
     if role:
         return 'role', role[0]
-    cli_warning(f'Could not find an atom or a role with name: {name}')
+    cli_warning(f'Could not find an atom or a role with name: {name!r}')
 
 
 """
@@ -146,7 +146,7 @@ def role_create(args):
 
     ret = _get_role(args.name)
     if ret:
-        cli_error(f'Role "{args.name}" already in use')
+        cli_error(f'Role name {args.name!r} already in use')
 
     data = {
         'name': args.name,
@@ -159,7 +159,7 @@ def role_create(args):
     path = '/api/v1/hostpolicy/roles/'
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
-    cli_info(f"Created new role {args.name}", print_msg=True)
+    cli_info(f"Created new role {args.name!r}", print_msg=True)
 
 
 policy.add_command(
@@ -192,12 +192,12 @@ def role_delete(args):
 
     if inuse:
         hosts = ', '.join(inuse)
-        cli_error(f'Role {args.name} used on hosts: {hosts}')
+        cli_error(f'Role {args.name!r} used on hosts: {hosts}')
 
     path = f'/api/v1/hostpolicy/roles/{args.name}'
     history.record_delete(path, dict())
     delete(path)
-    cli_info(f"Deleted role {args.name}", print_msg=True)
+    cli_info(f"Deleted role {args.name!r}", print_msg=True)
 
 
 policy.add_command(
@@ -221,7 +221,7 @@ def add_atom(args):
     info = get_role(args.role)
     for atom in info['atoms']:
         if args.atom == atom['name']:
-            cli_info(f"Atom {args.atom} already a member of role {args.role}", print_msg=True)
+            cli_info(f"Atom {args.atom!r} already a member of role {args.role!r}", print_msg=True)
             return
     get_atom(args.atom)
 
@@ -229,7 +229,7 @@ def add_atom(args):
     path = f'/api/v1/hostpolicy/roles/{args.role}/atoms/'
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
-    cli_info(f"Added atom {args.atom} to role {args.role}", print_msg=True)
+    cli_info(f"Added atom {args.atom!r} to role {args.role!r}", print_msg=True)
 
 
 policy.add_command(
@@ -258,12 +258,12 @@ def remove_atom(args):
         if args.atom == atom['name']:
             break
     else:
-        cli_warning(f"Atom {args.atom} not a member of {args.role}")
+        cli_warning(f"Atom {args.atom!r} not a member of {args.role!r}")
 
     path = f'/api/v1/hostpolicy/roles/{args.role}/atoms/{args.atom}'
     history.record_delete(path, dict())
     delete(path)
-    cli_info(f"Removed atom {args.atom} from role {args.role}", print_msg=True)
+    cli_info(f"Removed atom {args.atom!r} from role {args.role!r}", print_msg=True)
 
 
 policy.add_command(
