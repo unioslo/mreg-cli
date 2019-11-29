@@ -58,6 +58,13 @@ def main():
         metavar='DOMAIN',
     )
 
+    mreg_args.add_argument(
+        '-p', '--prompt',
+        default="mreg",
+        help="default %(metavar)s (default: %(default)s)",
+        metavar='PROMPT',
+    )
+
     output_args = parser.add_argument_group('output settings')
     output_args.add_argument(
         '-v', '--verbosity',
@@ -119,7 +126,7 @@ def main():
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the
     # completer; and other visual things.
-    session = PromptSession(message=HTML('<b>mreg</b>> '),
+    session = PromptSession(message=HTML(f'<b>{args.prompt}</b>> '),
                             search_ignore_case=True,
                             completer=cli,
                             complete_while_typing=True,
