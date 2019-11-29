@@ -2241,6 +2241,7 @@ def srv_add(args):
         "weight": args.weight,
         "port": args.port,
         "host": info['id'],
+        "ttl": args.ttl,
     }
 
     # Create new SRV record
@@ -2277,6 +2278,9 @@ host.add_command(
              description='Host target name.',
              required=True,
              metavar='NAME'),
+        Flag('-ttl',
+             description='TTL value',
+             metavar='TTL'),
         Flag('-force',
              action='store_true',
              description='Enable force.'),
