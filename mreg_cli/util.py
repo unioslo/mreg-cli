@@ -17,7 +17,7 @@ from .log import cli_error, cli_warning
 location_tags = []
 category_tags = []
 session = requests.Session()
-mreg_auth_token_file = os.path.join(os.getenv('HOME'), '.mreg-cli_auth_token')
+mreg_auth_token_file = os.path.join(str(os.getenv('HOME')), '.mreg-cli_auth_token')
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +67,22 @@ def host_info_by_name_or_ip(name_or_ip: str) -> dict:
     return host_info_by_name(name)
 
 
+def _host_info_by_name(name: str, follow_cname: bool = True) -> dict:
+    hostinfo = get(f"/api/v1/hosts/{name}", ok404=True)
+
+    if hostinfo:
+        return hostinfo.json()
+    elif follow_cname:
+        # All host info data is returned from the API
+        path = f"/api/v1/hosts/?cnames__name={name}"
+        history.record_get(path)
+        hosts = get_list(path)
+        if len(hosts) == 1:
+            return hosts[0]
+    return None
+
+
+
 def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
     """
     Return a dict with host information about the given host.
@@ -79,19 +95,45 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
 
     # Get longform of name
     name = clean_hostname(name)
-    hostinfo = get(f"/api/v1/hosts/{name}", ok404=True)
+    hostinfo = _host_info_by_name(name, follow_cname=follow_cname)
+    if hostinfo is None:
+        cli_warning(f"host not found: {name!r}", exception=HostNotFoundWarning)
 
-    if hostinfo:
-        return hostinfo.json()
-    elif follow_cname:
-        # All host info data is returned from the API
-        path = f"/api/v1/hosts/?cnames__name={name}"
-        history.record_get(path)
-        hosts = get_list(path)
-        if len(hosts) == 1:
-            return hosts[0]
+    return hostinfo
 
-    cli_warning("host not found: {}".format(name), exception=HostNotFoundWarning)
+
+def _cname_info_by_name(name: str) -> dict:
+    path = f"/api/v1/cnames/?name={name}"
+    info = get_list(path)
+    if len(info) == 1:
+        return info[0]
+    return None
+
+
+def _srv_info_by_name(name: str) -> dict:
+    path = f"/api/v1/srvs/?name={name}"
+    info = get_list(path)
+    if len(info) == 1:
+        return info[0]
+    return None
+
+
+def get_info_by_name(name: str) -> typing.Tuple[str, dict]:
+    """
+    Get host, cname or srv by name.
+    """
+
+    name = clean_hostname(name)
+    info = _host_info_by_name(name, follow_cname=False)
+    if info is not None:
+        return "host", info
+    info = _cname_info_by_name(name)
+    if info is not None:
+        return "cname", info
+    info = _srv_info_by_name(name)
+    if info is not None:
+        return "srv", info
+    cli_warning(f"not found: {name!r}", exception=HostNotFoundWarning)
 
 
 def first_unused_ip_from_network(network: dict) -> str:

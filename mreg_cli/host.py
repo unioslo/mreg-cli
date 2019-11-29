@@ -15,6 +15,7 @@ from .util import (
     first_unused_ip_from_network,
     format_mac,
     get,
+    get_info_by_name,
     get_list,
     get_network,
     get_network_by_ip,
@@ -2607,12 +2608,13 @@ def ttl_remove(args):
     """Remove explicit TTL for host. If <name> is an alias the alias host is
     updated.
     """
-    info = host_info_by_name(args.name)
+    target_type, info = get_info_by_name(args.name)
+
     old_data = {"ttl": info["ttl"]}
     new_data = {"ttl": ""}
 
     # Remove TTL value
-    path = f"/api/v1/hosts/{info['name']}"
+    path = f"/api/v1/{target_type}s/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, ttl="")
     cli_info("removed TTL for {}".format(info["name"]), print_msg=True)
@@ -2638,12 +2640,11 @@ host.add_command(
 #############################################
 
 def ttl_set(args):
-    """Set ttl for host. Valid values are 300 <= TTL <= 68400 or "default". If
+    """Set ttl for name. Valid values are 300 <= TTL <= 68400 or "default". If
     <name> is an alias the alias host is updated.
     """
 
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
+    target_type, info = get_info_by_name(args.name)
 
     # TTL sanity check
     if not is_valid_ttl(args.ttl):
@@ -2655,7 +2656,7 @@ def ttl_set(args):
     new_data = {"ttl": args.ttl if args.ttl != "default" else ""}
 
     # Update TTL
-    path = f"/api/v1/hosts/{info['name']}"
+    path = f"/api/v1/{target_type}s/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, **new_data)
     cli_info("updated TTL to {} for {}".format(args.ttl, info["name"]), print_msg=True)
@@ -2684,9 +2685,10 @@ host.add_command(
 ##############################################
 
 def ttl_show(args):
-    """Show ttl for host. If <name> is an alias the alias hosts TTL is shown.
+    """Show ttl for name. If <name> is an alias the alias hosts TTL is shown.
     """
     info = host_info_by_name(args.name)
+    target_type, info = get_info_by_name(args.name)
     print_ttl(info["ttl"])
     cli_info("showed TTL for {}".format(info["name"]))
 
@@ -2694,13 +2696,12 @@ def ttl_show(args):
 # Add 'ttl_show' as a sub command to the 'host' command
 host.add_command(
     prog='ttl_show',
-    description='Show ttl for host. If NAME is an alias the alias hosts TTL is '
-                'shown.',
+    description='Show ttl for name.',
     short_desc='Show TTL.',
     callback=ttl_show,
     flags=[
         Flag('name',
-             description='Host target name.',
+             description='Name',
              metavar='NAME'),
     ],
 )
