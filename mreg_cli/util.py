@@ -571,7 +571,7 @@ def convert_wildcard_to_filter(param, arg):
 
     """
     if '*' not in arg:
-        return f'?{param}={arg}'
+        return f'{param}={arg}'
 
     args = arg.split('*')
     args_len = len(args) - 1
@@ -594,7 +594,7 @@ def convert_wildcard_to_regex(param, arg):
 
     """
     if '*' not in arg:
-        return f'?{param}={arg}'
+        return f'{param}={arg}'
 
     args = arg.split('*')
     args_len = len(args) - 1
@@ -606,5 +606,8 @@ def convert_wildcard_to_regex(param, arg):
             regex += f'{piece}$'
         elif piece:
             regex += f'.*{piece}.*'
+
+    if arg == '*':
+        regex = '.'
 
     return f'{param}__regex={regex}'
