@@ -700,7 +700,7 @@ def set_comment(args):
     path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, comment=args.comment)
-    cli_info("updated comment of {} to \"{}\""
+    cli_info("Updated comment of {} to \"{}\""
              .format(info["name"], args.comment), print_msg=True)
 
 
