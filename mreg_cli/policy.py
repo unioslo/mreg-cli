@@ -335,6 +335,7 @@ def atom_history(args):
     items = get_history_items(args.name, 'hostpolicy_atom', data_relation='atoms')
     print_history_items(args.name, items)
 
+
 policy.add_command(
     prog='atom_history',
     description='Show history for atom name',
@@ -347,10 +348,12 @@ policy.add_command(
     ],
 )
 
+
 def role_history(args):
     """Show history for name"""
     items = get_history_items(args.name, 'hostpolicy_role', data_relation='roles')
     print_history_items(args.name, items)
+
 
 policy.add_command(
     prog='role_history',
@@ -370,14 +373,14 @@ def list_atoms(args):
     List all atoms by given filters
     """
 
-    def _print(key, value, padding=14):
+    def _print(key, value, padding=20):
         print("{1:<{0}} {2}".format(padding, key, value))
-    
+
     filter = convert_wildcard_to_regex('name', args.name)
     info = get_list(f'/api/v1/hostpolicy/atoms/?{filter}')
     if info:
         for i in info:
-            _print(i['name'], i['description'])
+            _print(i['name'], repr(i['description']))
     else:
         print('No match')
 
@@ -389,7 +392,7 @@ policy.add_command(
     callback=list_atoms,
     flags=[
         Flag('name',
-            description='Atom name filter',
+             description='Atom name filter',
              metavar='NAME'),
     ]
 )
@@ -402,12 +405,12 @@ def list_roles(args):
 
     def _print(key, value, padding=14):
         print("{1:<{0}} {2}".format(padding, key, value))
-    
+
     filter = convert_wildcard_to_regex('name', args.name)
     info = get_list(f'/api/v1/hostpolicy/roles/?{filter}')
     if info:
         for i in info:
-            _print(i['name'], i['description'])
+            _print(i['name'], repr(i['description']))
     else:
         print('No match')
 
@@ -419,7 +422,7 @@ policy.add_command(
     callback=list_roles,
     flags=[
         Flag('name',
-            description='Role name filter',
+             description='Role name filter',
              metavar='NAME'),
     ]
 )
@@ -438,7 +441,6 @@ def list_hosts(args):
         print('No host uses this role')
 
 
-
 policy.add_command(
     prog='list_hosts',
     description='List hosts which use the given role',
@@ -446,10 +448,11 @@ policy.add_command(
     callback=list_hosts,
     flags=[
         Flag('name',
-            description='Role name',
+             description='Role name',
              metavar='NAME'),
     ]
 )
+
 
 def list_members(args):
     """
@@ -464,6 +467,7 @@ def list_members(args):
     else:
         print('No atom members')
 
+
 policy.add_command(
     prog='list_members',
     description='List all members of a role',
@@ -471,7 +475,7 @@ policy.add_command(
     callback=list_members,
     flags=[
         Flag('name',
-            description='Role name',
+             description='Role name',
              metavar='NAME'),
     ]
 )
@@ -514,9 +518,42 @@ policy.add_command(
     ]
 )
 
-###############################################
-# Implementation of sub command 'host_remove' #
-###############################################
+
+def host_list(args):
+    """
+    List host roles
+    """
+
+    def _print(hostname, roleinfo):
+        if not roleinfo:
+            cli_info(f"Host {hostname!r} has no roles.", print_msg=True)
+        else:
+            print(f"Roles for {hostname!r}:")
+            for role in roleinfo:
+                print(f"  {role['name']}")
+
+    info = []
+    for name in args.hosts:
+        info.append(host_info_by_name(name))
+
+    for i in info:
+        name = i['name']
+        path = f'/api/v1/hostpolicy/roles/?hosts__name={name}'
+        _print(name, get_list(path))
+
+
+policy.add_command(
+    prog='host_list',
+    description='List roles for host(s)',
+    short_desc='List roles for host(s)',
+    callback=host_list,
+    flags=[
+        Flag('hosts',
+             description='hosts',
+             nargs='+',
+             metavar='HOST'),
+    ]
+)
 
 
 def host_remove(args):
@@ -553,6 +590,35 @@ policy.add_command(
     ]
 )
 
+
+def rename(args):
+    """Rename an atom/role
+    """
+    if _get_atom(args.oldname):
+        path = f'/api/v1/hostpolicy/atoms/{args.oldname}'
+    elif _get_role(args.oldname):
+        path = f'/api/v1/hostpolicy/roles/{args.oldname}'
+    else:
+        cli_warning('Could not find an atom or role with name {args.name!r}')
+    patch(path, name=args.newname)
+    cli_info(f"Renamed {args.oldname!r} to {args.newname!r}", True)
+
+
+policy.add_command(
+    prog='rename',
+    description='Rename an atom or role',
+    short_desc='Rename an atom or role',
+    callback=rename,
+    flags=[
+        Flag('oldname',
+             description='Existing name',
+             metavar='OLDNAME'),
+        Flag('newname',
+             description='New name',
+             metavar='NEWNAME'),
+    ]
+)
+
 ###################################################
 # Implementation of sub command 'set_description' #
 ###################################################
@@ -566,10 +632,9 @@ def set_description(args):
     elif _get_role(args.name):
         path = f'/api/v1/hostpolicy/roles/{args.name}'
     else:
-        cli_warning('Could not find an atom or role with name {args.name}')
+        cli_warning('Could not find an atom or role with name {args.name!r}')
     patch(path, description=args.description)
-    cli_info("updated description to '{}' for {}".format(args.description,
-                                                         args.name), True)
+    cli_info(f"updated description to {args.description!r} for {args.name!r}", True)
 
 
 policy.add_command(
