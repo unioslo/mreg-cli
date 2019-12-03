@@ -790,7 +790,7 @@ def _ip_add(args, ipversion, macaddress=None):
         if is_valid_mac(macaddress):
             macaddress = format_mac(macaddress)
         else:
-            cli_error("Invalid macaddress: {macaddress}")
+            cli_error(f"Invalid macaddress: {macaddress}")
 
     if info is None:
         hostname = clean_hostname(args.name)
