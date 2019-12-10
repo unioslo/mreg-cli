@@ -1,11 +1,10 @@
 import ipaddress
-import operator
 from urllib.parse import urlencode
 
 from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
-from .util import delete, get_list, is_valid_network, post
+from .util import convert_wildcard_to_regex, delete, get_list, is_valid_network, post
 
 ###################################
 #  Add the main command 'access'  #
@@ -21,17 +20,23 @@ permission = cli.add_command(
 # Implementation of sub command 'list' #
 ##########################################
 
+
 def network_list(args):
     """
     Lists permissions for networks
     """
 
-    query = {}
+    # Replace with a.supernet_of(b) when python 3.7 is required
+    def _supernet_of(a, b):
+        return (a.network_address <= b.network_address and
+                a.broadcast_address >= b.broadcast_address)
+
+    query = []
     params = ""
     if args.group is not None:
-        query['group'] = args.group
+        query.append(convert_wildcard_to_regex("group", args.group))
     if query:
-        params = "&{}".format(urlencode(query))
+        params = "&" + "&".join(query)
     permissions = get_list(f"/api/v1/permissions/netgroupregex/?ordering=range,group{params}")
 
     data = []
@@ -40,7 +45,7 @@ def network_list(args):
         for i in permissions:
             permnet = ipaddress.ip_network(i['range'])
             if argnetwork.version == permnet.version and \
-               argnetwork.supernet_of(ipaddress.ip_network(i['range'])):
+               _supernet_of(argnetwork, ipaddress.ip_network(i['range'])):
                 data.append(i)
     else:
         data = permissions
