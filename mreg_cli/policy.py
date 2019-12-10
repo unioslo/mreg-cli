@@ -393,7 +393,7 @@ policy.add_command(
     flags=[
         Flag('name',
              description='Atom name filter',
-             metavar='NAME'),
+             metavar='FILTER'),
     ]
 )
 
@@ -423,7 +423,7 @@ policy.add_command(
     flags=[
         Flag('name',
              description='Role name filter',
-             metavar='NAME'),
+             metavar='FILTER'),
     ]
 )
 
