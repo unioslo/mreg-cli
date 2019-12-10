@@ -74,7 +74,7 @@ permission.add_command(
     callback=network_list,
     flags=[
         Flag('-group',
-             description='Group with access',
+             description='Group with access (supports wildcards)',
              metavar='GROUP'),
         Flag('-range',
              description='Network range',
