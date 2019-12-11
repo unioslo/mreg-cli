@@ -221,7 +221,7 @@ def add(args):
 host.add_command(
     prog='add',
     description='Add a new host with the given name, ip or network and contact. '
-                'comment are optional.',
+                'comment is optional.',
     short_desc='Add a new host',
     callback=add,
     flags=[
