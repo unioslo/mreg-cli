@@ -7,7 +7,7 @@ import shlex
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
-from . import config, log, util
+from . import config, log, util, mocktraffic
 from .cli import cli
 
 logger = logging.getLogger(__name__)
@@ -79,14 +79,24 @@ def main():
         help="write log to %(metavar)s",
         metavar='LOGFILE',
     )
-
     output_args.add_argument(
         '--show-token',
         dest='show_token',
         action='store_true',
         help="show API token after login",
     )
-
+    output_args.add_argument(
+        '--record',
+        dest='record_traffic',
+        help="Record all server/client traffic to %(metavar)s",
+        metavar='RECFILE',
+    )
+    output_args.add_argument(
+        '--playback',
+        dest='mock_traffic',
+        help="Run commands and mock all server/client traffic with data from %(metavar)s",
+        metavar='MOCKFILE',
+    )
 
     args = parser.parse_args()
     setup_logging(args.verbosity)
@@ -112,6 +122,15 @@ def main():
     if args.show_token:
         print(util.session.headers["Authorization"])
 
+    m = mocktraffic.MockTraffic()
+    if 'mock_traffic' in conf:
+        if 'record_traffic' in conf:
+            print("You can't use both the playback and record options at the same time!")
+            raise SystemExit()
+        m.start_playback(conf['mock_traffic'])
+    elif 'record_traffic' in conf:
+        m.start_recording(conf['record_traffic'])
+
     # Must import the commands, for the side effects of creating the commands
     # when importing.
     from . import dhcp      # noqa: F401
@@ -135,6 +154,15 @@ def main():
     # Welcome text for the app
     print('Type -h for help.')
 
+    # If playing back traffic, just run through the data and exit afterwards.
+    if m.is_playback():
+        while True:
+            line = mocktraffic.MockTraffic().get_next_command()
+            if not line:
+                raise SystemExit()
+            print(">",line)
+            cli.parse(shlex.split(line))
+
     # The app runs in an infinite loop and is expected to exit using sys.exit()
     while True:
         try:
@@ -145,6 +173,11 @@ def main():
             raise SystemExit()
         try:
             for line in lines.splitlines():
+                # If recording commands, submit the command line.
+                # Don't record the "source" command itself.
+                if m.is_recording() and not line.lstrip().startswith("source"):
+                    m.record_command(line)
+                # Run the command
                 cli.parse(shlex.split(line))
         except ValueError as e:
             print(e)

@@ -13,6 +13,7 @@ from prompt_toolkit import prompt
 from .exceptions import CliError, HostNotFoundWarning
 from .history import history
 from .log import cli_error, cli_warning
+from . import mocktraffic
 
 location_tags = []
 category_tags = []
@@ -258,7 +259,15 @@ def result_check(result, type, url):
 
 def _request_wrapper(type, path, ok404=False, first=True, **data):
     url = requests.compat.urljoin(mregurl, path)
-    result = getattr(session, type)(url, data=data, timeout=HTTP_TIMEOUT)
+    mh = mocktraffic.MockTraffic()
+
+    if mh.is_playback():
+        result = mh.get_mock_result(type, url, data)
+    else:
+        result = getattr(session, type)(url, data=data, timeout=HTTP_TIMEOUT)
+
+    if mh.is_recording():
+        mh.record(type, url, data, result)
 
     if first and result.status_code == 401:
         update_token()

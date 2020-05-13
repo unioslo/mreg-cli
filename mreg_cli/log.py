@@ -5,6 +5,8 @@ from datetime import datetime
 
 from .exceptions import CliError, CliWarning
 
+from . import mocktraffic
+
 logfile = None
 
 
@@ -39,7 +41,17 @@ def cli_error(msg: str, raise_exception: bool = True, exception=CliError) -> Non
     )
     _write_log(s)
     if raise_exception:
-        raise exception("ERROR: {}: {}".format(pre, msg))
+        # A simplified message for console
+        msg = "ERROR: {}: {}".format(pre, msg)
+        mt = mocktraffic.MockTraffic()
+        if mt.is_recording():
+            # If recording traffic, also record the console output
+            mt.record_output(msg)
+        elif mt.is_playback():
+            # If playing back traffic, verify the console output is as expected
+            mt.compare_with_expected_output(msg)
+        # Raise the exception
+        raise exception(msg)
 
 
 def cli_warning(msg: str, raise_exception: bool = True, exception=CliWarning) -> None:
@@ -53,7 +65,16 @@ def cli_warning(msg: str, raise_exception: bool = True, exception=CliWarning) ->
     )
     _write_log(s)
     if raise_exception:
-        raise exception("WARNING: {}: {}".format(pre, msg))
+        # A simplified message for console
+        msg = "WARNING: {}: {}".format(pre, msg)
+        mt = mocktraffic.MockTraffic()
+        if mt.is_recording():
+            # If recording traffic, also record the console output
+            mt.record_output(msg)
+        elif mt.is_playback():
+            # If playing back traffic, verify the console output is as expected
+            mt.compare_with_expected_output(msg)
+        raise exception(msg)
 
 
 def cli_info(msg: str, print_msg: bool = False) -> None:
@@ -67,4 +88,13 @@ def cli_info(msg: str, print_msg: bool = False) -> None:
     )
     _write_log(s)
     if print_msg:
-        print("OK: {}: {}".format(pre, msg))
+        # A simplified message for console
+        msg = "OK: {}: {}".format(pre, msg)
+        print(msg)
+        mt = mocktraffic.MockTraffic()
+        if mt.is_recording():
+            # If recording traffic, also record the console output
+            mt.record_output(msg)
+        elif mt.is_playback():
+            # If playing back traffic, verify the console output is as expected
+            mt.compare_with_expected_output(msg)

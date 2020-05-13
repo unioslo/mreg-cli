@@ -5,7 +5,7 @@ from prompt_toolkit import HTML
 from prompt_toolkit import print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
 
-from . import util
+from . import util, mocktraffic
 from .exceptions import CliError, CliWarning
 
 
@@ -218,6 +218,8 @@ def _source(args):
     import shlex
     import html
 
+    m = mocktraffic.MockTraffic()
+
     for filename in args.files:
         if filename.startswith('~'):
             filename = os.path.expanduser(filename)
@@ -228,6 +230,11 @@ def _source(args):
                     if l.startswith('!'):
                         os.system(l[1:])
                         continue
+
+                    # If recording commands, submit the command line.
+                    # Don't record the "source" command itself.
+                    if m.is_recording() and not l.lstrip().startswith('source'):
+                        m.record_command(l)
 
                     # With comments=True shlex will remove comments from the line
                     # when splitting. Comment symbol is #
