@@ -107,21 +107,6 @@ def main():
     if 'logfile' in conf:
         log.logfile = conf['logfile']
 
-    if "user" not in conf:
-        print("Username not set in config or as argument")
-        return
-    elif "url" not in conf:
-        print("mreg url not set in config or as argument")
-        return
-
-    try:
-        util.login1(conf["user"], conf["url"])
-    except (EOFError, KeyboardInterrupt):
-        print('')
-        raise SystemExit()
-    if args.show_token:
-        print(util.session.headers["Authorization"])
-
     m = mocktraffic.MockTraffic()
     if 'mock_traffic' in conf:
         if 'record_traffic' in conf:
@@ -130,6 +115,25 @@ def main():
         m.start_playback(conf['mock_traffic'])
     elif 'record_traffic' in conf:
         m.start_recording(conf['record_traffic'])
+
+    if m.is_playback():
+        util.mregurl = "http://dummyvalue/"
+        util.username = "dummyuser"
+    else:
+        if "user" not in conf:
+            print("Username not set in config or as argument")
+            return
+        elif "url" not in conf:
+            print("mreg url not set in config or as argument")
+            return
+
+        try:
+            util.login1(conf["user"], conf["url"])
+        except (EOFError, KeyboardInterrupt):
+            print('')
+            raise SystemExit()
+        if args.show_token:
+            print(util.session.headers["Authorization"])
 
     # Must import the commands, for the side effects of creating the commands
     # when importing.

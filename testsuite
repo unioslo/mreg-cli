@@ -1,0 +1,42 @@
+# network setup ################################################################
+network create -network 10.0.0.0/24 -desc "Seth MacFarlanes network!"  # ipv4 network
+network create -network 2001:db8::/64 -desc "familynet"                # ipv6 network
+
+network create -network 10.0.1.0/24 -desc "Frozzzen"        # frozen network
+network set_frozen 10.0.1.0/24
+
+# zone creation ################################################################
+zone create example.org hostmaster@example.org ns1.example.org  # should require force because ns1 is unknown
+zone create example.org hostmaster@example.org ns1.example.org -force
+
+# Host creation ################################################################
+host add sethmacfarlane -ip 10.0.0.69 -contact me@griffin.no -comment "O.o"
+host set_contact sethmacfarlane peter@griffin.no
+host set_comment sethmacfarlane "Family Guy is too awesome"
+
+host add stan -ip 10.0.0.100 -contact american@dad.no -macaddress aa:bb:cc:11:22:33
+host add roger -ip 10.0.0.101 -contact american@dad.no
+host add steve -ip 10.0.0.102 -contact american@dad.no
+host add francine -ip 10.0.0.103 -contact american@dad.no
+host add haley -ip 10.0.0.104 -contact american@dad.no
+
+# pick an ip address from a subnet
+host add claus -ip 10.0.0.0/24 -contact american@dad.no  # should pick an unused ip address
+host info claus
+
+# Host removal
+host remove stan
+host remove roger
+host remove steve
+host remove francine
+host remove haley
+host remove claus
+host remove sethmacfarlane
+
+# Zone removal
+zone delete example.org
+
+# Networks teardown ############################
+network remove 10.0.0.0/24 -f
+network remove 2001:db8::/64 -force
+network remove 10.0.1.0/24 -f
