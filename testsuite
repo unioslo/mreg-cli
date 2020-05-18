@@ -1,42 +1,98 @@
-# network setup ################################################################
-network create -network 10.0.0.0/24 -desc "Seth MacFarlanes network!"  # ipv4 network
-network create -network 2001:db8::/64 -desc "familynet"                # ipv6 network
-
-network create -network 10.0.1.0/24 -desc "Frozzzen"        # frozen network
-network set_frozen 10.0.1.0/24
-
-# zone creation ################################################################
+##### Tests: Zone
+#   - zone creation
+#   - zone info
+#   - zone list
+#   - set/update ns, soa, ttl
 zone create example.org hostmaster@example.org ns1.example.org  # should require force because ns1 is unknown
 zone create example.org hostmaster@example.org ns1.example.org -force
+zone info example.org
+zone list -forward
+zone set_ns example.org ns2.example.org  #  requires force because ns2 is unknown
+zone set_ns example.org ns2.example.org -force
+zone set_soa example.org -email hostperson@example.org -serialno 12345 -refresh 360 -retry 1800 -expire 2400 -soa-ttl 1800
+zone set_default_ttl example.org 60    # should fail, must be >= 300
+zone set_default_ttl example.org 300 
 
-# Host creation ################################################################
-host add sethmacfarlane -ip 10.0.0.69 -contact me@griffin.no -comment "O.o"
-host set_contact sethmacfarlane peter@griffin.no
-host set_comment sethmacfarlane "Family Guy is too awesome"
 
-host add stan -ip 10.0.0.100 -contact american@dad.no -macaddress aa:bb:cc:11:22:33
-host add roger -ip 10.0.0.101 -contact american@dad.no
-host add steve -ip 10.0.0.102 -contact american@dad.no
-host add francine -ip 10.0.0.103 -contact american@dad.no
-host add haley -ip 10.0.0.104 -contact american@dad.no
+##### Tests: Network
+#    - list used/unused IPv4 addresses
+#    - pick next unused address
+#    - set number of reserved addresses
+network create -network 10.0.2.0/28 -desc "TinyNet"
+network list_used_addresses 10.0.2.0/28
+network list_unused_addresses 10.0.2.0/28
+network set_reserved 10.0.2.0/28 8
+host add tinyhost -ip 10.0.2.0/28 -contact tinyhost@example.org
+network list_used_addresses 10.0.2.0/28
+network list_unused_addresses 10.0.2.0/28
+host remove tinyhost
+network remove 10.0.2.0/28 -force
 
-# pick an ip address from a subnet
-host add claus -ip 10.0.0.0/24 -contact american@dad.no  # should pick an unused ip address
-host info claus
 
-# Host removal
-host remove stan
-host remove roger
-host remove steve
-host remove francine
-host remove haley
-host remove claus
-host remove sethmacfarlane
-
-# Zone removal
-zone delete example.org
-
-# Networks teardown ############################
-network remove 10.0.0.0/24 -f
-network remove 2001:db8::/64 -force
+##### Tests: Network
+#    - frozen network
+#    - excluded ip ranges
+#    - network info
+network create -network 10.0.1.0/24 -desc "Frozzzen"        # frozen network
+network set_frozen 10.0.1.0/24
+host add somehost -ip 10.0.1.0/24 -contact support@example.org  # should require force, because net's frozen
+network add_excluded_range 10.0.1.0/24 10.0.1.20 10.0.1.30
+host add somehost -ip 10.0.1.20 -contact support@example.org -force # should fail because ip is in excluded range
+host add somehost -ip 10.0.1.0/24 -contact support@example.org -force
+network list_used_addresses 10.0.1.0/24
+network set_description 10.0.1.0/24 "Frozen but has one host"
+network info 10.0.1.0/24
+host remove somehost
+network unset_frozen 10.0.1.0/24
+host add otherhost -ip 10.0.1.20 -contact support@example.org  # fails because reserved range
+network remove_excluded_range 10.0.1.0/24 10.0.1.20 10.0.1.30
+host add otherhost -ip 10.0.1.20 -contact support@example.org  # should not need force now that net is unfrozen
+host remove otherhost
 network remove 10.0.1.0/24 -f
+
+# TODO: #    - setting network category, location, vlan
+#network set_category 10.0.1.0/24 Comedy_Drama
+#network set_location 10.0.1.0/24 Oslo_Norway
+#network set_vlan 10.0.1.0/24 1234
+
+
+##### Tests: Hostgroups
+#   - create, delete groups
+#   - add/remove hosts to/from groups
+#   - add groups to other groups
+#   - add/remove owners
+group create mygroup "This describes the group"
+host add testhost1
+host add testhost2
+group host_add mygroup testhost1
+group host_add mygroup testhost2
+group owner_add mygroup myself
+group host_remove mygroup testhost2
+group info mygroup
+group create yourgroup "meh"
+group group_add mygroup yourgroup
+group info mygroup
+group group_remove mygroup yourgroup
+group owner_add mygroup anotherowner
+group owner_remove mygroup myself
+group delete mygroup     # fails because the group contains testhost1, must force
+group delete mygroup -force
+group delete yourgroup
+host remove testhost1
+host remove testhost2
+
+
+##### Tests: Delegations
+#   - create, delete, list
+#   - set delegation comment
+zone delegation_create example.org wut.example.org ns2.example.org -force
+zone delegation_comment_set example.org wut.example.org "This is a comment"
+zone delegation_list example.org
+host add testhost.wut.example.org   #  should fail: host is in delegation, should require force
+zone delegation_comment_remove example.org wut.example.org
+zone delegation_delete example.org wut.example.org
+
+
+##### Tests: Zone
+#    - Zone removal
+zone delete example.org
