@@ -27,6 +27,14 @@ network list_used_addresses 10.0.2.0/28
 network list_unused_addresses 10.0.2.0/28
 host remove tinyhost
 network remove 10.0.2.0/28 -force
+# ipv6
+network create -network 2001:db8::/64 -desc "Lorem ipsum dolor sit amet"
+network list_used_addresses 2001:db8::/64
+network list_unused_addresses 2001:db8::/64
+network set_reserved 2001:db8::/64 50
+host add tinyhost -ip 2001:db8::/64 -contact me@example.org
+host remove tinyhost
+network remove 2001:db8::/64 -f
 
 
 ##### Tests: Network
@@ -49,6 +57,18 @@ network remove_excluded_range 10.0.1.0/24 10.0.1.20 10.0.1.30
 host add otherhost -ip 10.0.1.20 -contact support@example.org  # should not need force now that net is unfrozen
 host remove otherhost
 network remove 10.0.1.0/24 -f
+# IPv6
+network create -network 2001:db8::/64 -desc "Lorem ipsum dolor sit amet"
+network set_frozen 2001:db8::/64
+host add somehost -ip 2001:db8::/64 -contact m@example.org  # should require force
+network add_excluded_range 2001:db8::/64 2001:db8::20 2001:db8::30
+host add somehost -ip 2001:db8::20 -contact support@example.org -force # should fail
+host add somehost -ip 2001:db8::/64 -contact support@example.org -force
+network set_description 2001:db8::/64 "Frozen but has one host"
+network info 2001:db8::/64
+host remove somehost
+network remove 2001:db8::/64 -f
+
 
 # TODO: #    - setting network category, location, vlan
 #network set_category 10.0.1.0/24 Comedy_Drama
@@ -89,8 +109,157 @@ zone delegation_create example.org wut.example.org ns2.example.org -force
 zone delegation_comment_set example.org wut.example.org "This is a comment"
 zone delegation_list example.org
 host add testhost.wut.example.org   #  should fail: host is in delegation, should require force
+host add testhost.wut.example.org -force  # should work
+host remove testhost.wut.example.org
 zone delegation_comment_remove example.org wut.example.org
 zone delegation_delete example.org wut.example.org
+
+
+##### Tests: Policy
+#   - create/delete atoms
+#   - create/delete roles
+#   - add/remove hosts from policies
+#   - rename
+#   - set description
+policy atom_create apple "Here's the description"
+policy atom_create -created 2018-07-07 orange "Round and orange"
+policy list_atoms *
+policy role_create fruit "5 a day"
+policy list_roles *
+policy add_atom fruit apple
+policy add_atom fruit orange
+policy info orange
+policy info fruit
+policy list_members fruit
+policy atom_delete apple  # Should fail because 'apple' is used in role 'fruit'
+policy remove_atom fruit apple
+policy atom_delete apple
+policy set_description orange "Juicy"
+policy rename orange tangerine
+host add foo
+policy host_add tangerine foo # should fail, tangerine is an atom, not a role
+policy host_add fruit foo
+policy list_hosts fruit
+policy host_list foo
+policy host_remove fruit foo
+policy remove_atom fruit banana # should fail
+policy remove_atom fruit tangerine
+policy role_delete vegetables  # fails, that role doesn't exist
+policy role_delete fruit
+host remove foo
+
+
+##### Tests: Network permissions
+#   - add/remove permissions for network ranges
+permission network_add 10.0.0.0/24 somegroup "[abc]+.uio.no"
+permission network_list
+permission network_remove 10.0.0.0/24 othergroup "[abc]*.uio.no"  # fails, no match
+permission network_remove 10.0.0.0/24 somegroup "[abc]+.uio.no"
+
+
+##### Tests: DHCP
+#   - associate / disassociate ip with mac address
+network create -network 10.0.0.0/24 -desc foo
+host add foo
+host a_add foo 10.0.0.5
+dhcp assoc 1.2.3.4 aa:bb:cc:dd:ee:ff  # doesn't work, because ip addr doesn't exist
+dhcp assoc 10.0.0.5 aa:bb:cc:dd:ee:ff
+dhcp disassoc 1.2.3.4    # ip addr dosnt exst
+dhcp disassoc 10.0.0.5
+dhcp assoc meh 11:22:33:44:55:66  # host not found
+dhcp assoc foo aa:bb:cc:dd:ee:ff
+dhcp disassoc foo
+dhcp disassoc meh   # host not found
+host remove foo
+network remove 10.0.0.0/24 -f
+
+
+##### Tests: host
+#   - all the host sub-commands
+network create -network 10.0.0.0/24 -desc "lorem ipsum"
+network create -network 2001:db8::/64 -desc "dolor sit amet"
+host add foo -ip 10.0.0.10 -contact hi@ho.com -comment "meh" -macaddress 11:22:33:aa:bb:cc
+host info foo
+host find -name *oo*
+host find -contact hi*
+host find -comment meh
+host find -name f* -contact h* -comment m*
+host rename foo bar
+host set_comment bar 'This is the comment'
+host set_contact bar "I'm the contact"   # fails because invalid email address
+host set_contact bar me@example.org
+# IPv4 management
+host a_add bar 10.0.0.12  # must force
+host a_add bar 10.0.0.12 -f
+host a_add bar 10.0.0.13 -macaddress 11:22:33:44:55:66 -force
+host a_change -old 10.0.0.12 -new 10.0.0.14 bar
+host a_change -old 10.0.0.13 -new 10.0.0.15 bar   # doesn't actually work, because mac addr
+host a_remove bar 10.0.0.13
+host add baz
+host a_move -ip 10.0.0.10 -fromhost bar -tohost baz
+host a_show baz
+# IPv6 management
+host aaaa_add bar 2001:db8::/64  # must force
+host aaaa_add bar 2001:db8::11 -f
+host aaaa_add bar 2001:db8::12 -macaddress 11:22:33:44:55:67 -f
+host aaaa_show bar
+host aaaa_change -old 2001:db8::11 -new 2001:db8::13 bar
+host aaaa_change -old 2001:db8::12 -new 2001:db8::14 bar  # doesn't work, because mac addr
+host aaaa_remove bar 2001:db8::13
+host aaaa_move -ip 2001:db8::12 -fromhost bar -tohost baz
+host a_show baz
+# CNAME
+host cname_add bar fubar
+host cname_show bar
+host cname_remove bar fubar
+# HINFO
+host hinfo_add baz x86 Win
+host hinfo_show baz
+host hinfo_remove baz
+# LOC
+host loc_add baz "52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m"
+host loc_show baz
+host loc_remove baz
+# MX
+host mx_add baz 10 mail.example.org
+host mx_show baz
+host mx_remove baz 10 mail.example.org
+# NAPTR
+host naptr_add -name baz -preference 16384 -order 3 -flag u -service "SIP" -regex "[abc]+" -replacement "wonk"
+host naptr_show baz
+host naptr_remove -name baz -preference 16384 -order 3 -flag u -service "sip" -regex "[abc]+" -replacement "wonk"
+# PTR
+host ptr_add 10.0.0.20 baz.example.org
+host ptr_show 10.0.0.20
+host add clover
+host ptr_change -ip 10.0.0.20 -old baz -new clover
+host ptr_remove 10.0.0.20 clover
+network
+# SRV
+host srv_add -name "whatever" -priority 1 -weight 1 -port 80 -host baz  # doesn't work
+host srv_add -name "_sip._tcp.example.org" -priority 10 -weight 5 -port 3456 -host baz.example.org
+host srv_show "_sip._tcp.example.org"
+host srv_remove -name "_sip._tcp.example.org" -priority 10 -weight 5 -port 3456 -host baz.example.org
+# SSHFP
+host sshfp_add bar 1 1 12345678abcde
+host sshfp_show bar
+host sshfp_remove -fingerprint 394875985 bar   # not found
+host sshfp_remove bar
+# ttl
+host ttl_set bar 3600
+host ttl_show bar
+host ttl_remove bar
+# TXT
+host txt_add bar "Lorem ipsum dolor sit amet"
+host txt_show bar
+host txt_remove bar "Whatever"   # no match
+host txt_remove bar "Lorem ipsum dolor sit amet"
+# cleanup
+host remove bar
+host remove baz -f
+host remove clover
+network remove 10.0.0.0/24 -f
+network remove 2001:db8::/64 -f
 
 
 ##### Tests: Zone
