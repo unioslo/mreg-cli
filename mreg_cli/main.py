@@ -117,7 +117,7 @@ def main():
         m.start_recording(conf['record_traffic'])
 
     if m.is_playback():
-        util.mregurl = "http://dummyvalue/"
+        util.mregurl = "http://127.0.0.1:8000/"
         util.username = "dummyuser"
     else:
         if "user" not in conf:
