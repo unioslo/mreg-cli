@@ -12,6 +12,7 @@ from .util import convert_wildcard_to_regex, delete, get_list, get, is_valid_net
 permission = cli.add_command(
     prog='permission',
     description='Manage permissions.',
+    short_desc='Manage permissions',
 )
 
 

@@ -13,7 +13,8 @@ from .util import (convert_wildcard_to_regex, delete, get, get_list, host_info_b
 
 policy = cli.add_command(
     prog='policy',
-    description='Manage hostpolicy',
+    description='Manage policies for hosts.',
+    short_desc='Manage policies',
 )
 
 # Utils

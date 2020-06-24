@@ -29,6 +29,25 @@ class Flag:
         self.action = action
 
 
+def _create_command_group(parent):
+    parent_name = parent.prog.strip()
+
+    if parent_name:
+        title = 'subcommands'
+    else:
+        title = 'commands'
+
+    metavar = '<command>'
+    description = "Run '{}' for more details".format(
+        ' '.join(word for word in (parent_name, metavar, '-h') if word))
+
+    return parent.add_subparsers(
+        title=title,
+        description=description,
+        metavar=metavar,
+    )
+
+
 class Command(Completer):
     """Command is a class which acts as a wrapper around argparse and
     prompt_toolkit.
@@ -58,9 +77,11 @@ class Command(Completer):
         :return: the Command object of the new command.
         """
         if not self.sub:
-            self.sub = self.parser.add_subparsers()
-        parser = self.sub.add_parser(prog, description=description,
-                                     epilog=epilog)
+            self.sub = _create_command_group(self.parser)
+        parser = self.sub.add_parser(prog,
+                                     description=description,
+                                     epilog=epilog,
+                                     help=short_desc)
         for f in flags:
             # Need to create a dict with the parameters so only used
             # parameters are sent, or else exceptions are raised. Ex: if
@@ -193,7 +214,7 @@ def _quit(args):
 cli.add_command(
     prog='quit',
     description='Exit application.',
-    short_desc='Exit application.',
+    short_desc='Quit',
     callback=_quit,
 )
 
@@ -203,8 +224,8 @@ def logout(args):
 
 cli.add_command(
     prog='logout',
-    description='Logout from mreg and exit. Will delete token',
-    short_desc='Logout from mreg and exit.',
+    description='Log out from mreg and exit. Will delete token',
+    short_desc='Log out from mreg',
     callback=logout,
 )
 
@@ -258,8 +279,8 @@ def _source(args):
 # Always need the source command.
 cli.add_command(
     prog='source',
-    description='Read commands from the given source files.',
-    short_desc='Read from file(s).',
+    description='Read and run commands from the given source files.',
+    short_desc='Run commands from file(s)',
     callback=_source,
     flags=[
         Flag('files',

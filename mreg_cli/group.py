@@ -12,7 +12,8 @@ from .util import delete, get, get_list, host_info_by_name, patch, post
 
 group = cli.add_command(
     prog='group',
-    description='Manage hostgroups',
+    description='Manage hostgroups.',
+    short_desc='Manage hostgroups',
 )
 
 # Utils
