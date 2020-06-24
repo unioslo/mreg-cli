@@ -246,6 +246,7 @@ history = History()
 history_ = cli.add_command(
     prog='history',
     description='Undo, redo or print history for this program session.',
+    short_desc='Session history'
 )
 
 
@@ -254,7 +255,7 @@ history_ = cli.add_command(
 #########################################
 
 def print_(args):
-    print('pringing history.')
+    print('printing history.')
 
 
 history_.add_command(

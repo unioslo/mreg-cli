@@ -42,6 +42,7 @@ from .util import (
 host = cli.add_command(
     prog='host',
     description='Manage hosts.',
+    short_desc='Manage hosts',
 )
 
 

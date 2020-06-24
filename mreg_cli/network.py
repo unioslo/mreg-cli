@@ -30,6 +30,7 @@ from .util import (
 network = cli.add_command(
     prog='network',
     description='Manage networks.',
+    short_desc='Manage networks',
 )
 
 

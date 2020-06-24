@@ -9,7 +9,8 @@ from .util import format_mac, get_list, host_info_by_name, is_valid_ip, is_valid
 
 dhcp = cli.add_command(
     prog='dhcp',
-    description='Manage dhcp.',
+    description='Manage DHCP associations.',
+    short_desc='Manage DHCP',
 )
 
 def _dhcp_get_ip_by_arg(arg):
