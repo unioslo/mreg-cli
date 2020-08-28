@@ -392,7 +392,7 @@ policy.add_command(
     callback=list_atoms,
     flags=[
         Flag('name',
-             description='Atom name filter',
+             description='Atom name filter (regexp)',
              metavar='FILTER'),
     ]
 )
@@ -422,7 +422,7 @@ policy.add_command(
     callback=list_roles,
     flags=[
         Flag('name',
-             description='Role name filter',
+             description='Role name filter (regexp)',
              metavar='FILTER'),
     ]
 )
