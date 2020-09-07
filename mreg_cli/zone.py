@@ -51,7 +51,7 @@ def get_zone(name):
     path = zone_path(name)
     zone = get(path, ok404=True)
     if zone is None:
-        cli_warning(f"Zone '{zone}' does not exist")
+        cli_warning(f"Zone '{name}' does not exist")
     return zone.json(), path
 
 
