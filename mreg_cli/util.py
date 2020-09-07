@@ -17,7 +17,10 @@ from . import mocktraffic
 
 location_tags = []
 category_tags = []
+
 session = requests.Session()
+session.headers.update({'User-Agent': 'mreg-cli'})
+
 mreg_auth_token_file = os.path.join(str(os.getenv('HOME')), '.mreg-cli_auth_token')
 
 logger = logging.getLogger(__name__)
