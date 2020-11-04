@@ -79,8 +79,9 @@ def assoc(args):
     ip = _dhcp_get_ip_by_arg(args.name)
     new_mac = assoc_mac_to_ip(args.mac, ip, force=args.force)
 
-    cli_info("associated mac address {} with ip {}"
-             .format(new_mac, ip["ipaddress"]), print_msg=True)
+    if new_mac is not None:
+        cli_info("associated mac address {} with ip {}"
+                 .format(new_mac, ip["ipaddress"]), print_msg=True)
 
 
 dhcp.add_command(
