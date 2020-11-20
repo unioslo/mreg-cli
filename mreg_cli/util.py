@@ -260,14 +260,14 @@ def result_check(result, type, url):
         cli_warning(message)
 
 
-def _request_wrapper(type, path, ok404=False, first=True, **data):
+def _request_wrapper(type, path, params={}, ok404=False, first=True, **data):
     url = requests.compat.urljoin(mregurl, path)
     mh = mocktraffic.MockTraffic()
 
     if mh.is_playback():
         result = mh.get_mock_result(type, url, data)
     else:
-        result = getattr(session, type)(url, data=data, timeout=HTTP_TIMEOUT)
+        result = getattr(session, type)(url, params=params, data=data, timeout=HTTP_TIMEOUT)
 
     if mh.is_recording():
         mh.record(type, url, data, result)
@@ -282,17 +282,17 @@ def _request_wrapper(type, path, ok404=False, first=True, **data):
     return result
 
 
-def get(path: str, ok404=False) -> requests.Response:
+def get(path: str, params: dict = {}, ok404=False) -> requests.Response:
     """Uses requests to make a get request."""
-    return _request_wrapper("get", path, ok404=ok404)
+    return _request_wrapper("get", path, params=params, ok404=ok404)
 
 
-def get_list(path: str, ok404=False) -> requests.Response:
+def get_list(path: str, params: dict = {}, ok404=False) -> requests.Response:
     """Uses requests to make a get request.
        Will iterate over paginated results and return result as list."""
     ret = []
     while path:
-        result = get(path, ok404=ok404).json()
+        result = get(path, params=params, ok404=ok404).json()
         if 'next' in result:
             path = result['next']
             ret.extend(result['results'])
@@ -301,19 +301,19 @@ def get_list(path: str, ok404=False) -> requests.Response:
     return ret
 
 
-def post(path: str, **kwargs) -> requests.Response:
+def post(path: str, params: dict = {}, **kwargs) -> requests.Response:
     """Uses requests to make a post request. Assumes that all kwargs are data fields"""
-    return _request_wrapper("post", path, **kwargs)
+    return _request_wrapper("post", path, params=params, **kwargs)
 
 
-def patch(path: str, **kwargs) -> requests.Response:
+def patch(path: str, params: dict = {}, **kwargs) -> requests.Response:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
-    return _request_wrapper("patch", path, **kwargs)
+    return _request_wrapper("patch", path, params=params, **kwargs)
 
 
-def delete(path: str) -> requests.Response:
+def delete(path: str, params: dict = {},) -> requests.Response:
     """Uses requests to make a delete request."""
-    return _request_wrapper("delete", path)
+    return _request_wrapper("delete", path, params=params)
 
 
 ################################################################################

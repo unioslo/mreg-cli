@@ -2772,12 +2772,9 @@ def txt_remove(args):
     hostname = info["name"]
 
     # Check for matching TXT records for host
-    path = "/api/v1/txts/?host={}&txt={}".format(
-        info["id"],
-        args.text,
-    )
+    path = "/api/v1/txts/"
     history.record_get(path)
-    txts = get_list(path)
+    txts = get_list(path, params={"host": info["id"], "txt": args.text})
     if len(txts) == 0:
         cli_warning(f"{hostname} has no TXT records equal: {args.text}")
 
