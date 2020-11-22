@@ -8,16 +8,28 @@ from .util import get_list
 
 def get_history_items(name, resource, data_relation=None):
     # First check if any model id with the name exists
-    base_path = f"/api/v1/history/?resource={resource}"
-    ret = get_list(f"{base_path}&name={name}")
+    path = "/api/v1/history/"
+    params = {
+        "resource": resource,
+        "name": name,
+    }
+    ret = get_list(path, params=params)
     if len(ret) == 0:
         cli_warning(f"No history found for {name}")
     # Get all model ids, a group gets a new one when deleted and created again
     model_ids = { str(i["model_id"]) for i in ret }
     model_ids = ",".join(model_ids)
-    ret = get_list(f"{base_path}&model_id__in={model_ids}")
+    params = {
+        "resource": resource,
+        "model_id__in": model_ids,
+    }
+    ret = get_list(path, params=params)
     if data_relation is not None:
-        ret.extend(get_list(f"/api/v1/history/?data__relation={data_relation}&data__id__in={model_ids}"))
+        params = {
+            "data__relation": data_relation,
+            "data__id__in": model_ids,
+        }
+        ret.extend(get_list(path, params=params))
     return ret
 
 

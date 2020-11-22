@@ -19,7 +19,7 @@ group = cli.add_command(
 
 
 def get_hostgroup(name):
-    ret = get_list(f'/api/v1/hostgroups/?name={name}')
+    ret = get_list("/api/v1/hostgroups/", params={"name": name})
     if not ret:
         cli_warning(f'Group "{name}" does not exist')
     return ret[0]
@@ -36,7 +36,7 @@ def create(args):
     Create a new host group
     """
 
-    ret = get_list(f'/api/v1/hostgroups/?name={args.name}')
+    ret = get_list("/api/v1/hostgroups/", params={"name": args.name})
     if ret:
         cli_error(f'Groupname "{args.name}" already in use')
 
@@ -410,7 +410,7 @@ def host_list(args):
     List group memberships for host
     """
     hostname = host_info_by_name(args.host, follow_cname=False)['name']
-    group_list = get_list(f"/api/v1/hostgroups/?hosts__name={hostname}")
+    group_list = get_list("/api/v1/hostgroups/", params={"hosts__name": hostname})
     if len(group_list) == 0:
         cli_info(f"Host {hostname!r} is not a member in any hostgroup", True)
         return

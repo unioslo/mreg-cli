@@ -15,9 +15,12 @@ dhcp = cli.add_command(
 def _dhcp_get_ip_by_arg(arg):
     """Get A/AAAA record by either ip address or host name"""
     if is_valid_ip(arg):
-        path = f"/api/v1/ipaddresses/?ipaddress={arg}"
+        path = "/api/v1/ipaddresses/"
+        params = {
+            "ipaddress": arg,
+        }
         history.record_get(path)
-        ip = get_list(path)
+        ip = get_list(path, params=params)
         if not len(ip):
             cli_warning(f"ip {arg} doesn't exist.")
         elif len(ip) > 1:
@@ -39,9 +42,13 @@ def assoc_mac_to_ip(mac, ip, force=False):
     # MAC addr sanity check
     if is_valid_mac(mac):
         new_mac = format_mac(mac)
-        path = f"/api/v1/ipaddresses/?macaddress={new_mac}&ordering=ipaddress"
+        path = "/api/v1/ipaddresses/"
+        params = {
+            "macaddress": new_mac,
+            "ordering": "ipaddress",
+        }
         history.record_get(path)
-        macs = get_list(path)
+        macs = get_list(path, params=params)
         ips = ", ".join([i['ipaddress'] for i in macs])
         if len(macs) and not force:
             cli_warning(
