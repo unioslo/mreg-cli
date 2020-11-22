@@ -1,6 +1,6 @@
 import json
 import os
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlencode
 
 class MockTraffic(object):
 
@@ -75,7 +75,9 @@ class MockTraffic(object):
         f.close()
 
     """ Returns only the path + query string components of a url """
-    def urlpath(self, url):
+    def urlpath(self, url, params):
+        if params:
+            url = f"{url}?{urlencode(params)}"
         up = urlparse(url)
         if up.query != '':
             return up.path + '?' + up.query
@@ -85,7 +87,7 @@ class MockTraffic(object):
     """ Pretends to perform the http call (method, url and post data),
         verifies that it was the expected http call at this point in time,
         and returns an object that can pass for a http response. """
-    def get_mock_result(self, method, url, data):
+    def get_mock_result(self, method, url, params, data):
         i = MockTraffic.__instance
         if not i.playback:
             raise Exception("Did not call start_playback() before get_mock_result()")
@@ -96,7 +98,7 @@ class MockTraffic(object):
         #
         obj = i.mock_data[i.line_num-1]
         method = method.upper()
-        url = self.urlpath(url)
+        url = self.urlpath(url, params)
         if method != obj['method'] or url != obj['url'] or data != obj['data']:
             raise Exception("%s(%d):\nExpected: %s %s %s\nDid:      %s %s %s" %
                 (i.filename, i.line_num, obj['method'],obj['url'],obj['data'],method,url,data))
@@ -112,12 +114,12 @@ class MockTraffic(object):
         return MockResponse(obj.get('json_data',None), obj.get('status',0), obj.get('ok',False), obj.get('reason',''))
 
     """ Records an http call (method, url and postdata) and the response. """
-    def record(self, method, url, data, result):
+    def record(self, method, url, params, data, result):
         if not self.is_recording():
             return
         x = {
             'method': method.upper(),
-            'url': self.urlpath(url),
+            'url': self.urlpath(url, params),
             'data': data,
             'ok': result.ok,
             'status': result.status_code,

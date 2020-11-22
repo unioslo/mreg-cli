@@ -278,12 +278,12 @@ def _request_wrapper(type, path, params={}, ok404=False, first=True, **data):
     mh = mocktraffic.MockTraffic()
 
     if mh.is_playback():
-        result = mh.get_mock_result(type, url, data)
+        result = mh.get_mock_result(type, url, params, data)
     else:
         result = getattr(session, type)(url, params=params, data=data, timeout=HTTP_TIMEOUT)
 
     if mh.is_recording():
-        mh.record(type, url, data, result)
+        mh.record(type, url, params, data, result)
 
     if first and result.status_code == 401:
         update_token()
