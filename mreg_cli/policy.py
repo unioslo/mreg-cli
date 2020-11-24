@@ -20,7 +20,7 @@ policy = cli.add_command(
 
 
 def _get_atom(name):
-    return get_list(f'/api/v1/hostpolicy/atoms/?name={name}')
+    return get_list("/api/v1/hostpolicy/atoms/", params={"name": name})
 
 
 def get_atom(name):
@@ -31,7 +31,7 @@ def get_atom(name):
 
 
 def _get_role(name):
-    return get_list(f'/api/v1/hostpolicy/roles/?name={name}')
+    return get_list("/api/v1/hostpolicy/roles/", params={"name": name})
 
 
 def get_role(name):
@@ -106,7 +106,7 @@ def atom_delete(args):
 
     get_atom(args.name)
 
-    info = get_list(f'/api/v1/hostpolicy/roles/?atoms__name__exact={args.name}')
+    info = get_list("/api/v1/hostpolicy/roles/", params={"atoms__name__exact": args.name})
     inuse = [i['name'] for i in info]
 
     if inuse:
@@ -376,8 +376,10 @@ def list_atoms(args):
     def _print(key, value, padding=20):
         print("{1:<{0}} {2}".format(padding, key, value))
 
-    filter = convert_wildcard_to_regex('name', args.name)
-    info = get_list(f'/api/v1/hostpolicy/atoms/?{filter}')
+    params = {}
+    param, value = convert_wildcard_to_regex('name', args.name)
+    params[param] = value
+    info = get_list("/api/v1/hostpolicy/atoms/", params=params)
     if info:
         for i in info:
             _print(i['name'], repr(i['description']))
@@ -406,8 +408,10 @@ def list_roles(args):
     def _print(key, value, padding=14):
         print("{1:<{0}} {2}".format(padding, key, value))
 
-    filter = convert_wildcard_to_regex('name', args.name)
-    info = get_list(f'/api/v1/hostpolicy/roles/?{filter}')
+    params = {}
+    param, value = convert_wildcard_to_regex('name', args.name)
+    params[param] = value
+    info = get_list("/api/v1/hostpolicy/roles/", params=params)
     if info:
         for i in info:
             _print(i['name'], repr(i['description']))
@@ -538,8 +542,11 @@ def host_list(args):
 
     for i in info:
         name = i['name']
-        path = f'/api/v1/hostpolicy/roles/?hosts__name={name}'
-        _print(name, get_list(path))
+        path = "/api/v1/hostpolicy/roles/"
+        params = {
+            "hosts__name": name,
+        }
+        _print(name, get_list(path, params=params))
 
 
 policy.add_command(

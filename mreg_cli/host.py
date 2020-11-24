@@ -102,8 +102,8 @@ def _get_ip_from_args(ip, force, ipversion=None):
         network = get_network(ip)
         ip = first_unused_ip_from_network(network)
     elif is_valid_ip(ip):
-        path = f"/api/v1/hosts/?ipaddresses__ipaddress={ip}"
-        hosts = get_list(path)
+        path = "/api/v1/hosts/"
+        hosts = get_list(path, params={"ipaddresses__ipaddress": ip})
         if hosts and not force:
             hostnames = ','.join([i['name'] for i in hosts])
             cli_warning(f'{ip} already in use by: {hostnames}. Must force')
@@ -272,9 +272,9 @@ def remove(args):
 
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
-    path = f"/api/v1/naptrs/?host={info['id']}"
+    path = "/api/v1/naptrs/"
     history.record_get(path)
-    naptrs = get_list(path)
+    naptrs = get_list(path, params={"host": info['id']})
     if len(naptrs) > 0:
         if not args.force:
             warn_msg += "{} NAPTR records. ".format(len(naptrs))
@@ -286,9 +286,9 @@ def remove(args):
                 ))
 
     # Require force if host has any SRV records. Delete the SRV records if force
-    path = f"/api/v1/srvs/?host__name={info['name']}"
+    path = "/api/v1/srvs/"
     history.record_get(path)
-    srvs = get_list(path)
+    srvs = get_list(path, params={"host__name": info['name']})
     if len(srvs) > 0:
         if not args.force:
             warn_msg += "{} SRV records. ".format(len(srvs))
@@ -484,10 +484,14 @@ def _print_host_info(info):
 
 def _print_ip_info(ip):
     """Print all hosts which have a given IP. Also print out PTR override, if any."""
-    path = f"/api/v1/hosts/?ipaddresses__ipaddress={ip}&ordering=name"
+    path = "/api/v1/hosts/"
+    params = {
+        "ipaddresses__ipaddress": ip,
+        "ordering": "name",
+    }
     ip = ip.lower()
     history.record_get(path)
-    hosts = get_list(path)
+    hosts = get_list(path, params=params)
     ipaddresses = []
     ptrhost = None
     for info in hosts:
@@ -503,9 +507,12 @@ def _print_ip_info(ip):
     if len(ipaddresses) > 1 and ptrhost is None:
         cli_warning(f'IP {ip} used by {len(ipaddresses)} hosts, but no PTR override')
     if ptrhost is None:
-        path = f"/api/v1/hosts/?ptr_overrides__ipaddress={ip}"
+        path = "/api/v1/hosts/"
+        params = {
+            "ptr_overrides__ipaddress": ip,
+        }
         history.record_get(path)
-        hosts = get_list(path)
+        hosts = get_list(path, params=params)
         if hosts:
             ptrhost = hosts[0]['name']
         elif ipaddresses:
@@ -525,7 +532,7 @@ def info_(args):
             _print_ip_info(name_or_ip)
         elif is_valid_mac(name_or_ip):
             mac = format_mac(name_or_ip)
-            ret = get_list(f'api/v1/hosts/?ipaddresses__macaddress={mac}')
+            ret = get_list("api/v1/hosts/", params={"ipaddresses__macaddress": mac})
             if ret:
                 _print_host_info(ret[0])
             else:
@@ -562,27 +569,32 @@ def find(args):
         if '*' not in value:
             value = f'*{value}*'
 
-        params.append(convert_wildcard_to_regex(param, value))
+        param, value = convert_wildcard_to_regex(param, value)
+        params[param] = value
 
     if not any([args.name, args.comment, args.contact]):
         cli_warning('Need at least one search critera')
 
-    params = []
+    params = {
+        "ordering": "name",
+        "page_size": 1,
+    }
 
     for param in ('contact', 'comment', 'name'):
         value = getattr(args, param)
         if value:
             _add_param(param, value)
 
-    path = '/api/v1/hosts/?ordering=name&' + '&'.join(params)
-    ret = get(path + '&page_size=1').json()
+    path = "/api/v1/hosts/"
+    ret = get(path, params=params).json()
 
     if ret['count'] == 0:
         cli_warning('No hosts found.')
     elif ret['count'] > 500:
         cli_warning(f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.')
 
-    ret = get_list(path)
+    del(params["page_size"])
+    ret = get_list(path, params=params)
     max_name = max_contact = 20
     for i in ret:
         max_name = max(max_name, len(i['name']))
@@ -1373,9 +1385,12 @@ def cname_show(args):
         pass
 
     name = clean_hostname(args.name)
-    path = f"/api/v1/hosts/?cnames__name={name}"
+    path = "/api/v1/hosts/"
+    params = {
+        "cnames__name": name,
+    }
     history.record_get(path)
-    hosts = get_list(path)
+    hosts = get_list(path, params=params)
     if len(hosts):
         print_cname(name, hosts[0]["name"])
     else:
@@ -1773,9 +1788,12 @@ def mx_show(args):
     """Show all MX records for host.
     """
     info = host_info_by_name(args.name)
-    path = f"/api/v1/mxs/?host={info['id']}"
+    path = "/api/v1/mxs/"
+    params = {
+        "host": info['id'],
+    }
     history.record_get(path)
-    mxs = get_list(path)
+    mxs = get_list(path, params=params)
     print_mx(mxs, padding=5)
     cli_info("showed MX records for {}".format(info['name']))
 
@@ -1883,9 +1901,13 @@ def naptr_remove(args):
 
     # get the hosts NAPTR records where repl is a substring of the replacement
     # field
-    path = f"/api/v1/naptrs/?replacement__contains={args.replacement}&host={info['id']}"
+    path = "/api/v1/naptrs/"
+    params = {
+        "replacement__contains": args.replacement,
+        "host": info['id'],
+    }
     history.record_get(path)
-    naptrs = get_list(path)
+    naptrs = get_list(path, params=params)
 
     data = None
     attrs = ('preference', 'order', 'flag', 'service', 'regex', 'replacement',)
@@ -1948,9 +1970,12 @@ host.add_command(
 ################################################
 
 def _naptr_show(info):
-    path = f"/api/v1/naptrs/?host={info['id']}"
+    path = "/api/v1/naptrs/"
+    params = {
+        "host": info['id'],
+    }
     history.record_get(path)
-    naptrs = get_list(path)
+    naptrs = get_list(path, params=params)
     headers = ("NAPTRs:", "Preference", "Order", "Flag", "Service", "Regex", "Replacement")
     row_format = '{:<14}' * len(headers) 
     if naptrs:
@@ -2124,9 +2149,12 @@ def ptr_add(args):
     info = host_info_by_name(args.name)
 
     # check that a PTR record with the given ip doesn't exist
-    path = f"/api/v1/ptroverrides/?ipaddress={args.ip}"
+    path = "/api/v1/ptroverrides/"
+    params = {
+        "ipaddress": args.ip,
+    }
     history.record_get(path)
-    ptrs = get_list(path)
+    ptrs = get_list(path, params=params)
     if len(ptrs):
         cli_warning("{} already exist in a PTR record".format(args.ip))
     # check if host is in mreg controlled zone, must force if not
@@ -2182,9 +2210,12 @@ def ptr_show(args):
     if not is_valid_ip(args.ip):
         cli_warning(f"{args.ip} is not a valid IP")
 
-    path = f"/api/v1/hosts/?ptr_overrides__ipaddress={args.ip}"
+    path = "/api/v1/hosts/"
+    params = {
+        "ptr_overrides__ipaddress": args.ip,
+    }
     history.record_get(path)
-    host = get_list(path)
+    host = get_list(path, params=params)
 
     if host:
         host = host[0]
@@ -2299,9 +2330,13 @@ def srv_remove(args):
     sname = clean_hostname(args.name)
 
     # Check if service exist
-    path = f"/api/v1/srvs/?name={sname}&host={info['id']}"
+    path = "/api/v1/srvs/"
+    params = {
+        "name": sname,
+        "host": info['id'],
+    }
     history.record_get(path)
-    srvs = get_list(path)
+    srvs = get_list(path, params=params)
     if len(srvs) == 0:
         cli_warning(f"no service named {sname}")
 
@@ -2376,9 +2411,12 @@ def _srv_show(srvs=None, host_id=None):
         ))
 
     if srvs is None:
-        path = f"/api/v1/srvs/?host={host_id}"
+        path = "/api/v1/srvs/"
+        params = {
+            "host": host_id,
+        }
         history.record_get(path)
-        srvs = get_list(path)
+        srvs = get_list(path, params=params)
 
     if len(srvs) == 0:
         return
@@ -2392,7 +2430,7 @@ def _srv_show(srvs=None, host_id=None):
         host_ids.add(str(srv['host']))
 
     arg = ','.join(host_ids)
-    hosts = get_list(f'/api/v1/hosts/?id__in={arg}')
+    hosts = get_list("/api/v1/hosts/", params={"id__in": arg})
     for host in hosts:
         hostid2name[host['id']] = host['name']
 
@@ -2412,9 +2450,12 @@ def srv_show(args):
     sname = clean_hostname(args.service)
 
     # Get all matching SRV records
-    path = f"/api/v1/srvs/?name={sname}"
+    path = "/api/v1/srvs/"
+    params = {
+        "name": sname,
+    }
     history.record_get(path)
-    srvs = get_list(path)
+    srvs = get_list(path, params=params)
     if len(srvs) == 0:
         cli_warning("no service matching {}".format(sname))
     else:
@@ -2513,9 +2554,12 @@ def sshfp_remove(args):
     hid = info["id"]
 
     # Get all matching SSHFP records
-    path = f"/api/v1/sshfps/?host={hid}"
+    path = "/api/v1/sshfps/"
+    params = {
+        "host": hid,
+    }
     history.record_get(path)
-    sshfps = get_list(path)
+    sshfps = get_list(path, params=params)
     if len(sshfps) < 1:
         cli_warning("no SSHFP records matching {}".format(info["name"]))
 
@@ -2556,9 +2600,12 @@ host.add_command(
 ##############################################
 
 def _sshfp_show(info):
-    path = f"/api/v1/sshfps/?host={info['id']}"
+    path = "/api/v1/sshfps/"
+    params = {
+        "host": info['id'],
+    }
     history.record_get(path)
-    sshfps = get_list(path)
+    sshfps = get_list(path, params=params)
     headers = ("SSHFPs:", "Algorithm", "Type", "Fingerprint")
     row_format = '{:<14}' * len(headers)
     if sshfps:
@@ -2772,12 +2819,9 @@ def txt_remove(args):
     hostname = info["name"]
 
     # Check for matching TXT records for host
-    path = "/api/v1/txts/?host={}&txt={}".format(
-        info["id"],
-        args.text,
-    )
+    path = "/api/v1/txts/"
     history.record_get(path)
-    txts = get_list(path)
+    txts = get_list(path, params={"host": info["id"], "txt": args.text})
     if len(txts) == 0:
         cli_warning(f"{hostname} has no TXT records equal: {args.text}")
 
@@ -2816,9 +2860,12 @@ def txt_show(args):
     """Show all TXT records for host.
     """
     info = host_info_by_name(args.name)
-    path = f"/api/v1/txts/?host={info['id']}"
+    path = "/api/v1/txts/"
+    params = {
+        "host": info['id'],
+    }
     history.record_get(path)
-    txts = get_list(path)
+    txts = get_list(path, params=params)
     for txt in txts:
         print_txt(txt["txt"], padding=5)
     cli_info("showed TXT records for {}".format(info["name"]))

@@ -40,9 +40,12 @@ def set_config(cfg):
 
 def host_exists(name: str) -> bool:
     """Checks if a host with the given name exists"""
-    path = f"/api/v1/hosts/?name={name}"
+    path = "/api/v1/hosts/"
+    params = {
+        "name": name,
+    }
     history.record_get(path)
-    hosts = get_list(path)
+    hosts = get_list(path, params=params)
 
     # Response data sanity checks
     if len(hosts) > 1:
@@ -78,9 +81,12 @@ def _host_info_by_name(name: str, follow_cname: bool = True) -> dict:
         return hostinfo.json()
     elif follow_cname:
         # All host info data is returned from the API
-        path = f"/api/v1/hosts/?cnames__name={name}"
+        path = "/api/v1/hosts/"
+        params = {
+            "cnames__name": name
+        }
         history.record_get(path)
-        hosts = get_list(path)
+        hosts = get_list(path, params=params)
         if len(hosts) == 1:
             return hosts[0]
     return None
@@ -107,16 +113,22 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
 
 
 def _cname_info_by_name(name: str) -> dict:
-    path = f"/api/v1/cnames/?name={name}"
-    info = get_list(path)
+    path = "/api/v1/cnames/"
+    params = {
+        "name": name,
+    }
+    info = get_list(path, params=params)
     if len(info) == 1:
         return info[0]
     return None
 
 
 def _srv_info_by_name(name: str) -> dict:
-    path = f"/api/v1/srvs/?name={name}"
-    info = get_list(path)
+    path = "/api/v1/srvs/"
+    params = {
+        "name": name,
+    }
+    info = get_list(path, params=params)
     if len(info) == 1:
         return info[0]
     return None
@@ -183,7 +195,8 @@ def login1(user, url):
 
     # Find a better URL.. but so far so good
     try:
-        ret = session.get(requests.compat.urljoin(mregurl, '/api/v1/hosts/?page_size=1'),
+        ret = session.get(requests.compat.urljoin(mregurl, "/api/v1/hosts/"),
+                          params={"page_size": 1},
                           timeout=5)
     except requests.exceptions.ConnectionError as e:
         error(f"Could not connect to {url}")
@@ -260,17 +273,17 @@ def result_check(result, type, url):
         cli_warning(message)
 
 
-def _request_wrapper(type, path, ok404=False, first=True, **data):
+def _request_wrapper(type, path, params={}, ok404=False, first=True, **data):
     url = requests.compat.urljoin(mregurl, path)
     mh = mocktraffic.MockTraffic()
 
     if mh.is_playback():
-        result = mh.get_mock_result(type, url, data)
+        result = mh.get_mock_result(type, url, params, data)
     else:
-        result = getattr(session, type)(url, data=data, timeout=HTTP_TIMEOUT)
+        result = getattr(session, type)(url, params=params, data=data, timeout=HTTP_TIMEOUT)
 
     if mh.is_recording():
-        mh.record(type, url, data, result)
+        mh.record(type, url, params, data, result)
 
     if first and result.status_code == 401:
         update_token()
@@ -282,17 +295,17 @@ def _request_wrapper(type, path, ok404=False, first=True, **data):
     return result
 
 
-def get(path: str, ok404=False) -> requests.Response:
+def get(path: str, params: dict = {}, ok404=False) -> requests.Response:
     """Uses requests to make a get request."""
-    return _request_wrapper("get", path, ok404=ok404)
+    return _request_wrapper("get", path, params=params, ok404=ok404)
 
 
-def get_list(path: str, ok404=False) -> requests.Response:
+def get_list(path: str, params: dict = {}, ok404=False) -> requests.Response:
     """Uses requests to make a get request.
        Will iterate over paginated results and return result as list."""
     ret = []
     while path:
-        result = get(path, ok404=ok404).json()
+        result = get(path, params=params, ok404=ok404).json()
         if 'next' in result:
             path = result['next']
             ret.extend(result['results'])
@@ -301,19 +314,19 @@ def get_list(path: str, ok404=False) -> requests.Response:
     return ret
 
 
-def post(path: str, **kwargs) -> requests.Response:
+def post(path: str, params: dict = {}, **kwargs) -> requests.Response:
     """Uses requests to make a post request. Assumes that all kwargs are data fields"""
-    return _request_wrapper("post", path, **kwargs)
+    return _request_wrapper("post", path, params=params, **kwargs)
 
 
-def patch(path: str, **kwargs) -> requests.Response:
+def patch(path: str, params: dict = {}, **kwargs) -> requests.Response:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
-    return _request_wrapper("patch", path, **kwargs)
+    return _request_wrapper("patch", path, params=params, **kwargs)
 
 
-def delete(path: str) -> requests.Response:
+def delete(path: str, params: dict = {},) -> requests.Response:
     """Uses requests to make a delete request."""
-    return _request_wrapper("delete", path)
+    return _request_wrapper("delete", path, params=params)
 
 
 ################################################################################
@@ -324,7 +337,7 @@ def delete(path: str) -> requests.Response:
 
 def cname_exists(cname: str) -> bool:
     """Check if a cname exists"""
-    if len(get_list(f"/api/v1/cnames/?name={cname}")):
+    if len(get_list("/api/v1/cnames/", params={"name": cname})):
         return True
     else:
         return False
@@ -346,9 +359,12 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
 
 def resolve_ip(ip: str) -> str:
     """Returns host name associated with ip"""
-    path = f"/api/v1/hosts/?ipaddresses__ipaddress={ip}"
+    path = "/api/v1/hosts/"
+    params = {
+        "ipaddresses__ipaddress": ip,
+    }
     history.record_get(path)
-    hosts = get_list(path)
+    hosts = get_list(path, params=params)
 
     # Response data sanity check
     if len(hosts) > 1:
@@ -363,9 +379,12 @@ def resolve_input_name(name: str) -> str:
     """Tries to find the named host. Raises an exception if not."""
     hostname = clean_hostname(name)
 
-    path = f"/api/v1/hosts/?name={hostname}"
+    path = "/api/v1/hosts/"
+    params = {
+        "name": hostname,
+    }
     history.record_get(path)
-    hosts = get_list(path)
+    hosts = get_list(path, params=params)
 
     if len(hosts) == 1:
         assert hosts[0]["name"] == hostname
@@ -606,7 +625,7 @@ def convert_wildcard_to_regex(param, arg):
 
     """
     if '*' not in arg:
-        return f'{param}={arg}'
+        return (param, arg)
 
     args = arg.split('*')
     args_len = len(args) - 1
@@ -622,4 +641,4 @@ def convert_wildcard_to_regex(param, arg):
     if arg == '*':
         regex = '.'
 
-    return f'{param}__regex={regex}'
+    return (f'{param}__regex', regex)

@@ -31,13 +31,13 @@ def network_list(args):
         return (a.network_address <= b.network_address and
                 a.broadcast_address >= b.broadcast_address)
 
-    query = []
-    params = ""
+    params = {
+        "ordering": "range,group",
+    }
     if args.group is not None:
-        query.append(convert_wildcard_to_regex("group", args.group))
-    if query:
-        params = "&" + "&".join(query)
-    permissions = get_list(f"/api/v1/permissions/netgroupregex/?ordering=range,group{params}")
+        param, value = convert_wildcard_to_regex("group", args.group)
+        params[param] = value
+    permissions = get_list("/api/v1/permissions/netgroupregex/", params=params)
 
     data = []
     if args.range is not None:
@@ -134,13 +134,12 @@ def network_remove(args):
     Remove permission for networks
     """
 
-    query = {
-        'group': args.group,
-        'range': args.range,
-        'regex': args.regex,
+    params = {
+        "group": args.group,
+        "range": args.range,
+        "regex": args.regex,
     }
-    params = "{}".format(urlencode(query))
-    permissions = get_list("/api/v1/permissions/netgroupregex/?{}".format(params))
+    permissions = get_list("/api/v1/permissions/netgroupregex/", params=params)
 
     if not permissions:
         cli_warning("No matching permission found", True)
