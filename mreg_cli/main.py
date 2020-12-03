@@ -141,6 +141,7 @@ def main():
     from . import history   # noqa: F401
     from . import group      # noqa: F401
     from . import host      # noqa: F401
+    from . import label
     from . import network   # noqa: F401
     from . import permission  # noqa: F401
     from . import policy  # noqa: F401
