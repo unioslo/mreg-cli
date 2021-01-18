@@ -11,7 +11,7 @@ zone set_ns example.org ns2.example.org  #  requires force because ns2 is unknow
 zone set_ns example.org ns2.example.org -force
 zone set_soa example.org -email hostperson@example.org -serialno 12345 -refresh 360 -retry 1800 -expire 2400 -soa-ttl 1800
 zone set_default_ttl example.org 60    # should fail, must be >= 300
-zone set_default_ttl example.org 300 
+zone set_default_ttl example.org 300
 
 
 ##### Tests: Network
@@ -146,6 +146,7 @@ policy remove_atom fruit banana # should fail
 policy remove_atom fruit tangerine
 policy role_delete vegetables  # fails, that role doesn't exist
 policy role_delete fruit
+policy atom_delete tangerine
 host remove foo
 
 
@@ -193,7 +194,7 @@ host a_add bar 10.0.0.12  # must force
 host a_add bar 10.0.0.12 -f
 host a_add bar 10.0.0.13 -macaddress 11:22:33:44:55:66 -force
 host a_change -old 10.0.0.12 -new 10.0.0.14 bar
-host a_change -old 10.0.0.13 -new 10.0.0.15 bar   # doesn't actually work, because mac addr
+host a_change -old 10.0.0.13 -new 10.0.0.15 bar   # has mac addr, should keep it assigned to the new ip
 host a_remove bar 10.0.0.13
 host add baz
 host a_move -ip 10.0.0.10 -fromhost bar -tohost baz
@@ -204,9 +205,9 @@ host aaaa_add bar 2001:db8::11 -f
 host aaaa_add bar 2001:db8::12 -macaddress 11:22:33:44:55:67 -f
 host aaaa_show bar
 host aaaa_change -old 2001:db8::11 -new 2001:db8::13 bar
-host aaaa_change -old 2001:db8::12 -new 2001:db8::14 bar  # doesn't work, because mac addr
+host aaaa_change -old 2001:db8::12 -new 2001:db8::14 bar  # has mac addr, should keep it assigned to the new ip
 host aaaa_remove bar 2001:db8::13
-host aaaa_move -ip 2001:db8::12 -fromhost bar -tohost baz
+host aaaa_move -ip 2001:db8::14 -fromhost bar -tohost baz
 host a_show baz
 # CNAME
 host cname_add bar fubar
@@ -255,11 +256,41 @@ host txt_show bar
 host txt_remove bar "Whatever"   # no match
 host txt_remove bar "Lorem ipsum dolor sit amet"
 # cleanup
-host remove bar
+host remove bar -f
 host remove baz -f
 host remove clover
 network remove 10.0.0.0/24 -f
 network remove 2001:db8::/64 -f
+
+
+##### Tests: Label admin
+#   - create, delete, list
+#   - rename, change description
+#   - add/remove labels to roles
+#   - add/remove labels to permissions
+label add postit 'This is a label'
+label list
+label info postit
+label rename postit mylabel -desc 'This is the new description'
+label remove mylabel
+# Roles
+label add postit 'A label again'
+policy role_create myrole 'This is the description'
+policy label_add postit myrole
+policy list_roles *
+policy info myrole
+label info postit
+policy label_remove postit myrole
+policy role_delete myrole
+# Permissions
+permission network_add 192.168.0.0/16 mygroup .*
+permission label_add 192.168.0.0/16 mygroup .* postit
+permission network_list
+label info postit
+permission label_remove 192.168.0.0/16 mygroup .* postit
+permission network_list
+permission network_remove 192.168.0.0/16 mygroup .*
+label remove postit
 
 
 ##### Tests: Zone

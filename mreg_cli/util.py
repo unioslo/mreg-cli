@@ -274,7 +274,7 @@ def result_check(result, type, url):
         cli_warning(message)
 
 
-def _request_wrapper(type, path, params={}, ok404=False, first=True, **data):
+def _request_wrapper(type, path, params={}, ok404=False, first=True, use_json=False, **data):
     path = urllib.parse.quote(path, safe="/")
     url = requests.compat.urljoin(mregurl, path)
     mh = mocktraffic.MockTraffic()
@@ -282,7 +282,10 @@ def _request_wrapper(type, path, params={}, ok404=False, first=True, **data):
     if mh.is_playback():
         result = mh.get_mock_result(type, url, params, data)
     else:
-        result = getattr(session, type)(url, params=params, data=data, timeout=HTTP_TIMEOUT)
+        if use_json:
+            result = getattr(session, type)(url, json=params, timeout=HTTP_TIMEOUT)
+        else:
+            result = getattr(session, type)(url, params=params, data=data, timeout=HTTP_TIMEOUT)
 
     if mh.is_recording():
         mh.record(type, url, params, data, result)
@@ -321,9 +324,9 @@ def post(path: str, params: dict = {}, **kwargs) -> requests.Response:
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
-def patch(path: str, params: dict = {}, **kwargs) -> requests.Response:
+def patch(path: str, params: dict = {}, use_json=False, **kwargs) -> requests.Response:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
-    return _request_wrapper("patch", path, params=params, **kwargs)
+    return _request_wrapper("patch", path, params=params, use_json=use_json, **kwargs)
 
 
 def delete(path: str, params: dict = {},) -> requests.Response:
@@ -649,3 +652,23 @@ def convert_wildcard_to_regex(param, arg):
         regex = '.'
 
     return (f'{param}__regex', regex)
+
+
+
+################################################################################
+#                                                                              #
+#   Formatting functions                                                       #
+#                                                                              #
+################################################################################
+
+def print_table(headers, keys, data, indent=0):
+    raw_format = ' ' * indent
+    for key, header in zip(keys, headers):
+        longest = len(header)
+        for d in data:
+            longest = max(longest, len(d[key]))
+        raw_format += '{:<%d}   ' % longest
+
+    print(raw_format.format(*headers))
+    for d in data:
+        print(raw_format.format(*[d[key] for key in keys]))

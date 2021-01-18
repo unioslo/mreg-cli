@@ -5,7 +5,7 @@ from .history import history
 from .history_log import get_history_items, print_history_items
 from .log import cli_error, cli_info, cli_warning
 from .util import (convert_wildcard_to_regex, delete, get, get_list, host_info_by_name,
-                   patch, post)
+                   patch, post, print_table)
 
 ##################################
 #  Add the main command 'policy'  #
@@ -313,7 +313,14 @@ def info(args):
                 for i in info['atoms']:
                     _print('', i['name'])
             else:
-                print('None')
+                _print('', 'None')
+
+            print("Labels:")
+            for i in info['labels']:
+                lb = get(f"/api/v1/labels/{i}").json()
+                _print('', lb["name"])
+            if not info['labels']:
+                _print('', 'None')
 
 
 policy.add_command(
@@ -405,18 +412,29 @@ def list_roles(args):
     List all roles by given filters
     """
 
-    def _print(key, value, padding=14):
-        print("{1:<{0}} {2}".format(padding, key, value))
-
     params = {}
     param, value = convert_wildcard_to_regex('name', args.name)
     params[param] = value
     info = get_list("/api/v1/hostpolicy/roles/", params=params)
-    if info:
-        for i in info:
-            _print(i['name'], repr(i['description']))
-    else:
+    if not info:
         print('No match')
+        return
+
+    labelnames = {}
+    labellist = get_list(f'/api/v1/labels/')
+    if labellist:
+        for i in labellist:
+            labelnames[i['id']] = i['name']
+
+    rows = []
+    for i in info:
+        # show label names instead of id numbers
+        labels = []
+        for j in i['labels']:
+            labels.append(labelnames[j])
+        i['labels'] = ', '.join(labels)
+        rows.append(i)
+    print_table( ('Role','Description','Labels'), ('name','description','labels'), rows)
 
 
 policy.add_command(
@@ -641,7 +659,7 @@ def set_description(args):
     else:
         cli_warning('Could not find an atom or role with name {args.name!r}')
     patch(path, description=args.description)
-    cli_info(f"updated description to {args.description!r} for {args.name!r}", True)
+    cli_info(f"updated description to {args.description!r} for {args.name!r}", print_msg=True)
 
 
 policy.add_command(
@@ -656,5 +674,76 @@ policy.add_command(
         Flag('description',
              description='Description.',
              metavar='DESC'),
+    ]
+)
+
+
+#################################################################
+# Implementation of sub commands 'label_add' and 'label_remove'
+#################################################################
+
+def add_label_to_role(args):
+    """Add a label to a role"""
+    # find the role
+    path = f'/api/v1/hostpolicy/roles/{args.role}'
+    res = get(path, ok404=True)
+    if not res:
+        cli_warning(f'Could not find a role with name {args.role!r}')
+    role = res.json()
+    # find the label
+    labelpath = f'/api/v1/labels/name/{args.label}'
+    res = get(labelpath, ok404=True)
+    if not res:
+        cli_warning(f'Could not find a label with name {args.label!r}')
+    label = res.json()
+    # check if the role already has the label
+    if label["id"] in role["labels"]:
+        cli_warning(f'The role {args.role!r} already has the label {args.label!r}')
+    # patch the role
+    ar = role["labels"]
+    ar.append(label["id"])
+    patch(path, labels=ar)
+    cli_info(f"Added the label {args.label!r} to the role {args.role!r}.", print_msg=True)
+
+policy.add_command(
+    prog='label_add',
+    description='Add a label to a role',
+    callback=add_label_to_role,
+    flags=[
+        Flag('label'),
+        Flag('role')
+    ]
+)
+
+def remove_label_from_role(args):
+    """Remove a label from a role"""
+    # find the role
+    path = f'/api/v1/hostpolicy/roles/{args.role}'
+    res = get(path, ok404=True)
+    if not res:
+        cli_warning(f'Could not find a role with name {args.role!r}')
+    role = res.json()
+    # find the label
+    labelpath = f'/api/v1/labels/name/{args.label}'
+    res = get(labelpath, ok404=True)
+    if not res:
+        cli_warning(f'Could not find a label with name {args.label!r}')
+    label = res.json()
+    # check if the role has the label
+    if label["id"] not in role["labels"]:
+        cli_warning(f"The role {args.role!r} doesn't have the label {args.label!r}")
+    # patch the role
+    ar = role["labels"]
+    ar.remove(label["id"])
+    patch(path, use_json=True, params={'labels':ar})
+    cli_info(f"Removed the label {args.label!r} from the role {args.role!r}.", print_msg=True)
+
+policy.add_command(
+    prog='label_remove',
+    description='Remove a label from a role',
+    callback=remove_label_from_role,
+    flags=[
+        Flag('label'),
+        Flag('role')
     ]
 )
