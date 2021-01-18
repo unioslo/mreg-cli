@@ -144,7 +144,7 @@ def zone_delete(args):
 
     zone, path = get_zone(args.zone)
     hosts = get_list("/api/v1/hosts/", params={"zone": zone['id']})
-    zones = get_list(zone_path(f'?name__endswith=.{args.zone}'))
+    zones = get_list(zone_basepath(args.zone), params={"name__endswith": f".{args.zone}"})
 
     # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
     if hosts and not args.force:

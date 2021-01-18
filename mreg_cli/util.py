@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import typing
+import urllib.parse
 
 import requests
 
@@ -274,6 +275,7 @@ def result_check(result, type, url):
 
 
 def _request_wrapper(type, path, params={}, ok404=False, first=True, use_json=False, **data):
+    path = urllib.parse.quote(path, safe="/")
     url = requests.compat.urljoin(mregurl, path)
     mh = mocktraffic.MockTraffic()
 
@@ -408,6 +410,11 @@ def clean_hostname(name: typing.AnyStr) -> str:
         cli_warning("Invalid input for hostname: {}".format(name))
 
     name = name.lower()
+
+    # invalid characters?
+    if re.search("^([a-z0-9_][a-z0-9\-]*\.?)*$", name) is None:
+        cli_warning("Invalid input for hostname: {}".format(name))
+
     # Assume user is happy with domain, but strip the dot.
     if name.endswith("."):
         return name[:-1]
