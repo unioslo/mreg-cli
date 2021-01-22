@@ -76,7 +76,7 @@ def host_info_by_name_or_ip(name_or_ip: str) -> dict:
 
 
 def _host_info_by_name(name: str, follow_cname: bool = True) -> dict:
-    hostinfo = get(f"/api/v1/hosts/{name}", ok404=True)
+    hostinfo = get(f"/api/v1/hosts/{urllib.parse.quote(name)}", ok404=True)
 
     if hostinfo:
         return hostinfo.json()
@@ -275,7 +275,6 @@ def result_check(result, type, url):
 
 
 def _request_wrapper(type, path, params={}, ok404=False, first=True, use_json=False, **data):
-    path = urllib.parse.quote(path, safe="/")
     url = requests.compat.urljoin(mregurl, path)
     mh = mocktraffic.MockTraffic()
 
@@ -441,7 +440,7 @@ def ipsort(ips: list) -> list:
 
 def get_network_by_ip(ip: str) -> dict:
     if is_valid_ip(ip):
-        path = f"/api/v1/networks/ip/{ip}"
+        path = f"/api/v1/networks/ip/{urllib.parse.quote(ip)}"
         net = get(path, ok404=True)
         if net:
             return net.json()
@@ -454,7 +453,7 @@ def get_network_by_ip(ip: str) -> dict:
 def get_network(ip: str) -> dict:
     "Returns network associated with given range or IP"
     if is_valid_network(ip):
-        path = f"/api/v1/networks/{ip}"
+        path = f"/api/v1/networks/{urllib.parse.quote(ip)}"
         history.record_get(path)
         return get(path).json()
     elif is_valid_ip(ip):
@@ -468,42 +467,42 @@ def get_network(ip: str) -> dict:
 
 def get_network_used_count(ip_range: str):
     "Return a count of the addresses in use on a given network"
-    path = f"/api/v1/networks/{ip_range}/used_count"
+    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/used_count"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_used_list(ip_range: str):
     "Return a list of the addresses in use on a given network"
-    path = f"/api/v1/networks/{ip_range}/used_list"
+    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/used_list"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_unused_count(ip_range: str):
     "Return a count of the unused addresses on a given network"
-    path = f"/api/v1/networks/{ip_range}/unused_count"
+    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/unused_count"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_unused_list(ip_range: str):
     "Return a list of the unused addresses on a given network"
-    path = f"/api/v1/networks/{ip_range}/unused_list"
+    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/unused_list"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_first_unused(ip_range: str):
     "Returns the first unused address on a network, if any"
-    path = f"/api/v1/networks/{ip_range}/first_unused"
+    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/first_unused"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_reserved_ips(ip_range: str):
     "Returns the first unused address on a network, if any"
-    path = f"/api/v1/networks/{ip_range}/reserved_list"
+    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/reserved_list"
     history.record_get(path)
     return get(path).json()
 
