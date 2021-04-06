@@ -146,6 +146,7 @@ def main():
     from . import permission  # noqa: F401
     from . import policy  # noqa: F401
     from . import zone      # noqa: F401
+    from . import bacnet  # must be imported after host
 
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the

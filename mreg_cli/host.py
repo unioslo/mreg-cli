@@ -459,6 +459,14 @@ def print_txt(txt: str, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "TXT:", txt))
 
 
+def print_bacnetid(bacnetid: dict, padding: int = 14) -> None:
+    """Pretty print given txt"""
+    if bacnetid is None:
+        return
+    assert isinstance(bacnetid, dict)
+    print("{1:<{0}}{2}".format(padding, "BACnet ID:", bacnetid['id']))
+
+
 def _print_host_info(info):
     # Pretty print all host info
     print_host_name(info["name"])
@@ -480,6 +488,8 @@ def _print_host_info(info):
     _srv_show(host_id=info['id'])
     _naptr_show(info)
     _sshfp_show(info)
+    if "bacnetid" in info:
+        print_bacnetid(info.get("bacnetid"))
     cli_info("printed host info for {}".format(info["name"]))
 
 
@@ -1978,7 +1988,7 @@ def _naptr_show(info):
     history.record_get(path)
     naptrs = get_list(path, params=params)
     headers = ("NAPTRs:", "Preference", "Order", "Flag", "Service", "Regex", "Replacement")
-    row_format = '{:<14}' * len(headers) 
+    row_format = '{:<14}' * len(headers)
     if naptrs:
         print(row_format.format(*headers))
         for naptr in naptrs:
