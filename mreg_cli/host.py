@@ -1025,7 +1025,7 @@ def _ip_remove(args, ipversion):
     # Check that ip belongs to host
     info = host_info_by_name(args.name)
     for rec in info["ipaddresses"]:
-        if rec["ipaddress"] == args.ip:
+        if rec["ipaddress"] == args.ip.lower():
             ip_id = rec["id"]
             break
     else:
