@@ -411,7 +411,7 @@ def clean_hostname(name: typing.AnyStr) -> str:
     name = name.lower()
 
     # invalid characters?
-    if re.search("^([a-z0-9_][a-z0-9\-]*\.?)*$", name) is None:
+    if re.search("^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)*$", name) is None:
         cli_warning("Invalid input for hostname: {}".format(name))
 
     # Assume user is happy with domain, but strip the dot.

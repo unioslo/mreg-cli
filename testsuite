@@ -255,6 +255,9 @@ host txt_add bar "Lorem ipsum dolor sit amet"
 host txt_show bar
 host txt_remove bar "Whatever"   # no match
 host txt_remove bar "Lorem ipsum dolor sit amet"
+# wildcard
+host add *.example.org -force
+host remove *.example.org
 # cleanup
 host remove bar -f
 host remove baz -f
