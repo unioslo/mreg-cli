@@ -179,6 +179,13 @@ def ip_in_mreg_net(ip: str) -> bool:
 #                                                                              #
 ################################################################################
 
+def set_file_permissions(f, mode):
+    try:
+        os.chmod(f, mode)
+    except PermissionError:
+        print("Failed to set permissions on " + f, file=sys.stderr)
+    except FileNotFoundError:
+        pass
 
 def login1(user, url):
     global mregurl, username
@@ -193,6 +200,12 @@ def login1(user, url):
                     session.headers.update({"Authorization": f"Token {token}"})
         except PermissionError:
             pass
+
+    # Unconditionally set file permissions to 0600.  This is done here
+    # in order to migrate existing installations and can be removed when
+    # 0.9.11+ is reasonably widespread.  --Marius, 2021-04-22
+    # Consider inlining set_file_permissions afterwards!
+    set_file_permissions(mreg_auth_token_file, 0o600)
 
     # Find a better URL.. but so far so good
     try:
@@ -260,6 +273,7 @@ def _update_token(username, password):
         pass
     except PermissionError:
         pass
+    set_file_permissions(mreg_auth_token_file, 0o600)
 
 
 def result_check(result, type, url):
