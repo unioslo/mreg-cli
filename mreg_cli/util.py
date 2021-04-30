@@ -679,7 +679,7 @@ def print_table(headers, keys, data, indent=0):
     for key, header in zip(keys, headers):
         longest = len(header)
         for d in data:
-            longest = max(longest, len(d[key]))
+            longest = max(longest, len(str(d[key])))
         raw_format += '{:<%d}   ' % longest
 
     print(raw_format.format(*headers))
