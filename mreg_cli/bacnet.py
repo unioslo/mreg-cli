@@ -4,10 +4,7 @@ from .history import history
 from .host import host
 from .log import cli_error, cli_info, cli_warning
 from .util import (
-    clean_hostname,
     host_info_by_name,
-    _host_info_by_name,
-    resolve_input_name,
     print_table,
     get,
     get_list,
