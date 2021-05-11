@@ -1305,6 +1305,9 @@ def cname_add(args):
     if cname_exists(alias):
         cli_warning("The alias is already in use.")
 
+    # Check if the cname is in a zone controlled by mreg
+    check_zone_for_hostname(alias, args.force)
+
     data = {'host': info['id'],
             'name': alias}
     # Create CNAME record
@@ -1329,6 +1332,9 @@ host.add_command(
         Flag('alias',
              description='Name of CNAME host.',
              metavar='ALIAS'),
+        Flag('-force',
+             action='store_true',
+             description='Enable force.'),
     ],
 )
 
