@@ -1,4 +1,4 @@
-# MREG CLI 
+# MREG CLI [![Build Status](https://github.com/unioslo/mreg-cli/actions/workflows/test.yml/badge.svg)](https://github.com/unioslo/mreg-cli/actions/workflows/test.yml)
 Command Line Interface for Mreg
 
 - [Usage](#usage)
