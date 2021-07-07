@@ -61,7 +61,7 @@ jobs:
         options: >-
           --name mreg
         env:
-          GUNICORN_ARGS: --bind=0.0.0.0
+          GUNICORN_CMD_ARGS: --bind=0.0.0.0
           MREG_DB_HOST: postgres
           MREG_DB_PASSWORD: postgres
         ports:
