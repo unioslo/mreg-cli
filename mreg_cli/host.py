@@ -1398,20 +1398,7 @@ def cname_show(args):
         cli_info("showed cname aliases for {}".format(info["name"]))
         return
     except HostNotFoundWarning:
-        # Try again with the alias
-        pass
-
-    name = clean_hostname(args.name)
-    path = "/api/v1/hosts/"
-    params = {
-        "cnames__name": name,
-    }
-    history.record_get(path)
-    hosts = get_list(path, params=params)
-    if len(hosts):
-        print_cname(name, hosts[0]["name"])
-    else:
-        cli_warning("No cname found for {}".format(name))
+        cli_warning("No cname found for {}".format(args.name))
 
 
 # Add 'cname_show' as a sub command to the 'host' command
