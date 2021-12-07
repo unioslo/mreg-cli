@@ -1382,6 +1382,46 @@ host.add_command(
     ],
 )
 
+###################################################
+#  Implementation of sub command 'cname_replace'  #
+###################################################
+
+def cname_replace(args):
+    """Move a CNAME entry from one host to another.
+    """
+
+    cname = clean_hostname(args.cname)
+    host = clean_hostname(args.host)
+
+    cname_info = host_info_by_name(cname)
+    host_info = host_info_by_name(host)
+
+    if cname_info['id'] == host_info['id']:
+        cli_error(f"The CNAME {cname} already points to {host}.")
+
+    # Update CNAME record.
+    data = {'host': host_info['id'], 'name': cname }
+    path = f"/api/v1/cnames/{cname}"
+    history.record_patch(path, "", data, undoable=False)
+    patch(path, **data)
+    cli_info(f"Moved CNAME alias {cname}: {cname_info['name']} -> {host}",
+             print_msg=True)
+
+host.add_command(
+    prog='cname_replace',
+    description='Move a CNAME record from one host to another.',
+    short_desc='Replace a CNAME record.',
+    callback=cname_replace,
+    flags=[
+        Flag('cname',
+             description='The CNAME to modify.',
+             metavar='CNAME'),
+        Flag('host',
+             description='The new host for the CNAME.',
+             metavar='HOST'),
+    ],
+)
+
 
 ################################################
 #  Implementation of sub command 'cname_show'  #
