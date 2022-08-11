@@ -16,8 +16,8 @@ from .history import history
 from .log import cli_error, cli_warning
 from . import mocktraffic
 
-location_tags = []
-category_tags = []
+location_tags = []  # type: List[str]
+category_tags = []  # type: List[str]
 
 session = requests.Session()
 session.headers.update({'User-Agent': 'mreg-cli'})
