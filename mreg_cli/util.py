@@ -137,7 +137,7 @@ def _srv_info_by_name(name: str) -> Optional[dict]:
     return None
 
 
-def get_info_by_name(name: str) -> typing.Tuple[str, dict]:
+def get_info_by_name(name: str) -> Tuple[str, dict]:
     """
     Get host, cname or srv by name.
     """
@@ -320,7 +320,9 @@ def get(path: str, params: dict = {}, ok404=False) -> requests.Response:
     return _request_wrapper("get", path, params=params, ok404=ok404)
 
 
-def get_list(path: str, params: dict = {}, ok404=False) -> requests.Response:
+def get_list(
+    path: Optional[str], params: dict = {}, ok404=False
+) -> List[requests.Response]:
     """Uses requests to make a get request.
        Will iterate over paginated results and return result as list."""
     ret = []
@@ -527,7 +529,7 @@ def get_network_reserved_ips(ip_range: str):
     return get(path).json()
 
 
-def string_to_int(value, error_tag):
+def string_to_int(value: Any, error_tag: str) -> int:
     try:
         return int(value)
     except ValueError:
@@ -581,7 +583,7 @@ def is_valid_mac(mac: str) -> bool:
     return bool(re.match(r"^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", mac))
 
 
-def is_valid_ttl(ttl: typing.Union[int, str, bytes]) -> bool:  # int?
+def is_valid_ttl(ttl: Union[int, str, bytes]) -> bool:  # int?
     """Check application specific ttl restrictions."""
     if ttl in ("", "default"):
         return True
