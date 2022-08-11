@@ -418,16 +418,20 @@ def resolve_input_name(name: str) -> str:
 #                                                                              #
 ################################################################################
 
-def clean_hostname(name: typing.AnyStr) -> str:
+
+def clean_hostname(name: Union[str, bytes]) -> str:
     """ Converts from short to long hostname, if no domain found. """
     # bytes?
     if not isinstance(name, (str, bytes)):
         cli_warning("Invalid input for hostname: {}".format(name))
 
+    if isinstance(name, bytes):
+        name = name.decode()
+
     name = name.lower()
 
     # invalid characters?
-    if re.search("^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", name) is None:
+    if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", name) is None:
         cli_warning("Invalid input for hostname: {}".format(name))
 
     # Assume user is happy with domain, but strip the dot.
@@ -589,7 +593,7 @@ def is_valid_ttl(ttl: typing.Union[int, str, bytes]) -> bool:  # int?
     return 300 <= ttl <= 68400
 
 
-def is_valid_email(email: typing.AnyStr) -> bool:
+def is_valid_email(email: Union[str, bytes]) -> bool:
     """Check if email looks like a valid email"""
     if not isinstance(email, str):
         try:
