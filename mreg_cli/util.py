@@ -28,13 +28,15 @@ logger = logging.getLogger(__name__)
 
 HTTP_TIMEOUT = 20
 
+config = {}  # initialized by set_config
+
 
 def error(msg, code=os.EX_UNAVAILABLE):
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(code)
 
 
-def set_config(cfg):
+def set_config(cfg: dict) -> None:
     global config
     config = cfg
 
