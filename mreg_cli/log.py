@@ -2,6 +2,7 @@ import getpass
 import inspect
 import re
 from datetime import datetime
+from typing import NoReturn, Optional, Type
 
 from .exceptions import CliError, CliWarning
 
@@ -30,7 +31,9 @@ def _write_log(entry: str, end: str = "\n") -> None:
             f.write(entry + end)
 
 
-def cli_error(msg: str, raise_exception: bool = True, exception=CliError) -> None:
+def cli_error(
+    msg: str, raise_exception: bool = True, exception: Type[Exception] = CliError
+) -> Optional[NoReturn]:
     """Write a ERROR log entry."""
     pre = _prefix_from_stack()
     s = "{} {} [ERROR] {}: {}".format(
@@ -52,9 +55,12 @@ def cli_error(msg: str, raise_exception: bool = True, exception=CliError) -> Non
             mt.compare_with_expected_output(msg)
         # Raise the exception
         raise exception(msg)
+    return None
 
 
-def cli_warning(msg: str, raise_exception: bool = True, exception=CliWarning) -> None:
+def cli_warning(
+    msg: str, raise_exception: bool = True, exception: Type[Exception] = CliWarning
+) -> Optional[NoReturn]:
     """Write a WARNING log entry."""
     pre = _prefix_from_stack()
     s = "{} {} [WARNING] {}: {}".format(
@@ -75,6 +81,7 @@ def cli_warning(msg: str, raise_exception: bool = True, exception=CliWarning) ->
             # If playing back traffic, verify the console output is as expected
             mt.compare_with_expected_output(msg)
         raise exception(msg)
+    return None
 
 
 def cli_info(msg: str, print_msg: bool = False) -> None:
