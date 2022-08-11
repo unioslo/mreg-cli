@@ -1,5 +1,6 @@
 import ipaddress
-import typing
+from typing import Iterable, Optional
+
 
 from .cli import Flag, cli
 from .dhcp import assoc_mac_to_ip
@@ -53,7 +54,7 @@ def print_hinfo(hinfo: dict, padding: int = 14) -> None:
     print("{1:<{0}}cpu={2} os={3}".format(padding, "Hinfo:", hinfo['cpu'], hinfo['os']))
 
 
-def zoneinfo_for_hostname(host: str) -> dict:
+def zoneinfo_for_hostname(host: str) -> Optional[dict]:
     """Return zoneinfo for a hostname, or None if not found or invalid"""
     if "." not in host:
         return None
@@ -374,8 +375,9 @@ def print_comment(comment: str, padding: int = 14) -> None:
     print("{1:<{0}}{2}".format(padding, "Comment:", comment))
 
 
-def print_ipaddresses(ipaddresses: typing.Iterable[dict], names: bool = False,
-                      padding: int = 14) -> None:
+def print_ipaddresses(
+    ipaddresses: Iterable[dict], names: bool = False, padding: int = 14
+) -> None:
     """Pretty print given ip addresses"""
     def _find_padding(lst, attr):
         return max(padding, max([len(i[attr]) for i in lst])+1)
