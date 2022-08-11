@@ -1,4 +1,6 @@
-from typing import Literal, NoReturn, Optional, Type, overload
+from typing import NoReturn, Optional, Type, overload
+from typing_extensions import Literal
+
 
 
 @overload
