@@ -4,7 +4,7 @@ import logging
 import os
 import re
 import sys
-import typing
+from typing import Any, Optional, List, Tuple, Union
 import urllib.parse
 
 import requests
@@ -75,7 +75,7 @@ def host_info_by_name_or_ip(name_or_ip: str) -> dict:
     return host_info_by_name(name)
 
 
-def _host_info_by_name(name: str, follow_cname: bool = True) -> dict:
+def _host_info_by_name(name: str, follow_cname: bool = True) -> Optional[dict]:
     hostinfo = get(f"/api/v1/hosts/{urllib.parse.quote(name)}", ok404=True)
 
     if hostinfo:
@@ -113,7 +113,7 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
     return hostinfo
 
 
-def _cname_info_by_name(name: str) -> dict:
+def _cname_info_by_name(name: str) -> Optional[dict]:
     path = "/api/v1/cnames/"
     params = {
         "name": name,
@@ -124,7 +124,7 @@ def _cname_info_by_name(name: str) -> dict:
     return None
 
 
-def _srv_info_by_name(name: str) -> dict:
+def _srv_info_by_name(name: str) -> Optional[dict]:
     path = "/api/v1/srvs/"
     params = {
         "name": name,
