@@ -4,7 +4,20 @@ import logging
 import os
 import re
 import sys
-from typing import Any, Optional, List, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    NoReturn,
+    Optional,
+    List,
+    Sequence,
+    Tuple,
+    Union,
+    overload,
+    cast,
+)
+from typing_extensions import Literal
 import urllib.parse
 
 import requests
@@ -14,6 +27,7 @@ from prompt_toolkit import prompt
 from .exceptions import CliError, HostNotFoundWarning
 from .history import history
 from .log import cli_error, cli_warning
+from .types import ResponseLike
 from . import mocktraffic
 
 location_tags = []  # type: List[str]
@@ -31,7 +45,7 @@ HTTP_TIMEOUT = 20
 config = {}  # initialized by set_config
 
 
-def error(msg, code=os.EX_UNAVAILABLE):
+def error(msg, code=os.EX_UNAVAILABLE) -> NoReturn:
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(code)
 
@@ -181,7 +195,8 @@ def ip_in_mreg_net(ip: str) -> bool:
 #                                                                              #
 ################################################################################
 
-def set_file_permissions(f, mode):
+
+def set_file_permissions(f: str, mode: int) -> None:
     try:
         os.chmod(f, mode)
     except PermissionError:
@@ -189,7 +204,8 @@ def set_file_permissions(f, mode):
     except FileNotFoundError:
         pass
 
-def login1(user, url):
+
+def login1(user: str, url: str) -> None:
     global mregurl, username
     mregurl = url
     username = user
@@ -221,7 +237,7 @@ def login1(user, url):
         login(user, url)
 
 
-def login(user, url):
+def login(user: str, url: str) -> None:
     print(f"Connecting to {url}")
 
     # get url
@@ -232,7 +248,7 @@ def login(user, url):
         error(e)
 
 
-def logout():
+def logout() -> None:
     path = requests.compat.urljoin(mregurl, '/api/token-logout/')
     # Try to logout, and ignore errors
     try:
@@ -241,7 +257,7 @@ def logout():
         pass
 
 
-def update_token():
+def update_token() -> None:
     password = prompt("You need to re-autenticate\nEnter password: ",
                       is_password=True)
     try:
@@ -250,7 +266,7 @@ def update_token():
         error(e)
 
 
-def _update_token(username, password):
+def _update_token(username: str, password: str) -> None:
     tokenurl = requests.compat.urljoin(mregurl, '/api/token-auth/')
     try:
         result = requests.post(tokenurl, {'username': username,
@@ -278,7 +294,7 @@ def _update_token(username, password):
     set_file_permissions(mreg_auth_token_file, 0o600)
 
 
-def result_check(result, type, url):
+def result_check(result: ResponseLike, type: str, url: str) -> None:
     if not result.ok:
         message = f"{type} \"{url}\": {result.status_code}: {result.reason}"
         try:
@@ -290,7 +306,15 @@ def result_check(result, type, url):
         cli_warning(message)
 
 
-def _request_wrapper(type, path, params={}, ok404=False, first=True, use_json=False, **data):
+def _request_wrapper(
+    type: str,
+    path: str,
+    params: Dict[str, str] = {},
+    ok404: bool = False,
+    first: bool = True,
+    use_json: bool = False,
+    **data,
+) -> Optional[ResponseLike]:
     url = requests.compat.urljoin(mregurl, path)
     mh = mocktraffic.MockTraffic()
 
@@ -300,7 +324,12 @@ def _request_wrapper(type, path, params={}, ok404=False, first=True, use_json=Fa
         if use_json:
             result = getattr(session, type)(url, json=params, timeout=HTTP_TIMEOUT)
         else:
-            result = getattr(session, type)(url, params=params, data=data, timeout=HTTP_TIMEOUT)
+            result = getattr(session, type)(
+                url, params=params, data=data, timeout=HTTP_TIMEOUT
+            )
+        result = cast(
+            requests.Response, result
+        )  # convince mypy that result is a Response
 
     if mh.is_recording():
         mh.record(type, url, params, data, result)
@@ -315,38 +344,68 @@ def _request_wrapper(type, path, params={}, ok404=False, first=True, use_json=Fa
     return result
 
 
-def get(path: str, params: dict = {}, ok404=False) -> requests.Response:
+@overload
+def get(
+    path: str, params: Dict[str, str], ok404: Literal[True]
+) -> Optional[ResponseLike]:
+    ...
+
+
+@overload
+def get(path: str, params: Dict[str, str], ok404: Literal[False]) -> ResponseLike:
+    ...
+
+
+@overload
+def get(
+    path: str, params: Dict[str, str] = ..., *, ok404: bool
+) -> Optional[ResponseLike]:
+    ...
+
+
+@overload
+def get(path: str, params: Dict[str, str] = ...) -> ResponseLike:
+    ...
+
+
+def get(
+    path: str, params: Dict[str, str] = {}, ok404: bool = False
+) -> Optional[ResponseLike]:
     """Uses requests to make a get request."""
     return _request_wrapper("get", path, params=params, ok404=ok404)
 
 
-def get_list(
-    path: Optional[str], params: dict = {}, ok404=False
-) -> List[requests.Response]:
+def get_list(path: Optional[str], params: dict = {}, ok404: bool = False) -> List[dict]:
     """Uses requests to make a get request.
        Will iterate over paginated results and return result as list."""
-    ret = []
+    ret = []  # type: List[dict]
     while path:
-        result = get(path, params=params, ok404=ok404).json()
-        if 'next' in result:
-            path = result['next']
-            ret.extend(result['results'])
+        resp = get(path, params=params, ok404=ok404)
+        if resp is None:
+            return ret
+        result = resp.json()
+
+        if "next" in result:
+            path = result["next"]
+            ret.extend(result["results"])
         else:
             path = None
     return ret
 
 
-def post(path: str, params: dict = {}, **kwargs) -> requests.Response:
+def post(path: str, params: dict = {}, **kwargs: Any) -> Optional[ResponseLike]:
     """Uses requests to make a post request. Assumes that all kwargs are data fields"""
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
-def patch(path: str, params: dict = {}, use_json=False, **kwargs) -> requests.Response:
+def patch(
+    path: str, params: dict = {}, use_json: bool = False, **kwargs: Any
+) -> Optional[ResponseLike]:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
     return _request_wrapper("patch", path, params=params, use_json=use_json, **kwargs)
 
 
-def delete(path: str, params: dict = {},) -> requests.Response:
+def delete(path: str, params: dict = {}) -> Optional[ResponseLike]:
     """Uses requests to make a delete request."""
     return _request_wrapper("delete", path, params=params)
 
@@ -456,11 +515,11 @@ def clean_hostname(name: Union[str, bytes]) -> str:
 ################################################################################
 
 
-def ipsort(ips: list) -> list:
+def ipsort(ips: Iterable[Any]) -> list:
     return sorted(ips, key=lambda i: ipaddress.ip_address(i))
 
 
-def get_network_by_ip(ip: str) -> dict:
+def get_network_by_ip(ip: str) -> Dict[str, Any]:
     if is_valid_ip(ip):
         path = f"/api/v1/networks/ip/{urllib.parse.quote(ip)}"
         net = get(path, ok404=True)
@@ -472,7 +531,7 @@ def get_network_by_ip(ip: str) -> dict:
         cli_warning("Not a valid ip address")
 
 
-def get_network(ip: str) -> dict:
+def get_network(ip: str) -> Dict[str, Any]:
     "Returns network associated with given range or IP"
     if is_valid_network(ip):
         path = f"/api/v1/networks/{urllib.parse.quote(ip)}"
@@ -487,42 +546,42 @@ def get_network(ip: str) -> dict:
         cli_warning("Not a valid ip range or ip address")
 
 
-def get_network_used_count(ip_range: str):
+def get_network_used_count(ip_range: str) -> int:
     "Return a count of the addresses in use on a given network"
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/used_count"
     history.record_get(path)
     return get(path).json()
 
 
-def get_network_used_list(ip_range: str):
+def get_network_used_list(ip_range: str) -> List[str]:
     "Return a list of the addresses in use on a given network"
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/used_list"
     history.record_get(path)
     return get(path).json()
 
 
-def get_network_unused_count(ip_range: str):
+def get_network_unused_count(ip_range: str) -> int:
     "Return a count of the unused addresses on a given network"
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/unused_count"
     history.record_get(path)
     return get(path).json()
 
 
-def get_network_unused_list(ip_range: str):
+def get_network_unused_list(ip_range: str) -> List[str]:
     "Return a list of the unused addresses on a given network"
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/unused_list"
     history.record_get(path)
     return get(path).json()
 
 
-def get_network_first_unused(ip_range: str):
+def get_network_first_unused(ip_range: str) -> str:
     "Returns the first unused address on a network, if any"
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/first_unused"
     history.record_get(path)
     return get(path).json()
 
 
-def get_network_reserved_ips(ip_range: str):
+def get_network_reserved_ips(ip_range: str) -> List[str]:
     "Returns the first unused address on a network, if any"
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/reserved_list"
     history.record_get(path)
@@ -625,7 +684,7 @@ def format_mac(mac: str) -> str:
     return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])
 
 
-def convert_wildcard_to_filter(param, arg):
+def convert_wildcard_to_filter(param: str, arg: str) -> str:
     """
     Convert wildcard filter "foo*bar*" to something DRF will understand.
 
@@ -648,7 +707,7 @@ def convert_wildcard_to_filter(param, arg):
 
     return '&'.join(parts)
 
-def convert_wildcard_to_regex(param, arg):
+def convert_wildcard_to_regex(param: str, arg: str) -> Tuple[str, str]:
     """
     Convert wildcard filter "foo*bar*" to something DRF will understand.
 
@@ -682,8 +741,14 @@ def convert_wildcard_to_regex(param, arg):
 #                                                                              #
 ################################################################################
 
-def print_table(headers, keys, data, indent=0):
-    raw_format = ' ' * indent
+
+def print_table(
+    headers: Sequence[str],
+    keys: Sequence[str],
+    data: List[Dict[str, Any]],
+    indent: int = 0,
+) -> None:
+    raw_format = " " * indent
     for key, header in zip(keys, headers):
         longest = len(header)
         for d in data:

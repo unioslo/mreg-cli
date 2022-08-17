@@ -109,7 +109,8 @@ class MockTraffic(object):
                 self.status_code = status_code
                 self.ok = ok
                 self.reason = reason
-            def json(self):
+
+            def json(self, *args, **kwargs):
                 return self.json_data
         return MockResponse(obj.get('json_data',None), obj.get('status',0), obj.get('ok',False), obj.get('reason',''))
 
