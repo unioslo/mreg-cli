@@ -10,7 +10,7 @@ install_requirements = [
     'python-dateutil',
     'prompt_toolkit>=2',
     'requests',
-    'typing_extensions;python_version<"3.8"'
+    'typing_extensions'
 ]
 
 
