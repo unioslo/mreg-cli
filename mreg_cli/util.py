@@ -599,7 +599,7 @@ def is_valid_email(email: Union[str, bytes]) -> bool:
     """Check if email looks like a valid email"""
     if not isinstance(email, str):
         try:
-            email = str(email)
+            email = email.decode()
         except ValueError:
             return False
     return True if re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email) else False
