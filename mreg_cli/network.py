@@ -1,4 +1,6 @@
+from argparse import Namespace
 import ipaddress
+from typing import Any, Dict, Union
 import urllib.parse
 
 from .cli import Flag, cli
@@ -22,6 +24,7 @@ from .util import (
     patch,
     post,
     string_to_int,
+    convert_wildcard_to_regex,
 )
 
 ###################################
@@ -160,33 +163,12 @@ network.add_command(
 # Implementation of sub command 'info' #
 ########################################
 
+
 def info(args):
     """Display network info
     """
     for net in args.networks:
-        # Get network info or raise exception
-        ip_range = get_network_range_from_input(net)
-        network_info = get_network(ip_range)
-        used = get_network_used_count(ip_range)
-        unused = get_network_unused_count(ip_range)
-        network = ipaddress.ip_network(ip_range)
-
-        # Pretty print all network info
-        print_network(network_info['network'], "Network:")
-        print_network(network.netmask.exploded, "Netmask:")
-        print_network(network_info['description'], "Description:")
-        print_network(network_info['category'], "Category:")
-        print_network(network_info['location'], "Location:")
-        print_network(network_info['vlan'], "VLAN")
-        print_network(network_info['dns_delegated'] if
-                      network_info['dns_delegated'] else False, "DNS delegated:")
-        print_network(network_info['frozen'] if network_info['frozen'] else False,
-                      "Frozen")
-        print_network_reserved(network_info['network'], network_info['reserved'])
-        print_network_excluded_ranges(network_info['excluded_ranges'])
-        print_network(used, "Used addresses:")
-        print_network_unused(unused)
-        cli_info(f"printed network info for {ip_range}")
+        print_network_info(net)
 
 
 network.add_command(
@@ -200,6 +182,168 @@ network.add_command(
              nargs='+',
              metavar='NETWORK'),
     ]
+)
+
+
+def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
+    """Prints info about a network given a network address string (CIDR notation),
+    or from a network info dict fetched by `get_network()`.
+
+    If a network address string is passed in, `get_network()` is called to fetch
+    information about the network with the given address.
+    """
+    if isinstance(network_info, str):
+        addr = network_info
+        ip_range = ip_range = get_network_range_from_input(addr)
+        network_info = get_network(ip_range)
+    elif isinstance(network_info, dict):
+        ip_range = network_info["network"]
+    else:
+        # TODO:improve error message. Possibly raise a built-in exception to signal
+        # that this is not a user error?
+        t = urllib.parse.quote(str(type(network_info)))  # quote to safely HTML print
+        cli_warning(f"Unable to display network information about a {t} object")
+
+    used = get_network_used_count(ip_range)
+    unused = get_network_unused_count(ip_range)
+    ip_network = ipaddress.ip_network(ip_range)
+
+    # Pretty print all network info
+    print_network(network_info["network"], "Network:")
+    print_network(ip_network.netmask.exploded, "Netmask:")
+    print_network(network_info["description"], "Description:")
+    print_network(network_info["category"], "Category:")
+    print_network(network_info["location"], "Location:")
+    print_network(network_info["vlan"], "VLAN")
+    print_network(
+        network_info["dns_delegated"] if network_info["dns_delegated"] else False,
+        "DNS delegated:",
+    )
+    print_network(network_info["frozen"] if network_info["frozen"] else False, "Frozen")
+    print_network_reserved(network_info["network"], network_info["reserved"])
+    print_network_excluded_ranges(network_info["excluded_ranges"])
+    print_network(used, "Used addresses:")
+    print_network_unused(unused)
+    cli_info(f"printed network info for {ip_range}")
+
+
+########################################
+# Implementation of sub command 'find' #
+########################################
+
+
+def find(args: Namespace):
+    """List networks matching search criteria."""
+    args_dict = vars(args)
+
+    params = {}
+    param_names = [
+        "network",
+        "description",
+        "vlan",
+        "dns_delegated",
+        "category",
+        "location",
+        "frozen",
+        "reserved",
+    ]
+    for name in param_names:
+        value = args_dict.get(name)
+        if value is None:
+            continue
+        param, val = convert_wildcard_to_regex(name, value)
+        params[param] = val
+
+    if not params:
+        cli_warning("Need at least one search criteria")
+
+    path = f"/api/v1/networks/"
+    networks = get_list(path, params)
+    if not networks:
+        cli_warning("No networks matching the query were found.")
+
+    n_networks = len(networks)
+    for i, nwork in enumerate(networks):
+        if args.limit and i >= args.limit:
+            omitted = n_networks - i
+            s = "s" if omitted > 1 else ""
+            if not args.silent:
+                print(f"Reached limit ({args.limit}). Omitted {omitted} network{s}.")
+            break
+        if args.addr_only:
+            print(nwork["network"])
+        else:
+            print_network_info(nwork)
+            print()  # Blank line between networks
+
+    s = "s" if n_networks > 1 else ""
+    if not args.silent:
+        print(f"Found {n_networks} network{s} matching the search criteria.")
+
+
+network.add_command(
+    prog="find",
+    description="Search for networks based on a range of search parameters.",
+    short_desc="Search for networks.",
+    callback=find,
+    flags=[
+        Flag(
+            "-network",
+            description="Network address.",
+            metavar="NETWORK",
+        ),
+        Flag(
+            "-description",
+            description="Description.",
+            metavar="DESCRIPTION",
+        ),
+        Flag(
+            "-vlan",
+            description="VLAN.",
+            metavar="VLAN",
+        ),
+        Flag(
+            "-dns_delegated",
+            description="DNS delegation status (0 or 1).",
+            metavar="DNS-DELEGATED",
+        ),
+        Flag(
+            "-category",
+            description="Category.",
+            metavar="CATEGORY",
+        ),
+        Flag(
+            "-location",
+            description="Location.",
+            metavar="LOCATION",
+        ),
+        Flag(
+            "-frozen",
+            description="Frozen status (0 or 1).",
+            metavar="FROZEN",
+        ),
+        Flag(
+            "-reserved",
+            description="Exact number of reserved network addresses.",
+            metavar="RESERVED",
+        ),
+        Flag(
+            "-addr-only",
+            description="Only print network address of matching networks.",
+            action="store_true",
+        ),
+        Flag(
+            "-limit",
+            description="Maximum number of networks to print.",
+            metavar="LIMIT",
+            type=int,
+        ),
+        Flag(
+            "-silent",
+            description="Do not print meta info (number of networks found, limit reached, etc.).",
+            action="store_true",
+        ),
+    ],
 )
 
 
