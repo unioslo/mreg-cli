@@ -237,7 +237,12 @@ def find(args: Namespace):
     args_dict = vars(args)
 
     ip_arg = args_dict.get("ip")
-    if not ip_arg:
+
+    if ip_arg:
+        ip_range = get_network_range_from_input(ip_arg)
+        network_info = get_network(ip_range)
+        networks = [network_info]
+    else:
         params = {}
         param_names = [
             "network",
@@ -261,10 +266,6 @@ def find(args: Namespace):
 
         path = f"/api/v1/networks/"
         networks = get_list(path, params)
-    else:
-        ip_range = get_network_range_from_input(ip_arg)
-        network_info = get_network(ip_range)
-        networks = [network_info]
 
     if not networks:
         cli_warning("No networks matching the query were found.")
