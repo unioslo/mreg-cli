@@ -38,7 +38,7 @@ network = cli.add_command(
 )
 
 
-def get_network_range_from_input(net):
+def get_network_range_from_input(net: str) -> str:
     if net.endswith("/"):
         net = net[:-1]
     if is_valid_ip(net):
@@ -236,29 +236,36 @@ def find(args: Namespace):
     """List networks matching search criteria."""
     args_dict = vars(args)
 
-    params = {}
-    param_names = [
-        "network",
-        "description",
-        "vlan",
-        "dns_delegated",
-        "category",
-        "location",
-        "frozen",
-        "reserved",
-    ]
-    for name in param_names:
-        value = args_dict.get(name)
-        if value is None:
-            continue
-        param, val = convert_wildcard_to_regex(name, value)
-        params[param] = val
+    ip_arg = args_dict.get("ip")
+    if not ip_arg:
+        params = {}
+        param_names = [
+            "network",
+            "description",
+            "vlan",
+            "dns_delegated",
+            "category",
+            "location",
+            "frozen",
+            "reserved",
+        ]
+        for name in param_names:
+            value = args_dict.get(name)
+            if value is None:
+                continue
+            param, val = convert_wildcard_to_regex(name, value)
+            params[param] = val
 
-    if not params:
-        cli_warning("Need at least one search criteria")
+        if not params:
+            cli_warning("Need at least one search criteria")
 
-    path = f"/api/v1/networks/"
-    networks = get_list(path, params)
+        path = f"/api/v1/networks/"
+        networks = get_list(path, params)
+    else:
+        ip_range = get_network_range_from_input(ip_arg)
+        network_info = get_network(ip_range)
+        networks = [network_info]
+
     if not networks:
         cli_warning("No networks matching the query were found.")
 
@@ -266,8 +273,8 @@ def find(args: Namespace):
     for i, nwork in enumerate(networks):
         if args.limit and i >= args.limit:
             omitted = n_networks - i
-            s = "s" if omitted > 1 else ""
             if not args.silent:
+                s = "s" if omitted > 1 else ""
                 print(f"Reached limit ({args.limit}). Omitted {omitted} network{s}.")
             break
         if args.addr_only:
@@ -276,17 +283,22 @@ def find(args: Namespace):
             print_network_info(nwork)
             print()  # Blank line between networks
 
-    s = "s" if n_networks > 1 else ""
     if not args.silent:
+        s = "s" if n_networks > 1 else ""
         print(f"Found {n_networks} network{s} matching the search criteria.")
 
 
 network.add_command(
     prog="find",
-    description="Search for networks based on a range of search parameters.",
-    short_desc="Search for networks.",
+    description="Search for networks based on a range of search parameters",
+    short_desc="Search for networks",
     callback=find,
     flags=[
+        Flag(
+            "-ip",
+            description="Exact host address",
+            metavar="IP",
+        ),
         Flag(
             "-network",
             description="Network address",
