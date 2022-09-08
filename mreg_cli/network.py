@@ -194,7 +194,7 @@ def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
     """
     if isinstance(network_info, str):
         addr = network_info
-        ip_range = ip_range = get_network_range_from_input(addr)
+        ip_range = get_network_range_from_input(addr)
         network_info = get_network(ip_range)
     elif isinstance(network_info, dict):
         ip_range = network_info["network"]
