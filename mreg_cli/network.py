@@ -297,7 +297,7 @@ network.add_command(
     flags=[
         Flag(
             "-ip",
-            description="Exact host address",
+            description="Exact IP address",
             metavar="IP",
         ),
         Flag(
