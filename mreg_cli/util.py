@@ -16,8 +16,13 @@ from typing import (
     Union,
     overload,
     cast,
+    TYPE_CHECKING,
 )
-from typing_extensions import Literal
+
+if TYPE_CHECKING:
+    from .types import ResponseLike
+    from typing_extensions import Literal
+
 import urllib.parse
 
 import requests
@@ -27,7 +32,7 @@ from prompt_toolkit import prompt
 from .exceptions import CliError, HostNotFoundWarning
 from .history import history
 from .log import cli_error, cli_warning
-from .types import ResponseLike
+
 from . import mocktraffic
 
 location_tags = []  # type: List[str]
@@ -294,7 +299,7 @@ def _update_token(username: str, password: str) -> None:
     set_file_permissions(mreg_auth_token_file, 0o600)
 
 
-def result_check(result: ResponseLike, type: str, url: str) -> None:
+def result_check(result: "ResponseLike", type: str, url: str) -> None:
     if not result.ok:
         message = f"{type} \"{url}\": {result.status_code}: {result.reason}"
         try:
@@ -314,7 +319,7 @@ def _request_wrapper(
     first: bool = True,
     use_json: bool = False,
     **data,
-) -> Optional[ResponseLike]:
+) -> Optional["ResponseLike"]:
     url = requests.compat.urljoin(mregurl, path)
     mh = mocktraffic.MockTraffic()
 
@@ -346,31 +351,31 @@ def _request_wrapper(
 
 @overload
 def get(
-    path: str, params: Dict[str, str], ok404: Literal[True]
-) -> Optional[ResponseLike]:
+    path: str, params: Dict[str, str], ok404: "Literal[True]"
+) -> Optional["ResponseLike"]:
     ...
 
 
 @overload
-def get(path: str, params: Dict[str, str], ok404: Literal[False]) -> ResponseLike:
+def get(path: str, params: Dict[str, str], ok404: "Literal[False]") -> "ResponseLike":
     ...
 
 
 @overload
 def get(
     path: str, params: Dict[str, str] = ..., *, ok404: bool
-) -> Optional[ResponseLike]:
+) -> Optional["ResponseLike"]:
     ...
 
 
 @overload
-def get(path: str, params: Dict[str, str] = ...) -> ResponseLike:
+def get(path: str, params: Dict[str, str] = ...) -> "ResponseLike":
     ...
 
 
 def get(
     path: str, params: Dict[str, str] = {}, ok404: bool = False
-) -> Optional[ResponseLike]:
+) -> Optional["ResponseLike"]:
     """Uses requests to make a get request."""
     return _request_wrapper("get", path, params=params, ok404=ok404)
 
@@ -393,19 +398,19 @@ def get_list(path: Optional[str], params: dict = {}, ok404: bool = False) -> Lis
     return ret
 
 
-def post(path: str, params: dict = {}, **kwargs: Any) -> Optional[ResponseLike]:
+def post(path: str, params: dict = {}, **kwargs: Any) -> Optional["ResponseLike"]:
     """Uses requests to make a post request. Assumes that all kwargs are data fields"""
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
 def patch(
     path: str, params: dict = {}, use_json: bool = False, **kwargs: Any
-) -> Optional[ResponseLike]:
+) -> Optional["ResponseLike"]:
     """Uses requests to make a patch request. Assumes that all kwargs are data fields"""
     return _request_wrapper("patch", path, params=params, use_json=use_json, **kwargs)
 
 
-def delete(path: str, params: dict = {}) -> Optional[ResponseLike]:
+def delete(path: str, params: dict = {}) -> Optional["ResponseLike"]:
     """Uses requests to make a delete request."""
     return _request_wrapper("delete", path, params=params)
 
