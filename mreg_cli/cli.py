@@ -5,7 +5,7 @@ from prompt_toolkit import HTML
 from prompt_toolkit import print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
 
-from . import mocktraffic, util
+from . import util, mocktraffic
 from .exceptions import CliError, CliWarning
 
 
@@ -250,8 +250,8 @@ def _source(args):
     newlines.
     The files may contain comments. The comment symbol is #
     """
-    import html
     import shlex
+    import html
 
     m = mocktraffic.MockTraffic()
 
