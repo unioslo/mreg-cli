@@ -219,13 +219,6 @@ cli.add_command(
 )
 
 cli.add_command(
-    prog='quit',
-    description='Exit application.',
-    short_desc='Quit',
-    callback=_quit,
-)
-
-cli.add_command(
     prog='exit',
     description='Exit application.',
     short_desc='Quit',
