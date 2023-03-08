@@ -5,7 +5,7 @@ from prompt_toolkit import HTML
 from prompt_toolkit import print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
 
-from . import util, mocktraffic
+from . import mocktraffic, util
 from .exceptions import CliError, CliWarning
 
 
@@ -218,6 +218,20 @@ cli.add_command(
     callback=_quit,
 )
 
+cli.add_command(
+    prog='quit',
+    description='Exit application.',
+    short_desc='Quit',
+    callback=_quit,
+)
+
+cli.add_command(
+    prog='exit',
+    description='Exit application.',
+    short_desc='Quit',
+    callback=_quit,
+)
+
 def logout(args):
     util.logout()
     raise CliExit
@@ -236,8 +250,8 @@ def _source(args):
     newlines.
     The files may contain comments. The comment symbol is #
     """
-    import shlex
     import html
+    import shlex
 
     m = mocktraffic.MockTraffic()
 
