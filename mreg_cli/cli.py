@@ -218,6 +218,13 @@ cli.add_command(
     callback=_quit,
 )
 
+cli.add_command(
+    prog='exit',
+    description='Exit application.',
+    short_desc='Quit',
+    callback=_quit,
+)
+
 def logout(args):
     util.logout()
     raise CliExit
