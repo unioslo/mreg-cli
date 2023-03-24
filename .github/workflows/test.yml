@@ -15,9 +15,9 @@ jobs:
           - '3.9'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: v1-pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements-*.txt') }}
@@ -26,7 +26,7 @@ jobs:
             v1-pip-${{ runner.os }}
             v1-pip-
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install
@@ -68,9 +68,9 @@ jobs:
           - 8000:8000
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: v1-pip-${{ runner.os }}-${{ hashFiles('requirements-*.txt') }}

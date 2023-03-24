@@ -186,6 +186,9 @@ def add(args):
     if cname_exists(name):
         cli_warning("the name is already in use by a cname")
 
+    if args.macaddress is not None and not is_valid_mac(args.macaddress):
+        cli_warning("invalid MAC address: {}".format(args.macaddress))
+
     if args.ip:
         ip = _get_ip_from_args(args.ip, args.force)
 
