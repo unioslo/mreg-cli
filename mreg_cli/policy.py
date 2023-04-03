@@ -522,7 +522,7 @@ def host_add(args):
         path = f'/api/v1/hostpolicy/roles/{args.role}/hosts/'
         history.record_post(path, "", data, undoable=False)
         post(path, **data)
-        cli_info(f"Added {name} to {args.role}", print_msg=True)
+        cli_info(f"Added host {name} to role {args.role}", print_msg=True)
 
 
 policy.add_command(
@@ -597,7 +597,7 @@ def host_remove(args):
         path = f'/api/v1/hostpolicy/roles/{args.role}/hosts/{name}'
         history.record_delete(path, dict())
         delete(path)
-        cli_info(f"Removed '{name}' from {args.role}", print_msg=True)
+        cli_info(f"Removed host {name} from role {args.role}", print_msg=True)
 
 
 policy.add_command(

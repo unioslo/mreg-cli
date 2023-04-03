@@ -459,7 +459,7 @@
 {"method": "GET", "url": "/api/v1/hostpolicy/roles/?name=fruit", "data": {}, "ok": true, "status": 200, "reason": "OK", "json_data": {"count": 1, "next": null, "previous": null, "results": [{"id": 18, "hosts": [], "atoms": [{"name": "tangerine"}], "updated_at": "2020-12-03T17:04:39.350461+01:00", "create_date": "2020-12-03", "description": "5 a day", "name": "fruit", "labels": []}]}}
 {"method": "GET", "url": "/api/v1/hosts/foo.example.org", "data": {}, "ok": true, "status": 200, "reason": "OK", "json_data": {"id": 171, "ipaddresses": [], "cnames": [], "mxs": [], "txts": [{"id": 181, "created_at": "2020-12-03T17:04:39.680469+01:00", "updated_at": "2020-12-03T17:04:39.680508+01:00", "txt": "v=spf1 -all", "host": 171}], "ptr_overrides": [], "hinfo": null, "loc": null, "created_at": "2020-12-03T17:04:39.669575+01:00", "updated_at": "2020-12-03T17:04:39.669607+01:00", "name": "foo.example.org", "contact": "", "ttl": null, "comment": "", "zone": 10}}
 {"method": "POST", "url": "/api/v1/hostpolicy/roles/fruit/hosts/", "data": {"name": "foo.example.org"}, "ok": true, "status": 201, "reason": "Created"}
-{"output": "OK: : Added foo.example.org to fruit"}
+{"output": "OK: : Added host foo.example.org to role fruit"}
 {"command": "policy list_hosts fruit\n"}
 {"method": "GET", "url": "/api/v1/hostpolicy/roles/?name=fruit", "data": {}, "ok": true, "status": 200, "reason": "OK", "json_data": {"count": 1, "next": null, "previous": null, "results": [{"id": 18, "hosts": [{"name": "foo.example.org"}], "atoms": [{"name": "tangerine"}], "updated_at": "2020-12-03T17:04:40.022449+01:00", "create_date": "2020-12-03", "description": "5 a day", "name": "fruit", "labels": []}]}}
 {"command": "policy host_list foo\n"}
@@ -469,7 +469,7 @@
 {"method": "GET", "url": "/api/v1/hostpolicy/roles/?name=fruit", "data": {}, "ok": true, "status": 200, "reason": "OK", "json_data": {"count": 1, "next": null, "previous": null, "results": [{"id": 18, "hosts": [{"name": "foo.example.org"}], "atoms": [{"name": "tangerine"}], "updated_at": "2020-12-03T17:04:40.022449+01:00", "create_date": "2020-12-03", "description": "5 a day", "name": "fruit", "labels": []}]}}
 {"method": "GET", "url": "/api/v1/hosts/foo.example.org", "data": {}, "ok": true, "status": 200, "reason": "OK", "json_data": {"id": 171, "ipaddresses": [], "cnames": [], "mxs": [], "txts": [{"id": 181, "created_at": "2020-12-03T17:04:39.680469+01:00", "updated_at": "2020-12-03T17:04:39.680508+01:00", "txt": "v=spf1 -all", "host": 171}], "ptr_overrides": [], "hinfo": null, "loc": null, "created_at": "2020-12-03T17:04:39.669575+01:00", "updated_at": "2020-12-03T17:04:39.669607+01:00", "name": "foo.example.org", "contact": "", "ttl": null, "comment": "", "zone": 10}}
 {"method": "DELETE", "url": "/api/v1/hostpolicy/roles/fruit/hosts/foo.example.org", "data": {}, "ok": true, "status": 204, "reason": "No Content"}
-{"output": "OK: : Removed 'foo.example.org' from fruit"}
+{"output": "OK: : Removed host foo.example.org from role fruit"}
 {"command": "policy remove_atom fruit banana"}
 {"method": "GET", "url": "/api/v1/hostpolicy/roles/?name=fruit", "data": {}, "ok": true, "status": 200, "reason": "OK", "json_data": {"count": 1, "next": null, "previous": null, "results": [{"id": 18, "hosts": [], "atoms": [{"name": "tangerine"}], "updated_at": "2020-12-03T17:04:40.542141+01:00", "create_date": "2020-12-03", "description": "5 a day", "name": "fruit", "labels": []}]}}
 {"output": "WARNING: : Atom 'banana' not a member of 'fruit'"}
