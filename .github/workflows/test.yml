@@ -13,6 +13,8 @@ jobs:
           - '3.7'
           - '3.8'
           - '3.9'
+          - '3.10'
+          - '3.11'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -39,12 +41,9 @@ jobs:
   integration:
     name: Integration
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        postgresql-version: [11, 12, 13]
     services:
       postgres:
-        image: postgres:${{ matrix.postgresql-version }}
+        image: postgres:latest
         env:
           POSTGRES_USER: mreg
           POSTGRES_DB: mreg
@@ -61,8 +60,8 @@ jobs:
         options: >-
           --name mreg
         env:
-          GUNICORN_CMD_ARGS: --bind=0.0.0.0
           MREG_DB_HOST: postgres
+          MREG_DB_USER: mreg
           MREG_DB_PASSWORD: postgres
         ports:
           - 8000:8000
