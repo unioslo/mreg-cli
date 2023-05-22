@@ -1,6 +1,6 @@
 from .cli import Flag, cli
 from .history import history
-from .log import cli_info, cli_error
+from .log import cli_info, cli_warning, cli_error
 from .util import get, get_list, post, patch, delete, print_table
 
 label = cli.add_command(

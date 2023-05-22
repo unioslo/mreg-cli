@@ -5,7 +5,7 @@ from prompt_toolkit import HTML
 from prompt_toolkit import print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
 
-from . import util, mocktraffic
+from . import util, recordhttp
 from .exceptions import CliError, CliWarning
 
 
@@ -237,7 +237,7 @@ cli.add_command(
 )
 
 
-def _source(args):
+def source(files, ignore_errors, verbose):
     """source reads commands from one or more source files.
     Each command must be on one line and the commands must be separated with
     newlines.
@@ -246,9 +246,9 @@ def _source(args):
     import shlex
     import html
 
-    m = mocktraffic.MockTraffic()
+    m = recordhttp.RecordHttp()
 
-    for filename in args.files:
+    for filename in files:
         if filename.startswith('~'):
             filename = os.path.expanduser(filename)
         try:
@@ -269,19 +269,21 @@ def _source(args):
                     s = shlex.split(l, comments=True)
 
                     # In verbose mode all commands are printed before execution.
-                    if args.verbose and s:
+                    if verbose and s:
                         print(HTML(f'<i>> {html.escape(l.strip())}</i>'))
                     cli.parse(s)
                     if cli.last_errno != 0:
                         print(HTML(f'<ansired><i>{filename}</i>: '
                                    f'Error on line {i + 1}</ansired>'))
-                        if not args.ignore_errors:
+                        if not ignore_errors:
                             return
         except FileNotFoundError:
             print(f"No such file: '{filename}'")
         except PermissionError:
             print(f"Permission denied: '{filename}'")
 
+def _source(args):
+    source(args.files, args.ignore_errors, args.verbose)
 
 # Always need the source command.
 cli.add_command(

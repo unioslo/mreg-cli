@@ -3,7 +3,7 @@ on: [push, pull_request]
 name: CI
 jobs:
   test:
-    name: Fixtures
+    name: Integration
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -31,69 +31,9 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install
+      - name: Install mreg-cli
         run: |
           pip install -r requirements.txt
           pip install -e .
-      - name: Test
-        run: mreg-cli --playback testsuite-result.json
-
-  integration:
-    name: Integration
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: mreg
-          POSTGRES_DB: mreg
-          POSTGRES_PASSWORD: postgres
-        # Add health checks and trick it into creating the citext
-        # extension when ready.
-        options: >-
-          --health-cmd "pg_isready && PGPASSWORD=$POSTGRES_PASSWORD psql -U mreg -c 'CREATE EXTENSION IF NOT EXISTS citext;' mreg || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      mreg:
-        image: ghcr.io/unioslo/mreg:latest
-        options: >-
-          --name mreg
-        env:
-          MREG_DB_HOST: postgres
-          MREG_DB_USER: mreg
-          MREG_DB_PASSWORD: postgres
-        ports:
-          - 8000:8000
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Cache pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: v1-pip-${{ runner.os }}-${{ hashFiles('requirements-*.txt') }}
-          restore-keys: |
-            v1-pip-${{ runner.os }}
-            v1-pip-
-      - name: Install
-        run: |
-          pip install -r requirements.txt
-          pip install -e .
-      - name: Create superuser
-        run: |
-          echo -ne '
-          from django.conf import settings
-          from django.contrib.auth import get_user_model
-          from django.contrib.auth.models import Group
-          user = get_user_model().objects.create_user(
-            username="ci",password="test")
-          user.groups.clear()
-          su = getattr(settings, "SUPERUSER_GROUP", None)
-          group, created = Group.objects.get_or_create(name=su)
-          group.user_set.add(user)
-          ' | docker exec -i mreg python /app/manage.py shell
-      - name: Run tests
-        run: >
-          echo -ne 'test\nsource testsuite\nquit\n'
-          | mreg-cli -u ci -d example.org --url http://localhost:8000
+      - name: Test and compare api calls
+        run: ci/run_testsuite_and_record.sh

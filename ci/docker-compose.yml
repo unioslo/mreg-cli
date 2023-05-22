@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_USER=mreg
+      - POSTGRES_DB=mreg
+      - POSTGRES_PASSWORD=mreg
+    healthcheck:
+       test: ["CMD", "pg_isready", "--username=mreg"]
+       interval: 5s
+       timeout: 5s
+       retries: 5
+       start_period: 5s
+
+  mreg:
+    image: ghcr.io/unioslo/mreg:latest
+    container_name: mreg
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 8000:8000
+    environment:
+      - MREG_DB_HOST=postgres
+      - MREG_DB_NAME=mreg
+      - MREG_DB_USER=mreg
+      - MREG_DB_PASSWORD=mreg
+      - CI=yes
+    healthcheck:
+      test: sh -c "[ -f /var/run/gunicorn.pid ]"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  dummy-container:
+    image: hello-world
+    depends_on:
+      mreg:
+        condition: service_healthy

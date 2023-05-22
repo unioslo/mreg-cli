@@ -6,7 +6,7 @@ from typing import NoReturn, Optional, Type
 
 from .exceptions import CliError, CliWarning
 
-from . import mocktraffic
+from . import recordhttp
 
 logfile = None
 
@@ -46,13 +46,10 @@ def cli_error(
     if raise_exception:
         # A simplified message for console
         msg = "ERROR: {}: {}".format(pre, msg)
-        mt = mocktraffic.MockTraffic()
+        mt = recordhttp.RecordHttp()
         if mt.is_recording():
             # If recording traffic, also record the console output
             mt.record_output(msg)
-        elif mt.is_playback():
-            # If playing back traffic, verify the console output is as expected
-            mt.compare_with_expected_output(msg)
         # Raise the exception
         raise exception(msg)
     return None
@@ -73,13 +70,10 @@ def cli_warning(
     if raise_exception:
         # A simplified message for console
         msg = "WARNING: {}: {}".format(pre, msg)
-        mt = mocktraffic.MockTraffic()
+        mt = recordhttp.RecordHttp()
         if mt.is_recording():
             # If recording traffic, also record the console output
             mt.record_output(msg)
-        elif mt.is_playback():
-            # If playing back traffic, verify the console output is as expected
-            mt.compare_with_expected_output(msg)
         raise exception(msg)
     return None
 
@@ -98,10 +92,7 @@ def cli_info(msg: str, print_msg: bool = False) -> None:
         # A simplified message for console
         msg = "OK: {}: {}".format(pre, msg)
         print(msg)
-        mt = mocktraffic.MockTraffic()
+        mt = recordhttp.RecordHttp()
         if mt.is_recording():
             # If recording traffic, also record the console output
             mt.record_output(msg)
-        elif mt.is_playback():
-            # If playing back traffic, verify the console output is as expected
-            mt.compare_with_expected_output(msg)

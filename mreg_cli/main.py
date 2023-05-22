@@ -7,8 +7,8 @@ import shlex
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
-from . import config, log, util, mocktraffic
-from .cli import cli
+from . import config, log, util, recordhttp
+from .cli import cli, source
 
 logger = logging.getLogger(__name__)
 
@@ -92,10 +92,10 @@ def main():
         metavar='RECFILE',
     )
     output_args.add_argument(
-        '--playback',
-        dest='mock_traffic',
-        help="Run commands and mock all server/client traffic with data from %(metavar)s",
-        metavar='MOCKFILE',
+        '--source',
+        dest='source',
+        help="Read commands from %(metavar)s",
+        metavar='SOURCE',
     )
 
     args = parser.parse_args()
@@ -107,33 +107,24 @@ def main():
     if 'logfile' in conf:
         log.logfile = conf['logfile']
 
-    m = mocktraffic.MockTraffic()
-    if 'mock_traffic' in conf:
-        if 'record_traffic' in conf:
-            print("You can't use both the playback and record options at the same time!")
-            raise SystemExit()
-        m.start_playback(conf['mock_traffic'])
-    elif 'record_traffic' in conf:
+    m = recordhttp.RecordHttp()
+    if 'record_traffic' in conf:
         m.start_recording(conf['record_traffic'])
 
-    if m.is_playback():
-        util.mregurl = "http://127.0.0.1:8000/"
-        util.username = "dummyuser"
-    else:
-        if "user" not in conf:
-            print("Username not set in config or as argument")
-            return
-        elif "url" not in conf:
-            print("mreg url not set in config or as argument")
-            return
+    if "user" not in conf:
+        print("Username not set in config or as argument")
+        return
+    elif "url" not in conf:
+        print("mreg url not set in config or as argument")
+        return
 
-        try:
-            util.login1(conf["user"], conf["url"])
-        except (EOFError, KeyboardInterrupt):
-            print('')
-            raise SystemExit()
-        if args.show_token:
-            print(util.session.headers["Authorization"])
+    try:
+        util.login1(conf["user"], conf["url"])
+    except (EOFError, KeyboardInterrupt):
+        print('')
+        raise SystemExit()
+    if args.show_token:
+        print(util.session.headers["Authorization"])
 
     # Must import the commands, for the side effects of creating the commands
     # when importing.
@@ -160,14 +151,10 @@ def main():
     # Welcome text for the app
     print('Type -h for help.')
 
-    # If playing back traffic, just run through the data and exit afterwards.
-    if m.is_playback():
-        while True:
-            line = mocktraffic.MockTraffic().get_next_command()
-            if not line:
-                raise SystemExit()
-            print(">",line)
-            cli.parse(shlex.split(line))
+    # if the --source parameter was given, read commands from the source file and then exit
+    if 'source' in conf:
+        source([conf['source']],'verbosity' in conf,False)
+        return
 
     # The app runs in an infinite loop and is expected to exit using sys.exit()
     while True:
