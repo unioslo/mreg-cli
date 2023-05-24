@@ -33,7 +33,7 @@ from .exceptions import CliError, HostNotFoundWarning
 from .history import history
 from .log import cli_error, cli_warning
 
-from . import recordhttp
+from . import recorder
 
 location_tags = []  # type: List[str]
 category_tags = []  # type: List[str]
@@ -321,7 +321,7 @@ def _request_wrapper(
     **data,
 ) -> Optional["ResponseLike"]:
     url = requests.compat.urljoin(mregurl, path)
-    mh = recordhttp.RecordHttp()
+    rec = recorder.Recorder()
 
     if use_json:
         result = getattr(session, type)(url, json=params, timeout=HTTP_TIMEOUT)
@@ -333,8 +333,8 @@ def _request_wrapper(
         requests.Response, result
     )  # convince mypy that result is a Response
 
-    if mh.is_recording():
-        mh.record(type, url, params, data, result)
+    if rec.is_recording():
+        rec.record(type, url, params, data, result)
 
     if first and result.status_code == 401:
         update_token()

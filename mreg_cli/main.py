@@ -7,7 +7,7 @@ import shlex
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
-from . import config, log, util, recordhttp
+from . import config, log, util, recorder
 from .cli import cli, source
 
 logger = logging.getLogger(__name__)
@@ -107,9 +107,9 @@ def main():
     if 'logfile' in conf:
         log.logfile = conf['logfile']
 
-    m = recordhttp.RecordHttp()
+    rec = recorder.Recorder()
     if 'record_traffic' in conf:
-        m.start_recording(conf['record_traffic'])
+        rec.start_recording(conf['record_traffic'])
 
     if "user" not in conf:
         print("Username not set in config or as argument")
@@ -153,7 +153,7 @@ def main():
 
     # if the --source parameter was given, read commands from the source file and then exit
     if 'source' in conf:
-        source([conf['source']],'verbosity' in conf,False)
+        source([conf['source']], 'verbosity' in conf, False)
         return
 
     # The app runs in an infinite loop and is expected to exit using sys.exit()
@@ -168,8 +168,8 @@ def main():
             for line in lines.splitlines():
                 # If recording commands, submit the command line.
                 # Don't record the "source" command itself.
-                if m.is_recording() and not line.lstrip().startswith("source"):
-                    m.record_command(line)
+                if rec.is_recording() and not line.lstrip().startswith("source"):
+                    rec.record_command(line)
                 # Run the command
                 cli.parse(shlex.split(line))
         except ValueError as e:

@@ -5,7 +5,7 @@ from prompt_toolkit import HTML
 from prompt_toolkit import print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
 
-from . import util, recordhttp
+from . import util, recorder
 from .exceptions import CliError, CliWarning
 
 
@@ -246,7 +246,7 @@ def source(files, ignore_errors, verbose):
     import shlex
     import html
 
-    m = recordhttp.RecordHttp()
+    rec = recorder.Recorder()
 
     for filename in files:
         if filename.startswith('~'):
@@ -261,8 +261,8 @@ def source(files, ignore_errors, verbose):
 
                     # If recording commands, submit the command line.
                     # Don't record the "source" command itself.
-                    if m.is_recording() and not l.lstrip().startswith('source'):
-                        m.record_command(l)
+                    if rec.is_recording() and not l.lstrip().startswith('source'):
+                        rec.record_command(l)
 
                     # With comments=True shlex will remove comments from the line
                     # when splitting. Comment symbol is #
