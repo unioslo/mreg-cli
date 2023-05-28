@@ -147,13 +147,12 @@ def zone_delete(args):
     zones = get_list(zone_basepath(args.zone), params={"name__endswith": f".{args.zone}"})
 
     # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
-    if hosts and not args.force:
-        cli_warning(
-            "Zone has {} registered entries, must force".format(len(hosts)))
+    if hosts:
+        cli_warning(f"Zone has {len(hosts)} registered entries. Can not delete.")
     other_zones = [z['name'] for z in zones if z['name'] != args.zone]
     if other_zones:
-        cli_warning("Zone has registered subzones '{}', "
-                    "can not delete".format(", ".join(sorted(other_zones))))
+        zone_desc = ", ".join(sorted(other_zones))
+        cli_warning(f"Zone has registered subzones: '{zone_desc}'. Can not delete")
 
     delete(path)
     cli_info("deleted zone {}".format(zone['name']), True)
