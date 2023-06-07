@@ -385,7 +385,7 @@ def list_atoms(args):
         print("{1:<{0}} {2}".format(padding, key, value))
 
     params = {}
-    param, value = convert_wildcard_to_regex('name', args.name)
+    param, value = convert_wildcard_to_regex('name', args.name, True)
     params[param] = value
     info = get_list("/api/v1/hostpolicy/atoms/", params=params)
     if info:
@@ -402,7 +402,7 @@ policy.add_command(
     callback=list_atoms,
     flags=[
         Flag('name',
-             description='Atom name filter (regexp)',
+             description='Atom name, or part of name. You can use * as a wildcard.',
              metavar='FILTER'),
     ]
 )
@@ -414,7 +414,7 @@ def list_roles(args):
     """
 
     params = {}
-    param, value = convert_wildcard_to_regex('name', args.name)
+    param, value = convert_wildcard_to_regex('name', args.name, True)
     params[param] = value
     info = get_list("/api/v1/hostpolicy/roles/", params=params)
     if not info:
@@ -445,7 +445,7 @@ policy.add_command(
     callback=list_roles,
     flags=[
         Flag('name',
-             description='Role name filter (regexp)',
+             description='Role name, or part of name. You can use * as a wildcard.',
              metavar='FILTER'),
     ]
 )
