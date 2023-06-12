@@ -582,10 +582,7 @@ def find(args):
     """
 
     def _add_param(param, value):
-        if '*' not in value:
-            value = f'*{value}*'
-
-        param, value = convert_wildcard_to_regex(param, value)
+        param, value = convert_wildcard_to_regex(param, value, True)
         params[param] = value
 
     if not any([args.name, args.comment, args.contact]):

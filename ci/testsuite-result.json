@@ -5665,6 +5665,24 @@
     ]
   },
   {
+    "command": "network find -network 10.0.1.0/24 -description '*one host*' -vlan 1234 -frozen 1 -reserved 6 -dns_delegated 0 -category Yellow -location Somewhere\n"
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/networks/?network=10.0.1.0%2F24&description__regex=.%2Aone+host.%2A&vlan=1234&dns_delegated=0&category=Yellow&location=Somewhere&frozen=1&reserved=6",
+    "data": {},
+    "status": 200,
+    "response": {
+      "count": 0,
+      "next": null,
+      "previous": null,
+      "results": []
+    }
+  },
+  {
+    "output": "WARNING: : No networks matching the query were found."
+  },
+  {
     "command": "host remove somehost\n"
   },
   {
@@ -8133,6 +8151,27 @@
     }
   },
   {
+    "command": "policy list_atoms ppl\n"
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/hostpolicy/atoms/?name__regex=.%2Appl.%2A",
+    "data": {},
+    "status": 200,
+    "response": {
+      "count": 1,
+      "next": null,
+      "previous": null,
+      "results": [
+        {
+          "roles": [],
+          "description": "Here's the description",
+          "name": "apple"
+        }
+      ]
+    }
+  },
+  {
     "command": "policy role_create fruit \"5 a day\"\n"
   },
   {
@@ -8165,6 +8204,41 @@
   {
     "method": "GET",
     "url": "/api/v1/hostpolicy/roles/?name__regex=.",
+    "data": {},
+    "status": 200,
+    "response": {
+      "count": 1,
+      "next": null,
+      "previous": null,
+      "results": [
+        {
+          "hosts": [],
+          "atoms": [],
+          "description": "5 a day",
+          "name": "fruit",
+          "labels": []
+        }
+      ]
+    }
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/labels/",
+    "data": {},
+    "status": 200,
+    "response": {
+      "count": 0,
+      "next": null,
+      "previous": null,
+      "results": []
+    }
+  },
+  {
+    "command": "policy list_roles fru\n"
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/hostpolicy/roles/?name__regex=.%2Afru.%2A",
     "data": {},
     "status": 200,
     "response": {

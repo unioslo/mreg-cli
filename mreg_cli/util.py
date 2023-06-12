@@ -281,7 +281,10 @@ def _update_token(username: str, password: str) -> None:
     except requests.exceptions.SSLError as e:
         error(e)
     if not result.ok:
-        res = result.json()
+        try:
+            res = result.json()
+        except:
+            res = result.text
         if result.status_code == 400:
             if 'non_field_errors' in res:
                 cli_error("Invalid username/password")
@@ -686,30 +689,7 @@ def format_mac(mac: str) -> str:
     return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])
 
 
-def convert_wildcard_to_filter(param: str, arg: str) -> str:
-    """
-    Convert wildcard filter "foo*bar*" to something DRF will understand.
-
-    E.g. "foo*bar*" -> "?name__startswith=foo&name__contains=bar"
-
-    """
-    if '*' not in arg:
-        return f'{param}={arg}'
-
-    args = arg.split('*')
-    args_len = len(args) - 1
-    parts = []
-    for i, piece in enumerate(args):
-        if i == 0 and piece:
-            parts.append(f'{param}__startswith={piece}')
-        elif i == args_len and piece:
-            parts.append(f'{param}__endswith={piece}')
-        elif piece:
-            parts.append(f'{param}__contains={piece}')
-
-    return '&'.join(parts)
-
-def convert_wildcard_to_regex(param: str, arg: str) -> Tuple[str, str]:
+def convert_wildcard_to_regex(param: str, arg: str, autoWildcards: bool = False) -> Tuple[str, str]:
     """
     Convert wildcard filter "foo*bar*" to something DRF will understand.
 
@@ -717,7 +697,10 @@ def convert_wildcard_to_regex(param: str, arg: str) -> Tuple[str, str]:
 
     """
     if '*' not in arg:
-        return (param, arg)
+        if autoWildcards:
+            arg = f'*{arg}*'
+        else:
+            return (param, arg)
 
     args = arg.split('*')
     args_len = len(args) - 1
@@ -729,6 +712,12 @@ def convert_wildcard_to_regex(param: str, arg: str) -> Tuple[str, str]:
             regex += f'{piece}$'
         elif piece:
             regex += f'.*{piece}.*'
+#        if i == 0 and piece:
+#            parts.append(f'{param}__startswith={piece}')
+#        elif i == args_len and piece:
+#            parts.append(f'{param}__endswith={piece}')
+#        elif piece:
+#            parts.append(f'{param}__contains={piece}')
 
     if arg == '*':
         regex = '.'

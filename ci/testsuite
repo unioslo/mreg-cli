@@ -42,7 +42,6 @@ network remove 2001:db8::/64 -f
 #    - excluded ip ranges
 #    - network info
 #    - setting network category, location, vlan
-#TODO: network find
 network create -network 10.0.1.0/24 -desc "Frozzzen"        # frozen network
 network set_frozen 10.0.1.0/24
 host add somehost -ip 10.0.1.0/24 -contact support@example.org  # should require force, because net's frozen
@@ -56,6 +55,7 @@ network set_description 10.0.1.0/24 "Frozen but has one host"
 #network set_location 10.0.1.0/24 Oslo_Norway
 network set_vlan 10.0.1.0/24 1234
 network info 10.0.1.0/24
+network find -network 10.0.1.0/24 -description '*one host*' -vlan 1234 -frozen 1 -reserved 6 -dns_delegated 0 -category Yellow -location Somewhere
 host remove somehost
 network unset_frozen 10.0.1.0/24
 host add otherhost -ip 10.0.1.20 -contact support@example.org  # fails because reserved range
@@ -124,8 +124,10 @@ zone delegation_delete example.org wut.example.org
 policy atom_create apple "Here's the description"
 policy atom_create -created 2018-07-07 orange "Round and orange"
 policy list_atoms *
+policy list_atoms ppl
 policy role_create fruit "5 a day"
 policy list_roles *
+policy list_roles fru
 policy add_atom fruit apple
 policy add_atom fruit orange
 policy info orange

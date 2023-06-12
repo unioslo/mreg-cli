@@ -307,7 +307,7 @@ network.add_command(
         ),
         Flag(
             "-description",
-            description="Description",
+            description="Description. Supports * as a wildcard",
             metavar="DESCRIPTION",
         ),
         Flag(
