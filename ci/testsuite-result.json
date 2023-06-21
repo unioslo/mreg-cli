@@ -9768,7 +9768,7 @@
     "output": "WARNING: : host not found: 'meh.example.org'"
   },
   {
-    "command": "host remove foo\n"
+    "command": "host a_remove foo 10.0.0.5\n"
   },
   {
     "method": "GET",
@@ -9783,6 +9783,76 @@
           "host": 13
         }
       ],
+      "cnames": [],
+      "mxs": [],
+      "txts": [
+        {
+          "txt": "v=spf1 -all",
+          "host": 13
+        }
+      ],
+      "ptr_overrides": [],
+      "hinfo": null,
+      "loc": null,
+      "bacnetid": null,
+      "name": "foo.example.org",
+      "contact": "",
+      "ttl": null,
+      "comment": "",
+      "zone": 1
+    }
+  },
+  {
+    "method": "DELETE",
+    "url": "/api/v1/ipaddresses/6",
+    "data": {},
+    "status": 204
+  },
+  {
+    "output": "OK: : removed ip 10.0.0.5 from foo.example.org"
+  },
+  {
+    "command": "dhcp assoc foo aa:bb:cc:dd:ee:ff"
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/hosts/foo.example.org",
+    "data": {},
+    "status": 200,
+    "response": {
+      "ipaddresses": [],
+      "cnames": [],
+      "mxs": [],
+      "txts": [
+        {
+          "txt": "v=spf1 -all",
+          "host": 13
+        }
+      ],
+      "ptr_overrides": [],
+      "hinfo": null,
+      "loc": null,
+      "bacnetid": null,
+      "name": "foo.example.org",
+      "contact": "",
+      "ttl": null,
+      "comment": "",
+      "zone": 1
+    }
+  },
+  {
+    "output": "ERROR: : foo doesn't have any ip addresses."
+  },
+  {
+    "command": "host remove foo\n"
+  },
+  {
+    "method": "GET",
+    "url": "/api/v1/hosts/foo.example.org",
+    "data": {},
+    "status": 200,
+    "response": {
+      "ipaddresses": [],
       "cnames": [],
       "mxs": [],
       "txts": [

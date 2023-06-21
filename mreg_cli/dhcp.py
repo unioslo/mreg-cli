@@ -1,6 +1,6 @@
 from .cli import Flag, cli
 from .history import history
-from .log import cli_info, cli_warning
+from .log import cli_error, cli_info, cli_warning
 from .util import format_mac, get_list, host_info_by_name, is_valid_ip, is_valid_mac, patch
 
 #################################
@@ -32,10 +32,12 @@ def _dhcp_get_ip_by_arg(arg):
         info = host_info_by_name(arg)
         if len(info["ipaddresses"]) > 1:
             cli_warning(
-                "{} got {} ip addresses, please enter an ip instead.".format(
+                "{} has {} ip addresses, please enter one of the addresses instead.".format(
                     info["name"],
                     len(info["ipaddresses"]),
                 ))
+        if len(info["ipaddresses"]) == 0:
+            cli_error("{} doesn't have any ip addresses.".format(arg))
         ip = info["ipaddresses"][0]
     return ip
 

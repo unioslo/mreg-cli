@@ -173,6 +173,8 @@ dhcp assoc meh 11:22:33:44:55:66  # host not found
 dhcp assoc foo aa:bb:cc:dd:ee:ff
 dhcp disassoc foo
 dhcp disassoc meh   # host not found
+host a_remove foo 10.0.0.5
+dhcp assoc foo aa:bb:cc:dd:ee:ff # doesn't work, because the host doesn't have any ip addresses
 host remove foo
 network remove 10.0.0.0/24 -f
 

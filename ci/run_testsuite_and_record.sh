@@ -14,6 +14,8 @@ trap cleanup EXIT
 docker compose up -d
 
 # create a superuser
+# TODO: Replace this with python manage.py create_mreg_superuser --username test --password test,
+#       but only after we're sure that every branch we want to test has that feature merged in already.
 echo -ne '
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -26,6 +28,6 @@ group.user_set.add(user)
 ' | docker exec -i mreg python /app/manage.py shell
 
 # run the test suite
-echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_output.json
+echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_output.json >/dev/null
 diff testsuite-result.json new_output.json
 exit $?
