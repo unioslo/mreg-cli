@@ -6,12 +6,13 @@ set -e
 
 # clean up on exit, even if something fails
 function cleanup {
-    docker compose down
+    docker compose --ansi=never down
 }
 trap cleanup EXIT
 
 # start mreg+postgres in containers
-docker compose up -d
+docker compose --ansi=never pull --quiet
+docker compose --ansi=never up -d
 
 # create a superuser
 # TODO: Replace this with python manage.py create_mreg_superuser --username test --password test,
