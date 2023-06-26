@@ -29,5 +29,7 @@ group.user_set.add(user)
 
 # run the test suite
 echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_output.json >/dev/null
-diff testsuite-result.json new_output.json
+
+# show a detailed diff
+python diff.py testsuite-result.json new_output.json
 exit $?
