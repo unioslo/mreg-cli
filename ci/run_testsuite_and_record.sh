@@ -29,8 +29,8 @@ group.user_set.add(user)
 ' | docker exec -i mreg python /app/manage.py shell
 
 # run the test suite
-echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_output.json >/dev/null
+echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_testsuite_log.json >/dev/null
 
 # show a detailed diff
-python diff.py testsuite-result.json new_output.json
+python diff.py testsuite-result.json new_testsuite_log.json
 exit $?
