@@ -11,8 +11,12 @@ function cleanup {
 trap cleanup EXIT
 
 # start mreg+postgres in containers
-docker compose --ansi=never pull --quiet
-docker compose --ansi=never up -d
+if [[ -n "$GITHUB_ACTIONS" ]]; then
+    docker compose --ansi=never pull --quiet
+    docker compose --ansi=never up -d
+else
+    docker compose up -d
+fi
 
 # create a superuser
 # TODO: Replace this with python manage.py create_mreg_superuser --username test --password test,
@@ -29,6 +33,7 @@ group.user_set.add(user)
 ' | docker exec -i mreg python /app/manage.py shell
 
 # run the test suite
+rm -f new_testsuite_log.json
 echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_testsuite_log.json >/dev/null
 
 # show a detailed diff
