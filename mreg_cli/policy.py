@@ -297,9 +297,11 @@ def info(args):
             output += "Atom members:\n"
             if info["atoms"]:
                 for i in info["atoms"]:
-                    _format("", i["name"])
+                    output += _format("", i["name"])
             else:
                 print("None")
+
+    return output
 
 
 policy.add_command(
@@ -556,9 +558,6 @@ def host_list(args):
             "hosts__name": name,
         }
         output += _format(name, get_list(path, params=params))
-        name = i["name"]
-        path = f"/api/v1/hostpolicy/roles/?hosts__name={name}"
-        output += _format(name, get_list(path))
 
     return output
 
