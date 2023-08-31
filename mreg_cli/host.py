@@ -1823,8 +1823,8 @@ def mx_show(args):
     }
     history.record_get(path)
     mxs = get_list(path, params=params)
-    print_mx(mxs, padding=5)
     cli_info("showed MX records for {}".format(info["name"]))
+    return format_mx(mxs, padding=5)
 
 
 # Add 'mx_show' as a sub command to the 'host' command
