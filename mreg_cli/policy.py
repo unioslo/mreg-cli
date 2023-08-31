@@ -530,7 +530,7 @@ def host_list(args):
         params = {
             "hosts__name": name,
         }
-        output += (name, get_list(path, params=params))
+        output += _format(name, get_list(path, params=params))
         name = i["name"]
         path = f"/api/v1/hostpolicy/roles/?hosts__name={name}"
         output += _format(name, get_list(path))
