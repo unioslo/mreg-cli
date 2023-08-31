@@ -382,16 +382,18 @@ def list_roles(args):
     """
     output = ""
 
-    def _print(key, value, padding=14):
-        print("{1:<{0}} {2}".format(padding, key, value))
+    def _format(key, value, padding=14):
+        return "{1:<{0}} {2}\n".format(padding, key, value)
 
     filter = convert_wildcard_to_regex("name", args.name)
     info = get_list(f"/api/v1/hostpolicy/roles/?{filter}")
     if info:
         for i in info:
-            _print(i["name"], repr(i["description"]))
+            output += _format(i["name"], repr(i["description"]))
     else:
-        print("No match")
+        output += "No match\n"
+
+    return output
 
 
 policy.add_command(
@@ -519,7 +521,9 @@ def host_list(args):
     for i in info:
         name = i["name"]
         path = f"/api/v1/hostpolicy/roles/?hosts__name={name}"
-        _print(name, get_list(path))
+        output += _format(name, get_list(path))
+
+    return output
 
 
 policy.add_command(
