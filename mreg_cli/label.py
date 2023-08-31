@@ -65,32 +65,35 @@ label.add_command(
 
 
 def label_info(args):
+    output = ""
     path = f"/api/v1/labels/name/{args.name}"
     label = get(path).json()
-    print("Name:                  ", label["name"])
-    print("Description:           ", label["description"])
+    output += "Name:                  " + label["name"] + "\n"
+    output += "Description:           " + label["description"] + "\n"
 
     rolelist = get_list("/api/v1/hostpolicy/roles/", params={"labels__name": args.name})
-    print("Roles with this label: ")
+    output += "Roles with this label: \n"
     if rolelist:
         for r in rolelist:
-            print("    " + r["name"])
+            output += "    " + r["name"] + "\n"
     else:
-        print("    None")
+        output += "    None\n"
 
     permlist = get_list(
         "/api/v1/permissions/netgroupregex/", params={"labels__name": args.name}
     )
-    print("Permissions with this label:")
+    output += "Permissions with this label:\n"
     if permlist:
-        create_table(
+        output += create_table(
             ("IP range", "Group", "Reg.exp."),
             ("range", "group", "regex"),
             permlist,
             indent=4,
         )
     else:
-        print("    None")
+        output += "    None\n"
+
+    return output
 
 
 label.add_command(
