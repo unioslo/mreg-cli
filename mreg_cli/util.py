@@ -753,7 +753,7 @@ def create_table(
             longest = max(longest, len(str(d[key])))
         raw_format += "{:<%d}   " % longest
 
-    output += raw_format.format(*headers)
+    output += raw_format.format(*headers) + "\n"
     for d in data:
-        output += raw_format.format(*[d[key] for key in keys])
+        output += raw_format.format(*[d[key] for key in keys]) + "\n"
     return output

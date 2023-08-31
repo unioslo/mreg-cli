@@ -64,20 +64,23 @@ def network_list(args):
 
     if not data:
         cli_info("No permissions found", True)
-        return
+        return ""
 
-    headers = ("Range", "Group", "Regex")
-    keys = ("range", "group", "regex")
-    raw_format = ""
-    for key, header in zip(keys, headers):
-        longest = len(header)
-        for d in data:
-            longest = max(longest, len(d[key]))
-        raw_format += "{:<%d} " % longest
+    # Add label names to the result
+    labelnames = {}
+    info = get_list("/api/v1/labels/")
+    if info:
+        for i in info:
+            labelnames[i["id"]] = i["name"]
+    for row in data:
+        labels = []
+        for j in row["labels"]:
+            labels.append(labelnames[j])
+        row["labels"] = ", ".join(labels)
 
-    print(raw_format.format(*headers))
-    for d in data:
-        print(raw_format.format(*[d[key] for key in keys]))
+    headers = ("Range", "Group", "Regex", "Labels")
+    keys = ("range", "group", "regex", "labels")
+    return create_table(headers, keys, data)
 
 
 permission.add_command(

@@ -391,13 +391,27 @@ def list_roles(args):
 
     params = {}
     param, value = convert_wildcard_to_regex("name", args.name, True)
+    param, value = convert_wildcard_to_regex("name", args.name, True)
     params[param] = value
     info = get_list("/api/v1/hostpolicy/roles/", params=params)
-    if info:
-        for i in info:
-            output += _format(i["name"], repr(i["description"]))
-    else:
-        output += "No match\n"
+    if not info:
+        print("No match")
+        return
+
+    labelnames = {}
+    labellist = get_list(f"/api/v1/labels/")
+    if labellist:
+        for i in labellist:
+            labelnames[i["id"]] = i["name"]
+    #    if info:
+    #        for i in info:
+    #            output += _format(i["name"], repr(i["description"]))
+    #    else:
+    #        output += "No match\n"
+
+    if not info:
+        cli_info("No match", True)
+        return ""
 
     rows = []
     for i in info:
