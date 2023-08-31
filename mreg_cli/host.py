@@ -2460,6 +2460,8 @@ def _srv_show(srvs=None, host_id=None):
             prev_name = srv["name"]
         output += format_srv(srv, hostid2name[srv["host"]], padding)
 
+    return output
+
 
 def srv_show(args):
     """Show SRV records for the service."""
