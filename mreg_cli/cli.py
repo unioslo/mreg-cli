@@ -1,11 +1,13 @@
 import argparse
 import os
+import re
+from typing import List, Optional
 
 from prompt_toolkit import HTML
 from prompt_toolkit import print_formatted_text as print
 from prompt_toolkit.completion import Completer, Completion
 
-from . import util, recorder
+from . import recorder, util
 from .exceptions import CliError, CliWarning
 
 
@@ -14,9 +16,19 @@ class CliExit(Exception):
 
 
 class Flag:
-    def __init__(self, name, description='', short_desc='', nargs=None,
-                 default=None, type=None, choices=None, required=False,
-                 metavar=None, action=None):
+    def __init__(
+        self,
+        name,
+        description="",
+        short_desc="",
+        nargs=None,
+        default=None,
+        type=None,
+        choices=None,
+        required=False,
+        metavar=None,
+        action=None,
+    ):
         self.name = name
         self.short_desc = short_desc
         self.description = description
@@ -33,13 +45,14 @@ def _create_command_group(parent):
     parent_name = parent.prog.strip()
 
     if parent_name:
-        title = 'subcommands'
+        title = "subcommands"
     else:
-        title = 'commands'
+        title = "commands"
 
-    metavar = '<command>'
+    metavar = "<command>"
     description = "Run '{}' for more details".format(
-        ' '.join(word for word in (parent_name, metavar, '-h') if word))
+        " ".join(word for word in (parent_name, metavar, "-h") if word)
+    )
 
     return parent.add_subparsers(
         title=title,
@@ -66,11 +79,12 @@ class Command(Completer):
         self.children = {}
         self.flags = {}
         for flag in flags:
-            if flag.name.startswith('-'):
-                self.flags[flag.name.lstrip('-')] = flag
+            if flag.name.startswith("-"):
+                self.flags[flag.name.lstrip("-")] = flag
 
-    def add_command(self, prog, description, short_desc='', epilog=None,
-                    callback=None, flags=[]):
+    def add_command(
+        self, prog, description, short_desc="", epilog=None, callback=None, flags=[]
+    ):
         """
         :param flags: a list of Flag objects. NB: must be handled as read-only,
         since the default value is [].
@@ -78,48 +92,68 @@ class Command(Completer):
         """
         if not self.sub:
             self.sub = _create_command_group(self.parser)
-        parser = self.sub.add_parser(prog,
-                                     description=description,
-                                     epilog=epilog,
-                                     help=short_desc)
+        parser = self.sub.add_parser(
+            prog, description=description, epilog=epilog, help=short_desc
+        )
         for f in flags:
             # Need to create a dict with the parameters so only used
             # parameters are sent, or else exceptions are raised. Ex: if
             # required is passed with an argument which doesn't accept the
             # required option.
             args = {
-                'help': f.description,
+                "help": f.description,
             }
             if f.type:
-                args['type'] = f.type
+                args["type"] = f.type
             if f.nargs:
-                args['nargs'] = f.nargs
+                args["nargs"] = f.nargs
             if f.default:
-                args['default'] = f.default
+                args["default"] = f.default
             if f.choices:
-                args['choices'] = f.choices
+                args["choices"] = f.choices
             if f.required:
-                args['required'] = f.required
+                args["required"] = f.required
             if f.metavar:
-                args['metavar'] = f.metavar
+                args["metavar"] = f.metavar
             if f.action:
-                args['action'] = f.action
-            parser.add_argument(
-                f.name,
-                **args
-            )
+                args["action"] = f.action
+            parser.add_argument(f.name, **args)
         parser.set_defaults(func=callback)
 
         new_cmd = Command(parser, flags, short_desc)
         self.children[prog] = new_cmd
         return new_cmd
 
-    def parse(self, args):
+    def filter_output(
+        self, output: List[str], filter_re: Optional[re.Pattern], negate: bool
+    ) -> List[str]:
+        """Filter the output based on a given regular expression.
+
+        :param output: The original output list.
+        :param filter_re: The compiled regular expression for filtering.
+        :param negate: Whether to negate the filter.
+
+        :returns: A filtered list.
+        """
+        if filter_re is None:
+            return output
+
+        if negate:
+            return [line for line in output if not filter_re.search(line)]
+
+        return [line for line in output if filter_re.search(line)]
+
+    def parse(self, args, filter_re: Optional[re.Pattern] = None, negate: bool = False):
         try:
             args = self.parser.parse_args(args)
-            # If the command has a callback function, call it.
-            if 'func' in vars(args) and args.func:
-                args.func(args)
+            if "func" in vars(args) and args.func:
+                output = args.func(args)
+
+                if output:
+                    lines = output.splitlines()
+                    output = self.filter_output(lines, filter_re, negate)
+                    for line in output:
+                        print(line)
 
         except SystemExit as e:
             # This is a super-hacky workaround to implement a REPL app using
@@ -128,13 +162,14 @@ class Command(Completer):
             self.last_errno = e.code
 
         except CliWarning as e:
-            print(HTML(f'<i>{e}</i>'))
+            print(HTML(f"<i>{e}</i>"))
 
         except CliError as e:
-            print(HTML(f'<ansired>{e}</ansired>'))
+            print(HTML(f"<ansired>{e}</ansired>"))
 
         except CliExit:
             from sys import exit
+
             exit(0)
 
         else:
@@ -144,17 +179,14 @@ class Command(Completer):
 
     def get_completions(self, document, complete_event):
         cur = document.get_word_before_cursor()
-        words = document.text.strip().split(' ')
+        words = document.text.strip().split(" ")
         yield from self.complete(cur, words)
 
     def complete(self, cur, words):
         # if line is empty suggest all sub commands
         if not words:
             for name in self.children:
-                yield Completion(
-                    name,
-                    display_meta=self.children[name].short_desc
-                )
+                yield Completion(name, display_meta=self.children[name].short_desc)
             return
 
         # only suggest sub commands if there's only one word on the line.
@@ -170,7 +202,7 @@ class Command(Completer):
                     yield Completion(
                         name,
                         display_meta=self.children[name].short_desc,
-                        start_position=-len(cur)
+                        start_position=-len(cur),
                     )
 
         # if the line starts with one of the sub commands, pass it along
@@ -184,26 +216,26 @@ class Command(Completer):
         if not cur:
             return
         # If the current word is - then it is the beginning of a flag
-        if cur == '-':
-            cur = ''
+        if cur == "-":
+            cur = ""
         # If current word doesn't start with - then it isn't a flag being typed
-        elif ('-' + cur) not in words:
+        elif ("-" + cur) not in words:
             return
 
         # complete flags which aren't already used
         for name in self.flags:
-            if ('-' + name) not in words:
+            if ("-" + name) not in words:
                 if name.startswith(cur):
                     yield Completion(
                         name,
                         display_meta=self.flags[name].short_desc,
-                        start_position=-len(cur)
+                        start_position=-len(cur),
                     )
 
 
 # Top parser is the root of all the command parsers
-_top_parser = argparse.ArgumentParser('')
-cli = Command(_top_parser, list(), '')
+_top_parser = argparse.ArgumentParser("")
+cli = Command(_top_parser, list(), "")
 
 
 def _quit(args):
@@ -212,27 +244,29 @@ def _quit(args):
 
 # Always need a quit command
 cli.add_command(
-    prog='quit',
-    description='Exit application.',
-    short_desc='Quit',
+    prog="quit",
+    description="Exit application.",
+    short_desc="Quit",
     callback=_quit,
 )
 
 cli.add_command(
-    prog='exit',
-    description='Exit application.',
-    short_desc='Quit',
+    prog="exit",
+    description="Exit application.",
+    short_desc="Quit",
     callback=_quit,
 )
+
 
 def logout(args):
     util.logout()
     raise CliExit
 
+
 cli.add_command(
-    prog='logout',
-    description='Log out from mreg and exit. Will delete token',
-    short_desc='Log out from mreg',
+    prog="logout",
+    description="Log out from mreg and exit. Will delete token",
+    short_desc="Log out from mreg",
     callback=logout,
 )
 
@@ -243,25 +277,25 @@ def source(files, ignore_errors, verbose):
     newlines.
     The files may contain comments. The comment symbol is #
     """
-    import shlex
     import html
+    import shlex
 
     rec = recorder.Recorder()
 
     for filename in files:
-        if filename.startswith('~'):
+        if filename.startswith("~"):
             filename = os.path.expanduser(filename)
         try:
             with open(filename) as f:
                 for i, l in enumerate(f):
                     # Shell commands can be called from scripts. They start with '!'
-                    if l.startswith('!'):
+                    if l.startswith("!"):
                         os.system(l[1:])
                         continue
 
                     # If recording commands, submit the command line.
                     # Don't record the "source" command itself.
-                    if rec.is_recording() and not l.lstrip().startswith('source'):
+                    if rec.is_recording() and not l.lstrip().startswith("source"):
                         rec.record_command(l)
 
                     # With comments=True shlex will remove comments from the line
@@ -270,11 +304,15 @@ def source(files, ignore_errors, verbose):
 
                     # In verbose mode all commands are printed before execution.
                     if verbose and s:
-                        print(HTML(f'<i>> {html.escape(l.strip())}</i>'))
+                        print(HTML(f"<i>> {html.escape(l.strip())}</i>"))
                     cli.parse(s)
                     if cli.last_errno != 0:
-                        print(HTML(f'<ansired><i>{filename}</i>: '
-                                   f'Error on line {i + 1}</ansired>'))
+                        print(
+                            HTML(
+                                f"<ansired><i>{filename}</i>: "
+                                f"Error on line {i + 1}</ansired>"
+                            )
+                        )
                         if not ignore_errors:
                             return
         except FileNotFoundError:
@@ -282,30 +320,34 @@ def source(files, ignore_errors, verbose):
         except PermissionError:
             print(f"Permission denied: '{filename}'")
 
+
 def _source(args):
     source(args.files, args.ignore_errors, args.verbose)
 
+
 # Always need the source command.
 cli.add_command(
-    prog='source',
-    description='Read and run commands from the given source files.',
-    short_desc='Run commands from file(s)',
+    prog="source",
+    description="Read and run commands from the given source files.",
+    short_desc="Run commands from file(s)",
     callback=_source,
     flags=[
-        Flag('files',
-             description='Source files to read commands from. Commands are '
-                         'separated with new lines and comments are started '
-                         'with "#"',
-             short_desc='File names',
-             nargs='+',
-             metavar='SOURCE'),
-        Flag('-ignore-errors',
-             description='Continue command execution on error. Default is to '
-                         'stop execution on error.',
-             short_desc='Stop on error.',
-             action='store_true'),
-        Flag('-verbose',
-             description='Verbose output.',
-             action='store_true'),
-    ]
+        Flag(
+            "files",
+            description="Source files to read commands from. Commands are "
+            "separated with new lines and comments are started "
+            'with "#"',
+            short_desc="File names",
+            nargs="+",
+            metavar="SOURCE",
+        ),
+        Flag(
+            "-ignore-errors",
+            description="Continue command execution on error. Default is to "
+            "stop execution on error.",
+            short_desc="Stop on error.",
+            action="store_true",
+        ),
+        Flag("-verbose", description="Verbose output.", action="store_true"),
+    ],
 )

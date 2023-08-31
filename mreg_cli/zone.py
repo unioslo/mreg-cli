@@ -8,14 +8,14 @@ from .util import delete, get, get_list, host_info_by_name, patch, post
 #################################
 
 zone = cli.add_command(
-    prog='zone',
-    description='Manage zones.',
+    prog="zone",
+    description="Manage zones.",
 )
 
 
 def _verify_nameservers(nameservers, force):
     if not nameservers:
-        cli_warning('At least one nameserver is required')
+        cli_warning("At least one nameserver is required")
 
     errors = []
     for nameserver in nameservers:
@@ -25,22 +25,22 @@ def _verify_nameservers(nameservers, force):
             if not force:
                 errors.append(f"{nameserver} is not in mreg, must force")
         else:
-            if info['zone'] is not None:
-                if not info['ipaddresses'] and not force:
+            if info["zone"] is not None:
+                if not info["ipaddresses"] and not force:
                     errors.append(f"{nameserver} has no A-record/glue, must force")
     if errors:
         cli_warning("\n".join(errors))
 
 
-def print_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
-    print("        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl))
+def format_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
+    return "        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl)
 
 
 def zone_basepath(name):
-    basepath = '/api/v1/zones/'
-    if name.endswith('.arpa'):
-        return f'{basepath}reverse/'
-    return f'{basepath}forward/'
+    basepath = "/api/v1/zones/"
+    if name.endswith(".arpa"):
+        return f"{basepath}reverse/"
+    return f"{basepath}forward/"
 
 
 def zone_path(name):
@@ -59,9 +59,9 @@ def get_zone(name):
 # Implementation of sub command 'create' #
 ##########################################
 
+
 def create(args):
-    """Create new zone.
-    """
+    """Create new zone."""
     _verify_nameservers(args.ns, args.force)
     path = zone_basepath(args.zone)
     post(path, name=args.zone, email=args.email, primary_ns=args.ns)
@@ -69,25 +69,16 @@ def create(args):
 
 
 zone.add_command(
-    prog='create',
-    description='Create new zone.',
-    short_desc='Create new zone.',
+    prog="create",
+    description="Create new zone.",
+    short_desc="Create new zone.",
     callback=create,
     flags=[
-        Flag('zone',
-             description='Zone name.',
-             metavar='ZONE'),
-        Flag('email',
-             description='Contact email.',
-             metavar='EMAIL'),
-        Flag('ns',
-             description='Nameservers of the zone.',
-             nargs='+',
-             metavar='NS'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
-    ]
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag("email", description="Contact email.", metavar="EMAIL"),
+        Flag("ns", description="Nameservers of the zone.", nargs="+", metavar="NS"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
 )
 
 
@@ -95,42 +86,36 @@ zone.add_command(
 # Implementation of sub command 'delegation_create' #
 #####################################################
 
+
 def delegation_create(args):
-    """Create a new zone delegation. """
+    """Create a new zone delegation."""
     _, path = get_zone(args.zone)
     if not args.delegation.endswith(f".{args.zone}"):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
     _verify_nameservers(args.ns, args.force)
-    post(f"{path}/delegations/",
-         name=args.delegation,
-         nameservers=args.ns,
-         comment=args.comment)
+    post(
+        f"{path}/delegations/",
+        name=args.delegation,
+        nameservers=args.ns,
+        comment=args.comment,
+    )
     cli_info("created zone delegation {}".format(args.delegation), True)
 
 
 zone.add_command(
-    prog='delegation_create',
-    description='Create new zone delegation.',
-    short_desc='Create new zone delegation.',
+    prog="delegation_create",
+    description="Create new zone delegation.",
+    short_desc="Create new zone delegation.",
     callback=delegation_create,
     flags=[
-        Flag('zone',
-             description='Zone name.',
-             metavar='ZONE'),
-        Flag('delegation',
-             description='Delegation',
-             metavar='DELEGATION'),
-        Flag('ns',
-             description='Nameservers for the delegation.',
-             nargs='+',
-             metavar='NS'),
-        Flag('-comment',
-             description='Comment with a description',
-             metavar='COMMENT'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
-    ]
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag("delegation", description="Delegation", metavar="DELEGATION"),
+        Flag(
+            "ns", description="Nameservers for the delegation.", nargs="+", metavar="NS"
+        ),
+        Flag("-comment", description="Comment with a description", metavar="COMMENT"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
 )
 
 
@@ -138,39 +123,37 @@ zone.add_command(
 # Implementation of sub command 'delete' #
 ##########################################
 
+
 def zone_delete(args):
-    """Delete a zone
-    """
+    """Delete a zone"""
 
     zone, path = get_zone(args.zone)
-    hosts = get_list("/api/v1/hosts/", params={"zone": zone['id']})
-    zones = get_list(zone_basepath(args.zone), params={"name__endswith": f".{args.zone}"})
+    hosts = get_list("/api/v1/hosts/", params={"zone": zone["id"]})
+    zones = get_list(
+        zone_basepath(args.zone), params={"name__endswith": f".{args.zone}"}
+    )
 
     # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
     if hosts:
         cli_warning(f"Zone has {len(hosts)} registered entries. Can not delete.")
-    other_zones = [z['name'] for z in zones if z['name'] != args.zone]
+    other_zones = [z["name"] for z in zones if z["name"] != args.zone]
     if other_zones:
         zone_desc = ", ".join(sorted(other_zones))
         cli_warning(f"Zone has registered subzones: '{zone_desc}'. Can not delete")
 
     delete(path)
-    cli_info("deleted zone {}".format(zone['name']), True)
+    cli_info("deleted zone {}".format(zone["name"]), True)
 
 
 zone.add_command(
-    prog='delete',
-    description='Delete a zone',
-    short_desc='Delete a zone',
+    prog="delete",
+    description="Delete a zone",
+    short_desc="Delete a zone",
     callback=zone_delete,
     flags=[
-        Flag('zone',
-             description='Zone name.',
-             metavar='ZONE'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
-    ]
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
 )
 
 
@@ -178,8 +161,9 @@ zone.add_command(
 # Implementation of sub command 'delegation_delete' #
 #####################################################
 
+
 def delegation_delete(args):
-    """Delete a zone delegation. """
+    """Delete a zone delegation."""
     zone, path = get_zone(args.zone)
     if not args.delegation.endswith(f".{args.zone}"):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
@@ -188,18 +172,14 @@ def delegation_delete(args):
 
 
 zone.add_command(
-    prog='delegation_delete',
-    description='Delete a zone delegation',
-    short_desc='Delete a zone delegation',
+    prog="delegation_delete",
+    description="Delete a zone delegation",
+    short_desc="Delete a zone delegation",
     callback=delegation_delete,
     flags=[
-        Flag('zone',
-             description='Zone name.',
-             metavar='ZONE'),
-        Flag('delegation',
-             description='Delegation',
-             metavar='DELEGATION'),
-        ]
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag("delegation", description="Delegation", metavar="DELEGATION"),
+    ],
 )
 
 
@@ -207,42 +187,44 @@ zone.add_command(
 # Implementation of sub command 'info' #
 ##########################################
 
-def info(args):
-    """Show SOA info for a existing zone.
-    """
 
-    def print_soa(info: str, text: str, padding: int = 20) -> None:
-        print("{1:<{0}}{2}".format(padding, info, text))
+def info(args):
+    """Show SOA info for a existing zone."""
+
+    def format_soa(info: str, text: str, padding: int = 20) -> None:
+        return "{1:<{0}}{2}\n".format(padding, info, text)
 
     if not args.zone:
-        cli_warning('Name is required')
+        cli_warning("Name is required")
+
+    output = ""
 
     zone, _ = get_zone(args.zone)
-    print_soa("Zone:", zone["name"])
-    print_ns("Nameservers:", "hostname", "TTL")
-    for ns in zone['nameservers']:
-        ttl = ns['ttl'] if ns['ttl'] else "<not set>"
-        print_ns("", ns['name'], ttl)
-    print_soa("Primary ns:", zone["primary_ns"])
-    print_soa("Email:", zone['email'])
-    print_soa("Serialnumber:", zone["serialno"])
-    print_soa("Refresh:", zone["refresh"])
-    print_soa("Retry:", zone["retry"])
-    print_soa("Expire:", zone["expire"])
-    print_soa("SOA TTL:", zone["soa_ttl"])
-    print_soa("Default TTL:", zone["default_ttl"])
+    output += format_soa("Zone:", zone["name"])
+    output += format_ns("Nameservers:", "hostname", "TTL")
+    for ns in zone["nameservers"]:
+        ttl = ns["ttl"] if ns["ttl"] else "<not set>"
+        output += format_ns("", ns["name"], ttl)
+    output += format_soa("Primary ns:", zone["primary_ns"])
+    output += format_soa("Email:", zone["email"])
+    output += format_soa("Serialnumber:", zone["serialno"])
+    output += format_soa("Refresh:", zone["refresh"])
+    output += format_soa("Retry:", zone["retry"])
+    output += format_soa("Expire:", zone["expire"])
+    output += format_soa("SOA TTL:", zone["soa_ttl"])
+    output += format_soa("Default TTL:", zone["default_ttl"])
+
+    return output
 
 
 zone.add_command(
-    prog='info',
-    description='Delete a zone',
-    short_desc='Delete a zone',
+    prog="info",
+    description="Delete a zone",
+    short_desc="Delete a zone",
     callback=info,
     flags=[
-        Flag('zone',
-             description='Zone name.',
-             metavar='ZONE'),
-    ]
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+    ],
 )
 
 
@@ -250,47 +232,55 @@ zone.add_command(
 # Implementation of sub command 'list' #
 ##########################################
 
+
 def zone_list(args):
-    """List all zones.
-    """
+    """List all zones."""
 
     all_zones = []
+
     def _get_zone_list(zonetype):
         zones = get_list(f"/api/v1/zones/{zonetype}/")
         all_zones.extend(zones)
 
     if not (args.forward or args.reverse):
-        cli_warning('Add either -forward or -reverse as argument')
+        cli_warning("Add either -forward or -reverse as argument")
 
     if args.forward:
-        _get_zone_list('forward')
+        _get_zone_list("forward")
     if args.reverse:
-        _get_zone_list('reverse')
+        _get_zone_list("reverse")
 
+    output = ""
 
     if all_zones:
-        print("Zones:")
+        output += "Zones:\n"
         for zone in all_zones:
-            print('   {}'.format(zone['name']))
+            output += "   {}\n".format(zone["name"])
     else:
-        print("No zones found.")
+        output += "No zones found."
+
+    return output
 
 
 zone.add_command(
-    prog='list',
-    description='List zones',
-    short_desc='List zones',
+    prog="list",
+    description="List zones",
+    short_desc="List zones",
     callback=zone_list,
-    flags = [
-        Flag('-forward',
-            action='store_true',
-            short_desc='List all forward zones',
-            description='List all forward zones'),
-        Flag('-reverse',
-            action='store_true',
-            short_desc='List all reverse zones',
-            description='List all reverse zones')
-        ],
+    flags=[
+        Flag(
+            "-forward",
+            action="store_true",
+            short_desc="List all forward zones",
+            description="List all forward zones",
+        ),
+        Flag(
+            "-reverse",
+            action="store_true",
+            short_desc="List all reverse zones",
+            description="List all reverse zones",
+        ),
+    ],
 )
 
 
@@ -298,41 +288,44 @@ zone.add_command(
 # Implementation of sub command 'delegation_list' #
 ###################################################
 
+
 def zone_delegation_list(args):
-    """List a zone's delegations
-    """
+    """List a zone's delegations"""
+
+    output = ""
 
     _, path = get_zone(args.zone)
     delegations = get_list(f"{path}/delegations/")
     if delegations:
-        print("Delegations:")
-        for i in sorted(delegations, key=lambda kv: kv['name']):
-            print('    {}'.format(i['name']))
-            if i['comment']:
-                print('        Comment: {}'.format(i['comment']))
-            print_ns("Nameservers:", "hostname", "TTL")
-            for ns in i['nameservers']:
-                ttl = ns['ttl'] if ns['ttl'] else "<not set>"
-                print_ns("", ns['name'], ttl)
+        output += "Delegations:\n"
+        for i in sorted(delegations, key=lambda kv: kv["name"]):
+            output += "    {}\n".format(i["name"])
+            if i["comment"]:
+                output += "        Comment: {}\n".format(i["comment"])
+            output += format_ns("Nameservers:", "hostname", "TTL")
+            for ns in i["nameservers"]:
+                ttl = ns["ttl"] if ns["ttl"] else "<not set>"
+                output += format_ns("", ns["name"], ttl)
     else:
         cli_info(f"No delegations for {args.zone}", True)
 
+    return output
+
 
 zone.add_command(
-    prog='delegation_list',
+    prog="delegation_list",
     description="List a zone's delegations",
     short_desc="List a zone's delegations",
     callback=zone_delegation_list,
     flags=[
-        Flag('zone',
-             description='Zone name.',
-             metavar='ZONE'),
-        ]
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+    ],
 )
 
 ##########################################################
 # Implementation of sub command 'delegation_comment_set' #
 ##########################################################
+
 
 def _get_delegation_path(zone, delegation):
     if not delegation.endswith(f".{zone}"):
@@ -343,7 +336,7 @@ def _get_delegation_path(zone, delegation):
     if delegation is not None:
         return path
     else:
-        cli_error('Delegation {delegation} not found')
+        cli_error("Delegation {delegation} not found")
 
 
 def zone_delegation_comment_set(args):
@@ -355,44 +348,35 @@ def zone_delegation_comment_set(args):
 
 
 zone.add_command(
-    prog='delegation_comment_set',
+    prog="delegation_comment_set",
     description="Set a comment for zone delegation",
     short_desc="Set a comment for zone delegation",
     callback=zone_delegation_comment_set,
     flags=[
-        Flag('zone',
-             description='Zone name',
-             metavar='ZONE'),
-        Flag('delegation',
-             description='Delegation',
-             metavar='DELEGATION'),
-        Flag('comment',
-             description='Comment',
-             metavar='COMMENT'),
-        ]
+        Flag("zone", description="Zone name", metavar="ZONE"),
+        Flag("delegation", description="Delegation", metavar="DELEGATION"),
+        Flag("comment", description="Comment", metavar="COMMENT"),
+    ],
 )
+
 
 def zone_delegation_comment_remove(args):
     """Set a delegation's comment"""
 
     path = _get_delegation_path(args.zone, args.delegation)
-    patch(path, comment='')
+    patch(path, comment="")
     cli_info(f"Removed comment for {args.delegation}", True)
 
 
 zone.add_command(
-    prog='delegation_comment_remove',
+    prog="delegation_comment_remove",
     description="Remove a comment for zone delegation",
     short_desc="Remove a comment for zone delegation",
     callback=zone_delegation_comment_remove,
     flags=[
-        Flag('zone',
-             description='Zone name',
-             metavar='ZONE'),
-        Flag('delegation',
-             description='Delegation',
-             metavar='DELEGATION'),
-        ]
+        Flag("zone", description="Zone name", metavar="ZONE"),
+        Flag("delegation", description="Delegation", metavar="DELEGATION"),
+    ],
 )
 
 
@@ -400,9 +384,9 @@ zone.add_command(
 # Implementation of sub command 'set_ns' #
 ##########################################
 
+
 def set_ns(args):
-    """Update nameservers for an existing zone.
-    """
+    """Update nameservers for an existing zone."""
     _verify_nameservers(args.ns, args.force)
     zone, path = get_zone(args.zone)
     patch(f"{path}/nameservers", primary_ns=args.ns)
@@ -410,22 +394,15 @@ def set_ns(args):
 
 
 zone.add_command(
-    prog='set_ns',
-    description='Update nameservers for an existing zone.',
-    short_desc='Update nameservers for an existing zone.',
+    prog="set_ns",
+    description="Update nameservers for an existing zone.",
+    short_desc="Update nameservers for an existing zone.",
     callback=set_ns,
     flags=[
-        Flag('zone',
-             description='Zone name.',
-             metavar='ZONE'),
-        Flag('ns',
-             description='Nameservers of the zone.',
-             nargs='+',
-             metavar='NS'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
-    ]
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag("ns", description="Nameservers of the zone.", nargs="+", metavar="NS"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
 )
 
 
@@ -433,18 +410,25 @@ zone.add_command(
 # Implementation of sub command 'set_soa' #
 ###########################################
 
+
 def set_soa(args):
     # .zone .ns .email .serialno .retry .expire .soa_ttl
-    """Updated the SOA of a zone.
-    """
+    """Updated the SOA of a zone."""
     _, path = get_zone(args.zone)
     data = {}
-    for i in ('email', 'expire', 'refresh', 'retry', 'serialno', 'soa_ttl',):
+    for i in (
+        "email",
+        "expire",
+        "refresh",
+        "retry",
+        "serialno",
+        "soa_ttl",
+    ):
         value = getattr(args, i, None)
         if value is not None:
             data[i] = value
     if args.ns:
-        data['primary_ns'] = args.ns
+        data["primary_ns"] = args.ns
 
     if data:
         patch(path, **data)
@@ -454,41 +438,22 @@ def set_soa(args):
 
 
 zone.add_command(
-    prog='set_soa',
-    description='Updated the SOA of a zone.',
-    short_desc='Updated the SOA of a zone.',
+    prog="set_soa",
+    description="Updated the SOA of a zone.",
+    short_desc="Updated the SOA of a zone.",
     callback=set_soa,
     flags=[
-        Flag('zone',
-             description='Zone name.',
-             metavar='ZONE'),
-        Flag('-ns',
-             description='Primary nameserver (SOA MNAME).',
-             metavar='PRIMARY-NS'),
-        Flag('-email',
-             description='Zone contact email.',
-             metavar='EMAIL'),
-        Flag('-serialno',
-             description='Serial number.',
-             type=int,
-             metavar='SERIALNO'),
-        Flag('-refresh',
-             description='Refresh time.',
-             type=int,
-             metavar='REFRESH'),
-        Flag('-retry',
-             description='Retry time.',
-             type=int,
-             metavar='RETRY'),
-        Flag('-expire',
-             description='Expire time.',
-             type=int,
-             metavar='EXPIRE'),
-        Flag('-soa-ttl',
-             description='SOA Time To Live',
-             type=int,
-             metavar='TTL'),
-    ]
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag(
+            "-ns", description="Primary nameserver (SOA MNAME).", metavar="PRIMARY-NS"
+        ),
+        Flag("-email", description="Zone contact email.", metavar="EMAIL"),
+        Flag("-serialno", description="Serial number.", type=int, metavar="SERIALNO"),
+        Flag("-refresh", description="Refresh time.", type=int, metavar="REFRESH"),
+        Flag("-retry", description="Retry time.", type=int, metavar="RETRY"),
+        Flag("-expire", description="Expire time.", type=int, metavar="EXPIRE"),
+        Flag("-soa-ttl", description="SOA Time To Live", type=int, metavar="TTL"),
+    ],
 )
 
 ###################################################
@@ -498,26 +463,20 @@ zone.add_command(
 
 def set_default_ttl(args):
     # .zone .ttl
-    """Update the default TTL of a zone.
-    """
+    """Update the default TTL of a zone."""
     _, path = get_zone(args.zone)
-    data = {'default_ttl': args.ttl}
+    data = {"default_ttl": args.ttl}
     patch(path, **data)
     cli_info("set default TTL for {}".format(args.zone), True)
 
 
 zone.add_command(
-    prog='set_default_ttl',
-    description='Set the default TTL of a zone.',
-    short_desc='Set the default TTL of a zone.',
+    prog="set_default_ttl",
+    description="Set the default TTL of a zone.",
+    short_desc="Set the default TTL of a zone.",
     callback=set_default_ttl,
     flags=[
-        Flag('zone',
-             description='Zone name.',
-             metavar='ZONE'),
-        Flag('ttl',
-             description='Default Time To Live.',
-             type=int,
-             metavar='TTL'),
-        ]
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag("ttl", description="Default Time To Live.", type=int, metavar="TTL"),
+    ],
 )
