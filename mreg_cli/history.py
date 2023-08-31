@@ -44,16 +44,26 @@ class HistoryEvent:
     def __repr__(self):
         return "<{} event with {} requests>".format(self.name, len(self.requests))
 
-    def add_request(self, name: str, url: str, resource_name: str, old_data: dict, new_data: dict,
-                    redoable: bool, undoable: bool) -> None:
+    def add_request(
+        self,
+        name: str,
+        url: str,
+        resource_name: str,
+        old_data: dict,
+        new_data: dict,
+        redoable: bool,
+        undoable: bool,
+    ) -> None:
         """Add a recording of a request which happened during this event."""
-        self.requests.append({
-            "name": name,
-            "url": url,
-            "resource_name": resource_name,
-            "old_data": old_data,
-            "new_data": new_data,
-        })
+        self.requests.append(
+            {
+                "name": name,
+                "url": url,
+                "resource_name": resource_name,
+                "old_data": old_data,
+                "new_data": new_data,
+            }
+        )
         if not redoable:
             self.redoable = False
         if not undoable:
@@ -72,18 +82,15 @@ class HistoryEvent:
                 res = requests.patch(url=request["url"], data=request["old_data"])
                 msg = "patched {}".format(request["url"])
             elif request["name"] == "DELETE":
-                url = request["url"].rsplit(sep='/', maxsplit=1)[0] + "/"
+                url = request["url"].rsplit(sep="/", maxsplit=1)[0] + "/"
                 res = requests.post(url, data=request["old_data"])
                 msg = "posted {}".format(url)
             else:
                 continue
             if not res.ok:
                 # QUESTION HISTORY: hvordan egentlig håndtere feil under undo av event?
-                message = "{} \"{}\": {}: {}".format(
-                    request["name"],
-                    request["url"],
-                    res.status_code,
-                    res.reason
+                message = '{} "{}": {}: {}'.format(
+                    request["name"], request["url"], res.status_code, res.reason
                 )
                 try:
                     body = res.json()
@@ -113,11 +120,8 @@ class HistoryEvent:
                 continue
             if not res.ok:
                 # QUESTION HISTORY: hvordan egentlig håndtere feil under redo av event?
-                message = "{} \"{}\": {}: {}".format(
-                    request["name"],
-                    request["url"],
-                    res.status_code,
-                    res.reason
+                message = '{} "{}": {}: {}'.format(
+                    request["name"], request["url"], res.status_code, res.reason
                 )
                 try:
                     body = res.json()
@@ -153,8 +157,14 @@ class History:
             # Setting current to a dummy event which will be lost when a new event is started.
             self.current = HistoryEvent()
 
-    def record_post(self, url: str, resource_name: str, new_data: dict, redoable: bool = True,
-                    undoable: bool = True) -> None:
+    def record_post(
+        self,
+        url: str,
+        resource_name: str,
+        new_data: dict,
+        redoable: bool = True,
+        undoable: bool = True,
+    ) -> None:
         """Record a POST request in the current event"""
         self.current.add_request(
             name="POST",
@@ -166,8 +176,14 @@ class History:
             undoable=undoable,
         )
 
-    def record_patch(self, url: str, new_data: dict, old_data: dict,
-                     redoable: bool = True, undoable: bool = True) -> None:
+    def record_patch(
+        self,
+        url: str,
+        new_data: dict,
+        old_data: dict,
+        redoable: bool = True,
+        undoable: bool = True,
+    ) -> None:
         """Record a PATCH request in the current event"""
         self.current.add_request(
             name="PATCH",
@@ -179,8 +195,9 @@ class History:
             undoable=undoable,
         )
 
-    def record_delete(self, url: str, old_data: dict, redoable: bool = True,
-                      undoable: bool = True) -> None:
+    def record_delete(
+        self, url: str, old_data: dict, redoable: bool = True, undoable: bool = True
+    ) -> None:
         """Record a DELETE request in the current event"""
         self.current.add_request(
             name="DELETE",
@@ -192,7 +209,9 @@ class History:
             undoable=undoable,
         )
 
-    def record_get(self, url: str, redoable: bool = True, undoable: bool = True) -> None:
+    def record_get(
+        self, url: str, redoable: bool = True, undoable: bool = True
+    ) -> None:
         """Record a GET request in the current event"""
         self.current.add_request(
             name="GET",
@@ -244,9 +263,9 @@ history = History()
 ####################################
 
 history_ = cli.add_command(
-    prog='history',
-    description='Undo, redo or print history for this program session.',
-    short_desc='Session history'
+    prog="history",
+    description="Undo, redo or print history for this program session.",
+    short_desc="Session history",
 )
 
 
@@ -254,14 +273,15 @@ history_ = cli.add_command(
 # Implementation of sub command 'print' #
 #########################################
 
+
 def print_(args):
-    print('printing history.')
+    print("printing history.")
 
 
 history_.add_command(
-    prog='print',
-    description='Print the history',
-    short_desc='Print the history',
+    prog="print",
+    description="Print the history",
+    short_desc="Print the history",
     callback=print_,
 )
 
@@ -270,21 +290,19 @@ history_.add_command(
 # Implementation of sub command 'redo' #
 ########################################
 
+
 def redo(args):
-    print('redo:', args.num)
+    print("redo:", args.num)
 
 
 history_.add_command(
-    prog='redo',
-    description='Redo some history event given by NUM (GET '
-                'requests are not redone)',
-    short_desc='Redo history.',
+    prog="redo",
+    description="Redo some history event given by NUM (GET " "requests are not redone)",
+    short_desc="Redo history.",
     callback=redo,
     flags=[
-        Flag('num',
-             description='History number of the event to redo.',
-             metavar='NUM'),
-    ]
+        Flag("num", description="History number of the event to redo.", metavar="NUM"),
+    ],
 )
 
 
@@ -292,19 +310,18 @@ history_.add_command(
 # Implementation of sub command 'undo' #
 ########################################
 
+
 def undo(args):
-    print('undo:', args.num)
+    print("undo:", args.num)
 
 
 history_.add_command(
-    prog='undo',
-    description='Undo some history event given by <history-number> (GET '
-                'requests are not redone)',
-    short_desc='Undo history.',
+    prog="undo",
+    description="Undo some history event given by <history-number> (GET "
+    "requests are not redone)",
+    short_desc="Undo history.",
     callback=undo,
     flags=[
-        Flag('num',
-             description='History number of the event to undo.',
-             metavar='NUM'),
-    ]
+        Flag("num", description="History number of the event to undo.", metavar="NUM"),
+    ],
 )

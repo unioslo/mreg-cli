@@ -5,18 +5,18 @@ import os
 import re
 import sys
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Iterable,
+    List,
     NoReturn,
     Optional,
-    List,
     Sequence,
     Tuple,
     Union,
-    overload,
     cast,
-    TYPE_CHECKING,
+    overload,
 )
 
 if TYPE_CHECKING:
@@ -26,14 +26,12 @@ if TYPE_CHECKING:
 import urllib.parse
 
 import requests
-
 from prompt_toolkit import prompt
 
+from . import recorder
 from .exceptions import CliError, HostNotFoundWarning
 from .history import history
 from .log import cli_error, cli_warning
-
-from . import recorder
 
 location_tags = []  # type: List[str]
 category_tags = []  # type: List[str]
