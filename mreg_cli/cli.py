@@ -1,7 +1,7 @@
 import argparse
 import os
-import re
-from typing import List, Optional
+from ssl import ALERT_DESCRIPTION_INSUFFICIENT_SECURITY
+from typing import Any, List, Optional
 
 from prompt_toolkit import HTML
 from prompt_toolkit import print_formatted_text as print
@@ -124,8 +124,10 @@ class Command(Completer):
         self.children[prog] = new_cmd
         return new_cmd
 
+    # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
+    # don't have that type. So we use Any instead.
     def filter_output(
-        self, output: List[str], filter_re: Optional[re.Pattern], negate: bool
+        self, output: List[str], filter_re: Optional[Any], negate: bool
     ) -> List[str]:
         """Filter the output based on a given regular expression.
 
@@ -143,7 +145,9 @@ class Command(Completer):
 
         return [line for line in output if filter_re.search(line)]
 
-    def parse(self, args, filter_re: Optional[re.Pattern] = None, negate: bool = False):
+    # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
+    # don't have that type. So we use Any instead.
+    def parse(self, args, filter_re: Optional[Any] = None, negate: bool = False):
         try:
             args = self.parser.parse_args(args)
             if "func" in vars(args) and args.func:
