@@ -301,12 +301,12 @@ def info(args):
             else:
                 output += "None\n"
 
-            output += "Labels:\n"
-            for i in info["labels"]:
-                lb = get(f"/api/v1/labels/{i}").json()
-                output += _format("", lb["name"])
-            if not info["labels"]:
-                output += _format("", "None")
+        output += "Labels:\n"
+        for i in info["labels"]:
+            lb = get(f"/api/v1/labels/{i}").json()
+            output += _format("", lb["name"])
+        if not info["labels"]:
+            output += _format("", "None")
 
     return output
 
