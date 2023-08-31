@@ -1,7 +1,7 @@
 from .cli import Flag, cli
 from .history import history
 from .log import cli_error, cli_info, cli_warning
-from .util import delete, get, get_list, patch, post, print_table
+from .util import delete, get, get_list, patch, post, create_table
 
 label = cli.add_command(
     prog="label",
@@ -36,8 +36,8 @@ def label_list(args):
     labels = get_list("/api/v1/labels/", params={"ordering": "name"})
     if not labels:
         cli_info("No labels", True)
-        return
-    print_table(("Name", "Description"), ("name", "description"), labels)
+        return ""
+    return create_table(("Name", "Description"), ("name", "description"), labels)
 
 
 label.add_command(prog="list", description="List labels", callback=label_list, flags=[])
@@ -83,7 +83,7 @@ def label_info(args):
     )
     print("Permissions with this label:")
     if permlist:
-        print_table(
+        create_table(
             ("IP range", "Group", "Reg.exp."),
             ("range", "group", "regex"),
             permlist,

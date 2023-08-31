@@ -12,7 +12,7 @@ from .util import (
     host_info_by_name,
     patch,
     post,
-    print_table,
+    create_table,
 )
 
 ##################################
@@ -399,6 +399,17 @@ def list_roles(args):
     else:
         output += "No match\n"
 
+    rows = []
+    for i in info:
+        # show label names instead of id numbers
+        labels = []
+        for j in i["labels"]:
+            labels.append(labelnames[j])
+        i["labels"] = ", ".join(labels)
+        rows.append(i)
+    output += create_table(
+        ("Role", "Description", "Labels"), ("name", "description", "labels"), rows
+    )
     return output
 
 

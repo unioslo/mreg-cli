@@ -3,7 +3,7 @@ from .exceptions import HostNotFoundWarning
 from .history import history
 from .host import host
 from .log import cli_error, cli_info, cli_warning
-from .util import delete, get, get_list, host_info_by_name, post, print_table
+from .util import delete, get, get_list, host_info_by_name, post, create_table
 
 
 def bacnetid_add(args):
@@ -81,7 +81,7 @@ def bacnetid_list(args):
         if maxval > 4194302:
             cli_error("The maximum ID value is 4194302.")
     r = get_list("/api/v1/bacnet/ids/", {"id__range": "{},{}".format(minval, maxval)})
-    print_table(("ID", "Hostname"), ("id", "hostname"), r)
+    return create_table(("ID", "Hostname"), ("id", "hostname"), r)
 
 
 host.add_command(

@@ -11,7 +11,7 @@ from .util import (
     is_valid_network,
     patch,
     post,
-    print_table,
+    create_table,
 )
 
 ###################################
