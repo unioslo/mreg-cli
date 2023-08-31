@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from typing import NoReturn, Optional, Type, Union
 
-from . import mocktraffic, recorder
+from . import recorder
 from .exceptions import CliError, CliWarning
 
 logfile = None

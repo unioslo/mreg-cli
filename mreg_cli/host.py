@@ -2,7 +2,6 @@ import ipaddress
 import re
 from typing import Iterable, Optional
 
-
 from .cli import Flag, cli
 from .dhcp import assoc_mac_to_ip
 from .exceptions import HostNotFoundWarning
@@ -229,7 +228,7 @@ host.add_command(
     description=(
         "Add a new host with the given name, ip or network and contact. "
         "comment is optional."
-        )
+    ),
     short_desc="Add a new host",
     callback=add,
     flags=[
@@ -241,8 +240,10 @@ host.add_command(
         Flag(
             "-ip",
             short_desc="An ip or net",
-            description="The hosts ip or a network. If it's a network the first free IP is "
-            "selected from the network",
+            description=(
+                "The hosts ip or a network. If it's a network the first free IP is "
+                "selected from the network"
+            ),
             metavar="IP/NET",
         ),
         Flag(
@@ -284,7 +285,7 @@ def remove(args):
     # force
     path = "/api/v1/naptrs/"
     history.record_get(path)
-    naptrs = get_list(path, params={"host": info['id']})
+    naptrs = get_list(path, params={"host": info["id"]})
     if len(naptrs) > 0:
         if not args.force:
             warn_msg += "{} NAPTR records. ".format(len(naptrs))
@@ -300,7 +301,7 @@ def remove(args):
     # Require force if host has any SRV records. Delete the SRV records if force
     path = "/api/v1/srvs/"
     history.record_get(path)
-    srvs = get_list(path, params={"host__name": info['name']})
+    srvs = get_list(path, params={"host__name": info["name"]})
     if len(srvs) > 0:
         if not args.force:
             warn_msg += "{} SRV records. ".format(len(srvs))
@@ -391,7 +392,7 @@ def format_comment(comment: str, padding: int = 14) -> str:
 
 
 def format_ipadresses(
-    ipaddresses: typing.Iterable[dict], names: bool = False, padding: int = 14
+    ipaddresses: Iterable[dict], names: bool = False, padding: int = 14
 ) -> None:
     """Format given ip addresses"""
 
@@ -639,7 +640,7 @@ def find(args):
             f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.'
         )
 
-    del(params["page_size"])
+    del params["page_size"]
     ret = get_list(path, params=params)
     max_name = max_contact = 20
     for i in ret:
@@ -1343,8 +1344,7 @@ def cname_add(args):
     # Check if the cname is in a zone controlled by mreg
     check_zone_for_hostname(alias, args.force)
 
-    data = {'host': info['id'],
-            'name': alias}
+    data = {"host": info["id"], "name": alias}
     # Create CNAME record
     path = "/api/v1/cnames/"
     history.record_post(path, "", data, undoable=False)
@@ -1360,15 +1360,9 @@ host.add_command(
     short_desc="Add CNAME.",
     callback=cname_add,
     flags=[
-        Flag('name',
-             description='Name of target host.',
-             metavar='NAME'),
-        Flag('alias',
-             description='Name of CNAME host.',
-             metavar='ALIAS'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag("name", description="Name of target host.", metavar="NAME"),
+        Flag("alias", description="Name of CNAME host.", metavar="ALIAS"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -1415,9 +1409,9 @@ host.add_command(
 #  Implementation of sub command 'cname_replace'  #
 ###################################################
 
+
 def cname_replace(args):
-    """Move a CNAME entry from one host to another.
-    """
+    """Move a CNAME entry from one host to another."""
 
     cname = clean_hostname(args.cname)
     host = clean_hostname(args.host)
@@ -1425,69 +1419,27 @@ def cname_replace(args):
     cname_info = host_info_by_name(cname)
     host_info = host_info_by_name(host)
 
-    if cname_info['id'] == host_info['id']:
+    if cname_info["id"] == host_info["id"]:
         cli_error(f"The CNAME {cname} already points to {host}.")
 
     # Update CNAME record.
-    data = {'host': host_info['id'], 'name': cname }
+    data = {"host": host_info["id"], "name": cname}
     path = f"/api/v1/cnames/{cname}"
     history.record_patch(path, "", data, undoable=False)
     patch(path, **data)
-    cli_info(f"Moved CNAME alias {cname}: {cname_info['name']} -> {host}",
-             print_msg=True)
+    cli_info(
+        f"Moved CNAME alias {cname}: {cname_info['name']} -> {host}", print_msg=True
+    )
+
 
 host.add_command(
-    prog='cname_replace',
-    description='Move a CNAME record from one host to another.',
-    short_desc='Replace a CNAME record.',
+    prog="cname_replace",
+    description="Move a CNAME record from one host to another.",
+    short_desc="Replace a CNAME record.",
     callback=cname_replace,
     flags=[
-        Flag('cname',
-             description='The CNAME to modify.',
-             metavar='CNAME'),
-        Flag('host',
-             description='The new host for the CNAME.',
-             metavar='HOST'),
-    ],
-)
-
-###################################################
-#  Implementation of sub command 'cname_replace'  #
-###################################################
-
-def cname_replace(args):
-    """Move a CNAME entry from one host to another.
-    """
-
-    cname = clean_hostname(args.cname)
-    host = clean_hostname(args.host)
-
-    cname_info = host_info_by_name(cname)
-    host_info = host_info_by_name(host)
-
-    if cname_info['id'] == host_info['id']:
-        cli_error(f"The CNAME {cname} already points to {host}.")
-
-    # Update CNAME record.
-    data = {'host': host_info['id'], 'name': cname }
-    path = f"/api/v1/cnames/{cname}"
-    history.record_patch(path, "", data, undoable=False)
-    patch(path, **data)
-    cli_info(f"Moved CNAME alias {cname}: {cname_info['name']} -> {host}",
-             print_msg=True)
-
-host.add_command(
-    prog='cname_replace',
-    description='Move a CNAME record from one host to another.',
-    short_desc='Replace a CNAME record.',
-    callback=cname_replace,
-    flags=[
-        Flag('cname',
-             description='The CNAME to modify.',
-             metavar='CNAME'),
-        Flag('host',
-             description='The new host for the CNAME.',
-             metavar='HOST'),
+        Flag("cname", description="The CNAME to modify.", metavar="CNAME"),
+        Flag("host", description="The new host for the CNAME.", metavar="HOST"),
     ],
 )
 
@@ -1867,12 +1819,12 @@ def mx_show(args):
     info = host_info_by_name(args.name)
     path = "/api/v1/mxs/"
     params = {
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     mxs = get_list(path, params=params)
     print_mx(mxs, padding=5)
-    cli_info("showed MX records for {}".format(info['name']))
+    cli_info("showed MX records for {}".format(info["name"]))
 
 
 # Add 'mx_show' as a sub command to the 'host' command
@@ -1981,7 +1933,7 @@ def naptr_remove(args):
     path = "/api/v1/naptrs/"
     params = {
         "replacement__contains": args.replacement,
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     naptrs = get_list(path, params=params)
@@ -2059,12 +2011,20 @@ def _naptr_format(info):
     output = ""
     path = "/api/v1/naptrs/"
     params = {
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     naptrs = get_list(path, params=params)
-    headers = ("NAPTRs:", "Preference", "Order", "Flag", "Service", "Regex", "Replacement")
-    row_format = '{:<14}' * len(headers)
+    headers = (
+        "NAPTRs:",
+        "Preference",
+        "Order",
+        "Flag",
+        "Service",
+        "Regex",
+        "Replacement",
+    )
+    row_format = "{:<14}" * len(headers)
     if naptrs:
         output += row_format.format(*headers)
         for naptr in naptrs:
@@ -2389,7 +2349,7 @@ def srv_remove(args):
     path = "/api/v1/srvs/"
     params = {
         "name": sname,
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     srvs = get_list(path, params=params)
@@ -2487,7 +2447,7 @@ def _srv_show(srvs=None, host_id=None):
             padding = len(srv["name"])
         host_ids.add(str(srv["host"]))
 
-    arg = ','.join(host_ids)
+    arg = ",".join(host_ids)
     hosts = get_list("/api/v1/hosts/", params={"id__in": arg})
     for host in hosts:
         hostid2name[host["id"]] = host["name"]
@@ -2666,7 +2626,7 @@ def _sshfp_format(info):
     output = ""
     path = "/api/v1/sshfps/"
     params = {
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     sshfps = get_list(path, params=params)
@@ -2917,7 +2877,7 @@ def txt_show(args):
     info = host_info_by_name(args.name)
     path = "/api/v1/txts/"
     params = {
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     txts = get_list(path, params=params)

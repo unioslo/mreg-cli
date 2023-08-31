@@ -37,19 +37,15 @@ def network_list(args):
 
     # Replace with a.supernet_of(b) when python 3.7 is required
     def _supernet_of(a, b):
-        return (a.network_address <= b.network_address and
-                a.broadcast_address >= b.broadcast_address)
+        return (
+            a.network_address <= b.network_address
+            and a.broadcast_address >= b.broadcast_address
+        )
 
     params = {
         "ordering": "range,group",
     }
     if args.group is not None:
-        query.append(convert_wildcard_to_regex("group", args.group))
-    if query:
-        params = "&" + "&".join(query)
-    permissions = get_list(
-        f"/api/v1/permissions/netgroupregex/?ordering=range,group{params}"
-    )
         param, value = convert_wildcard_to_regex("group", args.group)
         params[param] = value
     permissions = get_list("/api/v1/permissions/netgroupregex/", params=params)
@@ -177,7 +173,6 @@ permission.add_command(
     ],
 )
 
-
 #################################################################
 # Implementation of sub commands 'label_add' and 'label_remove'
 #################################################################
@@ -281,120 +276,4 @@ permission.add_command(
         Flag("regex", description="Regular expression", metavar="REGEX"),
         Flag("label", description="The label you want to remove"),
     ],
-)
-
-
-#################################################################
-# Implementation of sub commands 'label_add' and 'label_remove'
-#################################################################
-
-def add_label_to_permission(args):
-    """Add a label to a permission triplet"""
-
-    # find the permission
-    query = {
-        'group': args.group,
-        'range': args.range,
-        'regex': args.regex,
-    }
-    permissions = get_list("/api/v1/permissions/netgroupregex/", params=query)
-
-    if not permissions:
-        cli_warning("No matching permission found", True)
-        return
-
-    assert len(permissions) == 1, "Should only match one permission"
-    id = permissions[0]['id']
-    path = f"/api/v1/permissions/netgroupregex/{id}"
-
-    # find the label
-    labelpath = f'/api/v1/labels/name/{args.label}'
-    res = get(labelpath, ok404=True)
-    if not res:
-        cli_warning(f'Could not find a label with name {args.label!r}')
-    label = res.json()
-
-    # check if the permission object already has the label
-    perm = get(path).json()
-    if label["id"] in perm["labels"]:
-        cli_warning(f'The permission already has the label {args.label!r}')
-
-    # patch the permission
-    ar = perm["labels"]
-    ar.append(label["id"])
-    patch(path, labels=ar)
-    cli_info(f"Added the label {args.label!r} to the permission.", print_msg=True)
-
-permission.add_command(
-    prog='label_add',
-    description='Add a label to a permission',
-    callback=add_label_to_permission,
-    flags=[
-        Flag('range',
-             description='Network range',
-             metavar='RANGE'),
-        Flag('group',
-             description='Group with access',
-             metavar='GROUP'),
-        Flag('regex',
-             description='Regular expression',
-             metavar='REGEX'),
-        Flag('label',
-            description='The label you want to add')
-    ]
-)
-
-def remove_label_from_permission(args):
-    """Remove a label from a permission"""
-    # find the permission
-    query = {
-        'group': args.group,
-        'range': args.range,
-        'regex': args.regex,
-    }
-    permissions = get_list("/api/v1/permissions/netgroupregex/", params=query)
-
-    if not permissions:
-        cli_warning("No matching permission found", True)
-        return
-
-    assert len(permissions) == 1, "Should only match one permission"
-    id = permissions[0]['id']
-    path = f"/api/v1/permissions/netgroupregex/{id}"
-
-    # find the label
-    labelpath = f'/api/v1/labels/name/{args.label}'
-    res = get(labelpath, ok404=True)
-    if not res:
-        cli_warning(f'Could not find a label with name {args.label!r}')
-    label = res.json()
-
-    # check if the permission object has the label
-    perm = get(path).json()
-    if not label["id"] in perm["labels"]:
-        cli_warning(f"The permission doesn't have the label {args.label!r}")
-
-    # patch the permission
-    ar = perm["labels"]
-    ar.remove(label["id"])
-    patch(path, params={'labels':ar}, use_json=True)
-    cli_info(f"Removed the label {args.label!r} from the permission.", print_msg=True)
-
-permission.add_command(
-    prog='label_remove',
-    description='Remove a label from a permission',
-    callback=remove_label_from_permission,
-    flags=[
-        Flag('range',
-             description='Network range',
-             metavar='RANGE'),
-        Flag('group',
-             description='Group with access',
-             metavar='GROUP'),
-        Flag('regex',
-             description='Regular expression',
-             metavar='REGEX'),
-        Flag('label',
-            description='The label you want to remove')
-    ]
 )
