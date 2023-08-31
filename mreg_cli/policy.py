@@ -28,7 +28,7 @@ policy = cli.add_command(
 
 
 def _get_atom(name):
-    return get_list(f"/api/v1/hostpolicy/atoms/?name={name}")
+    return get_list("/api/v1/hostpolicy/atoms/", params={"name": name})
 
 
 def get_atom(name):
@@ -39,7 +39,7 @@ def get_atom(name):
 
 
 def _get_role(name):
-    return get_list(f"/api/v1/hostpolicy/roles/?name={name}")
+    return get_list("/api/v1/hostpolicy/roles/", params={"name": name})
 
 
 def get_role(name):
@@ -106,7 +106,9 @@ def atom_delete(args):
 
     get_atom(args.name)
 
-    info = get_list(f"/api/v1/hostpolicy/roles/?atoms__name__exact={args.name}")
+    info = get_list(
+        "/api/v1/hostpolicy/roles/", params={"atoms__name__exact": args.name}
+    )
     inuse = [i["name"] for i in info]
 
     if inuse:
@@ -354,8 +356,10 @@ def list_atoms(args):
     def _format(key, value, padding=20):
         return "{1:<{0}} {2}\n".format(padding, key, value)
 
-    filter = convert_wildcard_to_regex("name", args.name)
-    info = get_list(f"/api/v1/hostpolicy/atoms/?{filter}")
+    params = {}
+    param, value = convert_wildcard_to_regex("name", args.name, True)
+    params[param] = value
+    info = get_list("/api/v1/hostpolicy/atoms/", params=params)
     if info:
         for i in info:
             output += _format(i["name"], repr(i["description"]))
@@ -385,8 +389,10 @@ def list_roles(args):
     def _format(key, value, padding=14):
         return "{1:<{0}} {2}\n".format(padding, key, value)
 
-    filter = convert_wildcard_to_regex("name", args.name)
-    info = get_list(f"/api/v1/hostpolicy/roles/?{filter}")
+    params = {}
+    param, value = convert_wildcard_to_regex("name", args.name, True)
+    params[param] = value
+    info = get_list("/api/v1/hostpolicy/roles/", params=params)
     if info:
         for i in info:
             output += _format(i["name"], repr(i["description"]))
@@ -519,6 +525,12 @@ def host_list(args):
         info.append(host_info_by_name(name))
 
     for i in info:
+        name = i["name"]
+        path = "/api/v1/hostpolicy/roles/"
+        params = {
+            "hosts__name": name,
+        }
+        output += (name, get_list(path, params=params))
         name = i["name"]
         path = f"/api/v1/hostpolicy/roles/?hosts__name={name}"
         output += _format(name, get_list(path))

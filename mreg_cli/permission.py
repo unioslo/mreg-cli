@@ -142,12 +142,12 @@ def network_remove(args):
     Remove permission for networks
     """
 
-    query = {
+    params = {
         "group": args.group,
         "range": args.range,
         "regex": args.regex,
     }
-    permissions = get_list("/api/v1/permissions/netgroupregex/", params=query)
+    permissions = get_list("/api/v1/permissions/netgroupregex/", params=params)
 
     if not permissions:
         cli_warning("No matching permission found", True)

@@ -383,7 +383,7 @@ def host_list(args) -> str:
     List group memberships for host
     """
     hostname = host_info_by_name(args.host, follow_cname=False)["name"]
-    group_list = get_list(f"/api/v1/hostgroups/?hosts__name={hostname}")
+    group_list = get_list("/api/v1/hostgroups/", params={"hosts__name": hostname})
     if len(group_list) == 0:
         cli_info(f"Host {hostname!r} is not a member in any hostgroup", True)
         return

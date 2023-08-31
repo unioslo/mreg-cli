@@ -39,9 +39,9 @@ location_tags = []  # type: List[str]
 category_tags = []  # type: List[str]
 
 session = requests.Session()
-session.headers.update({'User-Agent': 'mreg-cli'})
+session.headers.update({"User-Agent": "mreg-cli"})
 
-mreg_auth_token_file = os.path.join(str(os.getenv('HOME')), '.mreg-cli_auth_token')
+mreg_auth_token_file = os.path.join(str(os.getenv("HOME")), ".mreg-cli_auth_token")
 
 logger = logging.getLogger(__name__)
 
@@ -71,14 +71,18 @@ def host_exists(name: str) -> bool:
 
     # Response data sanity checks
     if len(hosts) > 1:
-        cli_error("host exist check received more than one exact match for \"{}\"".format(name))
+        cli_error(
+            'host exist check received more than one exact match for "{}"'.format(name)
+        )
     if len(hosts) == 0:
         return False
     if hosts[0]["name"] != name:
-        cli_error("host exist check received from API \"{}\" when searched for \"{}\"".format(
-            hosts[0]["name"],
-            name,
-        ))
+        cli_error(
+            'host exist check received from API "{}" when searched for "{}"'.format(
+                hosts[0]["name"],
+                name,
+            )
+        )
     return True
 
 
@@ -104,15 +108,12 @@ def _host_info_by_name(name: str, follow_cname: bool = True) -> Optional[dict]:
     elif follow_cname:
         # All host info data is returned from the API
         path = "/api/v1/hosts/"
-        params = {
-            "cnames__name": name
-        }
+        params = {"cnames__name": name}
         history.record_get(path)
         hosts = get_list(path, params=params)
         if len(hosts) == 1:
             return hosts[0]
     return None
-
 
 
 def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
@@ -182,9 +183,11 @@ def first_unused_ip_from_network(network: dict) -> str:
     :return: Ip address string
     """
 
-    unused = get_network_first_unused(network['network'])
+    unused = get_network_first_unused(network["network"])
     if not unused:
-        cli_warning("No free addresses remaining on network {}".format(network['network']))
+        cli_warning(
+            "No free addresses remaining on network {}".format(network["network"])
+        )
     return unused
 
 
@@ -217,8 +220,8 @@ def login1(user: str, url: str) -> None:
 
     if os.path.isfile(mreg_auth_token_file):
         try:
-            with open(mreg_auth_token_file, encoding='utf-8') as tokenfile:
-                tokenuser, token = tokenfile.readline().split('¤')
+            with open(mreg_auth_token_file, encoding="utf-8") as tokenfile:
+                tokenuser, token = tokenfile.readline().split("¤")
                 if tokenuser == user:
                     session.headers.update({"Authorization": f"Token {token}"})
         except PermissionError:
@@ -232,9 +235,11 @@ def login1(user: str, url: str) -> None:
 
     # Find a better URL.. but so far so good
     try:
-        ret = session.get(requests.compat.urljoin(mregurl, "/api/v1/hosts/"),
-                          params={"page_size": 1},
-                          timeout=5)
+        ret = session.get(
+            requests.compat.urljoin(mregurl, "/api/v1/hosts/"),
+            params={"page_size": 1},
+            timeout=5,
+        )
     except requests.exceptions.ConnectionError as e:
         error(f"Could not connect to {url}")
 
@@ -254,7 +259,7 @@ def login(user: str, url: str) -> None:
 
 
 def logout() -> None:
-    path = requests.compat.urljoin(mregurl, '/api/token-logout/')
+    path = requests.compat.urljoin(mregurl, "/api/token-logout/")
     # Try to logout, and ignore errors
     try:
         session.post(path)
@@ -263,8 +268,7 @@ def logout() -> None:
 
 
 def update_token() -> None:
-    password = prompt("You need to re-autenticate\nEnter password: ",
-                      is_password=True)
+    password = prompt("You need to re-autenticate\nEnter password: ", is_password=True)
     try:
         _update_token(username, password)
     except CliError as e:
@@ -272,10 +276,9 @@ def update_token() -> None:
 
 
 def _update_token(username: str, password: str) -> None:
-    tokenurl = requests.compat.urljoin(mregurl, '/api/token-auth/')
+    tokenurl = requests.compat.urljoin(mregurl, "/api/token-auth/")
     try:
-        result = requests.post(tokenurl, {'username': username,
-                                          'password': password})
+        result = requests.post(tokenurl, {"username": username, "password": password})
     except requests.exceptions.ConnectionError as err:
         error(err)
     except requests.exceptions.SSLError as e:
@@ -286,15 +289,15 @@ def _update_token(username: str, password: str) -> None:
         except:
             res = result.text
         if result.status_code == 400:
-            if 'non_field_errors' in res:
+            if "non_field_errors" in res:
                 cli_error("Invalid username/password")
         else:
             cli_error(res)
-    token = result.json()['token']
+    token = result.json()["token"]
     session.headers.update({"Authorization": f"Token {token}"})
     try:
-        with open(mreg_auth_token_file, 'w', encoding='utf-8') as tokenfile:
-            tokenfile.write(f'{username}¤{token}')
+        with open(mreg_auth_token_file, "w", encoding="utf-8") as tokenfile:
+            tokenfile.write(f"{username}¤{token}")
     except FileNotFoundError:
         pass
     except PermissionError:
@@ -304,7 +307,7 @@ def _update_token(username: str, password: str) -> None:
 
 def result_check(result: "ResponseLike", type: str, url: str) -> None:
     if not result.ok:
-        message = f"{type} \"{url}\": {result.status_code}: {result.reason}"
+        message = f'{type} "{url}": {result.status_code}: {result.reason}'
         try:
             body = result.json()
         except ValueError:
@@ -332,9 +335,7 @@ def _request_wrapper(
         result = getattr(session, type)(
             url, params=params, data=data, timeout=HTTP_TIMEOUT
         )
-    result = cast(
-        requests.Response, result
-    )  # convince mypy that result is a Response
+    result = cast(requests.Response, result)  # convince mypy that result is a Response
 
     if rec.is_recording():
         rec.record(type, url, params, data, result)
@@ -382,7 +383,7 @@ def get(
 
 def get_list(path: Optional[str], params: dict = {}, ok404: bool = False) -> List[dict]:
     """Uses requests to make a get request.
-       Will iterate over paginated results and return result as list."""
+    Will iterate over paginated results and return result as list."""
     ret = []  # type: List[dict]
     while path:
         resp = get(path, params=params, ok404=ok404)
@@ -421,6 +422,7 @@ def delete(path: str, params: dict = {}) -> Optional["ResponseLike"]:
 #                                                                              #
 ################################################################################
 
+
 def cname_exists(cname: str) -> bool:
     """Check if a cname exists"""
     if len(get_list("/api/v1/cnames/", params={"name": cname})):
@@ -434,6 +436,7 @@ def cname_exists(cname: str) -> bool:
 #   Host resolving utilities                                                   #
 #                                                                              #
 ################################################################################
+
 
 def resolve_name_or_ip(name_or_ip: str) -> str:
     """Tries to find a host from the given name/ip. Raises an exception if not."""
@@ -454,10 +457,12 @@ def resolve_ip(ip: str) -> str:
 
     # Response data sanity check
     if len(hosts) > 1:
-        cli_error("resolve ip got multiple matches for ip \"{}\"".format(ip))
+        cli_error('resolve ip got multiple matches for ip "{}"'.format(ip))
 
     if len(hosts) == 0:
-        cli_warning("{} doesnt belong to any host".format(ip), exception=HostNotFoundWarning)
+        cli_warning(
+            "{} doesnt belong to any host".format(ip), exception=HostNotFoundWarning
+        )
     return hosts[0]["name"]
 
 
@@ -486,7 +491,7 @@ def resolve_input_name(name: str) -> str:
 
 
 def clean_hostname(name: Union[str, bytes]) -> str:
-    """ Converts from short to long hostname, if no domain found. """
+    """Converts from short to long hostname, if no domain found."""
     # bytes?
     if not isinstance(name, (str, bytes)):
         cli_warning("Invalid input for hostname: {}".format(name))
@@ -505,13 +510,14 @@ def clean_hostname(name: Union[str, bytes]) -> str:
         return name[:-1]
 
     # If a dot in name, assume long name.
-    if '.' in name:
+    if "." in name:
         return name
 
     # Append domain name if in config and it does not end with it
-    if 'domain' in config and not name.endswith(config['domain']):
-        return "{}.{}".format(name, config['domain'])
+    if "domain" in config and not name.endswith(config["domain"]):
+        return "{}.{}".format(name, config["domain"])
     return name
+
 
 ################################################################################
 #                                                                              #
@@ -606,6 +612,7 @@ def string_to_int(value: Any, error_tag: str) -> int:
 #                                                                              #
 ################################################################################
 
+
 def is_valid_ip(ip: str) -> bool:
     """Check if ip is valid ipv4 og ipv6."""
     return is_valid_ipv4(ip) or is_valid_ipv6(ip)
@@ -685,45 +692,46 @@ def format_mac(mac: str) -> str:
     Replaces any other delimiters with a colon and turns it into all lower
     case.
     """
-    mac = re.sub('[.:-]', '', mac).lower()
-    return ":".join(["%s" % (mac[i:i+2]) for i in range(0, 12, 2)])
+    mac = re.sub("[.:-]", "", mac).lower()
+    return ":".join(["%s" % (mac[i : i + 2]) for i in range(0, 12, 2)])
 
 
-def convert_wildcard_to_regex(param: str, arg: str, autoWildcards: bool = False) -> Tuple[str, str]:
+def convert_wildcard_to_regex(
+    param: str, arg: str, autoWildcards: bool = False
+) -> Tuple[str, str]:
     """
     Convert wildcard filter "foo*bar*" to something DRF will understand.
 
     E.g. "foo*bar*" -> "?name__regex=$foo.*bar.*"
 
     """
-    if '*' not in arg:
+    if "*" not in arg:
         if autoWildcards:
-            arg = f'*{arg}*'
+            arg = f"*{arg}*"
         else:
             return (param, arg)
 
-    args = arg.split('*')
+    args = arg.split("*")
     args_len = len(args) - 1
-    regex = ''
+    regex = ""
     for i, piece in enumerate(args):
         if i == 0 and piece:
-            regex += f'^{piece}'
+            regex += f"^{piece}"
         elif i == args_len and piece:
-            regex += f'{piece}$'
+            regex += f"{piece}$"
         elif piece:
-            regex += f'.*{piece}.*'
-#        if i == 0 and piece:
-#            parts.append(f'{param}__startswith={piece}')
-#        elif i == args_len and piece:
-#            parts.append(f'{param}__endswith={piece}')
-#        elif piece:
-#            parts.append(f'{param}__contains={piece}')
+            regex += f".*{piece}.*"
+    #        if i == 0 and piece:
+    #            parts.append(f'{param}__startswith={piece}')
+    #        elif i == args_len and piece:
+    #            parts.append(f'{param}__endswith={piece}')
+    #        elif piece:
+    #            parts.append(f'{param}__contains={piece}')
 
-    if arg == '*':
-        regex = '.'
+    if arg == "*":
+        regex = "."
 
-    return (f'{param}__regex', regex)
-
+    return (f"{param}__regex", regex)
 
 
 ################################################################################
@@ -744,7 +752,7 @@ def print_table(
         longest = len(header)
         for d in data:
             longest = max(longest, len(str(d[key])))
-        raw_format += '{:<%d}   ' % longest
+        raw_format += "{:<%d}   " % longest
 
     print(raw_format.format(*headers))
     for d in data:

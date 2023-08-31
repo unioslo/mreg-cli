@@ -2245,7 +2245,7 @@ def ptr_show(args):
         "ptr_overrides__ipaddress": args.ip,
     }
     history.record_get(path)
-    host = get_list(path)
+    host = get_list(path, params=params)
 
     output = ""
 
