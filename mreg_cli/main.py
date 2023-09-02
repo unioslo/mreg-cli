@@ -131,8 +131,9 @@ def main():
         print(util.session.headers["Authorization"])
 
     # Must import the commands, for the side effects of creating the commands
-    # when importing.
-    from . import dhcp  # noqa: F401
+    # when importing. Ensure that the noqa comments are updated when new
+    # commands are added, otherwise the import will be removed by ruff.
+    from . import dhcp  # noqa: F401,
     from . import group  # noqa: F401
     from . import history  # noqa: F401
     from . import host  # noqa: F401
