@@ -1,11 +1,13 @@
+import atexit
 import json
 import os
-from urllib.parse import urlparse, urlencode
-import atexit
-import requests
-from typing import Dict, Any
+from typing import Any, Dict
+from urllib.parse import urlencode, urlparse
 
-def remove_dict_key_recursive(obj, key:str) -> None:
+import requests
+
+
+def remove_dict_key_recursive(obj, key: str) -> None:
     if isinstance(obj, list):
         for elem in obj:
             remove_dict_key_recursive(elem, key)
@@ -18,10 +20,11 @@ def remove_dict_key_recursive(obj, key:str) -> None:
         for other_value in obj.values():
             remove_dict_key_recursive(other_value, key)
 
-class Recorder:
 
+class Recorder:
     # Singleton
     __instance = None
+
     def __new__(cls):
         if Recorder.__instance is None:
             i = Recorder.__instance = object.__new__(cls)
@@ -35,7 +38,9 @@ class Recorder:
         if self != Recorder.__instance:
             return getattr(Recorder.__instance, name)
         else:
-            raise AttributeError("%r object has no attribute %r" % (self.__class__.__name__, name))
+            raise AttributeError(
+                "%r object has no attribute %r" % (self.__class__.__name__, name)
+            )
 
     def save_recording(self) -> None:
         i = Recorder.__instance
@@ -45,6 +50,7 @@ class Recorder:
 
     """ Start recording http traffic, commands and console output to the given filename.
         Warning! If the file exists, it will be deleted/overwritten. """
+
     def start_recording(self, filename: str) -> None:
         i = Recorder.__instance
         i.recording = True
@@ -52,59 +58,80 @@ class Recorder:
         atexit.register(Recorder.save_recording, self)
         try:
             os.remove(filename)
-        except:
+        except OSError:
             pass
 
     def is_recording(self) -> bool:
         return Recorder.__instance.recording
 
-    def record_command(self, cmd:str) -> None:
+    def record_command(self, cmd: str) -> None:
         if not self.is_recording():
             return
         # trim spaces, remove comments
         cmd = cmd.lstrip()
-        if cmd.find("#")>-1:
-            cmd = cmd[0:cmd.find("#")].rstrip()
-        # don't log empty commands
-        if cmd == '': # Compare to empty string to avoid being tripped up by strings having false-like values (0, False, etc)
+        if cmd.find("#") > -1:
+            cmd = cmd[0 : cmd.find("#")].rstrip()
+        # Don't log empty commands. Compare to empty string to avoid being tripped
+        # up by strings having false-like values (0, False, etc)
+        if cmd == "":
             return
-        x = {'command':cmd}
+        x = {"command": cmd}
         Recorder.__instance.recorded_data.append(x)
 
-    def record_output(self, output:str) -> None:
+    def record_output(self, output: str) -> None:
         if not self.is_recording():
             return
-        x = {'output':output}
+        x = {"output": output}
         Recorder.__instance.recorded_data.append(x)
 
     """ Returns only the path + query string components of a url """
-    def urlpath(self, url:str, params:str) -> str:
+
+    def urlpath(self, url: str, params: str) -> str:
         if params:
             url = f"{url}?{urlencode(params)}"
         up = urlparse(url)
-        if up.query != '': # Compare to empty string to avoid being tripped up by strings having false-like values (0, False, etc)
-            return up.path + '?' + up.query
+        # Compare to empty string to avoid being tripped up by strings having
+        # false-like values (0, False, etc)
+        if up.query != "":
+            return up.path + "?" + up.query
         else:
             return up.path
 
     """ Records an http call (method, url and postdata) and the response. """
-    def record(self, method: str, url: str, params: str, data: Dict[str, Any], result: requests.Response) -> None:
+
+    def record(
+        self,
+        method: str,
+        url: str,
+        params: str,
+        data: Dict[str, Any],
+        result: requests.Response,
+    ) -> None:
         if not self.is_recording():
             return
         x = {
-            'method': method.upper(),
-            'url': self.urlpath(url, params),
-            'data': data,
-            'status': result.status_code
+            "method": method.upper(),
+            "url": self.urlpath(url, params),
+            "data": data,
+            "status": result.status_code,
         }
         try:
             obj = result.json()
-            keys_to_remove = ['id','created_at','updated_at','serialno','serialno_updated_at','create_date']
+            keys_to_remove = [
+                "id",
+                "created_at",
+                "updated_at",
+                "serialno",
+                "serialno_updated_at",
+                "create_date",
+            ]
             for key in keys_to_remove:
                 remove_dict_key_recursive(obj, key)
-            x['response'] = obj
+            x["response"] = obj
         except requests.JSONDecodeError:
-            s = result.content.decode('utf-8').strip()
-            if s != "":  # Compare to empty string to avoid being tripped up by strings having false-like values (0, False, etc)
-                x['response'] = s
+            s = result.content.decode("utf-8").strip()
+            # Compare to empty string to avoid being tripped up by strings having
+            # false-like values (0, False, etc)
+            if s != "":
+                x["response"] = s
         Recorder.__instance.recorded_data.append(x)

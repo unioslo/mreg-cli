@@ -1,5 +1,4 @@
-"""
-Logging
+"""Logging
 -------
 This module can be used to configure basic logging to stderr, with an optional
 filter level.
@@ -21,14 +20,16 @@ import sys
 logger = logging.getLogger(__name__)
 
 # Config file locations
-DEFAULT_CONFIG_PATH = tuple((
-    os.path.expanduser('~/.config/mreg-cli.conf'),
-    '/etc/mreg-cli.conf',
-    os.path.join(sys.prefix, 'local', 'share', 'mreg-cli.conf'),
-    os.path.join(sys.prefix, 'share', 'mreg-cli.conf'),
-    # At last, look in ../data/ in case we're developing
-    os.path.join(os.path.dirname(__file__), '..', 'data', 'mreg-cli.conf'),
-))
+DEFAULT_CONFIG_PATH = tuple(
+    (
+        os.path.expanduser("~/.config/mreg-cli.conf"),
+        "/etc/mreg-cli.conf",
+        os.path.join(sys.prefix, "local", "share", "mreg-cli.conf"),
+        os.path.join(sys.prefix, "share", "mreg-cli.conf"),
+        # At last, look in ../data/ in case we're developing
+        os.path.join(os.path.dirname(__file__), "..", "data", "mreg-cli.conf"),
+    )
+)
 
 DEFAULT_URL = None
 DEFAULT_DOMAIN = None
@@ -47,8 +48,7 @@ LOGGING_VERBOSITY = (
 
 
 def get_verbosity(verbosity):
-    """
-    Translate verbosity to logging level.
+    """Translate verbosity to logging level.
 
     Levels are traslated according to :py:const:`LOGGING_VERBOSITY`.
 
@@ -61,8 +61,7 @@ def get_verbosity(verbosity):
 
 
 def configure_logging(level):
-    """
-    Enable and configure logging.
+    """Enable and configure logging.
 
     :param int level: logging level
     """
@@ -70,17 +69,16 @@ def configure_logging(level):
 
 
 def get_config_file():
-    """
-    :return:
-        returns the best (first) match from DEFAULT_CONFIG_PATH, or
-        None if no file was found.
+    """:return:
+    returns the best (first) match from DEFAULT_CONFIG_PATH, or
+    None if no file was found.
     """
     for path in DEFAULT_CONFIG_PATH:
-        logger.debug('looking for config in %r', os.path.abspath(path))
+        logger.debug("looking for config in %r", os.path.abspath(path))
         if os.path.isfile(path):
-            logger.info('found config in %r', path)
+            logger.info("found config in %r", path)
             return path
-    logger.debug('no config file found in config paths')
+    logger.debug("no config file found in config paths")
     return None
 
 
@@ -89,7 +87,7 @@ def get_default_domain():
 
 
 def get_default_url():
-    for url in (os.environ.get('MREGCLI_DEFAULT_URL'), DEFAULT_URL):
+    for url in (os.environ.get("MREGCLI_DEFAULT_URL"), DEFAULT_URL):
         if url is not None:
             return url
     return None

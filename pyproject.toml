@@ -1,0 +1,130 @@
+[build-system]
+requires = ["setuptools ~= 58.0"]
+
+[tool.black]
+max-line-length = 99
+
+[tool.isort]
+profile = "black"
+line_length = 99
+
+[tool.ruff]
+select = [
+    "A", # flake8-builtins
+    #    "ANN", # annotations
+    #    "ARG", # flake8-unused-arguments
+    "B", # flake8-bugbear
+    # "D",   # pydocstyle
+    "DJ", # flake8-django
+    "E",  # error
+    # "F",   # Pyflakes
+    "I",   # isort
+    "ISC", # flake8-implicit-str-concat
+    "INP", # flake8-no-pep420 (implicit namespace packages, you need __init__.py)
+    #    "PL", # pylint (all of the below)
+    "PLC", # pylint-convention
+    "PLE", # pylint-error
+    # "PLR", # pylint-refactor
+    # "PLW", # pylint-warning
+    "W", # warnings        
+]
+ignore = [
+    # B905 (`zip()` without an explicit `strict=` parameter) is incompatible with older python versions.
+    "B905",
+    # D203 (1 blank line required before class docstring) is incompatible with
+    # D211 (No blank lines allowed before class docstring). We ignore D203.
+    "D203",
+    # D213 (Multi-line docstring summary should start at the second line) is incompatible with
+    # D212 (Multi-line docstring summary should start at the first line). We ignore D213.
+    "D213",
+    # ANN101 (Missing type annotation for `self` in method) is infered.
+    "ANN101",
+]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "I",
+    "N",
+    "Q",
+    "S",
+    "T",
+    "W",
+    "ANN",
+    "ARG",
+    "BLE",
+    "COM",
+    "DJ",
+    "DTZ",
+    "EM",
+    "ERA",
+    "EXE",
+    "FBT",
+    "ICN",
+    "INP",
+    "ISC",
+    "NPY",
+    "PD",
+    "PGH",
+    "PIE",
+    "PL",
+    "PT",
+    "PTH",
+    "PYI",
+    "RET",
+    "RSE",
+    "RUF",
+    "SIM",
+    "SLF",
+    "TCH",
+    "TID",
+    "TRY",
+    "UP",
+    "YTT",
+]
+unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "migrations",
+]
+per-file-ignores = {}
+
+line-length = 99
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.10.
+target-version = "py310"
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10
