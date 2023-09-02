@@ -1769,9 +1769,7 @@ host.add_command(
     callback=mx_remove,
     flags=[
         Flag("name", description="Host target name.", metavar="NAME"),
-        Flag(
-            "priority", description="Priority", flag_flag_type=int, metavar="PRIORITY"
-        ),
+        Flag("priority", description="Priority", flag_type=int, metavar="PRIORITY"),
         Flag("mx", description="Mail Server", metavar="TEXT"),
     ],
 )
