@@ -2,14 +2,7 @@ from .cli import Flag
 from .history import history
 from .host import host
 from .log import cli_error, cli_info
-from .util import (
-    delete,
-    get,
-    get_list,
-    host_info_by_name,
-    post,
-    print_table,
-)
+from .util import delete, get, get_list, host_info_by_name, post, print_table
 
 
 def bacnetid_add(args):
@@ -97,10 +90,16 @@ host.add_command(
     callback=bacnetid_list,
     flags=[
         Flag(
-            "-min", description="Minimum ID value (0-4194302)", type=int, metavar="MIN"
+            "-min",
+            description="Minimum ID value (0-4194302)",
+            flag_type=int,
+            metavar="MIN",
         ),
         Flag(
-            "-max", description="Maximum ID value (0-4194302)", type=int, metavar="MAX"
+            "-max",
+            description="Maximum ID value (0-4194302)",
+            flag_type=int,
+            metavar="MAX",
         ),
     ],
 )

@@ -431,11 +431,13 @@ zone.add_command(
             "-ns", description="Primary nameserver (SOA MNAME).", metavar="PRIMARY-NS"
         ),
         Flag("-email", description="Zone contact email.", metavar="EMAIL"),
-        Flag("-serialno", description="Serial number.", type=int, metavar="SERIALNO"),
-        Flag("-refresh", description="Refresh time.", type=int, metavar="REFRESH"),
-        Flag("-retry", description="Retry time.", type=int, metavar="RETRY"),
-        Flag("-expire", description="Expire time.", type=int, metavar="EXPIRE"),
-        Flag("-soa-ttl", description="SOA Time To Live", type=int, metavar="TTL"),
+        Flag(
+            "-serialno", description="Serial number.", flag_type=int, metavar="SERIALNO"
+        ),
+        Flag("-refresh", description="Refresh time.", flag_type=int, metavar="REFRESH"),
+        Flag("-retry", description="Retry time.", flag_type=int, metavar="RETRY"),
+        Flag("-expire", description="Expire time.", flag_type=int, metavar="EXPIRE"),
+        Flag("-soa-ttl", description="SOA Time To Live", flag_type=int, metavar="TTL"),
     ],
 )
 
@@ -460,6 +462,6 @@ zone.add_command(
     callback=set_default_ttl,
     flags=[
         Flag("zone", description="Zone name.", metavar="ZONE"),
-        Flag("ttl", description="Default Time To Live.", type=int, metavar="TTL"),
+        Flag("ttl", description="Default Time To Live.", flag_type=int, metavar="TTL"),
     ],
 )

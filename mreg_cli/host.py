@@ -1732,7 +1732,7 @@ host.add_command(
     callback=mx_add,
     flags=[
         Flag("name", description="Host target name.", metavar="NAME"),
-        Flag("priority", description="Priority", type=int, metavar="PRIORITY"),
+        Flag("priority", description="Priority", flag_type=int, metavar="PRIORITY"),
         Flag("mx", description="Mail Server", metavar="MX"),
     ],
 )
@@ -1769,7 +1769,9 @@ host.add_command(
     callback=mx_remove,
     flags=[
         Flag("name", description="Host target name.", metavar="NAME"),
-        Flag("priority", description="Priority", type=int, metavar="PRIORITY"),
+        Flag(
+            "priority", description="Priority", flag_flag_type=int, metavar="PRIORITY"
+        ),
         Flag("mx", description="Mail Server", metavar="TEXT"),
     ],
 )
@@ -1855,14 +1857,14 @@ host.add_command(
         Flag(
             "-preference",
             description="NAPTR preference.",
-            type=int,
+            flag_type=int,
             required=True,
             metavar="PREFERENCE",
         ),
         Flag(
             "-order",
             description="NAPTR order.",
-            type=int,
+            flag_type=int,
             required=True,
             metavar="ORDER",
         ),
@@ -1941,14 +1943,14 @@ host.add_command(
         Flag(
             "-preference",
             description="NAPTR preference.",
-            type=int,
+            flag_type=int,
             required=True,
             metavar="PREFERENCE",
         ),
         Flag(
             "-order",
             description="NAPTR order.",
-            type=int,
+            flag_type=int,
             required=True,
             metavar="ORDER",
         ),
@@ -2347,18 +2349,24 @@ host.add_command(
         Flag(
             "-priority",
             description="SRV priority.",
-            type=int,
+            flag_type=int,
             required=True,
             metavar="PRIORITY",
         ),
         Flag(
             "-weight",
             description="SRV weight.",
-            type=int,
+            flag_type=int,
             required=True,
             metavar="WEIGHT",
         ),
-        Flag("-port", description="SRV port.", type=int, required=True, metavar="PORT"),
+        Flag(
+            "-port",
+            description="SRV port.",
+            flag_type=int,
+            required=True,
+            metavar="PORT",
+        ),
         Flag("-host", description="Host target name.", required=True, metavar="NAME"),
     ],
 )

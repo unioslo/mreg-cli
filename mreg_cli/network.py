@@ -358,7 +358,7 @@ network.add_command(
             "-limit",
             description="Maximum number of networks to print",
             metavar="LIMIT",
-            type=int,
+            flag_type=int,
         ),
         Flag(
             "-silent",
@@ -714,7 +714,10 @@ network.add_command(
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
         Flag(
-            "number", description="Number of reserved hosts.", type=int, metavar="NUM"
+            "number",
+            description="Number of reserved hosts.",
+            flag_type=int,
+            metavar="NUM",
         ),
     ],
 )
@@ -741,7 +744,7 @@ network.add_command(
     callback=set_vlan,
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
-        Flag("vlan", description="VLAN.", type=int, metavar="VLAN"),
+        Flag("vlan", description="VLAN.", flag_type=int, metavar="VLAN"),
     ],
 )
 
