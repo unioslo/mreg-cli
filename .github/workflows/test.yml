@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04] # For python3.6
         python-version:
           - '3.6'
           - '3.7'
@@ -44,6 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-20.04] # For python3.6
         python-version:
           - "3.6"
           - "3.7"
