@@ -132,16 +132,15 @@ def main():
 
     # Must import the commands, for the side effects of creating the commands
     # when importing.
-    from . import (
-        dhcp,  # noqa: F401
-        group,  # noqa: F401
-        history,  # noqa: F401
-        host,  # noqa: F401
-        network,  # noqa: F401
-        permission,  # noqa: F401
-        policy,  # noqa: F401
-        zone,  # noqa: F401
-    )
+    from . import dhcp  # noqa: F401
+    from . import group  # noqa: F401
+    from . import history  # noqa: F401
+    from . import host  # noqa: F401
+    from . import label  # noqa: F401
+    from . import network  # noqa: F401
+    from . import permission  # noqa: F401
+    from . import policy  # noqa: F401
+    from . import zone  # noqa: F401
 
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the
