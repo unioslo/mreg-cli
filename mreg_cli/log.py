@@ -4,9 +4,8 @@ import re
 from datetime import datetime
 from typing import NoReturn, Optional, Type
 
-from .exceptions import CliError, CliWarning
-
 from . import recorder
+from .exceptions import CliError, CliWarning
 
 logfile = None
 
@@ -37,7 +36,7 @@ def cli_error(
     """Write a ERROR log entry."""
     pre = _prefix_from_stack()
     s = "{} {} [ERROR] {}: {}".format(
-        datetime.now().isoformat(sep=' ', timespec="seconds"),
+        datetime.now().isoformat(sep=" ", timespec="seconds"),
         getpass.getuser(),
         pre,
         msg,
@@ -61,7 +60,7 @@ def cli_warning(
     """Write a WARNING log entry."""
     pre = _prefix_from_stack()
     s = "{} {} [WARNING] {}: {}".format(
-        datetime.now().isoformat(sep=' ', timespec="seconds"),
+        datetime.now().isoformat(sep=" ", timespec="seconds"),
         getpass.getuser(),
         pre,
         msg,
@@ -82,7 +81,7 @@ def cli_info(msg: str, print_msg: bool = False) -> None:
     """Write an OK log entry."""
     pre = _prefix_from_stack()
     s = "{} {} [OK] {}: {}".format(
-        datetime.now().isoformat(sep=' ', timespec="seconds"),
+        datetime.now().isoformat(sep=" ", timespec="seconds"),
         getpass.getuser(),
         pre,
         msg,

@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any
+
     from typing_extensions import Protocol
 
     class ResponseLike(Protocol):

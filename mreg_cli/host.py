@@ -1,7 +1,6 @@
 import ipaddress
 from typing import Iterable, Optional
 
-
 from .cli import Flag, cli
 from .dhcp import assoc_mac_to_ip
 from .exceptions import HostNotFoundWarning
@@ -41,21 +40,21 @@ from .util import (
 #################################
 
 host = cli.add_command(
-    prog='host',
-    description='Manage hosts.',
-    short_desc='Manage hosts',
+    prog="host",
+    description="Manage hosts.",
+    short_desc="Manage hosts",
 )
 
 
 def print_hinfo(hinfo: dict, padding: int = 14) -> None:
-    """Pretty given hinfo id"""
+    """Pretty given hinfo id."""
     if hinfo is None:
         return
-    print("{1:<{0}}cpu={2} os={3}".format(padding, "Hinfo:", hinfo['cpu'], hinfo['os']))
+    print("{1:<{0}}cpu={2} os={3}".format(padding, "Hinfo:", hinfo["cpu"], hinfo["os"]))
 
 
 def zoneinfo_for_hostname(host: str) -> Optional[dict]:
-    """Return zoneinfo for a hostname, or None if not found or invalid"""
+    """Return zoneinfo for a hostname, or None if not found or invalid."""
     if "." not in host:
         return None
 
@@ -73,13 +72,12 @@ def check_zone_for_hostname(name: str, force: bool, require_zone: bool = False):
             cli_warning(f"{name} isn't in a zone controlled by MREG.")
         if not force:
             cli_warning(f"{name} isn't in a zone controlled by MREG, must force")
-    elif 'delegation' in zoneinfo and not force:
-        delegation = zoneinfo['delegation']['name']
+    elif "delegation" in zoneinfo and not force:
+        delegation = zoneinfo["delegation"]["name"]
         cli_warning(f"{name} is in zone delegation {delegation}, must force")
 
 
 def _get_ip_from_args(ip, force, ipversion=None):
-
     # Try to fail fast for valid IP
     if ipversion is not None and is_valid_ip(ip):
         if ipversion == 4:
@@ -107,8 +105,8 @@ def _get_ip_from_args(ip, force, ipversion=None):
         path = "/api/v1/hosts/"
         hosts = get_list(path, params={"ipaddresses__ipaddress": ip})
         if hosts and not force:
-            hostnames = ','.join([i['name'] for i in hosts])
-            cli_warning(f'{ip} already in use by: {hostnames}. Must force')
+            hostnames = ",".join([i["name"] for i in hosts])
+            cli_warning(f"{ip} already in use by: {hostnames}. Must force")
         network = get_network_by_ip(ip)
         if not network:
             if force:
@@ -117,7 +115,7 @@ def _get_ip_from_args(ip, force, ipversion=None):
     else:
         cli_warning(f"Could not determine network for {ip}")
 
-    network_object = ipaddress.ip_network(network['network'])
+    network_object = ipaddress.ip_network(network["network"])
     if ipversion:
         if network_object.version != ipversion:
             if ipversion == 4:
@@ -126,10 +124,9 @@ def _get_ip_from_args(ip, force, ipversion=None):
                 cli_warning("Attemptet to get an ipv6 address, but input yielded ipv4")
 
     if network["frozen"] and not force:
-        cli_warning("network {} is frozen, must force"
-                    .format(network["network"]))
+        cli_warning("network {} is frozen, must force".format(network["network"]))
     # Chat the address given isn't reserved
-    reserved_addresses = get_network_reserved_ips(network['network'])
+    reserved_addresses = get_network_reserved_ips(network["network"])
     if ip in reserved_addresses and not force:
         cli_warning("Address is reserved. Requires force")
     if network_object.num_addresses > 2:
@@ -145,12 +142,12 @@ def _check_ipversion(ip, ipversion):
     # Ip sanity check
     if ipversion == 4:
         if not is_valid_ipv4(ip):
-            cli_warning(f'not a valid ipv4: {ip}')
+            cli_warning(f"not a valid ipv4: {ip}")
     elif ipversion == 6:
         if not is_valid_ipv6(ip):
-            cli_warning(f'not a valid ipv6: {ip}')
+            cli_warning(f"not a valid ipv6: {ip}")
     else:
-        cli_warning(f'Unknown ipversion: {ipversion}')
+        cli_warning(f"Unknown ipversion: {ipversion}")
 
 
 ################################################################################
@@ -164,11 +161,11 @@ def _check_ipversion(ip, ipversion):
 #  Implementation of sub command 'add'  #
 #########################################
 
+
 def add(args):
     """Add a new host with the given name.
-       ip/network, comment and contact are optional.
+    ip/network, comment and contact are optional.
     """
-
     # Fail if given host exists
     name = clean_hostname(args.name)
     try:
@@ -196,8 +193,9 @@ def add(args):
     if args.contact and not is_valid_email(args.contact):
         cli_warning(
             "invalid mail address ({}) when trying to add {}".format(
-                args.contact,
-                args.name))
+                args.contact, args.name
+            )
+        )
 
     # Create the new host with an ip address
     path = "/api/v1/hosts/"
@@ -207,14 +205,14 @@ def add(args):
         "comment": args.comment or None,
     }
     if args.ip:
-        data['ipaddress'] = ip
+        data["ipaddress"] = ip
 
     history.record_post(path, resource_name=name, new_data=data)
     post(path, **data)
     if args.macaddress is not None:
-            # It can only be one, as it was just created.
-            ipdata = get(f"{path}{name}").json()['ipaddresses'][0]
-            assoc_mac_to_ip(args.macaddress, ipdata, force=args.force)
+        # It can only be one, as it was just created.
+        ipdata = get(f"{path}{name}").json()["ipaddresses"][0]
+        assoc_mac_to_ip(args.macaddress, ipdata, force=args.force)
     msg = f"created host {name}"
     if args.ip:
         msg += f" with IP {ip}"
@@ -223,33 +221,33 @@ def add(args):
 
 # Add 'add' as a sub command to the 'host' command
 host.add_command(
-    prog='add',
-    description='Add a new host with the given name, ip or network and contact. '
-                'comment is optional.',
-    short_desc='Add a new host',
+    prog="add",
+    description="Add a new host with the given name, ip or network and contact. "
+    "comment is optional.",
+    short_desc="Add a new host",
     callback=add,
     flags=[
-        Flag('name',
-             short_desc='Name of new host (req)',
-             description='Name of new host (req)'),
-        Flag('-ip',
-             short_desc='An ip or net',
-             description="The hosts ip or a network. If it's a network the first free IP is "
-                         "selected from the network",
-             metavar='IP/NET'),
-        Flag('-contact',
-             short_desc='Contact mail for the host',
-             description='Contact mail for the host'),
-        Flag('-comment',
-             short_desc='A comment.',
-             description='A comment.'),
-        Flag('-macaddress',
-             description='Mac address',
-             metavar='MACADDRESS'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
-    ]
+        Flag(
+            "name",
+            short_desc="Name of new host (req)",
+            description="Name of new host (req)",
+        ),
+        Flag(
+            "-ip",
+            short_desc="An ip or net",
+            description="The hosts ip or a network. If it's a network the first free IP is "
+            "selected from the network",
+            metavar="IP/NET",
+        ),
+        Flag(
+            "-contact",
+            short_desc="Contact mail for the host",
+            description="Contact mail for the host",
+        ),
+        Flag("-comment", short_desc="A comment.", description="A comment."),
+        Flag("-macaddress", description="Mac address", metavar="MACADDRESS"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
 )
 
 
@@ -257,10 +255,10 @@ host.add_command(
 #  Implementation of sub command 'remove'  #
 ############################################
 
+
 def remove(args):
     # args.name, args.force
     """Remove host."""
-
     # Get host info or raise exception
     info = host_info_by_name_or_ip(args.name)
 
@@ -279,30 +277,34 @@ def remove(args):
     # force
     path = "/api/v1/naptrs/"
     history.record_get(path)
-    naptrs = get_list(path, params={"host": info['id']})
+    naptrs = get_list(path, params={"host": info["id"]})
     if len(naptrs) > 0:
         if not args.force:
             warn_msg += "{} NAPTR records. ".format(len(naptrs))
         else:
             for naptr in naptrs:
-                cli_info("deleted NAPTR record {} when removing {}".format(
-                    naptr["replacement"],
-                    info["name"],
-                ))
+                cli_info(
+                    "deleted NAPTR record {} when removing {}".format(
+                        naptr["replacement"],
+                        info["name"],
+                    )
+                )
 
     # Require force if host has any SRV records. Delete the SRV records if force
     path = "/api/v1/srvs/"
     history.record_get(path)
-    srvs = get_list(path, params={"host__name": info['name']})
+    srvs = get_list(path, params={"host__name": info["name"]})
     if len(srvs) > 0:
         if not args.force:
             warn_msg += "{} SRV records. ".format(len(srvs))
         else:
             for srv in srvs:
-                cli_info("deleted SRV record {} when removing {}".format(
-                    srv["name"],
-                    info["name"],
-                ))
+                cli_info(
+                    "deleted SRV record {} when removing {}".format(
+                        srv["name"],
+                        info["name"],
+                    )
+                )
 
     # Require force if host has any PTR records. Delete the PTR records if force
     if len(info["ptr_overrides"]) > 0:
@@ -310,10 +312,12 @@ def remove(args):
             warn_msg += "{} PTR records. ".format(len(info["ptr_overrides"]))
         else:
             for ptr in info["ptr_overrides"]:
-                cli_info("deleted PTR record {} when removing {}".format(
-                    ptr["ipaddress"],
-                    info["name"],
-                ))
+                cli_info(
+                    "deleted PTR record {} when removing {}".format(
+                        ptr["ipaddress"],
+                        info["name"],
+                    )
+                )
 
     # To be able to undo the delete the ipaddress field of the 'old_data' has to
     # be an ipaddress string
@@ -333,18 +337,18 @@ def remove(args):
 
 # Add 'remove' as a sub command to the 'host' command
 host.add_command(
-    prog='remove',
-    description='Remove the given host.',
+    prog="remove",
+    description="Remove the given host.",
     callback=remove,
     flags=[
-        Flag('name',
-             short_desc='Name or ip.',
-             description='Name of host or an ip belonging to the host.',
-             metavar='NAME/IP'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
-    ]
+        Flag(
+            "name",
+            short_desc="Name or ip.",
+            description="Name of host or an ip belonging to the host.",
+            metavar="NAME/IP",
+        ),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
 )
 
 
@@ -353,6 +357,7 @@ host.add_command(
 ##########################################
 
 # first some print helpers
+
 
 def print_host_name(name: str, padding: int = 14) -> None:
     """Pretty print given name."""
@@ -381,24 +386,26 @@ def print_comment(comment: str, padding: int = 14) -> None:
 def print_ipaddresses(
     ipaddresses: Iterable[dict], names: bool = False, padding: int = 14
 ) -> None:
-    """Pretty print given ip addresses"""
+    """Pretty print given ip addresses."""
+
     def _find_padding(lst, attr):
-        return max(padding, max([len(i[attr]) for i in lst])+1)
+        return max(padding, max([len(i[attr]) for i in lst]) + 1)
+
     if not ipaddresses:
         return
     a_records = []
     aaaa_records = []
-    len_ip = _find_padding(ipaddresses, 'ipaddress')
+    len_ip = _find_padding(ipaddresses, "ipaddress")
     for record in ipaddresses:
         if is_valid_ipv4(record["ipaddress"]):
             a_records.append(record)
         elif is_valid_ipv6(record["ipaddress"]):
             aaaa_records.append(record)
     if names:
-        len_names = _find_padding(ipaddresses, 'name')
+        len_names = _find_padding(ipaddresses, "name")
     else:
         len_names = padding
-    for records, text in ((a_records, 'A_Records'), (aaaa_records, 'AAAA_Records')):
+    for records, text in ((a_records, "A_Records"), (aaaa_records, "AAAA_Records")):
         if records:
             print("{1:<{0}}{2:<{3}}  {4}".format(len_names, text, "IP", len_ip, "MAC"))
             for record in records:
@@ -408,56 +415,65 @@ def print_ipaddresses(
                     name = record["name"]
                 else:
                     name = ""
-                print("{1:<{0}}{2:<{3}}  {4}".format(
-                    len_names, name, ip if ip else "<not set>", len_ip,
-                    mac if mac else "<not set>"))
+                print(
+                    "{1:<{0}}{2:<{3}}  {4}".format(
+                        len_names,
+                        name,
+                        ip if ip else "<not set>",
+                        len_ip,
+                        mac if mac else "<not set>",
+                    )
+                )
 
 
 def print_ttl(ttl: int, padding: int = 14) -> None:
-    """Pretty print given ttl"""
+    """Pretty print given ttl."""
     assert isinstance(ttl, int) or ttl is None
     print("{1:<{0}}{2}".format(padding, "TTL:", ttl or "(Default)"))
 
 
-
 def print_loc(loc: dict, padding: int = 14) -> None:
-    """Pretty print given loc"""
+    """Pretty print given loc."""
     if loc is None:
         return
     assert isinstance(loc, dict)
-    print("{1:<{0}}{2}".format(padding, "Loc:", loc['loc']))
+    print("{1:<{0}}{2}".format(padding, "Loc:", loc["loc"]))
 
 
 def print_cname(cname: str, host: str, padding: int = 14) -> None:
-    """Pretty print given cname"""
+    """Pretty print given cname."""
     print("{1:<{0}}{2} -> {3}".format(padding, "Cname:", cname, host))
 
 
 def print_mx(mxs: dict, padding: int = 14) -> None:
-    """Pretty print all MXs"""
+    """Pretty print all MXs."""
     if not mxs:
         return
     len_pri = len("Priority")
     print("{1:<{0}}{2} {3}".format(padding, "MX:", "Priority", "Server"))
-    for mx in sorted(mxs, key=lambda i: i['priority']):
-        print("{1:<{0}}{2:>{3}} {4}".format(padding, "", mx['priority'], len_pri, mx['mx']))
+    for mx in sorted(mxs, key=lambda i: i["priority"]):
+        print(
+            "{1:<{0}}{2:>{3}} {4}".format(
+                padding, "", mx["priority"], len_pri, mx["mx"]
+            )
+        )
 
 
 def print_naptr(naptr: dict, host_name: str, padding: int = 14) -> None:
-    """Pretty print given txt"""
+    """Pretty print given txt."""
     assert isinstance(naptr, dict)
     assert isinstance(host_name, str)
 
 
 def print_ptr(ip: str, host_name: str, padding: int = 14) -> None:
-    """Pretty print given txt"""
+    """Pretty print given txt."""
     assert isinstance(ip, str)
     assert isinstance(host_name, str)
-    print("{1:<{0}}{2} -> {3}".format(padding, 'PTR override:', ip, host_name))
+    print("{1:<{0}}{2} -> {3}".format(padding, "PTR override:", ip, host_name))
 
 
 def print_txt(txt: str, padding: int = 14) -> None:
-    """Pretty print given txt"""
+    """Pretty print given txt."""
     if txt is None:
         return
     assert isinstance(txt, str)
@@ -465,11 +481,11 @@ def print_txt(txt: str, padding: int = 14) -> None:
 
 
 def print_bacnetid(bacnetid: dict, padding: int = 14) -> None:
-    """Pretty print given txt"""
+    """Pretty print given txt."""
     if bacnetid is None:
         return
     assert isinstance(bacnetid, dict)
-    print("{1:<{0}}{2}".format(padding, "BACnet ID:", bacnetid['id']))
+    print("{1:<{0}}{2}".format(padding, "BACnet ID:", bacnetid["id"]))
 
 
 def _print_host_info(info):
@@ -482,15 +498,15 @@ def _print_host_info(info):
     for ptr in info["ptr_overrides"]:
         print_ptr(ptr["ipaddress"], info["name"])
     print_ttl(info["ttl"])
-    print_mx(info['mxs'])
-    print_hinfo(info['hinfo'])
+    print_mx(info["mxs"])
+    print_hinfo(info["hinfo"])
     if info["loc"]:
         print_loc(info["loc"])
     for cname in info["cnames"]:
         print_cname(cname["name"], info["name"])
     for txt in info["txts"]:
         print_txt(txt["txt"])
-    _srv_show(host_id=info['id'])
+    _srv_show(host_id=info["id"])
     _naptr_show(info)
     _sshfp_show(info)
     if "bacnetid" in info:
@@ -511,17 +527,17 @@ def _print_ip_info(ip):
     ipaddresses = []
     ptrhost = None
     for info in hosts:
-        for i in info['ipaddresses']:
-            if i['ipaddress'] == ip:
-                i['name'] = info['name']
+        for i in info["ipaddresses"]:
+            if i["ipaddress"] == ip:
+                i["name"] = info["name"]
                 ipaddresses.append(i)
-        for i in info['ptr_overrides']:
-            if i['ipaddress'] == ip:
-                ptrhost = info['name']
+        for i in info["ptr_overrides"]:
+            if i["ipaddress"] == ip:
+                ptrhost = info["name"]
 
     print_ipaddresses(ipaddresses, names=True)
     if len(ipaddresses) > 1 and ptrhost is None:
-        cli_warning(f'IP {ip} used by {len(ipaddresses)} hosts, but no PTR override')
+        cli_warning(f"IP {ip} used by {len(ipaddresses)} hosts, but no PTR override")
     if ptrhost is None:
         path = "/api/v1/hosts/"
         params = {
@@ -530,11 +546,11 @@ def _print_ip_info(ip):
         history.record_get(path)
         hosts = get_list(path, params=params)
         if hosts:
-            ptrhost = hosts[0]['name']
+            ptrhost = hosts[0]["name"]
         elif ipaddresses:
-            ptrhost = 'default'
+            ptrhost = "default"
     if not ipaddresses and ptrhost is None:
-        cli_warning(f'Found no hosts or ptr override matching IP {ip}')
+        cli_warning(f"Found no hosts or ptr override matching IP {ip}")
     print_ptr(ip, ptrhost)
 
 
@@ -552,48 +568,49 @@ def info_(args):
             if ret:
                 _print_host_info(ret[0])
             else:
-                cli_warning(f'Found no host with macaddress: {mac}')
+                cli_warning(f"Found no host with macaddress: {mac}")
         else:
             info = host_info_by_name(name_or_ip)
             name = clean_hostname(name_or_ip)
-            if any(cname['name'] == name for cname in info['cnames']):
+            if any(cname["name"] == name for cname in info["cnames"]):
                 print(f'{name} is a CNAME for {info["name"]}')
             _print_host_info(info)
 
 
 # Add 'info' as a sub command to the 'host' command
 host.add_command(
-    prog='info',
-    description='Print info about one or more hosts.',
-    short_desc='Print info about one or more hosts.',
+    prog="info",
+    description="Print info about one or more hosts.",
+    short_desc="Print info about one or more hosts.",
     callback=info_,
     flags=[
-        Flag('hosts',
-             description='One or more hosts given by their name, ip or mac.',
-             short_desc='One or more names, ips or macs.',
-             nargs='+',
-             metavar='NAME/IP/MAC')
-    ]
+        Flag(
+            "hosts",
+            description="One or more hosts given by their name, ip or mac.",
+            short_desc="One or more names, ips or macs.",
+            nargs="+",
+            metavar="NAME/IP/MAC",
+        )
+    ],
 )
 
 
 def find(args):
-    """List hosts maching search criteria
-    """
+    """List hosts maching search criteria."""
 
     def _add_param(param, value):
         param, value = convert_wildcard_to_regex(param, value, True)
         params[param] = value
 
     if not any([args.name, args.comment, args.contact]):
-        cli_warning('Need at least one search critera')
+        cli_warning("Need at least one search critera")
 
     params = {
         "ordering": "name",
         "page_size": 1,
     }
 
-    for param in ('contact', 'comment', 'name'):
+    for param in ("contact", "comment", "name"):
         value = getattr(args, param)
         if value:
             _add_param(param, value)
@@ -601,44 +618,57 @@ def find(args):
     path = "/api/v1/hosts/"
     ret = get(path, params=params).json()
 
-    if ret['count'] == 0:
-        cli_warning('No hosts found.')
-    elif ret['count'] > 500:
-        cli_warning(f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.')
+    if ret["count"] == 0:
+        cli_warning("No hosts found.")
+    elif ret["count"] > 500:
+        cli_warning(
+            f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.'
+        )
 
-    del(params["page_size"])
+    del params["page_size"]
     ret = get_list(path, params=params)
     max_name = max_contact = 20
     for i in ret:
-        max_name = max(max_name, len(i['name']))
-        max_contact = max(max_contact, len(i['contact']))
+        max_name = max(max_name, len(i["name"]))
+        max_contact = max(max_contact, len(i["contact"]))
 
     def _print(name, contact, comment):
-        print("{0:<{1}} {2:<{3}} {4}".format(name, max_name, contact, max_contact, comment))
+        print(
+            "{0:<{1}} {2:<{3}} {4}".format(
+                name, max_name, contact, max_contact, comment
+            )
+        )
 
-    _print('Name', 'Contact', 'Comment')
+    _print("Name", "Contact", "Comment")
     for i in ret:
-        _print(i['name'], i['contact'], i['comment'])
+        _print(i["name"], i["contact"], i["comment"])
+
 
 host.add_command(
-    prog='find',
-    description='Lists hosts matching search criteria',
-    short_desc='Lists hosts matching search criteria',
+    prog="find",
+    description="Lists hosts matching search criteria",
+    short_desc="Lists hosts matching search criteria",
     callback=find,
     flags=[
-        Flag('-name',
-             description='Name or part of name',
-             short_desc='Name or part of name',
-             metavar='NAME'),
-        Flag('-comment',
-             description='Comment or part of comment',
-             short_desc='Comment or part of comment',
-             metavar='CONTACT'),
-        Flag('-contact',
-             description='Contact or part of contact',
-             short_desc='Contact or part of contact',
-             metavar='CONTACT')
-    ]
+        Flag(
+            "-name",
+            description="Name or part of name",
+            short_desc="Name or part of name",
+            metavar="NAME",
+        ),
+        Flag(
+            "-comment",
+            description="Comment or part of comment",
+            short_desc="Comment or part of comment",
+            metavar="CONTACT",
+        ),
+        Flag(
+            "-contact",
+            description="Contact or part of contact",
+            short_desc="Contact or part of contact",
+            metavar="CONTACT",
+        ),
+    ],
 )
 
 
@@ -646,10 +676,9 @@ host.add_command(
 #  Implementation of sub command 'rename'  #
 ############################################
 
-def rename(args):
-    """Rename host. If <old-name> is an alias then the alias is renamed.
-    """
 
+def rename(args):
+    """Rename host. If <old-name> is an alias then the alias is renamed."""
     # Find old host
     old_name = resolve_input_name(args.old_name)
 
@@ -678,8 +707,7 @@ def rename(args):
     # Rename host
     path = f"/api/v1/hosts/{old_name}"
     # Cannot redo/undo now since it changes name
-    history.record_patch(path, new_data, old_data, redoable=False,
-                         undoable=False)
+    history.record_patch(path, new_data, old_data, redoable=False, undoable=False)
     patch(path, name=new_name)
 
     cli_info("renamed {} to {}".format(old_name, new_name), print_msg=True)
@@ -687,24 +715,26 @@ def rename(args):
 
 # Add 'rename' as a sub command to the 'host' command
 host.add_command(
-    prog='rename',
-    description='Rename host. If the old name is an alias then the alias is '
-                'renamed.',
-    short_desc='Rename a host',
+    prog="rename",
+    description="Rename host. If the old name is an alias then the alias is "
+    "renamed.",
+    short_desc="Rename a host",
     callback=rename,
     flags=[
-        Flag('old_name',
-             description='Host name of the host to rename. May be an alias. '
-                         'If it is an alias then the alias is renamed.',
-             short_desc='Existing host name.',
-             metavar='OLD'),
-        Flag('new_name',
-             description='New name for the host, or alias.',
-             short_desc='New name',
-             metavar='NEW'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag(
+            "old_name",
+            description="Host name of the host to rename. May be an alias. "
+            "If it is an alias then the alias is renamed.",
+            short_desc="Existing host name.",
+            metavar="OLD",
+        ),
+        Flag(
+            "new_name",
+            description="New name for the host, or alias.",
+            short_desc="New name",
+            metavar="NEW",
+        ),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -713,9 +743,9 @@ host.add_command(
 #  Implementation of sub command 'set_comment'  #
 #################################################
 
+
 def set_comment(args):
-    """Set comment for host. If <name> is an alias the cname host is updated.
-    """
+    """Set comment for host. If <name> is an alias the cname host is updated."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
     old_data = {"comment": info["comment"] or ""}
@@ -725,25 +755,27 @@ def set_comment(args):
     path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, comment=args.comment)
-    cli_info("Updated comment of {} to \"{}\""
-             .format(info["name"], args.comment), print_msg=True)
+    cli_info(
+        'Updated comment of {} to "{}"'.format(info["name"], args.comment),
+        print_msg=True,
+    )
 
 
 # Add 'set_comment' as a sub command to the 'host' command
 host.add_command(
-    prog='set_comment',
-    description='Set comment for host. If NAME is an alias the cname host is '
-                'updated.',
-    short_desc='Set comment.',
+    prog="set_comment",
+    description="Set comment for host. If NAME is an alias the cname host is "
+    "updated.",
+    short_desc="Set comment.",
     callback=set_comment,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('comment',
-             description='The new comment. If it contains spaces then it must '
-                         'be enclosed in quotes.',
-             metavar='COMMENT')
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag(
+            "comment",
+            description="The new comment. If it contains spaces then it must "
+            "be enclosed in quotes.",
+            metavar="COMMENT",
+        ),
     ],
 )
 
@@ -752,13 +784,14 @@ host.add_command(
 #  Implementation of sub command 'set_contact'  #
 #################################################
 
+
 def set_contact(args):
-    """Set contact for host. If <name> is an alias the cname host is updated.
-    """
+    """Set contact for host. If <name> is an alias the cname host is updated."""
     # Contact sanity check
     if not is_valid_email(args.contact):
-        cli_warning("invalid mail address {} (target host: {})".format(
-            args.contact, args.name))
+        cli_warning(
+            "invalid mail address {} (target host: {})".format(args.contact, args.name)
+        )
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -769,24 +802,21 @@ def set_contact(args):
     path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, contact=args.contact)
-    cli_info("Updated contact of {} to {}".format(info["name"], args.contact),
-             print_msg=True)
+    cli_info(
+        "Updated contact of {} to {}".format(info["name"], args.contact), print_msg=True
+    )
 
 
 # Add 'set_contact' as a sub command to the 'host' command
 host.add_command(
-    prog='set_contact',
-    description='Set contact for host. If NAME is an alias the cname host is '
-                'updated.',
-    short_desc='Set contact.',
+    prog="set_contact",
+    description="Set contact for host. If NAME is an alias the cname host is "
+    "updated.",
+    short_desc="Set contact.",
     callback=set_contact,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('contact',
-             description='Mail address of the contact.',
-             metavar='CONTACT')
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("contact", description="Mail address of the contact.", metavar="CONTACT"),
     ],
 )
 
@@ -796,6 +826,7 @@ host.add_command(
 #                                  A records                                   #
 #                                                                              #
 ################################################################################
+
 
 def _ip_add(args, ipversion, macaddress=None):
     info = None
@@ -819,8 +850,7 @@ def _ip_add(args, ipversion, macaddress=None):
 
     if info is None:
         hostname = clean_hostname(args.name)
-        data = {'name': hostname,
-                'ipaddress': ip}
+        data = {"name": hostname, "ipaddress": ip}
         # Create new host with IP
         path = "/api/v1/hosts/"
         history.record_post(path, ip, data)
@@ -828,14 +858,15 @@ def _ip_add(args, ipversion, macaddress=None):
         cli_info(f"Created host {hostname} with ip {ip}", print_msg=True)
         if macaddress is not None:
             # It can only be one, as it was just created.
-            ip = get(f"{path}{hostname}").json()['ipaddresses'][0]
+            ip = get(f"{path}{hostname}").json()["ipaddresses"][0]
             assoc_mac_to_ip(macaddress, ip, force=args.force)
 
     else:
         # Require force if host has multiple A/AAAA records
         if len(info["ipaddresses"]) and not args.force:
-            cli_warning("{} already has A/AAAA record(s), must force"
-                        .format(info["name"]))
+            cli_warning(
+                "{} already has A/AAAA record(s), must force".format(info["name"])
+            )
 
         if any(args.ip == i["ipaddress"] for i in info["ipaddresses"]):
             cli_warning(f"Host already has IP {args.ip}")
@@ -845,7 +876,7 @@ def _ip_add(args, ipversion, macaddress=None):
             "ipaddress": ip,
         }
         if macaddress is not None:
-            data['macaddress'] = macaddress
+            data["macaddress"] = macaddress
 
         # Add IP
         path = "/api/v1/ipaddresses/"
@@ -858,34 +889,30 @@ def _ip_add(args, ipversion, macaddress=None):
 #  Implementation of sub command 'a_add'  #
 ###########################################
 
+
 def a_add(args):
-    """Add an A record to host. If <name> is an alias the cname host is used.
-    """
+    """Add an A record to host. If <name> is an alias the cname host is used."""
     _ip_add(args, 4, macaddress=args.macaddress)
 
 
 # Add 'a_add' as a sub command to the 'host' command
 host.add_command(
-    prog='a_add',
-    description='Add an A record to host. If NAME is an alias the cname host '
-                'is used.',
-    short_desc='Add A record.',
+    prog="a_add",
+    description="Add an A record to host. If NAME is an alias the cname host "
+    "is used.",
+    short_desc="Add A record.",
     callback=a_add,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('ip',
-             description='The IP of new A record. May also be a network, '
-                         'in which case a random IP address from that network '
-                         'is chosen.',
-             metavar='IP/network'),
-        Flag('-macaddress',
-             description='Mac address',
-             metavar='MACADDRESS'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag(
+            "ip",
+            description="The IP of new A record. May also be a network, "
+            "in which case a random IP address from that network "
+            "is chosen.",
+            metavar="IP/network",
+        ),
+        Flag("-macaddress", description="Mac address", metavar="MACADDRESS"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -893,6 +920,7 @@ host.add_command(
 ##############################################
 #  Implementation of sub command 'a_change'  #
 ##############################################
+
 
 def _ip_change(args, ipversion):
     if args.old == args.new:
@@ -908,7 +936,7 @@ def _ip_change(args, ipversion):
             ip_id = i["id"]
             break
     else:
-        cli_warning("\"{}\" is not owned by {}".format(args.old, info["name"]))
+        cli_warning('"{}" is not owned by {}'.format(args.old, info["name"]))
 
     new_ip = _get_ip_from_args(args.new, args.force, ipversion=ipversion)
 
@@ -918,47 +946,49 @@ def _ip_change(args, ipversion):
     # Update A/AAAA records ip address
     path = f"/api/v1/ipaddresses/{ip_id}"
     # Cannot redo/undo since recourse name changes
-    history.record_patch(path, new_data, old_data, redoable=False,
-                         undoable=False)
+    history.record_patch(path, new_data, old_data, redoable=False, undoable=False)
     patch(path, ipaddress=new_ip)
     cli_info(
         "changed ip {} to {} for {}".format(args.old, new_ip, info["name"]),
-        print_msg=True)
+        print_msg=True,
+    )
 
 
 def a_change(args):
-    """Change A record. If <name> is an alias the cname host is used.
-    """
-
+    """Change A record. If <name> is an alias the cname host is used."""
     _ip_change(args, 4)
 
 
 # Add 'a_change' as a sub command to the 'host' command
 host.add_command(
-    prog='a_change',
-    description='Change an A record for the target host. If NAME is an alias '
-                'the cname host is used.',
-    short_desc='Change A record.',
+    prog="a_change",
+    description="Change an A record for the target host. If NAME is an alias "
+    "the cname host is used.",
+    short_desc="Change A record.",
     callback=a_change,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             short_desc='Host name.',
-             metavar='NAME'),
-        Flag('-old',
-             description='The existing IP that should be changed.',
-             short_desc='IP to change.',
-             required=True,
-             metavar='IP'),
-        Flag('-new',
-             description='The new IP address. May also be a network, in which '
-                         'case a random IP from that network is chosen.',
-             short_desc='New IP.',
-             required=True,
-             metavar='IP/network'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag(
+            "name",
+            description="Name of the target host.",
+            short_desc="Host name.",
+            metavar="NAME",
+        ),
+        Flag(
+            "-old",
+            description="The existing IP that should be changed.",
+            short_desc="IP to change.",
+            required=True,
+            metavar="IP",
+        ),
+        Flag(
+            "-new",
+            description="The new IP address. May also be a network, in which "
+            "case a random IP from that network is chosen.",
+            short_desc="New IP.",
+            required=True,
+            metavar="IP/network",
+        ),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -972,55 +1002,54 @@ def _ip_move(args, ipversion):
     frominfo = host_info_by_name(args.fromhost)
     toinfo = host_info_by_name(args.tohost)
     ip_id = None
-    for ip in frominfo['ipaddresses']:
-        if ip['ipaddress'] == args.ip:
-            ip_id = ip['id']
+    for ip in frominfo["ipaddresses"]:
+        if ip["ipaddress"] == args.ip:
+            ip_id = ip["id"]
     ptr_id = None
-    for ptr in frominfo['ptr_overrides']:
-        if ptr['ipaddress'] == args.ip:
-            ptr_id = ptr['id']
+    for ptr in frominfo["ptr_overrides"]:
+        if ptr["ipaddress"] == args.ip:
+            ptr_id = ptr["id"]
     if ip_id is None and ptr_id is None:
         cli_warning(f'Host {frominfo["name"]} have no IP or PTR with address {args.ip}')
     msg = ""
     if ip_id:
-        path = f'/api/v1/ipaddresses/{ip_id}'
-        patch(path, host=toinfo['id'])
-        msg = f'Moved ipaddress {args.ip}'
+        path = f"/api/v1/ipaddresses/{ip_id}"
+        patch(path, host=toinfo["id"])
+        msg = f"Moved ipaddress {args.ip}"
     else:
-        msg += f'No ipaddresses matched. '
+        msg += "No ipaddresses matched. "
     if ptr_id:
-        path = f'/api/v1/ptroverrides/{ptr_id}'
-        patch(path, host=toinfo['id'])
-        msg += 'Moved PTR override.'
+        path = f"/api/v1/ptroverrides/{ptr_id}"
+        patch(path, host=toinfo["id"])
+        msg += "Moved PTR override."
     cli_info(msg, print_msg=True)
 
 
 def a_move(args):
-    """Move an IP from a host to another host. Will move also move the PTR, if any.
-    """
-
+    """Move an IP from a host to another host. Will move also move the PTR, if any."""
     _ip_move(args, 4)
 
 
 # Add 'a_move' as a sub command to the 'host' command
 host.add_command(
-    prog='a_move',
-    description='Move A record from a host to another host',
-    short_desc='Move A record',
+    prog="a_move",
+    description="Move A record from a host to another host",
+    short_desc="Move A record",
     callback=a_move,
     flags=[
-        Flag('-ip',
-             description='IP to move',
-             required=True,
-             metavar='IP'),
-        Flag('-fromhost',
-             description='Name of source host',
-             required=True,
-             metavar='NAME'),
-        Flag('-tohost',
-             description='Name of destination host',
-             required=True,
-             metavar='NAME'),
+        Flag("-ip", description="IP to move", required=True, metavar="IP"),
+        Flag(
+            "-fromhost",
+            description="Name of source host",
+            required=True,
+            metavar="NAME",
+        ),
+        Flag(
+            "-tohost",
+            description="Name of destination host",
+            required=True,
+            metavar="NAME",
+        ),
     ],
 )
 
@@ -1028,6 +1057,7 @@ host.add_command(
 ##############################################
 #  Implementation of sub command 'a_remove'  #
 ##############################################
+
 
 def _ip_remove(args, ipversion):
     ip_id = None
@@ -1052,30 +1082,23 @@ def _ip_remove(args, ipversion):
     path = f"/api/v1/ipaddresses/{ip_id}"
     history.record_delete(path, old_data)
     delete(path)
-    cli_info("removed ip {} from {}".format(args.ip, info["name"]),
-             print_msg=True)
+    cli_info("removed ip {} from {}".format(args.ip, info["name"]), print_msg=True)
 
 
 def a_remove(args):
-    """Remove A record from host. If <name> is an alias the cname host is used.
-    """
-
+    """Remove A record from host. If <name> is an alias the cname host is used."""
     _ip_remove(args, 4)
 
 
 # Add 'a_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='a_remove',
-    description='Remove an A record from the target host.',
-    short_desc='Remove A record.',
+    prog="a_remove",
+    description="Remove an A record from the target host.",
+    short_desc="Remove A record.",
     callback=a_remove,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('ip',
-             description='IP to remove.',
-             metavar='IP'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("ip", description="IP to remove.", metavar="IP"),
     ],
 )
 
@@ -1084,9 +1107,9 @@ host.add_command(
 #  Implementation of sub command 'a_show'  #
 ############################################
 
+
 def a_show(args):
-    """Show hosts ipaddresses. If <name> is an alias the cname host is used.
-    """
+    """Show hosts ipaddresses. If <name> is an alias the cname host is used."""
     info = host_info_by_name(args.name)
     print_ipaddresses(info["ipaddresses"])
     cli_info("showed ip addresses for {}".format(info["name"]))
@@ -1094,15 +1117,13 @@ def a_show(args):
 
 # Add 'a_show' as a sub command to the 'host' command
 host.add_command(
-    prog='a_show',
-    description='Show hosts ipaddresses. If NAME is an alias the cname host '
-                'is used.',
-    short_desc='Show ipaddresses.',
+    prog="a_show",
+    description="Show hosts ipaddresses. If NAME is an alias the cname host "
+    "is used.",
+    short_desc="Show ipaddresses.",
     callback=a_show,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
     ],
 )
 
@@ -1118,32 +1139,24 @@ host.add_command(
 #  Implementation of sub command 'aaaa_add'  #
 ##############################################
 
+
 def aaaa_add(args):
-    """Add an AAAA record to host. If <name> is an alias the cname host is used.
-    """
+    """Add an AAAA record to host. If <name> is an alias the cname host is used."""
     _ip_add(args, 6, macaddress=args.macaddress)
 
 
 # Add 'aaaa_add' as a sub command to the 'host' command
 host.add_command(
-    prog='aaaa_add',
-    description=' Add an AAAA record to host. If NAME is an alias the cname '
-                'host is used.',
-    short_desc='Add AAAA record.',
+    prog="aaaa_add",
+    description=" Add an AAAA record to host. If NAME is an alias the cname "
+    "host is used.",
+    short_desc="Add AAAA record.",
     callback=aaaa_add,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('ip',
-             description='The IPv6 to add to target host.',
-             metavar='IPv6'),
-        Flag('-macaddress',
-             description='Mac address',
-             metavar='MACADDRESS'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("ip", description="The IPv6 to add to target host.", metavar="IPv6"),
+        Flag("-macaddress", description="Mac address", metavar="MACADDRESS"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -1152,38 +1165,40 @@ host.add_command(
 #  Implementation of sub command 'aaaa_change'  #
 #################################################
 
-def aaaa_change(args):
-    """Change AAAA record. If <name> is an alias the cname host is used.
-    """
 
+def aaaa_change(args):
+    """Change AAAA record. If <name> is an alias the cname host is used."""
     _ip_change(args, 6)
 
 
 # Add 'aaaa_change' as a sub command to the 'host' command
 host.add_command(
-    prog='aaaa_change',
-    description='Change AAAA record. If NAME is an alias the cname host is '
-                'used.',
-    short_desc='Change AAAA record.',
+    prog="aaaa_change",
+    description="Change AAAA record. If NAME is an alias the cname host is used.",
+    short_desc="Change AAAA record.",
     callback=aaaa_change,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             short_desc='Host name.',
-             metavar='NAME'),
-        Flag('-old',
-             description='The existing IPv6 that should be changed.',
-             short_desc='IPv6 to change.',
-             required=True,
-             metavar='IPv6'),
-        Flag('-new',
-             description='The new IPv6 address.',
-             short_desc='New IPv6.',
-             required=True,
-             metavar='IPv6'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag(
+            "name",
+            description="Name of the target host.",
+            short_desc="Host name.",
+            metavar="NAME",
+        ),
+        Flag(
+            "-old",
+            description="The existing IPv6 that should be changed.",
+            short_desc="IPv6 to change.",
+            required=True,
+            metavar="IPv6",
+        ),
+        Flag(
+            "-new",
+            description="The new IPv6 address.",
+            short_desc="New IPv6.",
+            required=True,
+            metavar="IPv6",
+        ),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -1193,31 +1208,30 @@ host.add_command(
 
 
 def aaaa_move(args):
-    """Move an IP from a host to another host. Will move also move the PTR, if any.
-    """
-
+    """Move an IP from a host to another host. Will move also move the PTR, if any."""
     _ip_move(args, 6)
 
 
 # Add 'aaaa_move' as a sub command to the 'host' command
 host.add_command(
-    prog='aaaa_move',
-    description='Move AAAA record from a host to another host',
-    short_desc='Move AAAA record',
+    prog="aaaa_move",
+    description="Move AAAA record from a host to another host",
+    short_desc="Move AAAA record",
     callback=aaaa_move,
     flags=[
-        Flag('-ip',
-             description='IP to move',
-             required=True,
-             metavar='IP'),
-        Flag('-fromhost',
-             description='Name of source host',
-             required=True,
-             metavar='NAME'),
-        Flag('-tohost',
-             description='Name of destination host',
-             required=True,
-             metavar='NAME'),
+        Flag("-ip", description="IP to move", required=True, metavar="IP"),
+        Flag(
+            "-fromhost",
+            description="Name of source host",
+            required=True,
+            metavar="NAME",
+        ),
+        Flag(
+            "-tohost",
+            description="Name of destination host",
+            required=True,
+            metavar="NAME",
+        ),
     ],
 )
 
@@ -1225,6 +1239,7 @@ host.add_command(
 #################################################
 #  Implementation of sub command 'aaaa_remove'  #
 #################################################
+
 
 def aaaa_remove(args):
     """Remove AAAA record from host. If <name> is an alias the cname host is
@@ -1235,18 +1250,14 @@ def aaaa_remove(args):
 
 # Add 'aaaa_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='aaaa_remove',
-    description='Remove AAAA record from host. If NAME is an alias the cname '
-                'host is used.',
-    short_desc='Remove AAAA record.',
+    prog="aaaa_remove",
+    description="Remove AAAA record from host. If NAME is an alias the cname "
+    "host is used.",
+    short_desc="Remove AAAA record.",
     callback=aaaa_remove,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('ip',
-             description='IPv6 to remove.',
-             metavar='IPv6'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("ip", description="IPv6 to remove.", metavar="IPv6"),
     ],
 )
 
@@ -1255,9 +1266,9 @@ host.add_command(
 #  Implementation of sub command 'aaaa_show'  #
 ###############################################
 
+
 def aaaa_show(args):
-    """Show hosts ipaddresses. If <name> is an alias the cname host is used.
-    """
+    """Show hosts ipaddresses. If <name> is an alias the cname host is used."""
     info = host_info_by_name(args.name)
     print_ipaddresses(info["ipaddresses"])
     cli_info("showed aaaa records for {}".format(info["name"]))
@@ -1265,15 +1276,13 @@ def aaaa_show(args):
 
 # Add 'aaaa_show' as a sub command to the 'host' command
 host.add_command(
-    prog='aaaa_show',
-    description='Show hosts AAAA records. If NAME is an alias the cname host '
-                'is used.',
-    short_desc='Show AAAA records.',
+    prog="aaaa_show",
+    description="Show hosts AAAA records. If NAME is an alias the cname host "
+    "is used.",
+    short_desc="Show AAAA records.",
     callback=aaaa_show,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
     ],
 )
 
@@ -1289,9 +1298,9 @@ host.add_command(
 #  Implementation of sub command 'cname_add'  #
 ###############################################
 
+
 def cname_add(args):
-    """Add a CNAME record to host.
-    """
+    """Add a CNAME record to host."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
     alias = clean_hostname(args.alias)
@@ -1310,33 +1319,25 @@ def cname_add(args):
     # Check if the cname is in a zone controlled by mreg
     check_zone_for_hostname(alias, args.force)
 
-    data = {'host': info['id'],
-            'name': alias}
+    data = {"host": info["id"], "name": alias}
     # Create CNAME record
     path = "/api/v1/cnames/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
-    cli_info("Added cname alias {} for {}".format(alias, info["name"]),
-             print_msg=True)
+    cli_info("Added cname alias {} for {}".format(alias, info["name"]), print_msg=True)
 
 
 # Add 'cname_add' as a sub command to the 'host' command
 host.add_command(
-    prog='cname_add',
-    description='Add a CNAME record to host. If NAME is an alias '
-                'the cname host is used as target for ALIAS.',
-    short_desc='Add CNAME.',
+    prog="cname_add",
+    description="Add a CNAME record to host. If NAME is an alias "
+    "the cname host is used as target for ALIAS.",
+    short_desc="Add CNAME.",
     callback=cname_add,
     flags=[
-        Flag('name',
-             description='Name of target host.',
-             metavar='NAME'),
-        Flag('alias',
-             description='Name of CNAME host.',
-             metavar='ALIAS'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag("name", description="Name of target host.", metavar="NAME"),
+        Flag("alias", description="Name of CNAME host.", metavar="ALIAS"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -1345,42 +1346,37 @@ host.add_command(
 #  Implementation of sub command 'cname_remove'  #
 ##################################################
 
+
 def cname_remove(args):
-    """Remove CNAME record.
-    """
+    """Remove CNAME record."""
     info = host_info_by_name(args.name)
-    hostname = info['name']
+    hostname = info["name"]
     alias = clean_hostname(args.alias)
 
-    if not info['cnames']:
-        cli_warning("\"{}\" doesn't have any CNAME records.".format(hostname))
+    if not info["cnames"]:
+        cli_warning('"{}" doesn\'t have any CNAME records.'.format(hostname))
 
-    for cname in info['cnames']:
-        if cname['name'] == alias:
+    for cname in info["cnames"]:
+        if cname["name"] == alias:
             break
     else:
-        cli_warning("\"{}\" is not an alias for \"{}\"".format(alias, hostname))
+        cli_warning('"{}" is not an alias for "{}"'.format(alias, hostname))
 
     # Delete CNAME host
     path = f"/api/v1/cnames/{alias}"
     history.record_delete(path, dict(), undoable=False)
     delete(path)
-    cli_info("Removed cname alias {} for {}".format(alias, hostname),
-             print_msg=True)
+    cli_info("Removed cname alias {} for {}".format(alias, hostname), print_msg=True)
 
 
 # Add 'cname_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='cname_remove',
-    description='Remove CNAME record.',
+    prog="cname_remove",
+    description="Remove CNAME record.",
     callback=cname_remove,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('alias',
-             description='Name of CNAME to remove.',
-             metavar='CNAME'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("alias", description="Name of CNAME to remove.", metavar="CNAME"),
     ],
 )
 
@@ -1388,39 +1384,36 @@ host.add_command(
 #  Implementation of sub command 'cname_replace'  #
 ###################################################
 
-def cname_replace(args):
-    """Move a CNAME entry from one host to another.
-    """
 
+def cname_replace(args):
+    """Move a CNAME entry from one host to another."""
     cname = clean_hostname(args.cname)
     host = clean_hostname(args.host)
 
     cname_info = host_info_by_name(cname)
     host_info = host_info_by_name(host)
 
-    if cname_info['id'] == host_info['id']:
+    if cname_info["id"] == host_info["id"]:
         cli_error(f"The CNAME {cname} already points to {host}.")
 
     # Update CNAME record.
-    data = {'host': host_info['id'], 'name': cname }
+    data = {"host": host_info["id"], "name": cname}
     path = f"/api/v1/cnames/{cname}"
     history.record_patch(path, "", data, undoable=False)
     patch(path, **data)
-    cli_info(f"Moved CNAME alias {cname}: {cname_info['name']} -> {host}",
-             print_msg=True)
+    cli_info(
+        f"Moved CNAME alias {cname}: {cname_info['name']} -> {host}", print_msg=True
+    )
+
 
 host.add_command(
-    prog='cname_replace',
-    description='Move a CNAME record from one host to another.',
-    short_desc='Replace a CNAME record.',
+    prog="cname_replace",
+    description="Move a CNAME record from one host to another.",
+    short_desc="Replace a CNAME record.",
     callback=cname_replace,
     flags=[
-        Flag('cname',
-             description='The CNAME to modify.',
-             metavar='CNAME'),
-        Flag('host',
-             description='The new host for the CNAME.',
-             metavar='HOST'),
+        Flag("cname", description="The CNAME to modify.", metavar="CNAME"),
+        Flag("host", description="The new host for the CNAME.", metavar="HOST"),
     ],
 )
 
@@ -1428,6 +1421,7 @@ host.add_command(
 ################################################
 #  Implementation of sub command 'cname_show'  #
 ################################################
+
 
 def cname_show(args):
     """Show CNAME records for host. If <name> is an alias the cname hosts
@@ -1445,15 +1439,13 @@ def cname_show(args):
 
 # Add 'cname_show' as a sub command to the 'host' command
 host.add_command(
-    prog='cname_show',
-    description='Show CNAME records for host. If NAME is an alias the cname '
-                'hosts aliases are shown.',
-    short_desc='Show CNAME records.',
+    prog="cname_show",
+    description="Show CNAME records for host. If NAME is an alias the cname "
+    "hosts aliases are shown.",
+    short_desc="Show CNAME records.",
     callback=cname_show,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
     ],
 )
 
@@ -1464,10 +1456,9 @@ host.add_command(
 #                                                                              #
 ################################################################################
 
+
 def _hinfo_remove(host_) -> None:
-    """
-    Helper method to remove hinfo from a host.
-    """
+    """Helper method to remove hinfo from a host."""
     old_data = {"hinfo": host_["hinfo"]}
     new_data = {"hinfo": ""}
 
@@ -1477,25 +1468,20 @@ def _hinfo_remove(host_) -> None:
     patch(path, hinfo="")
 
 
-
 ###############################################
 #  Implementation of sub command 'hinfo_add'  #
 ###############################################
 
+
 def hinfo_add(args):
-    """Add hinfo for host. If <name> is an alias the cname host is updated.
-    """
+    """Add hinfo for host. If <name> is an alias the cname host is updated."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    if info['hinfo']:
+    if info["hinfo"]:
         cli_warning(f"{info['name']} already has hinfo set.")
 
-    data = {
-        "host": info["id"],
-        "cpu": args.cpu,
-        "os": args.os
-    }
+    data = {"host": info["id"], "cpu": args.cpu, "os": args.os}
     # Add HINFO record to host
     path = "/api/v1/hinfos/"
     history.record_post(path, "", data, undoable=False)
@@ -1504,21 +1490,14 @@ def hinfo_add(args):
 
 
 host.add_command(
-    prog='hinfo_add',
-    description='Add HINFO for host. If NAME is an alias the cname host is '
-                'updated.',
-    short_desc='Set HINFO.',
+    prog="hinfo_add",
+    description="Add HINFO for host. If NAME is an alias the cname host is updated.",
+    short_desc="Set HINFO.",
     callback=hinfo_add,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('cpu',
-             description='CPU/hardware',
-             metavar='CPU'),
-        Flag('os',
-             description='Operating system',
-             metavar='OS'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("cpu", description="CPU/hardware", metavar="CPU"),
+        Flag("os", description="Operating system", metavar="OS"),
     ],
 )
 
@@ -1527,42 +1506,40 @@ host.add_command(
 #  Implementation of sub command 'hinfo_remove'  #
 ##################################################
 
+
 def hinfo_remove(args):
-    """
-    hinfo_remove <name>
-        Remove hinfo for host. If <name> is an alias the cname host is updated.
+    """hinfo_remove <name>
+    Remove hinfo for host. If <name> is an alias the cname host is updated.
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    if not info['hinfo']:
+    if not info["hinfo"]:
         cli_warning(f"{info['name']} already has no hinfo set.")
-    host_id = info['id']
+    host_id = info["id"]
     path = f"/api/v1/hinfos/{host_id}"
     history.record_delete(path, host_id)
     delete(path)
-    cli_info("deleted HINFO from {}".format(info['name']), True)
+    cli_info("deleted HINFO from {}".format(info["name"]), True)
 
 
 # Add 'hinfo_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='hinfo_remove',
-    description='Remove hinfo for host. If NAME is an alias the cname host is '
-                'updated.',
-    short_desc='Remove HINFO.',
+    prog="hinfo_remove",
+    description="Remove hinfo for host. If NAME is an alias the cname host is "
+    "updated.",
+    short_desc="Remove HINFO.",
     callback=hinfo_remove,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
     ],
 )
-
 
 
 ################################################
 #  Implementation of sub command 'hinfo_show'  #
 ################################################
+
 
 def hinfo_show(args):
     """Show hinfo for host. If <name> is an alias the cname hosts hinfo is
@@ -1578,36 +1555,33 @@ def hinfo_show(args):
 
 # Add 'hinfo_show' as a sub command to the 'host' command
 host.add_command(
-    prog='hinfo_show',
-    description='Show hinfo for host. If NAME is an alias the cname hosts '
-                'hinfo is shown.',
-    short_desc='Show HINFO.',
+    prog="hinfo_show",
+    description="Show hinfo for host. If NAME is an alias the cname hosts "
+    "hinfo is shown.",
+    short_desc="Show HINFO.",
     callback=hinfo_show,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
     ],
 )
+
 
 def _history(args):
-    """Show host history for name"""
+    """Show host history for name."""
     hostname = clean_hostname(args.name)
-    items = get_history_items(hostname, 'host', data_relation='hosts')
+    items = get_history_items(hostname, "host", data_relation="hosts")
     print_history_items(hostname, items)
 
+
 host.add_command(
-    prog='history',
-    description='Show history for host name',
-    short_desc='Show history for host name',
+    prog="history",
+    description="Show history for host name",
+    short_desc="Show history for host name",
     callback=_history,
     flags=[
-        Flag('name',
-             description='Host name',
-             metavar='NAME'),
+        Flag("name", description="Host name", metavar="NAME"),
     ],
 )
-
 
 
 ################################################################################
@@ -1621,16 +1595,16 @@ host.add_command(
 #  Implementation of sub command 'loc_remove'  #
 ################################################
 
+
 def loc_remove(args):
     """Remove location from host. If <name> is an alias the cname host is
     updated.
     """
-
     # Get host info or raise exception
     info = host_info_by_name(args.name)
-    if not info['loc']:
+    if not info["loc"]:
         cli_warning(f"{info['name']} already has no loc set.")
-    host_id = info['id']
+    host_id = info["id"]
     path = f"/api/v1/locs/{host_id}"
     history.record_delete(path, host_id)
     delete(path)
@@ -1640,15 +1614,13 @@ def loc_remove(args):
 
 # Add 'loc_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='loc_remove',
-    description='Remove location from host. If NAME is an alias the cname host '
-                'is updated.',
-    short_desc='Remove LOC record.',
+    prog="loc_remove",
+    description="Remove location from host. If NAME is an alias the cname host "
+    "is updated.",
+    short_desc="Remove LOC record.",
     callback=loc_remove,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
     ],
 )
 
@@ -1657,40 +1629,31 @@ host.add_command(
 #  Implementation of sub command 'loc_add'  #
 #############################################
 
-def loc_add(args):
-    """Set location of host. If <name> is an alias the cname host is updated.
-    """
 
+def loc_add(args):
+    """Set location of host. If <name> is an alias the cname host is updated."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    if info['loc']:
+    if info["loc"]:
         cli_warning(f"{info['name']} already has loc set.")
 
-    data = {
-        "host": info["id"],
-        "loc": args.loc
-    }
+    data = {"host": info["id"], "loc": args.loc}
     path = "/api/v1/locs/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
-    cli_info("added LOC '{}' for {}".format(args.loc, info["name"]),
-             print_msg=True)
+    cli_info("added LOC '{}' for {}".format(args.loc, info["name"]), print_msg=True)
 
 
 host.add_command(
-    prog='loc_add',
-    description='Set location of host. If NAME is an alias the cname host is '
-                'updated.',
-    short_desc='Set LOC record.',
+    prog="loc_add",
+    description="Set location of host. If NAME is an alias the cname host is "
+    "updated.",
+    short_desc="Set LOC record.",
     callback=loc_add,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
-        Flag('loc',
-             description='New LOC.',
-             metavar='LOC'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("loc", description="New LOC.", metavar="LOC"),
     ],
 )
 
@@ -1698,6 +1661,7 @@ host.add_command(
 ##############################################
 #  Implementation of sub command 'loc_show'  #
 ##############################################
+
 
 def loc_show(args):
     """Show location of host. If <name> is an alias the cname hosts LOC is
@@ -1713,15 +1677,13 @@ def loc_show(args):
 
 # Add 'loc_show' as a sub command to the 'host' command
 host.add_command(
-    prog='loc_show',
-    description='Show location of host. If NAME is an alias the cname hosts '
-                'LOC is shown.',
-    short_desc='Show LOC record.',
+    prog="loc_show",
+    description="Show location of host. If NAME is an alias the cname hosts "
+    "LOC is shown.",
+    short_desc="Show LOC record.",
     callback=loc_show,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
     ],
 )
 
@@ -1732,10 +1694,11 @@ host.add_command(
 #                                                                             #
 ###############################################################################
 
+
 def _mx_in_mxs(mxs, priority, mx):
     for info in mxs:
-        if info['priority'] == priority and info['mx'] == mx:
-            return info['id']
+        if info["priority"] == priority and info["mx"] == mx:
+            return info["id"]
     return None
 
 
@@ -1743,20 +1706,17 @@ def _mx_in_mxs(mxs, priority, mx):
 #  Implementation of sub command 'mx_add'  #
 #############################################
 
+
 def mx_add(args):
     """Add a mx record to host. <text> must be enclosed in double quotes if it
     contains more than one word.
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
-    if _mx_in_mxs(info['mxs'], args.priority, args.mx):
-        cli_warning("{} already has that MX defined".format(info['name']))
+    if _mx_in_mxs(info["mxs"], args.priority, args.mx):
+        cli_warning("{} already has that MX defined".format(info["name"]))
 
-    data = {
-        "host": info["id"],
-        "priority": args.priority,
-        "mx": args.mx
-    }
+    data = {"host": info["id"], "priority": args.priority, "mx": args.mx}
     # Add MX record to host
     path = "/api/v1/mxs/"
     history.record_post(path, "", data, undoable=False)
@@ -1766,21 +1726,14 @@ def mx_add(args):
 
 # Add 'mx_add' as a sub command to the 'host' command
 host.add_command(
-    prog='mx_add',
-    description='Add a MX record to host.',
-    short_desc='Add MX record.',
+    prog="mx_add",
+    description="Add a MX record to host.",
+    short_desc="Add MX record.",
     callback=mx_add,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
-        Flag('priority',
-             description='Priority',
-             type=int,
-             metavar='PRIORITY'),
-        Flag('mx',
-             description='Mail Server',
-             metavar='MX'),
+        Flag("name", description="Host target name.", metavar="NAME"),
+        Flag("priority", description="Priority", flag_type=int, metavar="PRIORITY"),
+        Flag("mx", description="Mail Server", metavar="MX"),
     ],
 )
 
@@ -1789,39 +1742,35 @@ host.add_command(
 #  Implementation of sub command 'mx_remove'  #
 ################################################
 
+
 def mx_remove(args):
-    """Remove MX record for host.
-    """
+    """Remove MX record for host."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    mx_id = _mx_in_mxs(info['mxs'], args.priority, args.mx)
+    mx_id = _mx_in_mxs(info["mxs"], args.priority, args.mx)
     if mx_id is None:
-        cli_warning("{} has no MX records with priority {} and mail exhange {}".format(
-                    info['name'], args.priority, args.mx))
+        cli_warning(
+            "{} has no MX records with priority {} and mail exhange {}".format(
+                info["name"], args.priority, args.mx
+            )
+        )
     path = f"/api/v1/mxs/{mx_id}"
     history.record_delete(path, mx_id)
     delete(path)
-    cli_info("deleted MX from {}".format(info['name']), True)
+    cli_info("deleted MX from {}".format(info["name"]), True)
 
 
 # Add 'mx_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='mx_remove',
-    description=' Remove MX record for host.',
-    short_desc='Remove MX record.',
+    prog="mx_remove",
+    description=" Remove MX record for host.",
+    short_desc="Remove MX record.",
     callback=mx_remove,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
-        Flag('priority',
-             description='Priority',
-             type=int,
-             metavar='PRIORITY'),
-        Flag('mx',
-             description='Mail Server',
-             metavar='TEXT'),
+        Flag("name", description="Host target name.", metavar="NAME"),
+        Flag("priority", description="Priority", flag_type=int, metavar="PRIORITY"),
+        Flag("mx", description="Mail Server", metavar="TEXT"),
     ],
 )
 
@@ -1830,30 +1779,28 @@ host.add_command(
 #  Implementation of sub command 'mx_show'  #
 ##############################################
 
+
 def mx_show(args):
-    """Show all MX records for host.
-    """
+    """Show all MX records for host."""
     info = host_info_by_name(args.name)
     path = "/api/v1/mxs/"
     params = {
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     mxs = get_list(path, params=params)
     print_mx(mxs, padding=5)
-    cli_info("showed MX records for {}".format(info['name']))
+    cli_info("showed MX records for {}".format(info["name"]))
 
 
 # Add 'mx_show' as a sub command to the 'host' command
 host.add_command(
-    prog='mx_show',
-    description='Show all MX records for host.',
-    short_desc='Show MX records.',
+    prog="mx_show",
+    description="Show all MX records for host.",
+    short_desc="Show MX records.",
     callback=mx_show,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
+        Flag("name", description="Host target name.", metavar="NAME"),
     ],
 )
 
@@ -1869,9 +1816,9 @@ host.add_command(
 #  Implementation of sub command 'naptr_add'  #
 ###############################################
 
+
 def naptr_add(args):
-    """Add a NAPTR record to host.
-    """
+    """Add a NAPTR record to host."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
@@ -1894,41 +1841,42 @@ def naptr_add(args):
 
 # Add 'naptr_add' as a sub command to the 'host' command
 host.add_command(
-    prog='naptr_add',
-    description='Add a NAPTR record to host.',
-    short_desc='Add NAPTR record.',
+    prog="naptr_add",
+    description="Add a NAPTR record to host.",
+    short_desc="Add NAPTR record.",
     callback=naptr_add,
     flags=[
-        Flag('-name',
-             description='Name of the target host.',
-             required=True,
-             metavar='NAME'),
-        Flag('-preference',
-             description='NAPTR preference.',
-             type=int,
-             required=True,
-             metavar='PREFERENCE'),
-        Flag('-order',
-             description='NAPTR order.',
-             type=int,
-             required=True,
-             metavar='ORDER'),
-        Flag('-flag',
-             description='NAPTR flag.',
-             required=True,
-             metavar='FLAG'),
-        Flag('-service',
-             description='NAPTR service.',
-             required=True,
-             metavar='SERVICE'),
-        Flag('-regex',
-             description='NAPTR regexp.',
-             required=True,
-             metavar='REGEXP'),
-        Flag('-replacement',
-             description='NAPTR replacement.',
-             required=True,
-             metavar='REPLACEMENT'),
+        Flag(
+            "-name",
+            description="Name of the target host.",
+            required=True,
+            metavar="NAME",
+        ),
+        Flag(
+            "-preference",
+            description="NAPTR preference.",
+            flag_type=int,
+            required=True,
+            metavar="PREFERENCE",
+        ),
+        Flag(
+            "-order",
+            description="NAPTR order.",
+            flag_type=int,
+            required=True,
+            metavar="ORDER",
+        ),
+        Flag("-flag", description="NAPTR flag.", required=True, metavar="FLAG"),
+        Flag(
+            "-service", description="NAPTR service.", required=True, metavar="SERVICE"
+        ),
+        Flag("-regex", description="NAPTR regexp.", required=True, metavar="REGEXP"),
+        Flag(
+            "-replacement",
+            description="NAPTR replacement.",
+            required=True,
+            metavar="REPLACEMENT",
+        ),
     ],
 )
 
@@ -1937,10 +1885,10 @@ host.add_command(
 #  Implementation of sub command 'naptr_remove'  #
 ##################################################
 
+
 def naptr_remove(args):
-    """
-    naptr_remove <name> <replacement>
-        Remove NAPTR record.
+    """naptr_remove <name> <replacement>
+    Remove NAPTR record.
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -1950,13 +1898,20 @@ def naptr_remove(args):
     path = "/api/v1/naptrs/"
     params = {
         "replacement__contains": args.replacement,
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     naptrs = get_list(path, params=params)
 
     data = None
-    attrs = ('preference', 'order', 'flag', 'service', 'regex', 'replacement',)
+    attrs = (
+        "preference",
+        "order",
+        "flag",
+        "service",
+        "regex",
+        "replacement",
+    )
     for naptr in naptrs:
         if all(naptr[attr] == getattr(args, attr) for attr in attrs):
             data = naptr
@@ -1973,40 +1928,41 @@ def naptr_remove(args):
 
 # Add 'naptr_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='naptr_remove',
-    description='Remove NAPTR record.',
+    prog="naptr_remove",
+    description="Remove NAPTR record.",
     callback=naptr_remove,
     flags=[
-        Flag('-name',
-             description='Name of the target host.',
-             required=True,
-             metavar='NAME'),
-        Flag('-preference',
-             description='NAPTR preference.',
-             type=int,
-             required=True,
-             metavar='PREFERENCE'),
-        Flag('-order',
-             description='NAPTR order.',
-             type=int,
-             required=True,
-             metavar='ORDER'),
-        Flag('-flag',
-             description='NAPTR flag.',
-             required=True,
-             metavar='FLAG'),
-        Flag('-service',
-             description='NAPTR service.',
-             required=True,
-             metavar='SERVICE'),
-        Flag('-regex',
-             description='NAPTR regexp.',
-             required=True,
-             metavar='REGEXP'),
-        Flag('-replacement',
-             description='NAPTR replacement.',
-             required=True,
-             metavar='REPLACEMENT'),
+        Flag(
+            "-name",
+            description="Name of the target host.",
+            required=True,
+            metavar="NAME",
+        ),
+        Flag(
+            "-preference",
+            description="NAPTR preference.",
+            flag_type=int,
+            required=True,
+            metavar="PREFERENCE",
+        ),
+        Flag(
+            "-order",
+            description="NAPTR order.",
+            flag_type=int,
+            required=True,
+            metavar="ORDER",
+        ),
+        Flag("-flag", description="NAPTR flag.", required=True, metavar="FLAG"),
+        Flag(
+            "-service", description="NAPTR service.", required=True, metavar="SERVICE"
+        ),
+        Flag("-regex", description="NAPTR regexp.", required=True, metavar="REGEXP"),
+        Flag(
+            "-replacement",
+            description="NAPTR replacement.",
+            required=True,
+            metavar="REPLACEMENT",
+        ),
     ],
 )
 
@@ -2015,33 +1971,43 @@ host.add_command(
 #  Implementation of sub command 'naptr_show'  #
 ################################################
 
+
 def _naptr_show(info):
     path = "/api/v1/naptrs/"
     params = {
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     naptrs = get_list(path, params=params)
-    headers = ("NAPTRs:", "Preference", "Order", "Flag", "Service", "Regex", "Replacement")
-    row_format = '{:<14}' * len(headers)
+    headers = (
+        "NAPTRs:",
+        "Preference",
+        "Order",
+        "Flag",
+        "Service",
+        "Regex",
+        "Replacement",
+    )
+    row_format = "{:<14}" * len(headers)
     if naptrs:
         print(row_format.format(*headers))
         for naptr in naptrs:
-            print(row_format.format(
-                '',
-                naptr["preference"],
-                naptr["order"],
-                naptr["flag"],
-                naptr["service"],
-                naptr["regex"] or '""',
-                naptr["replacement"],
-            ))
+            print(
+                row_format.format(
+                    "",
+                    naptr["preference"],
+                    naptr["order"],
+                    naptr["flag"],
+                    naptr["service"],
+                    naptr["regex"] or '""',
+                    naptr["replacement"],
+                )
+            )
     return len(naptrs)
 
 
 def naptr_show(args):
-    """Show all NAPTR records for host.
-    """
+    """Show all NAPTR records for host."""
     info = host_info_by_name(args.name)
     num_naptrs = _naptr_show(info)
     if num_naptrs == 0:
@@ -2051,14 +2017,12 @@ def naptr_show(args):
 
 # Add 'naptr_show' as a sub command to the 'host' command
 host.add_command(
-    prog='naptr_show',
-    description='Show all NAPTR records for host.',
-    short_desc='Show NAPTR records.',
+    prog="naptr_show",
+    description="Show all NAPTR records for host.",
+    short_desc="Show NAPTR records.",
     callback=naptr_show,
     flags=[
-        Flag('name',
-             description='Name of the target host.',
-             metavar='NAME'),
+        Flag("name", description="Name of the target host.", metavar="NAME"),
     ],
 )
 
@@ -2074,9 +2038,9 @@ host.add_command(
 #  Implementation of sub command 'ptr_change'  #
 ################################################
 
+
 def ptr_change(args):
-    """Move PTR record from <old-name> to <new-name>.
-    """
+    """Move PTR record from <old-name> to <new-name>."""
     # Get host info or raise exception
     old_info = host_info_by_name(args.old)
     new_info = host_info_by_name(args.new)
@@ -2087,11 +2051,9 @@ def ptr_change(args):
 
     # check that old host has a PTR record with the given ip
     if not len(old_info["ptr_overrides"]):
-        cli_warning("no PTR record for {} with ip {}".format(old_info["name"],
-                                                             args.ip))
+        cli_warning("no PTR record for {} with ip {}".format(old_info["name"], args.ip))
     if old_info["ptr_overrides"][0]["ipaddress"] != args.ip:
-        cli_warning("{} PTR record doesn't match {}".format(old_info["name"],
-                                                            args.ip))
+        cli_warning("{} PTR record doesn't match {}".format(old_info["name"], args.ip))
 
     # change PTR record
     data = {
@@ -2101,36 +2063,33 @@ def ptr_change(args):
     path = "/api/v1/ptroverrides/{}".format(old_info["ptr_overrides"][0]["id"])
     history.record_patch(path, data, old_info["ptr_overrides"][0])
     patch(path, **data)
-    cli_info("changed owner of PTR record {} from {} to {}".format(
-        args.ip,
-        old_info["name"],
-        new_info["name"],
-    ), print_msg=True)
+    cli_info(
+        "changed owner of PTR record {} from {} to {}".format(
+            args.ip,
+            old_info["name"],
+            new_info["name"],
+        ),
+        print_msg=True,
+    )
 
 
 # Add 'ptr_change' as a sub command to the 'host' command
 host.add_command(
-    prog='ptr_change',
-    description='Move PTR record from OLD to NEW.',
-    short_desc='Move PTR record.',
+    prog="ptr_change",
+    description="Move PTR record from OLD to NEW.",
+    short_desc="Move PTR record.",
     callback=ptr_change,
     flags=[
-        Flag('-ip',
-             description='IP of PTR record. May be IPv4 or IPv6.',
-             short_desc='IP of PTR record.',
-             required=True,
-             metavar='IP'),
-        Flag('-old',
-             description='Name of old host.',
-             required=True,
-             metavar='NAME'),
-        Flag('-new',
-             description='Name of new host.',
-             required=True,
-             metavar='NAME'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag(
+            "-ip",
+            description="IP of PTR record. May be IPv4 or IPv6.",
+            short_desc="IP of PTR record.",
+            required=True,
+            metavar="IP",
+        ),
+        Flag("-old", description="Name of old host.", required=True, metavar="NAME"),
+        Flag("-new", description="Name of new host.", required=True, metavar="NAME"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -2139,41 +2098,37 @@ host.add_command(
 #  Implementation of sub command 'ptr_remove'  #
 ################################################
 
+
 def ptr_remove(args):
-    """Remove PTR record from host.
-    """
+    """Remove PTR record from host."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    for ptr in info['ptr_overrides']:
-        if ptr['ipaddress'] == args.ip:
-            ptr_id = ptr['id']
+    for ptr in info["ptr_overrides"]:
+        if ptr["ipaddress"] == args.ip:
+            ptr_id = ptr["id"]
             break
     else:
-        cli_warning("no PTR record for {} with ip {}".format(info["name"],
-                                                             args.ip))
+        cli_warning("no PTR record for {} with ip {}".format(info["name"], args.ip))
 
     # Delete record
     path = f"/api/v1/ptroverrides/{ptr_id}"
     history.record_delete(path, ptr_id)
     delete(path)
-    cli_info("deleted PTR record {} for {}".format(args.ip, info["name"]),
-             print_msg=True)
+    cli_info(
+        "deleted PTR record {} for {}".format(args.ip, info["name"]), print_msg=True
+    )
 
 
 # Add 'ptr_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='ptr_remove',
-    description='Remove PTR record from host.',
-    short_desc='Remove PTR record.',
+    prog="ptr_remove",
+    description="Remove PTR record from host.",
+    short_desc="Remove PTR record.",
     callback=ptr_remove,
     flags=[
-        Flag('ip',
-             description='IP of PTR record. May be IPv4 or IPv6.',
-             metavar='IP'),
-        Flag('name',
-             description='Name of host.',
-             metavar='NAME'),
+        Flag("ip", description="IP of PTR record. May be IPv4 or IPv6.", metavar="IP"),
+        Flag("name", description="Name of host.", metavar="NAME"),
     ],
 )
 
@@ -2182,9 +2137,9 @@ host.add_command(
 #  Implementation of sub command 'ptr_add'  #
 #############################################
 
+
 def ptr_add(args):
-    """Create a PTR record for host.
-    """
+    """Create a PTR record for host."""
     # Ip sanity check
     if not is_valid_ip(args.ip):
         cli_warning("invalid ip: {}".format(args.ip))
@@ -2204,12 +2159,13 @@ def ptr_add(args):
     if len(ptrs):
         cli_warning("{} already exist in a PTR record".format(args.ip))
     # check if host is in mreg controlled zone, must force if not
-    if info['zone'] is None and not args.force:
-        cli_warning("{} isn't in a zone controlled by MREG, must force"
-                    .format(info["name"]))
+    if info["zone"] is None and not args.force:
+        cli_warning(
+            "{} isn't in a zone controlled by MREG, must force".format(info["name"])
+        )
 
     network = get_network_by_ip(args.ip)
-    reserved_addresses = get_network_reserved_ips(network['network'])
+    reserved_addresses = get_network_reserved_ips(network["network"])
     if args.ip in reserved_addresses and not args.force:
         cli_warning("Address is reserved. Requires force")
 
@@ -2221,26 +2177,19 @@ def ptr_add(args):
     path = "/api/v1/ptroverrides/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
-    cli_info("Added PTR record {} to {}".format(args.ip, info["name"]),
-             print_msg=True)
+    cli_info("Added PTR record {} to {}".format(args.ip, info["name"]), print_msg=True)
 
 
 # Add 'ptr_add' as a sub command to the 'host' command
 host.add_command(
-    prog='ptr_add',
-    description='Create a PTR record for host.',
-    short_desc='Add PTR record.',
+    prog="ptr_add",
+    description="Create a PTR record for host.",
+    short_desc="Add PTR record.",
     callback=ptr_add,
     flags=[
-        Flag('ip',
-             description='IP of PTR record. May be IPv4 or IPv6.',
-             metavar='IP'),
-        Flag('name',
-             description='Name of host.',
-             metavar='NAME'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag("ip", description="IP of PTR record. May be IPv4 or IPv6.", metavar="IP"),
+        Flag("name", description="Name of host.", metavar="NAME"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -2249,10 +2198,9 @@ host.add_command(
 #  Implementation of sub command 'ptr_show'  #
 ##############################################
 
-def ptr_show(args):
-    """Show PTR record matching given ip.
-    """
 
+def ptr_show(args):
+    """Show PTR record matching given ip."""
     if not is_valid_ip(args.ip):
         cli_warning(f"{args.ip} is not a valid IP")
 
@@ -2275,15 +2223,13 @@ def ptr_show(args):
 
 # Add 'ptr_show' as a sub command to the 'host' command
 host.add_command(
-    prog='ptr_show',
-    description='Show PTR record matching given ip (empty input shows all '
-                'PTR records).',
-    short_desc='Show PTR record.',
+    prog="ptr_show",
+    description="Show PTR record matching given ip (empty input shows all "
+    "PTR records).",
+    short_desc="Show PTR record.",
     callback=ptr_show,
     flags=[
-        Flag('ip',
-             description='IP of PTR record. May be IPv4 or IPv6.',
-             metavar='IP'),
+        Flag("ip", description="IP of PTR record. May be IPv4 or IPv6.", metavar="IP"),
     ],
 )
 
@@ -2299,10 +2245,9 @@ host.add_command(
 #  Implementation of sub command 'srv_add'  #
 #############################################
 
-def srv_add(args):
-    """Add SRV record.
-    """
 
+def srv_add(args):
+    """Add SRV record."""
     sname = clean_hostname(args.name)
     check_zone_for_hostname(sname, False, require_zone=True)
 
@@ -2310,14 +2255,14 @@ def srv_add(args):
     info = host_info_by_name(args.host)
 
     # Require force if target host not in MREG zone
-    check_zone_for_hostname(info['name'], args.force)
+    check_zone_for_hostname(info["name"], args.force)
 
     data = {
         "name": sname,
         "priority": args.priority,
         "weight": args.weight,
         "port": args.port,
-        "host": info['id'],
+        "host": info["id"],
         "ttl": args.ttl,
     }
 
@@ -2325,42 +2270,26 @@ def srv_add(args):
     path = "/api/v1/srvs/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
-    cli_info("Added SRV record {} with target {}".format(sname, info['name']),
-             print_msg=True)
+    cli_info(
+        "Added SRV record {} with target {}".format(sname, info["name"]), print_msg=True
+    )
 
 
 # Add 'srv_add' as a sub command to the 'host' command
 host.add_command(
-    prog='srv_add',
-    description='Add SRV record.',
+    prog="srv_add",
+    description="Add SRV record.",
     callback=srv_add,
     flags=[
-        Flag('-name',
-             description='SRV service.',
-             required=True,
-             metavar='SERVICE'),
-        Flag('-priority',
-             description='SRV priority.',
-             required=True,
-             metavar='PRIORITY'),
-        Flag('-weight',
-             description='SRV weight.',
-             required=True,
-             metavar='WEIGHT'),
-        Flag('-port',
-             description='SRV port.',
-             required=True,
-             metavar='PORT'),
-        Flag('-host',
-             description='Host target name.',
-             required=True,
-             metavar='NAME'),
-        Flag('-ttl',
-             description='TTL value',
-             metavar='TTL'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag("-name", description="SRV service.", required=True, metavar="SERVICE"),
+        Flag(
+            "-priority", description="SRV priority.", required=True, metavar="PRIORITY"
+        ),
+        Flag("-weight", description="SRV weight.", required=True, metavar="WEIGHT"),
+        Flag("-port", description="SRV port.", required=True, metavar="PORT"),
+        Flag("-host", description="Host target name.", required=True, metavar="NAME"),
+        Flag("-ttl", description="TTL value", metavar="TTL"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -2369,9 +2298,9 @@ host.add_command(
 #  Implementation of sub command 'srv_remove'  #
 ################################################
 
+
 def srv_remove(args):
-    """Remove SRV record.
-    """
+    """Remove SRV record."""
     info = host_info_by_name(args.host)
     sname = clean_hostname(args.name)
 
@@ -2379,7 +2308,7 @@ def srv_remove(args):
     path = "/api/v1/srvs/"
     params = {
         "name": sname,
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     srvs = get_list(path, params=params)
@@ -2387,7 +2316,12 @@ def srv_remove(args):
         cli_warning(f"no service named {sname}")
 
     data = None
-    attrs = ('name', 'priority', 'weight', 'port',)
+    attrs = (
+        "name",
+        "priority",
+        "weight",
+        "port",
+    )
     for srv in srvs:
         if all(srv[attr] == getattr(args, attr) for attr in attrs):
             data = srv
@@ -2405,33 +2339,33 @@ def srv_remove(args):
 
 # Add 'srv_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='srv_remove',
-    description='Remove SRV record.',
+    prog="srv_remove",
+    description="Remove SRV record.",
     callback=srv_remove,
     flags=[
-        Flag('-name',
-             description='SRV service.',
-             required=True,
-             metavar='SERVICE'),
-        Flag('-priority',
-             description='SRV priority.',
-             type=int,
-             required=True,
-             metavar='PRIORITY'),
-        Flag('-weight',
-             description='SRV weight.',
-             type=int,
-             required=True,
-             metavar='WEIGHT'),
-        Flag('-port',
-             description='SRV port.',
-             type=int,
-             required=True,
-             metavar='PORT'),
-        Flag('-host',
-             description='Host target name.',
-             required=True,
-             metavar='NAME'),
+        Flag("-name", description="SRV service.", required=True, metavar="SERVICE"),
+        Flag(
+            "-priority",
+            description="SRV priority.",
+            flag_type=int,
+            required=True,
+            metavar="PRIORITY",
+        ),
+        Flag(
+            "-weight",
+            description="SRV weight.",
+            flag_type=int,
+            required=True,
+            metavar="WEIGHT",
+        ),
+        Flag(
+            "-port",
+            description="SRV port.",
+            flag_type=int,
+            required=True,
+            metavar="PORT",
+        ),
+        Flag("-host", description="Host target name.", required=True, metavar="NAME"),
     ],
 )
 
@@ -2440,21 +2374,24 @@ host.add_command(
 #  Implementation of sub command 'srv_show'  #
 ##############################################
 
+
 def _srv_show(srvs=None, host_id=None):
     assert srvs is not None or host_id is not None
     hostid2name = dict()
     host_ids = set()
 
     def print_srv(srv: dict, hostname: str, padding: int = 14) -> None:
-        """Pretty print given srv"""
-        print("SRV: {1:<{0}} {2:^6} {3:^6} {4:^6} {5}".format(
-            padding,
-            srv["name"],
-            srv["priority"],
-            srv["weight"],
-            srv["port"],
-            hostname,
-        ))
+        """Pretty print given srv."""
+        print(
+            "SRV: {1:<{0}} {2:^6} {3:^6} {4:^6} {5}".format(
+                padding,
+                srv["name"],
+                srv["priority"],
+                srv["weight"],
+                srv["port"],
+                hostname,
+            )
+        )
 
     if srvs is None:
         path = "/api/v1/srvs/"
@@ -2473,12 +2410,12 @@ def _srv_show(srvs=None, host_id=None):
     for srv in srvs:
         if len(srv["name"]) > padding:
             padding = len(srv["name"])
-        host_ids.add(str(srv['host']))
+        host_ids.add(str(srv["host"]))
 
-    arg = ','.join(host_ids)
+    arg = ",".join(host_ids)
     hosts = get_list("/api/v1/hosts/", params={"id__in": arg})
     for host in hosts:
-        hostid2name[host['id']] = host['name']
+        hostid2name[host["id"]] = host["name"]
 
     prev_name = ""
     for srv in srvs:
@@ -2486,13 +2423,11 @@ def _srv_show(srvs=None, host_id=None):
             srv["name"] = ""
         else:
             prev_name = srv["name"]
-        print_srv(srv, hostid2name[srv['host']], padding)
+        print_srv(srv, hostid2name[srv["host"]], padding)
 
 
 def srv_show(args):
-    """Show SRV records for the service.
-    """
-
+    """Show SRV records for the service."""
     sname = clean_hostname(args.service)
 
     # Get all matching SRV records
@@ -2511,14 +2446,12 @@ def srv_show(args):
 
 # Add 'srv_show' as a sub command to the 'host' command
 host.add_command(
-    prog='srv_show',
-    description='Show SRV records for the service.',
-    short_desc='Show SRV records.',
+    prog="srv_show",
+    description="Show SRV records for the service.",
+    short_desc="Show SRV records.",
     callback=srv_show,
     flags=[
-        Flag('service',
-             description='Host target name.',
-             metavar='SERVICE'),
+        Flag("service", description="Host target name.", metavar="SERVICE"),
     ],
 )
 
@@ -2534,10 +2467,9 @@ host.add_command(
 # Implementation of sub command 'sshfp_add' #
 #############################################
 
-def sshfp_add(args):
-    """Add SSHFP record.
-    """
 
+def sshfp_add(args):
+    """Add SSHFP record."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
@@ -2552,28 +2484,24 @@ def sshfp_add(args):
     path = "/api/v1/sshfps/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
-    cli_info("Added SSHFP record {} for host {}"
-             .format(args.fingerprint, info["name"]), print_msg=True)
+    cli_info(
+        "Added SSHFP record {} for host {}".format(args.fingerprint, info["name"]),
+        print_msg=True,
+    )
 
 
 # Add 'sshfp_add' as a sub command to the 'host' command
 host.add_command(
-    prog='sshfp_add',
-    description='Add SSHFP record.',
+    prog="sshfp_add",
+    description="Add SSHFP record.",
     callback=sshfp_add,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
-        Flag('algorithm',
-             description='SSH algorithm.',
-             metavar='ALGORITHM'),
-        Flag('hash_type',
-             description='Hash type.',
-             metavar='HASH_TYPE'),
-        Flag('fingerprint',
-             description='Hexadecimal fingerprint.',
-             metavar='FINGERPRINT'),
+        Flag("name", description="Host target name.", metavar="NAME"),
+        Flag("algorithm", description="SSH algorithm.", metavar="ALGORITHM"),
+        Flag("hash_type", description="Hash type.", metavar="HASH_TYPE"),
+        Flag(
+            "fingerprint", description="Hexadecimal fingerprint.", metavar="FINGERPRINT"
+        ),
     ],
 )
 
@@ -2582,18 +2510,22 @@ host.add_command(
 # Implementation of sub command 'sshfp_remove' #
 ################################################
 
+
 def sshfp_remove(args):
     """Remove SSHFP record with a given fingerprint from the host.
-       A missing fingerprint removes all SSHFP records for the host.
+    A missing fingerprint removes all SSHFP records for the host.
     """
 
     def _delete_sshfp_record(sshfp: dict, hname: str):
         path = f"/api/v1/sshfps/{sshfp['id']}"
         history.record_delete(path, sshfp, redoable=False)
         delete(path)
-        cli_info("removed SSHFP record with fingerprint {} for {}".format(sshfp["fingerprint"],
-                                                                          hname),
-                 print_msg=True)
+        cli_info(
+            "removed SSHFP record with fingerprint {} for {}".format(
+                sshfp["fingerprint"], hname
+            ),
+            print_msg=True,
+        )
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -2616,9 +2548,12 @@ def sshfp_remove(args):
                 _delete_sshfp_record(sshfp, info["name"])
                 found = True
         if not found:
-            cli_info("found no SSHFP record with fingerprint {} for {}".format(args.fingerprint,
-                                                                               info["name"]),
-                     print_msg=True)
+            cli_info(
+                "found no SSHFP record with fingerprint {} for {}".format(
+                    args.fingerprint, info["name"]
+                ),
+                print_msg=True,
+            )
     else:
         for sshfp in sshfps:
             _delete_sshfp_record(sshfp, info["name"])
@@ -2626,17 +2561,17 @@ def sshfp_remove(args):
 
 # Add 'sshfp_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='sshfp_remove',
-    description='Remove SSHFP record with a given fingerprint from the host. '
-                'A missing fingerprint removes all SSHFP records for the host.',
+    prog="sshfp_remove",
+    description="Remove SSHFP record with a given fingerprint from the host. "
+    "A missing fingerprint removes all SSHFP records for the host.",
     callback=sshfp_remove,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
-        Flag('-fingerprint',
-             description='Hexadecimal fingerprint.',
-             metavar='FINGERPRINT'),
+        Flag("name", description="Host target name.", metavar="NAME"),
+        Flag(
+            "-fingerprint",
+            description="Hexadecimal fingerprint.",
+            metavar="FINGERPRINT",
+        ),
     ],
 )
 
@@ -2645,30 +2580,32 @@ host.add_command(
 # Implementation of sub command 'sshfp_show' #
 ##############################################
 
+
 def _sshfp_show(info):
     path = "/api/v1/sshfps/"
     params = {
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     sshfps = get_list(path, params=params)
     headers = ("SSHFPs:", "Algorithm", "Type", "Fingerprint")
-    row_format = '{:<14}' * len(headers)
+    row_format = "{:<14}" * len(headers)
     if sshfps:
         print(row_format.format(*headers))
         for sshfp in sshfps:
-            print(row_format.format(
-                '',
-                sshfp["algorithm"],
-                sshfp["hash_type"],
-                sshfp["fingerprint"],
-            ))
+            print(
+                row_format.format(
+                    "",
+                    sshfp["algorithm"],
+                    sshfp["hash_type"],
+                    sshfp["fingerprint"],
+                )
+            )
     return len(sshfps)
 
-def sshfp_show(args):
-    """Show SSHFP records for the host.
-    """
 
+def sshfp_show(args):
+    """Show SSHFP records for the host."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
     num_sshfps = _sshfp_show(info)
@@ -2678,14 +2615,12 @@ def sshfp_show(args):
 
 # Add 'sshfp_show' as a sub command to the 'host' command
 host.add_command(
-    prog='sshfp_show',
-    description='Show SSHFP records for the host.',
-    short_desc='Show SSHFP record.',
+    prog="sshfp_show",
+    description="Show SSHFP records for the host.",
+    short_desc="Show SSHFP record.",
     callback=sshfp_show,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
+        Flag("name", description="Host target name.", metavar="NAME"),
     ],
 )
 
@@ -2700,6 +2635,7 @@ host.add_command(
 ################################################
 #  Implementation of sub command 'ttl_remove'  #
 ################################################
+
 
 def ttl_remove(args):
     """Remove explicit TTL for host. If <name> is an alias the alias host is
@@ -2719,15 +2655,13 @@ def ttl_remove(args):
 
 # Add 'ttl_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='ttl_remove',
-    description='Remove explicit TTL for host. If NAME is an alias the alias '
-                'host is updated.',
-    short_desc='Remove TTL record.',
+    prog="ttl_remove",
+    description="Remove explicit TTL for host. If NAME is an alias the alias "
+    "host is updated.",
+    short_desc="Remove TTL record.",
     callback=ttl_remove,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
+        Flag("name", description="Host target name.", metavar="NAME"),
     ],
 )
 
@@ -2736,18 +2670,18 @@ host.add_command(
 #  Implementation of sub command 'ttl_set'  #
 #############################################
 
+
 def ttl_set(args):
     """Set ttl for name. Valid values are 300 <= TTL <= 68400 or "default". If
     <name> is an alias the alias host is updated.
     """
-
     target_type, info = get_info_by_name(args.name)
 
     # TTL sanity check
     if not is_valid_ttl(args.ttl):
         cli_warning(
-            "invalid TTL value: {} (target host {})".format(args.ttl,
-                                                            info["name"]))
+            "invalid TTL value: {} (target host {})".format(args.ttl, info["name"])
+        )
 
     old_data = {"ttl": info["ttl"] or ""}
     new_data = {"ttl": args.ttl if args.ttl != "default" else ""}
@@ -2761,18 +2695,14 @@ def ttl_set(args):
 
 # Add 'ttl_set' as a sub command to the 'host' command
 host.add_command(
-    prog='ttl_set',
-    description='Set ttl for host. Valid values are 300 <= TTL <= 68400 or '
-                '"default". If NAME is an alias the alias host is updated.',
-    short_desc='Set TTL record.',
+    prog="ttl_set",
+    description="Set ttl for host. Valid values are 300 <= TTL <= 68400 or "
+    '"default". If NAME is an alias the alias host is updated.',
+    short_desc="Set TTL record.",
     callback=ttl_set,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
-        Flag('ttl',
-             description='New TTL.',
-             metavar='TTL'),
+        Flag("name", description="Host target name.", metavar="NAME"),
+        Flag("ttl", description="New TTL.", metavar="TTL"),
     ],
 )
 
@@ -2781,9 +2711,9 @@ host.add_command(
 #  Implementation of sub command 'ttl_show'  #
 ##############################################
 
+
 def ttl_show(args):
-    """Show ttl for name. If <name> is an alias the alias hosts TTL is shown.
-    """
+    """Show ttl for name. If <name> is an alias the alias hosts TTL is shown."""
     info = host_info_by_name(args.name)
     target_type, info = get_info_by_name(args.name)
     print_ttl(info["ttl"])
@@ -2792,14 +2722,12 @@ def ttl_show(args):
 
 # Add 'ttl_show' as a sub command to the 'host' command
 host.add_command(
-    prog='ttl_show',
-    description='Show ttl for name.',
-    short_desc='Show TTL.',
+    prog="ttl_show",
+    description="Show ttl for name.",
+    short_desc="Show TTL.",
     callback=ttl_show,
     flags=[
-        Flag('name',
-             description='Name',
-             metavar='NAME'),
+        Flag("name", description="Name", metavar="NAME"),
     ],
 )
 
@@ -2815,6 +2743,7 @@ host.add_command(
 #  Implementation of sub command 'txt_add'  #
 #############################################
 
+
 def txt_add(args):
     """Add a txt record to host. <text> must be enclosed in double quotes if it
     contains more than one word.
@@ -2824,10 +2753,7 @@ def txt_add(args):
     if any(args.text == i["txt"] for i in info["txts"]):
         cli_warning("The TXT record already exists for {}".format(info["name"]))
 
-    data = {
-        "host": info["id"],
-        "txt": args.text
-    }
+    data = {"host": info["id"], "txt": args.text}
     # Add TXT record to host
     path = "/api/v1/txts/"
     history.record_post(path, "", data, undoable=False)
@@ -2837,18 +2763,18 @@ def txt_add(args):
 
 # Add 'txt_add' as a sub command to the 'host' command
 host.add_command(
-    prog='txt_add',
-    description='Add a txt record to host. TEXT must be enclosed in double '
-                'quotes if it contains more than one word.',
-    short_desc='Add TXT record.',
+    prog="txt_add",
+    description="Add a txt record to host. TEXT must be enclosed in double "
+    "quotes if it contains more than one word.",
+    short_desc="Add TXT record.",
     callback=txt_add,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
-        Flag('text',
-             description='TXT record text. Must be quoted if contains spaces.',
-             metavar='TEXT'),
+        Flag("name", description="Host target name.", metavar="NAME"),
+        Flag(
+            "text",
+            description="TXT record text. Must be quoted if contains spaces.",
+            metavar="TEXT",
+        ),
     ],
 )
 
@@ -2857,9 +2783,9 @@ host.add_command(
 #  Implementation of sub command 'txt_remove'  #
 ################################################
 
+
 def txt_remove(args):
-    """Remove TXT record for host with <text>.
-    """
+    """Remove TXT record for host with <text>."""
     # Get host info or raise exception
     info = host_info_by_name(args.name)
     hostname = info["name"]
@@ -2880,20 +2806,18 @@ def txt_remove(args):
 
 # Add 'txt_remove' as a sub command to the 'host' command
 host.add_command(
-    prog='txt_remove',
-    description=' Remove TXT record for host matching TEXT.',
-    short_desc='Remove TXT record.',
+    prog="txt_remove",
+    description=" Remove TXT record for host matching TEXT.",
+    short_desc="Remove TXT record.",
     callback=txt_remove,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
-        Flag('text',
-             description='TXT record text. Must be quoted if contains spaces.',
-             metavar='TEXT'),
-        Flag('-force',
-             action='store_true',
-             description='Enable force.'),
+        Flag("name", description="Host target name.", metavar="NAME"),
+        Flag(
+            "text",
+            description="TXT record text. Must be quoted if contains spaces.",
+            metavar="TEXT",
+        ),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 
@@ -2902,13 +2826,13 @@ host.add_command(
 #  Implementation of sub command 'txt_show'  #
 ##############################################
 
+
 def txt_show(args):
-    """Show all TXT records for host.
-    """
+    """Show all TXT records for host."""
     info = host_info_by_name(args.name)
     path = "/api/v1/txts/"
     params = {
-        "host": info['id'],
+        "host": info["id"],
     }
     history.record_get(path)
     txts = get_list(path, params=params)
@@ -2919,13 +2843,11 @@ def txt_show(args):
 
 # Add 'txt_show' as a sub command to the 'host' command
 host.add_command(
-    prog='txt_show',
-    description='Show all TXT records for host.',
-    short_desc='Show TXT records.',
+    prog="txt_show",
+    description="Show all TXT records for host.",
+    short_desc="Show TXT records.",
     callback=txt_show,
     flags=[
-        Flag('name',
-             description='Host target name.',
-             metavar='NAME'),
+        Flag("name", description="Host target name.", metavar="NAME"),
     ],
 )
