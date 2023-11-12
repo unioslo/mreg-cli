@@ -2,8 +2,9 @@ from itertools import chain
 
 from .cli import Flag, cli
 from .history import history
-from .history_log import get_history_items, print_history_items
+from .history_log import format_history_items, get_history_items
 from .log import cli_error, cli_info, cli_warning
+from .outputmanager import OutputManager
 from .util import delete, get_list, host_info_by_name, patch, post
 
 ##################################
@@ -31,7 +32,7 @@ Implementation of sub command 'create'
 """
 
 
-def create(args):
+def create(args) -> None:
     # .name .description
     """Create a new host group."""
     ret = get_list("/api/v1/hostgroups/", params={"name": args.name})
@@ -63,17 +64,16 @@ group.add_command(
 ########################################
 
 
-def info(args):
+def info(args) -> None:
     """Show host group info."""
 
-    def _print(key, value, padding=14):
-        print("{1:<{0}} {2}".format(padding, key, value))
+    manager = OutputManager()
 
     for name in args.name:
         info = get_hostgroup(name)
 
-        _print("Name:", info["name"])
-        _print("Description:", info["description"])
+        manager.add_formatted_line("Name:", info["name"])
+        manager.add_formatted_line("Description:", info["description"])
         members = []
         count = len(info["hosts"])
         if count:
@@ -81,10 +81,12 @@ def info(args):
         count = len(info["groups"])
         if count:
             members.append("{} group{}".format(count, "s" if count > 1 else ""))
-        _print("Members:", ", ".join(members))
+        manager.add_formatted_line("Members:", ", ".join(members))
         if len(info["owners"]):
             owners = ", ".join([i["name"] for i in info["owners"]])
-            _print("Owners:", owners)
+            manager.add_formatted_line("Owners:", owners)
+
+    return manager
 
 
 group.add_command(
@@ -103,7 +105,7 @@ group.add_command(
 ##########################################
 
 
-def rename(args):
+def rename(args) -> None:
     """Rename group."""
     get_hostgroup(args.oldname)
     patch(f"/api/v1/hostgroups/{args.oldname}", name=args.newname)
@@ -127,35 +129,34 @@ group.add_command(
 ########################################
 
 
-def _list(args):
+def _list(args) -> None:
     """List group members."""
 
-    def _print(key, value, source="", padding=14):
-        print("{1:<{0}} {2:<{0}} {3}".format(padding, key, value, source))
+    manager = OutputManager()
 
-    def _print_hosts(hosts, source=""):
+    def _format_hosts(hosts, source=""):
         for host in hosts:
-            _print("host", host["name"], source=source)
+            manager.add_formatted_line_with_source("host", host["name"], source)
 
     def _expand_group(groupname):
         info = get_hostgroup(groupname)
-        _print_hosts(info["hosts"], source=groupname)
+        _format_hosts(info["hosts"], source=groupname)
         for group in info["groups"]:
             _expand_group(group["name"])
 
     info = get_hostgroup(args.name)
     if args.expand:
-        _print("Type", "Name", "Source")
-        _print_hosts(info["hosts"], source=args.name)
+        manager.add_formatted_line_with_source("Type", "Name", "Source")
+        _format_hosts(info["hosts"], source=args.name)
     else:
-        _print("Type", "Name")
-        _print_hosts(info["hosts"])
+        manager.add_formatted_line("Type", "Name")
+        _format_hosts(info["hosts"])
 
     for group in info["groups"]:
         if args.expand:
             _expand_group(group["name"])
         else:
-            _print("group", group["name"])
+            manager.add_formatted_line("group", group["name"])
 
 
 group.add_command(
@@ -169,8 +170,12 @@ group.add_command(
     ],
 )
 
+##########################################
+# Implementation of sub command 'delete' #
+##########################################
 
-def _delete(args):
+
+def _delete(args) -> None:
     # .name .force
     """Delete a host group."""
     info = get_hostgroup(args.name)
@@ -198,11 +203,19 @@ group.add_command(
     ],
 )
 
+###########################################
+# Implementation of sub command 'history' #
+###########################################
 
-def _history(args):
+
+def _history(args) -> None:
     """Show host history for name."""
+    manager = OutputManager()
     items = get_history_items(args.name, "group", data_relation="groups")
-    print_history_items(args.name, items)
+    for line in format_history_items(args.name, items):
+        manager.add_line(line)
+
+    return manager
 
 
 group.add_command(
@@ -221,7 +234,7 @@ group.add_command(
 #############################################
 
 
-def group_add(args):
+def group_add(args) -> None:
     """Add group(s) to group."""
     for name in chain([args.dstgroup], args.srcgroup):
         get_hostgroup(name)
@@ -253,7 +266,7 @@ group.add_command(
 ################################################
 
 
-def group_remove(args):
+def group_remove(args) -> None:
     """Remove group(s) from group."""
     info = get_hostgroup(args.dstgroup)
     group_names = set(i["name"] for i in info["groups"])
@@ -284,7 +297,7 @@ group.add_command(
 ############################################
 
 
-def host_add(args):
+def host_add(args) -> None:
     """Add host(s) to group."""
     get_hostgroup(args.group)
     info = []
@@ -318,7 +331,7 @@ group.add_command(
 ###############################################
 
 
-def host_remove(args):
+def host_remove(args) -> None:
     """Remove host(s) from group."""
     get_hostgroup(args.group)
     info = []
@@ -344,8 +357,12 @@ group.add_command(
     ],
 )
 
+#############################################
+# Implementation of sub command 'host_list' #
+#############################################
 
-def host_list(args):
+
+def host_list(args) -> None:
     """List group memberships for host."""
     hostname = host_info_by_name(args.host, follow_cname=False)["name"]
     group_list = get_list("/api/v1/hostgroups/", params={"hosts__name": hostname})
@@ -353,9 +370,13 @@ def host_list(args):
         cli_info(f"Host {hostname!r} is not a member in any hostgroup", True)
         return
 
-    print("Groups:")
+    manager = OutputManager()
+
+    manager.add_line("Groups:")
     for group in group_list:
-        print("  ", group["name"])
+        manager.add_line("  ", group["name"])
+
+    return manager
 
 
 group.add_command(
@@ -368,12 +389,12 @@ group.add_command(
     ],
 )
 
-############################################
+#############################################
 # Implementation of sub command 'owner_add' #
-############################################
+#############################################
 
 
-def owner_add(args):
+def owner_add(args) -> None:
     """Add owner(s) to group."""
     get_hostgroup(args.group)
 
@@ -403,7 +424,7 @@ group.add_command(
 ################################################
 
 
-def owner_remove(args):
+def owner_remove(args) -> None:
     """Remove owner(s) from group."""
     info = get_hostgroup(args.group)
     names = set(i["name"] for i in info["owners"])
@@ -434,7 +455,7 @@ group.add_command(
 ###################################################
 
 
-def set_description(args):
+def set_description(args) -> None:
     """Set description for group."""
     get_hostgroup(args.name)
     patch(f"/api/v1/hostgroups/{args.name}", description=args.description)

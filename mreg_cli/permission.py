@@ -6,12 +6,12 @@ from .log import cli_info, cli_warning
 from .util import (
     convert_wildcard_to_regex,
     delete,
+    format_table,
     get,
     get_list,
     is_valid_network,
     patch,
     post,
-    print_table,
 )
 
 ###################################
@@ -30,14 +30,13 @@ permission = cli.add_command(
 ##########################################
 
 
-def network_list(args):
+def network_list(args) -> None:
     """Lists permissions for networks."""
 
     # Replace with a.supernet_of(b) when python 3.7 is required
     def _supernet_of(a, b):
         return (
-            a.network_address <= b.network_address
-            and a.broadcast_address >= b.broadcast_address
+            a.network_address <= b.network_address and a.broadcast_address >= b.broadcast_address
         )
 
     params = {
@@ -78,7 +77,7 @@ def network_list(args):
 
     headers = ("Range", "Group", "Regex", "Labels")
     keys = ("range", "group", "regex", "labels")
-    print_table(headers, keys, data)
+    format_table(headers, keys, data)
 
 
 permission.add_command(
@@ -101,7 +100,7 @@ permission.add_command(
 ##########################################
 
 
-def network_add(args):
+def network_add(args) -> None:
     """Add permission for network."""
     if not is_valid_network(args.range):
         cli_warning(f"Invalid range: {args.range}")
@@ -135,7 +134,7 @@ permission.add_command(
 ##########################################
 
 
-def network_remove(args):
+def network_remove(args) -> None:
     """Remove permission for networks."""
     params = {
         "group": args.group,
@@ -174,7 +173,7 @@ permission.add_command(
 #################################################################
 
 
-def add_label_to_permission(args):
+def add_label_to_permission(args) -> None:
     """Add a label to a permission triplet."""
     # find the permission
     query = {
@@ -224,7 +223,7 @@ permission.add_command(
 )
 
 
-def remove_label_from_permission(args):
+def remove_label_from_permission(args) -> None:
     """Remove a label from a permission."""
     # find the permission
     query = {

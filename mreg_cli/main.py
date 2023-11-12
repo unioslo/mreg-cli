@@ -2,13 +2,13 @@ import argparse
 import configparser
 import getpass
 import logging
-import shlex
 
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
 from . import config, log, recorder, util
 from .cli import cli, source
+from .outputmanager import OutputManager
 
 logger = logging.getLogger(__name__)
 
@@ -176,8 +176,17 @@ def main():
                 # Don't record the "source" command itself.
                 if rec.is_recording() and not line.lstrip().startswith("source"):
                     rec.record_command(line)
+                # OutputManager is a singleton class so we
+                # need to clear it before each command.
+                output = OutputManager()
+                output.clear()
+                # Set the command that generated the output
+                # Also remove filters and other noise.
+                cmd = output.from_command(line)
                 # Run the command
-                cli.parse(shlex.split(line))
+                cli.parse(cmd)
+                # Render the output
+                output.render()
         except ValueError as e:
             print(e)
 

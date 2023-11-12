@@ -1,16 +1,17 @@
 from .cli import Flag, cli
 from .history import history
-from .history_log import get_history_items, print_history_items
+from .history_log import format_history_items, get_history_items
 from .log import cli_error, cli_info, cli_warning
+from .outputmanager import OutputManager
 from .util import (
     convert_wildcard_to_regex,
     delete,
+    format_table,
     get,
     get_list,
     host_info_by_name,
     patch,
     post,
-    print_table,
 )
 
 ##################################
@@ -63,7 +64,7 @@ Implementation of sub command 'atom_create'
 """
 
 
-def atom_create(args):
+def atom_create(args) -> None:
     # .name .description
     """Create a new atom."""
     ret = _get_atom(args.name)
@@ -94,14 +95,12 @@ policy.add_command(
 )
 
 
-def atom_delete(args):
+def atom_delete(args) -> None:
     # .name
     """Delete an atom."""
     get_atom(args.name)
 
-    info = get_list(
-        "/api/v1/hostpolicy/roles/", params={"atoms__name__exact": args.name}
-    )
+    info = get_list("/api/v1/hostpolicy/roles/", params={"atoms__name__exact": args.name})
     inuse = [i["name"] for i in info]
 
     if inuse:
@@ -130,7 +129,7 @@ Implementation of sub command 'role_create'
 """
 
 
-def role_create(args):
+def role_create(args) -> None:
     # .role .description
     """Create a new role."""
     ret = _get_role(args.name)
@@ -161,7 +160,7 @@ policy.add_command(
 )
 
 
-def role_delete(args):
+def role_delete(args) -> None:
     # .name
     """Delete a role."""
     info = get_role(args.name)
@@ -188,7 +187,7 @@ policy.add_command(
 )
 
 
-def add_atom(args):
+def add_atom(args) -> None:
     """Make an atom member of a role."""
     info = get_role(args.role)
     for atom in info["atoms"]:
@@ -219,7 +218,7 @@ policy.add_command(
 )
 
 
-def remove_atom(args):
+def remove_atom(args) -> None:
     """Remove an atom member from a role."""
     info = get_role(args.role)
     for atom in info["atoms"]:
@@ -251,39 +250,41 @@ policy.add_command(
 ########################################
 
 
-def info(args):
+def info(args) -> None:
     """Show info about an atom or role."""
 
-    def _print(key, value, padding=14):
-        print("{1:<{0}} {2}".format(padding, key, value))
+    manager = OutputManager()
+
+    def _format(key, value, padding=14):
+        manager.add_formatted_line(key, value, padding)
 
     for name in args.name:
         policy, info = get_atom_or_role(name)
-        _print("Name:", info["name"])
-        _print("Created:", info["create_date"])
-        _print("Description:", info["description"])
+        _format("Name:", info["name"])
+        _format("Created:", info["create_date"])
+        _format("Description:", info["description"])
 
         if policy == "atom":
-            print("Roles where this atom is a member:")
+            manager.add_line("Roles where this atom is a member:")
             if info["roles"]:
                 for i in info["roles"]:
-                    _print("", i["name"])
+                    _format("", i["name"])
             else:
-                print("None")
+                manager.add_line("None")
         else:
-            print("Atom members:")
+            manager.add_line("Atom members:")
             if info["atoms"]:
                 for i in info["atoms"]:
-                    _print("", i["name"])
+                    _format("", i["name"])
             else:
-                _print("", "None")
+                _format("", "None")
 
-            print("Labels:")
+            manager.add_line("Labels:")
             for i in info["labels"]:
                 lb = get(f"/api/v1/labels/{i}").json()
-                _print("", lb["name"])
+                _format("", lb["name"])
             if not info["labels"]:
-                _print("", "None")
+                _format("", "None")
 
 
 policy.add_command(
@@ -297,10 +298,10 @@ policy.add_command(
 )
 
 
-def atom_history(args):
+def atom_history(args) -> None:
     """Show history for name."""
     items = get_history_items(args.name, "hostpolicy_atom", data_relation="atoms")
-    print_history_items(args.name, items)
+    format_history_items(args.name, items)
 
 
 policy.add_command(
@@ -314,10 +315,10 @@ policy.add_command(
 )
 
 
-def role_history(args):
+def role_history(args) -> None:
     """Show history for name."""
     items = get_history_items(args.name, "hostpolicy_role", data_relation="roles")
-    print_history_items(args.name, items)
+    format_history_items(args.name, items)
 
 
 policy.add_command(
@@ -331,11 +332,13 @@ policy.add_command(
 )
 
 
-def list_atoms(args):
+def list_atoms(args) -> None:
     """List all atoms by given filters."""
 
-    def _print(key, value, padding=20):
-        print("{1:<{0}} {2}".format(padding, key, value))
+    manager = OutputManager()
+
+    def _format(key, value, padding=20):
+        manager.add_formatted_line(key, value, padding)
 
     params = {}
     param, value = convert_wildcard_to_regex("name", args.name, True)
@@ -343,9 +346,9 @@ def list_atoms(args):
     info = get_list("/api/v1/hostpolicy/atoms/", params=params)
     if info:
         for i in info:
-            _print(i["name"], repr(i["description"]))
+            _format(i["name"], repr(i["description"]))
     else:
-        print("No match")
+        manager.add_line("No match")
 
 
 policy.add_command(
@@ -363,14 +366,17 @@ policy.add_command(
 )
 
 
-def list_roles(args):
+def list_roles(args) -> None:
     """List all roles by given filters."""
+
+    manager = OutputManager()
+
     params = {}
     param, value = convert_wildcard_to_regex("name", args.name, True)
     params[param] = value
     info = get_list("/api/v1/hostpolicy/roles/", params=params)
     if not info:
-        print("No match")
+        manager.add_line("No match")
         return
 
     labelnames = {}
@@ -387,9 +393,7 @@ def list_roles(args):
             labels.append(labelnames[j])
         i["labels"] = ", ".join(labels)
         rows.append(i)
-    print_table(
-        ("Role", "Description", "Labels"), ("name", "description", "labels"), rows
-    )
+    format_table(("Role", "Description", "Labels"), ("name", "description", "labels"), rows)
 
 
 policy.add_command(
@@ -407,15 +411,16 @@ policy.add_command(
 )
 
 
-def list_hosts(args):
+def list_hosts(args) -> None:
     """List hosts which use the given role."""
+    manager = OutputManager()
     info = get_role(args.name)
     if info["hosts"]:
-        print("Name:")
+        manager.add_line("Name:")
         for i in info["hosts"]:
-            print(" " + i["name"])
+            manager.add_line(f" {i['name']}")
     else:
-        print("No host uses this role")
+        manager.add_line("No host uses this role")
 
 
 policy.add_command(
@@ -429,16 +434,16 @@ policy.add_command(
 )
 
 
-def list_members(args):
+def list_members(args) -> None:
     """List atom members for a role."""
     info = get_role(args.name)
-
+    manager = OutputManager()
     if info["atoms"]:
-        print("Name:")
+        manager.add_line("Name:")
         for i in info["atoms"]:
-            print(" " + i["name"])
+            manager.add_line(f" {i['name']}")
     else:
-        print("No atom members")
+        manager.add_line("No atom members")
 
 
 policy.add_command(
@@ -452,7 +457,7 @@ policy.add_command(
 )
 
 
-def host_add(args):
+def host_add(args) -> None:
     """Add host(s) to role."""
     get_role(args.role)
     info = []
@@ -482,16 +487,18 @@ policy.add_command(
 )
 
 
-def host_list(args):
+def host_list(args) -> None:
     """List host roles."""
 
-    def _print(hostname, roleinfo):
+    manager = OutputManager()
+
+    def _format(hostname, roleinfo):
         if not roleinfo:
             cli_info(f"Host {hostname!r} has no roles.", print_msg=True)
         else:
-            print(f"Roles for {hostname!r}:")
+            manager.add_line(f"Roles for {hostname!r}:")
             for role in roleinfo:
-                print(f"  {role['name']}")
+                manager.add_line(f"  {role['name']}")
 
     info = []
     for name in args.hosts:
@@ -503,7 +510,7 @@ def host_list(args):
         params = {
             "hosts__name": name,
         }
-        _print(name, get_list(path, params=params))
+        _format(name, get_list(path, params=params))
 
 
 policy.add_command(
@@ -517,7 +524,7 @@ policy.add_command(
 )
 
 
-def host_remove(args):
+def host_remove(args) -> None:
     """Remove host(s) from role."""
     get_role(args.role)
     info = []
@@ -544,7 +551,7 @@ policy.add_command(
 )
 
 
-def rename(args):
+def rename(args) -> None:
     """Rename an atom/role."""
     if _get_atom(args.oldname):
         path = f"/api/v1/hostpolicy/atoms/{args.oldname}"
@@ -572,7 +579,7 @@ policy.add_command(
 ###################################################
 
 
-def set_description(args):
+def set_description(args) -> None:
     """Set description for atom/role."""
     if _get_atom(args.name):
         path = f"/api/v1/hostpolicy/atoms/{args.name}"
@@ -581,9 +588,7 @@ def set_description(args):
     else:
         cli_warning("Could not find an atom or role with name {args.name!r}")
     patch(path, description=args.description)
-    cli_info(
-        f"updated description to {args.description!r} for {args.name!r}", print_msg=True
-    )
+    cli_info(f"updated description to {args.description!r} for {args.name!r}", print_msg=True)
 
 
 policy.add_command(
@@ -603,7 +608,7 @@ policy.add_command(
 #################################################################
 
 
-def add_label_to_role(args):
+def add_label_to_role(args) -> None:
     """Add a label to a role."""
     # find the role
     path = f"/api/v1/hostpolicy/roles/{args.role}"
@@ -624,9 +629,7 @@ def add_label_to_role(args):
     ar = role["labels"]
     ar.append(label["id"])
     patch(path, labels=ar)
-    cli_info(
-        f"Added the label {args.label!r} to the role {args.role!r}.", print_msg=True
-    )
+    cli_info(f"Added the label {args.label!r} to the role {args.role!r}.", print_msg=True)
 
 
 policy.add_command(
@@ -637,7 +640,7 @@ policy.add_command(
 )
 
 
-def remove_label_from_role(args):
+def remove_label_from_role(args) -> None:
     """Remove a label from a role."""
     # find the role
     path = f"/api/v1/hostpolicy/roles/{args.role}"
@@ -658,9 +661,7 @@ def remove_label_from_role(args):
     ar = role["labels"]
     ar.remove(label["id"])
     patch(path, use_json=True, params={"labels": ar})
-    cli_info(
-        f"Removed the label {args.label!r} from the role {args.role!r}.", print_msg=True
-    )
+    cli_info(f"Removed the label {args.label!r} from the role {args.role!r}.", print_msg=True)
 
 
 policy.add_command(

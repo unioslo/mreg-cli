@@ -747,12 +747,13 @@ def convert_wildcard_to_regex(
 ################################################################################
 
 
-def print_table(
+def format_table(
     headers: Sequence[str],
     keys: Sequence[str],
     data: List[Dict[str, Any]],
     indent: int = 0,
-) -> None:
+) -> str:
+    output = ""
     raw_format = " " * indent
     for key, header in zip(keys, headers):
         longest = len(header)
@@ -760,6 +761,8 @@ def print_table(
             longest = max(longest, len(str(d[key])))
         raw_format += "{:<%d}   " % longest
 
-    print(raw_format.format(*headers))
+    output += raw_format.format(*headers)
     for d in data:
-        print(raw_format.format(*[d[key] for key in keys]))
+        output += raw_format.format(*[d[key] for key in keys])
+
+    return output
