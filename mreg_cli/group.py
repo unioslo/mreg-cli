@@ -86,8 +86,6 @@ def info(args) -> None:
             owners = ", ".join([i["name"] for i in info["owners"]])
             manager.add_formatted_line("Owners:", owners)
 
-    return manager
-
 
 group.add_command(
     prog="info",
@@ -214,8 +212,6 @@ def _history(args) -> None:
     items = get_history_items(args.name, "group", data_relation="groups")
     for line in format_history_items(args.name, items):
         manager.add_line(line)
-
-    return manager
 
 
 group.add_command(
@@ -375,8 +371,6 @@ def host_list(args) -> None:
     manager.add_line("Groups:")
     for group in group_list:
         manager.add_line("  ", group["name"])
-
-    return manager
 
 
 group.add_command(
