@@ -195,9 +195,7 @@ def add(args):
     # Contact sanity check
     if args.contact and not is_valid_email(args.contact):
         cli_warning(
-            "invalid mail address ({}) when trying to add {}".format(
-                args.contact, args.name
-            )
+            "invalid mail address ({}) when trying to add {}".format(args.contact, args.name)
         )
 
     # Create the new host with an ip address
@@ -415,9 +413,7 @@ def format_ipaddresses(
         len_names = padding
     for records, text in ((a_records, "A_Records"), (aaaa_records, "AAAA_Records")):
         if records:
-            manager.add_line(
-                "{1:<{0}}{2:<{3}}  {4}".format(len_names, text, "IP", len_ip, "MAC")
-            )
+            manager.add_line("{1:<{0}}{2:<{3}}  {4}".format(len_names, text, "IP", len_ip, "MAC"))
             for record in records:
                 ip = record["ipaddress"]
                 mac = record["macaddress"]
@@ -452,9 +448,7 @@ def format_loc(loc: dict, padding: int = 14) -> None:
 
 def format_cname(cname: str, host: str, padding: int = 14) -> None:
     """Pretty print given cname."""
-    OutputManager().add_line(
-        "{1:<{0}}{2} -> {3}".format(padding, "Cname:", cname, host)
-    )
+    OutputManager().add_line("{1:<{0}}{2} -> {3}".format(padding, "Cname:", cname, host))
 
 
 def print_mx(mxs: dict, padding: int = 14) -> None:
@@ -466,9 +460,7 @@ def print_mx(mxs: dict, padding: int = 14) -> None:
     manager.add_line("{1:<{0}}{2} {3}".format(padding, "MX:", "Priority", "Server"))
     for mx in sorted(mxs, key=lambda i: i["priority"]):
         manager.add_line(
-            "{1:<{0}}{2:>{3}} {4}".format(
-                padding, "", mx["priority"], len_pri, mx["mx"]
-            )
+            "{1:<{0}}{2:>{3}} {4}".format(padding, "", mx["priority"], len_pri, mx["mx"])
         )
 
 
@@ -482,9 +474,7 @@ def format_ptr(ip: str, host_name: str, padding: int = 14) -> None:
     """Pretty print given txt."""
     assert isinstance(ip, str)
     assert isinstance(host_name, str)
-    OutputManager().add_line(
-        "{1:<{0}}{2} -> {3}".format(padding, "PTR override:", ip, host_name)
-    )
+    OutputManager().add_line("{1:<{0}}{2} -> {3}".format(padding, "PTR override:", ip, host_name))
 
 
 def format_txt(txt: str, padding: int = 14) -> None:
@@ -500,9 +490,7 @@ def format_bacnetid(bacnetid: dict, padding: int = 14) -> None:
     if bacnetid is None:
         return
     assert isinstance(bacnetid, dict)
-    OutputManager().add_line(
-        "{1:<{0}}{2}".format(padding, "BACnet ID:", bacnetid["id"])
-    )
+    OutputManager().add_line("{1:<{0}}{2}".format(padding, "BACnet ID:", bacnetid["id"]))
 
 
 def _print_host_info(info):
@@ -638,9 +626,7 @@ def find(args) -> None:
     if ret["count"] == 0:
         cli_warning("No hosts found.")
     elif ret["count"] > 500:
-        cli_warning(
-            f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.'
-        )
+        cli_warning(f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.')
 
     del params["page_size"]
     ret = get_list(path, params=params)
@@ -651,9 +637,7 @@ def find(args) -> None:
 
     def _print(name, contact, comment):
         OutputManager().add_line(
-            "{0:<{1}} {2:<{3}} {4}".format(
-                name, max_name, contact, max_contact, comment
-            )
+            "{0:<{1}} {2:<{3}} {4}".format(name, max_name, contact, max_contact, comment)
         )
 
     _print("Name", "Contact", "Comment")
@@ -805,9 +789,7 @@ def set_contact(args) -> None:
     """Set contact for host. If <name> is an alias the cname host is updated."""
     # Contact sanity check
     if not is_valid_email(args.contact):
-        cli_warning(
-            "invalid mail address {} (target host: {})".format(args.contact, args.name)
-        )
+        cli_warning("invalid mail address {} (target host: {})".format(args.contact, args.name))
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -818,9 +800,7 @@ def set_contact(args) -> None:
     path = f"/api/v1/hosts/{info['name']}"
     history.record_patch(path, new_data, old_data)
     patch(path, contact=args.contact)
-    cli_info(
-        "Updated contact of {} to {}".format(info["name"], args.contact), print_msg=True
-    )
+    cli_info("Updated contact of {} to {}".format(info["name"], args.contact), print_msg=True)
 
 
 # Add 'set_contact' as a sub command to the 'host' command
@@ -879,9 +859,7 @@ def _ip_add(args, ipversion, macaddress=None):
     else:
         # Require force if host has multiple A/AAAA records
         if len(info["ipaddresses"]) and not args.force:
-            cli_warning(
-                "{} already has A/AAAA record(s), must force".format(info["name"])
-            )
+            cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
 
         if any(args.ip == i["ipaddress"] for i in info["ipaddresses"]):
             cli_warning(f"Host already has IP {args.ip}")
@@ -1106,10 +1084,7 @@ def _ip_remove(args, ipversion) -> None:
 
 def a_remove(args) -> None:
     """Remove A record from host. If <name> is an alias the cname host is used."""
-    _ip_remove(
-        args,
-        4,
-    )
+    _ip_remove(args, 4)
 
 
 # Add 'a_remove' as a sub command to the 'host' command
@@ -1188,10 +1163,7 @@ host.add_command(
 
 def aaaa_change(args) -> None:
     """Change AAAA record. If <name> is an alias the cname host is used."""
-    _ip_change(
-        args,
-        6,
-    )
+    _ip_change(args, 6)
 
 
 # Add 'aaaa_change' as a sub command to the 'host' command
@@ -1232,10 +1204,7 @@ host.add_command(
 
 def aaaa_move(args) -> None:
     """Move an IP from a host to another host. Will move also move the PTR, if any."""
-    _ip_move(
-        args,
-        6,
-    )
+    _ip_move(args, 6)
 
 
 # Add 'aaaa_move' as a sub command to the 'host' command
@@ -1425,9 +1394,7 @@ def cname_replace(args) -> None:
     path = f"/api/v1/cnames/{cname}"
     history.record_patch(path, "", data, undoable=False)
     patch(path, **data)
-    cli_info(
-        f"Moved CNAME alias {cname}: {cname_info['name']} -> {host}", print_msg=True
-    )
+    cli_info(f"Moved CNAME alias {cname}: {cname_info['name']} -> {host}", print_msg=True)
 
 
 host.add_command(
@@ -1886,9 +1853,7 @@ host.add_command(
             metavar="ORDER",
         ),
         Flag("-flag", description="NAPTR flag.", required=True, metavar="FLAG"),
-        Flag(
-            "-service", description="NAPTR service.", required=True, metavar="SERVICE"
-        ),
+        Flag("-service", description="NAPTR service.", required=True, metavar="SERVICE"),
         Flag("-regex", description="NAPTR regexp.", required=True, metavar="REGEXP"),
         Flag(
             "-replacement",
@@ -1972,9 +1937,7 @@ host.add_command(
             metavar="ORDER",
         ),
         Flag("-flag", description="NAPTR flag.", required=True, metavar="FLAG"),
-        Flag(
-            "-service", description="NAPTR service.", required=True, metavar="SERVICE"
-        ),
+        Flag("-service", description="NAPTR service.", required=True, metavar="SERVICE"),
         Flag("-regex", description="NAPTR regexp.", required=True, metavar="REGEXP"),
         Flag(
             "-replacement",
@@ -2135,9 +2098,7 @@ def ptr_remove(args) -> None:
     path = f"/api/v1/ptroverrides/{ptr_id}"
     history.record_delete(path, ptr_id)
     delete(path)
-    cli_info(
-        "deleted PTR record {} for {}".format(args.ip, info["name"]), print_msg=True
-    )
+    cli_info("deleted PTR record {} for {}".format(args.ip, info["name"]), print_msg=True)
 
 
 # Add 'ptr_remove' as a sub command to the 'host' command
@@ -2180,9 +2141,7 @@ def ptr_add(args) -> None:
         cli_warning("{} already exist in a PTR record".format(args.ip))
     # check if host is in mreg controlled zone, must force if not
     if info["zone"] is None and not args.force:
-        cli_warning(
-            "{} isn't in a zone controlled by MREG, must force".format(info["name"])
-        )
+        cli_warning("{} isn't in a zone controlled by MREG, must force".format(info["name"]))
 
     network = get_network_by_ip(args.ip)
     reserved_addresses = get_network_reserved_ips(network["network"])
@@ -2289,9 +2248,7 @@ def srv_add(args) -> None:
     path = "/api/v1/srvs/"
     history.record_post(path, "", data, undoable=False)
     post(path, **data)
-    cli_info(
-        "Added SRV record {} with target {}".format(sname, info["name"]), print_msg=True
-    )
+    cli_info("Added SRV record {} with target {}".format(sname, info["name"]), print_msg=True)
 
 
 # Add 'srv_add' as a sub command to the 'host' command
@@ -2301,9 +2258,7 @@ host.add_command(
     callback=srv_add,
     flags=[
         Flag("-name", description="SRV service.", required=True, metavar="SERVICE"),
-        Flag(
-            "-priority", description="SRV priority.", required=True, metavar="PRIORITY"
-        ),
+        Flag("-priority", description="SRV priority.", required=True, metavar="PRIORITY"),
         Flag("-weight", description="SRV weight.", required=True, metavar="WEIGHT"),
         Flag("-port", description="SRV port.", required=True, metavar="PORT"),
         Flag("-host", description="Host target name.", required=True, metavar="NAME"),
@@ -2518,9 +2473,7 @@ host.add_command(
         Flag("name", description="Host target name.", metavar="NAME"),
         Flag("algorithm", description="SSH algorithm.", metavar="ALGORITHM"),
         Flag("hash_type", description="Hash type.", metavar="HASH_TYPE"),
-        Flag(
-            "fingerprint", description="Hexadecimal fingerprint.", metavar="FINGERPRINT"
-        ),
+        Flag("fingerprint", description="Hexadecimal fingerprint.", metavar="FINGERPRINT"),
     ],
 )
 
@@ -2540,9 +2493,7 @@ def sshfp_remove(args) -> None:
         history.record_delete(path, sshfp, redoable=False)
         delete(path)
         cli_info(
-            "removed SSHFP record with fingerprint {} for {}".format(
-                sshfp["fingerprint"], hname
-            ),
+            "removed SSHFP record with fingerprint {} for {}".format(sshfp["fingerprint"], hname),
             print_msg=True,
         )
 
@@ -2698,9 +2649,7 @@ def ttl_set(args) -> None:
 
     # TTL sanity check
     if not is_valid_ttl(args.ttl):
-        cli_warning(
-            "invalid TTL value: {} (target host {})".format(args.ttl, info["name"])
-        )
+        cli_warning("invalid TTL value: {} (target host {})".format(args.ttl, info["name"]))
 
     old_data = {"ttl": info["ttl"] or ""}
     new_data = {"ttl": args.ttl if args.ttl != "default" else ""}
