@@ -19,6 +19,8 @@ from typing import (
     overload,
 )
 
+from .outputmanager import OutputManager
+
 if TYPE_CHECKING:
     from typing_extensions import Literal
 
@@ -70,9 +72,7 @@ def host_exists(name: str) -> bool:
 
     # Response data sanity checks
     if len(hosts) > 1:
-        cli_error(
-            'host exist check received more than one exact match for "{}"'.format(name)
-        )
+        cli_error('host exist check received more than one exact match for "{}"'.format(name))
     if len(hosts) == 0:
         return False
     if hosts[0]["name"] != name:
@@ -176,9 +176,7 @@ def first_unused_ip_from_network(network: dict) -> str:
     """
     unused = get_network_first_unused(network["network"])
     if not unused:
-        cli_warning(
-            "No free addresses remaining on network {}".format(network["network"])
-        )
+        cli_warning("No free addresses remaining on network {}".format(network["network"]))
     return unused
 
 
@@ -323,9 +321,7 @@ def _request_wrapper(
     rec = recorder.Recorder()
 
     if use_json:
-        result = getattr(session, operation_type)(
-            url, json=params, timeout=HTTP_TIMEOUT
-        )
+        result = getattr(session, operation_type)(url, json=params, timeout=HTTP_TIMEOUT)
     else:
         result = getattr(session, operation_type)(
             url, params=params, data=data, timeout=HTTP_TIMEOUT
@@ -346,9 +342,7 @@ def _request_wrapper(
 
 
 @overload
-def get(
-    path: str, params: Dict[str, str], ok404: "Literal[True]"
-) -> Optional["ResponseLike"]:
+def get(path: str, params: Dict[str, str], ok404: "Literal[True]") -> Optional["ResponseLike"]:
     ...
 
 
@@ -358,9 +352,7 @@ def get(path: str, params: Dict[str, str], ok404: "Literal[False]") -> "Response
 
 
 @overload
-def get(
-    path: str, params: Dict[str, str] = ..., *, ok404: bool
-) -> Optional["ResponseLike"]:
+def get(path: str, params: Dict[str, str] = ..., *, ok404: bool) -> Optional["ResponseLike"]:
     ...
 
 
@@ -369,18 +361,14 @@ def get(path: str, params: Dict[str, str] = ...) -> "ResponseLike":
     ...
 
 
-def get(
-    path: str, params: Dict[str, str] = None, ok404: bool = False
-) -> Optional["ResponseLike"]:
+def get(path: str, params: Dict[str, str] = None, ok404: bool = False) -> Optional["ResponseLike"]:
     """Uses requests to make a get request."""
     if params is None:
         params = {}
     return _request_wrapper("get", path, params=params, ok404=ok404)
 
 
-def get_list(
-    path: Optional[str], params: dict = None, ok404: bool = False
-) -> List[dict]:
+def get_list(path: Optional[str], params: dict = None, ok404: bool = False) -> List[dict]:
     """Uses requests to make a get request.
     Will iterate over paginated results and return result as list.
     """
@@ -468,9 +456,7 @@ def resolve_ip(ip: str) -> str:
         cli_error('resolve ip got multiple matches for ip "{}"'.format(ip))
 
     if len(hosts) == 0:
-        cli_warning(
-            "{} doesnt belong to any host".format(ip), exception=HostNotFoundWarning
-        )
+        cli_warning("{} doesnt belong to any host".format(ip), exception=HostNotFoundWarning)
     return hosts[0]["name"]
 
 
@@ -747,13 +733,13 @@ def convert_wildcard_to_regex(
 ################################################################################
 
 
-def format_table(
+def add_formatted_table_for_output(
     headers: Sequence[str],
     keys: Sequence[str],
     data: List[Dict[str, Any]],
     indent: int = 0,
 ) -> str:
-    output = ""
+    manager = OutputManager()
     raw_format = " " * indent
     for key, header in zip(keys, headers):
         longest = len(header)
@@ -761,8 +747,6 @@ def format_table(
             longest = max(longest, len(str(d[key])))
         raw_format += "{:<%d}   " % longest
 
-    output += raw_format.format(*headers)
+    manager.add_line(raw_format.format(*headers))
     for d in data:
-        output += raw_format.format(*[d[key] for key in keys])
-
-    return output
+        manager.add_line(raw_format.format(*[d[key] for key in keys]))

@@ -4,9 +4,9 @@ from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
 from .util import (
+    add_formatted_table_for_output,
     convert_wildcard_to_regex,
     delete,
-    format_table,
     get,
     get_list,
     is_valid_network,
@@ -77,7 +77,7 @@ def network_list(args) -> None:
 
     headers = ("Range", "Group", "Regex", "Labels")
     keys = ("range", "group", "regex", "labels")
-    format_table(headers, keys, data)
+    add_formatted_table_for_output(headers, keys, data)
 
 
 permission.add_command(

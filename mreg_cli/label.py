@@ -2,7 +2,7 @@ from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
 from .outputmanager import OutputManager
-from .util import delete, format_table, get, get_list, patch, post
+from .util import add_formatted_table_for_output, delete, get, get_list, patch, post
 
 label = cli.add_command(
     prog="label",
@@ -38,7 +38,7 @@ def label_list(args) -> None:
     if not labels:
         cli_info("No labels", True)
         return
-    format_table(("Name", "Description"), ("name", "description"), labels)
+    add_formatted_table_for_output(("Name", "Description"), ("name", "description"), labels)
 
 
 label.add_command(prog="list", description="List labels", callback=label_list, flags=[])
@@ -83,7 +83,7 @@ def label_info(args) -> None:
     permlist = get_list("/api/v1/permissions/netgroupregex/", params={"labels__name": args.name})
     manager.add_line("Permissions with this label:")
     if permlist:
-        format_table(
+        add_formatted_table_for_output(
             ("IP range", "Group", "Reg.exp."),
             ("range", "group", "regex"),
             permlist,

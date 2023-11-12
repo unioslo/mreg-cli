@@ -4,9 +4,9 @@ from .history_log import format_history_items, get_history_items
 from .log import cli_error, cli_info, cli_warning
 from .outputmanager import OutputManager
 from .util import (
+    add_formatted_table_for_output,
     convert_wildcard_to_regex,
     delete,
-    format_table,
     get,
     get_list,
     host_info_by_name,
@@ -393,7 +393,9 @@ def list_roles(args) -> None:
             labels.append(labelnames[j])
         i["labels"] = ", ".join(labels)
         rows.append(i)
-    format_table(("Role", "Description", "Labels"), ("name", "description", "labels"), rows)
+    add_formatted_table_for_output(
+        ("Role", "Description", "Labels"), ("name", "description", "labels"), rows
+    )
 
 
 policy.add_command(
