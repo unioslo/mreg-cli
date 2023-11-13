@@ -1,7 +1,6 @@
 import argparse
 import os
 import shlex
-from typing import Any, List, Optional
 
 from prompt_toolkit import HTML, print_formatted_text
 from prompt_toolkit.completion import Completer, Completion
