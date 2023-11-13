@@ -1,4 +1,5 @@
 import argparse
+import html
 import os
 import shlex
 
@@ -254,8 +255,6 @@ def source(files, ignore_errors, verbose):
     newlines.
     The files may contain comments. The comment symbol is #.
     """
-    import html
-    import shlex
 
     rec = recorder.Recorder()
 
