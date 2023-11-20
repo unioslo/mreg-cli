@@ -1,14 +1,8 @@
 from .cli import Flag, cli
+from .exceptions import CliWarning
 from .history import history
-from .log import cli_error, cli_info, cli_warning
-from .util import (
-    format_mac,
-    get_list,
-    host_info_by_name,
-    is_valid_ip,
-    is_valid_mac,
-    patch,
-)
+from .log import cli_info, cli_warning
+from .util import format_mac, get_list, host_info_by_name, is_valid_ip, is_valid_mac, patch
 
 #################################
 #  Add the main command 'dhcp'  #
@@ -45,7 +39,11 @@ def _dhcp_get_ip_by_arg(arg):
                 )
             )
         if len(info["ipaddresses"]) == 0:
-            cli_error("{} doesn't have any ip addresses.".format(arg))
+            cli_warning(
+                "{} doesn't have any ip addresses.".format(arg),
+                raise_exception=True,
+                exception=CliWarning,
+            )
         ip = info["ipaddresses"][0]
     return ip
 
@@ -64,8 +62,7 @@ def assoc_mac_to_ip(mac, ip, force=False):
         ips = ", ".join([i["ipaddress"] for i in macs])
         if len(macs) and not force:
             cli_warning(
-                "mac {} already in use by: {}. "
-                "Use force to add {} -> {} as well.".format(
+                "mac {} already in use by: {}. Use force to add {} -> {} as well.".format(
                     mac, ips, ip["ipaddress"], mac
                 )
             )
@@ -78,9 +75,7 @@ def assoc_mac_to_ip(mac, ip, force=False):
         return
     elif old_mac and not force:
         cli_warning(
-            "ip {} has existing mac {}. Use force to replace.".format(
-                ip["ipaddress"], old_mac
-            )
+            "ip {} has existing mac {}. Use force to replace.".format(ip["ipaddress"], old_mac)
         )
 
     # Update Ipaddress with a mac
@@ -141,9 +136,7 @@ def disassoc(args):
         history.record_patch(path, new_data={"macaddress": ""}, old_data=ip)
         patch(path, macaddress="")
         cli_info(
-            "disassociated mac address {} from ip {}".format(
-                ip["macaddress"], ip["ipaddress"]
-            ),
+            "disassociated mac address {} from ip {}".format(ip["macaddress"], ip["ipaddress"]),
             print_msg=True,
         )
     else:
