@@ -9841,7 +9841,7 @@
     }
   },
   {
-    "output": "ERROR: : foo doesn't have any ip addresses."
+    "output": "WARNING: : foo doesn't have any ip addresses."
   },
   {
     "command": "host remove foo\n"
