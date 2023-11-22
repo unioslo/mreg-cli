@@ -22,8 +22,8 @@ class OutputManager:
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(OutputManager, cls).__new__(cls)
-            cls._instance._lines = []
+            cls._instance = super().__new__(cls)
+            cls._instance.clear()
         return cls._instance
 
     def clear(self) -> None:
@@ -32,6 +32,7 @@ class OutputManager:
         self._filter_re = None
         self._negate = False
         self._command = None
+        self.command = None
 
     def has_output(self) -> bool:
         """Returns True if there is output to display."""
@@ -44,8 +45,7 @@ class OutputManager:
 
         :return: The cleaned command, devoid of filters and other noise.
         """
-        self.command = command
-        self._command, self._filter_re, self._negate = self.get_filter()
+        self._command, self._filter_re, self._negate = self.get_filter(command)
         return self._command
 
     def add_line(self, line: str) -> None:
@@ -80,12 +80,14 @@ class OutputManager:
 
     # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
     # don't have that type. So we use Any instead.
-    def get_filter(self) -> Tuple[str, Any, bool]:
+    def get_filter(self, command: str) -> Tuple[str, Any, bool]:
         """Returns the filter for the output.
+
+        :param command: The command to parse for the filter.
 
         :return: The filter and whether it is a negated filter.
         """
-        command = self.command
+        self.command = command
         negate = False
         filter_re = None
 
