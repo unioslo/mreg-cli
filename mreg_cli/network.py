@@ -6,6 +6,7 @@ from typing import Any, Dict, Union
 from .cli import Flag, cli
 from .history import history
 from .log import cli_error, cli_info, cli_warning
+from .outputmanager import OutputManager
 from .util import (
     convert_wildcard_to_regex,
     delete,
@@ -54,14 +55,14 @@ def get_network_range_from_input(net: str) -> str:
 def print_network_unused(count: int, padding: int = 25) -> None:
     "Pretty print amount of unused addresses."
     assert isinstance(count, int)
-    print(
+    OutputManager().add_line(
         "{1:<{0}}{2}{3}".format(
             padding, "Unused addresses:", count, " (excluding reserved adr.)"
         )
     )
 
 
-def print_network_excluded_ranges(info: dict, padding: int = 25) -> None:
+def format_network_excluded_ranges(info: dict, padding: int = 25) -> None:
     if not info:
         return
     count = 0
@@ -71,23 +72,33 @@ def print_network_excluded_ranges(info: dict, padding: int = 25) -> None:
         count += int(end_ip) - int(start_ip)
         if end_ip == start_ip:
             count += 1
-    print("{1:<{0}}{2} ipaddresses".format(padding, "Excluded ranges:", count))
+    manager = OutputManager()
+    manager.add_line(
+        "{1:<{0}}{2} ipaddresses".format(padding, "Excluded ranges:", count)
+    )
     for i in info:
-        print("{1:<{0}}{2} -> {3}".format(padding, "", i["start_ip"], i["end_ip"]))
+        manager.add_line(
+            "{1:<{0}}{2} -> {3}".format(padding, "", i["start_ip"], i["end_ip"])
+        )
 
 
-def print_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
+def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
     "Pretty print ip range and reserved addresses list."
     assert isinstance(ip_range, str)
     assert isinstance(reserved, int)
     network = ipaddress.ip_network(ip_range)
-    print(
+    manager = OutputManager()
+    manager.add_line(
         "{1:<{0}}{2} - {3}".format(
             padding, "IP-range:", network.network_address, network.broadcast_address
         )
     )
-    print("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
-    print("{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)"))
+    manager.add_line(
+        "{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved)
+    )
+    manager.add_line(
+        "{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)")
+    )
     res = get_network_reserved_ips(ip_range)
     res.remove(str(network.network_address))
     broadcast = False
@@ -95,9 +106,9 @@ def print_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> N
         res.remove(str(network.broadcast_address))
         broadcast = True
     for host in res:
-        print("{1:<{0}}{2}".format(padding, "", host))
+        manager.add_line("{1:<{0}}{2}".format(padding, "", host))
     if broadcast:
-        print(
+        manager.add_line(
             "{1:<{0}}{2}{3}".format(
                 padding, "", network.broadcast_address, " (broadcast)"
             )
@@ -105,7 +116,7 @@ def print_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> N
 
 
 def print_network(info: int, text: str, padding: int = 25) -> None:
-    print("{1:<{0}}{2}".format(padding, text, info))
+    OutputManager().add_line("{1:<{0}}{2}".format(padding, text, info))
 
 
 ##########################################
@@ -113,7 +124,7 @@ def print_network(info: int, text: str, padding: int = 25) -> None:
 ##########################################
 
 
-def create(args):
+def create(args) -> None:
     """Create a new network."""
     frozen = True if args.frozen else False
     if args.vlan:
@@ -128,8 +139,7 @@ def create(args):
         network_object = ipaddress.ip_network(network["network"])
         if network_object.overlaps(ipaddress.ip_network(args.network)):
             cli_warning(
-                "Overlap found between new network {} and existing "
-                "network {}".format(
+                "Overlap found between new network {} and existing network {}".format(
                     ipaddress.ip_network(args.network), network["network"]
                 )
             )
@@ -172,7 +182,7 @@ network.add_command(
 ########################################
 
 
-def info(args):
+def info(args) -> None:
     """Display network info."""
     for net in args.networks:
         print_network_info(net)
@@ -229,8 +239,8 @@ def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
         "DNS delegated:",
     )
     print_network(network_info["frozen"] if network_info["frozen"] else False, "Frozen")
-    print_network_reserved(network_info["network"], network_info["reserved"])
-    print_network_excluded_ranges(network_info["excluded_ranges"])
+    format_network_reserved(network_info["network"], network_info["reserved"])
+    format_network_excluded_ranges(network_info["excluded_ranges"])
     print_network(used, "Used addresses:")
     print_network_unused(unused)
     cli_info(f"printed network info for {ip_range}")
@@ -241,7 +251,7 @@ def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
 ########################################
 
 
-def find(args: Namespace):
+def find(args: Namespace) -> None:
     """List networks matching search criteria."""
     args_dict = vars(args)
 
@@ -279,23 +289,27 @@ def find(args: Namespace):
     if not networks:
         cli_warning("No networks matching the query were found.")
 
+    manager = OutputManager()
+
     n_networks = len(networks)
     for i, nwork in enumerate(networks):
         if args.limit and i >= args.limit:
             omitted = n_networks - i
             if not args.silent:
                 s = "s" if omitted > 1 else ""
-                print(f"Reached limit ({args.limit}). Omitted {omitted} network{s}.")
+                manager.add_line(
+                    f"Reached limit ({args.limit}). Omitted {omitted} network{s}."
+                )
             break
         if args.addr_only:
-            print(nwork["network"])
+            manager.add_line(nwork["network"])
         else:
             print_network_info(nwork)
-            print()  # Blank line between networks
+            manager.add_line("")  # Blank line between networks
 
     if not args.silent:
         s = "s" if n_networks > 1 else ""
-        print(f"Found {n_networks} network{s} matching the search criteria.")
+        manager.add_line(f"Found {n_networks} network{s} matching the search criteria.")
 
 
 network.add_command(
@@ -374,7 +388,7 @@ network.add_command(
 #########################################################
 
 
-def list_unused_addresses(args):
+def list_unused_addresses(args) -> None:
     """Lists all the unused addresses for a network."""
     ip_range = get_network_range_from_input(args.network)
     unused = get_network_unused_list(ip_range)
@@ -382,7 +396,7 @@ def list_unused_addresses(args):
         cli_warning(f"No free addresses remaining on network {ip_range}")
 
     for address in unused:
-        print("{1:<{0}}".format(25, address))
+        OutputManager().add_line("{1:<{0}}".format(25, address))
 
 
 network.add_command(
@@ -401,7 +415,7 @@ network.add_command(
 #######################################################
 
 
-def list_used_addresses(args):
+def list_used_addresses(args) -> None:
     """Lists all the used addresses for a network."""
     ip_range = get_network_range_from_input(args.network)
     urlencoded_ip_range = urllib.parse.quote(ip_range)
@@ -414,20 +428,21 @@ def list_used_addresses(args):
     ptr2host = get(path).json()
 
     ips = ipsort(set(list(ip2host.keys()) + list(ptr2host.keys())))
+    manager = OutputManager()
     if not ips:
-        print(f"No used addresses on {ip_range}")
+        manager.add_line(f"No used addresses on {ip_range}")
         return
 
     for ip in ips:
         if ip in ptr2host:
-            print("{1:<{0}}{2} (ptr override)".format(25, ip, ptr2host[ip]))
+            manager.add_line("{1:<{0}}{2} (ptr override)".format(25, ip, ptr2host[ip]))
         elif ip in ip2host:
             if len(ip2host[ip]) > 1:
                 hosts = ",".join(ip2host[ip])
                 host = f"{hosts} (NO ptr override!!)"
             else:
                 host = ip2host[ip][0]
-            print("{1:<{0}}{2}".format(25, ip, host))
+            manager.add_line("{1:<{0}}{2}".format(25, ip, host))
 
 
 network.add_command(
@@ -446,14 +461,13 @@ network.add_command(
 ##########################################
 
 
-def remove(args):
+def remove(args) -> None:
     """Remove network."""
     ipaddress.ip_network(args.network)
     host_list = get_network_used_list(args.network)
     if host_list:
         cli_warning(
-            "Network contains addresses that are in use. Remove hosts "
-            "before deletion"
+            "Network contains addresses that are in use. Remove hosts before deletion"
         )
 
     if not args.force:
@@ -480,7 +494,7 @@ network.add_command(
 ######################################################
 
 
-def add_excluded_range(args):
+def add_excluded_range(args) -> None:
     """Add an excluded range to a network."""
     info = get_network(args.network)
     network = info["network"]
@@ -513,7 +527,7 @@ network.add_command(
 #########################################################
 
 
-def remove_excluded_range(args):
+def remove_excluded_range(args) -> None:
     """Remove an excluded range to a network."""
     info = get_network(args.network)
     network = info["network"]
@@ -554,7 +568,7 @@ network.add_command(
 ################################################
 
 
-def set_category(args):
+def set_category(args) -> None:
     """Set category tag for network."""
     network = get_network(args.network)
     if not is_valid_category_tag(args.category):
@@ -585,7 +599,7 @@ network.add_command(
 ###################################################
 
 
-def set_description(args):
+def set_description(args) -> None:
     """Set description for network."""
     network = get_network(args.network)
     path = f"/api/v1/networks/{urllib.parse.quote(network['network'])}"
@@ -615,7 +629,7 @@ network.add_command(
 #####################################################
 
 
-def set_dns_delegated(args):
+def set_dns_delegated(args) -> None:
     """Set that DNS-administration is being handled elsewhere."""
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
@@ -640,7 +654,7 @@ network.add_command(
 ##############################################
 
 
-def set_frozen(args):
+def set_frozen(args) -> None:
     """Freeze a network."""
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
@@ -665,7 +679,7 @@ network.add_command(
 ################################################
 
 
-def set_location(args):
+def set_location(args) -> None:
     """Set location tag for network."""
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
@@ -696,7 +710,7 @@ network.add_command(
 ################################################
 
 
-def set_reserved(args):
+def set_reserved(args) -> None:
     """Set number of reserved hosts."""
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
@@ -728,7 +742,7 @@ network.add_command(
 ############################################
 
 
-def set_vlan(args):
+def set_vlan(args) -> None:
     """Set VLAN for network."""
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
@@ -754,7 +768,7 @@ network.add_command(
 #######################################################
 
 
-def unset_dns_delegated(args):
+def unset_dns_delegated(args) -> None:
     """Set that DNS-administration is not being handled elsewhere."""
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
@@ -779,7 +793,7 @@ network.add_command(
 ################################################
 
 
-def unset_frozen(args):
+def unset_frozen(args) -> None:
     """Unfreeze a network."""
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)

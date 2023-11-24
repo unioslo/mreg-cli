@@ -1,5 +1,7 @@
 import argparse
+import html
 import os
+import shlex
 
 from prompt_toolkit import HTML, print_formatted_text
 from prompt_toolkit.completion import Completer, Completion
@@ -90,9 +92,7 @@ class Command(Completer):
             flags = []
         if not self.sub:
             self.sub = _create_command_group(self.parser)
-        parser = self.sub.add_parser(
-            prog, description=description, epilog=epilog, help=short_desc
-        )
+        parser = self.sub.add_parser(prog, description=description, epilog=epilog, help=short_desc)
         for f in flags:
             # Need to create a dict with the parameters so only used
             # parameters are sent, or else exceptions are raised. Ex: if
@@ -122,7 +122,11 @@ class Command(Completer):
         self.children[prog] = new_cmd
         return new_cmd
 
-    def parse(self, args):
+    def parse(self, command: str) -> None:
+        """Parse and execute a command."""
+
+        args = shlex.split(command, comments=True)
+
         try:
             args = self.parser.parse_args(args)
             # If the command has a callback function, call it.
@@ -251,8 +255,6 @@ def source(files, ignore_errors, verbose):
     newlines.
     The files may contain comments. The comment symbol is #.
     """
-    import html
-    import shlex
 
     rec = recorder.Recorder()
 
@@ -272,16 +274,10 @@ def source(files, ignore_errors, verbose):
                     if rec.is_recording() and not line.lstrip().startswith("source"):
                         rec.record_command(line)
 
-                    # With comments=True shlex will remove comments from the line
-                    # when splitting. Comment symbol is #
-                    s = shlex.split(line, comments=True)
-
                     # In verbose mode all commands are printed before execution.
-                    if verbose and s:
-                        print_formatted_text(
-                            HTML(f"<i>> {html.escape(line.strip())}</i>")
-                        )
-                    cli.parse(s)
+                    if verbose:
+                        print_formatted_text(HTML(f"<i>> {html.escape(line.strip())}</i>"))
+                    cli.parse(line)
                     if cli.last_errno != 0:
                         print_formatted_text(
                             HTML(
@@ -324,8 +320,7 @@ cli.add_command(
         Flag(
             "-ignore-errors",
             description=(
-                "Continue command execution on error. Default is to "
-                "stop execution on error."
+                "Continue command execution on error. Default is to stop execution on error."
             ),
             short_desc="Stop on error.",
             action="store_true",

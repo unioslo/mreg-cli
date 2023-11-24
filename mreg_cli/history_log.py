@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from dateutil.parser import parse
 
@@ -33,7 +34,11 @@ def get_history_items(name, resource, data_relation=None):
     return ret
 
 
-def print_history_items(ownname, items):
+def format_history_items(ownname, items) -> List[str]:
+    """Format history items for output."""
+
+    lines: str = []
+
     def _remove_unneded_keys(data):
         for key in (
             "id",
@@ -80,4 +85,6 @@ def print_history_items(ownname, items):
         else:
             cli_warning(f"Unhandled history entry: {i}")
 
-        print(f"{timestamp} [{i['user']}]: {model} {action}: {msg}")
+        lines.append(f"{timestamp} [{i['user']}]: {model} {action}: {msg}")
+
+    return lines

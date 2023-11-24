@@ -90,7 +90,7 @@ def assoc_mac_to_ip(mac, ip, force=False):
 #########################################
 
 
-def assoc(args):
+def assoc(args) -> None:
     # .name .mac .force
     """Associate MAC address with host. If host got multiple A/AAAA records an
     IP must be given instead of name.
@@ -107,8 +107,10 @@ def assoc(args):
 
 dhcp.add_command(
     prog="assoc",
-    description="Associate MAC address with host. If host got multiple A/AAAA "
-    "records an IP must be given instead of name.",
+    description=(
+        "Associate MAC address with host. If host got multiple A/AAAA "
+        "records an IP must be given instead of name."
+    ),
     short_desc="Add MAC address to host.",
     callback=assoc,
     flags=[
@@ -124,7 +126,7 @@ dhcp.add_command(
 ############################################
 
 
-def disassoc(args):
+def disassoc(args) -> None:
     """Disassociate MAC address with host/ip. If host got multiple A/AAAA
     records an IP must be given instead of name.
     """
@@ -148,8 +150,10 @@ def disassoc(args):
 
 dhcp.add_command(
     prog="disassoc",
-    description="Disassociate MAC address with host/ip. If host got multiple "
-    "A/AAAA records an IP must be given instead of name.",
+    description=(
+        "Disassociate MAC address with host/ip. If host got multiple "
+        "A/AAAA records an IP must be given instead of name."
+    ),
     short_desc="Disassociate MAC address.",
     callback=disassoc,
     flags=[

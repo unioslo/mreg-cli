@@ -1,7 +1,8 @@
 from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
-from .util import delete, get, get_list, patch, post, print_table
+from .outputmanager import OutputManager
+from .util import add_formatted_table_for_output, delete, get, get_list, patch, post
 
 label = cli.add_command(
     prog="label",
@@ -9,9 +10,9 @@ label = cli.add_command(
 )
 
 
-def label_add(args):
+def label_add(args) -> None:
     if " " in args.name:
-        print("The label name can't contain spaces.")
+        OutputManager().add_line("The label name can't contain spaces.")
         return
     data = {"name": args.name, "description": args.description}
     path = "/api/v1/labels/"
@@ -32,18 +33,18 @@ label.add_command(
 )
 
 
-def label_list(args):
+def label_list(args) -> None:
     labels = get_list("/api/v1/labels/", params={"ordering": "name"})
     if not labels:
         cli_info("No labels", True)
         return
-    print_table(("Name", "Description"), ("name", "description"), labels)
+    add_formatted_table_for_output(("Name", "Description"), ("name", "description"), labels)
 
 
 label.add_command(prog="list", description="List labels", callback=label_list, flags=[])
 
 
-def label_delete(args):
+def label_delete(args) -> None:
     path = f"/api/v1/labels/name/{args.name}"
     history.record_delete(path, dict(), undoable=False)
     delete(path)
@@ -64,33 +65,32 @@ label.add_command(
 )
 
 
-def label_info(args):
+def label_info(args) -> None:
     path = f"/api/v1/labels/name/{args.name}"
     label = get(path).json()
-    print("Name:                  ", label["name"])
-    print("Description:           ", label["description"])
+    manager = OutputManager()
+    manager.add_line(f"Name:                  {label['name']}")
+    manager.add_line(f"Description:           {label['description']}")
 
     rolelist = get_list("/api/v1/hostpolicy/roles/", params={"labels__name": args.name})
-    print("Roles with this label: ")
+    manager.add_line("Roles with this label: ")
     if rolelist:
         for r in rolelist:
-            print("    " + r["name"])
+            manager.add_line("    " + r["name"])
     else:
-        print("    None")
+        manager.add_line("    None")
 
-    permlist = get_list(
-        "/api/v1/permissions/netgroupregex/", params={"labels__name": args.name}
-    )
-    print("Permissions with this label:")
+    permlist = get_list("/api/v1/permissions/netgroupregex/", params={"labels__name": args.name})
+    manager.add_line("Permissions with this label:")
     if permlist:
-        print_table(
+        add_formatted_table_for_output(
             ("IP range", "Group", "Reg.exp."),
             ("range", "group", "regex"),
             permlist,
             indent=4,
         )
     else:
-        print("    None")
+        manager.add_line("    None")
 
 
 label.add_command(
@@ -101,7 +101,7 @@ label.add_command(
 )
 
 
-def label_rename(args):
+def label_rename(args) -> None:
     path = f"/api/v1/labels/name/{args.oldname}"
     res = get(path, ok404=True)
     if not res:

@@ -2,15 +2,13 @@ from .cli import Flag
 from .history import history
 from .host import host
 from .log import cli_error, cli_info
-from .util import delete, get, get_list, host_info_by_name, post, print_table
+from .util import add_formatted_table_for_output, delete, get, get_list, host_info_by_name, post
 
 
-def bacnetid_add(args):
+def bacnetid_add(args) -> None:
     info = host_info_by_name(args.name)
     if "bacnetid" in info and info["bacnetid"] is not None:
-        cli_error(
-            "{} already has BACnet ID {}.".format(info["name"], info["bacnetid"]["id"])
-        )
+        cli_error("{} already has BACnet ID {}.".format(info["name"], info["bacnetid"]["id"]))
     postdata = {"hostname": info["name"]}
     path = "/api/v1/bacnet/ids/"
     bacnetid = args.id
@@ -18,18 +16,14 @@ def bacnetid_add(args):
         response = get(path + bacnetid, ok404=True)
         if response:
             j = response.json()
-            cli_error(
-                "BACnet ID {} is already in use by {}".format(j["id"], j["hostname"])
-            )
+            cli_error("BACnet ID {} is already in use by {}".format(j["id"], j["hostname"]))
         postdata["id"] = bacnetid
     history.record_post(path, "", postdata)
     post(path, **postdata)
     info = host_info_by_name(args.name)
     if "bacnetid" in info and info["bacnetid"] is not None:
         b = info["bacnetid"]
-        cli_info(
-            "Assigned BACnet ID {} to {}".format(b["id"], info["name"]), print_msg=True
-        )
+        cli_info("Assigned BACnet ID {} to {}".format(b["id"], info["name"]), print_msg=True)
 
 
 host.add_command(
@@ -44,7 +38,7 @@ host.add_command(
 )
 
 
-def bacnetid_remove(args):
+def bacnetid_remove(args) -> None:
     info = host_info_by_name(args.name)
     if "bacnetid" not in info or info["bacnetid"] is None:
         cli_error("{} does not have a BACnet ID assigned.".format(info["name"]))
@@ -68,7 +62,7 @@ host.add_command(
 )
 
 
-def bacnetid_list(args):
+def bacnetid_list(args) -> None:
     minval = 0
     if args.min is not None:
         minval = args.min
@@ -80,7 +74,7 @@ def bacnetid_list(args):
         if maxval > 4194302:
             cli_error("The maximum ID value is 4194302.")
     r = get_list("/api/v1/bacnet/ids/", {"id__range": "{},{}".format(minval, maxval)})
-    print_table(("ID", "Hostname"), ("id", "hostname"), r)
+    add_formatted_table_for_output(("ID", "Hostname"), ("id", "hostname"), r)
 
 
 host.add_command(
