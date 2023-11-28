@@ -78,10 +78,8 @@ class OutputManager:
         formatted_line = "{1:<{0}} {2:<{0}} {3}".format(padding, key, value, source)
         self.add_line(formatted_line)
 
-    # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
-    # don't have that type. So we use Any instead.
     def _find_split_index(self, command: str) -> int:
-        """Finds the index to split the command for filtering.
+        """Find the index to split the command for filtering.
 
         It handles both single and double quotes, ensuring that the split
         occurs outside of any quoted sections.
@@ -105,6 +103,8 @@ class OutputManager:
 
         return -1
 
+    # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
+    # don't have that type. So we use Any instead.
     def get_filter(self, command: str) -> Tuple[str, Any, bool]:
         """Returns the filter for the output.
 
@@ -113,7 +113,7 @@ class OutputManager:
         splitting.
 
         :param command: The command to parse for the filter.
-        :return: The filter and whether it is a negated filter.
+        :return: The command, the filter, and whether it is a negated filter.
         """
         negate = False
         filter_re = None
@@ -131,7 +131,7 @@ class OutputManager:
 
                 filter_re = re.compile(filter_str)
 
-        return command, filter_re, negate
+        return (command, filter_re, negate)
 
     def lines(self) -> List[str]:
         """Return the lines of output.
