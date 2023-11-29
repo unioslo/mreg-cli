@@ -8,6 +8,7 @@ from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
 from . import config, log, recorder, util
 from .cli import cli, source
+from .exceptions import CliError, CliWarning
 from .outputmanager import OutputManager
 
 logger = logging.getLogger(__name__)
@@ -187,8 +188,10 @@ def main():
                 cli.parse(cmd)
                 # Render the output
                 output.render()
-        except ValueError as e:
-            print(e)
+        except (CliWarning, CliError) as exc:
+            exc.print_self()
+        except ValueError as exc:
+            print(exc)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,8 @@ command.
 import re
 from typing import Any, List, Tuple
 
+from mreg_cli.exceptions import CliError
+
 
 class OutputManager:
     """Manages and formats output for display.
@@ -42,7 +44,7 @@ class OutputManager:
         """Adds the command that generated the output.
 
         :param command: The command to add.
-
+        :raises CliError: If the command is invalid.
         :return: The cleaned command, devoid of filters and other noise.
         """
         self._command, self._filter_re, self._negate = self.get_filter(command)
@@ -113,6 +115,7 @@ class OutputManager:
         splitting.
 
         :param command: The command to parse for the filter.
+        :raises CliError: If the filter is invalid.
         :return: The command, the filter, and whether it is a negated filter.
         """
         negate = False
@@ -129,7 +132,17 @@ class OutputManager:
                     negate = True
                     filter_str = filter_str[1:].strip()
 
-                filter_re = re.compile(filter_str)
+                try:
+                    filter_re = re.compile(filter_str)
+                except re.error as exc:
+                    if "|" in filter_str:
+                        raise CliError(
+                            "ERROR: Command parts that contain a pipe ('|') must be quoted.",
+                        ) from exc
+                    else:
+                        raise CliError(
+                            "ERROR: Unable to compile regex '{}': {}", filter_str, exc
+                        ) from exc
 
         return (command, filter_re, negate)
 
