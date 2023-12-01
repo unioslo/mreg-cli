@@ -117,9 +117,10 @@ class OutputManager:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
 
-            # Recording related attributes. These must come first as they are
-            # used in clear(). Note that these are not reset between commands,
-            # which is why they are not themselves manipulated in clear().
+            # Recording related attributes. These must come first as they may
+            # be encountered when calling clear(). Note that these attributes are
+            # not reset between commands, which is why they are not themselves
+            # manipulated in clear().
             cls._recording: bool = False
             cls._filename: str = None
             cls._recorded_data: List[str] = []
