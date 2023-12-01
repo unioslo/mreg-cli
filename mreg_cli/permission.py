@@ -3,16 +3,8 @@ import ipaddress
 from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
-from .util import (
-    add_formatted_table_for_output,
-    convert_wildcard_to_regex,
-    delete,
-    get,
-    get_list,
-    is_valid_network,
-    patch,
-    post,
-)
+from .outputmanager import OutputManager
+from .util import convert_wildcard_to_regex, delete, get, get_list, is_valid_network, patch, post
 
 ###################################
 #  Add the main command 'access'  #
@@ -77,7 +69,7 @@ def network_list(args) -> None:
 
     headers = ("Range", "Group", "Regex", "Labels")
     keys = ("range", "group", "regex", "labels")
-    add_formatted_table_for_output(headers, keys, data)
+    OutputManager().add_formatted_table(headers, keys, data)
 
 
 permission.add_command(

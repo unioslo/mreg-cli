@@ -2,12 +2,15 @@ import argparse
 import html
 import os
 import shlex
+import sys
+from typing import Generator, List
 
 from prompt_toolkit import HTML, print_formatted_text
 from prompt_toolkit.completion import Completer, Completion
 
-from . import recorder, util
+from . import util
 from .exceptions import CliError, CliWarning
+from .outputmanager import OutputManager, remove_comments
 
 
 class CliExit(Exception):
@@ -143,9 +146,9 @@ class Command(Completer):
             exc.print_self()
 
         except CliExit:
-            from sys import exit
-
-            exit(0)
+            # If we have active recordings going on, save them before exiting
+            OutputManager().save_recording()
+            sys.exit(0)
 
         else:
             # If no exception occurred make sure errno isn't set to an error
@@ -207,6 +210,21 @@ class Command(Completer):
                         start_position=-len(cur),
                     )
 
+    def process_command_line(self, line: str) -> None:
+        """Process a line containing a command."""
+        line = remove_comments(line)
+        # OutputManager is a singleton class so we
+        # need to clear it before each command.
+        output = OutputManager()
+        output.clear()
+        # Set the command that generated the output
+        # Also remove filters and other noise.
+        cmd = output.from_command(line)
+        # Run the command
+        cli.parse(cmd)
+        # Render the output
+        output.render()
+
 
 # Top parser is the root of all the command parsers
 _top_parser = argparse.ArgumentParser("")
@@ -215,6 +233,19 @@ cli = Command(_top_parser, list(), "")
 
 def _quit(args):
     raise CliExit
+
+
+def _start_recording(args) -> None:
+    """Start recording commands and output to the given file."""
+    if not args.filename:
+        raise CliError("No filename given.")
+
+    OutputManager().start_recording(args.filename)
+
+
+def _stop_recording(args):
+    """Stop recording commands and output to the given file."""
+    OutputManager().save_recording()
 
 
 # Always need a quit command
@@ -245,36 +276,59 @@ cli.add_command(
     callback=logout,
 )
 
+recordings = cli.add_command(
+    prog="recording",
+    description="Recording related commands.",
+    short_desc="Recording related commands",
+)
 
-def source(files, ignore_errors, verbose):
-    """Source reads commands from one or more source files.
-    Each command must be on one line and the commands must be separated with
-    newlines.
-    The files may contain comments. The comment symbol is #.
+recordings.add_command(
+    prog="start",
+    description="Start recording commands to a file.",
+    short_desc="Start recording",
+    callback=_start_recording,
+    flags=[
+        Flag(
+            "filename",
+            description="The filename to record to.",
+            short_desc="Filename",
+            metavar="filename",
+        )
+    ],
+)
+
+recordings.add_command(
+    prog="stop",
+    description="Stop recording commands and output to the given file.",
+    short_desc="Stop recording",
+    callback=_stop_recording,
+)
+
+
+def source(files: List[str], ignore_errors: bool, verbose: bool) -> Generator[str, None, None]:
+    """Read commands from one or more source files and yield them.
+
+    :param files: List of file paths to read commands from.
+    :param ignore_errors: If True, continue on errors.
+    :param verbose: If True, print commands before execution.
+
+    :yields: Command lines from the files.
     """
-
-    rec = recorder.Recorder()
-
     for filename in files:
         if filename.startswith("~"):
             filename = os.path.expanduser(filename)
         try:
             with open(filename) as f:
                 for i, line in enumerate(f):
-                    # Shell commands can be called from scripts. They start with '!'
                     if line.startswith("!"):
                         os.system(line[1:])
                         continue
 
-                    # If recording commands, submit the command line.
-                    # Don't record the "source" command itself.
-                    if rec.is_recording() and not line.lstrip().startswith("source"):
-                        rec.record_command(line)
-
-                    # In verbose mode all commands are printed before execution.
                     if verbose:
                         print_formatted_text(HTML(f"<i>> {html.escape(line.strip())}</i>"))
-                    cli.parse(line)
+
+                    yield line
+
                     if cli.last_errno != 0:
                         print_formatted_text(
                             HTML(
@@ -284,6 +338,7 @@ def source(files, ignore_errors, verbose):
                                 )
                             )
                         )
+                        OutputManager().record_extra_output(f"{filename}: Error on line {i + 1}")
                         if not ignore_errors:
                             return
         except FileNotFoundError:
@@ -293,7 +348,14 @@ def source(files, ignore_errors, verbose):
 
 
 def _source(args):
-    source(args.files, args.ignore_errors, args.verbose)
+    """Wrapper for the source function to integrate with the CLI.
+
+    :param args: Arguments from the CLI.
+    """
+    for command in source(args.files, args.ignore_errors, args.verbose):
+        # Process each command here as needed, similar to the main loop
+        print(f"Processing command: {command}")
+        cli.process_command_line(command)
 
 
 # Always need the source command.

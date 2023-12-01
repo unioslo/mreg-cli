@@ -6,7 +6,7 @@ import logging
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
-from . import config, log, recorder, util
+from . import config, log, util
 from .cli import cli, source
 from .exceptions import CliError, CliWarning
 from .outputmanager import OutputManager
@@ -112,9 +112,8 @@ def main():
     if "logfile" in conf:
         log.logfile = conf["logfile"]
 
-    rec = recorder.Recorder()
     if "record_traffic" in conf:
-        rec.start_recording(conf["record_traffic"])
+        OutputManager().start_recording(conf["record_traffic"])
 
     if "user" not in conf:
         print("Username not set in config or as argument")
@@ -144,11 +143,20 @@ def main():
     from . import policy  # noqa: F401
     from . import zone  # noqa: F401
 
+    # Define a function that returns the prompt message
+    def get_prompt_message():
+        """Return the prompt message."""
+        manager = OutputManager()
+        if manager.is_recording():
+            return HTML(f"<i>[>'{manager.recording_filename()}']</i> <b>{args.prompt}</b>> ")
+        else:
+            return HTML(f"<b>{args.prompt}</b>> ")
+
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the
     # completer; and other visual things.
     session = PromptSession(
-        message=HTML(f"<b>{args.prompt}</b>> "),
+        message=get_prompt_message,
         search_ignore_case=True,
         completer=cli,
         complete_while_typing=True,
@@ -160,7 +168,8 @@ def main():
 
     # if the --source parameter was given, read commands from the source file and then exit
     if "source" in conf:
-        source([conf["source"]], "verbosity" in conf, False)
+        for command in source([conf["source"]], "verbosity" in conf, False):
+            cli.process_command_line(command)
         return
 
     # The app runs in an infinite loop and is expected to exit using sys.exit()
@@ -173,25 +182,9 @@ def main():
             raise SystemExit() from None
         try:
             for line in lines.splitlines():
-                # If recording commands, submit the command line.
-                # Don't record the "source" command itself.
-                if rec.is_recording() and not line.lstrip().startswith("source"):
-                    rec.record_command(line)
-                # OutputManager is a singleton class so we
-                # need to clear it before each command.
-                output = OutputManager()
-                output.clear()
-                # Set the command that generated the output
-                # Also remove filters and other noise.
-                cmd = output.from_command(line)
-                # Run the command
-                cli.parse(cmd)
-                # Render the output
-                output.render()
-        except (CliWarning, CliError) as exc:
-            exc.print_self()
-        except ValueError as exc:
-            print(exc)
+                cli.process_command_line(line)
+        except ValueError as e:
+            print(e)
 
 
 if __name__ == "__main__":
