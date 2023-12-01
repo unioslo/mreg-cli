@@ -320,6 +320,7 @@ def source(files: List[str], ignore_errors: bool, verbose: bool) -> Generator[st
         try:
             with open(filename) as f:
                 for i, line in enumerate(f):
+                    # Shell commands can be called from scripts. They start with '!'
                     if line.startswith("!"):
                         os.system(line[1:])
                         continue
