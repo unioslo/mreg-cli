@@ -139,11 +139,8 @@ class Command(Completer):
             # after it prints a help msg.
             self.last_errno = e.code
 
-        except CliWarning as e:
-            print_formatted_text(HTML(f"<i>{e}</i>"))
-
-        except CliError as e:
-            print_formatted_text(HTML(f"<ansired>{e}</ansired>"))
+        except (CliWarning, CliError) as exc:
+            exc.print_self()
 
         except CliExit:
             from sys import exit
