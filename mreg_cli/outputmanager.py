@@ -115,26 +115,32 @@ class OutputManager:
         """Create a new instance of the class, or return the existing one."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-
-            # Recording related attributes. These must come first as they may
-            # be encountered when calling clear(). Note that these attributes are
-            # not reset between commands, which is why they are not themselves
-            # manipulated in clear().
-            cls._recording: bool = False
-            cls._filename: str = None
-            cls._recorded_data: List[str] = []
-
             cls._instance.clear()
+            cls._instance.clear_recording()
 
         return cls._instance
 
     def clear(self) -> None:
         """Clear the object."""
-        self._lines = []
+        self._output: [str] = []
         self._filter_re = None
-        self._negate = False
-        self._command = None
-        self.command = None
+        self._filter_negate = False
+        self._command_executed = None
+        self._command_issued = None
+
+        self._ok: [str] = []  # This is typically commands that went OK but returned no content
+        self._warnings: [str] = []
+        self._errors: [str] = []
+
+        self._api_requests: [str] = []
+
+        self._exceptions: [Exception] = []
+
+    def clear_recording(self) -> None:
+        """Clears the recording data."""
+        self._recorded_data = []
+        self._recording = False
+        self._filename = None
 
     def start_recording(self, filename: str) -> None:
         """Declare intent to start recording to the given filename.
@@ -153,25 +159,14 @@ class OutputManager:
         self._recording = True
         self._filename = filename
 
-        atexit.register(self.save_recording)
+        atexit.register(self.stop_recording)
         try:
             os.remove(filename)
         except OSError:
             pass
 
     def stop_recording(self) -> None:
-        """Declare intent to stop recording.
-
-        This will delete the recorded data if it has not been saved.
-
-        Note: This does not save the recording, use save_recording() for that.
-        """
-        self._recorded_data = []
-        self._recording = False
-        self._filename = None
-
-    def save_recording(self) -> None:
-        """Save the recording to the file.
+        """Stop the recording and save the recording to the file.
 
         Returns gracefully if recording is not active.
         """
@@ -181,7 +176,46 @@ class OutputManager:
         with open(self._filename, "w") as rec_file:
             json.dump(self._recorded_data, rec_file, indent=2)
 
-        self.stop_recording()
+        self.clear_recording()
+
+    def create_recording_entry(self) -> Dict[str, Any]:
+        """Create a recording entry."""
+        return {
+            "command": self._command_executed,
+            "command_filter": self._filter_re.pattern if self._filter_re else None,
+            "command_issued": self._command_issued,
+            "ok": self._ok,
+            "warning": self._warnings,
+            "error": self._errors,
+            "output": self.filtered_output(),
+            # We probably want timestamps in the recording, but we need to disable
+            # this for CI runs as they will obviously fail if the timestamp changes.
+            # TODO: Make this configurable
+            #            "timestamp": datetime.datetime.now().isoformat(sep=" ", timespec="seconds"),
+            #            "timestamp_as_epoch": int(datetime.datetime.now().timestamp()),
+            "api_requests": self._api_requests,
+        }
+
+    def add_warning(self, msg: str) -> None:
+        """Add a warning event to the output.
+
+        :param msg: The warning message.
+        """
+        self._warnings.append(msg)
+
+    def add_error(self, msg: str) -> None:
+        """Add an error event to the output.
+
+        :param msg: The error message.
+        """
+        self._errors.append(msg)
+
+    def add_ok(self, msg: str) -> None:
+        """Add an OK event to the output.
+
+        :param msg: The ok message.
+        """
+        self._ok.append(msg)
 
     def is_recording(self) -> bool:
         """Return True if recording is active."""
@@ -196,45 +230,18 @@ class OutputManager:
             return None
         return self._filename
 
-    def record_command(self, command: str) -> None:
-        """Record a command, if recording is active.
-
-        :param command: The command to record.
-        """
-        if not self.is_recording() or not command:
+    def record_output(self) -> None:
+        """Record the output, if recording is active."""
+        command = self._command_executed
+        # Note that we may record commands without output as they may have
+        # warnings or errors.
+        if not command or not self.is_recording():
             return
 
-        # Do not record commands starting with any of the commands in
-        # COMMANDS_NOT_TO_RECORD
         if any(command.startswith(cmd) for cmd in self.COMMANDS_NOT_TO_RECORD):
             return
 
-        # Do not record empty commands
-        if command and command != "\n":
-            self._recorded_data.append({"command": command})
-
-    def record_extra_output(self, output: str) -> None:
-        """Record extra output, if recording is active.
-
-        :param output: The output to record.
-        """
-        if not self.is_recording() or not output:
-            return
-
-        self._recorded_data.append({"output": output})
-
-    def record_output(self) -> None:
-        """Record the output, if recording is active."""
-        # Don't record if we're not recording, and don't record
-        # output as the  empty output
-        if not self.is_recording() or not self._recorded_data:
-            return
-
-        if not self.lines():
-            return
-
-        output = "\n".join(self.lines())
-        self._recorded_data.append({"output": output})
+        self._recorded_data.append(self.create_recording_entry())
 
     def record_request(
         self, method: str, url: str, params: str, data: Dict[str, Any], result: requests.Response
@@ -259,7 +266,7 @@ class OutputManager:
             # false-like values (0, False, etc)
             if s != "":
                 ret_dict["response"] = s
-        self._recorded_data.append(ret_dict)
+        self._api_requests.append(ret_dict)
 
     def has_output(self) -> bool:
         """Return True if there is output to display."""
@@ -274,16 +281,18 @@ class OutputManager:
         :raises CliError: If the command is invalid.
         :return: The cleaned command, devoid of filters and other noise.
         """
-        self._command, self._filter_re, self._negate = self.get_filter(command)
-        self.record_command(command)
-        return self._command
+        self._command_issued = command.rstrip()
+        self._command_executed, self._filter_re, self._filter_negate = self.get_filter(
+            remove_comments(self._command_issued)
+        )
+        return self._command_executed
 
     def add_line(self, line: str) -> None:
         """Add a line to the output.
 
         :param line: The line to add.
         """
-        self._lines.append(line)
+        self._output.append(line)
 
     def add_formatted_line(self, key: str, value: str, padding: int = 14) -> None:
         """Format and add a key-value pair as a line.
@@ -382,7 +391,7 @@ class OutputManager:
         for d in data:
             self.add_line(raw_format.format(*[d[key] for key in keys]))
 
-    def lines(self) -> List[str]:
+    def filtered_output(self) -> List[str]:
         """Return the lines of output.
 
         If the command is set, and it has a filter, the lines will
@@ -391,13 +400,13 @@ class OutputManager:
         Note: This filtering is not cached, so repeated calls will
         re-filter the output (to the same result, presumably).
         """
-        lines = self._lines
+        lines = self._output
         filter_re = self._filter_re
 
         if filter_re is None:
             return lines
 
-        if self._negate:
+        if self._filter_negate:
             return [line for line in lines if not filter_re.search(line)]
 
         return [line for line in lines if filter_re.search(line)]
@@ -405,7 +414,7 @@ class OutputManager:
     def render(self) -> None:
         """Print the output to stdout, and records it if recording is active."""
         self.record_output()
-        for line in self.lines():
+        for line in self.filtered_output():
             print(line)
 
     def __str__(self) -> str:
