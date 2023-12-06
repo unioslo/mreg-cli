@@ -116,7 +116,7 @@ class OutputManager:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.clear()
-            cls._instance.clear_recording()
+            cls._instance.recording_clear()
 
         return cls._instance
 
@@ -134,15 +134,23 @@ class OutputManager:
 
         self._api_requests: [str] = []
 
-        self._exceptions: [Exception] = []
+        self._time_started: [datetime] = datetime.datetime.now()
 
-    def clear_recording(self) -> None:
+    def recording_clear(self) -> None:
         """Clears the recording data."""
         self._recorded_data = []
         self._recording = False
         self._filename = None
+        self._record_timestamps = True
 
-    def start_recording(self, filename: str) -> None:
+    def record_timestamps(self, state: bool) -> None:
+        """Set whether to record timestamps in the recording.
+
+        :param state: True to record timestamps, False to not record timestamps.
+        """
+        self._record_timestamps = state
+
+    def recording_start(self, filename: str) -> None:
         """Declare intent to start recording to the given filename.
 
         Note: The file will be overwritten if it exists.
@@ -159,27 +167,35 @@ class OutputManager:
         self._recording = True
         self._filename = filename
 
-        atexit.register(self.stop_recording)
+        atexit.register(self.recording_stop)
         try:
             os.remove(filename)
         except OSError:
             pass
 
-    def stop_recording(self) -> None:
+    def recording_stop(self) -> None:
         """Stop the recording and save the recording to the file.
 
         Returns gracefully if recording is not active.
         """
-        if not self.is_recording():
+        if not self.recording_active():
             return
 
         with open(self._filename, "w") as rec_file:
             json.dump(self._recorded_data, rec_file, indent=2)
 
-        self.clear_recording()
+        self.recording_clear()
 
-    def create_recording_entry(self) -> Dict[str, Any]:
+    def recording_entry(self) -> Dict[str, Any]:
         """Create a recording entry."""
+        time: Dict[str, Union[str, int]] = {
+            "timestamp": self._time_started.isoformat(sep=" ", timespec="seconds"),
+            "timestamp_as_epoch": int(self._time_started.timestamp()),
+            "runtime_in_ms": int(
+                (datetime.datetime.now() - self._time_started).total_seconds() * 1000
+            ),
+        }
+
         return {
             "command": self._command_executed,
             "command_filter": self._filter_re.pattern if self._filter_re else None,
@@ -188,12 +204,8 @@ class OutputManager:
             "warning": self._warnings,
             "error": self._errors,
             "output": self.filtered_output(),
-            # We probably want timestamps in the recording, but we need to disable
-            # this for CI runs as they will obviously fail if the timestamp changes.
-            # TODO: Make this configurable
-            #            "timestamp": datetime.datetime.now().isoformat(sep=" ", timespec="seconds"),
-            #            "timestamp_as_epoch": int(datetime.datetime.now().timestamp()),
             "api_requests": self._api_requests,
+            "time": time if self._record_timestamps else None,
         }
 
     def add_warning(self, msg: str) -> None:
@@ -217,8 +229,8 @@ class OutputManager:
         """
         self._ok.append(msg)
 
-    def is_recording(self) -> bool:
-        """Return True if recording is active."""
+    def recording_active(self) -> bool:
+        """Returns True if recording is active."""
         return self._recording
 
     def recording_filename(self) -> Optional[str]:
@@ -226,28 +238,27 @@ class OutputManager:
 
         Return gracefully if recording is not active.
         """
-        if not self.is_recording():
+        if not self.recording_active():
             return None
         return self._filename
 
-    def record_output(self) -> None:
+    def recording_output(self) -> None:
         """Record the output, if recording is active."""
         command = self._command_executed
         # Note that we may record commands without output as they may have
         # warnings or errors.
-        if not command or not self.is_recording():
+        if not command or not self.recording_active():
             return
 
         if any(command.startswith(cmd) for cmd in self.COMMANDS_NOT_TO_RECORD):
             return
 
-        self._recorded_data.append(self.create_recording_entry())
+        self._recorded_data.append(self.recording_entry())
 
-    def record_request(
+    def recording_request(
         self, method: str, url: str, params: str, data: Dict[str, Any], result: requests.Response
     ) -> None:
-        """Record a request, if recording is active."""
-        if not self.is_recording():
+        if not self.recording_active():
             return
         ret_dict: Dict[str, Any] = {
             "method": method.upper(),
@@ -412,8 +423,8 @@ class OutputManager:
         return [line for line in lines if filter_re.search(line)]
 
     def render(self) -> None:
-        """Print the output to stdout, and records it if recording is active."""
-        self.record_output()
+        """Prints the output to stdout, and records it if recording is active."""
+        self.recording_output()
         for line in self.filtered_output():
             print(line)
 

@@ -167,7 +167,7 @@ class Command(Completer):
 
         except CliExit:
             # If we have active recordings going on, save them before exiting
-            OutputManager().stop_recording()
+            OutputManager().recording_stop()
             sys.exit(0)
 
         else:
@@ -273,12 +273,12 @@ def _start_recording(args: argparse.Namespace) -> None:
     if not args.filename:
         raise CliError("No filename given.")
 
-    OutputManager().start_recording(args.filename)
+    OutputManager().recording_start(args.filename)
 
 
 def _stop_recording(args: argparse.Namespace):
     """Stop recording commands and output to the given file."""
-    OutputManager().stop_recording()
+    OutputManager().recording_stop()
 
 
 # Always need a quit command
