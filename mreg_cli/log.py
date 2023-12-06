@@ -4,8 +4,8 @@ import re
 from datetime import datetime
 from typing import NoReturn, Optional, Type
 
-from . import recorder
 from .exceptions import CliError, CliWarning
+from .outputmanager import OutputManager
 
 logfile = None
 
@@ -45,10 +45,10 @@ def cli_error(
     if raise_exception:
         # A simplified message for console
         msg = "ERROR: {}: {}".format(pre, msg)
-        rec = recorder.Recorder()
-        if rec.is_recording():
+        manager = OutputManager()
+        if manager.is_recording():
             # If recording traffic, also record the console output
-            rec.record_output(msg)
+            manager.record_extra_output(msg)
         # Raise the exception
         raise exception(msg)
     return None
@@ -69,10 +69,10 @@ def cli_warning(
     if raise_exception:
         # A simplified message for console
         msg = "WARNING: {}: {}".format(pre, msg)
-        rec = recorder.Recorder()
-        if rec.is_recording():
+        manager = OutputManager()
+        if manager.is_recording():
             # If recording traffic, also record the console output
-            rec.record_output(msg)
+            manager.record_extra_output(msg)
         raise exception(msg)
     return None
 
@@ -91,7 +91,7 @@ def cli_info(msg: str, print_msg: bool = False) -> None:
         # A simplified message for console
         msg = "OK: {}: {}".format(pre, msg)
         print(msg)
-        rec = recorder.Recorder()
-        if rec.is_recording():
+        manager = OutputManager()
+        if manager.is_recording():
             # If recording traffic, also record the console output
-            rec.record_output(msg)
+            manager.record_extra_output(msg)

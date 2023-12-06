@@ -12,7 +12,6 @@ from typing import (
     List,
     NoReturn,
     Optional,
-    Sequence,
     Tuple,
     Union,
     cast,
@@ -31,7 +30,6 @@ import urllib.parse
 import requests
 from prompt_toolkit import prompt
 
-from . import recorder
 from .exceptions import CliError, HostNotFoundWarning
 from .history import history
 from .log import cli_error, cli_warning
@@ -318,7 +316,6 @@ def _request_wrapper(
     if params is None:
         params = {}
     url = requests.compat.urljoin(mregurl, path)
-    rec = recorder.Recorder()
 
     if use_json:
         result = getattr(session, operation_type)(url, json=params, timeout=HTTP_TIMEOUT)
@@ -328,8 +325,9 @@ def _request_wrapper(
         )
     result = cast(requests.Response, result)  # convince mypy that result is a Response
 
-    if rec.is_recording():
-        rec.record(operation_type, url, params, data, result)
+    manager = OutputManager()
+    if manager.is_recording():
+        manager.record_request(operation_type, url, params, data, result)
 
     if first and result.status_code == 401:
         update_token()
@@ -724,29 +722,3 @@ def convert_wildcard_to_regex(
         regex = "."
 
     return (f"{param}__regex", regex)
-
-
-################################################################################
-#                                                                              #
-#   Formatting functions                                                       #
-#                                                                              #
-################################################################################
-
-
-def add_formatted_table_for_output(
-    headers: Sequence[str],
-    keys: Sequence[str],
-    data: List[Dict[str, Any]],
-    indent: int = 0,
-) -> str:
-    manager = OutputManager()
-    raw_format = " " * indent
-    for key, header in zip(keys, headers):
-        longest = len(header)
-        for d in data:
-            longest = max(longest, len(str(d[key])))
-        raw_format += "{:<%d}   " % longest
-
-    manager.add_line(raw_format.format(*headers))
-    for d in data:
-        manager.add_line(raw_format.format(*[d[key] for key in keys]))
