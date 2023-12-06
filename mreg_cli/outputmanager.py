@@ -182,9 +182,7 @@ class OutputManager:
         with open(self._filename, "w") as rec_file:
             json.dump(self._recorded_data, rec_file, indent=2)
 
-        self._recording = False
-        self._recorded_data = []
-        self._filename = None
+        self.stop_recording()
 
     def is_recording(self) -> bool:
         """Returns True if recording is active."""
