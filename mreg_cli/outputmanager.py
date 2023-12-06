@@ -89,8 +89,6 @@ def urlpath(url: str, params: str) -> str:
     else:
         return up.path
 
-from mreg_cli.exceptions import CliError
-
 
 class OutputManager:
     """Manages and formats output for display.
