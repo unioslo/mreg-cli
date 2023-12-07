@@ -8,6 +8,8 @@ from .log import cli_error, cli_info
 from .outputmanager import OutputManager
 from .util import delete, get, get_list, host_info_by_name, post
 
+BACNET_MAX_ID = 4194302
+
 
 def bacnetid_add(args: argparse.Namespace) -> None:
     """Assign a BACnet ID to the host.
@@ -87,8 +89,8 @@ def bacnetid_list(args: argparse.Namespace) -> None:
     maxval = 4194302
     if args.max is not None:
         maxval = args.max
-        if maxval > 4194302:
-            cli_error("The maximum ID value is 4194302.")
+        if maxval > BACNET_MAX_ID:
+            cli_error(f"The maximum ID value is {BACNET_MAX_ID}.")
     r = get_list("/api/v1/bacnet/ids/", {"id__range": "{},{}".format(minval, maxval)})
     OutputManager().add_formatted_table(("ID", "Hostname"), ("id", "hostname"), r)
 

@@ -176,7 +176,7 @@ class Command(Completer):
 
     def get_completions(
         self, document: document.Document, complete_event: CompleteEvent
-    ) -> Generator[Completion | Any, Any, None]:
+    ) -> Generator[Union[Completion, Any], Any, None]:
         """Prepare completions for the current command.
 
         :param document: The current document.
@@ -188,7 +188,7 @@ class Command(Completer):
         words = document.text.strip().split(" ")
         yield from self.complete(cur, words)
 
-    def complete(self, cur: str, words: str) -> Generator[Completion | Any, Any, None]:
+    def complete(self, cur: str, words: str) -> Generator[Union[Completion, Any], Any, None]:
         """Generate completions during typing.
 
         :param cur: The current word.
