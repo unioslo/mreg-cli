@@ -200,6 +200,7 @@ class OutputManager:
         return {
             "command": self._command_executed,
             "command_filter": self._filter_re.pattern if self._filter_re else None,
+            "command_filter_negate": self._filter_negate,
             "command_issued": self._command_issued,
             "ok": self._ok,
             "warning": self._warnings,
