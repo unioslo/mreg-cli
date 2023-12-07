@@ -1,4 +1,4 @@
-"""This module contains the output management for the mreg_cli package.
+"""Output management for the mreg_cli package.
 
 This is a singleton class that manages the output for the CLI. It stores the
 output lines and formats them for display. It also manages the filter for the
@@ -112,6 +112,7 @@ class OutputManager:
     ]
 
     def __new__(cls):
+        """Create a new instance of the class, or return the existing one."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
 
@@ -128,7 +129,7 @@ class OutputManager:
         return cls._instance
 
     def clear(self) -> None:
-        """Clears the object."""
+        """Clear the object."""
         self._lines = []
         self._filter_re = None
         self._negate = False
@@ -183,13 +184,13 @@ class OutputManager:
         self.stop_recording()
 
     def is_recording(self) -> bool:
-        """Returns True if recording is active."""
+        """Return True if recording is active."""
         return self._recording
 
     def recording_filename(self) -> Optional[str]:
-        """Returns the filename being recorded to.
+        """Return the filename being recorded to.
 
-        Returns gracefully if recording is not active.
+        Return gracefully if recording is not active.
         """
         if not self.is_recording():
             return None
@@ -238,6 +239,7 @@ class OutputManager:
     def record_request(
         self, method: str, url: str, params: str, data: Dict[str, Any], result: requests.Response
     ) -> None:
+        """Record a request, if recording is active."""
         if not self.is_recording():
             return
         ret_dict: Dict[str, Any] = {
@@ -260,11 +262,11 @@ class OutputManager:
         self._recorded_data.append(ret_dict)
 
     def has_output(self) -> bool:
-        """Returns True if there is output to display."""
+        """Return True if there is output to display."""
         return len(self._lines) > 0
 
     def from_command(self, command: str) -> str:
-        """Adds the command that generated the output.
+        """Add the command that generated the output.
 
         Also records the command if recording is active.
 
@@ -277,14 +279,14 @@ class OutputManager:
         return self._command
 
     def add_line(self, line: str) -> None:
-        """Adds a line to the output.
+        """Add a line to the output.
 
         :param line: The line to add.
         """
         self._lines.append(line)
 
     def add_formatted_line(self, key: str, value: str, padding: int = 14) -> None:
-        """Formats and adds a key-value pair as a line.
+        """Format and add a key-value pair as a line.
 
         :param key: The key or label.
         :param value: The value.
@@ -296,7 +298,7 @@ class OutputManager:
     def add_formatted_line_with_source(
         self, key: str, value: str, source: str = "", padding: int = 14
     ) -> None:
-        """Formats and adds a key-value pair as a line with a source.
+        """Format and adds a key-value pair as a line with a source.
 
         :param key: The key or label.
         :param value: The value.
@@ -317,7 +319,7 @@ class OutputManager:
     # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
     # don't have that type. So we use Any instead.
     def get_filter(self, command: str) -> Tuple[str, Any, bool]:
-        """Returns the filter for the output.
+        """Return the filter for the output.
 
         Parses the command string and extracts a filter if present, taking into
         account both single and double quoted strings to avoid incorrect
@@ -362,6 +364,13 @@ class OutputManager:
         data: List[Dict[str, Any]],
         indent: int = 0,
     ) -> str:
+        """Format and add a table of data.
+
+        Generates a table of data from the given headers, keys, and data. The
+        headers are used as the column headers, and the keys are used to
+        extract the data from the dicts in the data list. The data is
+        formatted and added to the output.
+        """
         raw_format = " " * indent
         for key, header in zip(keys, headers):
             longest = len(header)
@@ -394,11 +403,11 @@ class OutputManager:
         return [line for line in lines if filter_re.search(line)]
 
     def render(self) -> None:
-        """Prints the output to stdout, and records it if recording is active."""
+        """Print the output to stdout, and records it if recording is active."""
         self.record_output()
         for line in self.lines():
             print(line)
 
     def __str__(self) -> str:
-        """Returns the formatted output as a single string."""
+        """Return the formatted output as a single string."""
         return "\n".join(self._lines)

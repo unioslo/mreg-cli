@@ -1,3 +1,6 @@
+"""Backnet commands for the mreg CLI."""
+import argparse
+
 from .cli import Flag
 from .history import history
 from .host import host
@@ -6,7 +9,11 @@ from .outputmanager import OutputManager
 from .util import delete, get, get_list, host_info_by_name, post
 
 
-def bacnetid_add(args) -> None:
+def bacnetid_add(args: argparse.Namespace) -> None:
+    """Assign a BACnet ID to the host.
+
+    :param args: argparse.Namespace (name, id)
+    """
     info = host_info_by_name(args.name)
     if "bacnetid" in info and info["bacnetid"] is not None:
         cli_error("{} already has BACnet ID {}.".format(info["name"], info["bacnetid"]["id"]))
@@ -39,7 +46,11 @@ host.add_command(
 )
 
 
-def bacnetid_remove(args) -> None:
+def bacnetid_remove(args: argparse.Namespace) -> None:
+    """Unassign the BACnet ID from the host.
+
+    :param args: argparse.Namespace (name)
+    """
     info = host_info_by_name(args.name)
     if "bacnetid" not in info or info["bacnetid"] is None:
         cli_error("{} does not have a BACnet ID assigned.".format(info["name"]))
@@ -63,7 +74,11 @@ host.add_command(
 )
 
 
-def bacnetid_list(args) -> None:
+def bacnetid_list(args: argparse.Namespace) -> None:
+    """Find/list BACnet IDs and hostnames by ID.
+
+    :param args: argparse.Namespace (min, max)
+    """
     minval = 0
     if args.min is not None:
         minval = args.min

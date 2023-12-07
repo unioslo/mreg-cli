@@ -13,11 +13,11 @@ select = [
     "A", # flake8-builtins
     #    "ANN", # annotations
     #    "ARG", # flake8-unused-arguments
-    "B", # flake8-bugbear
-    # "D",   # pydocstyle
-    "DJ", # flake8-django
-    "E",  # error
-    # "F",   # Pyflakes
+    "B",   # flake8-bugbear
+    "D",   # pydocstyle
+    "DJ",  # flake8-django
+    "E",   # error
+    "F",   # Pyflakes
     "I",   # isort
     "ISC", # flake8-implicit-str-concat
     "INP", # flake8-no-pep420 (implicit namespace packages, you need __init__.py)

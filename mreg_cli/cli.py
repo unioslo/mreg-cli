@@ -1,12 +1,16 @@
+"""Command line interface for mreg.
+
+This file contains the main CLI class and the top level parser.
+"""
 import argparse
 import html
 import os
 import shlex
 import sys
-from typing import Generator, List
+from typing import Any, Callable, Generator, List, Union
 
-from prompt_toolkit import HTML, print_formatted_text
-from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit import HTML, document, print_formatted_text
+from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 
 from . import util
 from .exceptions import CliError, CliWarning
@@ -14,23 +18,28 @@ from .outputmanager import OutputManager, remove_comments
 
 
 class CliExit(Exception):
+    """Exception used to exit the CLI."""
+
     pass
 
 
 class Flag:
+    """Class for flag information available to commands in the CLI."""
+
     def __init__(
         self,
-        name,
-        description="",
-        short_desc="",
-        nargs=None,
-        default=None,
-        flag_type=None,
-        choices=None,
-        required=False,
-        metavar=None,
-        action=None,
+        name: str,
+        description: str = "",
+        short_desc: str = "",
+        nargs: int = None,
+        default: Any = None,
+        flag_type: Any = None,
+        choices: List[str] = None,
+        required: bool = False,
+        metavar: str = None,
+        action: str = None,
     ):
+        """Initialize a Flag object."""
         self.name = name
         self.short_desc = short_desc
         self.description = description
@@ -43,7 +52,8 @@ class Flag:
         self.action = action
 
 
-def _create_command_group(parent):
+def _create_command_group(parent: argparse.ArgumentParser):
+    """Create a sub parser for a command."""
     parent_name = parent.prog.strip()
 
     if parent_name:
@@ -64,14 +74,16 @@ def _create_command_group(parent):
 
 
 class Command(Completer):
-    """Command is a class which acts as a wrapper around argparse and
-    prompt_toolkit.
+    """Command class for the CLI.
+
+    Wrapper around argparse.ArgumentParser and prompt_toolkit.
     """
 
     # Used to detect an error when running commands from a source file.
     last_errno = 0
 
-    def __init__(self, parser, flags, short_desc):
+    def __init__(self, parser: argparse.ArgumentParser, flags: List[Flag], short_desc: str):
+        """Initialize a Command object."""
         self.parser = parser
         # sub is an object used for creating sub parser for this command. A
         # command/ArgParser can only have one of this object.
@@ -85,9 +97,17 @@ class Command(Completer):
                 self.flags[flag.name.lstrip("-")] = flag
 
     def add_command(
-        self, prog, description, short_desc="", epilog=None, callback=None, flags=None
+        self,
+        prog: str,
+        description: str,
+        short_desc: str = "",
+        epilog: str = None,
+        callback: Callable[[argparse.ArgumentParser], None] = None,
+        flags: Union[List[Flag], None] = None,
     ):
-        """:param flags: a list of Flag objects. NB: must be handled as read-only,
+        """Add a command to the current parser.
+
+        :param flags: a list of Flag objects. NB: must be handled as read-only,
         since the default value is [].
         :return: the Command object of the new command.
         """
@@ -127,7 +147,6 @@ class Command(Completer):
 
     def parse(self, command: str) -> None:
         """Parse and execute a command."""
-
         args = shlex.split(command, comments=True)
 
         try:
@@ -155,12 +174,26 @@ class Command(Completer):
             # code.
             self.last_errno = 0
 
-    def get_completions(self, document, complete_event):
+    def get_completions(
+        self, document: document.Document, complete_event: CompleteEvent
+    ) -> Generator[Completion | Any, Any, None]:
+        """Prepare completions for the current command.
+
+        :param document: The current document.
+        :param complete_event: The current complete event.
+
+        :yields: Completions for the current command.
+        """
         cur = document.get_word_before_cursor()
         words = document.text.strip().split(" ")
         yield from self.complete(cur, words)
 
-    def complete(self, cur, words):
+    def complete(self, cur: str, words: str) -> Generator[Completion | Any, Any, None]:
+        """Generate completions during typing.
+
+        :param cur: The current word.
+        :param words: The current line split into words.
+        """
         # if line is empty suggest all sub commands
         if not words:
             for name in self.children:
@@ -231,11 +264,11 @@ _top_parser = argparse.ArgumentParser("")
 cli = Command(_top_parser, list(), "")
 
 
-def _quit(args):
+def _quit(args: argparse.Namespace):
     raise CliExit
 
 
-def _start_recording(args) -> None:
+def _start_recording(args: argparse.Namespace) -> None:
     """Start recording commands and output to the given file."""
     if not args.filename:
         raise CliError("No filename given.")
@@ -243,7 +276,7 @@ def _start_recording(args) -> None:
     OutputManager().start_recording(args.filename)
 
 
-def _stop_recording(args):
+def _stop_recording(args: argparse.Namespace):
     """Stop recording commands and output to the given file."""
     OutputManager().save_recording()
 
@@ -264,7 +297,8 @@ cli.add_command(
 )
 
 
-def logout(args):
+def logout(args: argparse.Namespace):
+    """Log out from mreg and exit. Will delete token."""
     util.logout()
     raise CliExit
 
@@ -348,10 +382,10 @@ def source(files: List[str], ignore_errors: bool, verbose: bool) -> Generator[st
             print_formatted_text(f"Permission denied: '{filename}'")
 
 
-def _source(args):
-    """Wrapper for the source function to integrate with the CLI.
+def _source(args: argparse.Namespace):
+    """Source command for the CLI.
 
-    :param args: Arguments from the CLI.
+    :param args: The arguments passed to the command.
     """
     for command in source(args.files, args.ignore_errors, args.verbose):
         # Process each command here as needed, similar to the main loop

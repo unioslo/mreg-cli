@@ -1,5 +1,7 @@
+"""Host commands for the MREG CLI."""
+import argparse
 import ipaddress
-from typing import Iterable, Optional
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from .cli import Flag, cli
 from .dhcp import assoc_mac_to_ip
@@ -8,6 +10,7 @@ from .history import history
 from .history_log import format_history_items, get_history_items
 from .log import cli_error, cli_info, cli_warning
 from .outputmanager import OutputManager
+from .types import IP_Version
 from .util import (
     clean_hostname,
     cname_exists,
@@ -47,7 +50,7 @@ host = cli.add_command(
 )
 
 
-def format_hinfo(hinfo: dict, padding: int = 14) -> None:
+def format_hinfo(hinfo: Union[Dict[str, Any], None], padding: int = 14) -> None:
     """Pretty given hinfo id."""
     if hinfo is None:
         return
@@ -56,7 +59,7 @@ def format_hinfo(hinfo: dict, padding: int = 14) -> None:
     )
 
 
-def zoneinfo_for_hostname(host: str) -> Optional[dict]:
+def zoneinfo_for_hostname(host: str) -> Optional[Dict[str, Any]]:
     """Return zoneinfo for a hostname, or None if not found or invalid."""
     if "." not in host:
         return None
@@ -67,7 +70,8 @@ def zoneinfo_for_hostname(host: str) -> Optional[dict]:
     return None if zoneinfo is None else zoneinfo.json()
 
 
-def check_zone_for_hostname(name: str, force: bool, require_zone: bool = False):
+def check_zone_for_hostname(name: str, force: bool, require_zone: bool = False) -> None:
+    """Check if a hostname is in a zone controlled by MREG."""
     # Require force if FQDN not in MREG zone
     zoneinfo = zoneinfo_for_hostname(name)
     if zoneinfo is None:
@@ -80,7 +84,15 @@ def check_zone_for_hostname(name: str, force: bool, require_zone: bool = False):
         cli_warning(f"{name} is in zone delegation {delegation}, must force")
 
 
-def _get_ip_from_args(ip, force, ipversion=None):
+def _get_ip_from_args(ip: str, force: bool, ipversion: Union[IP_Version, None] = None) -> str:
+    """Return an IP address from the given args.
+
+    - If the given ip is an ip, then that ip is returned.
+    - If the given ip is a network, then the first unused IP from that network is returned.
+    - If the given ip is a network without a mask, then network is deduced as per above.
+
+    Note that the ipversion is only used to check that the given ip is of the correct version.
+    """
     # Try to fail fast for valid IP
     if ipversion is not None and is_valid_ip(ip):
         if ipversion == 4:
@@ -141,7 +153,8 @@ def _get_ip_from_args(ip, force, ipversion=None):
     return ip
 
 
-def _check_ipversion(ip, ipversion):
+def _check_ipversion(ip: str, ipversion: IP_Version) -> None:
+    """Check that the given ip is of the given ipversion."""
     # Ip sanity check
     if ipversion == 4:
         if not is_valid_ipv4(ip):
@@ -165,11 +178,14 @@ def _check_ipversion(ip, ipversion):
 #########################################
 
 
-def add(args):
+def add(args: argparse.Namespace) -> None:
     """Add a new host with the given name.
-    ip/network, comment and contact are optional.
+
+    :param args: argparse.Namespace (name, ip, contact, comment, force, macaddress)
     """
     # Fail if given host exists
+
+    ip = None
     name = clean_hostname(args.name)
     try:
         name = resolve_input_name(name)
@@ -205,7 +221,7 @@ def add(args):
         "contact": args.contact or None,
         "comment": args.comment or None,
     }
-    if args.ip:
+    if args.ip and ip:
         data["ipaddress"] = ip
 
     history.record_post(path, resource_name=name, new_data=data)
@@ -260,9 +276,11 @@ host.add_command(
 ############################################
 
 
-def remove(args):
-    # args.name, args.force
-    """Remove host."""
+def remove(args: argparse.Namespace) -> None:
+    """Remove host.
+
+    :param args: argparse.Namespace (name, force)
+    """
     # Get host info or raise exception
     info = host_info_by_name_or_ip(args.name)
 
@@ -363,7 +381,7 @@ host.add_command(
 # first some print helpers
 
 
-def format_host_name(name: str, padding: int = 14) -> None:
+def format_host_name(name: Union[str, None], padding: int = 14) -> None:
     """Pretty print given name."""
     if name is None:
         return
@@ -371,7 +389,7 @@ def format_host_name(name: str, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "Name:", name))
 
 
-def format_contact(contact: str, padding: int = 14) -> None:
+def format_contact(contact: Union[str, None], padding: int = 14) -> None:
     """Pretty print given contact."""
     if contact is None:
         return
@@ -379,7 +397,7 @@ def format_contact(contact: str, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "Contact:", contact))
 
 
-def format_comment(comment: str, padding: int = 14) -> None:
+def format_comment(comment: Union[str, None], padding: int = 14) -> None:
     """Pretty print given comment."""
     if comment is None:
         return
@@ -388,11 +406,11 @@ def format_comment(comment: str, padding: int = 14) -> None:
 
 
 def format_ipaddresses(
-    ipaddresses: Iterable[dict], names: bool = False, padding: int = 14
+    ipaddresses: Iterable[Dict[str, Any]], names: bool = False, padding: int = 14
 ) -> None:
     """Pretty print given ip addresses."""
 
-    def _find_padding(lst, attr):
+    def _find_padding(lst: List[str], attr: str):
         return max(padding, max([len(i[attr]) for i in lst]) + 1)
 
     manager = OutputManager()
@@ -438,7 +456,7 @@ def format_ttl(ttl: int, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "TTL:", ttl or "(Default)"))
 
 
-def format_loc(loc: dict, padding: int = 14) -> None:
+def format_loc(loc: Union[Dict[str, Any], None], padding: int = 14) -> None:
     """Pretty print given loc."""
     if loc is None:
         return
@@ -451,7 +469,7 @@ def format_cname(cname: str, host: str, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2} -> {3}".format(padding, "Cname:", cname, host))
 
 
-def print_mx(mxs: dict, padding: int = 14) -> None:
+def print_mx(mxs: Dict[str, Any], padding: int = 14) -> None:
     """Pretty print all MXs."""
     if not mxs:
         return
@@ -464,7 +482,7 @@ def print_mx(mxs: dict, padding: int = 14) -> None:
         )
 
 
-def format_naptr(naptr: dict, host_name: str, padding: int = 14) -> None:
+def format_naptr(naptr: Dict[str, Any], host_name: str, padding: int = 14) -> None:
     """Pretty print given txt."""
     assert isinstance(naptr, dict)
     assert isinstance(host_name, str)
@@ -477,7 +495,7 @@ def format_ptr(ip: str, host_name: str, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2} -> {3}".format(padding, "PTR override:", ip, host_name))
 
 
-def format_txt(txt: str, padding: int = 14) -> None:
+def format_txt(txt: Union[str, None], padding: int = 14) -> None:
     """Pretty print given txt."""
     if txt is None:
         return
@@ -485,7 +503,7 @@ def format_txt(txt: str, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "TXT:", txt))
 
 
-def format_bacnetid(bacnetid: dict, padding: int = 14) -> None:
+def format_bacnetid(bacnetid: Union[Dict[str, Any], None], padding: int = 14) -> None:
     """Pretty print given txt."""
     if bacnetid is None:
         return
@@ -493,8 +511,8 @@ def format_bacnetid(bacnetid: dict, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "BACnet ID:", bacnetid["id"]))
 
 
-def _print_host_info(info):
-    # Pretty print all host info
+def _print_host_info(info: Dict[str, Any]) -> None:
+    """Print all host info."""
     format_host_name(info["name"])
     format_contact(info["contact"])
     if info["comment"]:
@@ -519,7 +537,7 @@ def _print_host_info(info):
     cli_info("printed host info for {}".format(info["name"]))
 
 
-def _print_ip_info(ip):
+def _print_ip_info(ip: str) -> None:
     """Print all hosts which have a given IP. Also print out PTR override, if any."""
     path = "/api/v1/hosts/"
     params = {
@@ -559,9 +577,12 @@ def _print_ip_info(ip):
     format_ptr(ip, ptrhost)
 
 
-def info_(args) -> None:
-    """Print information about host. If <name> is an alias the cname hosts info
-    is shown.
+def info_(args: argparse.Namespace) -> None:
+    """Print information about host.
+
+    If <name> is an alias the cname hosts info is shown.
+
+    :param args: argparse.Namespace (hosts)
     """
     for name_or_ip in args.hosts:
         # Get host info or raise exception
@@ -600,17 +621,20 @@ host.add_command(
 )
 
 
-def find(args) -> None:
-    """List hosts maching search criteria."""
+def find(args: argparse.Namespace) -> None:
+    """List hosts maching search criteria.
 
-    def _add_param(param, value):
+    :param args: argparse.Namespace (name, comment, contact)
+    """
+
+    def _add_param(param: str, value: str) -> None:
         param, value = convert_wildcard_to_regex(param, value, True)
         params[param] = value
 
     if not any([args.name, args.comment, args.contact]):
         cli_warning("Need at least one search critera")
 
-    params = {
+    params: Dict[str, Union[str, int]] = {
         "ordering": "name",
         "page_size": 1,
     }
@@ -635,7 +659,7 @@ def find(args) -> None:
         max_name = max(max_name, len(i["name"]))
         max_contact = max(max_contact, len(i["contact"]))
 
-    def _print(name, contact, comment):
+    def _print(name: str, contact: str, comment: str) -> None:
         OutputManager().add_line(
             "{0:<{1}} {2:<{3}} {4}".format(name, max_name, contact, max_contact, comment)
         )
@@ -678,8 +702,11 @@ host.add_command(
 ############################################
 
 
-def rename(args) -> None:
-    """Rename host. If <old-name> is an alias then the alias is renamed."""
+def rename(args: argparse.Namespace) -> None:
+    """Rename host. If <old-name> is an alias then the alias is renamed.
+
+    :param args: argparse.Namespace (old_name, new_name, force)
+    """
     # Find old host
     old_name = resolve_input_name(args.old_name)
 
@@ -723,8 +750,10 @@ host.add_command(
     flags=[
         Flag(
             "old_name",
-            description="Host name of the host to rename. May be an alias. "
-            "If it is an alias then the alias is renamed.",
+            description=(
+                "Host name of the host to rename. May be an alias. ",
+                "If it is an alias then the alias is renamed.",
+            ),
             short_desc="Existing host name.",
             metavar="OLD",
         ),
@@ -744,8 +773,11 @@ host.add_command(
 #################################################
 
 
-def set_comment(args) -> None:
-    """Set comment for host. If <name> is an alias the cname host is updated."""
+def set_comment(args: argparse.Namespace) -> None:
+    """Set comment for host. If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, comment)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
     old_data = {"comment": info["comment"] or ""}
@@ -785,8 +817,11 @@ host.add_command(
 #################################################
 
 
-def set_contact(args) -> None:
-    """Set contact for host. If <name> is an alias the cname host is updated."""
+def set_contact(args: argparse.Namespace) -> None:
+    """Set contact for host. If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, contact)
+    """
     # Contact sanity check
     if not is_valid_email(args.contact):
         cli_warning("invalid mail address {} (target host: {})".format(args.contact, args.name))
@@ -823,7 +858,13 @@ host.add_command(
 ################################################################################
 
 
-def _ip_add(args, ipversion, macaddress=None):
+def _ip_add(args: argparse.Namespace, ipversion: IP_Version, macaddress: str = None) -> None:
+    """Add an A record to host. If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name, ip, force)
+    :param ipversion: 4 or 6
+    :param macaddress: macaddress to associate with the ip (optional)
+    """
     info = None
 
     if "*" in args.name and not args.force:
@@ -883,8 +924,11 @@ def _ip_add(args, ipversion, macaddress=None):
 ###########################################
 
 
-def a_add(args) -> None:
-    """Add an A record to host. If <name> is an alias the cname host is used."""
+def a_add(args: argparse.Namespace) -> None:
+    """Add an A record to host. If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name, ip, force, macaddress)
+    """
     _ip_add(args, 4, macaddress=args.macaddress)
 
 
@@ -916,7 +960,11 @@ host.add_command(
 ##############################################
 
 
-def _ip_change(args, ipversion) -> None:
+def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
+    """Change A record. If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name, old, new, force)
+    """
     if args.old == args.new:
         cli_warning("New and old IP are equal")
 
@@ -948,8 +996,11 @@ def _ip_change(args, ipversion) -> None:
     )
 
 
-def a_change(args):
-    """Change A record. If <name> is an alias the cname host is used."""
+def a_change(args: argparse.Namespace) -> None:
+    """Change A record. If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name, old, new, force)
+    """
     _ip_change(args, 4)
 
 
@@ -994,7 +1045,12 @@ host.add_command(
 ############################################
 
 
-def _ip_move(args, ipversion) -> None:
+def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
+    """Move an IP from a host to another host. Will move also move the PTR, if any.
+
+    :param args: argparse.Namespace (ip, fromhost, tohost)
+    :param ipversion: 4 or 6
+    """
     _check_ipversion(args.ip, ipversion)
     frominfo = host_info_by_name(args.fromhost)
     toinfo = host_info_by_name(args.tohost)
@@ -1022,8 +1078,11 @@ def _ip_move(args, ipversion) -> None:
     cli_info(msg, print_msg=True)
 
 
-def a_move(args) -> None:
-    """Move an IP from a host to another host. Will move also move the PTR, if any."""
+def a_move(args: argparse.Namespace) -> None:
+    """Move an IP from a host to another host. Will move also move the PTR, if any.
+
+    :param args: argparse.Namespace (ip, fromhost, tohost)
+    """
     _ip_move(args, 4)
 
 
@@ -1056,7 +1115,11 @@ host.add_command(
 ##############################################
 
 
-def _ip_remove(args, ipversion) -> None:
+def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
+    """Remove A record from host. If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name, ip)
+    """
     ip_id = None
 
     _check_ipversion(args.ip, ipversion)
@@ -1082,8 +1145,11 @@ def _ip_remove(args, ipversion) -> None:
     cli_info("removed ip {} from {}".format(args.ip, info["name"]), print_msg=True)
 
 
-def a_remove(args) -> None:
-    """Remove A record from host. If <name> is an alias the cname host is used."""
+def a_remove(args: argparse.Namespace) -> None:
+    """Remove A record from host. If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name, ip)
+    """
     _ip_remove(args, 4)
 
 
@@ -1105,8 +1171,11 @@ host.add_command(
 ############################################
 
 
-def a_show(args) -> None:
-    """Show hosts ipaddresses. If <name> is an alias the cname host is used."""
+def a_show(args: argparse.Namespace) -> None:
+    """Show hosts ipaddresses. If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name)
+    """
     info = host_info_by_name(args.name)
     format_ipaddresses(info["ipaddresses"])
     cli_info("showed ip addresses for {}".format(info["name"]))
@@ -1136,8 +1205,11 @@ host.add_command(
 ##############################################
 
 
-def aaaa_add(args) -> None:
-    """Add an AAAA record to host. If <name> is an alias the cname host is used."""
+def aaaa_add(args: argparse.Namespace) -> None:
+    """Add an AAAA record to host. If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name, ip, force, macaddress)
+    """
     _ip_add(args, 6, macaddress=args.macaddress)
 
 
@@ -1161,8 +1233,11 @@ host.add_command(
 #################################################
 
 
-def aaaa_change(args) -> None:
-    """Change AAAA record. If <name> is an alias the cname host is used."""
+def aaaa_change(args: argparse.Namespace) -> None:
+    """Change AAAA record. If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name, old, new, force)
+    """
     _ip_change(args, 6)
 
 
@@ -1202,8 +1277,11 @@ host.add_command(
 ###############################################
 
 
-def aaaa_move(args) -> None:
-    """Move an IP from a host to another host. Will move also move the PTR, if any."""
+def aaaa_move(args: argparse.Namespace) -> None:
+    """Move an IP from a host to another host. Will move also move the PTR, if any.
+
+    :param args: argparse.Namespace (ip, fromhost, tohost)
+    """
     _ip_move(args, 6)
 
 
@@ -1236,9 +1314,12 @@ host.add_command(
 #################################################
 
 
-def aaaa_remove(args) -> None:
-    """Remove AAAA record from host. If <name> is an alias the cname host is
-    used.
+def aaaa_remove(args: argparse.Namespace) -> None:
+    """Remove AAAA record from host.
+
+    If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name, ip)
     """
     _ip_remove(args, 6)
 
@@ -1261,8 +1342,13 @@ host.add_command(
 ###############################################
 
 
-def aaaa_show(args) -> None:
-    """Show hosts ipaddresses. If <name> is an alias the cname host is used."""
+def aaaa_show(args: argparse.Namespace) -> None:
+    """Show hosts ipaddresses.
+
+    If <name> is an alias the cname host is used.
+
+    :param args: argparse.Namespace (name)
+    """
     info = host_info_by_name(args.name)
     format_ipaddresses(info["ipaddresses"])
     cli_info("showed aaaa records for {}".format(info["name"]))
@@ -1292,8 +1378,11 @@ host.add_command(
 ###############################################
 
 
-def cname_add(args) -> None:
-    """Add a CNAME record to host."""
+def cname_add(args: argparse.Namespace) -> None:
+    """Add a CNAME record to host.
+
+    :param args: argparse.Namespace (name, alias, force)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
     alias = clean_hostname(args.alias)
@@ -1323,8 +1412,10 @@ def cname_add(args) -> None:
 # Add 'cname_add' as a sub command to the 'host' command
 host.add_command(
     prog="cname_add",
-    description="Add a CNAME record to host. If NAME is an alias "
-    "the cname host is used as target for ALIAS.",
+    description=(
+        "Add a CNAME record to host. If NAME is an alias ",
+        "the cname host is used as target for ALIAS.",
+    ),
     short_desc="Add CNAME.",
     callback=cname_add,
     flags=[
@@ -1340,8 +1431,11 @@ host.add_command(
 ##################################################
 
 
-def cname_remove(args) -> None:
-    """Remove CNAME record."""
+def cname_remove(args: argparse.Namespace) -> None:
+    """Remove CNAME record.
+
+    :param args: argparse.Namespace (name, alias)
+    """
     info = host_info_by_name(args.name)
     hostname = info["name"]
     alias = clean_hostname(args.alias)
@@ -1378,8 +1472,11 @@ host.add_command(
 ###################################################
 
 
-def cname_replace(args) -> None:
-    """Move a CNAME entry from one host to another."""
+def cname_replace(args: argparse.Namespace) -> None:
+    """Move a CNAME entry from one host to another.
+
+    :param args: argparse.Namespace (cname, host)
+    """
     cname = clean_hostname(args.cname)
     host = clean_hostname(args.host)
 
@@ -1414,9 +1511,12 @@ host.add_command(
 ################################################
 
 
-def cname_show(args) -> None:
-    """Show CNAME records for host. If <name> is an alias the cname hosts
-    aliases are shown.
+def cname_show(args: argparse.Namespace) -> None:
+    """Show CNAME records for host.
+
+    If <name> is an alias the cname hosts aliases are shown.
+
+    :param args: argparse.Namespace (name)
     """
     try:
         info = host_info_by_name(args.name)
@@ -1431,8 +1531,10 @@ def cname_show(args) -> None:
 # Add 'cname_show' as a sub command to the 'host' command
 host.add_command(
     prog="cname_show",
-    description="Show CNAME records for host. If NAME is an alias the cname "
-    "hosts aliases are shown.",
+    description=(
+        "Show CNAME records for host. If NAME is an alias the cname ",
+        "hosts aliases are shown.",
+    ),
     short_desc="Show CNAME records.",
     callback=cname_show,
     flags=[
@@ -1448,8 +1550,11 @@ host.add_command(
 ################################################################################
 
 
-def _hinfo_remove(host_) -> None:
-    """Helper method to remove hinfo from a host."""
+def _hinfo_remove(host_: Dict[str, str]) -> None:
+    """Remove hinfo from a host.
+
+    :param host_: host info dictionary (requires 'hinfo' and 'name' keys)
+    """
     old_data = {"hinfo": host_["hinfo"]}
     new_data = {"hinfo": ""}
 
@@ -1464,8 +1569,13 @@ def _hinfo_remove(host_) -> None:
 ###############################################
 
 
-def hinfo_add(args) -> None:
-    """Add hinfo for host. If <name> is an alias the cname host is updated."""
+def hinfo_add(args: argparse.Namespace) -> None:
+    """Add hinfo for host.
+
+    If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, cpu, os)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
@@ -1498,9 +1608,12 @@ host.add_command(
 ##################################################
 
 
-def hinfo_remove(args) -> None:
-    """hinfo_remove <name>
-    Remove hinfo for host. If <name> is an alias the cname host is updated.
+def hinfo_remove(args: argparse.Namespace) -> None:
+    """Remove hinfo for host.
+
+    If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name)
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -1531,9 +1644,12 @@ host.add_command(
 ################################################
 
 
-def hinfo_show(args) -> None:
-    """Show hinfo for host. If <name> is an alias the cname hosts hinfo is
-    shown.
+def hinfo_show(args: argparse.Namespace) -> None:
+    """Show hinfo for host.
+
+    If <name> is an alias the cname hosts hinfo is shown.
+
+    :param args: argparse.Namespace (name)
     """
     info = host_info_by_name(args.name)
     if info["hinfo"]:
@@ -1555,8 +1671,11 @@ host.add_command(
 )
 
 
-def _history(args) -> None:
-    """Show host history for name."""
+def _history(args: argparse.Namespace) -> None:
+    """Show host history for name.
+
+    :param args: argparse.Namespace (name)
+    """
     hostname = clean_hostname(args.name)
     items = get_history_items(hostname, "host", data_relation="hosts")
     format_history_items(hostname, items)
@@ -1585,9 +1704,12 @@ host.add_command(
 ################################################
 
 
-def loc_remove(args) -> None:
-    """Remove location from host. If <name> is an alias the cname host is
-    updated.
+def loc_remove(args: argparse.Namespace) -> None:
+    """Remove location from host.
+
+    If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name)
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -1618,8 +1740,13 @@ host.add_command(
 #############################################
 
 
-def loc_add(args) -> None:
-    """Set location of host. If <name> is an alias the cname host is updated."""
+def loc_add(args: argparse.Namespace) -> None:
+    """Set location of host.
+
+    If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, loc)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
@@ -1650,9 +1777,12 @@ host.add_command(
 ##############################################
 
 
-def loc_show(args) -> None:
-    """Show location of host. If <name> is an alias the cname hosts LOC is
-    shown.
+def loc_show(args: argparse.Namespace) -> None:
+    """Show location of host.
+
+    If <name> is an alias the cname hosts LOC is shown.
+
+    :param args: argparse.Namespace (name)
     """
     info = host_info_by_name(args.name)
     if info["loc"]:
@@ -1681,7 +1811,13 @@ host.add_command(
 ###############################################################################
 
 
-def _mx_in_mxs(mxs, priority, mx):
+def _mx_in_mxs(mxs: List[Dict[str, str]], priority: str, mx: str) -> Optional[str]:
+    """Check that a matching mx record exists in the list of mxs.
+
+    :param mxs: list of mx records (Dict[str, str])
+    :param priority: priority of the target mx record
+    :param mx: mail exchange of the target mx record
+    """
     for info in mxs:
         if info["priority"] == priority and info["mx"] == mx:
             return info["id"]
@@ -1693,9 +1829,12 @@ def _mx_in_mxs(mxs, priority, mx):
 #############################################
 
 
-def mx_add(args) -> None:
-    """Add a mx record to host. <text> must be enclosed in double quotes if it
-    contains more than one word.
+def mx_add(args: argparse.Namespace) -> None:
+    """Add a mx record to host.
+
+    <text> must be enclosed in double quotes if it contains more than one word.
+
+    :param args: argparse.Namespace (name, priority, mx)
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -1729,8 +1868,11 @@ host.add_command(
 ################################################
 
 
-def mx_remove(args) -> None:
-    """Remove MX record for host."""
+def mx_remove(args: argparse.Namespace) -> None:
+    """Remove MX record for host.
+
+    :param args: argparse.Namespace (name, priority, mx)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
@@ -1766,8 +1908,11 @@ host.add_command(
 ##############################################
 
 
-def mx_show(args) -> None:
-    """Show all MX records for host."""
+def mx_show(args: argparse.Namespace) -> None:
+    """Show all MX records for host.
+
+    :param args: argparse.Namespace (name)
+    """
     info = host_info_by_name(args.name)
     path = "/api/v1/mxs/"
     params = {
@@ -1803,12 +1948,15 @@ host.add_command(
 ###############################################
 
 
-def naptr_add(args) -> None:
-    """Add a NAPTR record to host."""
+def naptr_add(args: argparse.Namespace) -> None:
+    """Add a NAPTR record to host.
+
+    :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    data = {
+    data: Dict[str, str] = {
         "preference": args.preference,
         "order": args.order,
         "flag": args.flag,
@@ -1870,9 +2018,10 @@ host.add_command(
 ##################################################
 
 
-def naptr_remove(args) -> None:
-    """naptr_remove <name> <replacement>
-    Remove NAPTR record.
+def naptr_remove(args: argparse.Namespace) -> None:
+    """Remove NAPTR record.
+
+    :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -1954,7 +2103,7 @@ host.add_command(
 ################################################
 
 
-def _naptr_show(info):
+def _naptr_show(info: Dict[str, str]) -> int:
     path = "/api/v1/naptrs/"
     params = {
         "host": info["id"],
@@ -1989,8 +2138,11 @@ def _naptr_show(info):
     return len(naptrs)
 
 
-def naptr_show(args) -> None:
-    """Show all NAPTR records for host."""
+def naptr_show(args: argparse.Namespace) -> None:
+    """Show all NAPTR records for host.
+
+    :param args: argparse.Namespace (name)
+    """
     info = host_info_by_name(args.name)
     num_naptrs = _naptr_show(info)
     if num_naptrs == 0:
@@ -2022,8 +2174,11 @@ host.add_command(
 ################################################
 
 
-def ptr_change(args) -> None:
-    """Move PTR record from <old-name> to <new-name>."""
+def ptr_change(args: argparse.Namespace) -> None:
+    """Move PTR record from <old-name> to <new-name>.
+
+    :param args: argparse.Namespace (ip, old, new, force)
+    """
     # Get host info or raise exception
     old_info = host_info_by_name(args.old)
     new_info = host_info_by_name(args.new)
@@ -2082,8 +2237,11 @@ host.add_command(
 ################################################
 
 
-def ptr_remove(args) -> None:
-    """Remove PTR record from host."""
+def ptr_remove(args: argparse.Namespace) -> None:
+    """Remove PTR record from host.
+
+    :param args: argparse.Namespace (ip, name)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
@@ -2119,8 +2277,11 @@ host.add_command(
 #############################################
 
 
-def ptr_add(args) -> None:
-    """Create a PTR record for host."""
+def ptr_add(args: argparse.Namespace) -> None:
+    """Create a PTR record for host.
+
+    :param args: argparse.Namespace (ip, name, force)
+    """
     # Ip sanity check
     if not is_valid_ip(args.ip):
         cli_warning("invalid ip: {}".format(args.ip))
@@ -2178,8 +2339,11 @@ host.add_command(
 ##############################################
 
 
-def ptr_show(args) -> None:
-    """Show PTR record matching given ip."""
+def ptr_show(args: argparse.Namespace) -> None:
+    """Show PTR record matching given ip.
+
+    :param args: argparse.Namespace (ip)
+    """
     if not is_valid_ip(args.ip):
         cli_warning(f"{args.ip} is not a valid IP")
 
@@ -2224,8 +2388,11 @@ host.add_command(
 #############################################
 
 
-def srv_add(args) -> None:
-    """Add SRV record."""
+def srv_add(args: argparse.Namespace) -> None:
+    """Add SRV record.
+
+    :param args: argparse.Namespace (name, priority, weight, port, host, ttl, force)
+    """
     sname = clean_hostname(args.name)
     check_zone_for_hostname(sname, False, require_zone=True)
 
@@ -2273,8 +2440,11 @@ host.add_command(
 ################################################
 
 
-def srv_remove(args) -> None:
-    """Remove SRV record."""
+def srv_remove(args: argparse.Namespace) -> None:
+    """Remove SRV record.
+
+    :param args: argparse.Namespace (name, priority, weight, port, host)
+    """
     info = host_info_by_name(args.host)
     sname = clean_hostname(args.name)
 
@@ -2349,12 +2519,12 @@ host.add_command(
 ##############################################
 
 
-def _srv_show(srvs=None, host_id=None):
+def _srv_show(srvs: Union[Dict[str, Any], None] = None, host_id: str = None) -> None:
     assert srvs is not None or host_id is not None
     hostid2name = dict()
     host_ids = set()
 
-    def print_srv(srv: dict, hostname: str, padding: int = 14) -> None:
+    def print_srv(srv: Dict[str, Any], hostname: str, padding: int = 14) -> None:
         """Pretty print given srv."""
         OutputManager().add_line(
             "SRV: {1:<{0}} {2:^6} {3:^6} {4:^6} {5}".format(
@@ -2380,11 +2550,13 @@ def _srv_show(srvs=None, host_id=None):
 
     padding = 0
 
-    # Print records
-    for srv in srvs:
-        if len(srv["name"]) > padding:
-            padding = len(srv["name"])
-        host_ids.add(str(srv["host"]))
+    # The assert at the start of the method doesn't catch the None case,
+    # so to make linters happy, we need to check for it explicitly here.
+    if srvs is not None:
+        for srv in srvs:
+            if len(srv["name"]) > padding:
+                padding = len(srv["name"])
+            host_ids.add(str(srv["host"]))
 
     arg = ",".join(host_ids)
     hosts = get_list("/api/v1/hosts/", params={"id__in": arg})
@@ -2392,16 +2564,20 @@ def _srv_show(srvs=None, host_id=None):
         hostid2name[host["id"]] = host["name"]
 
     prev_name = ""
-    for srv in srvs:
-        if prev_name == srv["name"]:
-            srv["name"] = ""
-        else:
-            prev_name = srv["name"]
-        print_srv(srv, hostid2name[srv["host"]], padding)
+    if srvs is not None:
+        for srv in srvs:
+            if prev_name == srv["name"]:
+                srv["name"] = ""
+            else:
+                prev_name = srv["name"]
+            print_srv(srv, hostid2name[srv["host"]], padding)
 
 
-def srv_show(args) -> None:
-    """Show SRV records for the service."""
+def srv_show(args: argparse.Namespace) -> None:
+    """Show SRV records for the service.
+
+    :param args: argparse.Namespace (service)
+    """
     sname = clean_hostname(args.service)
 
     # Get all matching SRV records
@@ -2442,8 +2618,11 @@ host.add_command(
 #############################################
 
 
-def sshfp_add(args) -> None:
-    """Add SSHFP record."""
+def sshfp_add(args: argparse.Namespace) -> None:
+    """Add SSHFP record.
+
+    :param args: argparse.Namespace (name, algorithm, hash_type, fingerprint)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
@@ -2483,12 +2662,16 @@ host.add_command(
 ################################################
 
 
-def sshfp_remove(args) -> None:
-    """Remove SSHFP record with a given fingerprint from the host.
+def sshfp_remove(args: argparse.Namespace) -> None:
+    """Remove SSHFP record from the host.
+
     A missing fingerprint removes all SSHFP records for the host.
+
+    :param args: argparse.Namespace (name, fingerprint)
     """
 
-    def _delete_sshfp_record(sshfp: dict, hname: str):
+    def _delete_sshfp_record(sshfp: Dict[str, Any], hname: str) -> None:
+        """Delete SSHFP record from the host."""
         path = f"/api/v1/sshfps/{sshfp['id']}"
         history.record_delete(path, sshfp, redoable=False)
         delete(path)
@@ -2532,8 +2715,10 @@ def sshfp_remove(args) -> None:
 # Add 'sshfp_remove' as a sub command to the 'host' command
 host.add_command(
     prog="sshfp_remove",
-    description="Remove SSHFP record with a given fingerprint from the host. "
-    "A missing fingerprint removes all SSHFP records for the host.",
+    description=(
+        "Remove SSHFP record with a given fingerprint from the host. ",
+        "A missing fingerprint removes all SSHFP records for the host.",
+    ),
     callback=sshfp_remove,
     flags=[
         Flag("name", description="Host target name.", metavar="NAME"),
@@ -2551,7 +2736,8 @@ host.add_command(
 ##############################################
 
 
-def _sshfp_show(info):
+def _sshfp_show(info: Dict[str, str]) -> int:
+    """Show SSHFP records for the host."""
     path = "/api/v1/sshfps/"
     params = {
         "host": info["id"],
@@ -2575,8 +2761,11 @@ def _sshfp_show(info):
     return len(sshfps)
 
 
-def sshfp_show(args) -> None:
-    """Show SSHFP records for the host."""
+def sshfp_show(args: argparse.Namespace) -> None:
+    """Show SSHFP records for the host.
+
+    :param args: argparse.Namespace (name)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
     num_sshfps = _sshfp_show(info)
@@ -2608,9 +2797,12 @@ host.add_command(
 ################################################
 
 
-def ttl_remove(args) -> None:
-    """Remove explicit TTL for host. If <name> is an alias the alias host is
-    updated.
+def ttl_remove(args: argparse.Namespace) -> None:
+    """Remove explicit TTL for host.
+
+    If <name> is an alias the alias host is updated.
+
+    :param args: argparse.Namespace (name)
     """
     target_type, info = get_info_by_name(args.name)
 
@@ -2641,9 +2833,13 @@ host.add_command(
 #############################################
 
 
-def ttl_set(args) -> None:
-    """Set ttl for name. Valid values are 300 <= TTL <= 68400 or "default". If
-    <name> is an alias the alias host is updated.
+def ttl_set(args: argparse.Namespace) -> None:
+    """Set ttl for name.
+
+    Valid values are 300 <= TTL <= 68400 or "default".
+    If <name> is an alias the alias host is updated.
+
+    :param args: argparse.Namespace (name, ttl)
     """
     target_type, info = get_info_by_name(args.name)
 
@@ -2664,8 +2860,10 @@ def ttl_set(args) -> None:
 # Add 'ttl_set' as a sub command to the 'host' command
 host.add_command(
     prog="ttl_set",
-    description="Set ttl for host. Valid values are 300 <= TTL <= 68400 or "
-    '"default". If NAME is an alias the alias host is updated.',
+    description=(
+        "Set ttl for host. Valid values are 300 <= TTL <= 68400 or ",
+        '"default". If NAME is an alias the alias host is updated.',
+    ),
     short_desc="Set TTL record.",
     callback=ttl_set,
     flags=[
@@ -2680,10 +2878,15 @@ host.add_command(
 ##############################################
 
 
-def ttl_show(args) -> None:
-    """Show ttl for name. If <name> is an alias the alias hosts TTL is shown."""
+def ttl_show(args: argparse.Namespace) -> None:
+    """Show ttl for name.
+
+    If <name> is an alias the alias hosts TTL is shown.
+
+    :param args: argparse.Namespace (name)
+    """
     info = host_info_by_name(args.name)
-    target_type, info = get_info_by_name(args.name)
+    _, info = get_info_by_name(args.name)
     format_ttl(info["ttl"])
     cli_info("showed TTL for {}".format(info["name"]))
 
@@ -2712,9 +2915,12 @@ host.add_command(
 #############################################
 
 
-def txt_add(args) -> None:
-    """Add a txt record to host. <text> must be enclosed in double quotes if it
-    contains more than one word.
+def txt_add(args: argparse.Namespace) -> None:
+    """Add a txt record to host.
+
+    <text> must be enclosed in double quotes if it contains more than one word.
+
+    :param args: argparse.Namespace (name, text)
     """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -2732,8 +2938,10 @@ def txt_add(args) -> None:
 # Add 'txt_add' as a sub command to the 'host' command
 host.add_command(
     prog="txt_add",
-    description="Add a txt record to host. TEXT must be enclosed in double "
-    "quotes if it contains more than one word.",
+    description=(
+        "Add a txt record to host. TEXT must be enclosed in double ",
+        "quotes if it contains more than one word.",
+    ),
     short_desc="Add TXT record.",
     callback=txt_add,
     flags=[
@@ -2752,8 +2960,11 @@ host.add_command(
 ################################################
 
 
-def txt_remove(args) -> None:
-    """Remove TXT record for host with <text>."""
+def txt_remove(args: argparse.Namespace) -> None:
+    """Remove TXT record for host with <text>.
+
+    :param args: argparse.Namespace (name, text)
+    """
     # Get host info or raise exception
     info = host_info_by_name(args.name)
     hostname = info["name"]
@@ -2795,8 +3006,11 @@ host.add_command(
 ##############################################
 
 
-def txt_show(args) -> None:
-    """Show all TXT records for host."""
+def txt_show(args: argparse.Namespace) -> None:
+    """Show all TXT records for host.
+
+    :param args: argparse.Namespace (name)
+    """
     info = host_info_by_name(args.name)
     path = "/api/v1/txts/"
     params = {

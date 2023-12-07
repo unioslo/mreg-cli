@@ -1,3 +1,6 @@
+"""DHCP commands for mreg_cli."""
+import argparse
+
 from .cli import Flag, cli
 from .exceptions import CliWarning
 from .history import history
@@ -15,8 +18,11 @@ dhcp = cli.add_command(
 )
 
 
-def _dhcp_get_ip_by_arg(arg):
-    """Get A/AAAA record by either ip address or host name."""
+def _dhcp_get_ip_by_arg(arg: str) -> str:
+    """Get A/AAAA record by either ip address or host name.
+
+    :param arg: ip address or host name (as a string)
+    """
     if is_valid_ip(arg):
         path = "/api/v1/ipaddresses/"
         params = {
@@ -48,7 +54,8 @@ def _dhcp_get_ip_by_arg(arg):
     return ip
 
 
-def assoc_mac_to_ip(mac, ip, force=False):
+def assoc_mac_to_ip(mac: str, ip: str, force: bool = False) -> str:
+    """Associate MAC address with IP address."""
     # MAC addr sanity check
     if is_valid_mac(mac):
         new_mac = format_mac(mac)
@@ -90,10 +97,12 @@ def assoc_mac_to_ip(mac, ip, force=False):
 #########################################
 
 
-def assoc(args) -> None:
-    # .name .mac .force
-    """Associate MAC address with host. If host got multiple A/AAAA records an
-    IP must be given instead of name.
+def assoc(args: argparse.Namespace) -> None:
+    """Associate MAC address with host.
+
+    If host has multiple A/AAAA records an IP must be given instead of name.
+
+    :param args: argparse.Namespace (name, mac, force)
     """
     ip = _dhcp_get_ip_by_arg(args.name)
     new_mac = assoc_mac_to_ip(args.mac, ip, force=args.force)
@@ -126,9 +135,12 @@ dhcp.add_command(
 ############################################
 
 
-def disassoc(args) -> None:
-    """Disassociate MAC address with host/ip. If host got multiple A/AAAA
-    records an IP must be given instead of name.
+def disassoc(args: argparse.Namespace) -> None:
+    """Disassociate MAC address with host/ip.
+
+    If host has multiple A/AAAA records an IP must be given instead of name.
+
+    :param args: argparse.Namespace (name)
     """
     ip = _dhcp_get_ip_by_arg(args.name)
 

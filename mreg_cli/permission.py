@@ -1,9 +1,12 @@
+"""Implementation of the 'permission' command and its subcommands."""
+import argparse
 import ipaddress
 
 from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
 from .outputmanager import OutputManager
+from .types import IP_network
 from .util import convert_wildcard_to_regex, delete, get, get_list, is_valid_network, patch, post
 
 ###################################
@@ -22,12 +25,16 @@ permission = cli.add_command(
 ##########################################
 
 
-def network_list(args) -> None:
-    """Lists permissions for networks."""
+def network_list(args: argparse.Namespace) -> None:
+    """List permissions for networks.
+
+    :param args: argparse.Namespace (group, range)
+    """
 
     # Replace with a.supernet_of(b) when python 3.7 is required
-    def _supernet_of(a, b):
-        return (
+    def _supernet_of(a: IP_network, b: IP_network) -> bool:
+        """Return True if a is a supernet of b."""
+        return bool(
             a.network_address <= b.network_address and a.broadcast_address >= b.broadcast_address
         )
 
@@ -92,8 +99,11 @@ permission.add_command(
 ##########################################
 
 
-def network_add(args) -> None:
-    """Add permission for network."""
+def network_add(args: argparse.Namespace) -> None:
+    """Add permission for network.
+
+    :param args: argparse.Namespace (range, group, regex)
+    """
     if not is_valid_network(args.range):
         cli_warning(f"Invalid range: {args.range}")
 
@@ -126,8 +136,11 @@ permission.add_command(
 ##########################################
 
 
-def network_remove(args) -> None:
-    """Remove permission for networks."""
+def network_remove(args: argparse.Namespace) -> None:
+    """Remove permission for networks.
+
+    :param args: argparse.Namespace (range, group, regex)
+    """
     params = {
         "group": args.group,
         "range": args.range,
@@ -165,8 +178,11 @@ permission.add_command(
 #################################################################
 
 
-def add_label_to_permission(args) -> None:
-    """Add a label to a permission triplet."""
+def add_label_to_permission(args: argparse.Namespace) -> None:
+    """Add a label to a permission triplet.
+
+    :param args: argparse.Namespace (range, group, regex, label)
+    """
     # find the permission
     query = {
         "group": args.group,
@@ -215,8 +231,11 @@ permission.add_command(
 )
 
 
-def remove_label_from_permission(args) -> None:
-    """Remove a label from a permission."""
+def remove_label_from_permission(args: argparse.Namespace) -> None:
+    """Remove a label from a permission.
+
+    :param args: argparse.Namespace (range, group, regex, label)
+    """
     # find the permission
     query = {
         "group": args.group,

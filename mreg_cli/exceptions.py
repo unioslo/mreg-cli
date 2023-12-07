@@ -1,4 +1,4 @@
-"""This module contains custom exceptions for the CLI."""
+"""Custom exceptions for mreg-cli."""
 
 import sys
 
@@ -10,14 +10,14 @@ class CliException(Exception):
     """Base exception class for the CLI."""
 
     def formatted_exception(self) -> str:
-        """Returns a formatted string representation of the exception.
+        """Return a formatted string representation of the exception.
 
         :returns: Formatted string for the exception message.
         """
         raise NotImplementedError("This method should be implemented by subclasses")
 
     def print_self(self):
-        """Prints the exception with appropriate formatting."""
+        """Print the exception with appropriate formatting."""
         print_formatted_text(HTML(self.formatted_exception()), file=sys.stdout)
 
 
@@ -25,7 +25,7 @@ class CliError(CliException):
     """Exception class for CLI errors."""
 
     def formatted_exception(self) -> str:
-        """Formatted string with ANSI red color for the error message.
+        """Return a string formatted with HTML red tag for the error message.
 
         :returns: Formatted error message.
         """
@@ -36,7 +36,7 @@ class CliWarning(CliException):
     """Exception class for CLI warnings."""
 
     def formatted_exception(self) -> str:
-        """Formatted string with HTML italic tag for the warning message.
+        """Return a string formatted with HTML italic tag for the warning message.
 
         :returns: Formatted warning message.
         """
@@ -44,8 +44,12 @@ class CliWarning(CliException):
 
 
 class HostNotFoundWarning(CliWarning):
+    """Warning class for host not found."""
+
     pass
 
 
 class NetworkNotFoundWarning(CliWarning):
+    """Warning class for network not found."""
+
     pass

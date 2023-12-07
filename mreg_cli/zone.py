@@ -1,3 +1,7 @@
+"""Manage zones."""
+import argparse
+from typing import Any, Dict, Tuple
+
 from .cli import Flag, cli
 from .exceptions import HostNotFoundWarning
 from .log import cli_error, cli_info, cli_warning
@@ -14,7 +18,8 @@ zone = cli.add_command(
 )
 
 
-def _verify_nameservers(nameservers, force):
+def _verify_nameservers(nameservers: str, force: bool) -> None:
+    """Verify that nameservers are in mreg and have A-records."""
     if not nameservers:
         cli_warning("At least one nameserver is required")
 
@@ -34,23 +39,27 @@ def _verify_nameservers(nameservers, force):
 
 
 def format_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
+    """Format nameserver output."""
     OutputManager().add_line(
         "        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl)
     )
 
 
-def zone_basepath(name):
+def zone_basepath(name: str) -> str:
+    """Return the basepath for a zone."""
     basepath = "/api/v1/zones/"
     if name.endswith(".arpa"):
         return f"{basepath}reverse/"
     return f"{basepath}forward/"
 
 
-def zone_path(name):
+def zone_path(name: str) -> str:
+    """Return the path for a zone."""
     return zone_basepath(name) + name
 
 
-def get_zone(name):
+def get_zone(name: str) -> Tuple[Dict[str, Any], str]:
+    """Return the zone and path for a zone."""
     path = zone_path(name)
     zone = get(path, ok404=True)
     if zone is None:
@@ -63,8 +72,11 @@ def get_zone(name):
 ##########################################
 
 
-def create(args) -> None:
-    """Create new zone."""
+def create(args: argparse.Namespace) -> None:
+    """Create a new zone.
+
+    :param args: argparse.Namespace (ns, force, zone, email)
+    """
     _verify_nameservers(args.ns, args.force)
     path = zone_basepath(args.zone)
     post(path, name=args.zone, email=args.email, primary_ns=args.ns)
@@ -90,8 +102,11 @@ zone.add_command(
 #####################################################
 
 
-def delegation_create(args) -> None:
-    """Create a new zone delegation."""
+def delegation_create(args: argparse.Namespace) -> None:
+    """Create a new zone delegation.
+
+    :param args: argparse.Namespace (ns, force, zone, delegation, comment)
+    """
     _, path = get_zone(args.zone)
     if not args.delegation.endswith(f".{args.zone}"):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
@@ -125,8 +140,11 @@ zone.add_command(
 ##########################################
 
 
-def zone_delete(args) -> None:
-    """Delete a zone."""
+def zone_delete(args: argparse.Namespace) -> None:
+    """Delete a zone.
+
+    :param args: argparse.Namespace (zone, force)
+    """
     zone, path = get_zone(args.zone)
     hosts = get_list("/api/v1/hosts/", params={"zone": zone["id"]})
     zones = get_list(zone_basepath(args.zone), params={"name__endswith": f".{args.zone}"})
@@ -160,9 +178,12 @@ zone.add_command(
 #####################################################
 
 
-def delegation_delete(args) -> None:
-    """Delete a zone delegation."""
-    zone, path = get_zone(args.zone)
+def delegation_delete(args: argparse.Namespace) -> None:
+    """Delete a zone delegation.
+
+    :param args: argparse.Namespace (zone, delegation)
+    """
+    _, path = get_zone(args.zone)
     if not args.delegation.endswith(f".{args.zone}"):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
     delete(f"{path}/delegations/{args.delegation}")
@@ -186,8 +207,11 @@ zone.add_command(
 ##########################################
 
 
-def info(args) -> None:
-    """Show SOA info for a existing zone."""
+def info(args: argparse.Namespace) -> None:
+    """Show SOA info for a existing zone.
+
+    :param args: argparse.Namespace (zone)
+    """
 
     def print_soa(info: str, text: str, padding: int = 20) -> None:
         OutputManager().add_line("{1:<{0}}{2}".format(padding, info, text))
@@ -227,11 +251,14 @@ zone.add_command(
 ##########################################
 
 
-def zone_list(args) -> None:
-    """List all zones."""
+def zone_list(args: argparse.Namespace) -> None:
+    """List all zones.
+
+    :param args: argparse.Namespace (forward, reverse)
+    """
     all_zones = []
 
-    def _get_zone_list(zonetype):
+    def _get_zone_list(zonetype: str) -> None:
         zones = get_list(f"/api/v1/zones/{zonetype}/")
         all_zones.extend(zones)
 
@@ -280,8 +307,11 @@ zone.add_command(
 ###################################################
 
 
-def zone_delegation_list(args) -> None:
-    """List a zone's delegations."""
+def zone_delegation_list(args: argparse.Namespace) -> None:
+    """List a zone's delegations.
+
+    :param args: argparse.Namespace (zone)
+    """
     _, path = get_zone(args.zone)
     manager = OutputManager()
     delegations = get_list(f"{path}/delegations/")
@@ -314,7 +344,8 @@ zone.add_command(
 ##########################################################
 
 
-def _get_delegation_path(zone, delegation):
+def _get_delegation_path(zone: str, delegation: str) -> str:
+    """Return the path for a delegation."""
     if not delegation.endswith(f".{zone}"):
         cli_warning(f"Delegation '{delegation}' is not in '{zone}'")
     _, path = get_zone(zone)
@@ -326,8 +357,11 @@ def _get_delegation_path(zone, delegation):
         cli_error("Delegation {delegation} not found")
 
 
-def zone_delegation_comment_set(args) -> None:
-    """Set a delegation's comment."""
+def zone_delegation_comment_set(args: argparse.Namespace) -> None:
+    """Set a delegation's comment.
+
+    :param args: argparse.Namespace (zone, delegation, comment)
+    """
     path = _get_delegation_path(args.zone, args.delegation)
     patch(path, comment=args.comment)
     cli_info(f"Updated comment for {args.delegation}", True)
@@ -346,8 +380,11 @@ zone.add_command(
 )
 
 
-def zone_delegation_comment_remove(args) -> None:
-    """Set a delegation's comment."""
+def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
+    """Set a delegation's comment.
+
+    :param args: argparse.Namespace (zone, delegation)
+    """
     path = _get_delegation_path(args.zone, args.delegation)
     patch(path, comment="")
     cli_info(f"Removed comment for {args.delegation}", True)
@@ -370,10 +407,13 @@ zone.add_command(
 ##########################################
 
 
-def set_ns(args) -> None:
-    """Update nameservers for an existing zone."""
+def set_ns(args: argparse.Namespace) -> None:
+    """Update nameservers for an existing zone.
+
+    :param args: argparse.Namespace (zone, ns, force)
+    """
     _verify_nameservers(args.ns, args.force)
-    zone, path = get_zone(args.zone)
+    _, path = get_zone(args.zone)
     patch(f"{path}/nameservers", primary_ns=args.ns)
     cli_info("updated nameservers for {}".format(args.zone), True)
 
@@ -396,9 +436,11 @@ zone.add_command(
 ###########################################
 
 
-def set_soa(args) -> None:
-    # .zone .ns .email .serialno .retry .expire .soa_ttl
-    """Updated the SOA of a zone."""
+def set_soa(args: argparse.Namespace) -> None:
+    """Update the SOA of a zone.
+
+    :param args: argparse.Namespace (zone, ns, email, serialno, retry, expire, soa_ttl)
+    """
     _, path = get_zone(args.zone)
     data = {}
     for i in (
@@ -444,9 +486,11 @@ zone.add_command(
 ###################################################
 
 
-def set_default_ttl(args) -> None:
-    # .zone .ttl
-    """Update the default TTL of a zone."""
+def set_default_ttl(args: argparse.Namespace) -> None:
+    """Update the default TTL of a zone.
+
+    :param args: argparse.Namespace (zone, ttl)
+    """
     _, path = get_zone(args.zone)
     data = {"default_ttl": args.ttl}
     patch(path, **data)

@@ -1,3 +1,4 @@
+"""Logging functions for the CLI."""
 import getpass
 import inspect
 import re
@@ -11,6 +12,7 @@ logfile = None
 
 
 def _prefix_from_stack() -> str:
+    """Get a prefix for log entries from the stack."""
     stack = inspect.stack()
     stack.reverse()
     prefix = ""
@@ -25,6 +27,7 @@ def _prefix_from_stack() -> str:
 
 
 def _write_log(entry: str, end: str = "\n") -> None:
+    """Write a log entry to the log file."""
     if logfile is not None:
         with open(logfile, "a+") as f:
             f.write(entry + end)
