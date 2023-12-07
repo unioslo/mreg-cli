@@ -1,9 +1,12 @@
 """Typing definitions for mreg_cli."""
 import ipaddress
-from typing import TYPE_CHECKING, Literal, Union
+from typing import TYPE_CHECKING, Union
 
 IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
-IP_Version = Literal[4, 6]
+# IP_Version = Literal[4, 6]
+# IP_Version can be either 4 or 6, but Literal is not supported in older versions of Python.
+# We could use typing_extensions.Literal, but that would require an extra dependency.
+IP_Version = int
 
 
 if TYPE_CHECKING:
