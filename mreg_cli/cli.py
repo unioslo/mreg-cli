@@ -15,7 +15,7 @@ from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 
 from . import util
 from .exceptions import CliError, CliWarning
-from .outputmanager import OutputManager, remove_comments
+from .outputmanager import OutputManager
 
 
 class CliExit(Exception):

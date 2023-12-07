@@ -134,7 +134,7 @@ class OutputManager:
 
         self._api_requests: [str] = []
 
-        self._time_started: [datetime] = datetime.datetime.now()
+        self._time_started: datetime.datetime = datetime.datetime.now()
 
     def recording_clear(self) -> None:
         """Clears the recording data."""
@@ -188,12 +188,13 @@ class OutputManager:
 
     def recording_entry(self) -> Dict[str, Any]:
         """Create a recording entry."""
+        now = datetime.datetime.now()
+        start = self._time_started
+
         time: Dict[str, Union[str, int]] = {
-            "timestamp": self._time_started.isoformat(sep=" ", timespec="seconds"),
-            "timestamp_as_epoch": int(self._time_started.timestamp()),
-            "runtime_in_ms": int(
-                (datetime.datetime.now() - self._time_started).total_seconds() * 1000
-            ),
+            "timestamp": start.isoformat(sep=" ", timespec="seconds"),
+            "timestamp_as_epoch": int(start.timestamp()),
+            "runtime_in_ms": int((now - start).total_seconds() * 1000),
         }
 
         return {
