@@ -34,7 +34,10 @@ jobs:
       - name: Install mreg-cli
         run: |
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           pip install -e .
+      - name: Check linting
+        run: tox -e lint
       - name: Test and compare api calls
         run: ci/run_testsuite_and_record.sh
 
