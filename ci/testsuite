@@ -132,7 +132,7 @@ policy add_atom fruit apple
 policy add_atom fruit orange
 policy info orange |! Created # Created dates will differ
 policy info fruit |! Created # Created dates will differ
-policy list_members fruit
+policy list_members fruit |! Created # Created dates will differ
 policy atom_delete apple  # Should fail because 'apple' is used in role 'fruit'
 policy remove_atom fruit apple
 policy atom_delete apple
