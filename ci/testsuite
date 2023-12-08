@@ -285,7 +285,7 @@ label add postit 'A label again'
 policy role_create myrole 'This is the description'
 policy label_add postit myrole
 policy list_roles *
-policy info myrole
+policy info myrole |! Created # Created dates will differ
 label info postit
 policy label_remove postit myrole
 policy role_delete myrole

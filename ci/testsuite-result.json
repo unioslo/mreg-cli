@@ -15243,7 +15243,7 @@
     "output": "Role     Description               Labels   \nmyrole   This is the description   postit   "
   },
   {
-    "command": "policy info myrole\n"
+    "command": "policy info myrole |! Created"
   },
   {
     "method": "GET",
@@ -15290,7 +15290,7 @@
     }
   },
   {
-    "output": "Name:          myrole\nCreated:       2023-12-08\nDescription:   This is the description\nAtom members:\n               None\nLabels:\n               postit"
+    "output": "Name:          myrole\nDescription:   This is the description\nAtom members:\n               None\nLabels:\n               postit"
   },
   {
     "command": "label info postit\n"
