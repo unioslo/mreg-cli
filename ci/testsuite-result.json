@@ -8504,7 +8504,7 @@
     "output": "Name:          fruit\nDescription:   5 a day\nAtom members:\n               apple\n               orange\nLabels:\n               None"
   },
   {
-    "command": "policy list_members fruit\n"
+    "command": "policy list_members fruit |! Created"
   },
   {
     "method": "GET",
