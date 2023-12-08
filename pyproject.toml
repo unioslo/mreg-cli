@@ -39,6 +39,24 @@ ignore = [
     "D213",
     # ANN101 (Missing type annotation for `self` in method) is infered.
     "ANN101",
+
+    # Rules disabled due to using ruff as a formatter. Most of these rules
+    # will thus be enforced by the formatter.
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "W191",   # Indentation contains tabs
+    "E111",   # Indentation is not a multiple of four
+    "E114",   # Indentation is not a multiple of four (comment)
+    "E117",   # Over-indented
+    "D206",   # Docstring should be indented with spaces, not tabs
+    "D300",   # Use """triple double quotes""" (found '''-quotes)
+    "Q000",   # Remove bad quotes (inlined)
+    "Q001",   # Remove bad quotes (multiline)
+    "Q002",   # Remove bad quotes (docstring)
+    "Q003",   # Avoidable escape quote
+    "COM812", # Missing trailing comma in Python 3.6+
+    "COM819", # Prohibited trailing comma    
+    "ISC001", # Implicit string concatenation (single line)
+    "ISC002", # Implicit string concatenation (multiline)
 ]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
