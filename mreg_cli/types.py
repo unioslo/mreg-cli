@@ -4,11 +4,10 @@ import sys
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if sys.version_info >= (3, 8):
-    from typing import Literal
+    pass
 
+if sys.version_info >= (3, 7):
     from typing_extensions import TypedDict
-
-    IP_Version = Literal[4, 6]
 
     class TimeInfo(TypedDict):
         """Type definition for time-related information in the recording entry."""
