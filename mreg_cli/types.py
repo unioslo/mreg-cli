@@ -2,7 +2,7 @@
 
 import ipaddress
 import sys
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, List, Optional, TypedDict, Union
 
 # Horrible hack to support Literal when possible.
 if sys.version_info >= (3, 8):
@@ -41,3 +41,26 @@ if TYPE_CHECKING:
         def json(self, **kwargs: Any) -> Any:
             """Return the response body as JSON."""
             ...
+
+
+class TimeInfo(TypedDict):
+    """Type definition for time-related information in the recording entry."""
+
+    timestamp: str
+    timestamp_as_epoch: int
+    runtime_in_ms: int
+
+
+class RecordingEntry(TypedDict):
+    """Type definition for a recording entry."""
+
+    command: str
+    command_filter: Optional[str]
+    command_filter_negate: bool
+    command_issued: str
+    ok: List[str]
+    warning: List[str]
+    error: List[str]
+    output: List[str]
+    api_requests: List[str]
+    time: Optional[TimeInfo]

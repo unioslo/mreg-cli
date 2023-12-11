@@ -15,6 +15,7 @@ from urllib.parse import urlencode, urlparse
 import requests
 
 from mreg_cli.exceptions import CliError
+from mreg_cli.types import RecordingEntry, TimeInfo
 
 
 # These functions are for generic output usage, but can't be in util.py
@@ -121,27 +122,27 @@ class OutputManager:
         return cls._instance
 
     def clear(self) -> None:
-        """Clear the object."""
-        self._output: [str] = []
-        self._filter_re = None
-        self._filter_negate = False
-        self._command_executed = None
-        self._command_issued = None
+        """Clears the object."""
+        self._output: List[str] = []
+        self._filter_re: Any = None  # should be re.Pattern, but python 3.6 doesn't have that
+        self._filter_negate: bool = False
+        self._command_executed: str = None
+        self._command_issued: str = None
 
-        self._ok: [str] = []  # This is typically commands that went OK but returned no content
-        self._warnings: [str] = []
-        self._errors: [str] = []
+        self._ok: List[str] = []  # This is typically commands that went OK but returned no content
+        self._warnings: List[str] = []
+        self._errors: List[str] = []
 
-        self._api_requests: [str] = []
+        self._api_requests: List[str] = []
 
         self._time_started: datetime.datetime = datetime.datetime.now()
 
     def recording_clear(self) -> None:
         """Clears the recording data."""
-        self._recorded_data = []
-        self._recording = False
-        self._filename = None
-        self._record_timestamps = True
+        self._recorded_data: List[RecordingEntry] = []
+        self._recording: bool = False
+        self._filename: str = None
+        self._record_timestamps: bool = True
 
     def record_timestamps(self, state: bool) -> None:
         """Set whether to record timestamps in the recording.
@@ -186,12 +187,12 @@ class OutputManager:
 
         self.recording_clear()
 
-    def recording_entry(self) -> Dict[str, Any]:
+    def recording_entry(self) -> RecordingEntry:
         """Create a recording entry."""
         now = datetime.datetime.now()
         start = self._time_started
 
-        time: Dict[str, Union[str, int]] = {
+        time: TimeInfo = {
             "timestamp": start.isoformat(sep=" ", timespec="seconds"),
             "timestamp_as_epoch": int(start.timestamp()),
             "runtime_in_ms": int((now - start).total_seconds() * 1000),
