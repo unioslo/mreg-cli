@@ -35,7 +35,11 @@ else:
 
     TimeInfo = Dict[str, Any]
     RecordingEntry = Dict[str, Any]
-    IP_Version = int
+
+try:
+    from typing import TypedDict  # Python 3.8 and newer
+except ImportError:
+    from typing_extensions import TypedDict  # Python 3.6 and 3.7
 
 
 if TYPE_CHECKING:
