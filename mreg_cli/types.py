@@ -9,8 +9,6 @@ if sys.version_info >= (3, 8):
 
     IP_Version = Literal[4, 6]
 else:
-    from typing import int
-
     IP_Version = int
 
 IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
