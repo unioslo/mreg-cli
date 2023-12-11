@@ -3,7 +3,7 @@ import ipaddress
 import sys
 from typing import TYPE_CHECKING, Union
 
-# Horrible heck to support Literal on Python 3.6
+# Horrible hack to support Literal when possible.
 if sys.version_info >= (3, 8):
     from typing import Literal
 
