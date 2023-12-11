@@ -72,7 +72,7 @@
     "output": "OK: : created zone example.org"
   },
   {
-    "command": "zone info example.org\n"
+    "command": "zone info example.org |! Serialnumber"
   },
   {
     "method": "GET",
@@ -98,7 +98,7 @@
     }
   },
   {
-    "output": "Zone:               example.org\n        Nameservers:        hostname            TTL\n                            ns1.example.org     <not set>\nPrimary ns:         ns1.example.org\nEmail:              hostmaster@example.org\nSerialnumber:       3231208000\nRefresh:            10800\nRetry:              3600\nExpire:             1814400\nSOA TTL:            43200\nDefault TTL:        43200"
+    "output": "Zone:               example.org\n        Nameservers:        hostname            TTL\n                            ns1.example.org     <not set>\nPrimary ns:         ns1.example.org\nEmail:              hostmaster@example.org\nRefresh:            10800\nRetry:              3600\nExpire:             1814400\nSOA TTL:            43200\nDefault TTL:        43200"
   },
   {
     "command": "zone list -forward\n"

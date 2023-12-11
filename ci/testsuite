@@ -5,7 +5,7 @@
 #   - set/update ns, soa, ttl
 zone create example.org hostmaster@example.org ns1.example.org  # should require force because ns1 is unknown
 zone create example.org hostmaster@example.org ns1.example.org -force
-zone info example.org
+zone info example.org |! Serialnumber # Serialnumber includes the date: https://github.com/unioslo/mreg/blob/master/mreg/utils.py#L78
 zone list -forward
 zone set_ns example.org ns2.example.org  #  requires force because ns2 is unknown
 zone set_ns example.org ns2.example.org -force
