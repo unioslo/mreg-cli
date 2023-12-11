@@ -4,8 +4,8 @@ import sys
 from typing import TYPE_CHECKING, Union
 
 # Horrible heck to support Literal on Python 3.6
-if sys.version_info >= (3, 7):
-    from typing_extensions import Literal
+if sys.version_info >= (3, 8):
+    from typing import Literal
 
     IP_Version = Literal[4, 6]
 else:
