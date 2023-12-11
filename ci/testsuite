@@ -130,9 +130,9 @@ policy list_roles *
 policy list_roles fru
 policy add_atom fruit apple
 policy add_atom fruit orange
-policy info orange
-policy info fruit
-policy list_members fruit
+policy info orange |! Created # Created dates will differ
+policy info fruit |! Created # Created dates will differ
+policy list_members fruit |! Created # Created dates will differ
 policy atom_delete apple  # Should fail because 'apple' is used in role 'fruit'
 policy remove_atom fruit apple
 policy atom_delete apple
@@ -285,7 +285,7 @@ label add postit 'A label again'
 policy role_create myrole 'This is the description'
 policy label_add postit myrole
 policy list_roles *
-policy info myrole
+policy info myrole |! Created # Created dates will differ
 label info postit
 policy label_remove postit myrole
 policy role_delete myrole

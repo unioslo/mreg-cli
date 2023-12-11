@@ -98,7 +98,7 @@
     }
   },
   {
-    "output": "Zone:               example.org\n        Nameservers:        hostname            TTL\n                            ns1.example.org     <not set>\nPrimary ns:         ns1.example.org\nEmail:              hostmaster@example.org\nSerialnumber:       3231206000\nRefresh:            10800\nRetry:              3600\nExpire:             1814400\nSOA TTL:            43200\nDefault TTL:        43200"
+    "output": "Zone:               example.org\n        Nameservers:        hostname            TTL\n                            ns1.example.org     <not set>\nPrimary ns:         ns1.example.org\nEmail:              hostmaster@example.org\nSerialnumber:       3231208000\nRefresh:            10800\nRetry:              3600\nExpire:             1814400\nSOA TTL:            43200\nDefault TTL:        43200"
   },
   {
     "command": "zone list -forward\n"
@@ -8431,7 +8431,7 @@
     "output": "OK: : Added atom 'orange' to role 'fruit'"
   },
   {
-    "command": "policy info orange\n"
+    "command": "policy info orange |! Created"
   },
   {
     "method": "GET",
@@ -8456,10 +8456,10 @@
     }
   },
   {
-    "output": "Name:          orange\nCreated:       2018-07-07\nDescription:   Round and orange\nRoles where this atom is a member:\n               fruit"
+    "output": "Name:          orange\nDescription:   Round and orange\nRoles where this atom is a member:\n               fruit"
   },
   {
-    "command": "policy info fruit\n"
+    "command": "policy info fruit |! Created"
   },
   {
     "method": "GET",
@@ -8501,10 +8501,10 @@
     }
   },
   {
-    "output": "Name:          fruit\nCreated:       2023-12-06\nDescription:   5 a day\nAtom members:\n               apple\n               orange\nLabels:\n               None"
+    "output": "Name:          fruit\nDescription:   5 a day\nAtom members:\n               apple\n               orange\nLabels:\n               None"
   },
   {
-    "command": "policy list_members fruit\n"
+    "command": "policy list_members fruit |! Created"
   },
   {
     "method": "GET",
@@ -15243,7 +15243,7 @@
     "output": "Role     Description               Labels   \nmyrole   This is the description   postit   "
   },
   {
-    "command": "policy info myrole\n"
+    "command": "policy info myrole |! Created"
   },
   {
     "method": "GET",
@@ -15290,7 +15290,7 @@
     }
   },
   {
-    "output": "Name:          myrole\nCreated:       2023-12-06\nDescription:   This is the description\nAtom members:\n               None\nLabels:\n               postit"
+    "output": "Name:          myrole\nDescription:   This is the description\nAtom members:\n               None\nLabels:\n               postit"
   },
   {
     "command": "label info postit\n"
