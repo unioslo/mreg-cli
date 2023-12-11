@@ -32,6 +32,8 @@ if sys.version_info >= (3, 8):
         time: Optional[TimeInfo]
 
 else:
+    from typing import Any
+
     TimeInfo = Dict[str, Any]
     RecordingEntry = Dict[str, Any]
     IP_Version = int
