@@ -1,12 +1,19 @@
 """Typing definitions for mreg_cli."""
 import ipaddress
+import sys
 from typing import TYPE_CHECKING, Union
 
+# Horrible heck to support Literal on Python 3.6
+if sys.version_info >= (3, 7):
+    from typing_extensions import Literal
+
+    IP_Version = Literal[4, 6]
+else:
+    from typing import int
+
+    IP_Version = int
+
 IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
-# IP_Version = Literal[4, 6]
-# IP_Version can be either 4 or 6, but Literal is not supported in older versions of Python.
-# We could use typing_extensions.Literal, but that would require an extra dependency.
-IP_Version = int
 
 
 if TYPE_CHECKING:
