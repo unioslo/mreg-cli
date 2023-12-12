@@ -1,4 +1,5 @@
 """Network commands for mreg_cli."""
+
 import argparse
 import ipaddress
 import urllib.parse

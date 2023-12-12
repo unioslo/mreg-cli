@@ -1,4 +1,5 @@
-"""Manage hostgroups."""
+"""Hostgroups commands for mreg_cli."""
+
 import argparse
 from itertools import chain
 from typing import Any, Dict, List

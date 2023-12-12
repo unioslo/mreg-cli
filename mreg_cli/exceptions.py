@@ -1,4 +1,9 @@
-"""Custom exceptions for mreg-cli."""
+"""Custom exceptions for mreg_cli.
+
+Note that Cli exceptions offer a print_self() method that prints the exception
+with appropriate formatting. This is useful for printing exceptions in the
+context of a CLI command.
+"""
 
 import sys
 

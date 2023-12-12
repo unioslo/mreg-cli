@@ -1,4 +1,9 @@
-"""Utility functions for mreg_cli."""
+"""Utility functions for mreg_cli.
+
+Due to circular dependencies, this module is not allowed to import anything from mreg_cli.
+And this rule is promptly broken by importing from mreg_cli.outputmanager...
+"""
+
 import ipaddress
 import json
 import logging

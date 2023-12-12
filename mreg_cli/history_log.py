@@ -1,4 +1,5 @@
 """History log related functions."""
+
 import json
 from typing import Any, Dict, List
 

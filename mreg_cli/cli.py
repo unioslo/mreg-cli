@@ -2,6 +2,7 @@
 
 This file contains the main CLI class and the top level parser.
 """
+
 import argparse
 import html
 import os

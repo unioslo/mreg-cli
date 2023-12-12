@@ -1,4 +1,5 @@
-"""Manage zones."""
+"""Zone commands for mreg_cli."""
+
 import argparse
 from typing import Any, Dict, Tuple
 

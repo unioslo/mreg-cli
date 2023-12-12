@@ -1,4 +1,4 @@
-"""Implementation of sub command 'policy'."""
+"""Policy commands for mreg_cli."""
 
 import argparse
 from typing import Any, Dict, List

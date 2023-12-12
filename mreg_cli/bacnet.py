@@ -1,4 +1,5 @@
-"""Backnet commands for the mreg CLI."""
+"""Backnet commands for the mreg_cli."""
+
 import argparse
 
 from .cli import Flag

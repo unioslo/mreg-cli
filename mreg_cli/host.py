@@ -1,4 +1,5 @@
-"""Host commands for the MREG CLI."""
+"""Host commands for mreg_cli."""
+
 import argparse
 import ipaddress
 from typing import Any, Dict, Iterable, List, Optional, Union

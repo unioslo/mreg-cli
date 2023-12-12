@@ -1,4 +1,5 @@
 """Logging functions for the CLI."""
+
 import getpass
 import inspect
 import re

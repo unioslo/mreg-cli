@@ -1,4 +1,5 @@
 """Typing definitions for mreg_cli."""
+
 import ipaddress
 import sys
 from typing import TYPE_CHECKING, Union

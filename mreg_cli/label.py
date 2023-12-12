@@ -1,4 +1,5 @@
-"""Label-related commands."""
+"""Label-related commands for mreg_cli."""
+
 import argparse
 
 from .cli import Flag, cli

@@ -1,4 +1,5 @@
 """DHCP commands for mreg_cli."""
+
 import argparse
 
 from .cli import Flag, cli

@@ -1,4 +1,5 @@
-"""Main entry point for the mreg cli."""
+"""Main entry point for mreg_cli."""
+
 import argparse
 import configparser
 import getpass

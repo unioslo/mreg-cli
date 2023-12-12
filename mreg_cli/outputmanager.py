@@ -1,4 +1,4 @@
-"""Output management for the mreg_cli package.
+"""Output management for mreg_cli.
 
 This is a singleton class that manages the output for the CLI. It stores the
 output lines and formats them for display. It also manages the filter for the

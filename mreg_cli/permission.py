@@ -1,4 +1,5 @@
-"""Implementation of the 'permission' command and its subcommands."""
+"""Permission commands for mreg_cli."""
+
 import argparse
 import ipaddress
 
