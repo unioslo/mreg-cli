@@ -8,7 +8,7 @@ import html
 import os
 import shlex
 import sys
-from typing import Any, Callable, Generator, List, Union
+from typing import Any, Callable, Generator, List, NoReturn, Union
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
@@ -265,7 +265,7 @@ _top_parser = argparse.ArgumentParser("")
 cli = Command(_top_parser, list(), "")
 
 
-def _quit(args: argparse.Namespace):
+def _quit(args: argparse.Namespace) -> NoReturn:
     raise CliExit
 
 
