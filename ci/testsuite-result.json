@@ -34,11 +34,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:06",
-      "timestamp_as_epoch": 1702460046,
-      "runtime_in_ms": 56
-    }
+    "time": null
   },
   {
     "command": "zone create example.org hostmaster@example.org ns1.example.org -force",
@@ -88,11 +84,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:06",
-      "timestamp_as_epoch": 1702460046,
-      "runtime_in_ms": 141
-    }
+    "time": null
   },
   {
     "command": "zone info example.org",
@@ -139,11 +131,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:06",
-      "timestamp_as_epoch": 1702460046,
-      "runtime_in_ms": 117
-    }
+    "time": null
   },
   {
     "command": "zone list -forward",
@@ -189,11 +177,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:06",
-      "timestamp_as_epoch": 1702460046,
-      "runtime_in_ms": 23
-    }
+    "time": null
   },
   {
     "command": "zone set_ns example.org ns2.example.org",
@@ -230,11 +214,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:06",
-      "timestamp_as_epoch": 1702460046,
-      "runtime_in_ms": 44
-    }
+    "time": null
   },
   {
     "command": "zone set_ns example.org ns2.example.org -force",
@@ -305,11 +285,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:06",
-      "timestamp_as_epoch": 1702460046,
-      "runtime_in_ms": 104
-    }
+    "time": null
   },
   {
     "command": "zone set_soa example.org -email hostperson@example.org -serialno 12345 -refresh 360 -retry 1800 -expire 2400 -soa-ttl 1800",
@@ -360,11 +336,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 63
-    }
+    "time": null
   },
   {
     "command": "zone set_default_ttl example.org 60",
@@ -415,11 +387,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 44
-    }
+    "time": null
   },
   {
     "command": "zone set_default_ttl example.org 300",
@@ -465,11 +433,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 44
-    }
+    "time": null
   },
   {
     "command": "network create -network 10.0.2.0/28 -desc \"TinyNet\"",
@@ -509,11 +473,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 41
-    }
+    "time": null
   },
   {
     "command": "network list_used_addresses 10.0.2.0/28",
@@ -542,11 +502,7 @@
         "response": {}
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 36
-    }
+    "time": null
   },
   {
     "command": "network list_unused_addresses 10.0.2.0/28",
@@ -590,11 +546,7 @@
         ]
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 20
-    }
+    "time": null
   },
   {
     "command": "network set_reserved 10.0.2.0/28 8",
@@ -634,11 +586,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "host add tinyhost -ip 10.0.2.0/28 -contact tinyhost@example.org",
@@ -757,11 +705,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 169
-    }
+    "time": null
   },
   {
     "command": "network list_used_addresses 10.0.2.0/28",
@@ -794,11 +738,7 @@
         "response": {}
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 36
-    }
+    "time": null
   },
   {
     "command": "network list_unused_addresses 10.0.2.0/28",
@@ -830,11 +770,7 @@
         ]
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 21
-    }
+    "time": null
   },
   {
     "command": "host remove tinyhost",
@@ -911,11 +847,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 113
-    }
+    "time": null
   },
   {
     "command": "network remove 10.0.2.0/28 -force",
@@ -943,11 +875,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 41
-    }
+    "time": null
   },
   {
     "command": "network create -network 2001:db8::/64 -desc \"Lorem ipsum dolor sit amet\"",
@@ -987,11 +915,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 42
-    }
+    "time": null
   },
   {
     "command": "network list_used_addresses 2001:db8::/64",
@@ -1020,11 +944,7 @@
         "response": {}
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 37
-    }
+    "time": null
   },
   {
     "command": "network list_unused_addresses 2001:db8::/64",
@@ -9238,11 +9158,7 @@
         ]
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 62
-    }
+    "time": null
   },
   {
     "command": "network set_reserved 2001:db8::/64 50",
@@ -9282,11 +9198,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 42
-    }
+    "time": null
   },
   {
     "command": "host add tinyhost -ip 2001:db8::/64 -contact me@example.org",
@@ -9446,11 +9358,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:07",
-      "timestamp_as_epoch": 1702460047,
-      "runtime_in_ms": 168
-    }
+    "time": null
   },
   {
     "command": "host remove tinyhost",
@@ -9527,11 +9435,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 111
-    }
+    "time": null
   },
   {
     "command": "network remove 2001:db8::/64 -f",
@@ -9559,11 +9463,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 48
-    }
+    "time": null
   },
   {
     "command": "network create -network 10.0.1.0/24 -desc \"Frozzzen\"",
@@ -9603,11 +9503,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 45
-    }
+    "time": null
   },
   {
     "command": "network set_frozen 10.0.1.0/24",
@@ -9647,11 +9543,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 45
-    }
+    "time": null
   },
   {
     "command": "host add somehost -ip 10.0.1.0/24 -contact support@example.org",
@@ -9740,11 +9632,7 @@
         "response": "10.0.1.4"
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 106
-    }
+    "time": null
   },
   {
     "command": "network add_excluded_range 10.0.1.0/24 10.0.1.20 10.0.1.30",
@@ -9786,11 +9674,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 56
-    }
+    "time": null
   },
   {
     "command": "host add somehost -ip 10.0.1.20 -contact support@example.org -force",
@@ -9919,11 +9803,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 163
-    }
+    "time": null
   },
   {
     "command": "host add somehost -ip 10.0.1.0/24 -contact support@example.org -force",
@@ -10043,11 +9923,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 163
-    }
+    "time": null
   },
   {
     "command": "network list_used_addresses 10.0.1.0/24",
@@ -10080,11 +9956,7 @@
         "response": {}
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 35
-    }
+    "time": null
   },
   {
     "command": "network set_description 10.0.1.0/24 \"Frozen but has one host\"",
@@ -10130,11 +10002,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 44
-    }
+    "time": null
   },
   {
     "command": "network set_vlan 10.0.1.0/24 1234",
@@ -10180,11 +10048,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 43
-    }
+    "time": null
   },
   {
     "command": "network info 10.0.1.0/24",
@@ -10269,11 +10133,7 @@
         ]
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:08",
-      "timestamp_as_epoch": 1702460048,
-      "runtime_in_ms": 77
-    }
+    "time": null
   },
   {
     "command": "network find -network 10.0.1.0/24 -description '*one host*' -vlan 1234 -frozen 1 -reserved 6 -dns_delegated 0 -category Yellow -location Somewhere",
@@ -10300,11 +10160,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 23
-    }
+    "time": null
   },
   {
     "command": "host remove somehost",
@@ -10381,11 +10237,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 111
-    }
+    "time": null
   },
   {
     "command": "network unset_frozen 10.0.1.0/24",
@@ -10431,11 +10283,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 45
-    }
+    "time": null
   },
   {
     "command": "host add otherhost -ip 10.0.1.20 -contact support@example.org",
@@ -10564,11 +10412,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 164
-    }
+    "time": null
   },
   {
     "command": "network remove_excluded_range 10.0.1.0/24 10.0.1.20 10.0.1.30",
@@ -10612,11 +10456,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 55
-    }
+    "time": null
   },
   {
     "command": "host add otherhost -ip 10.0.1.20 -contact support@example.org",
@@ -10735,11 +10575,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 159
-    }
+    "time": null
   },
   {
     "command": "host remove otherhost",
@@ -10816,11 +10652,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 108
-    }
+    "time": null
   },
   {
     "command": "network remove 10.0.1.0/24 -f",
@@ -10848,11 +10680,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 41
-    }
+    "time": null
   },
   {
     "command": "network create -network 2001:db8::/64 -desc \"Lorem ipsum dolor sit amet\"",
@@ -10892,11 +10720,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 57
-    }
+    "time": null
   },
   {
     "command": "network set_frozen 2001:db8::/64",
@@ -10936,11 +10760,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 41
-    }
+    "time": null
   },
   {
     "command": "host add somehost -ip 2001:db8::/64 -contact m@example.org",
@@ -11029,11 +10849,7 @@
         "response": "2001:db8::4"
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 105
-    }
+    "time": null
   },
   {
     "command": "network add_excluded_range 2001:db8::/64 2001:db8::20 2001:db8::30",
@@ -11075,11 +10891,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:09",
-      "timestamp_as_epoch": 1702460049,
-      "runtime_in_ms": 44
-    }
+    "time": null
   },
   {
     "command": "host add somehost -ip 2001:db8::20 -contact support@example.org -force",
@@ -11207,11 +11019,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 169
-    }
+    "time": null
   },
   {
     "command": "host add somehost -ip 2001:db8::/64 -contact support@example.org -force",
@@ -11330,11 +11138,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 156
-    }
+    "time": null
   },
   {
     "command": "network set_description 2001:db8::/64 \"Frozen but has one host\"",
@@ -11380,11 +11184,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 44
-    }
+    "time": null
   },
   {
     "command": "network info 2001:db8::/64",
@@ -11467,11 +11267,7 @@
         ]
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 80
-    }
+    "time": null
   },
   {
     "command": "host remove somehost",
@@ -11548,11 +11344,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 110
-    }
+    "time": null
   },
   {
     "command": "network remove 2001:db8::/64 -f",
@@ -11580,11 +11372,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 43
-    }
+    "time": null
   },
   {
     "command": "group create mygroup \"This describes the group\"",
@@ -11620,11 +11408,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 50
-    }
+    "time": null
   },
   {
     "command": "host add testhost1",
@@ -11700,11 +11484,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 95
-    }
+    "time": null
   },
   {
     "command": "host add testhost2",
@@ -11780,11 +11560,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 95
-    }
+    "time": null
   },
   {
     "command": "group host_add mygroup testhost1",
@@ -11854,11 +11630,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 77
-    }
+    "time": null
   },
   {
     "command": "group host_add mygroup testhost2",
@@ -11932,11 +11704,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:10",
-      "timestamp_as_epoch": 1702460050,
-      "runtime_in_ms": 72
-    }
+    "time": null
   },
   {
     "command": "group owner_add mygroup myself",
@@ -11987,11 +11755,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "group host_remove mygroup testhost2",
@@ -12070,11 +11834,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 73
-    }
+    "time": null
   },
   {
     "command": "group info mygroup",
@@ -12121,11 +11881,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 24
-    }
+    "time": null
   },
   {
     "command": "group create yourgroup \"meh\"",
@@ -12161,11 +11917,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 44
-    }
+    "time": null
   },
   {
     "command": "group group_add mygroup yourgroup",
@@ -12238,11 +11990,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 72
-    }
+    "time": null
   },
   {
     "command": "group info mygroup",
@@ -12293,11 +12041,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 23
-    }
+    "time": null
   },
   {
     "command": "group group_remove mygroup yourgroup",
@@ -12351,11 +12095,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 47
-    }
+    "time": null
   },
   {
     "command": "group owner_add mygroup anotherowner",
@@ -12407,11 +12147,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "group owner_remove mygroup myself",
@@ -12464,11 +12200,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 47
-    }
+    "time": null
   },
   {
     "command": "group delete mygroup",
@@ -12512,11 +12244,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 27
-    }
+    "time": null
   },
   {
     "command": "group delete mygroup -force",
@@ -12566,11 +12294,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 51
-    }
+    "time": null
   },
   {
     "command": "group delete yourgroup",
@@ -12612,11 +12336,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 56
-    }
+    "time": null
   },
   {
     "command": "host remove testhost1",
@@ -12687,11 +12407,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 104
-    }
+    "time": null
   },
   {
     "command": "host remove testhost2",
@@ -12762,11 +12478,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 108
-    }
+    "time": null
   },
   {
     "command": "zone delegation_create example.org wut.example.org ns2.example.org -force",
@@ -12839,11 +12551,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 92
-    }
+    "time": null
   },
   {
     "command": "zone delegation_comment_set example.org wut.example.org \"This is a comment\"",
@@ -12906,11 +12614,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 67
-    }
+    "time": null
   },
   {
     "command": "zone delegation_list example.org",
@@ -12976,11 +12680,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 43
-    }
+    "time": null
   },
   {
     "command": "host add testhost.wut.example.org",
@@ -13027,11 +12727,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:11",
-      "timestamp_as_epoch": 1702460051,
-      "runtime_in_ms": 44
-    }
+    "time": null
   },
   {
     "command": "host add testhost.wut.example.org -force",
@@ -13101,11 +12797,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 88
-    }
+    "time": null
   },
   {
     "command": "host remove testhost.wut.example.org",
@@ -13171,11 +12863,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 101
-    }
+    "time": null
   },
   {
     "command": "zone delegation_comment_remove example.org wut.example.org",
@@ -13238,11 +12926,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 70
-    }
+    "time": null
   },
   {
     "command": "zone delegation_delete example.org wut.example.org",
@@ -13286,11 +12970,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 50
-    }
+    "time": null
   },
   {
     "command": "policy atom_create apple \"Here's the description\"",
@@ -13326,11 +13006,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 44
-    }
+    "time": null
   },
   {
     "command": "policy atom_create -created 2018-07-07 orange \"Round and orange\"",
@@ -13367,11 +13043,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 48
-    }
+    "time": null
   },
   {
     "command": "policy list_atoms *",
@@ -13410,11 +13082,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 22
-    }
+    "time": null
   },
   {
     "command": "policy list_atoms ppl",
@@ -13447,11 +13115,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 19
-    }
+    "time": null
   },
   {
     "command": "policy role_create fruit \"5 a day\"",
@@ -13487,11 +13151,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 48
-    }
+    "time": null
   },
   {
     "command": "policy list_roles *",
@@ -13539,11 +13199,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 40
-    }
+    "time": null
   },
   {
     "command": "policy list_roles fru",
@@ -13591,11 +13247,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 40
-    }
+    "time": null
   },
   {
     "command": "policy add_atom fruit apple",
@@ -13656,11 +13308,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 68
-    }
+    "time": null
   },
   {
     "command": "policy add_atom fruit orange",
@@ -13725,11 +13373,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 70
-    }
+    "time": null
   },
   {
     "command": "policy info orange",
@@ -13769,11 +13413,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 20
-    }
+    "time": null
   },
   {
     "command": "policy info fruit",
@@ -13833,11 +13473,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 43
-    }
+    "time": null
   },
   {
     "command": "policy list_members fruit",
@@ -13881,11 +13517,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 22
-    }
+    "time": null
   },
   {
     "command": "policy atom_delete apple",
@@ -13949,11 +13581,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 48
-    }
+    "time": null
   },
   {
     "command": "policy remove_atom fruit apple",
@@ -14001,11 +13629,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 50
-    }
+    "time": null
   },
   {
     "command": "policy atom_delete apple",
@@ -14056,11 +13680,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:12",
-      "timestamp_as_epoch": 1702460052,
-      "runtime_in_ms": 71
-    }
+    "time": null
   },
   {
     "command": "policy set_description orange \"Juicy\"",
@@ -14105,11 +13725,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 47
-    }
+    "time": null
   },
   {
     "command": "policy rename orange tangerine",
@@ -14154,11 +13770,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 49
-    }
+    "time": null
   },
   {
     "command": "host add foo",
@@ -14234,11 +13846,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 95
-    }
+    "time": null
   },
   {
     "command": "policy host_add tangerine foo",
@@ -14265,11 +13873,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 22
-    }
+    "time": null
   },
   {
     "command": "policy host_add fruit foo",
@@ -14342,11 +13946,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 71
-    }
+    "time": null
   },
   {
     "command": "policy list_hosts fruit",
@@ -14390,11 +13990,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 23
-    }
+    "time": null
   },
   {
     "command": "policy host_list foo",
@@ -14464,11 +14060,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 49
-    }
+    "time": null
   },
   {
     "command": "policy host_remove fruit foo",
@@ -14543,11 +14135,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 74
-    }
+    "time": null
   },
   {
     "command": "policy remove_atom fruit banana",
@@ -14586,11 +14174,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 26
-    }
+    "time": null
   },
   {
     "command": "policy remove_atom fruit tangerine",
@@ -14635,11 +14219,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "policy role_delete vegetables",
@@ -14666,11 +14246,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 21
-    }
+    "time": null
   },
   {
     "command": "policy role_delete fruit",
@@ -14711,11 +14287,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 51
-    }
+    "time": null
   },
   {
     "command": "policy atom_delete tangerine",
@@ -14766,11 +14338,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 67
-    }
+    "time": null
   },
   {
     "command": "host remove foo",
@@ -14841,11 +14409,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 110
-    }
+    "time": null
   },
   {
     "command": "permission network_add 10.0.0.0/24 somegroup \"[abc]+.uio.no\"",
@@ -14876,11 +14440,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 27
-    }
+    "time": null
   },
   {
     "command": "permission network_list",
@@ -14927,11 +14487,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 40
-    }
+    "time": null
   },
   {
     "command": "permission network_remove 10.0.0.0/24 othergroup \"[abc]*.uio.no\"",
@@ -14958,11 +14514,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 23
-    }
+    "time": null
   },
   {
     "command": "permission network_remove 10.0.0.0/24 somegroup \"[abc]+.uio.no\"",
@@ -15002,11 +14554,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "network create -network 10.0.0.0/24 -desc foo",
@@ -15046,11 +14594,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 39
-    }
+    "time": null
   },
   {
     "command": "host add foo",
@@ -15126,11 +14670,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:13",
-      "timestamp_as_epoch": 1702460053,
-      "runtime_in_ms": 98
-    }
+    "time": null
   },
   {
     "command": "host a_add foo 10.0.0.5",
@@ -15227,11 +14767,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 107
-    }
+    "time": null
   },
   {
     "command": "dhcp assoc 1.2.3.4 aa:bb:cc:dd:ee:ff",
@@ -15258,11 +14794,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 33
-    }
+    "time": null
   },
   {
     "command": "dhcp assoc 10.0.0.5 aa:bb:cc:dd:ee:ff",
@@ -15315,11 +14847,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 69
-    }
+    "time": null
   },
   {
     "command": "dhcp disassoc 1.2.3.4",
@@ -15346,11 +14874,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 26
-    }
+    "time": null
   },
   {
     "command": "dhcp disassoc 10.0.0.5",
@@ -15391,11 +14915,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 61
-    }
+    "time": null
   },
   {
     "command": "dhcp assoc meh 11:22:33:44:55:66",
@@ -15431,11 +14951,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 43
-    }
+    "time": null
   },
   {
     "command": "dhcp assoc foo aa:bb:cc:dd:ee:ff",
@@ -15502,11 +15018,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 78
-    }
+    "time": null
   },
   {
     "command": "dhcp disassoc foo",
@@ -15561,11 +15073,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 60
-    }
+    "time": null
   },
   {
     "command": "dhcp disassoc meh",
@@ -15601,11 +15109,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 42
-    }
+    "time": null
   },
   {
     "command": "host a_remove foo 10.0.0.5",
@@ -15658,11 +15162,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 50
-    }
+    "time": null
   },
   {
     "command": "dhcp assoc foo aa:bb:cc:dd:ee:ff",
@@ -15703,11 +15203,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 27
-    }
+    "time": null
   },
   {
     "command": "host remove foo",
@@ -15778,11 +15274,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 105
-    }
+    "time": null
   },
   {
     "command": "network remove 10.0.0.0/24 -f",
@@ -15810,11 +15302,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 41
-    }
+    "time": null
   },
   {
     "command": "network create -network 10.0.0.0/24 -desc \"lorem ipsum\"",
@@ -15854,11 +15342,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 40
-    }
+    "time": null
   },
   {
     "command": "network create -network 2001:db8::/64 -desc \"dolor sit amet\"",
@@ -15910,11 +15394,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 41
-    }
+    "time": null
   },
   {
     "command": "host add foo -ip 10.0.0.10 -contact hi@ho.com -comment \"meh\" -macaddress 11:22:33:aa:bb:cc",
@@ -16085,11 +15565,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:14",
-      "timestamp_as_epoch": 1702460054,
-      "runtime_in_ms": 237
-    }
+    "time": null
   },
   {
     "command": "host info foo",
@@ -16180,11 +15656,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 83
-    }
+    "time": null
   },
   {
     "command": "host find -name *oo*",
@@ -16278,11 +15750,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 52
-    }
+    "time": null
   },
   {
     "command": "host find -contact hi*",
@@ -16376,11 +15844,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 55
-    }
+    "time": null
   },
   {
     "command": "host find -comment meh",
@@ -16474,11 +15938,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 52
-    }
+    "time": null
   },
   {
     "command": "host find -name f* -contact h* -comment m*",
@@ -16572,11 +16032,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 53
-    }
+    "time": null
   },
   {
     "command": "host rename foo bar",
@@ -16689,11 +16145,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 145
-    }
+    "time": null
   },
   {
     "command": "host set_comment bar 'This is the comment'",
@@ -16748,11 +16200,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 82
-    }
+    "time": null
   },
   {
     "command": "host set_contact bar \"I'm the contact\"",
@@ -16766,11 +16214,7 @@
     "error": [],
     "output": [],
     "api_requests": [],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 2
-    }
+    "time": null
   },
   {
     "command": "host set_contact bar me@example.org",
@@ -16825,11 +16269,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 74
-    }
+    "time": null
   },
   {
     "command": "host a_add bar 10.0.0.12",
@@ -16918,11 +16358,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 83
-    }
+    "time": null
   },
   {
     "command": "host a_add bar 10.0.0.12 -f",
@@ -17025,11 +16461,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 110
-    }
+    "time": null
   },
   {
     "command": "host a_add bar 10.0.0.13 -macaddress 11:22:33:44:55:66 -force",
@@ -17138,11 +16570,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:15",
-      "timestamp_as_epoch": 1702460055,
-      "runtime_in_ms": 117
-    }
+    "time": null
   },
   {
     "command": "host a_change -old 10.0.0.12 -new 10.0.0.14 bar",
@@ -17249,11 +16677,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 117
-    }
+    "time": null
   },
   {
     "command": "host a_change -old 10.0.0.13 -new 10.0.0.15 bar",
@@ -17360,11 +16784,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 122
-    }
+    "time": null
   },
   {
     "command": "host a_remove bar 10.0.0.13",
@@ -17421,11 +16841,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 27
-    }
+    "time": null
   },
   {
     "command": "host add baz",
@@ -17501,11 +16917,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 95
-    }
+    "time": null
   },
   {
     "command": "host a_move -ip 10.0.0.10 -fromhost bar -tohost baz",
@@ -17596,11 +17008,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 83
-    }
+    "time": null
   },
   {
     "command": "host a_show baz",
@@ -17650,11 +17058,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 25
-    }
+    "time": null
   },
   {
     "command": "host aaaa_add bar 2001:db8::/64",
@@ -17742,11 +17146,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 91
-    }
+    "time": null
   },
   {
     "command": "host aaaa_add bar 2001:db8::11 -f",
@@ -17853,11 +17253,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 114
-    }
+    "time": null
   },
   {
     "command": "host aaaa_add bar 2001:db8::12 -macaddress 11:22:33:44:55:67 -f",
@@ -17970,11 +17366,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 114
-    }
+    "time": null
   },
   {
     "command": "host aaaa_show bar",
@@ -18043,11 +17435,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 26
-    }
+    "time": null
   },
   {
     "command": "host aaaa_change -old 2001:db8::11 -new 2001:db8::13 bar",
@@ -18158,11 +17546,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 117
-    }
+    "time": null
   },
   {
     "command": "host aaaa_change -old 2001:db8::12 -new 2001:db8::14 bar",
@@ -18273,11 +17657,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:16",
-      "timestamp_as_epoch": 1702460056,
-      "runtime_in_ms": 127
-    }
+    "time": null
   },
   {
     "command": "host aaaa_remove bar 2001:db8::13",
@@ -18345,11 +17725,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 50
-    }
+    "time": null
   },
   {
     "command": "host aaaa_move -ip 2001:db8::14 -fromhost bar -tohost baz",
@@ -18446,11 +17822,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 83
-    }
+    "time": null
   },
   {
     "command": "host a_show baz",
@@ -18507,11 +17879,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 27
-    }
+    "time": null
   },
   {
     "command": "host cname_add bar fubar",
@@ -18638,11 +18006,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 139
-    }
+    "time": null
   },
   {
     "command": "host cname_show bar",
@@ -18703,11 +18067,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 26
-    }
+    "time": null
   },
   {
     "command": "host cname_remove bar fubar",
@@ -18772,11 +18132,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 53
-    }
+    "time": null
   },
   {
     "command": "host hinfo_add baz x86 Win",
@@ -18843,11 +18199,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 49
-    }
+    "time": null
   },
   {
     "command": "host hinfo_show baz",
@@ -18905,11 +18257,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 26
-    }
+    "time": null
   },
   {
     "command": "host hinfo_remove baz",
@@ -18971,11 +18319,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 47
-    }
+    "time": null
   },
   {
     "command": "host loc_add baz \"52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m\"",
@@ -19040,11 +18384,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 49
-    }
+    "time": null
   },
   {
     "command": "host loc_show baz",
@@ -19101,11 +18441,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 25
-    }
+    "time": null
   },
   {
     "command": "host loc_remove baz",
@@ -19166,11 +18502,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "host mx_add baz 10 mail.example.org",
@@ -19237,11 +18569,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 50
-    }
+    "time": null
   },
   {
     "command": "host mx_show baz",
@@ -19320,11 +18648,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 45
-    }
+    "time": null
   },
   {
     "command": "host mx_remove baz 10 mail.example.org",
@@ -19388,11 +18712,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 49
-    }
+    "time": null
   },
   {
     "command": "host naptr_add -name baz -preference 16384 -order 3 -flag u -service \"SIP\" -regex \"[abc]+\" -replacement \"wonk\"",
@@ -19467,11 +18787,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 51
-    }
+    "time": null
   },
   {
     "command": "host naptr_show baz",
@@ -19548,11 +18864,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 45
-    }
+    "time": null
   },
   {
     "command": "host naptr_remove -name baz -preference 16384 -order 3 -flag u -service \"sip\" -regex \"[abc]+\" -replacement \"wonk\"",
@@ -19632,11 +18944,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:17",
-      "timestamp_as_epoch": 1702460057,
-      "runtime_in_ms": 71
-    }
+    "time": null
   },
   {
     "command": "host ptr_add 10.0.0.20 baz.example.org",
@@ -19760,11 +19068,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 121
-    }
+    "time": null
   },
   {
     "command": "host ptr_show 10.0.0.20",
@@ -19828,11 +19132,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 26
-    }
+    "time": null
   },
   {
     "command": "host add clover",
@@ -19908,11 +19208,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 93
-    }
+    "time": null
   },
   {
     "command": "host ptr_change -ip 10.0.0.20 -old baz -new clover",
@@ -20003,11 +19299,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 80
-    }
+    "time": null
   },
   {
     "command": "host ptr_remove 10.0.0.20 clover",
@@ -20059,11 +19351,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 48
-    }
+    "time": null
   },
   {
     "command": "network",
@@ -20075,11 +19363,7 @@
     "error": [],
     "output": [],
     "api_requests": [],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 0
-    }
+    "time": null
   },
   {
     "command": "host srv_add -name \"whatever\" -priority 1 -weight 1 -port 80 -host baz",
@@ -20199,11 +19483,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 91
-    }
+    "time": null
   },
   {
     "command": "host srv_add -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host baz.example.org",
@@ -20327,11 +19607,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 91
-    }
+    "time": null
   },
   {
     "command": "host srv_show \"_sip._tcp.example.org\"",
@@ -20414,11 +19690,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "host srv_remove -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host baz.example.org",
@@ -20498,11 +19770,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 69
-    }
+    "time": null
   },
   {
     "command": "host sshfp_add bar 1 1 12345678abcde",
@@ -20572,11 +19840,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 49
-    }
+    "time": null
   },
   {
     "command": "host sshfp_show bar",
@@ -20649,11 +19913,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "host sshfp_remove -fingerprint 394875985 bar",
@@ -20725,11 +19985,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 52
-    }
+    "time": null
   },
   {
     "command": "host sshfp_remove bar",
@@ -20807,11 +20063,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 72
-    }
+    "time": null
   },
   {
     "command": "host ttl_set bar 3600",
@@ -20871,11 +20123,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 74
-    }
+    "time": null
   },
   {
     "command": "host ttl_show bar",
@@ -20966,11 +20214,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:18",
-      "timestamp_as_epoch": 1702460058,
-      "runtime_in_ms": 50
-    }
+    "time": null
   },
   {
     "command": "host ttl_remove bar",
@@ -21030,11 +20274,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 74
-    }
+    "time": null
   },
   {
     "command": "host txt_add bar \"Lorem ipsum dolor sit amet\"",
@@ -21099,11 +20339,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 54
-    }
+    "time": null
   },
   {
     "command": "host txt_show bar",
@@ -21183,11 +20419,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "host txt_remove bar \"Whatever\"",
@@ -21255,11 +20487,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 51
-    }
+    "time": null
   },
   {
     "command": "host txt_remove bar \"Lorem ipsum dolor sit amet\"",
@@ -21338,11 +20566,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 77
-    }
+    "time": null
   },
   {
     "command": "host add *.example.org -force",
@@ -21418,11 +20642,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 95
-    }
+    "time": null
   },
   {
     "command": "host remove *.example.org",
@@ -21493,11 +20713,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 102
-    }
+    "time": null
   },
   {
     "command": "host remove bar -f",
@@ -21579,11 +20795,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 108
-    }
+    "time": null
   },
   {
     "command": "host remove baz -f",
@@ -21665,11 +20877,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 113
-    }
+    "time": null
   },
   {
     "command": "host remove clover",
@@ -21740,11 +20948,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 104
-    }
+    "time": null
   },
   {
     "command": "network remove 10.0.0.0/24 -f",
@@ -21772,11 +20976,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 42
-    }
+    "time": null
   },
   {
     "command": "network remove 2001:db8::/64 -f",
@@ -21804,11 +21004,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 41
-    }
+    "time": null
   },
   {
     "command": "label add postit 'This is a label'",
@@ -21832,11 +21028,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 21
-    }
+    "time": null
   },
   {
     "command": "label list",
@@ -21869,11 +21061,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:19",
-      "timestamp_as_epoch": 1702460059,
-      "runtime_in_ms": 17
-    }
+    "time": null
   },
   {
     "command": "label info postit",
@@ -21927,11 +21115,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 59
-    }
+    "time": null
   },
   {
     "command": "label rename postit mylabel -desc 'This is the new description'",
@@ -21965,11 +21149,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 42
-    }
+    "time": null
   },
   {
     "command": "label remove mylabel",
@@ -21990,11 +21170,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 21
-    }
+    "time": null
   },
   {
     "command": "label add postit 'A label again'",
@@ -22018,11 +21194,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 24
-    }
+    "time": null
   },
   {
     "command": "policy role_create myrole 'This is the description'",
@@ -22058,11 +21230,7 @@
         "status": 201
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 46
-    }
+    "time": null
   },
   {
     "command": "policy label_add postit myrole",
@@ -22110,11 +21278,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 74
-    }
+    "time": null
   },
   {
     "command": "policy list_roles *",
@@ -22169,11 +21333,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 39
-    }
+    "time": null
   },
   {
     "command": "policy info myrole",
@@ -22237,11 +21397,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 59
-    }
+    "time": null
   },
   {
     "command": "label info postit",
@@ -22305,11 +21461,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 60
-    }
+    "time": null
   },
   {
     "command": "policy label_remove postit myrole",
@@ -22355,11 +21507,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 73
-    }
+    "time": null
   },
   {
     "command": "policy role_delete myrole",
@@ -22400,11 +21548,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 49
-    }
+    "time": null
   },
   {
     "command": "permission network_add 192.168.0.0/16 mygroup .*",
@@ -22435,11 +21579,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 22
-    }
+    "time": null
   },
   {
     "command": "permission label_add 192.168.0.0/16 mygroup .* postit",
@@ -22505,11 +21645,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 86
-    }
+    "time": null
   },
   {
     "command": "permission network_list",
@@ -22563,11 +21699,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 41
-    }
+    "time": null
   },
   {
     "command": "label info postit",
@@ -22631,11 +21763,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 60
-    }
+    "time": null
   },
   {
     "command": "permission label_remove 192.168.0.0/16 mygroup .* postit",
@@ -22701,11 +21829,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 91
-    }
+    "time": null
   },
   {
     "command": "permission network_list",
@@ -22757,11 +21881,7 @@
         }
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 37
-    }
+    "time": null
   },
   {
     "command": "permission network_remove 192.168.0.0/16 mygroup .*",
@@ -22801,11 +21921,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 41
-    }
+    "time": null
   },
   {
     "command": "label remove postit",
@@ -22826,11 +21942,7 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 22
-    }
+    "time": null
   },
   {
     "command": "zone delete example.org",
@@ -22898,10 +22010,6 @@
         "status": 204
       }
     ],
-    "time": {
-      "timestamp": "2023-12-13 10:34:20",
-      "timestamp_as_epoch": 1702460060,
-      "runtime_in_ms": 99
-    }
+    "time": null
   }
 ]
