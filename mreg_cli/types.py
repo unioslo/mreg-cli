@@ -1,13 +1,11 @@
 """Type definitions for mreg_cli."""
 
+import ipaddress
 import sys
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 if sys.version_info >= (3, 8):
-    pass
-
-if sys.version_info >= (3, 7):
-    from typing_extensions import TypedDict
+    from typing import Literal, TypedDict
 
     class TimeInfo(TypedDict):
         """Type definition for time-related information in the recording entry."""
@@ -30,17 +28,16 @@ if sys.version_info >= (3, 7):
         api_requests: List[str]
         time: Optional[TimeInfo]
 
+    IP_Version = Literal[4, 6]
+
 else:
     from typing import Any
 
     TimeInfo = Dict[str, Any]
     RecordingEntry = Dict[str, Any]
+    IP_Version = int
 
-try:
-    from typing import TypedDict  # Python 3.8 and newer
-except ImportError:
-    from typing_extensions import TypedDict  # Python 3.6 and 3.7
-
+IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
 
 if TYPE_CHECKING:
     from typing import Any

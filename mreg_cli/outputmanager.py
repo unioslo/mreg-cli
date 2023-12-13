@@ -6,6 +6,7 @@ command.
 """
 
 import atexit
+import datetime
 import json
 import os
 import re
@@ -122,7 +123,7 @@ class OutputManager:
         return cls._instance
 
     def clear(self) -> None:
-        """Clears the object."""
+        """Clear the object."""
         self._output: List[str] = []
         self._filter_re: Any = None  # should be re.Pattern, but python 3.6 doesn't have that
         self._filter_negate: bool = False
@@ -138,7 +139,7 @@ class OutputManager:
         self._time_started: datetime.datetime = datetime.datetime.now()
 
     def recording_clear(self) -> None:
-        """Clears the recording data."""
+        """Clear the recording data."""
         self._recorded_data: List[RecordingEntry] = []
         self._recording: bool = False
         self._filename: str = None
@@ -233,7 +234,7 @@ class OutputManager:
         self._ok.append(msg)
 
     def recording_active(self) -> bool:
-        """Returns True if recording is active."""
+        """Return True if recording is active."""
         return self._recording
 
     def recording_filename(self) -> Optional[str]:
@@ -261,6 +262,7 @@ class OutputManager:
     def recording_request(
         self, method: str, url: str, params: str, data: Dict[str, Any], result: requests.Response
     ) -> None:
+        """Record a request, if recording is active."""
         if not self.recording_active():
             return
         ret_dict: Dict[str, Any] = {
@@ -426,7 +428,7 @@ class OutputManager:
         return [line for line in lines if filter_re.search(line)]
 
     def render(self) -> None:
-        """Prints the output to stdout, and records it if recording is active."""
+        """Print the output to stdout, and records it if recording is active."""
         self.recording_output()
         for line in self.filtered_output():
             print(line)
