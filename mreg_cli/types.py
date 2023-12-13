@@ -1,4 +1,4 @@
-"""Type definitions for mreg_cli."""
+"""Typing definitions for mreg_cli."""
 
 import ipaddress
 import sys
