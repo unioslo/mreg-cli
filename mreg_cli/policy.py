@@ -1,3 +1,8 @@
+"""Policy commands for mreg_cli."""
+
+import argparse
+from typing import Any, Dict, List
+
 from .cli import Flag, cli
 from .history import history
 from .history_log import format_history_items, get_history_items
@@ -18,29 +23,34 @@ policy = cli.add_command(
 # Utils
 
 
-def _get_atom(name):
+def _get_atom(name: str) -> List[Dict[str, Any]]:
+    """Return a list with the atom info."""
     return get_list("/api/v1/hostpolicy/atoms/", params={"name": name})
 
 
-def get_atom(name):
+def get_atom(name: str) -> Dict[str, Any]:
+    """Return the atom info."""
     ret = _get_atom(name)
     if not ret:
         cli_warning(f"Atom {name!r} does not exist")
     return ret[0]
 
 
-def _get_role(name):
+def _get_role(name: str) -> List[Dict[str, Any]]:
+    """Return a list with the role info."""
     return get_list("/api/v1/hostpolicy/roles/", params={"name": name})
 
 
-def get_role(name):
+def get_role(name: str) -> Dict[str, Any]:
+    """Return the role info."""
     ret = _get_role(name)
     if not ret:
         cli_warning(f"Role {name!r} does not exist")
     return ret[0]
 
 
-def get_atom_or_role(name):
+def get_atom_or_role(name: str) -> Dict[str, Any]:
+    """Return the atom or role info."""
     atom = _get_atom(name)
     if atom:
         return "atom", atom[0]
@@ -50,14 +60,16 @@ def get_atom_or_role(name):
     cli_warning(f"Could not find an atom or a role with name: {name!r}")
 
 
-"""
-Implementation of sub command 'atom_create'
-"""
+###############################################
+# Implementation of sub command 'atom_create' #
+###############################################
 
 
-def atom_create(args) -> None:
-    # .name .description
-    """Create a new atom."""
+def atom_create(args: argparse.Namespace) -> None:
+    """Create a new atom.
+
+    :param args: argparse.Namespace (name, description, created)
+    """
     ret = _get_atom(args.name)
     if ret:
         cli_error(f'Atom "{args.name}" already in use')
@@ -86,9 +98,11 @@ policy.add_command(
 )
 
 
-def atom_delete(args) -> None:
-    # .name
-    """Delete an atom."""
+def atom_delete(args: argparse.Namespace) -> None:
+    """Delete an atom.
+
+    :param args: argparse.Namespace (name)
+    """
     get_atom(args.name)
 
     info = get_list("/api/v1/hostpolicy/roles/", params={"atoms__name__exact": args.name})
@@ -115,14 +129,16 @@ policy.add_command(
 )
 
 
-"""
-Implementation of sub command 'role_create'
-"""
+###############################################
+# Implementation of sub command 'role_create' #
+###############################################
 
 
-def role_create(args) -> None:
-    # .role .description
-    """Create a new role."""
+def role_create(args: argparse.Namespace) -> None:
+    """Create a new role.
+
+    :param args: argparse.Namespace (name, description, created)
+    """
     ret = _get_role(args.name)
     if ret:
         cli_error(f"Role name {args.name!r} already in use")
@@ -151,9 +167,11 @@ policy.add_command(
 )
 
 
-def role_delete(args) -> None:
-    # .name
-    """Delete a role."""
+def role_delete(args: argparse.Namespace) -> None:
+    """Delete a role.
+
+    :param args: argparse.Namespace (name)
+    """
     info = get_role(args.name)
     inuse = [i["name"] for i in info["hosts"]]
 
@@ -178,8 +196,11 @@ policy.add_command(
 )
 
 
-def add_atom(args) -> None:
-    """Make an atom member of a role."""
+def add_atom(args: argparse.Namespace) -> None:
+    """Make an atom member of a role.
+
+    :param args: argparse.Namespace (role, atom)
+    """
     info = get_role(args.role)
     for atom in info["atoms"]:
         if args.atom == atom["name"]:
@@ -209,8 +230,11 @@ policy.add_command(
 )
 
 
-def remove_atom(args) -> None:
-    """Remove an atom member from a role."""
+def remove_atom(args: argparse.Namespace) -> None:
+    """Remove an atom member from a role.
+
+    :param args: argparse.Namespace (role, atom)
+    """
     info = get_role(args.role)
     for atom in info["atoms"]:
         if args.atom == atom["name"]:
@@ -241,12 +265,14 @@ policy.add_command(
 ########################################
 
 
-def info(args) -> None:
-    """Show info about an atom or role."""
+def info(args: argparse.Namespace) -> None:
+    """Show info about an atom or role.
 
+    :param args: argparse.Namespace (name)
+    """
     manager = OutputManager()
 
-    def _format(key, value, padding=14):
+    def _format(key: str, value: str, padding: int = 14) -> None:
         manager.add_formatted_line(key, value, padding)
 
     for name in args.name:
@@ -289,8 +315,11 @@ policy.add_command(
 )
 
 
-def atom_history(args) -> None:
-    """Show history for name."""
+def atom_history(args: argparse.Namespace) -> None:
+    """Show history for name.
+
+    :param args: argparse.Namespace (name)
+    """
     items = get_history_items(args.name, "hostpolicy_atom", data_relation="atoms")
     format_history_items(args.name, items)
 
@@ -306,8 +335,11 @@ policy.add_command(
 )
 
 
-def role_history(args) -> None:
-    """Show history for name."""
+def role_history(args: argparse.Namespace) -> None:
+    """Show history for name.
+
+    :param args: argparse.Namespace (name)
+    """
     items = get_history_items(args.name, "hostpolicy_role", data_relation="roles")
     format_history_items(args.name, items)
 
@@ -323,12 +355,14 @@ policy.add_command(
 )
 
 
-def list_atoms(args) -> None:
-    """List all atoms by given filters."""
+def list_atoms(args: argparse.Namespace) -> None:
+    """List all atoms by given filters.
 
+    :param args: argparse.Namespace (name)
+    """
     manager = OutputManager()
 
-    def _format(key, value, padding=20):
+    def _format(key: str, value: str, padding: int = 20) -> None:
         manager.add_formatted_line(key, value, padding)
 
     params = {}
@@ -357,9 +391,11 @@ policy.add_command(
 )
 
 
-def list_roles(args) -> None:
-    """List all roles by given filters."""
+def list_roles(args: argparse.Namespace) -> None:
+    """List all roles by given filters.
 
+    :param args: argparse.Namespace (name)
+    """
     manager = OutputManager()
 
     params = {}
@@ -404,8 +440,11 @@ policy.add_command(
 )
 
 
-def list_hosts(args) -> None:
-    """List hosts which use the given role."""
+def list_hosts(args: argparse.Namespace) -> None:
+    """List hosts which use the given role.
+
+    :param args: argparse.Namespace (name)
+    """
     manager = OutputManager()
     info = get_role(args.name)
     if info["hosts"]:
@@ -427,8 +466,11 @@ policy.add_command(
 )
 
 
-def list_members(args) -> None:
-    """List atom members for a role."""
+def list_members(args: argparse.Namespace) -> None:
+    """List atom members for a role.
+
+    :param args: argparse.Namespace (name)
+    """
     info = get_role(args.name)
     manager = OutputManager()
     if info["atoms"]:
@@ -450,8 +492,11 @@ policy.add_command(
 )
 
 
-def host_add(args) -> None:
-    """Add host(s) to role."""
+def host_add(args: argparse.Namespace) -> None:
+    """Add host(s) to role.
+
+    :param args: argparse.Namespace (role, hosts)
+    """
     get_role(args.role)
     info = []
     for name in args.hosts:
@@ -480,12 +525,14 @@ policy.add_command(
 )
 
 
-def host_list(args) -> None:
-    """List host roles."""
+def host_list(args: argparse.Namespace) -> None:
+    """List host roles.
 
+    :param args: argparse.Namespace (hosts)
+    """
     manager = OutputManager()
 
-    def _format(hostname, roleinfo):
+    def _format(hostname: str, roleinfo: List[Dict[str, Any]]) -> None:
         if not roleinfo:
             cli_info(f"Host {hostname!r} has no roles.", print_msg=True)
         else:
@@ -517,8 +564,11 @@ policy.add_command(
 )
 
 
-def host_remove(args) -> None:
-    """Remove host(s) from role."""
+def host_remove(args: argparse.Namespace) -> None:
+    """Remove host(s) from role.
+
+    :param args: argparse.Namespace (role, hosts)
+    """
     get_role(args.role)
     info = []
     for name in args.hosts:
@@ -544,8 +594,11 @@ policy.add_command(
 )
 
 
-def rename(args) -> None:
-    """Rename an atom/role."""
+def rename(args: argparse.Namespace) -> None:
+    """Rename an atom/role.
+
+    :param args: argparse.Namespace (oldname, newname)
+    """
     if _get_atom(args.oldname):
         path = f"/api/v1/hostpolicy/atoms/{args.oldname}"
     elif _get_role(args.oldname):
@@ -572,8 +625,11 @@ policy.add_command(
 ###################################################
 
 
-def set_description(args) -> None:
-    """Set description for atom/role."""
+def set_description(args: argparse.Namespace) -> None:
+    """Set description for atom/role.
+
+    :param args: argparse.Namespace (name, description)
+    """
     if _get_atom(args.name):
         path = f"/api/v1/hostpolicy/atoms/{args.name}"
     elif _get_role(args.name):
@@ -601,8 +657,11 @@ policy.add_command(
 #################################################################
 
 
-def add_label_to_role(args) -> None:
-    """Add a label to a role."""
+def add_label_to_role(args: argparse.Namespace) -> None:
+    """Add a label to a role.
+
+    :param args: argparse.Namespace (role, label)
+    """
     # find the role
     path = f"/api/v1/hostpolicy/roles/{args.role}"
     res = get(path, ok404=True)
@@ -633,8 +692,11 @@ policy.add_command(
 )
 
 
-def remove_label_from_role(args) -> None:
-    """Remove a label from a role."""
+def remove_label_from_role(args: argparse.Namespace) -> None:
+    """Remove a label from a role.
+
+    :param args: argparse.Namespace (role, label)
+    """
     # find the role
     path = f"/api/v1/hostpolicy/roles/{args.role}"
     res = get(path, ok404=True)

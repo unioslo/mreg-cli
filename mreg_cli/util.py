@@ -1,3 +1,9 @@
+"""Utility functions for mreg_cli.
+
+Due to circular dependencies, this module is not allowed to import anything from mreg_cli.
+And this rule is promptly broken by importing from mreg_cli.outputmanager...
+"""
+
 import ipaddress
 import json
 import logging
@@ -34,8 +40,8 @@ from .exceptions import CliError, HostNotFoundWarning
 from .history import history
 from .log import cli_error, cli_warning
 
-location_tags = []  # type: List[str]
-category_tags = []  # type: List[str]
+location_tags: List[str] = []
+category_tags: List[str] = []
 
 session = requests.Session()
 session.headers.update({"User-Agent": "mreg-cli"})
@@ -49,18 +55,20 @@ HTTP_TIMEOUT = 20
 config = {}  # initialized by set_config
 
 
-def error(msg, code=os.EX_UNAVAILABLE) -> NoReturn:
+def error(msg: str, code: int = os.EX_UNAVAILABLE) -> NoReturn:
+    """Print an error message and exits with the given code."""
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(code)
 
 
-def set_config(cfg: dict) -> None:
+def set_config(cfg: Dict[str, Any]) -> None:
+    """Set the config dict."""
     global config
     config = cfg
 
 
 def host_exists(name: str) -> bool:
-    """Checks if a host with the given name exists."""
+    """Check if a host with the given name exists."""
     path = "/api/v1/hosts/"
     params = {
         "name": name,
@@ -83,7 +91,7 @@ def host_exists(name: str) -> bool:
     return True
 
 
-def host_info_by_name_or_ip(name_or_ip: str) -> dict:
+def host_info_by_name_or_ip(name_or_ip: str) -> Dict[str, Any]:
     """Return a dict with host information about the given host, or the host owning the given ip.
 
     :param name_or_ip: Either a host name on short or long form or an ipv4/ipv6 address.
@@ -96,7 +104,7 @@ def host_info_by_name_or_ip(name_or_ip: str) -> dict:
     return host_info_by_name(name)
 
 
-def _host_info_by_name(name: str, follow_cname: bool = True) -> Optional[dict]:
+def _host_info_by_name(name: str, follow_cname: bool = True) -> Optional[Dict[str, Any]]:
     hostinfo = get(f"/api/v1/hosts/{urllib.parse.quote(name)}", ok404=True)
 
     if hostinfo:
@@ -112,7 +120,7 @@ def _host_info_by_name(name: str, follow_cname: bool = True) -> Optional[dict]:
     return None
 
 
-def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
+def host_info_by_name(name: str, follow_cname: bool = True) -> Dict[str, Any]:
     """Return a dict with host information about the given host.
 
     :param name: A host name on either short or long form.
@@ -129,7 +137,8 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict:
     return hostinfo
 
 
-def _cname_info_by_name(name: str) -> Optional[dict]:
+def _cname_info_by_name(name: str) -> Optional[Dict[str, Any]]:
+    """Return a dict with information about the given cname."""
     path = "/api/v1/cnames/"
     params = {
         "name": name,
@@ -140,7 +149,8 @@ def _cname_info_by_name(name: str) -> Optional[dict]:
     return None
 
 
-def _srv_info_by_name(name: str) -> Optional[dict]:
+def _srv_info_by_name(name: str) -> Optional[Dict[str, Any]]:
+    """Return a dict with information about the given srv."""
     path = "/api/v1/srvs/"
     params = {
         "name": name,
@@ -151,7 +161,7 @@ def _srv_info_by_name(name: str) -> Optional[dict]:
     return None
 
 
-def get_info_by_name(name: str) -> Tuple[str, dict]:
+def get_info_by_name(name: str) -> Tuple[str, Dict[str, Any]]:
     """Get host, cname or srv by name."""
     name = clean_hostname(name)
     info = _host_info_by_name(name, follow_cname=False)
@@ -166,10 +176,11 @@ def get_info_by_name(name: str) -> Tuple[str, dict]:
     cli_warning(f"not found: {name!r}", exception=HostNotFoundWarning)
 
 
-def first_unused_ip_from_network(network: dict) -> str:
-    """Returns the first unused ip from a given network.
+def first_unused_ip_from_network(network: Dict[str, Any]) -> str:
+    """Return the first unused ip from a given network.
+
     Assumes network exists.
-    :param network: dict with network info.
+    :param network: dict with network info (key: "network").
     :return: Ip address string.
     """
     unused = get_network_first_unused(network["network"])
@@ -192,6 +203,7 @@ def ip_in_mreg_net(ip: str) -> bool:
 
 
 def set_file_permissions(f: str, mode: int) -> None:
+    """Set file permissions on a file."""
     try:
         os.chmod(f, mode)
     except PermissionError:
@@ -201,6 +213,7 @@ def set_file_permissions(f: str, mode: int) -> None:
 
 
 def login1(user: str, url: str) -> None:
+    """Login to MREG."""
     global mregurl, username
     mregurl = url
     username = user
@@ -235,6 +248,7 @@ def login1(user: str, url: str) -> None:
 
 
 def login(user: str, url: str) -> None:
+    """Login to MREG."""
     print(f"Connecting to {url}")
 
     # get url
@@ -246,6 +260,7 @@ def login(user: str, url: str) -> None:
 
 
 def logout() -> None:
+    """Logout from MREG."""
     path = requests.compat.urljoin(mregurl, "/api/token-logout/")
     # Try to logout, and ignore errors
     try:
@@ -255,6 +270,7 @@ def logout() -> None:
 
 
 def update_token() -> None:
+    """Update the token."""
     password = prompt("You need to re-autenticate\nEnter password: ", is_password=True)
     try:
         _update_token(username, password)
@@ -263,6 +279,7 @@ def update_token() -> None:
 
 
 def _update_token(username: str, password: str) -> None:
+    """Perform the actual token update."""
     tokenurl = requests.compat.urljoin(mregurl, "/api/token-auth/")
     try:
         result = requests.post(tokenurl, {"username": username, "password": password})
@@ -293,6 +310,7 @@ def _update_token(username: str, password: str) -> None:
 
 
 def result_check(result: "ResponseLike", operation_type: str, url: str) -> None:
+    """Check the result of a request."""
     if not result.ok:
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
         try:
@@ -311,8 +329,9 @@ def _request_wrapper(
     ok404: bool = False,
     first: bool = True,
     use_json: bool = False,
-    **data,
+    **data: Any,
 ) -> Optional["ResponseLike"]:
+    """Wrap request calls to MREG for logging and token management."""
     if params is None:
         params = {}
     url = requests.compat.urljoin(mregurl, path)
@@ -360,19 +379,22 @@ def get(path: str, params: Dict[str, str] = ...) -> "ResponseLike":
 
 
 def get(path: str, params: Dict[str, str] = None, ok404: bool = False) -> Optional["ResponseLike"]:
-    """Uses requests to make a get request."""
+    """Make a standard get request."""
     if params is None:
         params = {}
     return _request_wrapper("get", path, params=params, ok404=ok404)
 
 
-def get_list(path: Optional[str], params: dict = None, ok404: bool = False) -> List[dict]:
-    """Uses requests to make a get request.
+def get_list(
+    path: Optional[str], params: Dict[str, Any] = None, ok404: bool = False
+) -> List[Dict[str, Any]]:
+    """Make a get request that produces a list.
+
     Will iterate over paginated results and return result as list.
     """
     if params is None:
         params = {}
-    ret = []  # type: List[dict]
+    ret: List[Dict[str, Any]] = []
     while path:
         resp = get(path, params=params, ok404=ok404)
         if resp is None:
@@ -387,24 +409,24 @@ def get_list(path: Optional[str], params: dict = None, ok404: bool = False) -> L
     return ret
 
 
-def post(path: str, params: dict = None, **kwargs: Any) -> Optional["ResponseLike"]:
-    """Uses requests to make a post request. Assumes that all kwargs are data fields."""
+def post(path: str, params: Dict[str, Any] = None, **kwargs: Any) -> Optional["ResponseLike"]:
+    """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
 def patch(
-    path: str, params: dict = None, use_json: bool = False, **kwargs: Any
+    path: str, params: Dict[str, Any] = None, use_json: bool = False, **kwargs: Any
 ) -> Optional["ResponseLike"]:
-    """Uses requests to make a patch request. Assumes that all kwargs are data fields."""
+    """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("patch", path, params=params, use_json=use_json, **kwargs)
 
 
-def delete(path: str, params: dict = None) -> Optional["ResponseLike"]:
-    """Uses requests to make a delete request."""
+def delete(path: str, params: Dict[str, Any] = None) -> Optional["ResponseLike"]:
+    """Use requests to make a delete request."""
     if params is None:
         params = {}
     return _request_wrapper("delete", path, params=params)
@@ -433,7 +455,7 @@ def cname_exists(cname: str) -> bool:
 
 
 def resolve_name_or_ip(name_or_ip: str) -> str:
-    """Tries to find a host from the given name/ip. Raises an exception if not."""
+    """Try to find a host from the given name/ip. Raises an exception if not."""
     if is_valid_ip(name_or_ip):
         return resolve_ip(name_or_ip)
     else:
@@ -441,7 +463,7 @@ def resolve_name_or_ip(name_or_ip: str) -> str:
 
 
 def resolve_ip(ip: str) -> str:
-    """Returns host name associated with ip."""
+    """Return a host name associated with ip."""
     path = "/api/v1/hosts/"
     params = {
         "ipaddresses__ipaddress": ip,
@@ -459,7 +481,7 @@ def resolve_ip(ip: str) -> str:
 
 
 def resolve_input_name(name: str) -> str:
-    """Tries to find the named host. Raises an exception if not."""
+    """Try to find the named host. Raises an exception if not."""
     hostname = clean_hostname(name)
 
     path = "/api/v1/hosts/"
@@ -483,7 +505,7 @@ def resolve_input_name(name: str) -> str:
 
 
 def clean_hostname(name: Union[str, bytes]) -> str:
-    """Converts from short to long hostname, if no domain found."""
+    """Convert from short to long hostname, if no domain found."""
     # bytes?
     if not isinstance(name, (str, bytes)):
         cli_warning("Invalid input for hostname: {}".format(name))
@@ -518,11 +540,13 @@ def clean_hostname(name: Union[str, bytes]) -> str:
 ################################################################################
 
 
-def ipsort(ips: Iterable[Any]) -> list:
+def ipsort(ips: Iterable[Any]) -> List[Any]:
+    """Sort a list of ips."""
     return sorted(ips, key=lambda i: ipaddress.ip_address(i))
 
 
 def get_network_by_ip(ip: str) -> Dict[str, Any]:
+    """Return a network associated with given IP."""
     if is_valid_ip(ip):
         path = f"/api/v1/networks/ip/{urllib.parse.quote(ip)}"
         net = get(path, ok404=True)
@@ -535,7 +559,7 @@ def get_network_by_ip(ip: str) -> Dict[str, Any]:
 
 
 def get_network(ip: str) -> Dict[str, Any]:
-    "Returns network associated with given range or IP."
+    """Return a network associated with given range or IP."""
     if is_valid_network(ip):
         path = f"/api/v1/networks/{urllib.parse.quote(ip)}"
         history.record_get(path)
@@ -550,48 +574,49 @@ def get_network(ip: str) -> Dict[str, Any]:
 
 
 def get_network_used_count(ip_range: str) -> int:
-    "Return a count of the addresses in use on a given network."
+    """Return a count of the addresses in use on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/used_count"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_used_list(ip_range: str) -> List[str]:
-    "Return a list of the addresses in use on a given network."
+    """Return a list of the addresses in use on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/used_list"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_unused_count(ip_range: str) -> int:
-    "Return a count of the unused addresses on a given network."
+    """Return a count of the unused addresses on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/unused_count"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_unused_list(ip_range: str) -> List[str]:
-    "Return a list of the unused addresses on a given network."
+    """Return a list of the unused addresses on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/unused_list"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_first_unused(ip_range: str) -> str:
-    "Returns the first unused address on a network, if any."
+    """Return the first unused address on a network, if any."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/first_unused"
     history.record_get(path)
     return get(path).json()
 
 
 def get_network_reserved_ips(ip_range: str) -> List[str]:
-    "Returns the first unused address on a network, if any."
+    """Return the first unused address on a network, if any."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/reserved_list"
     history.record_get(path)
     return get(path).json()
 
 
 def string_to_int(value: Any, error_tag: str) -> int:
+    """Convert a string to an integer."""
     try:
         return int(value)
     except ValueError:
@@ -680,8 +705,8 @@ def is_valid_category_tag(cat: str) -> bool:
 
 def format_mac(mac: str) -> str:
     """Create a strict 'aa:bb:cc:11:22:33' MAC address.
-    Replaces any other delimiters with a colon and turns it into all lower
-    case.
+
+    Replaces any other delimiters with a colon and turns it into all lower case.
     """
     mac = re.sub("[.:-]", "", mac).lower()
     return ":".join(["%s" % (mac[i : i + 2]) for i in range(0, 12, 2)])
@@ -694,6 +719,10 @@ def convert_wildcard_to_regex(
 
     E.g. "foo*bar*" -> "?name__regex=$foo.*bar.*"
 
+    :param param: The parameter to filter on
+    :param arg: The argument to filter on
+    :param autoWildcards: If True, add wildcards to the beginning and end of the argument if
+                          they are not already present.
     """
     if "*" not in arg:
         if autoWildcards:

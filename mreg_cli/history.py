@@ -1,4 +1,8 @@
+"""History tracking for the CLI."""
+
+import argparse
 import json
+from typing import Any, Dict
 
 import requests
 
@@ -21,7 +25,10 @@ from .log import cli_error, cli_info, cli_warning
 
 
 class HistoryEvent:
+    """A history event is a collection of requests which happened during a given event."""
+
     def __init__(self, name: str = "", index: int = -1):
+        """Initialize a new history event."""
         self.requests = []
         self.name = name
         self.index = index
@@ -29,6 +36,7 @@ class HistoryEvent:
         self.undoable = True
 
     def __str__(self):
+        """Return a string representation of this event."""
         s = "{:<3} {} ({} redo, {} undo):".format(
             self.index,
             self.name,
@@ -43,6 +51,7 @@ class HistoryEvent:
         return s
 
     def __repr__(self):
+        """Return a string representation of this event."""
         return "<{} event with {} requests>".format(self.name, len(self.requests))
 
     def add_request(
@@ -50,8 +59,8 @@ class HistoryEvent:
         name: str,
         url: str,
         resource_name: str,
-        old_data: dict,
-        new_data: dict,
+        old_data: Dict[str, Any],
+        new_data: Dict[str, Any],
         redoable: bool,
         undoable: bool,
     ) -> None:
@@ -136,7 +145,10 @@ class HistoryEvent:
 
 
 class History:
+    """A history object which can record and undo/redo events."""
+
     def __init__(self):
+        """Initialize a new history object."""
         self.events = []
         self.count = 0
         self.current = HistoryEvent()
@@ -162,7 +174,7 @@ class History:
         self,
         url: str,
         resource_name: str,
-        new_data: dict,
+        new_data: Dict[str, Any],
         redoable: bool = True,
         undoable: bool = True,
     ) -> None:
@@ -180,8 +192,8 @@ class History:
     def record_patch(
         self,
         url: str,
-        new_data: dict,
-        old_data: dict,
+        new_data: Dict[str, Any],
+        old_data: Dict[str, Any],
         redoable: bool = True,
         undoable: bool = True,
     ) -> None:
@@ -197,7 +209,7 @@ class History:
         )
 
     def record_delete(
-        self, url: str, old_data: dict, redoable: bool = True, undoable: bool = True
+        self, url: str, old_data: Dict[str, Any], redoable: bool = True, undoable: bool = True
     ) -> None:
         """Record a DELETE request in the current event."""
         self.current.add_request(
@@ -210,9 +222,7 @@ class History:
             undoable=undoable,
         )
 
-    def record_get(
-        self, url: str, redoable: bool = True, undoable: bool = True
-    ) -> None:
+    def record_get(self, url: str, redoable: bool = True, undoable: bool = True) -> None:
         """Record a GET request in the current event."""
         self.current.add_request(
             name="GET",
@@ -225,6 +235,7 @@ class History:
         )
 
     def print(self):  # noqa: A003 (Shadowing builting), needs fixing
+        """Print the history."""
         for e in self.events:
             print(e)
 
@@ -275,7 +286,8 @@ history_ = cli.add_command(
 #########################################
 
 
-def print_(args):
+def print_(args: argparse.Namespace):
+    """Print the history."""
     print("printing history.")
 
 
@@ -292,7 +304,11 @@ history_.add_command(
 ########################################
 
 
-def redo(args):
+def redo(args: argparse.Namespace):
+    """Redo some history event given by NUM.
+
+    :param args: argparse.Namespace (num)
+    """
     print("redo:", args.num)
 
 
@@ -312,14 +328,20 @@ history_.add_command(
 ########################################
 
 
-def undo(args):
+def undo(args: argparse.Namespace):
+    """Undo some history event given by NUM.
+
+    :param args: argparse.Namespace (num)
+    """
     print("undo:", args.num)
 
 
 history_.add_command(
     prog="undo",
-    description="Undo some history event given by <history-number> (GET "
-    "requests are not redone)",
+    description=(
+        "Undo some history event given by <history-number> (GET ",
+        "requests are not redone)",
+    ),
     short_desc="Undo history.",
     callback=undo,
     flags=[

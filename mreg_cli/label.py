@@ -1,3 +1,7 @@
+"""Label-related commands for mreg_cli."""
+
+import argparse
+
 from .cli import Flag, cli
 from .history import history
 from .log import cli_info, cli_warning
@@ -10,7 +14,11 @@ label = cli.add_command(
 )
 
 
-def label_add(args) -> None:
+def label_add(args: argparse.Namespace) -> None:
+    """Add a label.
+
+    :param args: argparse.Namespace (name, description)
+    """
     if " " in args.name:
         OutputManager().add_line("The label name can't contain spaces.")
         return
@@ -33,7 +41,11 @@ label.add_command(
 )
 
 
-def label_list(args) -> None:
+def label_list(args: argparse.Namespace) -> None:
+    """List labels.
+
+    :param args: argparse.Namespace (none used)
+    """
     labels = get_list("/api/v1/labels/", params={"ordering": "name"})
     if not labels:
         cli_info("No labels", True)
@@ -44,7 +56,11 @@ def label_list(args) -> None:
 label.add_command(prog="list", description="List labels", callback=label_list, flags=[])
 
 
-def label_delete(args) -> None:
+def label_delete(args: argparse.Namespace) -> None:
+    """Delete a label.
+
+    :param args: argparse.Namespace (name)
+    """
     path = f"/api/v1/labels/name/{args.name}"
     history.record_delete(path, dict(), undoable=False)
     delete(path)
@@ -65,7 +81,11 @@ label.add_command(
 )
 
 
-def label_info(args) -> None:
+def label_info(args: argparse.Namespace) -> None:
+    """Show details about a label.
+
+    :param args: argparse.Namespace (name)
+    """
     path = f"/api/v1/labels/name/{args.name}"
     label = get(path).json()
     manager = OutputManager()
@@ -101,7 +121,11 @@ label.add_command(
 )
 
 
-def label_rename(args) -> None:
+def label_rename(args: argparse.Namespace) -> None:
+    """Rename a label.
+
+    :param args: argparse.Namespace (oldname, newname, desc)
+    """
     path = f"/api/v1/labels/name/{args.oldname}"
     res = get(path, ok404=True)
     if not res:

@@ -1,21 +1,23 @@
+"""Main entry point for mreg_cli."""
+
 import argparse
 import configparser
 import getpass
 import logging
+from typing import Union
 
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
 from . import config, log, util
 from .cli import cli, source
-from .exceptions import CliError, CliWarning
 from .outputmanager import OutputManager
 
 logger = logging.getLogger(__name__)
 
 
-def setup_logging(verbosity):
-    """Configure logging if verbosity is not None."""
+def setup_logging(verbosity: Union[int, None] = None):
+    """Configure logging verbosity."""
     if verbosity is None:
         root = logging.getLogger()
         root.addHandler(logging.NullHandler())
@@ -25,6 +27,7 @@ def setup_logging(verbosity):
 
 
 def main():
+    """Entry point for the mreg cli."""
     # Read config file first, to provide defaults
     conf = {}
     configpath = config.get_config_file()
@@ -133,15 +136,15 @@ def main():
     # Must import the commands, for the side effects of creating the commands
     # when importing. Ensure that the noqa comments are updated when new
     # commands are added, otherwise the import will be removed by ruff.
-    from . import dhcp  # noqa: F401,
-    from . import group  # noqa: F401
-    from . import history  # noqa: F401
-    from . import host  # noqa: F401
-    from . import label  # noqa: F401
-    from . import network  # noqa: F401
-    from . import permission  # noqa: F401
-    from . import policy  # noqa: F401
-    from . import zone  # noqa: F401
+    from . import dhcp  # noqa
+    from . import group  # noqa
+    from . import history  # noqa
+    from . import host  # noqa
+    from . import label  # noqa
+    from . import network  # noqa
+    from . import permission  # noqa
+    from . import policy  # noqa
+    from . import zone  # noqa
 
     # Define a function that returns the prompt message
     def get_prompt_message():

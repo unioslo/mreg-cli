@@ -1,7 +1,9 @@
+"""Network commands for mreg_cli."""
+
+import argparse
 import ipaddress
 import urllib.parse
-from argparse import Namespace
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from .cli import Flag, cli
 from .history import history
@@ -39,7 +41,13 @@ network = cli.add_command(
 )
 
 
-def get_network_range_from_input(net: str) -> str:
+def get_network_range_from_input(net: str) -> Optional[str]:
+    """Return network range from input.
+
+    - If input is a valid ip address, return the network range of the ip address.
+    - If input is a valid network range, return the input.
+    - Otherwise, print a warning and return None.
+    """
     if net.endswith("/"):
         net = net[:-1]
     if is_valid_ip(net):
@@ -53,16 +61,15 @@ def get_network_range_from_input(net: str) -> str:
 
 # helper methods
 def print_network_unused(count: int, padding: int = 25) -> None:
-    "Pretty print amount of unused addresses."
+    """Pretty print amount of unused addresses."""
     assert isinstance(count, int)
     OutputManager().add_line(
-        "{1:<{0}}{2}{3}".format(
-            padding, "Unused addresses:", count, " (excluding reserved adr.)"
-        )
+        "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)")
     )
 
 
-def format_network_excluded_ranges(info: dict, padding: int = 25) -> None:
+def format_network_excluded_ranges(info: Dict[str, Any], padding: int = 25) -> None:
+    """Pretty print excluded ranges."""
     if not info:
         return
     count = 0
@@ -73,17 +80,13 @@ def format_network_excluded_ranges(info: dict, padding: int = 25) -> None:
         if end_ip == start_ip:
             count += 1
     manager = OutputManager()
-    manager.add_line(
-        "{1:<{0}}{2} ipaddresses".format(padding, "Excluded ranges:", count)
-    )
+    manager.add_line("{1:<{0}}{2} ipaddresses".format(padding, "Excluded ranges:", count))
     for i in info:
-        manager.add_line(
-            "{1:<{0}}{2} -> {3}".format(padding, "", i["start_ip"], i["end_ip"])
-        )
+        manager.add_line("{1:<{0}}{2} -> {3}".format(padding, "", i["start_ip"], i["end_ip"]))
 
 
 def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
-    "Pretty print ip range and reserved addresses list."
+    """Pretty print ip range and reserved addresses list."""
     assert isinstance(ip_range, str)
     assert isinstance(reserved, int)
     network = ipaddress.ip_network(ip_range)
@@ -93,12 +96,8 @@ def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> 
             padding, "IP-range:", network.network_address, network.broadcast_address
         )
     )
-    manager.add_line(
-        "{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved)
-    )
-    manager.add_line(
-        "{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)")
-    )
+    manager.add_line("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
+    manager.add_line("{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)"))
     res = get_network_reserved_ips(ip_range)
     res.remove(str(network.network_address))
     broadcast = False
@@ -109,13 +108,12 @@ def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> 
         manager.add_line("{1:<{0}}{2}".format(padding, "", host))
     if broadcast:
         manager.add_line(
-            "{1:<{0}}{2}{3}".format(
-                padding, "", network.broadcast_address, " (broadcast)"
-            )
+            "{1:<{0}}{2}{3}".format(padding, "", network.broadcast_address, " (broadcast)")
         )
 
 
 def print_network(info: int, text: str, padding: int = 25) -> None:
+    """Pretty print network info."""
     OutputManager().add_line("{1:<{0}}{2}".format(padding, text, info))
 
 
@@ -124,8 +122,11 @@ def print_network(info: int, text: str, padding: int = 25) -> None:
 ##########################################
 
 
-def create(args) -> None:
-    """Create a new network."""
+def create(args: argparse.Namespace) -> None:
+    """Create a new network.
+
+    :param args: argparse.Namespace (network, desc, vlan, category, location, frozen)
+    """
     frozen = True if args.frozen else False
     if args.vlan:
         string_to_int(args.vlan, "VLAN")
@@ -182,8 +183,11 @@ network.add_command(
 ########################################
 
 
-def info(args) -> None:
-    """Display network info."""
+def info(args: argparse.Namespace) -> None:
+    """Display network info.
+
+    :param args: argparse.Namespace (networks)
+    """
     for net in args.networks:
         print_network_info(net)
 
@@ -205,17 +209,19 @@ network.add_command(
 
 
 def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
-    """Prints info about a network given a network address string (CIDR notation),
-    or from a network info dict fetched by `get_network()`.
+    """Print info about a network.
 
-    If a network address string is passed in, `get_network()` is called to fetch
-    information about the network with the given address.
+    - Either a network address string (CIDR notation)
+    - Or a network info dict fetched by `get_network()`
+
+    :param network_info: Union[str, Dict[str, Any]]
+    :param padding: int
     """
     if isinstance(network_info, str):
         addr = network_info
         ip_range = get_network_range_from_input(addr)
         network_info = get_network(ip_range)
-    elif isinstance(network_info, dict):
+    elif isinstance(network_info, dict()):
         ip_range = network_info["network"]
     else:
         # TODO:improve error message. Possibly raise a built-in exception to signal
@@ -251,8 +257,12 @@ def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
 ########################################
 
 
-def find(args: Namespace) -> None:
-    """List networks matching search criteria."""
+def find(args: argparse.Namespace) -> None:
+    """List networks matching search criteria.
+
+    :param args: argparse.Namespace (limit, silent, addr_only, ip, network, description, vlan,
+                                     dns_delegated, category, location, frozen, reserved)
+    """
     args_dict = vars(args)
 
     ip_arg = args_dict.get("ip")
@@ -297,9 +307,7 @@ def find(args: Namespace) -> None:
             omitted = n_networks - i
             if not args.silent:
                 s = "s" if omitted > 1 else ""
-                manager.add_line(
-                    f"Reached limit ({args.limit}). Omitted {omitted} network{s}."
-                )
+                manager.add_line(f"Reached limit ({args.limit}). Omitted {omitted} network{s}.")
             break
         if args.addr_only:
             manager.add_line(nwork["network"])
@@ -388,8 +396,11 @@ network.add_command(
 #########################################################
 
 
-def list_unused_addresses(args) -> None:
-    """Lists all the unused addresses for a network."""
+def list_unused_addresses(args: argparse.Namespace) -> None:
+    """List all the unused addresses for a network.
+
+    :param args: argparse.Namespace (network)
+    """
     ip_range = get_network_range_from_input(args.network)
     unused = get_network_unused_list(ip_range)
     if not unused:
@@ -415,8 +426,11 @@ network.add_command(
 #######################################################
 
 
-def list_used_addresses(args) -> None:
-    """Lists all the used addresses for a network."""
+def list_used_addresses(args: argparse.Namespace) -> None:
+    """List all the used addresses for a network.
+
+    :param args: argparse.Namespace (network)
+    """
     ip_range = get_network_range_from_input(args.network)
     urlencoded_ip_range = urllib.parse.quote(ip_range)
 
@@ -461,14 +475,15 @@ network.add_command(
 ##########################################
 
 
-def remove(args) -> None:
-    """Remove network."""
+def remove(args: argparse.Namespace) -> None:
+    """Remove network.
+
+    :param args: argparse.Namespace (network, force)
+    """
     ipaddress.ip_network(args.network)
     host_list = get_network_used_list(args.network)
     if host_list:
-        cli_warning(
-            "Network contains addresses that are in use. Remove hosts before deletion"
-        )
+        cli_warning("Network contains addresses that are in use. Remove hosts before deletion")
 
     if not args.force:
         cli_warning("Must force.")
@@ -494,8 +509,11 @@ network.add_command(
 ######################################################
 
 
-def add_excluded_range(args) -> None:
-    """Add an excluded range to a network."""
+def add_excluded_range(args: argparse.Namespace) -> None:
+    """Add an excluded range to a network.
+
+    :param args: argparse.Namespace (network, start_ip, end_ip)
+    """
     info = get_network(args.network)
     network = info["network"]
     if not is_valid_ip(args.start_ip):
@@ -527,8 +545,11 @@ network.add_command(
 #########################################################
 
 
-def remove_excluded_range(args) -> None:
-    """Remove an excluded range to a network."""
+def remove_excluded_range(args: argparse.Namespace) -> None:
+    """Remove an excluded range to a network.
+
+    :param args: argparse.Namespace (network, start_ip, end_ip)
+    """
     info = get_network(args.network)
     network = info["network"]
 
@@ -568,8 +589,11 @@ network.add_command(
 ################################################
 
 
-def set_category(args) -> None:
-    """Set category tag for network."""
+def set_category(args: argparse.Namespace) -> None:
+    """Set category tag for network.
+
+    :param args: argparse.Namespace (network, category)
+    """
     network = get_network(args.network)
     if not is_valid_category_tag(args.category):
         cli_warning("Not a valid category tag")
@@ -599,15 +623,16 @@ network.add_command(
 ###################################################
 
 
-def set_description(args) -> None:
-    """Set description for network."""
+def set_description(args: argparse.Namespace) -> None:
+    """Set description for network.
+
+    :param args: argparse.Namespace (network, description)
+    """
     network = get_network(args.network)
     path = f"/api/v1/networks/{urllib.parse.quote(network['network'])}"
     patch(path, description=args.description)
     cli_info(
-        "updated description to '{}' for {}".format(
-            args.description, network["network"]
-        ),
+        "updated description to '{}' for {}".format(args.description, network["network"]),
         True,
     )
 
@@ -629,8 +654,11 @@ network.add_command(
 #####################################################
 
 
-def set_dns_delegated(args) -> None:
-    """Set that DNS-administration is being handled elsewhere."""
+def set_dns_delegated(args: argparse.Namespace) -> None:
+    """Set that DNS-administration is being handled elsewhere.
+
+    :param args: argparse.Namespace (network)
+    """
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
@@ -654,8 +682,11 @@ network.add_command(
 ##############################################
 
 
-def set_frozen(args) -> None:
-    """Freeze a network."""
+def set_frozen(args: argparse.Namespace) -> None:
+    """Freeze a network.
+
+    :param args: argparse.Namespace (network)
+    """
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
@@ -679,8 +710,11 @@ network.add_command(
 ################################################
 
 
-def set_location(args) -> None:
-    """Set location tag for network."""
+def set_location(args: argparse.Namespace) -> None:
+    """Set location tag for network.
+
+    :param args: argparse.Namespace (network, location)
+    """
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     if not is_valid_location_tag(args.location):
@@ -688,9 +722,7 @@ def set_location(args) -> None:
 
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
     patch(path, location=args.location)
-    cli_info(
-        "updated location tag to '{}' for {}".format(args.location, ip_range), True
-    )
+    cli_info("updated location tag to '{}' for {}".format(args.location, ip_range), True)
 
 
 network.add_command(
@@ -710,8 +742,11 @@ network.add_command(
 ################################################
 
 
-def set_reserved(args) -> None:
-    """Set number of reserved hosts."""
+def set_reserved(args: argparse.Namespace) -> None:
+    """Set number of reserved hosts.
+
+    :param args: argparse.Namespace (network, number)
+    """
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     reserved = args.number
@@ -742,8 +777,11 @@ network.add_command(
 ############################################
 
 
-def set_vlan(args) -> None:
-    """Set VLAN for network."""
+def set_vlan(args: argparse.Namespace) -> None:
+    """Set VLAN for network.
+
+    :param args: argparse.Namespace (network, vlan)
+    """
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
@@ -768,8 +806,11 @@ network.add_command(
 #######################################################
 
 
-def unset_dns_delegated(args) -> None:
-    """Set that DNS-administration is not being handled elsewhere."""
+def unset_dns_delegated(args: argparse.Namespace) -> None:
+    """Set that DNS-administration is not being handled elsewhere.
+
+    :param args: argparse.Namespace (network)
+    """
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
@@ -793,8 +834,11 @@ network.add_command(
 ################################################
 
 
-def unset_frozen(args) -> None:
-    """Unfreeze a network."""
+def unset_frozen(args: argparse.Namespace) -> None:
+    """Unfreeze a network.
+
+    :param args: argparse.Namespace (network)
+    """
     ip_range = get_network_range_from_input(args.network)
     get_network(ip_range)
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"

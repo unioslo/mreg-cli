@@ -1,4 +1,8 @@
+"""Hostgroups commands for mreg_cli."""
+
+import argparse
 from itertools import chain
+from typing import Any, Dict, List
 
 from .cli import Flag, cli
 from .history import history
@@ -17,24 +21,27 @@ group = cli.add_command(
     short_desc="Manage hostgroups",
 )
 
-# Utils
+# Utility functions
 
 
-def get_hostgroup(name):
+def get_hostgroup(name: str) -> Dict[str, Any]:
+    """Get hostgroup info by name."""
     ret = get_list("/api/v1/hostgroups/", params={"name": name})
     if not ret:
         cli_warning(f'Group "{name}" does not exist')
     return ret[0]
 
 
-"""
-Implementation of sub command 'create'
-"""
+##########################################
+# Implementation of sub command 'create' #
+##########################################
 
 
-def create(args) -> None:
-    # .name .description
-    """Create a new host group."""
+def create(args: argparse.Namespace) -> None:
+    """Create a new host group.
+
+    :param args: argparse.Namespace (name, description)
+    """
     ret = get_list("/api/v1/hostgroups/", params={"name": args.name})
     if ret:
         cli_error(f'Groupname "{args.name}" already in use')
@@ -64,9 +71,11 @@ group.add_command(
 ########################################
 
 
-def info(args) -> None:
-    """Show host group info."""
+def info(args: argparse.Namespace) -> None:
+    """Show host group info.
 
+    :param args: argparse.Namespace (name)
+    """
     manager = OutputManager()
 
     for name in args.name:
@@ -103,8 +112,11 @@ group.add_command(
 ##########################################
 
 
-def rename(args) -> None:
-    """Rename group."""
+def rename(args: argparse.Namespace) -> None:
+    """Rename group.
+
+    :param args: argparse.Namespace (oldname, newname)
+    """
     get_hostgroup(args.oldname)
     patch(f"/api/v1/hostgroups/{args.oldname}", name=args.newname)
     cli_info(f"Renamed group {args.oldname!r} to {args.newname!r}", True)
@@ -127,16 +139,20 @@ group.add_command(
 ########################################
 
 
-def _list(args) -> None:
-    """List group members."""
+def _list(args: argparse.Namespace) -> None:
+    """List group members.
 
+    :param args: argparse.Namespace (name, expand)
+    """
     manager = OutputManager()
 
-    def _format_hosts(hosts, source=""):
+    def _format_hosts(hosts: List[Dict[str, Any]], source: str = "") -> None:
+        """Format hosts and add to output manager."""
         for host in hosts:
             manager.add_formatted_line_with_source("host", host["name"], source)
 
-    def _expand_group(groupname):
+    def _expand_group(groupname: str) -> None:
+        """Expand group and add to output manager."""
         info = get_hostgroup(groupname)
         _format_hosts(info["hosts"], source=groupname)
         for group in info["groups"]:
@@ -173,9 +189,11 @@ group.add_command(
 ##########################################
 
 
-def _delete(args) -> None:
-    # .name .force
-    """Delete a host group."""
+def _delete(args: argparse.Namespace) -> None:
+    """Delete a host group.
+
+    :param args: argparse.Namespace (name, force)
+    """
     info = get_hostgroup(args.name)
 
     if (len(info["hosts"]) or len(info["groups"])) and not args.force:
@@ -206,8 +224,11 @@ group.add_command(
 ###########################################
 
 
-def _history(args) -> None:
-    """Show host history for name."""
+def _history(args: argparse.Namespace) -> None:
+    """Show host history for name.
+
+    :param args: argparse.Namespace (name)
+    """
     manager = OutputManager()
     items = get_history_items(args.name, "group", data_relation="groups")
     for line in format_history_items(args.name, items):
@@ -230,8 +251,11 @@ group.add_command(
 #############################################
 
 
-def group_add(args) -> None:
-    """Add group(s) to group."""
+def group_add(args: argparse.Namespace) -> None:
+    """Add group(s) to group.
+
+    :param args: argparse.Namespace (dstgroup, srcgroup)
+    """
     for name in chain([args.dstgroup], args.srcgroup):
         get_hostgroup(name)
 
@@ -262,8 +286,11 @@ group.add_command(
 ################################################
 
 
-def group_remove(args) -> None:
-    """Remove group(s) from group."""
+def group_remove(args: argparse.Namespace) -> None:
+    """Remove group(s) from group.
+
+    :param args: argparse.Namespace (dstgroup, srcgroup)
+    """
     info = get_hostgroup(args.dstgroup)
     group_names = set(i["name"] for i in info["groups"])
     for name in args.srcgroup:
@@ -293,8 +320,11 @@ group.add_command(
 ############################################
 
 
-def host_add(args) -> None:
-    """Add host(s) to group."""
+def host_add(args: argparse.Namespace) -> None:
+    """Add host(s) to group.
+
+    :param args: argparse.Namespace (group, hosts)
+    """
     get_hostgroup(args.group)
     info = []
     for name in args.hosts:
@@ -327,8 +357,11 @@ group.add_command(
 ###############################################
 
 
-def host_remove(args) -> None:
-    """Remove host(s) from group."""
+def host_remove(args: argparse.Namespace) -> None:
+    """Remove host(s) from group.
+
+    :param args: argparse.Namespace (group, hosts)
+    """
     get_hostgroup(args.group)
     info = []
     for name in args.hosts:
@@ -358,8 +391,11 @@ group.add_command(
 #############################################
 
 
-def host_list(args) -> None:
-    """List group memberships for host."""
+def host_list(args: argparse.Namespace) -> None:
+    """List group memberships for host.
+
+    :param args: argparse.Namespace (host)
+    """
     hostname = host_info_by_name(args.host, follow_cname=False)["name"]
     group_list = get_list("/api/v1/hostgroups/", params={"hosts__name": hostname})
     if len(group_list) == 0:
@@ -388,8 +424,11 @@ group.add_command(
 #############################################
 
 
-def owner_add(args) -> None:
-    """Add owner(s) to group."""
+def owner_add(args: argparse.Namespace) -> None:
+    """Add owner(s) to group.
+
+    :param args: argparse.Namespace (group, owners)
+    """
     get_hostgroup(args.group)
 
     for name in args.owners:
@@ -418,8 +457,11 @@ group.add_command(
 ################################################
 
 
-def owner_remove(args) -> None:
-    """Remove owner(s) from group."""
+def owner_remove(args: argparse.Namespace) -> None:
+    """Remove owner(s) from group.
+
+    :param args: argparse.Namespace (group, owners)
+    """
     info = get_hostgroup(args.group)
     names = set(i["name"] for i in info["owners"])
     for i in args.owners:
@@ -449,8 +491,11 @@ group.add_command(
 ###################################################
 
 
-def set_description(args) -> None:
-    """Set description for group."""
+def set_description(args: argparse.Namespace) -> None:
+    """Set description for group.
+
+    :param args: argparse.Namespace (name, description)
+    """
     get_hostgroup(args.name)
     patch(f"/api/v1/hostgroups/{args.name}", description=args.description)
     cli_info(f"updated description to {args.description!r} for {args.name!r}", True)

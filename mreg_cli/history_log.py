@@ -1,5 +1,7 @@
+"""History log related functions."""
+
 import json
-from typing import List
+from typing import Any, Dict, List
 
 from dateutil.parser import parse
 
@@ -7,7 +9,8 @@ from .log import cli_warning
 from .util import get_list
 
 
-def get_history_items(name, resource, data_relation=None):
+def get_history_items(name: str, resource: str, data_relation: str = None) -> List[Dict[str, Any]]:
+    """Get history items for a given name and resource."""
     # First check if any model id with the name exists
     path = "/api/v1/history/"
     params = {
@@ -34,12 +37,15 @@ def get_history_items(name, resource, data_relation=None):
     return ret
 
 
-def format_history_items(ownname, items) -> List[str]:
+def format_history_items(ownname: str, items: Dict[str, Any]) -> List[str]:
     """Format history items for output."""
-
     lines: str = []
 
-    def _remove_unneded_keys(data):
+    def _remove_unneded_keys(data: Dict[str, Any]):
+        """Remove unneeded keys from data.
+
+        Note: This modifies the data passed in.
+        """
         for key in (
             "id",
             "created_at",
