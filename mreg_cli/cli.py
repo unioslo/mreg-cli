@@ -2,7 +2,6 @@
 
 This file contains the main CLI class and the top level parser.
 """
-
 import argparse
 import html
 import os
@@ -13,44 +12,29 @@ from typing import Any, Callable, Generator, List, NoReturn, Union
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 
-from . import util
-from .exceptions import CliError, CliWarning
-from .outputmanager import OutputManager
+# Import all the commands
+from mreg_cli.commands.dhcp import DHCPCommands
+from mreg_cli.commands.group import GroupCommands
+from mreg_cli.commands.help import HelpCommands
+from mreg_cli.commands.host import HostCommands
+from mreg_cli.commands.label import LabelCommands
+from mreg_cli.commands.network import NetworkCommands
+from mreg_cli.commands.permission import PermissionCommands
+from mreg_cli.commands.policy import PolicyCommands
+from mreg_cli.commands.zone import ZoneCommands
+
+# Import other mreg_cli modules
+from mreg_cli.exceptions import CliError, CliWarning
+from mreg_cli.help_formatter import CustomHelpFormatter
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag
+from mreg_cli.utilities.api import logout as _force_logout
 
 
 class CliExit(Exception):
     """Exception used to exit the CLI."""
 
     pass
-
-
-class Flag:
-    """Class for flag information available to commands in the CLI."""
-
-    def __init__(
-        self,
-        name: str,
-        description: str = "",
-        short_desc: str = "",
-        nargs: str = "",
-        default: Any = None,
-        flag_type: Any = None,
-        choices: List[str] = None,
-        required: bool = False,
-        metavar: str = None,
-        action: str = None,
-    ):
-        """Initialize a Flag object."""
-        self.name = name
-        self.short_desc = short_desc
-        self.description = description
-        self.nargs = nargs
-        self.default = default
-        self.type = flag_type
-        self.choices = choices
-        self.required = required
-        self.metavar = metavar
-        self.action = action
 
 
 def _create_command_group(parent: argparse.ArgumentParser):
@@ -117,6 +101,7 @@ class Command(Completer):
         if not self.sub:
             self.sub = _create_command_group(self.parser)
         parser = self.sub.add_parser(prog, description=description, epilog=epilog, help=short_desc)
+        parser.formatter_class = CustomHelpFormatter
         for f in flags:
             # Need to create a dict with the parameters so only used
             # parameters are sent, or else exceptions are raised. Ex: if
@@ -260,7 +245,7 @@ class Command(Completer):
 
 
 # Top parser is the root of all the command parsers
-_top_parser = argparse.ArgumentParser("")
+_top_parser = argparse.ArgumentParser(formatter_class=CustomHelpFormatter)
 cli = Command(_top_parser, list(), "")
 
 
@@ -297,9 +282,23 @@ cli.add_command(
 )
 
 
+for command in [
+    DHCPCommands,
+    GroupCommands,
+    HelpCommands,
+    HostCommands,
+    NetworkCommands,
+    PermissionCommands,
+    PolicyCommands,
+    ZoneCommands,
+    LabelCommands,
+]:
+    command(cli).register_all_commands()
+
+
 def logout(args: argparse.Namespace):
     """Log out from mreg and exit. Will delete token."""
-    util.logout()
+    _force_logout()
     raise CliExit
 
 

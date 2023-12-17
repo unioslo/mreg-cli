@@ -1,7 +1,6 @@
 """Main entry point for mreg_cli."""
 
 import argparse
-import configparser
 import getpass
 import logging
 from typing import Union
@@ -9,9 +8,13 @@ from typing import Union
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
-from . import config, log, util
-from .cli import cli, source
-from .outputmanager import OutputManager
+import mreg_cli.utilities.api as api
+from mreg_cli.cli import cli, source
+from mreg_cli.config import MregCliConfig
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.utilities.api import login1
+
+from . import log
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +25,7 @@ def setup_logging(verbosity: Union[int, None] = None):
         root = logging.getLogger()
         root.addHandler(logging.NullHandler())
     else:
+        config = MregCliConfig()
         level = config.get_verbosity(int(verbosity) - 1)
         config.configure_logging(level)
 
@@ -29,19 +33,14 @@ def setup_logging(verbosity: Union[int, None] = None):
 def main():
     """Entry point for the mreg cli."""
     # Read config file first, to provide defaults
-    conf = {}
-    configpath = config.get_config_file()
-    if configpath is not None:
-        cfgparser = configparser.ConfigParser()
-        cfgparser.read(configpath)
-        conf = dict(cfgparser["mreg"].items())
+    config = MregCliConfig()
 
     parser = argparse.ArgumentParser(description="The MREG cli")
 
     connect_args = parser.add_argument_group("connection settings")
     connect_args.add_argument(
         "--url",
-        default=conf.get("url", config.get_default_url()),
+        default=config.get("url", config.get_default_url()),
         help="use mreg server at %(metavar)s (default: %(default)s)",
         metavar="URL",
     )
@@ -49,7 +48,7 @@ def main():
     connect_args.add_argument(
         "-u",
         "--user",
-        default=conf.get("user", getpass.getuser()),
+        default=config.get("user", getpass.getuser()),
         help="authenticate as %(metavar)s (default: %(default)s)",
         metavar="USER",
     )
@@ -58,7 +57,7 @@ def main():
     mreg_args.add_argument(
         "-d",
         "--domain",
-        default=conf.get("domain", config.get_default_domain()),
+        default=config.get("domain", config.get_default_domain()),
         help="default %(metavar)s (default: %(default)s)",
         metavar="DOMAIN",
     )
@@ -116,8 +115,8 @@ def main():
     setup_logging(args.verbosity)
     logger.debug(f"args: {args}")
     conf = {k: v for k, v in vars(args).items() if v}
+    config.set_cmd_config(conf)
 
-    util.set_config(conf)
     if "logfile" in conf:
         log.logfile = conf["logfile"]
 
@@ -127,36 +126,20 @@ def main():
     if "record_traffic_without_timestamps" in conf:
         OutputManager().record_timestamps(False)
 
-    if "user" not in conf:
+    if config.get("user") is None:
         print("Username not set in config or as argument")
         return
-    elif "url" not in conf:
+    elif config.get("url") is None:
         print("mreg url not set in config or as argument")
         return
 
     try:
-        util.login1(conf["user"], conf["url"])
+        login1(config.get("user"), config.get("url"))
     except (EOFError, KeyboardInterrupt):
         print("")
         raise SystemExit() from None
     if args.show_token:
-        print(util.session.headers["Authorization"])
-
-    # Must import the commands, for the side effects of creating the commands
-    # when importing. Ensure that the noqa comments are updated when new
-    # commands are added, otherwise the import will be removed by ruff.
-    # Also, ensure the order is kept as it is, as some imports (bacnet)
-    # depend on others (host).
-    from . import dhcp  # noqa
-    from . import group  # noqa
-    from . import history  # noqa
-    from . import host  # noqa
-    from . import bacnet  # noqa
-    from . import label  # noqa
-    from . import network  # noqa
-    from . import permission  # noqa
-    from . import policy  # noqa
-    from . import zone  # noqa
+        print(api.session.headers["Authorization"])
 
     # Define a function that returns the prompt message
     def get_prompt_message():

@@ -3,24 +3,26 @@
 import argparse
 from typing import Any, Dict, List
 
-from .cli import Flag, cli
-from .history import history
-from .history_log import format_history_items, get_history_items
-from .log import cli_error, cli_info, cli_warning
-from .outputmanager import OutputManager
-from .util import convert_wildcard_to_regex, delete, get, get_list, host_info_by_name, patch, post
+from mreg_cli.commands.base import BaseCommand
+from mreg_cli.commands.registry import CommandRegistry
+from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag
+from mreg_cli.utilities.api import delete, get, get_list, patch, post
+from mreg_cli.utilities.host import host_info_by_name
+from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
-##################################
-#  Add the main command 'policy'  #
-##################################
+command_registry = CommandRegistry()
 
-policy = cli.add_command(
-    prog="policy",
-    description="Manage policies for hosts.",
-    short_desc="Manage policies",
-)
 
-# Utils
+class PolicyCommands(BaseCommand):
+    """Policy commands for the CLI."""
+
+    def __init__(self, cli: Any) -> None:
+        """Initialize the policy commands."""
+        super().__init__(
+            cli, command_registry, "policy", "Manage policies for hosts.", "Manage policies"
+        )
 
 
 def _get_atom(name: str) -> List[Dict[str, Any]]:
@@ -60,11 +62,16 @@ def get_atom_or_role(name: str) -> Dict[str, Any]:
     cli_warning(f"Could not find an atom or a role with name: {name!r}")
 
 
-###############################################
-# Implementation of sub command 'atom_create' #
-###############################################
-
-
+@command_registry.register_command(
+    prog="atom_create",
+    description="Create a new atom",
+    short_desc="Create a new atom",
+    flags=[
+        Flag("name", description="Atom name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+        Flag("-created", description="Created date", metavar="CREATED"),
+    ],
+)
 def atom_create(args: argparse.Namespace) -> None:
     """Create a new atom.
 
@@ -80,24 +87,18 @@ def atom_create(args: argparse.Namespace) -> None:
         data["create_date"] = args.created
 
     path = "/api/v1/hostpolicy/atoms/"
-    history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info(f"Created new atom {args.name}", print_msg=True)
 
 
-policy.add_command(
-    prog="atom_create",
-    description="Create a new atom",
-    short_desc="Create a new atom",
-    callback=atom_create,
+@command_registry.register_command(
+    prog="atom_delete",
+    description="Delete an atom",
+    short_desc="Delete an atom",
     flags=[
         Flag("name", description="Atom name", metavar="NAME"),
-        Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("-created", description="Created date", metavar="CREATED"),
     ],
 )
-
-
 def atom_delete(args: argparse.Namespace) -> None:
     """Delete an atom.
 
@@ -113,27 +114,20 @@ def atom_delete(args: argparse.Namespace) -> None:
         cli_error(f"Atom {args.name} used in roles: {roles}")
 
     path = f"/api/v1/hostpolicy/atoms/{args.name}"
-    history.record_delete(path, dict())
     delete(path)
     cli_info(f"Deleted atom {args.name}", print_msg=True)
 
 
-policy.add_command(
-    prog="atom_delete",
-    description="Delete an atom",
-    short_desc="Delete an atom",
-    callback=atom_delete,
+@command_registry.register_command(
+    prog="role_create",
+    description="Create a new role",
+    short_desc="Create a new role",
     flags=[
-        Flag("name", description="Atom name", metavar="NAME"),
+        Flag("name", description="Role name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+        Flag("-created", description="Created date", metavar="CREATED"),
     ],
 )
-
-
-###############################################
-# Implementation of sub command 'role_create' #
-###############################################
-
-
 def role_create(args: argparse.Namespace) -> None:
     """Create a new role.
 
@@ -149,24 +143,18 @@ def role_create(args: argparse.Namespace) -> None:
         data["create_date"] = args.created
 
     path = "/api/v1/hostpolicy/roles/"
-    history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info(f"Created new role {args.name!r}", print_msg=True)
 
 
-policy.add_command(
-    prog="role_create",
-    description="Create a new role",
-    short_desc="Create a new role",
-    callback=role_create,
+@command_registry.register_command(
+    prog="role_delete",
+    description="Delete a role",
+    short_desc="Delete a role",
     flags=[
         Flag("name", description="Role name", metavar="NAME"),
-        Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("-created", description="Created date", metavar="CREATED"),
     ],
 )
-
-
 def role_delete(args: argparse.Namespace) -> None:
     """Delete a role.
 
@@ -180,22 +168,19 @@ def role_delete(args: argparse.Namespace) -> None:
         cli_error(f"Role {args.name!r} used on hosts: {hosts}")
 
     path = f"/api/v1/hostpolicy/roles/{args.name}"
-    history.record_delete(path, dict())
     delete(path)
     cli_info(f"Deleted role {args.name!r}", print_msg=True)
 
 
-policy.add_command(
-    prog="role_delete",
-    description="Delete a role",
-    short_desc="Delete a role",
-    callback=role_delete,
+@command_registry.register_command(
+    prog="add_atom",
+    description="Make an atom member of a role",
+    short_desc="Make an atom member of a role",
     flags=[
-        Flag("name", description="Role name", metavar="NAME"),
+        Flag("role", description="Role name", metavar="ROLE"),
+        Flag("atom", description="Atom name", metavar="ATOM"),
     ],
 )
-
-
 def add_atom(args: argparse.Namespace) -> None:
     """Make an atom member of a role.
 
@@ -213,23 +198,19 @@ def add_atom(args: argparse.Namespace) -> None:
 
     data = {"name": args.atom}
     path = f"/api/v1/hostpolicy/roles/{args.role}/atoms/"
-    history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info(f"Added atom {args.atom!r} to role {args.role!r}", print_msg=True)
 
 
-policy.add_command(
-    prog="add_atom",
-    description="Make an atom member of a role",
-    short_desc="Make an atom member of a role",
-    callback=add_atom,
+@command_registry.register_command(
+    prog="remove_atom",
+    description="Remove an atom member from a role",
+    short_desc="Remove an atom member from a role",
     flags=[
         Flag("role", description="Role name", metavar="ROLE"),
         Flag("atom", description="Atom name", metavar="ATOM"),
     ],
 )
-
-
 def remove_atom(args: argparse.Namespace) -> None:
     """Remove an atom member from a role.
 
@@ -243,28 +224,18 @@ def remove_atom(args: argparse.Namespace) -> None:
         cli_warning(f"Atom {args.atom!r} not a member of {args.role!r}")
 
     path = f"/api/v1/hostpolicy/roles/{args.role}/atoms/{args.atom}"
-    history.record_delete(path, dict())
     delete(path)
     cli_info(f"Removed atom {args.atom!r} from role {args.role!r}", print_msg=True)
 
 
-policy.add_command(
-    prog="remove_atom",
-    description="Remove an atom member from a role",
-    short_desc="Remove an atom member from a role",
-    callback=remove_atom,
+@command_registry.register_command(
+    prog="info",
+    description="Show info about an atom or role",
+    short_desc="atom/role info",
     flags=[
-        Flag("role", description="Role name", metavar="ROLE"),
-        Flag("atom", description="Atom name", metavar="ATOM"),
+        Flag("name", description="atom/role name", nargs="+", metavar="NAME"),
     ],
 )
-
-
-########################################
-# Implementation of sub command 'info' #
-########################################
-
-
 def info(args: argparse.Namespace) -> None:
     """Show info about an atom or role.
 
@@ -304,57 +275,18 @@ def info(args: argparse.Namespace) -> None:
                 _format("", "None")
 
 
-policy.add_command(
-    prog="info",
-    description="Show info about an atom or role",
-    short_desc="atom/role info",
-    callback=info,
+@command_registry.register_command(
+    prog="list_atoms",
+    description="List all atoms by given filters",
+    short_desc="List all atoms by given filters",
     flags=[
-        Flag("name", description="atom/role name", nargs="+", metavar="NAME"),
+        Flag(
+            "name",
+            description="Atom name, or part of name. You can use * as a wildcard.",
+            metavar="FILTER",
+        ),
     ],
 )
-
-
-def atom_history(args: argparse.Namespace) -> None:
-    """Show history for name.
-
-    :param args: argparse.Namespace (name)
-    """
-    items = get_history_items(args.name, "hostpolicy_atom", data_relation="atoms")
-    format_history_items(args.name, items)
-
-
-policy.add_command(
-    prog="atom_history",
-    description="Show history for atom name",
-    short_desc="Show history for atom name",
-    callback=atom_history,
-    flags=[
-        Flag("name", description="Host name", metavar="NAME"),
-    ],
-)
-
-
-def role_history(args: argparse.Namespace) -> None:
-    """Show history for name.
-
-    :param args: argparse.Namespace (name)
-    """
-    items = get_history_items(args.name, "hostpolicy_role", data_relation="roles")
-    format_history_items(args.name, items)
-
-
-policy.add_command(
-    prog="role_history",
-    description="Show history for role name",
-    short_desc="Show history for role name",
-    callback=role_history,
-    flags=[
-        Flag("name", description="Host name", metavar="NAME"),
-    ],
-)
-
-
 def list_atoms(args: argparse.Namespace) -> None:
     """List all atoms by given filters.
 
@@ -376,21 +308,18 @@ def list_atoms(args: argparse.Namespace) -> None:
         manager.add_line("No match")
 
 
-policy.add_command(
-    prog="list_atoms",
-    description="List all atoms by given filters",
-    short_desc="List all atoms by given filters",
-    callback=list_atoms,
+@command_registry.register_command(
+    prog="list_roles",
+    description="List all roles by given filters",
+    short_desc="List all roles by given filters",
     flags=[
         Flag(
             "name",
-            description="Atom name, or part of name. You can use * as a wildcard.",
+            description="Role name, or part of name. You can use * as a wildcard.",
             metavar="FILTER",
         ),
     ],
 )
-
-
 def list_roles(args: argparse.Namespace) -> None:
     """List all roles by given filters.
 
@@ -425,21 +354,14 @@ def list_roles(args: argparse.Namespace) -> None:
     )
 
 
-policy.add_command(
-    prog="list_roles",
-    description="List all roles by given filters",
-    short_desc="List all roles by given filters",
-    callback=list_roles,
+@command_registry.register_command(
+    prog="list_hosts",
+    description="List hosts which use the given role",
+    short_desc="List hosts which use the given role",
     flags=[
-        Flag(
-            "name",
-            description="Role name, or part of name. You can use * as a wildcard.",
-            metavar="FILTER",
-        ),
+        Flag("name", description="Role name", metavar="NAME"),
     ],
 )
-
-
 def list_hosts(args: argparse.Namespace) -> None:
     """List hosts which use the given role.
 
@@ -455,17 +377,14 @@ def list_hosts(args: argparse.Namespace) -> None:
         manager.add_line("No host uses this role")
 
 
-policy.add_command(
-    prog="list_hosts",
-    description="List hosts which use the given role",
-    short_desc="List hosts which use the given role",
-    callback=list_hosts,
+@command_registry.register_command(
+    prog="list_members",
+    description="List all members of a role",
+    short_desc="List role members",
     flags=[
         Flag("name", description="Role name", metavar="NAME"),
     ],
 )
-
-
 def list_members(args: argparse.Namespace) -> None:
     """List atom members for a role.
 
@@ -481,17 +400,15 @@ def list_members(args: argparse.Namespace) -> None:
         manager.add_line("No atom members")
 
 
-policy.add_command(
-    prog="list_members",
-    description="List all members of a role",
-    short_desc="List role members",
-    callback=list_members,
+@command_registry.register_command(
+    prog="host_add",
+    description="Add host(s) to role",
+    short_desc="Add host(s) to role",
     flags=[
-        Flag("name", description="Role name", metavar="NAME"),
+        Flag("role", description="role", metavar="ROLE"),
+        Flag("hosts", description="hosts", nargs="+", metavar="HOST"),
     ],
 )
-
-
 def host_add(args: argparse.Namespace) -> None:
     """Add host(s) to role.
 
@@ -508,23 +425,18 @@ def host_add(args: argparse.Namespace) -> None:
             "name": name,
         }
         path = f"/api/v1/hostpolicy/roles/{args.role}/hosts/"
-        history.record_post(path, "", data, undoable=False)
         post(path, **data)
         cli_info(f"Added host '{name}' to role '{args.role}'", print_msg=True)
 
 
-policy.add_command(
-    prog="host_add",
-    description="Add host(s) to role",
-    short_desc="Add host(s) to role",
-    callback=host_add,
+@command_registry.register_command(
+    prog="host_list",
+    description="List roles for host(s)",
+    short_desc="List roles for host(s)",
     flags=[
-        Flag("role", description="role", metavar="ROLE"),
         Flag("hosts", description="hosts", nargs="+", metavar="HOST"),
     ],
 )
-
-
 def host_list(args: argparse.Namespace) -> None:
     """List host roles.
 
@@ -553,17 +465,15 @@ def host_list(args: argparse.Namespace) -> None:
         _format(name, get_list(path, params=params))
 
 
-policy.add_command(
-    prog="host_list",
-    description="List roles for host(s)",
-    short_desc="List roles for host(s)",
-    callback=host_list,
+@command_registry.register_command(
+    prog="host_remove",
+    description="Remove host(s) from role",
+    short_desc="Remove host(s) from role",
     flags=[
-        Flag("hosts", description="hosts", nargs="+", metavar="HOST"),
+        Flag("role", description="role", metavar="ROLE"),
+        Flag("hosts", description="host", nargs="+", metavar="HOST"),
     ],
 )
-
-
 def host_remove(args: argparse.Namespace) -> None:
     """Remove host(s) from role.
 
@@ -577,23 +487,19 @@ def host_remove(args: argparse.Namespace) -> None:
     for i in info:
         name = i["name"]
         path = f"/api/v1/hostpolicy/roles/{args.role}/hosts/{name}"
-        history.record_delete(path, dict())
         delete(path)
         cli_info(f"Removed host '{name}' from role '{args.role}'", print_msg=True)
 
 
-policy.add_command(
-    prog="host_remove",
-    description="Remove host(s) from role",
-    short_desc="Remove host(s) from role",
-    callback=host_remove,
+@command_registry.register_command(
+    prog="rename",
+    description="Rename an atom or role",
+    short_desc="Rename an atom or role",
     flags=[
-        Flag("role", description="role", metavar="ROLE"),
-        Flag("hosts", description="host", nargs="+", metavar="HOST"),
+        Flag("oldname", description="Existing name", metavar="OLDNAME"),
+        Flag("newname", description="New name", metavar="NEWNAME"),
     ],
 )
-
-
 def rename(args: argparse.Namespace) -> None:
     """Rename an atom/role.
 
@@ -609,22 +515,15 @@ def rename(args: argparse.Namespace) -> None:
     cli_info(f"Renamed {args.oldname!r} to {args.newname!r}", True)
 
 
-policy.add_command(
-    prog="rename",
-    description="Rename an atom or role",
-    short_desc="Rename an atom or role",
-    callback=rename,
+@command_registry.register_command(
+    prog="set_description",
+    description="Set description for an atom or role",
+    short_desc="Set description for an atom or role",
     flags=[
-        Flag("oldname", description="Existing name", metavar="OLDNAME"),
-        Flag("newname", description="New name", metavar="NEWNAME"),
+        Flag("name", description="Name", metavar="NAME"),
+        Flag("description", description="Description.", metavar="DESC"),
     ],
 )
-
-###################################################
-# Implementation of sub command 'set_description' #
-###################################################
-
-
 def set_description(args: argparse.Namespace) -> None:
     """Set description for atom/role.
 
@@ -640,23 +539,12 @@ def set_description(args: argparse.Namespace) -> None:
     cli_info(f"updated description to {args.description!r} for {args.name!r}", print_msg=True)
 
 
-policy.add_command(
-    prog="set_description",
-    description="Set description for an atom or role",
-    short_desc="Set description for an atom or role",
-    callback=set_description,
-    flags=[
-        Flag("name", description="Name", metavar="NAME"),
-        Flag("description", description="Description.", metavar="DESC"),
-    ],
+@command_registry.register_command(
+    prog="label_add",
+    description="Add a label to a role",
+    short_desc="Add label",
+    flags=[Flag("label"), Flag("role")],
 )
-
-
-#################################################################
-# Implementation of sub commands 'label_add' and 'label_remove'
-#################################################################
-
-
 def add_label_to_role(args: argparse.Namespace) -> None:
     """Add a label to a role.
 
@@ -684,14 +572,12 @@ def add_label_to_role(args: argparse.Namespace) -> None:
     cli_info(f"Added the label {args.label!r} to the role {args.role!r}.", print_msg=True)
 
 
-policy.add_command(
-    prog="label_add",
-    description="Add a label to a role",
-    callback=add_label_to_role,
+@command_registry.register_command(
+    prog="label_remove",
+    description="Remove a label from a role",
+    short_desc="Remove label",
     flags=[Flag("label"), Flag("role")],
 )
-
-
 def remove_label_from_role(args: argparse.Namespace) -> None:
     """Remove a label from a role.
 
@@ -717,11 +603,3 @@ def remove_label_from_role(args: argparse.Namespace) -> None:
     ar.remove(label["id"])
     patch(path, use_json=True, params={"labels": ar})
     cli_info(f"Removed the label {args.label!r} from the role {args.role!r}.", print_msg=True)
-
-
-policy.add_command(
-    prog="label_remove",
-    description="Remove a label from a role",
-    callback=remove_label_from_role,
-    flags=[Flag("label"), Flag("role")],
-)

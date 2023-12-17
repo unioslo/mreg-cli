@@ -1,56 +1,108 @@
 # MREG CLI [![Build Status](https://github.com/unioslo/mreg-cli/actions/workflows/test.yml/badge.svg)](https://github.com/unioslo/mreg-cli/actions/workflows/test.yml)
-Command Line Interface for Mreg
 
-- [Usage](#usage)
-    - [host](#host)
-        - [A/AAAA](#a/aaaa)
-        - [CNAME](#cname)
-        - [HINFO](#hinfo)
-        - [LOC](#loc)
-        - [NAPTR](#naptr)
-        - [PTR](#ptr)
-        - [SRV](#srv)
-        - [SSHFP](#sshfp)
-        - [TTL](#ttl)
-        - [TXT](#txt)
-        - [DHCP](#dhcp)
+`mreg-cli` is a command line interface for the MREG API.
+
+- [MREG CLI](#mreg-cli-)
+  - [Setup](#setup)
+  - [General usage](#general-usage)
+    - [Filtering](#filtering)
+    - [Forcing commands](#forcing-commands)
+  - [Command set](#command-set)
+    - [Host](#host)
+      - [A/AAAA](#aaaaa)
+      - [CNAME](#cname)
+      - [HINFO](#hinfo)
+      - [LOC](#loc)
+      - [NAPTR](#naptr)
+      - [PTR](#ptr)
+      - [SRV](#srv)
+      - [SSHFP](#sshfp)
+      - [TTL](#ttl)
+      - [TXT](#txt)
+      - [DHCP](#dhcp)
     - [subnet](#subnet)
     - [zone](#zone)
     - [history](#history)
     - [other](#other)
-- [Devhelp](#devhelp)
-    - [client.py](#client.py)
-    - [commands.py](#commands.py)
-    - [util.py](#util.py)
-    - [history.py](#history.py)
-    - [config.py](#config.py)
-    - [log.py](#log.py)
+  - [Devhelp](#devhelp)
+        - [client.py](#clientpy)
+        - [commands.py](#commandspy)
+        - [util.py](#utilpy)
+        - [history.py](#historypy)
+        - [config.py](#configpy)
+        - [log.py](#logpy)
 
-## Usage
-There is currently no form of authentication in the CLI. Force can be used by anyone.
+## Setup
 
-Logging uses the OS user name when recording logs.  
-The log file can be change in _cli.conf_.
+Options can be set in ~/.config/mreg-cli.conf. A typical config file looks like this:
 
-Server IP and port can also be specified in _cli.conf_.
+```ini
+[mreg]
+USER=mreg-user
+SERVER=https://mreg.example.com:8000
+```
 
-### host
-Force are required when adding a host with an ip in a subnet not controlled by MREG or in a frozen subnet.
-``` 
+## General usage
+
+Commands in `mreg-cli` take on the form of a fairly standard command line interface:
+
+```sh
+host add myhost.example.com 192.168.1.1 me@example.con -hinfo Linux -comment "My host"
+```
+
+Here we are using the `host add` command to add a new host. The command takes a number of arguments, which are positional. The arguments in this case is a name and an ip address, followed by a contact and some optional arguments. The optional arguments are specified with a flag, followed by the value. The optional arguments can be specified in any order, but the positional arguments must be specified in the order they are defined in the command.
+
+### Filtering
+
+`mreg-cli` support output filtering via the operators `|` and `|!`. The `|` operator is used to filter the output to only show the lines matching the text  specified after the operator. Using `|!` will show the lines _not_ matching the text specified after the operator. The filter text is a standard python regular expression. Some examples:
+
+```sh
+mreg> host info one.example.com
+Name:         one.example.com
+Contact:      me@example.com
+A_Records     IP                           MAC
+              192.168.1.2                  aa:bb:cc:dd:ee:ff
+TTL:          (Default)
+TXT:          v=spf1 -all
+mreg> host info one.example.com | example
+Name:         one.example.com
+Contact:      me@example.com
+mreg> host info one.example.com | me.*com
+Contact:      me@example.com
+mreg> host info one.example.com |! me.*com
+Name:         one.example.com
+A_Records     IP                           MAC
+              192.168.1.2                  aa:bb:cc:dd:ee:ff
+TTL:          (Default)
+TXT:          v=spf1 -all
+```
+
+### Forcing commands
+
+A number of commands take a `-force` flag. This flag is typically required when the operation will fail internal validation. However, please note that `-force` is emphatically not a "I know what I'm doing" flag. It is a "I know what I'm doing and I'm willing to take responsibility for the consequences" flag. If you're not sure what you're doing, don't use `-force`.
+
+As an example, you may add a host to a network unknown to mreg, or a frozen network. You may want to assiciate a mac address to a host or an IP that already has a mac address associated with it. All of these examples will cause a validation failure, but you may bypass this failure by using `-force`. This is fine if you for example are certain the new mac address is supposed to replace the old one, but if you mistakenly associate a mac address to the wrong host, you may cause the host to be unreachable on the network. `-force` exists to alert you that you are doing something that may have unintended consequences, and you should be sure you know what you are doing before using it.
+
+## Command set
+
+### Host
+
+```cli
    host add <name> <ip/net> <contact> [-hinfo <hinfo>] [-comment <comment>]
        Add a new host with the given name, ip or subnet and contact. hinfo and comment
        are optional.
 ```
 
-Force are required when removing a host with multiple A/AAAA records or if it has a NAPTR, PTR or SRV record.
-```
+!!!note
+    Force is required when adding a host with an ip in a subnet not controlled by MREG or in a frozen subnet.
+
+```cli
    host remove <name|ip>
        Remove host. If <name> is an alias the cname host is removed.
        
 ```
 
-```
-       
+```cli
    host info <name|ip>
        Print information about host. If <name> is an alias the cname hosts info is shown.
        
@@ -66,9 +118,11 @@ Force are required when removing a host with multiple A/AAAA records or if it ha
 ```
 
 #### A/AAAA
+
 The API doesn't differentiate between ipv4 and ipv6, so A/AAAA are only different on the client side.  
 Require force if the host already has A/AAAA record(s), or if the ip is in a subnet not controlled by MREG.
-```
+
+```cli
    host a_add <name> <ip|subnet>
        Add an A record to host. If <name> is an alias the cname host is used.
        
@@ -95,7 +149,8 @@ Require force if the host already has A/AAAA record(s), or if the ip is in a sub
 ```
 
 #### CNAME
-``` 
+
+```cli
    host cname_add <existing-name> <new-alias>
        Add a CNAME record to host. If <existing-name> is an alias the cname host is used as
        target for <new-alias>.
@@ -108,7 +163,8 @@ Require force if the host already has A/AAAA record(s), or if the ip is in a sub
 ```
 
 #### HINFO
-``` 
+
+```cli
    host hinfo_remove <name>
        Remove hinfo for host. If <name> is an alias the cname host is updated.
        
@@ -120,8 +176,10 @@ Require force if the host already has A/AAAA record(s), or if the ip is in a sub
 ```
 
 #### LOC
+
 All LOC commands require force.
-``` 
+
+```cli
    host loc_remove <name>
        Remove location from host. If <name> is an alias the cname host is updated.
        
@@ -133,7 +191,8 @@ All LOC commands require force.
 ```
 
 #### NAPTR
-``` 
+
+```cli
    host naptr_add <name> <preference> <order> <flagg> <service> <regexp> <replacement>
        Add a NAPTR record to host.
        
@@ -145,7 +204,8 @@ All LOC commands require force.
 ```
 
 #### PTR
-``` 
+
+```cli
    host ptr_change <ipv4|ipv6> <old-name> <new-name>
        Move PTR record from <old-name> to <new-name>.
        
@@ -160,8 +220,10 @@ All LOC commands require force.
 ```
 
 #### SRV
-Require force if a host with <target-name> doesn't exist.
-``` 
+
+Require force if a host with `target-name` doesn't exist.
+
+```cli
    host srv_add <service-name> <pri> <weight> <port> <target-name>
        Add SRV record.
        
@@ -173,7 +235,8 @@ Require force if a host with <target-name> doesn't exist.
 ```
 
 #### SSHFP
-```
+
+```cli
    host sshfp_add <name> <algorithm> <hash_type> <fingerprint>
        Add SSHFP record for the host.
 
@@ -186,7 +249,8 @@ Require force if a host with <target-name> doesn't exist.
 ```
 
 #### TTL
-``` 
+
+```cli
    host ttl_remove <name>
        Remove explicit TTL for host. If <name> is an alias the alias host is updated.
        
@@ -199,7 +263,8 @@ Require force if a host with <target-name> doesn't exist.
 ```
 
 #### TXT
-``` 
+
+```cli
    host txt_add <name> <text>
        Add a txt record to host. <text> must be enclosed in double quotes if it contains more
        than one word.
@@ -212,7 +277,8 @@ Require force if a host with <target-name> doesn't exist.
 ```
 
 #### DHCP
-``` 
+
+```cli
    dhcp assoc <name|ip> <mac-addr>
        Associate MAC address with host. If host got multiple A/AAAA records an IP must be
        given instead of name.
@@ -223,7 +289,8 @@ Require force if a host with <target-name> doesn't exist.
 ```
 
 ### subnet
-``` 
+
+```cli
    subnet create <subnet> <description> <vlan> <dns_delegated> <category> <location> <frozen>
        Create a new subnet
        
@@ -271,7 +338,8 @@ Require force if a host with <target-name> doesn't exist.
 ```
 
 ### zone
-``` 
+
+```cli
    zone create <zone-name> (<nameservers>)
        Create new zone.
        
@@ -285,28 +353,13 @@ Require force if a host with <target-name> doesn't exist.
        Updated the SOA of a zone.
 ```
 
-### history
-History is stored on a per-session basis, so when the program is terminated the history is gone.  
-The history is a recording Read commands from a file. If --exit is supplied then it'll stop executing on error.of all API calls for each user action. `history print` shows for each
-record if it can be redone/undone.  
-GET calls are never undone or redone.  
-The most common reason for an action not being undo-able is foreign keys being invalid after a delete.
-``` 
-   history print
-       Print the history.
-       
-   history redo <history-number>
-       Redo some history event given by <history-number> (GET requests are not redone)
-       
-   history undo <history-number>
-       Undo some history event given by <history-number> (GET requests cannot be undone)
-```
-
 ### other
+
 The CLI also provides these miscellaneous functions:
 
 List available commands without a argument, or display detailed help for a command or for a specific option of a command.
-```
+
+```cli
 help
 help <cmd>
 <cmd> help <option>
@@ -315,62 +368,3 @@ help <cmd>
 `shell <cmd>`: Run a bash command.
 
 `source <file-name> [--exit]`: Read commands from a file. If --exit is supplied then it'll stop executing on error.
-
-## Devhelp
-
-##### client.py
-Implementation of the client shell, using the python standard library module `cmd`.
-When creating a new command the only change needed here is to add the methods:
-```python
-    def do_<command-name>(self, args):
-        self.command_do(args, <command-object>)
-
-    def complete_<command-name>(self, text, line, begidx, endidx):
-        return self.command_complete(text, line, begidx, endidx, <command-object>)
-
-    def help_<command-name>(self):
-        self.command_help(<command-object>)
-```
-
-##### commands.py
-Implementation of the commands. `CommandBase` is the base class which uses inspection 
-to generate documentation and execute commands.  
-When creating a new command create a class which inherits `CommandBase` and add 
-methods starting with `opt_` to add options to the command:
-```python
-class <command-class>(CommandBase):
-    """
-    Doc string for the command. Displayed as help string when typing "help <command>"
-    """
-
-    def opt_<command-option>(self, args):
-        """
-        Doc string for command option. Displayed as help string when typing "<command> help <option>"
-        """
-        pass
-```
-
-##### util.py
-Contains most of the helper functions for the project.
-
-##### history.py
-Implementation of (basic) history recording. History recordings must be explicitly called
-from the code of command implementations. History is not saved to file.
-
-##### config.py
-Contains `cli_config(config_file, required_fields)`  which reads a simple key=value config
-file and returns a dict. Raises an exception if any of the required_fields are missing.
-
-##### log.py
-Contains functions for handling logging. The log entries are on the format: 
-```
-2018-01-01 15:01:02 username [ERROR] host add: message
-```
-
-The log functions are:
-
-`cli_info(msg, print_msg=False)` - log a [OK] message. Doesn't print to stdout by default.  
-`cli_warning(msg, print_msg=True)` - log a [WARNING] message and raise an exception, the default
-exception is CliWarning. Print to stdout by default.  
-`cli_error(msg, print_msg=True)` - log a [ERROR] message and raise an exception, the default
-exception is CliError. Print to stdout by default.

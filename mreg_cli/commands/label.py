@@ -1,19 +1,35 @@
 """Label-related commands for mreg_cli."""
 
 import argparse
+from typing import Any
 
-from .cli import Flag, cli
-from .history import history
-from .log import cli_info, cli_warning
-from .outputmanager import OutputManager
-from .util import delete, get, get_list, patch, post
+from mreg_cli.commands.base import BaseCommand
+from mreg_cli.commands.registry import CommandRegistry
+from mreg_cli.log import cli_info, cli_warning
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag
+from mreg_cli.utilities.api import delete, get, get_list, patch, post
 
-label = cli.add_command(
-    prog="label",
-    description="Manage labels.",
+command_registry = CommandRegistry()
+
+
+class LabelCommands(BaseCommand):
+    """Label commands for the CLI."""
+
+    def __init__(self, cli: Any) -> None:
+        """Initialize the label commands."""
+        super().__init__(cli, command_registry, "label", "Manage host labels", "Manage labels")
+
+
+@command_registry.register_command(
+    prog="add",
+    description="Add a label",
+    short_desc="Add a label",
+    flags=[
+        Flag("name", short_desc="Label name", description="The name of the new label"),
+        Flag("description", description="The purpose of the label"),
+    ],
 )
-
-
 def label_add(args: argparse.Namespace) -> None:
     """Add a label.
 
@@ -24,23 +40,13 @@ def label_add(args: argparse.Namespace) -> None:
         return
     data = {"name": args.name, "description": args.description}
     path = "/api/v1/labels/"
-    history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info(f'Added label "{args.name}"', True)
 
 
-label.add_command(
-    prog="add",
-    description="Add a label",
-    short_desc="Add a label",
-    callback=label_add,
-    flags=[
-        Flag("name", short_desc="Label name", description="The name of the new label"),
-        Flag("description", description="The purpose of the label"),
-    ],
+@command_registry.register_command(
+    prog="list", description="List labels", short_desc="List labels", flags=[]
 )
-
-
 def label_list(args: argparse.Namespace) -> None:
     """List labels.
 
@@ -53,24 +59,10 @@ def label_list(args: argparse.Namespace) -> None:
     OutputManager().add_formatted_table(("Name", "Description"), ("name", "description"), labels)
 
 
-label.add_command(prog="list", description="List labels", callback=label_list, flags=[])
-
-
-def label_delete(args: argparse.Namespace) -> None:
-    """Delete a label.
-
-    :param args: argparse.Namespace (name)
-    """
-    path = f"/api/v1/labels/name/{args.name}"
-    history.record_delete(path, dict(), undoable=False)
-    delete(path)
-    cli_info(f'Removed label "{args.name}"', True)
-
-
-label.add_command(
+@command_registry.register_command(
     prog="remove",
     description="Remove a label",
-    callback=label_delete,
+    short_desc="Remove a label",
     flags=[
         Flag(
             "name",
@@ -79,8 +71,22 @@ label.add_command(
         )
     ],
 )
+def label_delete(args: argparse.Namespace) -> None:
+    """Delete a label.
+
+    :param args: argparse.Namespace (name)
+    """
+    path = f"/api/v1/labels/name/{args.name}"
+    delete(path)
+    cli_info(f'Removed label "{args.name}"', True)
 
 
+@command_registry.register_command(
+    prog="info",
+    description="Show details about a label",
+    short_desc="Label details",
+    flags=[Flag("name", short_desc="Label name", description="The name of the label")],
+)
 def label_info(args: argparse.Namespace) -> None:
     """Show details about a label.
 
@@ -113,34 +119,10 @@ def label_info(args: argparse.Namespace) -> None:
         manager.add_line("    None")
 
 
-label.add_command(
-    prog="info",
-    description="Show details about a label",
-    callback=label_info,
-    flags=[Flag("name", short_desc="Label name", description="The name of the label")],
-)
-
-
-def label_rename(args: argparse.Namespace) -> None:
-    """Rename a label.
-
-    :param args: argparse.Namespace (oldname, newname, desc)
-    """
-    path = f"/api/v1/labels/name/{args.oldname}"
-    res = get(path, ok404=True)
-    if not res:
-        cli_warning(f'Label "{args.oldname}" does not exist.')
-    data = {"name": args.newname}
-    if args.desc:
-        data["description"] = args.desc
-    patch(path, **data)
-    cli_info('Renamed label "{}" to "{}"'.format(args.oldname, args.newname), True)
-
-
-label.add_command(
+@command_registry.register_command(
     prog="rename",
     description="Rename a label and/or change the description",
-    callback=label_rename,
+    short_desc="Rename a label",
     flags=[
         Flag(
             "oldname",
@@ -156,3 +138,17 @@ label.add_command(
         ),
     ],
 )
+def label_rename(args: argparse.Namespace) -> None:
+    """Rename a label.
+
+    :param args: argparse.Namespace (oldname, newname, desc)
+    """
+    path = f"/api/v1/labels/name/{args.oldname}"
+    res = get(path, ok404=True)
+    if not res:
+        cli_warning(f'Label "{args.oldname}" does not exist.')
+    data = {"name": args.newname}
+    if args.desc:
+        data["description"] = args.desc
+    patch(path, **data)
+    cli_info('Renamed label "{}" to "{}"'.format(args.oldname, args.newname), True)

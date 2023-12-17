@@ -1,8 +1,9 @@
 """Typing definitions for mreg_cli."""
 
+import argparse
 import ipaddress
 import sys
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, Union
 
 # This is a seperate import due to using string annotation, so the
 # import can't be consolidated into a single line with other imports
@@ -41,8 +42,49 @@ else:
     TimeInfo = Dict[str, Any]
     RecordingEntry = Dict[str, Any]
 
+CommandFunc = Callable[[argparse.Namespace], None]
 IP_Version: "TypeAlias" = "Literal[4, 6]"
 IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
+
+
+class Flag:
+    """Class for flag information available to commands in the CLI."""
+
+    def __init__(
+        self,
+        name: str,
+        description: str = "",
+        short_desc: str = "",
+        nargs: int = None,
+        default: Any = None,
+        flag_type: Any = None,
+        choices: List[str] = None,
+        required: bool = False,
+        metavar: str = None,
+        action: str = None,
+    ):
+        """Initialize a Flag object."""
+        self.name = name
+        self.short_desc = short_desc
+        self.description = description
+        self.nargs = nargs
+        self.default = default
+        self.type = flag_type
+        self.choices = choices
+        self.required = required
+        self.metavar = metavar
+        self.action = action
+
+
+class Command(NamedTuple):
+    """A command that can be registered with the CLI."""
+
+    prog: str
+    description: str
+    short_desc: str
+    callback: Callable[[argparse.Namespace], None]
+    flags: Optional[List[Flag]] = None
+
 
 if TYPE_CHECKING:
     from typing import Any
