@@ -42,7 +42,6 @@ else:
     TimeInfo = Dict[str, Any]
     RecordingEntry = Dict[str, Any]
 
-CommandFunc = Callable[[argparse.Namespace], None]
 IP_Version: "TypeAlias" = "Literal[4, 6]"
 IP_networkT = TypeVar("IP_networkT", ipaddress.IPv4Network, ipaddress.IPv6Network)
 
