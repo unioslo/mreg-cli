@@ -76,7 +76,7 @@ def info(args: argparse.Namespace) -> None:
 
         manager.add_formatted_line("Name:", info["name"])
         manager.add_formatted_line("Description:", info["description"])
-        members = []
+        members: List[str] = []
         count = len(info["hosts"])
         if count:
             members.append("{} host{}".format(count, "s" if count > 1 else ""))
@@ -246,7 +246,7 @@ def host_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, hosts)
     """
     get_hostgroup(args.group)
-    info = []
+    info: Dict[str, str] = []
     for name in args.hosts:
         info.append(host_info_by_name(name, follow_cname=False))
 
@@ -275,7 +275,7 @@ def host_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, hosts)
     """
     get_hostgroup(args.group)
-    info = []
+    info: Dict[str, str] = []
     for name in args.hosts:
         info.append(host_info_by_name(name, follow_cname=False))
 
