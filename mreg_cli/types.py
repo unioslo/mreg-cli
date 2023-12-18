@@ -4,8 +4,10 @@ import ipaddress
 import sys
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
+from typing_extensions import Literal, TypeAlias  # noqa: F401
+
 if sys.version_info >= (3, 8):
-    from typing import Literal, TypedDict
+    from typing import TypedDict
 
     class TimeInfo(TypedDict):
         """Type definition for time-related information in the recording entry."""
@@ -28,15 +30,13 @@ if sys.version_info >= (3, 8):
         api_requests: List[str]
         time: Optional[TimeInfo]
 
-    IP_Version = Literal[4, 6]
-
 else:
     from typing import Any
 
     TimeInfo = Dict[str, Any]
     RecordingEntry = Dict[str, Any]
-    IP_Version = int
 
+IP_Version: "TypeAlias" = "Literal[4, 6]"
 IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
 
 if TYPE_CHECKING:

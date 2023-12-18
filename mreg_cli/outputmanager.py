@@ -125,10 +125,10 @@ class OutputManager:
     def clear(self) -> None:
         """Clear the object."""
         self._output: List[str] = []
-        self._filter_re: Any = None  # should be re.Pattern, but python 3.6 doesn't have that
+        self._filter_re: Optional["re.Pattern[str]"] = None
         self._filter_negate: bool = False
-        self._command_executed: str = None
-        self._command_issued: str = None
+        self._command_executed: str = ""
+        self._command_issued: str = ""
 
         self._ok: List[str] = []  # This is typically commands that went OK but returned no content
         self._warnings: List[str] = []

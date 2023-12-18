@@ -32,7 +32,7 @@ class Flag:
         name: str,
         description: str = "",
         short_desc: str = "",
-        nargs: int = None,
+        nargs: str = "",
         default: Any = None,
         flag_type: Any = None,
         choices: List[str] = None,
