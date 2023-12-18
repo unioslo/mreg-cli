@@ -406,7 +406,7 @@ def host_list(args: argparse.Namespace) -> None:
 
     manager.add_line("Groups:")
     for group in group_list:
-        manager.add_line("  ", group["name"])
+        manager.add_line(f"  {group['name']}")
 
 
 group.add_command(

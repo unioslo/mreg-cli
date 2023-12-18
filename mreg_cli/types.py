@@ -2,18 +2,47 @@
 
 import ipaddress
 import sys
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
-# Horrible hack to support Literal when possible.
+# This is a seperate import due to using string annotation, so the
+# import can't be consolidated into a single line with other imports
+# from typing_extensions. This hack is required for RHEL7 support that
+# has a typing_extensions library that has some issues.
+if TYPE_CHECKING:
+    from typing_extensions import Literal, TypeAlias  # noqa: F401
+
 if sys.version_info >= (3, 8):
-    from typing import Literal
+    from typing import TypedDict
 
-    IP_Version = Literal[4, 6]
+    class TimeInfo(TypedDict):
+        """Type definition for time-related information in the recording entry."""
+
+        timestamp: str
+        timestamp_as_epoch: int
+        runtime_in_ms: int
+
+    class RecordingEntry(TypedDict):
+        """Type definition for a recording entry."""
+
+        command: str
+        command_filter: Optional[str]
+        command_filter_negate: bool
+        command_issued: str
+        ok: List[str]
+        warning: List[str]
+        error: List[str]
+        output: List[str]
+        api_requests: List[str]
+        time: Optional[TimeInfo]
+
 else:
-    IP_Version = int
+    from typing import Any
 
+    TimeInfo = Dict[str, Any]
+    RecordingEntry = Dict[str, Any]
+
+IP_Version: "TypeAlias" = "Literal[4, 6]"
 IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
-
 
 if TYPE_CHECKING:
     from typing import Any

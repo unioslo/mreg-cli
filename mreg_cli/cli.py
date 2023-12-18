@@ -15,7 +15,7 @@ from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 
 from . import util
 from .exceptions import CliError, CliWarning
-from .outputmanager import OutputManager, remove_comments
+from .outputmanager import OutputManager
 
 
 class CliExit(Exception):
@@ -32,7 +32,7 @@ class Flag:
         name: str,
         description: str = "",
         short_desc: str = "",
-        nargs: int = None,
+        nargs: str = "",
         default: Any = None,
         flag_type: Any = None,
         choices: List[str] = None,
@@ -167,7 +167,7 @@ class Command(Completer):
 
         except CliExit:
             # If we have active recordings going on, save them before exiting
-            OutputManager().save_recording()
+            OutputManager().recording_stop()
             sys.exit(0)
 
         else:
@@ -246,7 +246,6 @@ class Command(Completer):
 
     def process_command_line(self, line: str) -> None:
         """Process a line containing a command."""
-        line = remove_comments(line)
         # OutputManager is a singleton class so we
         # need to clear it before each command.
         output = OutputManager()
@@ -274,12 +273,12 @@ def _start_recording(args: argparse.Namespace) -> None:
     if not args.filename:
         raise CliError("No filename given.")
 
-    OutputManager().start_recording(args.filename)
+    OutputManager().recording_start(args.filename)
 
 
 def _stop_recording(args: argparse.Namespace):
     """Stop recording commands and output to the given file."""
-    OutputManager().save_recording()
+    OutputManager().recording_stop()
 
 
 # Always need a quit command
@@ -374,7 +373,7 @@ def source(files: List[str], ignore_errors: bool, verbose: bool) -> Generator[st
                                 )
                             )
                         )
-                        OutputManager().record_extra_output(f"{filename}: Error on line {i + 1}")
+                        OutputManager().add_error(f"{filename}: Error on line {i + 1}")
                         if not ignore_errors:
                             return
         except FileNotFoundError:

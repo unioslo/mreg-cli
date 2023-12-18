@@ -344,9 +344,7 @@ def _request_wrapper(
         )
     result = cast(requests.Response, result)  # convince mypy that result is a Response
 
-    manager = OutputManager()
-    if manager.is_recording():
-        manager.record_request(operation_type, url, params, data, result)
+    OutputManager().recording_request(operation_type, url, params, data, result)
 
     if first and result.status_code == 401:
         update_token()
