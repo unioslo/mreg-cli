@@ -8,7 +8,7 @@ from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
 from mreg_cli.utilities.api import patch
-from mreg_cli.utilities.host import assoc_mac_to_ip, get_primary_ip_by_name_or_any_ip
+from mreg_cli.utilities.host import assoc_mac_to_ip, get_unique_ip_by_name_or_ip
 
 command_registry = CommandRegistry()
 
@@ -41,7 +41,7 @@ def assoc(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, mac, force)
     """
-    ip = get_primary_ip_by_name_or_any_ip(args.name)
+    ip = get_unique_ip_by_name_or_ip(args.name)
     new_mac = assoc_mac_to_ip(args.mac, ip, force=args.force)
 
     if new_mac is not None:
@@ -69,7 +69,7 @@ def disassoc(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    ip = get_primary_ip_by_name_or_any_ip(args.name)
+    ip = get_unique_ip_by_name_or_ip(args.name)
 
     if ip.get("macaddress"):
         # Update ipaddress

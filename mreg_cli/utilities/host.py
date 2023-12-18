@@ -58,8 +58,14 @@ def clean_hostname(name: Union[str, bytes]) -> str:
     return name
 
 
-def get_primary_ip_by_name_or_any_ip(arg: str) -> str:
+def get_unique_ip_by_name_or_ip(arg: str) -> str:
     """Get A/AAAA record by either ip address or host name.
+
+    This will fail if:
+        - The host has multiple A/AAAA records.
+        - The host has no A/AAAA records.
+        - The IP is used by multiple hosts.
+        - The IP or host doesn't exist.
 
     :param arg: ip address or host name (as a string)
     """
