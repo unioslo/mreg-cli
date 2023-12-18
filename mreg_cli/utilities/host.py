@@ -58,7 +58,7 @@ def clean_hostname(name: Union[str, bytes]) -> str:
     return name
 
 
-def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
+def get_unique_ip_by_name_or_ip(arg: str) -> str:
     """Get A/AAAA record by either ip address or host name.
 
     This will fail if:
