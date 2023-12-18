@@ -7,7 +7,7 @@ import html
 import os
 import shlex
 import sys
-from typing import Any, Callable, Generator, List, NoReturn, Union
+from typing import Any, Generator, List, NoReturn, Union
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
@@ -27,7 +27,7 @@ from mreg_cli.commands.zone import ZoneCommands
 from mreg_cli.exceptions import CliError, CliWarning
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
+from mreg_cli.types import CommandFunc, Flag
 from mreg_cli.utilities.api import logout as _force_logout
 
 
@@ -87,7 +87,7 @@ class Command(Completer):
         description: str,
         short_desc: str = "",
         epilog: str = None,
-        callback: Callable[[argparse.ArgumentParser], None] = None,
+        callback: CommandFunc = None,
         flags: Union[List[Flag], None] = None,
     ):
         """Add a command to the current parser.

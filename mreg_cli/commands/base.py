@@ -3,11 +3,10 @@
 This module provides the :py:class:`BaseCommands` class, which is used as the
 base class for all CLI command classes.
 """
-import argparse
-from typing import Any, Callable, List, Optional
+from typing import Any, List, Optional
 
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.types import Flag
+from mreg_cli.types import CommandFunc, Flag
 
 
 class BaseCommand:
@@ -20,7 +19,7 @@ class BaseCommand:
         command_name: str,
         description: str,
         short_desc: Optional[str],
-        callback: Optional[Callable[[argparse.Namespace], None]] = None,
+        callback: Optional[CommandFunc] = None,
     ) -> None:
         """Initialize the command class."""
         self.base_cli = cli
@@ -42,7 +41,7 @@ class BaseCommand:
         prog: str,
         description: str,
         short_desc: str,
-        callback: Callable[[argparse.Namespace], None],
+        callback: CommandFunc,
         flags: Optional[List[Flag]] = None,
     ) -> None:
         """Add a command to the registry."""

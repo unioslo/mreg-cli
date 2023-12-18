@@ -3,7 +3,9 @@
 import argparse
 import ipaddress
 import sys
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Optional, Union
+
+CommandFunc = Callable[[argparse.Namespace], None]
 
 # This is a seperate import due to using string annotation, so the
 # import can't be consolidated into a single line with other imports
@@ -42,7 +44,6 @@ else:
     TimeInfo = Dict[str, Any]
     RecordingEntry = Dict[str, Any]
 
-CommandFunc = Callable[[argparse.Namespace], None]
 IP_Version: "TypeAlias" = "Literal[4, 6]"
 IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
 
@@ -82,7 +83,7 @@ class Command(NamedTuple):
     prog: str
     description: str
     short_desc: str
-    callback: Callable[[argparse.Namespace], None]
+    callback: CommandFunc
     flags: Optional[List[Flag]] = None
 
 

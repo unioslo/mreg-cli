@@ -4,10 +4,9 @@ This module provides the :py:class:`CommandWrapper` class, which is used to wrap
 a command and its attributes, so it may be used as a subcommand of mreg-cli.
 """
 
-import argparse
 from typing import Callable, List, Optional
 
-from mreg_cli.types import Command, Flag
+from mreg_cli.types import Command, CommandFunc, Flag
 
 
 class CommandRegistry:
@@ -28,7 +27,7 @@ class CommandRegistry:
         description: str,
         short_desc: str,
         flags: Optional[List[Flag]] = None,
-    ) -> Callable[[argparse.Namespace], None]:
+    ) -> Callable[[CommandFunc], CommandFunc]:
         """Register a command with the CLI.
 
         :param prog: The name of the command.
@@ -40,8 +39,8 @@ class CommandRegistry:
         """
 
         def decorator(
-            func: Callable[[argparse.Namespace], None],
-        ) -> Callable[[argparse.Namespace], None]:
+            func: CommandFunc,
+        ) -> CommandFunc:
             self._commands.append(Command(prog, description, short_desc, func, flags))
             return func
 
