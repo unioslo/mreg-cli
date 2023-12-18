@@ -4,7 +4,12 @@ import ipaddress
 import sys
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
-from typing_extensions import Literal, TypeAlias  # noqa: F401
+# This is a seperate import due to using string annotation, so the
+# import can't be consolidated into a single line with other imports
+# from typing_extensions. This hack is required for RHEL7 support that
+# has a typing_extensions library that has some issues.
+if TYPE_CHECKING:
+    from typing_extensions import Literal, TypeAlias  # noqa: F401
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict
