@@ -3,7 +3,7 @@
 import argparse
 import ipaddress
 import sys
-from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, Union
 
 CommandFunc = Callable[[argparse.Namespace], None]
 
