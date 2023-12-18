@@ -5,9 +5,7 @@ And this rule is promptly broken by importing from mreg_cli.outputmanager...
 """
 
 import ipaddress
-import os
-import sys
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NoReturn
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List
 
 if TYPE_CHECKING:
     pass
@@ -17,12 +15,6 @@ import urllib.parse
 from mreg_cli.log import cli_warning
 from mreg_cli.utilities.api import get
 from mreg_cli.utilities.validators import is_valid_ip, is_valid_network
-
-
-def error(msg: str, code: int = os.EX_UNAVAILABLE) -> NoReturn:
-    """Print an error message and exits with the given code."""
-    print(f"ERROR: {msg}", file=sys.stderr)
-    sys.exit(code)
 
 
 def get_network_first_unused_ip(network: Dict[str, Any]) -> str:

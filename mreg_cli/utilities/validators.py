@@ -5,10 +5,8 @@ Due to circular dependencies, be very aware of what you import here.
 """
 
 import ipaddress
-import os
 import re
-import sys
-from typing import TYPE_CHECKING, Any, Dict, NoReturn, Union
+from typing import TYPE_CHECKING, Union
 
 from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
@@ -16,18 +14,6 @@ from mreg_cli.types import IP_Version
 
 if TYPE_CHECKING:
     pass
-
-
-def error(msg: str, code: int = os.EX_UNAVAILABLE) -> NoReturn:
-    """Print an error message and exits with the given code."""
-    print(f"ERROR: {msg}", file=sys.stderr)
-    sys.exit(code)
-
-
-def set_config(cfg: Dict[str, Any]) -> None:
-    """Set the config dict."""
-    global config
-    config = cfg
 
 
 def is_valid_ip(ip: str) -> bool:
