@@ -41,10 +41,7 @@ class CliExit(Exception):
     pass
 
 
-SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]
-
-
-def _create_command_group(parent: argparse.ArgumentParser) -> SubparserType:
+def _create_command_group(parent: argparse.ArgumentParser) -> "SubparserType":
     """Create a sub parser for a command."""
     parent_name = parent.prog.strip()
 
@@ -79,7 +76,7 @@ class Command(Completer):
         self.parser = parser
         # sub is an object used for creating sub parser for this command. A
         # command/ArgParser can only have one of this object.
-        self.sub: Optional[SubparserType] = None
+        self.sub: Optional["SubparserType"] = None
 
         self.short_desc = short_desc
         self.children: Dict[str, Command] = {}
