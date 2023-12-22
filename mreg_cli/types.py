@@ -3,7 +3,7 @@
 import argparse
 import ipaddress
 import sys
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, TypeVar, Union
 
 CommandFunc = Callable[[argparse.Namespace], None]
 
@@ -39,13 +39,14 @@ if sys.version_info >= (3, 8):
         time: Optional[TimeInfo]
 
 else:
-    from typing import Any
-
     TimeInfo = Dict[str, Any]
     RecordingEntry = Dict[str, Any]
 
 IP_Version: "TypeAlias" = "Literal[4, 6]"
-IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
+IP_networkT = TypeVar("IP_networkT", ipaddress.IPv4Network, ipaddress.IPv6Network)
+# https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
+NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
+NargsType = Union[int, NargsStr]
 
 
 class Flag:
@@ -56,7 +57,7 @@ class Flag:
         name: str,
         description: str = "",
         short_desc: str = "",
-        nargs: int = None,
+        nargs: Optional[NargsType] = None,
         default: Any = None,
         flag_type: Any = None,
         choices: List[str] = None,

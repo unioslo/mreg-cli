@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING, Any, Dict, List, NoReturn, Optional, cast, overload
+from typing import TYPE_CHECKING, Any, Dict, List, NoReturn, Optional, Union, cast, overload
 
 import requests
 
@@ -41,7 +41,7 @@ mregurl = config.get("url")
 username = config.get("user")
 
 
-def error(msg: str, code: int = os.EX_UNAVAILABLE) -> NoReturn:
+def error(msg: Union[str, Exception], code: int = os.EX_UNAVAILABLE) -> NoReturn:
     """Print an error message and exits with the given code."""
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(code)
@@ -118,15 +118,15 @@ def update_token() -> None:
         e.print_self()
 
 
-def _update_token(username: str, password: str) -> None:
+def _update_token(username: Optional[str], password: str) -> None:
     """Perform the actual token update."""
     tokenurl = requests.compat.urljoin(mregurl, "/api/token-auth/")
     try:
         result = requests.post(tokenurl, {"username": username, "password": password})
-    except requests.exceptions.ConnectionError as err:
-        error(err)
     except requests.exceptions.SSLError as e:
         error(e)
+    except requests.exceptions.ConnectionError as err:
+        error(err)
     if not result.ok:
         try:
             res = result.json()
@@ -165,7 +165,7 @@ def result_check(result: "ResponseLike", operation_type: str, url: str) -> None:
 def _request_wrapper(
     operation_type: str,
     path: str,
-    params: Dict[str, str] = None,
+    params: Optional[Dict[str, Any]] = None,
     ok404: bool = False,
     first: bool = True,
     use_json: bool = False,
@@ -197,26 +197,28 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: Dict[str, str], ok404: "Literal[True]") -> Optional["ResponseLike"]:
+def get(path: str, params: Dict[str, Any], ok404: "Literal[True]") -> Optional["ResponseLike"]:
     ...
 
 
 @overload
-def get(path: str, params: Dict[str, str], ok404: "Literal[False]") -> "ResponseLike":
+def get(path: str, params: Dict[str, Any], ok404: "Literal[False]") -> "ResponseLike":
     ...
 
 
 @overload
-def get(path: str, params: Dict[str, str] = ..., *, ok404: bool) -> Optional["ResponseLike"]:
+def get(path: str, params: Dict[str, Any] = ..., *, ok404: bool) -> Optional["ResponseLike"]:
     ...
 
 
 @overload
-def get(path: str, params: Dict[str, str] = ...) -> "ResponseLike":
+def get(path: str, params: Dict[str, Any] = ...) -> "ResponseLike":
     ...
 
 
-def get(path: str, params: Dict[str, str] = None, ok404: bool = False) -> Optional["ResponseLike"]:
+def get(
+    path: str, params: Optional[Dict[str, Any]] = None, ok404: bool = False
+) -> Optional["ResponseLike"]:
     """Make a standard get request."""
     if params is None:
         params = {}
@@ -224,7 +226,7 @@ def get(path: str, params: Dict[str, str] = None, ok404: bool = False) -> Option
 
 
 def get_list(
-    path: Optional[str], params: Dict[str, Any] = None, ok404: bool = False
+    path: Optional[str], params: Optional[Dict[str, Any]] = None, ok404: bool = False
 ) -> List[Dict[str, Any]]:
     """Make a get request that produces a list.
 
@@ -247,7 +249,9 @@ def get_list(
     return ret
 
 
-def post(path: str, params: Dict[str, Any] = None, **kwargs: Any) -> Optional["ResponseLike"]:
+def post(
+    path: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any
+) -> Optional["ResponseLike"]:
     """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
@@ -255,7 +259,7 @@ def post(path: str, params: Dict[str, Any] = None, **kwargs: Any) -> Optional["R
 
 
 def patch(
-    path: str, params: Dict[str, Any] = None, use_json: bool = False, **kwargs: Any
+    path: str, params: Optional[Dict[str, Any]] = None, use_json: bool = False, **kwargs: Any
 ) -> Optional["ResponseLike"]:
     """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
@@ -263,7 +267,7 @@ def patch(
     return _request_wrapper("patch", path, params=params, use_json=use_json, **kwargs)
 
 
-def delete(path: str, params: Dict[str, Any] = None) -> Optional["ResponseLike"]:
+def delete(path: str, params: Optional[Dict[str, Any]] = None) -> Optional["ResponseLike"]:
     """Use requests to make a delete request."""
     if params is None:
         params = {}

@@ -7,7 +7,7 @@ Note that these functions *may* themselves require API calls to get additional d
 related to the field or dataset being formatted.
 """
 
-from typing import Any, Dict, Iterable, List, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
@@ -50,7 +50,7 @@ def output_ipaddresses(
 ) -> None:
     """Pretty print given ip addresses."""
 
-    def _find_padding(lst: List[str], attr: str):
+    def _find_padding(lst: Iterable[Dict[str, Any]], attr: str):
         return max(padding, max([len(i[attr]) for i in lst]) + 1)
 
     manager = OutputManager()
@@ -107,7 +107,7 @@ def output_cname(cname: str, host: str, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2} -> {3}".format(padding, "Cname:", cname, host))
 
 
-def output_mx(mxs: Dict[str, Any], padding: int = 14) -> None:
+def output_mx(mxs: List[Dict[str, Any]], padding: int = 14) -> None:
     """Pretty print all MXs."""
     if not mxs:
         return
@@ -139,7 +139,7 @@ def output_bacnetid(bacnetid: Union[Dict[str, Any], None], padding: int = 14) ->
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "BACnet ID:", bacnetid["id"]))
 
 
-def output_srv(srvs: Union[Dict[str, Any], None] = None, host_id: str = None) -> None:
+def output_srv(srvs: Optional[List[Dict[str, Any]]] = None, host_id: Optional[str] = None) -> None:
     """Pretty print given srv."""
     assert srvs is not None or host_id is not None
     hostid2name = dict()
@@ -319,4 +319,4 @@ def output_ip_info(ip: str) -> None:
             ptrhost = "default"
     if not ipaddresses and ptrhost is None:
         cli_warning(f"Found no hosts or ptr override matching IP {ip}")
-    output_ptr(ip, ptrhost)
+    output_ptr(ip, str(ptrhost))

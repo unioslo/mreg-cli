@@ -79,7 +79,7 @@ def remove_dict_key_recursive(obj: object, key: str) -> None:
             remove_dict_key_recursive(other_value, key)
 
 
-def urlpath(url: str, params: str) -> str:
+def urlpath(url: str, params: Dict[str, Any]) -> str:
     """Return the path and query string of a URL."""
     if params:
         url = f"{url}?{urlencode(params)}"
@@ -134,7 +134,7 @@ class OutputManager:
         self._warnings: List[str] = []
         self._errors: List[str] = []
 
-        self._api_requests: List[str] = []
+        self._api_requests: List[Dict[str, Any]] = []
 
         self._time_started: datetime.datetime = datetime.datetime.now()
 
@@ -142,7 +142,7 @@ class OutputManager:
         """Clear the recording data."""
         self._recorded_data: List[RecordingEntry] = []
         self._recording: bool = False
-        self._filename: str = None
+        self._filename: Optional[str] = None
         self._record_timestamps: bool = True
 
     def record_timestamps(self, state: bool) -> None:

@@ -38,7 +38,7 @@ Commands implemented:
 """
 
 import argparse
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
@@ -367,7 +367,7 @@ def naptr_add(args: argparse.Namespace) -> None:
     }
 
     path = "/api/v1/naptrs/"
-    post(path, **data)
+    post(path, params=None, **data)
     cli_info("created NAPTR record for {}".format(info["name"]), print_msg=True)
 
 
@@ -620,10 +620,10 @@ def ptr_show(args: argparse.Namespace) -> None:
     params = {
         "ptr_overrides__ipaddress": args.ip,
     }
-    host = get_list(path, params=params)
+    hosts = get_list(path, params=params)
 
-    if host:
-        host = host[0]
+    if hosts:
+        host = hosts[0]
         for ptr in host["ptr_overrides"]:
             if args.ip == ptr["ipaddress"]:
                 padding = len(args.ip)
@@ -744,7 +744,7 @@ def srv_remove(args: argparse.Namespace) -> None:
     cli_info("deleted SRV record for {}".format(info["name"]), print_msg=True)
 
 
-def _srv_show(srvs: Union[Dict[str, Any], None] = None, host_id: str = None) -> None:
+def _srv_show(srvs: Optional[List[Dict[str, Any]]] = None, host_id: Optional[str] = None) -> None:
     assert srvs is not None or host_id is not None
     hostid2name = dict()
     host_ids = set()
@@ -863,8 +863,8 @@ def sshfp_add(args: argparse.Namespace) -> None:
 @command_registry.register_command(
     prog="sshfp_remove",
     description=(
-        "Remove SSHFP record with a given fingerprint from the host. ",
-        "A missing fingerprint removes all SSHFP records for the host.",
+        "Remove SSHFP record with a given fingerprint from the host. "
+        "A missing fingerprint removes all SSHFP records for the host."
     ),
     short_desc="Remove SSHFP record.",
     flags=[
@@ -968,8 +968,8 @@ def ttl_remove(args: argparse.Namespace) -> None:
 @command_registry.register_command(
     prog="ttl_set",
     description=(
-        "Set ttl for host. Valid values are 300 <= TTL <= 68400 or ",
-        '"default". If NAME is an alias the alias host is updated.',
+        "Set ttl for host. Valid values are 300 <= TTL <= 68400 or "
+        '"default". If NAME is an alias the alias host is updated.'
     ),
     short_desc="Set TTL record.",
     flags=[
@@ -1028,8 +1028,8 @@ def ttl_show(args: argparse.Namespace) -> None:
 @command_registry.register_command(
     prog="txt_add",
     description=(
-        "Add a txt record to host. TEXT must be enclosed in double ",
-        "quotes if it contains more than one word.",
+        "Add a txt record to host. TEXT must be enclosed in double "
+        "quotes if it contains more than one word."
     ),
     short_desc="Add TXT record.",
     flags=[

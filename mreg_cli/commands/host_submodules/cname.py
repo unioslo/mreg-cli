@@ -14,8 +14,8 @@ from mreg_cli.utilities.zone import zone_check_for_hostname
 @command_registry.register_command(
     prog="cname_add",
     description=(
-        "Add a CNAME record to host. If NAME is an alias ",
-        "the cname host is used as target for ALIAS.",
+        "Add a CNAME record to host. If NAME is an alias "
+        "the cname host is used as target for ALIAS."
     ),
     short_desc="Add CNAME.",
     flags=[
@@ -120,8 +120,7 @@ def cname_replace(args: argparse.Namespace) -> None:
 @command_registry.register_command(
     prog="cname_show",
     description=(
-        "Show CNAME records for host. If NAME is an alias the cname ",
-        "hosts aliases are shown.",
+        "Show CNAME records for host. If NAME is an alias the cname " "hosts aliases are shown."
     ),
     short_desc="Show CNAME records.",
     flags=[

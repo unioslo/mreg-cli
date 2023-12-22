@@ -143,8 +143,7 @@ def a_add(args: argparse.Namespace) -> None:
 @command_registry.register_command(
     prog="a_change",
     description=(
-        "Change an A record for the target host.",
-        "If NAME is an alias the cname host is used.",
+        "Change an A record for the target host. If NAME is an alias the cname host is used."
     ),
     short_desc="Change A record.",
     flags=[

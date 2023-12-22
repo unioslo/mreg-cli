@@ -1,7 +1,7 @@
 """Policy commands for mreg_cli."""
 
 import argparse
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -51,7 +51,7 @@ def get_role(name: str) -> Dict[str, Any]:
     return ret[0]
 
 
-def get_atom_or_role(name: str) -> Dict[str, Any]:
+def get_atom_or_role(name: str) -> Tuple[str, Dict[str, Any]]:
     """Return the atom or role info."""
     atom = _get_atom(name)
     if atom:

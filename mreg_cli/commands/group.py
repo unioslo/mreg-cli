@@ -246,7 +246,7 @@ def host_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, hosts)
     """
     get_hostgroup(args.group)
-    info: Dict[str, str] = []
+    info: List[Dict[str, str]] = []
     for name in args.hosts:
         info.append(host_info_by_name(name, follow_cname=False))
 
@@ -275,7 +275,7 @@ def host_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, hosts)
     """
     get_hostgroup(args.group)
-    info: Dict[str, str] = []
+    info: List[Dict[str, str]] = []
     for name in args.hosts:
         info.append(host_info_by_name(name, follow_cname=False))
 

@@ -58,7 +58,7 @@ def clean_hostname(name: Union[str, bytes]) -> str:
     return name
 
 
-def get_unique_ip_by_name_or_ip(arg: str) -> str:
+def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
     """Get A/AAAA record by either ip address or host name.
 
     This will fail if:
@@ -74,12 +74,12 @@ def get_unique_ip_by_name_or_ip(arg: str) -> str:
         params = {
             "ipaddress": arg,
         }
-        ip = get_list(path, params=params)
-        if not len(ip):
+        ips = get_list(path, params=params)
+        if not len(ips):
             cli_warning(f"ip {arg} doesn't exist.")
-        elif len(ip) > 1:
-            cli_warning("ip {} is in use by {} hosts".format(arg, len(ip)))
-        ip = ip[0]
+        elif len(ips) > 1:
+            cli_warning("ip {} is in use by {} hosts".format(arg, len(ips)))
+        ip = ips[0]
     else:
         info = host_info_by_name(arg)
         if len(info["ipaddresses"]) > 1:
@@ -99,7 +99,7 @@ def get_unique_ip_by_name_or_ip(arg: str) -> str:
     return ip
 
 
-def assoc_mac_to_ip(mac: str, ip: str, force: bool = False) -> Union[str, None]:
+def assoc_mac_to_ip(mac: str, ip: Dict[str, Any], force: bool = False) -> Union[str, None]:
     """Associate MAC address with IP address."""
     # MAC addr sanity check
     if is_valid_mac(mac):
@@ -123,7 +123,7 @@ def assoc_mac_to_ip(mac: str, ip: str, force: bool = False) -> Union[str, None]:
     old_mac = ip.get("macaddress")
     if old_mac == new_mac:
         cli_info("new and old mac are identical. Ignoring.", print_msg=True)
-        return
+        return None
     elif old_mac and not force:
         cli_warning(
             "ip {} has existing mac {}. Use force to replace.".format(ip["ipaddress"], old_mac)
@@ -144,7 +144,7 @@ def cname_exists(cname: str) -> bool:
 
 
 def add_ip_to_host(
-    args: argparse.Namespace, ipversion: IP_Version, macaddress: str = None
+    args: argparse.Namespace, ipversion: IP_Version, macaddress: Optional[str] = None
 ) -> None:
     """Add an A record to host. If <name> is an alias the cname host is used.
 
@@ -176,12 +176,12 @@ def add_ip_to_host(
         data = {"name": hostname, "ipaddress": ip}
         # Create new host with IP
         path = "/api/v1/hosts/"
-        post(path, **data)
+        post(path, params=None, **data)
         cli_info(f"Created host {hostname} with ip {ip}", print_msg=True)
         if macaddress is not None:
             # It can only be one, as it was just created.
-            ip = get(f"{path}{hostname}").json()["ipaddresses"][0]
-            assoc_mac_to_ip(macaddress, ip, force=args.force)
+            new_ip = get(f"{path}{hostname}").json()["ipaddresses"][0]
+            assoc_mac_to_ip(macaddress, new_ip, force=args.force)
 
     else:
         # Require force if host has multiple A/AAAA records
@@ -200,7 +200,7 @@ def add_ip_to_host(
 
         # Add IP
         path = "/api/v1/ipaddresses/"
-        post(path, **data)
+        post(path, params=None, **data)
         cli_info(f"added ip {ip} to {info['name']}", print_msg=True)
 
 

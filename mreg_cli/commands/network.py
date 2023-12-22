@@ -3,7 +3,7 @@
 import argparse
 import ipaddress
 import urllib.parse
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Union
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -39,12 +39,12 @@ class NetworkCommands(BaseCommand):
         super().__init__(cli, command_registry, "network", "Manage networks", "Manage networks")
 
 
-def get_network_range_from_input(net: str) -> Optional[str]:
+def get_network_range_from_input(net: str) -> str:
     """Return network range from input.
 
     - If input is a valid ip address, return the network range of the ip address.
     - If input is a valid network range, return the input.
-    - Otherwise, print a warning and return None.
+    - Otherwise, print a warning and abort.
     """
     if net.endswith("/"):
         net = net[:-1]
@@ -65,7 +65,7 @@ def print_network_unused(count: int, padding: int = 25) -> None:
     )
 
 
-def format_network_excluded_ranges(info: Dict[str, Any], padding: int = 25) -> None:
+def format_network_excluded_ranges(info: List[Dict[str, Any]], padding: int = 25) -> None:
     """Pretty print excluded ranges."""
     if not info:
         return
@@ -105,7 +105,7 @@ def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> 
         )
 
 
-def print_network(info: int, text: str, padding: int = 25) -> None:
+def print_network(info: Union[int, str], text: str, padding: int = 25) -> None:
     """Pretty print network info."""
     OutputManager().add_line("{1:<{0}}{2}".format(padding, text, info))
 

@@ -8,7 +8,7 @@ from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag, IP_network
+from mreg_cli.types import Flag, IP_networkT
 from mreg_cli.utilities.api import delete, get, get_list, patch, post
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 from mreg_cli.utilities.validators import is_valid_network
@@ -46,7 +46,7 @@ def network_list(args: argparse.Namespace) -> None:
     """
 
     # Replace with a.supernet_of(b) when python 3.7 is required
-    def _supernet_of(a: IP_network, b: IP_network) -> bool:
+    def _supernet_of(a: IP_networkT, b: IP_networkT) -> bool:
         """Return True if a is a supernet of b."""
         return bool(
             a.network_address <= b.network_address and a.broadcast_address >= b.broadcast_address

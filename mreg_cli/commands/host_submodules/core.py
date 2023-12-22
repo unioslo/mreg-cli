@@ -116,7 +116,7 @@ def add(args: argparse.Namespace) -> None:
     if args.ip and ip:
         data["ipaddress"] = ip
 
-    post(path, **data)
+    post(path, params=None, **data)
     if args.macaddress is not None:
         # It can only be one, as it was just created.
         ipdata = get(f"{path}{name}").json()["ipaddresses"][0]
@@ -340,8 +340,8 @@ def find(args: argparse.Namespace) -> None:
         Flag(
             "old_name",
             description=(
-                "Host name of the host to rename. May be an alias. ",
-                "If it is an alias then the alias is renamed.",
+                "Host name of the host to rename. May be an alias. "
+                "If it is an alias then the alias is renamed."
             ),
             short_desc="Existing host name.",
             metavar="OLD",

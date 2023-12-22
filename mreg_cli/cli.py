@@ -7,7 +7,7 @@ import html
 import os
 import shlex
 import sys
-from typing import Any, Generator, List, NoReturn, Union
+from typing import Any, Dict, Generator, List, NoReturn, Optional, Union
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
@@ -37,7 +37,10 @@ class CliExit(Exception):
     pass
 
 
-def _create_command_group(parent: argparse.ArgumentParser):
+SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]
+
+
+def _create_command_group(parent: argparse.ArgumentParser) -> SubparserType:
     """Create a sub parser for a command."""
     parent_name = parent.prog.strip()
 
@@ -65,17 +68,17 @@ class Command(Completer):
     """
 
     # Used to detect an error when running commands from a source file.
-    last_errno = 0
+    last_errno: Union[str, int, None] = 0
 
     def __init__(self, parser: argparse.ArgumentParser, flags: List[Flag], short_desc: str):
         """Initialize a Command object."""
         self.parser = parser
         # sub is an object used for creating sub parser for this command. A
         # command/ArgParser can only have one of this object.
-        self.sub = None
+        self.sub: Optional[SubparserType] = None
 
         self.short_desc = short_desc
-        self.children = {}
+        self.children: Dict[str, Command] = {}
         self.flags = {}
         for flag in flags:
             if flag.name.startswith("-"):
@@ -86,8 +89,8 @@ class Command(Completer):
         prog: str,
         description: str,
         short_desc: str = "",
-        epilog: str = None,
-        callback: CommandFunc = None,
+        epilog: Optional[str] = None,
+        callback: Optional[CommandFunc] = None,
         flags: Union[List[Flag], None] = None,
     ):
         """Add a command to the current parser.
@@ -98,7 +101,7 @@ class Command(Completer):
         """
         if flags is None:
             flags = []
-        if not self.sub:
+        if self.sub is None:
             self.sub = _create_command_group(self.parser)
         parser = self.sub.add_parser(prog, description=description, epilog=epilog, help=short_desc)
         parser.formatter_class = CustomHelpFormatter
@@ -107,7 +110,7 @@ class Command(Completer):
             # parameters are sent, or else exceptions are raised. Ex: if
             # required is passed with an argument which doesn't accept the
             # required option.
-            args = {
+            args: Dict[str, Any] = {
                 "help": f.description,
             }
             if f.type:
@@ -136,10 +139,10 @@ class Command(Completer):
         args = shlex.split(command, comments=True)
 
         try:
-            args = self.parser.parse_args(args)
+            parsed_args = self.parser.parse_args(args)
             # If the command has a callback function, call it.
-            if "func" in vars(args) and args.func:
-                args.func(args)
+            if hasattr(parsed_args, "func") and parsed_args.func:
+                parsed_args.func(parsed_args)
 
         except SystemExit as e:
             # This is a super-hacky workaround to implement a REPL app using
@@ -174,7 +177,7 @@ class Command(Completer):
         words = document.text.strip().split(" ")
         yield from self.complete(cur, words)
 
-    def complete(self, cur: str, words: str) -> Generator[Union[Completion, Any], Any, None]:
+    def complete(self, cur: str, words: List[str]) -> Generator[Union[Completion, Any], Any, None]:
         """Generate completions during typing.
 
         :param cur: The current word.
