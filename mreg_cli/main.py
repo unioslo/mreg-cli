@@ -145,10 +145,13 @@ def main():
     # Must import the commands, for the side effects of creating the commands
     # when importing. Ensure that the noqa comments are updated when new
     # commands are added, otherwise the import will be removed by ruff.
+    # Also, ensure the order is kept as it is, as some imports (bacnet)
+    # depend on others (host).
     from . import dhcp  # noqa
     from . import group  # noqa
     from . import history  # noqa
     from . import host  # noqa
+    from . import bacnet  # noqa
     from . import label  # noqa
     from . import network  # noqa
     from . import permission  # noqa
