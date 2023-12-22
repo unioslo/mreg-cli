@@ -44,9 +44,11 @@ else:
 
 IP_Version: "TypeAlias" = "Literal[4, 6]"
 IP_networkT = TypeVar("IP_networkT", ipaddress.IPv4Network, ipaddress.IPv6Network)
-# https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
-NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
-NargsType = Union[int, NargsStr]
+
+if TYPE_CHECKING:
+    # https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
+    NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
+    NargsType = Union[int, NargsStr]
 
 
 class Flag:
@@ -57,13 +59,13 @@ class Flag:
         name: str,
         description: str = "",
         short_desc: str = "",
-        nargs: Optional[NargsType] = None,
+        nargs: Optional["NargsType"] = None,
         default: Any = None,
         flag_type: Any = None,
         choices: List[str] = None,
         required: bool = False,
-        metavar: str = None,
-        action: str = None,
+        metavar: Optional[str] = None,
+        action: Optional[str] = None,
     ):
         """Initialize a Flag object."""
         self.name = name
