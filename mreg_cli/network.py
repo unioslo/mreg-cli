@@ -221,7 +221,7 @@ def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
         addr = network_info
         ip_range = get_network_range_from_input(addr)
         network_info = get_network(ip_range)
-    elif isinstance(network_info, dict()):
+    elif isinstance(network_info, dict):
         ip_range = network_info["network"]
     else:
         # TODO:improve error message. Possibly raise a built-in exception to signal
