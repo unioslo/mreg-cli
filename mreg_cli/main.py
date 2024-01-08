@@ -100,6 +100,12 @@ def main():
         metavar="RECFILE",
     )
     output_args.add_argument(
+        "--record-without-timestamps",
+        dest="record_traffic_without_timestamps",
+        action="store_true",
+        help="Do not apply timestamps to the recording file",
+    )
+    output_args.add_argument(
         "--source",
         dest="source",
         help="Read commands from %(metavar)s",
@@ -116,7 +122,10 @@ def main():
         log.logfile = conf["logfile"]
 
     if "record_traffic" in conf:
-        OutputManager().start_recording(conf["record_traffic"])
+        OutputManager().recording_start(conf["record_traffic"])
+
+    if "record_traffic_without_timestamps" in conf:
+        OutputManager().record_timestamps(False)
 
     if "user" not in conf:
         print("Username not set in config or as argument")
@@ -136,10 +145,13 @@ def main():
     # Must import the commands, for the side effects of creating the commands
     # when importing. Ensure that the noqa comments are updated when new
     # commands are added, otherwise the import will be removed by ruff.
+    # Also, ensure the order is kept as it is, as some imports (bacnet)
+    # depend on others (host).
     from . import dhcp  # noqa
     from . import group  # noqa
     from . import history  # noqa
     from . import host  # noqa
+    from . import bacnet  # noqa
     from . import label  # noqa
     from . import network  # noqa
     from . import permission  # noqa
@@ -150,7 +162,7 @@ def main():
     def get_prompt_message():
         """Return the prompt message."""
         manager = OutputManager()
-        if manager.is_recording():
+        if manager.recording_active():
             return HTML(f"<i>[>'{manager.recording_filename()}']</i> <b>{args.prompt}</b>> ")
         else:
             return HTML(f"<b>{args.prompt}</b>> ")

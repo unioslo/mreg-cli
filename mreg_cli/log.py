@@ -46,14 +46,10 @@ def cli_error(
         msg,
     )
     _write_log(s)
+    msg = "ERROR: {}: {}".format(pre, msg)
+    OutputManager().add_error(msg)
     if raise_exception:
         # A simplified message for console
-        msg = "ERROR: {}: {}".format(pre, msg)
-        manager = OutputManager()
-        if manager.is_recording():
-            # If recording traffic, also record the console output
-            manager.record_extra_output(msg)
-        # Raise the exception
         raise exception(msg)
     return None
 
@@ -70,13 +66,10 @@ def cli_warning(
         msg,
     )
     _write_log(s)
+    msg = "WARNING: {}: {}".format(pre, msg)
+    OutputManager().add_warning(msg)
     if raise_exception:
         # A simplified message for console
-        msg = "WARNING: {}: {}".format(pre, msg)
-        manager = OutputManager()
-        if manager.is_recording():
-            # If recording traffic, also record the console output
-            manager.record_extra_output(msg)
         raise exception(msg)
     return None
 
@@ -91,11 +84,8 @@ def cli_info(msg: str, print_msg: bool = False) -> None:
         msg,
     )
     _write_log(s)
+    msg = "OK: {}: {}".format(pre, msg)
+    OutputManager().add_ok(msg)
     if print_msg:
         # A simplified message for console
-        msg = "OK: {}: {}".format(pre, msg)
         print(msg)
-        manager = OutputManager()
-        if manager.is_recording():
-            # If recording traffic, also record the console output
-            manager.record_extra_output(msg)

@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 from dateutil.parser import parse
 
 from .log import cli_warning
+from .outputmanager import OutputManager
 from .util import get_list
 
 
@@ -39,7 +40,6 @@ def get_history_items(name: str, resource: str, data_relation: str = None) -> Li
 
 def format_history_items(ownname: str, items: Dict[str, Any]) -> List[str]:
     """Format history items for output."""
-    lines: str = []
 
     def _remove_unneded_keys(data: Dict[str, Any]):
         """Remove unneeded keys from data.
@@ -91,6 +91,4 @@ def format_history_items(ownname: str, items: Dict[str, Any]) -> List[str]:
         else:
             cli_warning(f"Unhandled history entry: {i}")
 
-        lines.append(f"{timestamp} [{i['user']}]: {model} {action}: {msg}")
-
-    return lines
+        OutputManager().add_line(f"{timestamp} [{i['user']}]: {model} {action}: {msg}")
