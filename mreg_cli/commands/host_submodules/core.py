@@ -20,6 +20,7 @@ from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.api import delete, get, get_list, patch, post
+from mreg_cli.utilities.history import format_history_items, get_history_items
 from mreg_cli.utilities.host import (
     assoc_mac_to_ip,
     clean_hostname,
@@ -447,3 +448,21 @@ def set_contact(args: argparse.Namespace) -> None:
     path = f"/api/v1/hosts/{info['name']}"
     patch(path, contact=args.contact)
     cli_info("Updated contact of {} to {}".format(info["name"], args.contact), print_msg=True)
+
+
+@command_registry.register_command(
+    prog="history",
+    description="Show history for host.",
+    short_desc="Show history.",
+    flags=[
+        Flag("name", description="Host name", metavar="NAME"),
+    ],
+)
+def history(args: argparse.Namespace) -> None:
+    """Show host history for name.
+
+    :param args: argparse.Namespace (name)
+    """
+    hostname = clean_hostname(args.name)
+    items = get_history_items(hostname, "host", data_relation="hosts")
+    format_history_items(hostname, items)

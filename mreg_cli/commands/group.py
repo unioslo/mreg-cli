@@ -10,6 +10,7 @@ from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.api import delete, get_list, patch, post
+from mreg_cli.utilities.history import format_history_items, get_history_items
 from mreg_cli.utilities.host import host_info_by_name
 
 command_registry = CommandRegistry()
@@ -380,3 +381,20 @@ def set_description(args: argparse.Namespace) -> None:
     get_hostgroup(args.name)
     patch(f"/api/v1/hostgroups/{args.name}", description=args.description)
     cli_info(f"updated description to {args.description!r} for {args.name!r}", True)
+
+
+@command_registry.register_command(
+    prog="history",
+    description="Show history for group name",
+    short_desc="Show history for group name",
+    flags=[
+        Flag("name", description="Group name", metavar="NAME"),
+    ],
+)
+def history(args: argparse.Namespace) -> None:
+    """Show host history for name.
+
+    :param args: argparse.Namespace (name)
+    """
+    items = get_history_items(args.name, "group", data_relation="groups")
+    format_history_items(args.name, items)

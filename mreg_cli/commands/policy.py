@@ -9,6 +9,7 @@ from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.api import delete, get, get_list, patch, post
+from mreg_cli.utilities.history import format_history_items, get_history_items
 from mreg_cli.utilities.host import host_info_by_name
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
@@ -603,3 +604,37 @@ def remove_label_from_role(args: argparse.Namespace) -> None:
     ar.remove(label["id"])
     patch(path, use_json=True, params={"labels": ar})
     cli_info(f"Removed the label {args.label!r} from the role {args.role!r}.", print_msg=True)
+
+
+@command_registry.register_command(
+    prog="atom_history",
+    description="Show history for atom name",
+    short_desc="Show history for atom name",
+    flags=[
+        Flag("name", description="Host name", metavar="NAME"),
+    ],
+)
+def atom_history(args: argparse.Namespace) -> None:
+    """Show history for name.
+
+    :param args: argparse.Namespace (name)
+    """
+    items = get_history_items(args.name, "hostpolicy_atom", data_relation="atoms")
+    format_history_items(args.name, items)
+
+
+@command_registry.register_command(
+    prog="role_history",
+    description="Show history for role name",
+    short_desc="Show history for role name",
+    flags=[
+        Flag("name", description="Host name", metavar="NAME"),
+    ],
+)
+def role_history(args: argparse.Namespace) -> None:
+    """Show history for name.
+
+    :param args: argparse.Namespace (name)
+    """
+    items = get_history_items(args.name, "hostpolicy_role", data_relation="roles")
+    format_history_items(args.name, items)
