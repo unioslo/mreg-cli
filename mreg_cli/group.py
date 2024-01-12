@@ -229,10 +229,8 @@ def _history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    manager = OutputManager()
     items = get_history_items(args.name, "group", data_relation="groups")
-    for line in format_history_items(args.name, items):
-        manager.add_line(line)
+    format_history_items(args.name, items)
 
 
 group.add_command(
