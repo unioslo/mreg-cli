@@ -19,11 +19,6 @@ def replace_timestamps(obj: Any) -> Any:
     elif isinstance(obj, list):
         return [replace_timestamps(elem) for elem in obj]
     elif isinstance(obj, str):
-        if timestamp_pattern.match(obj):
-            print("Replacing timestamp:", obj)
-            tmp = timestamp_pattern.sub("<TIME>", obj)
-            print("With:", tmp)
-
         return timestamp_pattern.sub("<TIME>", obj)
     return obj
 
