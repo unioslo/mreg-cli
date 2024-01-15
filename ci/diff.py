@@ -1,11 +1,38 @@
 import difflib
 import json
+import re
 import sys
+from typing import Any, Dict, List
 
 
-def group_objects(json_file_path):
+def replace_timestamps(obj: Any) -> Any:
+    """Recursively replace timestamp values in a JSON object.
+
+    :param obj: A JSON object (dict, list, or primitive type).
+    :returns: A new object with timestamps replaced.
+    """
+    timestamp_pattern = re.compile(
+        r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2})?|\d{4}-\d{2}-\d{2}"
+    )
+    if isinstance(obj, dict):
+        return {k: replace_timestamps(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [replace_timestamps(elem) for elem in obj]
+    elif isinstance(obj, str):
+        return timestamp_pattern.sub("<TIME>", obj)
+    return obj
+
+
+def group_objects(json_file_path: str) -> List[List[Dict[str, Any]]]:
+    """Group objects in a JSON file by a specific criterion.
+
+    :param json_file_path: Path to the JSON file.
+    :returns: A list of grouped objects.
+    """
     with open(json_file_path, "r") as f:
         data = json.load(f)
+
+    data = [replace_timestamps(obj) for obj in data]
 
     grouped_objects = []
     temp = []
@@ -23,7 +50,8 @@ def group_objects(json_file_path):
     return grouped_objects
 
 
-def main():
+def main() -> None:
+    """Compare two JSON files."""
     if len(sys.argv) != 3:
         print("Usage: diff.py <file1> <file2>")
         sys.exit(1)
@@ -40,9 +68,7 @@ def main():
         cmdlist2.append(a[0]["command"].rstrip())
     differ = difflib.Differ()
     diff = differ.compare(cmdlist1, cmdlist2)
-    differences = [
-        line for line in diff if line.startswith("-") or line.startswith("+")
-    ]
+    differences = [line for line in diff if line.startswith("-") or line.startswith("+")]
     if differences:
         print(
             "Diff between what commands were run in the recorded result and the current testsuite:"

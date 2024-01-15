@@ -33,6 +33,8 @@ network list_used_addresses 2001:db8::/64
 network list_unused_addresses 2001:db8::/64
 network set_reserved 2001:db8::/64 50
 host add tinyhost -ip 2001:db8::/64 -contact me@example.org
+host info tinyhost | 2001
+host info tinyhost |! example.org
 host remove tinyhost
 network remove 2001:db8::/64 -f
 
@@ -56,6 +58,7 @@ network set_description 10.0.1.0/24 "Frozen but has one host"
 network set_vlan 10.0.1.0/24 1234
 network info 10.0.1.0/24
 network find -network 10.0.1.0/24 -description '*one host*' -vlan 1234 -frozen 1 -reserved 6 -dns_delegated 0 -category Yellow -location Somewhere
+host history somehost
 host remove somehost
 network unset_frozen 10.0.1.0/24
 host add otherhost -ip 10.0.1.20 -contact support@example.org  # fails because reserved range
@@ -95,6 +98,7 @@ group info mygroup
 group group_remove mygroup yourgroup
 group owner_add mygroup anotherowner
 group owner_remove mygroup myself
+group history mygroup
 group delete mygroup     # fails because the group contains testhost1, must force
 group delete mygroup -force
 group delete yourgroup
@@ -130,9 +134,10 @@ policy list_roles *
 policy list_roles fru
 policy add_atom fruit apple
 policy add_atom fruit orange
-policy info orange |! Created # Created dates will differ
-policy info fruit |! Created # Created dates will differ
-policy list_members fruit |! Created # Created dates will differ
+policy info orange
+policy info fruit
+policy list_members fruit
+policy atom_history apple
 policy atom_delete apple  # Should fail because 'apple' is used in role 'fruit'
 policy remove_atom fruit apple
 policy atom_delete apple
@@ -147,6 +152,7 @@ policy host_remove fruit foo
 policy remove_atom fruit banana # should fail
 policy remove_atom fruit tangerine
 policy role_delete vegetables  # fails, that role doesn't exist
+policy role_history fruit
 policy role_delete fruit
 policy atom_delete tangerine
 host remove foo
@@ -285,7 +291,7 @@ label add postit 'A label again'
 policy role_create myrole 'This is the description'
 policy label_add postit myrole
 policy list_roles *
-policy info myrole |! Created # Created dates will differ
+policy info myrole
 label info postit
 policy label_remove postit myrole
 policy role_delete myrole
