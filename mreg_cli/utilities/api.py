@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, NoReturn, Optional, Union, ca
 
 import requests
 
-from mreg_cli.config import MregCliConfig
 from mreg_cli.outputmanager import OutputManager
 
 if TYPE_CHECKING:
@@ -22,6 +21,7 @@ if TYPE_CHECKING:
 
 from prompt_toolkit import prompt
 
+from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError
 from mreg_cli.log import cli_error, cli_warning
 
@@ -33,12 +33,6 @@ mreg_auth_token_file = os.path.join(str(os.getenv("HOME")), ".mreg-cli_auth_toke
 logger = logging.getLogger(__name__)
 
 HTTP_TIMEOUT = 20
-
-config = MregCliConfig()
-
-
-mregurl = config.get("url")
-username = config.get("user")
 
 
 def error(msg: Union[str, Exception], code: int = os.EX_UNAVAILABLE) -> NoReturn:
@@ -77,7 +71,7 @@ def login1(user: str, url: str) -> None:
     # Find a better URL.. but so far so good
     try:
         ret = session.get(
-            requests.compat.urljoin(mregurl, "/api/v1/hosts/"),
+            requests.compat.urljoin(MregCliConfig().get("url"), "/api/v1/hosts/"),
             params={"page_size": 1},
             timeout=5,
         )
@@ -101,7 +95,7 @@ def login(user: str, url: str) -> None:
 
 def logout() -> None:
     """Logout from MREG."""
-    path = requests.compat.urljoin(mregurl, "/api/token-logout/")
+    path = requests.compat.urljoin(MregCliConfig().get("url"), "/api/token-logout/")
     # Try to logout, and ignore errors
     try:
         session.post(path)
@@ -113,14 +107,14 @@ def update_token() -> None:
     """Update the token."""
     password = prompt("You need to re-autenticate\nEnter password: ", is_password=True)
     try:
-        _update_token(username, password)
+        _update_token(MregCliConfig().get("user"), password)
     except CliError as e:
         e.print_self()
 
 
 def _update_token(username: Optional[str], password: str) -> None:
     """Perform the actual token update."""
-    tokenurl = requests.compat.urljoin(mregurl, "/api/token-auth/")
+    tokenurl = requests.compat.urljoin(MregCliConfig().get("url"), "/api/token-auth/")
     try:
         result = requests.post(tokenurl, {"username": username, "password": password})
     except requests.exceptions.SSLError as e:
@@ -174,7 +168,7 @@ def _request_wrapper(
     """Wrap request calls to MREG for logging and token management."""
     if params is None:
         params = {}
-    url = requests.compat.urljoin(mregurl, path)
+    url = requests.compat.urljoin(MregCliConfig().get("url"), path)
 
     if use_json:
         result = getattr(session, operation_type)(url, json=params, timeout=HTTP_TIMEOUT)
