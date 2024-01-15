@@ -38,7 +38,7 @@ def get_history_items(name: str, resource: str, data_relation: str = None) -> Li
     return ret
 
 
-def format_history_items(ownname: str, items: Dict[str, Any]) -> List[str]:
+def format_history_items(ownname: str, items: List[Dict[str, Any]]) -> None:
     """Format history items for output."""
 
     def _remove_unneded_keys(data: Dict[str, Any]):
