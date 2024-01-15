@@ -76,9 +76,7 @@ def format_network_excluded_ranges(info: Dict[str, Any], padding: int = 25) -> N
     for i in info:
         start_ip = ipaddress.ip_address(i["start_ip"])
         end_ip = ipaddress.ip_address(i["end_ip"])
-        count += int(end_ip) - int(start_ip)
-        if end_ip == start_ip:
-            count += 1
+        count += int(end_ip) - int(start_ip) + 1
     manager = OutputManager()
     manager.add_line("{1:<{0}}{2} ipaddresses".format(padding, "Excluded ranges:", count))
     for i in info:

@@ -10076,7 +10076,7 @@
       "                         10.0.1.2",
       "                         10.0.1.3",
       "                         10.0.1.255 (broadcast)",
-      "Excluded ranges:         10 ipaddresses",
+      "Excluded ranges:         11 ipaddresses",
       "                         10.0.1.20 -> 10.0.1.30",
       "Used addresses:          1",
       "Unused addresses:        239 (excluding reserved adr.)"
@@ -11211,7 +11211,7 @@
       "                         2001:db8::1",
       "                         2001:db8::2",
       "                         2001:db8::3",
-      "Excluded ranges:         16 ipaddresses",
+      "Excluded ranges:         17 ipaddresses",
       "                         2001:db8::20 -> 2001:db8::30",
       "Used addresses:          1",
       "Unused addresses:        18446744073709551594 (excluding reserved adr.)"
