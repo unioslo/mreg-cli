@@ -10,7 +10,7 @@ import datetime
 import json
 import os
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
@@ -18,9 +18,22 @@ import requests
 from mreg_cli.exceptions import CliError
 from mreg_cli.types import RecordingEntry, TimeInfo
 
+if TYPE_CHECKING:
+    from typing_extensions import Literal
 
-# These functions are for generic output usage, but can't be in util.py
-# because we would get a circular import.
+
+@overload
+def find_char_outside_quotes(line: str, target_char: str, return_position: "Literal[True]") -> int:
+    ...
+
+
+@overload
+def find_char_outside_quotes(
+    line: str, target_char: str, return_position: "Literal[False]"
+) -> str:
+    ...
+
+
 def find_char_outside_quotes(
     line: str, target_char: str, return_position: bool = False
 ) -> Union[str, int]:
@@ -57,8 +70,7 @@ def remove_comments(line: str) -> str:
     :param line: The line of text to process.
     :return: The line with comments removed.
     """
-    # Yes, this will always be a string, but linters fail to understand that.
-    return cast(str, find_char_outside_quotes(line, "#", False)).rstrip(" ")
+    return find_char_outside_quotes(line, "#", False).rstrip(" ")
 
 
 def remove_dict_key_recursive(obj: object, key: str) -> None:
@@ -260,7 +272,12 @@ class OutputManager:
         self._recorded_data.append(self.recording_entry())
 
     def recording_request(
-        self, method: str, url: str, params: str, data: Dict[str, Any], result: requests.Response
+        self,
+        method: str,
+        url: str,
+        params: Dict[str, Any],
+        data: Dict[str, Any],
+        result: requests.Response,
     ) -> None:
         """Record a request, if recording is active."""
         if not self.recording_active():
