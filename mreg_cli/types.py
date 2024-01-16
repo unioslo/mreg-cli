@@ -62,7 +62,7 @@ class Flag:
         nargs: Optional["NargsType"] = None,
         default: Any = None,
         flag_type: Any = None,
-        choices: List[str] = None,
+        choices: Optional[List[str]] = None,
         required: bool = False,
         metavar: Optional[str] = None,
         action: Optional[str] = None,
