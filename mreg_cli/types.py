@@ -92,8 +92,6 @@ class Command(NamedTuple):
 
 # Config
 DefaultType = TypeVar("DefaultType")
-DefaultNotSet = object()
-
 
 if TYPE_CHECKING:
     from typing import Any
