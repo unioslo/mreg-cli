@@ -58,17 +58,20 @@ class MregCliConfig:
     """
 
     _instance = None
+    _config_cmd: Dict[str, str]
+    _config_file: Dict[str, str]
+    _config_env: Dict[str, str]
 
-    def __new__(cls):
+    def __new__(cls) -> "MregCliConfig":
         """Create a new instance of the configuration class.
 
         This ensures that only one instance of the configuration class is created.
         """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._config_file: Dict[str, str] = {}
-            cls._instance._config_env: Dict[str, str] = cls._load_env_config()
-            cls._instance._config_cmd: Dict[str, str] = {}
+            cls._instance._config_file = {}
+            cls._instance._config_env = cls._load_env_config()
+            cls._instance._config_cmd = {}
             cls._instance.get_config()
 
         return cls._instance
