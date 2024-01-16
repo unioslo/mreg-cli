@@ -47,11 +47,8 @@ def label_add(args: argparse.Namespace) -> None:
 @command_registry.register_command(
     prog="list", description="List labels", short_desc="List labels", flags=[]
 )
-def label_list(args: argparse.Namespace) -> None:
-    """List labels.
-
-    :param args: argparse.Namespace (none used)
-    """
+def label_list(_: argparse.Namespace) -> None:
+    """List labels."""
     labels = get_list("/api/v1/labels/", params={"ordering": "name"})
     if not labels:
         cli_info("No labels", True)

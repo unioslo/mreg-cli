@@ -11,8 +11,8 @@ line_length = 99
 [tool.ruff]
 select = [
     "A", # flake8-builtins
-    #    "ANN", # annotations
-    #    "ARG", # flake8-unused-arguments
+    # "ANN", # annotations
+    "ARG", # flake8-unused-arguments
     "B",   # flake8-bugbear
     "D",   # pydocstyle
     "DJ",  # flake8-django

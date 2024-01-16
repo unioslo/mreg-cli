@@ -164,8 +164,12 @@ class Command(Completer):
             # code.
             self.last_errno = 0
 
+    # We ignore ARG0002 (unused-argument) because the method signature is
+    # required by the Completer class.
     def get_completions(
-        self, document: document.Document, complete_event: CompleteEvent
+        self,
+        document: document.Document,
+        complete_event: CompleteEvent,  # noqa: ARG002
     ) -> Generator[Union[Completion, Any], Any, None]:
         """Prepare completions for the current command.
 
@@ -253,7 +257,7 @@ _top_parser = argparse.ArgumentParser(formatter_class=CustomHelpFormatter)
 cli = Command(_top_parser, list(), "")
 
 
-def _quit(args: argparse.Namespace) -> NoReturn:
+def _quit(_: argparse.Namespace) -> NoReturn:
     raise CliExit
 
 
@@ -265,7 +269,7 @@ def _start_recording(args: argparse.Namespace) -> None:
     OutputManager().recording_start(args.filename)
 
 
-def _stop_recording(args: argparse.Namespace):
+def _stop_recording(_: argparse.Namespace):
     """Stop recording commands and output to the given file."""
     OutputManager().recording_stop()
 
@@ -300,7 +304,7 @@ for command in [
     command(cli).register_all_commands()
 
 
-def logout(args: argparse.Namespace):
+def logout(_: argparse.Namespace):
     """Log out from mreg and exit. Will delete token."""
     _force_logout()
     raise CliExit

@@ -20,12 +20,12 @@ class HelpCommands(BaseCommand):
             "help",
             "Show general help for the cli. Use `help -h` to see subtopics.",
             "Help",
-            callback=lambda args: cli.parser.print_help(),
+            callback=lambda _: cli.parser.print_help(),
         )
 
 
 @command_registry.register_command("filtering", "Show help for filtering.", "Filtering Help")
-def filtering_help(args: argparse.Namespace) -> None:
+def filtering_help(_: argparse.Namespace) -> None:
     """Show help for filtering."""
     print(
         """`mreg-cli` support output filtering via the operators `|` and `|!`.
@@ -69,6 +69,6 @@ TXT:          v=spf1 -all
 
 
 @command_registry.register_command("configuration", "Show configuration", "Show configuration")
-def configuration_help(args: argparse.Namespace) -> None:
+def configuration_help(_: argparse.Namespace) -> None:
     """Show configuration."""
     MregCliConfig().print_config_table()
