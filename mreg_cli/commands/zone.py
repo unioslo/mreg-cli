@@ -295,8 +295,8 @@ def _get_delegation_path(zone: str, delegation: str) -> str:
         cli_warning(f"Delegation '{delegation}' is not in '{zone}'")
     _, path = get_zone(zone)
     path = f"{path}/delegations/{delegation}"
-    delegation = get(path, ok404=True)
-    if delegation is not None:
+    response = get(path, ok404=True)
+    if response is not None:
         return path
     else:
         cli_error("Delegation {delegation} not found")

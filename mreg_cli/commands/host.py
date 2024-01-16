@@ -12,6 +12,7 @@ from typing import Any
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
+from mreg_cli.log import cli_error
 
 registry = CommandRegistry()
 
@@ -41,6 +42,9 @@ class HostCommands(BaseCommand):
         package = importlib.import_module(package_name)
 
         # Get the directory path of the package
+        if package.__file__ is None:
+            cli_error(f"Unable to initalize host submodules from {package_name}")
+
         package_dir = os.path.dirname(package.__file__)
 
         # Import all submodules

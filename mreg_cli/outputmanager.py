@@ -154,7 +154,7 @@ class OutputManager:
         """Clear the recording data."""
         self._recorded_data: List[RecordingEntry] = []
         self._recording: bool = False
-        self._filename: Optional[str] = None
+        self._filename: str
         self._record_timestamps: bool = True
 
     def record_timestamps(self, state: bool) -> None:
@@ -303,7 +303,7 @@ class OutputManager:
 
     def has_output(self) -> bool:
         """Return True if there is output to display."""
-        return len(self._lines) > 0
+        return len(self._output) > 0
 
     def from_command(self, command: str) -> str:
         """Add the command that generated the output.
@@ -405,8 +405,8 @@ class OutputManager:
         keys: Sequence[str],
         data: List[Dict[str, Any]],
         indent: int = 0,
-    ) -> str:
-        """Format and add a table of data.
+    ) -> None:
+        """Format and add a table of data to the output.
 
         Generates a table of data from the given headers, keys, and data. The
         headers are used as the column headers, and the keys are used to
@@ -423,6 +423,8 @@ class OutputManager:
         self.add_line(raw_format.format(*headers))
         for d in data:
             self.add_line(raw_format.format(*[d[key] for key in keys]))
+
+        return
 
     def filtered_output(self) -> List[str]:
         """Return the lines of output.
@@ -452,4 +454,4 @@ class OutputManager:
 
     def __str__(self) -> str:
         """Return the formatted output as a single string."""
-        return "\n".join(self._lines)
+        return "\n".join(self._output)

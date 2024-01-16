@@ -165,9 +165,14 @@ class MregCliConfig:
         """Get the default domain from the application."""
         return self.get("domain")
 
-    def get_default_url(self):
+    # We handle url by itself because it's a required config option,
+    # it cannot be none once options, env, and config file are parsed.
+    def get_url(self) -> str:
         """Get the default url from the application."""
-        self.get("url", self.get("default_url", None))
+        url = self.get("url", self.get("default_url"))
+        if url is None:
+            raise ValueError("No URL found in config, no defaults available!")
+        return url
 
     def _calculate_column_width(self, data: Dict[str, Any], min_width: int = 8) -> int:
         """Calculate the maximum column width, ensuring a minimum width.

@@ -72,7 +72,7 @@ def login1(user: str, url: str) -> None:
     # Find a better URL.. but so far so good
     try:
         ret = session.get(
-            urljoin(MregCliConfig().get("url"), "/api/v1/hosts/"),
+            urljoin(MregCliConfig().get_url(), "/api/v1/hosts/"),
             params={"page_size": 1},
             timeout=5,
         )
@@ -96,7 +96,7 @@ def login(user: str, url: str) -> None:
 
 def logout() -> None:
     """Logout from MREG."""
-    path = urljoin(MregCliConfig().get("url"), "/api/token-logout/")
+    path = urljoin(MregCliConfig().get_url(), "/api/token-logout/")
     # Try to logout, and ignore errors
     try:
         session.post(path)
@@ -115,7 +115,7 @@ def update_token() -> None:
 
 def _update_token(username: Optional[str], password: str) -> None:
     """Perform the actual token update."""
-    tokenurl = urljoin(MregCliConfig().get("url"), "/api/token-auth/")
+    tokenurl = urljoin(MregCliConfig().get_url(), "/api/token-auth/")
     try:
         result = requests.post(tokenurl, {"username": username, "password": password})
     except requests.exceptions.SSLError as e:
@@ -169,7 +169,7 @@ def _request_wrapper(
     """Wrap request calls to MREG for logging and token management."""
     if params is None:
         params = {}
-    url = urljoin(MregCliConfig().get("url"), path)
+    url = urljoin(MregCliConfig().get_url(), path)
 
     if use_json:
         result = getattr(session, operation_type)(url, json=params, timeout=HTTP_TIMEOUT)

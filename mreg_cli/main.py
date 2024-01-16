@@ -40,7 +40,7 @@ def main():
     connect_args = parser.add_argument_group("connection settings")
     connect_args.add_argument(
         "--url",
-        default=config.get("url", config.get_default_url()),
+        default=config.get_url(),
         help="use mreg server at %(metavar)s (default: %(default)s)",
         metavar="URL",
     )
