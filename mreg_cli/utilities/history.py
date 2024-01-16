@@ -1,7 +1,7 @@
 """History log related functions."""
 
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from dateutil.parser import parse
 
@@ -10,7 +10,9 @@ from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import get_list
 
 
-def get_history_items(name: str, resource: str, data_relation: str = None) -> List[Dict[str, Any]]:
+def get_history_items(
+    name: str, resource: str, data_relation: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Get history items for a given name and resource."""
     # First check if any model id with the name exists
     path = "/api/v1/history/"
@@ -22,8 +24,7 @@ def get_history_items(name: str, resource: str, data_relation: str = None) -> Li
     if len(ret) == 0:
         cli_warning(f"No history found for {name}")
     # Get all model ids, a group gets a new one when deleted and created again
-    model_ids = {str(i["model_id"]) for i in ret}
-    model_ids = ",".join(model_ids)
+    model_ids = ",".join({str(i["model_id"]) for i in ret})
     params = {
         "resource": resource,
         "model_id__in": model_ids,
@@ -38,7 +39,7 @@ def get_history_items(name: str, resource: str, data_relation: str = None) -> Li
     return ret
 
 
-def format_history_items(ownname: str, items: Dict[str, Any]) -> None:
+def format_history_items(ownname: str, items: List[Dict[str, Any]]) -> None:
     """Format history items for output."""
 
     def _remove_unneded_keys(data: Dict[str, Any]):

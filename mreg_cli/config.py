@@ -18,7 +18,9 @@ import configparser
 import logging
 import os
 import sys
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, overload
+
+from mreg_cli.types import DefaultType
 
 logger = logging.getLogger(__name__)
 
@@ -58,17 +60,20 @@ class MregCliConfig:
     """
 
     _instance = None
+    _config_cmd: Dict[str, str]
+    _config_file: Dict[str, str]
+    _config_env: Dict[str, str]
 
-    def __new__(cls):
+    def __new__(cls) -> "MregCliConfig":
         """Create a new instance of the configuration class.
 
         This ensures that only one instance of the configuration class is created.
         """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._config_file: Dict[str, str] = {}
-            cls._instance._config_env: Dict[str, str] = cls._load_env_config()
-            cls._instance._config_cmd: Dict[str, str] = {}
+            cls._instance._config_file = {}
+            cls._instance._config_env = cls._load_env_config()
+            cls._instance._config_cmd = {}
             cls._instance.get_config()
 
         return cls._instance
@@ -83,7 +88,17 @@ class MregCliConfig:
             if key.startswith(env_prefix)
         }
 
-    def get(self, key: str, default: str = None) -> Optional[str]:
+    @overload
+    def get(self, key: str) -> Optional[str]:
+        ...
+
+    @overload
+    def get(self, key: str, default: DefaultType = ...) -> Union[str, DefaultType]:
+        ...
+
+    def get(
+        self, key: str, default: Optional[DefaultType] = None
+    ) -> Optional[Union[str, DefaultType]]:
         """Get a configuration value with priority: cmdline, env, file.
 
         :param str key: Configuration key.

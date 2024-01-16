@@ -35,7 +35,7 @@ if sys.version_info >= (3, 8):
         warning: List[str]
         error: List[str]
         output: List[str]
-        api_requests: List[str]
+        api_requests: List[Dict[str, Any]]
         time: Optional[TimeInfo]
 
 else:
@@ -62,7 +62,7 @@ class Flag:
         nargs: Optional["NargsType"] = None,
         default: Any = None,
         flag_type: Any = None,
-        choices: List[str] = None,
+        choices: Optional[List[str]] = None,
         required: bool = False,
         metavar: Optional[str] = None,
         action: Optional[str] = None,
@@ -89,6 +89,9 @@ class Command(NamedTuple):
     callback: CommandFunc
     flags: Optional[List[Flag]] = None
 
+
+# Config
+DefaultType = TypeVar("DefaultType")
 
 if TYPE_CHECKING:
     from typing import Any
