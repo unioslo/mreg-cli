@@ -5,14 +5,12 @@ And this rule is promptly broken by importing from mreg_cli.outputmanager...
 """
 
 import ipaddress
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List
-
-if TYPE_CHECKING:
-    pass
-
+import sys
 import urllib.parse
+from typing import Any, Dict, Iterable, List
 
 from mreg_cli.log import cli_warning
+from mreg_cli.types import IP_networkT
 from mreg_cli.utilities.api import get
 from mreg_cli.utilities.validators import is_valid_ip, is_valid_network
 
@@ -102,3 +100,13 @@ def get_network_reserved_ips(ip_range: str) -> List[str]:
     """Return the first unused address on a network, if any."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/reserved_list"
     return get(path).json()
+
+
+def network_is_supernet(a: IP_networkT, b: IP_networkT) -> bool:
+    """Return True if a is a supernet of b."""
+    if sys.version_info >= (3, 7):
+        return a.supernet_of(b)
+    else:
+        return (
+            a.network_address <= b.network_address and a.broadcast_address >= b.broadcast_address
+        )
