@@ -18,7 +18,9 @@ import configparser
 import logging
 import os
 import sys
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union, overload
+
+from mreg_cli.types import DefaultType
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +88,17 @@ class MregCliConfig:
             if key.startswith(env_prefix)
         }
 
-    def get(self, key: str, default: str = None) -> Optional[str]:
+    @overload
+    def get(self, key: str) -> Optional[str]:
+        ...
+
+    @overload
+    def get(self, key: str, default: DefaultType = ...) -> Union[str, DefaultType]:
+        ...
+
+    def get(
+        self, key: str, default: Optional[DefaultType] = None
+    ) -> Optional[Union[str, DefaultType]]:
         """Get a configuration value with priority: cmdline, env, file.
 
         :param str key: Configuration key.
