@@ -22,7 +22,7 @@ class HostCommands(BaseCommand):
 
     def __init__(self, cli: Any) -> None:
         """Initialize the Host commands."""
-        super().__init__(cli, registry, "host", "Manage Hosts", "Host Management")
+        super().__init__(cli, registry, "host", "Manage Hosts.", "Host Management")
 
     # This is a class method that overrides the inherited method in a rather
     # hacky way. The reason for this is that the host class is large enough

@@ -308,7 +308,7 @@ def logout(args: argparse.Namespace):
 
 cli.add_command(
     prog="logout",
-    description="Log out from mreg and exit. Will delete token",
+    description="Log out from mreg and exit. Will delete the token.",
     short_desc="Log out from mreg",
     callback=logout,
 )

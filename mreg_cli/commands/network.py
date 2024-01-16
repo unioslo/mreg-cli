@@ -36,7 +36,7 @@ class NetworkCommands(BaseCommand):
 
     def __init__(self, cli: Any) -> None:
         """Initialize the network commands."""
-        super().__init__(cli, command_registry, "network", "Manage networks", "Manage networks")
+        super().__init__(cli, command_registry, "network", "Manage networks.", "Manage networks")
 
 
 def get_network_range_from_input(net: str) -> str:

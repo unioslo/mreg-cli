@@ -18,7 +18,7 @@ class LabelCommands(BaseCommand):
 
     def __init__(self, cli: Any) -> None:
         """Initialize the label commands."""
-        super().__init__(cli, command_registry, "label", "Manage host labels", "Manage labels")
+        super().__init__(cli, command_registry, "label", "Manage host labels.", "Manage labels")
 
 
 @command_registry.register_command(

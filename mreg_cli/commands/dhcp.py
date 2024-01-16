@@ -18,7 +18,7 @@ class DHCPCommands(BaseCommand):
 
     def __init__(self, cli: Any) -> None:
         """Initialize the DHCP commands."""
-        super().__init__(cli, command_registry, "dhcp", "Manage DHCP associations", "Manage DHCP")
+        super().__init__(cli, command_registry, "dhcp", "Manage DHCP associations.", "Manage DHCP")
 
 
 @command_registry.register_command(

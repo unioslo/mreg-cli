@@ -21,7 +21,7 @@ class GroupCommands(BaseCommand):
 
     def __init__(self, cli: Any) -> None:
         """Initialize the group commands."""
-        super().__init__(cli, command_registry, "group", "Manage hostgroups", "Manage hostgroups")
+        super().__init__(cli, command_registry, "group", "Manage hostgroups.", "Manage hostgroups")
 
 
 def get_hostgroup(name: str) -> Dict[str, Any]:
