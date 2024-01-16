@@ -35,7 +35,7 @@ if sys.version_info >= (3, 8):
         warning: List[str]
         error: List[str]
         output: List[str]
-        api_requests: List[str]
+        api_requests: List[Dict[str, Any]]
         time: Optional[TimeInfo]
 
 else:
