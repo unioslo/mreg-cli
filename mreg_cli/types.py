@@ -90,6 +90,11 @@ class Command(NamedTuple):
     flags: Optional[List[Flag]] = None
 
 
+# Config
+DefaultType = TypeVar("DefaultType")
+DefaultNotSet = object()
+
+
 if TYPE_CHECKING:
     from typing import Any
 
