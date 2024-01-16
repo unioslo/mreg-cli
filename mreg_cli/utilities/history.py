@@ -22,8 +22,7 @@ def get_history_items(name: str, resource: str, data_relation: str = None) -> Li
     if len(ret) == 0:
         cli_warning(f"No history found for {name}")
     # Get all model ids, a group gets a new one when deleted and created again
-    model_ids = {str(i["model_id"]) for i in ret}
-    model_ids = ",".join(model_ids)
+    model_ids = ",".join({str(i["model_id"]) for i in ret})
     params = {
         "resource": resource,
         "model_id__in": model_ids,
