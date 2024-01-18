@@ -10336,6 +10336,61 @@
     "time": null
   },
   {
+    "command": "host set_contact somehost \"new-support@example.org\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host set_contact somehost \"new-support@example.org\"",
+    "ok": [
+      "OK: : Updated contact of somehost.example.org to new-support@example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/somehost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.1.4",
+              "host": 4
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 4
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "somehost.example.org",
+          "contact": "support@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/hosts/somehost.example.org",
+        "data": {
+          "contact": "new-support@example.org"
+        },
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "host history somehost",
     "command_filter": null,
     "command_filter_negate": false,
@@ -10344,9 +10399,10 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-01-12 08:11:51 [system-signals]: Txt create: txt = 'v=spf1 -all'",
-      "2024-01-12 08:11:51 [test]: Host create: name = 'somehost.example.org', contact = 'support@example.org'",
-      "2024-01-12 08:11:51 [test]: Ipaddress create: ipaddress = '10.0.1.4'"
+      "2024-01-11 16:14:50 [system-signals]: Txt create: txt = 'v=spf1 -all'",
+      "2024-01-11 16:14:50 [test]: Host create: name = 'somehost.example.org', contact = 'support@example.org'",
+      "2024-01-11 16:14:50 [test]: Ipaddress create: ipaddress = '10.0.1.4'",
+      "2024-01-11 16:14:50 [test]: Host update: contact: support@example.org -> new-support@example.org"
     ],
     "api_requests": [
       {
@@ -10355,12 +10411,12 @@
         "data": {},
         "status": 200,
         "response": {
-          "count": 3,
+          "count": 4,
           "next": null,
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-12T08:11:51.705965+01:00",
+              "timestamp": "2024-01-11T16:14:50.091712+01:00",
               "user": "system-signals",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10372,7 +10428,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:51.710082+01:00",
+              "timestamp": "2024-01-11T16:14:50.096726+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10382,7 +10438,7 @@
               "data": "{\"name\": \"somehost.example.org\", \"contact\": \"support@example.org\"}"
             },
             {
-              "timestamp": "2024-01-12T08:11:51.715083+01:00",
+              "timestamp": "2024-01-11T16:14:50.102742+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10390,6 +10446,16 @@
               "model": "Ipaddress",
               "action": "create",
               "data": "{\"ipaddress\": \"10.0.1.4\"}"
+            },
+            {
+              "timestamp": "2024-01-11T16:14:50.615831+01:00",
+              "user": "test",
+              "resource": "host",
+              "name": "somehost.example.org",
+              "model_id": 4,
+              "model": "Host",
+              "action": "update",
+              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-01-11T16:14:50.102158+01:00\", \"updated_at\": \"2024-01-11T16:14:50.102168+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-01-11T16:14:50.091185+01:00\", \"updated_at\": \"2024-01-11T16:14:50.091195+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-01-11T16:14:50.089382+01:00\", \"updated_at\": \"2024-01-11T16:14:50.089393+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
             }
           ]
         }
@@ -10400,12 +10466,12 @@
         "data": {},
         "status": 200,
         "response": {
-          "count": 3,
+          "count": 4,
           "next": null,
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-12T08:11:51.705965+01:00",
+              "timestamp": "2024-01-11T16:14:50.091712+01:00",
               "user": "system-signals",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10417,7 +10483,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:51.710082+01:00",
+              "timestamp": "2024-01-11T16:14:50.096726+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10427,7 +10493,7 @@
               "data": "{\"name\": \"somehost.example.org\", \"contact\": \"support@example.org\"}"
             },
             {
-              "timestamp": "2024-01-12T08:11:51.715083+01:00",
+              "timestamp": "2024-01-11T16:14:50.102742+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10435,6 +10501,16 @@
               "model": "Ipaddress",
               "action": "create",
               "data": "{\"ipaddress\": \"10.0.1.4\"}"
+            },
+            {
+              "timestamp": "2024-01-11T16:14:50.615831+01:00",
+              "user": "test",
+              "resource": "host",
+              "name": "somehost.example.org",
+              "model_id": 4,
+              "model": "Host",
+              "action": "update",
+              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-01-11T16:14:50.102158+01:00\", \"updated_at\": \"2024-01-11T16:14:50.102168+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-01-11T16:14:50.091185+01:00\", \"updated_at\": \"2024-01-11T16:14:50.091195+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-01-11T16:14:50.089382+01:00\", \"updated_at\": \"2024-01-11T16:14:50.089393+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
             }
           ]
         }
@@ -10492,7 +10568,7 @@
           "loc": null,
           "bacnetid": null,
           "name": "somehost.example.org",
-          "contact": "support@example.org",
+          "contact": "new-support@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
@@ -12170,6 +12246,187 @@
               "description": "This describes the group"
             }
           ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "group history mygroup",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "group history mygroup",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "2024-01-11 16:14:52 [test]: HostGroup create: name = 'mygroup', description = 'This describes the group'",
+      "2024-01-11 16:14:52 [test]: Host add: testhost1.example.org",
+      "2024-01-11 16:14:52 [test]: Host add: testhost2.example.org",
+      "2024-01-11 16:14:52 [test]: Group add: myself",
+      "2024-01-11 16:14:52 [test]: Host remove: testhost2.example.org"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/history/?resource=group&name=mygroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 5,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "timestamp": "2024-01-11T16:14:52.362026+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "HostGroup",
+              "action": "create",
+              "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
+            },
+            {
+              "timestamp": "2024-01-11T16:14:52.641729+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "Host",
+              "action": "add",
+              "data": {
+                "name": "testhost1.example.org",
+                "relation": "hosts"
+              }
+            },
+            {
+              "timestamp": "2024-01-11T16:14:52.721709+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "Host",
+              "action": "add",
+              "data": {
+                "name": "testhost2.example.org",
+                "relation": "hosts"
+              }
+            },
+            {
+              "timestamp": "2024-01-11T16:14:52.781044+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "Group",
+              "action": "add",
+              "data": {
+                "name": "myself",
+                "relation": "owners"
+              }
+            },
+            {
+              "timestamp": "2024-01-11T16:14:52.860823+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "Host",
+              "action": "remove",
+              "data": {
+                "name": "testhost2.example.org",
+                "relation": "hosts"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/history/?resource=group&model_id__in=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 5,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "timestamp": "2024-01-11T16:14:52.362026+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "HostGroup",
+              "action": "create",
+              "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
+            },
+            {
+              "timestamp": "2024-01-11T16:14:52.641729+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "Host",
+              "action": "add",
+              "data": {
+                "name": "testhost1.example.org",
+                "relation": "hosts"
+              }
+            },
+            {
+              "timestamp": "2024-01-11T16:14:52.721709+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "Host",
+              "action": "add",
+              "data": {
+                "name": "testhost2.example.org",
+                "relation": "hosts"
+              }
+            },
+            {
+              "timestamp": "2024-01-11T16:14:52.781044+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "Group",
+              "action": "add",
+              "data": {
+                "name": "myself",
+                "relation": "owners"
+              }
+            },
+            {
+              "timestamp": "2024-01-11T16:14:52.860823+01:00",
+              "user": "test",
+              "resource": "group",
+              "name": "mygroup",
+              "model_id": 1,
+              "model": "Host",
+              "action": "remove",
+              "data": {
+                "name": "testhost2.example.org",
+                "relation": "hosts"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/history/?data__relation=groups&data__id__in=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
         }
       }
     ],
@@ -14303,6 +14560,108 @@
     "time": null
   },
   {
+    "command": "policy atom_history apple",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "policy atom_history apple",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "2024-01-11 16:14:54 [test]: HostPolicyAtom create: description = 'Here's the description', name = 'apple'",
+      "2024-01-11 16:14:54 [test]: HostPolicyAtom add to: hostpolicy_role fruit",
+      "2024-01-11 16:14:54 [test]: HostPolicyAtom remove from: hostpolicy_role fruit"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/history/?resource=hostpolicy_atom&name=apple",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "timestamp": "2024-01-11T16:14:54.310641+01:00",
+              "user": "test",
+              "resource": "hostpolicy_atom",
+              "name": "apple",
+              "model_id": 1,
+              "model": "HostPolicyAtom",
+              "action": "create",
+              "data": "{\"description\": \"Here's the description\", \"name\": \"apple\"}"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/history/?resource=hostpolicy_atom&model_id__in=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "timestamp": "2024-01-11T16:14:54.310641+01:00",
+              "user": "test",
+              "resource": "hostpolicy_atom",
+              "name": "apple",
+              "model_id": 1,
+              "model": "HostPolicyAtom",
+              "action": "create",
+              "data": "{\"description\": \"Here's the description\", \"name\": \"apple\"}"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/history/?data__relation=atoms&data__id__in=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 2,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "timestamp": "2024-01-11T16:14:54.602354+01:00",
+              "user": "test",
+              "resource": "hostpolicy_role",
+              "name": "fruit",
+              "model_id": 1,
+              "model": "HostPolicyAtom",
+              "action": "add",
+              "data": {
+                "name": "apple",
+                "relation": "atoms"
+              }
+            },
+            {
+              "timestamp": "2024-01-11T16:14:54.906978+01:00",
+              "user": "test",
+              "resource": "hostpolicy_role",
+              "name": "fruit",
+              "model_id": 1,
+              "model": "HostPolicyAtom",
+              "action": "remove",
+              "data": {
+                "name": "apple",
+                "relation": "atoms"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "policy atom_delete apple",
     "command_filter": null,
     "command_filter_negate": false,
@@ -14928,13 +15287,13 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-01-12 08:11:54 [test]: HostPolicyRole create: description = '5 a day', name = 'fruit', labels = '[]'",
-      "2024-01-12 08:11:54 [test]: HostPolicyAtom add: apple",
-      "2024-01-12 08:11:54 [test]: HostPolicyAtom add: orange",
-      "2024-01-12 08:11:54 [test]: HostPolicyAtom remove: apple",
-      "2024-01-12 08:11:54 [test]: Host add: foo.example.org",
-      "2024-01-12 08:11:54 [test]: Host remove: foo.example.org",
-      "2024-01-12 08:11:54 [test]: HostPolicyAtom remove: tangerine"
+      "2024-01-11 16:14:54 [test]: HostPolicyRole create: description = '5 a day', name = 'fruit', labels = '[]'",
+      "2024-01-11 16:14:54 [test]: HostPolicyAtom add: apple",
+      "2024-01-11 16:14:54 [test]: HostPolicyAtom add: orange",
+      "2024-01-11 16:14:54 [test]: HostPolicyAtom remove: apple",
+      "2024-01-11 16:14:55 [test]: Host add: foo.example.org",
+      "2024-01-11 16:14:55 [test]: Host remove: foo.example.org",
+      "2024-01-11 16:14:55 [test]: HostPolicyAtom remove: tangerine"
     ],
     "api_requests": [
       {
@@ -14948,7 +15307,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-12T08:11:54.310083+01:00",
+              "timestamp": "2024-01-11T16:14:54.441616+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -14958,7 +15317,7 @@
               "data": "{\"description\": \"5 a day\", \"name\": \"fruit\", \"labels\": []}"
             },
             {
-              "timestamp": "2024-01-12T08:11:54.409726+01:00",
+              "timestamp": "2024-01-11T16:14:54.602354+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -14971,7 +15330,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.455199+01:00",
+              "timestamp": "2024-01-11T16:14:54.683013+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -14984,7 +15343,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.610350+01:00",
+              "timestamp": "2024-01-11T16:14:54.906978+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -14997,7 +15356,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.849982+01:00",
+              "timestamp": "2024-01-11T16:14:55.430476+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15010,7 +15369,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.943497+01:00",
+              "timestamp": "2024-01-11T16:14:55.608986+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15023,7 +15382,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.993776+01:00",
+              "timestamp": "2024-01-11T16:14:55.691687+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15049,7 +15408,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-12T08:11:54.310083+01:00",
+              "timestamp": "2024-01-11T16:14:54.441616+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15059,7 +15418,7 @@
               "data": "{\"description\": \"5 a day\", \"name\": \"fruit\", \"labels\": []}"
             },
             {
-              "timestamp": "2024-01-12T08:11:54.409726+01:00",
+              "timestamp": "2024-01-11T16:14:54.602354+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15072,7 +15431,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.455199+01:00",
+              "timestamp": "2024-01-11T16:14:54.683013+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15085,7 +15444,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.610350+01:00",
+              "timestamp": "2024-01-11T16:14:54.906978+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15098,7 +15457,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.849982+01:00",
+              "timestamp": "2024-01-11T16:14:55.430476+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15111,7 +15470,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.943497+01:00",
+              "timestamp": "2024-01-11T16:14:55.608986+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15124,7 +15483,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:54.993776+01:00",
+              "timestamp": "2024-01-11T16:14:55.691687+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",

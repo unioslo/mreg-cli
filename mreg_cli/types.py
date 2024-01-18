@@ -1,8 +1,11 @@
 """Typing definitions for mreg_cli."""
 
+import argparse
 import ipaddress
 import sys
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, TypeVar, Union
+
+CommandFunc = Callable[[argparse.Namespace], None]
 
 # This is a seperate import due to using string annotation, so the
 # import can't be consolidated into a single line with other imports
@@ -32,17 +35,63 @@ if sys.version_info >= (3, 8):
         warning: List[str]
         error: List[str]
         output: List[str]
-        api_requests: List[str]
+        api_requests: List[Dict[str, Any]]
         time: Optional[TimeInfo]
 
 else:
-    from typing import Any
-
     TimeInfo = Dict[str, Any]
     RecordingEntry = Dict[str, Any]
 
 IP_Version: "TypeAlias" = "Literal[4, 6]"
-IP_network = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
+IP_networkT = TypeVar("IP_networkT", ipaddress.IPv4Network, ipaddress.IPv6Network)
+
+if TYPE_CHECKING:
+    # https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
+    NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
+    NargsType = Union[int, NargsStr]
+
+
+class Flag:
+    """Class for flag information available to commands in the CLI."""
+
+    def __init__(
+        self,
+        name: str,
+        description: str = "",
+        short_desc: str = "",
+        nargs: Optional["NargsType"] = None,
+        default: Any = None,
+        flag_type: Any = None,
+        choices: Optional[List[str]] = None,
+        required: bool = False,
+        metavar: Optional[str] = None,
+        action: Optional[str] = None,
+    ):
+        """Initialize a Flag object."""
+        self.name = name
+        self.short_desc = short_desc
+        self.description = description
+        self.nargs = nargs
+        self.default = default
+        self.type = flag_type
+        self.choices = choices
+        self.required = required
+        self.metavar = metavar
+        self.action = action
+
+
+class Command(NamedTuple):
+    """A command that can be registered with the CLI."""
+
+    prog: str
+    description: str
+    short_desc: str
+    callback: CommandFunc
+    flags: Optional[List[Flag]] = None
+
+
+# Config
+DefaultType = TypeVar("DefaultType")
 
 if TYPE_CHECKING:
     from typing import Any

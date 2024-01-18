@@ -58,6 +58,7 @@ network set_description 10.0.1.0/24 "Frozen but has one host"
 network set_vlan 10.0.1.0/24 1234
 network info 10.0.1.0/24
 network find -network 10.0.1.0/24 -description '*one host*' -vlan 1234 -frozen 1 -reserved 6 -dns_delegated 0 -category Yellow -location Somewhere
+host set_contact somehost "new-support@example.org"
 host history somehost
 host remove somehost
 network unset_frozen 10.0.1.0/24
@@ -92,6 +93,7 @@ group host_add mygroup testhost2
 group owner_add mygroup myself
 group host_remove mygroup testhost2
 group info mygroup
+group history mygroup
 group create yourgroup "meh"
 group group_add mygroup yourgroup
 group info mygroup
@@ -140,6 +142,7 @@ policy list_members fruit
 policy atom_history apple
 policy atom_delete apple  # Should fail because 'apple' is used in role 'fruit'
 policy remove_atom fruit apple
+policy atom_history apple
 policy atom_delete apple
 policy set_description orange "Juicy"
 policy rename orange tangerine

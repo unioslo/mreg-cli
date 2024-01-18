@@ -2,20 +2,37 @@
 
 This file contains the main CLI class and the top level parser.
 """
-
 import argparse
 import html
 import os
 import shlex
 import sys
-from typing import Any, Callable, Generator, List, NoReturn, Union
+from typing import TYPE_CHECKING, Any, Dict, Generator, List, NoReturn, Optional, Union
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 
-from . import util
-from .exceptions import CliError, CliWarning
-from .outputmanager import OutputManager
+# Import all the commands
+from mreg_cli.commands.dhcp import DHCPCommands
+from mreg_cli.commands.group import GroupCommands
+from mreg_cli.commands.help import HelpCommands
+from mreg_cli.commands.host import HostCommands
+from mreg_cli.commands.label import LabelCommands
+from mreg_cli.commands.network import NetworkCommands
+from mreg_cli.commands.permission import PermissionCommands
+from mreg_cli.commands.policy import PolicyCommands
+from mreg_cli.commands.zone import ZoneCommands
+
+# Import other mreg_cli modules
+from mreg_cli.exceptions import CliError, CliWarning
+from mreg_cli.help_formatter import CustomHelpFormatter
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import CommandFunc, Flag
+from mreg_cli.utilities.api import logout as _force_logout
+
+if TYPE_CHECKING:
+    # Can't use _SubParsersAction as generic in Python <3.9
+    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]
 
 
 class CliExit(Exception):
@@ -24,36 +41,7 @@ class CliExit(Exception):
     pass
 
 
-class Flag:
-    """Class for flag information available to commands in the CLI."""
-
-    def __init__(
-        self,
-        name: str,
-        description: str = "",
-        short_desc: str = "",
-        nargs: str = "",
-        default: Any = None,
-        flag_type: Any = None,
-        choices: List[str] = None,
-        required: bool = False,
-        metavar: str = None,
-        action: str = None,
-    ):
-        """Initialize a Flag object."""
-        self.name = name
-        self.short_desc = short_desc
-        self.description = description
-        self.nargs = nargs
-        self.default = default
-        self.type = flag_type
-        self.choices = choices
-        self.required = required
-        self.metavar = metavar
-        self.action = action
-
-
-def _create_command_group(parent: argparse.ArgumentParser):
+def _create_command_group(parent: argparse.ArgumentParser) -> "SubparserType":
     """Create a sub parser for a command."""
     parent_name = parent.prog.strip()
 
@@ -81,17 +69,17 @@ class Command(Completer):
     """
 
     # Used to detect an error when running commands from a source file.
-    last_errno = 0
+    last_errno: Union[str, int, None] = 0
 
     def __init__(self, parser: argparse.ArgumentParser, flags: List[Flag], short_desc: str):
         """Initialize a Command object."""
         self.parser = parser
         # sub is an object used for creating sub parser for this command. A
         # command/ArgParser can only have one of this object.
-        self.sub = None
+        self.sub: Optional["SubparserType"] = None
 
         self.short_desc = short_desc
-        self.children = {}
+        self.children: Dict[str, Command] = {}
         self.flags = {}
         for flag in flags:
             if flag.name.startswith("-"):
@@ -102,8 +90,8 @@ class Command(Completer):
         prog: str,
         description: str,
         short_desc: str = "",
-        epilog: str = None,
-        callback: Callable[[argparse.ArgumentParser], None] = None,
+        epilog: Optional[str] = None,
+        callback: Optional[CommandFunc] = None,
         flags: Union[List[Flag], None] = None,
     ):
         """Add a command to the current parser.
@@ -114,15 +102,16 @@ class Command(Completer):
         """
         if flags is None:
             flags = []
-        if not self.sub:
+        if self.sub is None:
             self.sub = _create_command_group(self.parser)
         parser = self.sub.add_parser(prog, description=description, epilog=epilog, help=short_desc)
+        parser.formatter_class = CustomHelpFormatter
         for f in flags:
             # Need to create a dict with the parameters so only used
             # parameters are sent, or else exceptions are raised. Ex: if
             # required is passed with an argument which doesn't accept the
             # required option.
-            args = {
+            args: Dict[str, Any] = {
                 "help": f.description,
             }
             if f.type:
@@ -151,10 +140,10 @@ class Command(Completer):
         args = shlex.split(command, comments=True)
 
         try:
-            args = self.parser.parse_args(args)
+            parsed_args = self.parser.parse_args(args)
             # If the command has a callback function, call it.
-            if "func" in vars(args) and args.func:
-                args.func(args)
+            if hasattr(parsed_args, "func") and parsed_args.func:
+                parsed_args.func(parsed_args)
 
         except SystemExit as e:
             # This is a super-hacky workaround to implement a REPL app using
@@ -175,8 +164,12 @@ class Command(Completer):
             # code.
             self.last_errno = 0
 
+    # We ignore ARG0002 (unused-argument) because the method signature is
+    # required by the Completer class.
     def get_completions(
-        self, document: document.Document, complete_event: CompleteEvent
+        self,
+        document: document.Document,
+        complete_event: CompleteEvent,  # noqa: ARG002
     ) -> Generator[Union[Completion, Any], Any, None]:
         """Prepare completions for the current command.
 
@@ -189,7 +182,7 @@ class Command(Completer):
         words = document.text.strip().split(" ")
         yield from self.complete(cur, words)
 
-    def complete(self, cur: str, words: str) -> Generator[Union[Completion, Any], Any, None]:
+    def complete(self, cur: str, words: List[str]) -> Generator[Union[Completion, Any], Any, None]:
         """Generate completions during typing.
 
         :param cur: The current word.
@@ -260,11 +253,11 @@ class Command(Completer):
 
 
 # Top parser is the root of all the command parsers
-_top_parser = argparse.ArgumentParser("")
+_top_parser = argparse.ArgumentParser(formatter_class=CustomHelpFormatter)
 cli = Command(_top_parser, list(), "")
 
 
-def _quit(args: argparse.Namespace) -> NoReturn:
+def _quit(_: argparse.Namespace) -> NoReturn:
     raise CliExit
 
 
@@ -276,7 +269,7 @@ def _start_recording(args: argparse.Namespace) -> None:
     OutputManager().recording_start(args.filename)
 
 
-def _stop_recording(args: argparse.Namespace):
+def _stop_recording(_: argparse.Namespace):
     """Stop recording commands and output to the given file."""
     OutputManager().recording_stop()
 
@@ -297,15 +290,29 @@ cli.add_command(
 )
 
 
-def logout(args: argparse.Namespace):
+for command in [
+    DHCPCommands,
+    GroupCommands,
+    HelpCommands,
+    HostCommands,
+    NetworkCommands,
+    PermissionCommands,
+    PolicyCommands,
+    ZoneCommands,
+    LabelCommands,
+]:
+    command(cli).register_all_commands()
+
+
+def logout(_: argparse.Namespace):
     """Log out from mreg and exit. Will delete token."""
-    util.logout()
+    _force_logout()
     raise CliExit
 
 
 cli.add_command(
     prog="logout",
-    description="Log out from mreg and exit. Will delete token",
+    description="Log out from mreg and exit. Will delete the token.",
     short_desc="Log out from mreg",
     callback=logout,
 )

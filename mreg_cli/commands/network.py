@@ -3,17 +3,15 @@
 import argparse
 import ipaddress
 import urllib.parse
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Union
 
-from .cli import Flag, cli
-from .history import history
-from .log import cli_error, cli_info, cli_warning
-from .outputmanager import OutputManager
-from .util import (
-    convert_wildcard_to_regex,
-    delete,
-    get,
-    get_list,
+from mreg_cli.commands.base import BaseCommand
+from mreg_cli.commands.registry import CommandRegistry
+from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag
+from mreg_cli.utilities.api import delete, get, get_list, patch, post
+from mreg_cli.utilities.network import (
     get_network,
     get_network_reserved_ips,
     get_network_unused_count,
@@ -21,32 +19,32 @@ from .util import (
     get_network_used_count,
     get_network_used_list,
     ipsort,
+)
+from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
+from mreg_cli.utilities.validators import (
     is_valid_category_tag,
     is_valid_ip,
     is_valid_location_tag,
     is_valid_network,
-    patch,
-    post,
-    string_to_int,
 )
 
-###################################
-#  Add the main command 'network'  #
-###################################
-
-network = cli.add_command(
-    prog="network",
-    description="Manage networks.",
-    short_desc="Manage networks",
-)
+command_registry = CommandRegistry()
 
 
-def get_network_range_from_input(net: str) -> Optional[str]:
+class NetworkCommands(BaseCommand):
+    """Network commands for the CLI."""
+
+    def __init__(self, cli: Any) -> None:
+        """Initialize the network commands."""
+        super().__init__(cli, command_registry, "network", "Manage networks.", "Manage networks")
+
+
+def get_network_range_from_input(net: str) -> str:
     """Return network range from input.
 
     - If input is a valid ip address, return the network range of the ip address.
     - If input is a valid network range, return the input.
-    - Otherwise, print a warning and return None.
+    - Otherwise, print a warning and abort.
     """
     if net.endswith("/"):
         net = net[:-1]
@@ -62,13 +60,12 @@ def get_network_range_from_input(net: str) -> Optional[str]:
 # helper methods
 def print_network_unused(count: int, padding: int = 25) -> None:
     """Pretty print amount of unused addresses."""
-    assert isinstance(count, int)
     OutputManager().add_line(
         "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)")
     )
 
 
-def format_network_excluded_ranges(info: Dict[str, Any], padding: int = 25) -> None:
+def format_network_excluded_ranges(info: List[Dict[str, Any]], padding: int = 25) -> None:
     """Pretty print excluded ranges."""
     if not info:
         return
@@ -85,8 +82,6 @@ def format_network_excluded_ranges(info: Dict[str, Any], padding: int = 25) -> N
 
 def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
     """Pretty print ip range and reserved addresses list."""
-    assert isinstance(ip_range, str)
-    assert isinstance(reserved, int)
     network = ipaddress.ip_network(ip_range)
     manager = OutputManager()
     manager.add_line(
@@ -110,7 +105,7 @@ def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> 
         )
 
 
-def print_network(info: int, text: str, padding: int = 25) -> None:
+def print_network(info: Union[int, str], text: str, padding: int = 25) -> None:
     """Pretty print network info."""
     OutputManager().add_line("{1:<{0}}{2}".format(padding, text, info))
 
@@ -120,6 +115,24 @@ def print_network(info: int, text: str, padding: int = 25) -> None:
 ##########################################
 
 
+@command_registry.register_command(
+    prog="create",
+    description="Create a new network",
+    short_desc="Create a new network",
+    flags=[
+        Flag("-network", description="Network.", required=True, metavar="NETWORK"),
+        Flag(
+            "-desc",
+            description="Network description.",
+            required=True,
+            metavar="DESCRIPTION",
+        ),
+        Flag("-vlan", description="VLAN.", default=None, metavar="VLAN"),
+        Flag("-category", description="Category.", default=None, metavar="Category"),
+        Flag("-location", description="Location.", default=None, metavar="LOCATION"),
+        Flag("-frozen", description="Set frozen network.", action="store_true"),
+    ],
+)
 def create(args: argparse.Namespace) -> None:
     """Create a new network.
 
@@ -155,46 +168,10 @@ def create(args: argparse.Namespace) -> None:
     cli_info("created network {}".format(args.network), True)
 
 
-network.add_command(
-    prog="create",
-    description="Create a new network",
-    short_desc="Create a new network",
-    callback=create,
-    flags=[
-        Flag("-network", description="Network.", required=True, metavar="NETWORK"),
-        Flag(
-            "-desc",
-            description="Network description.",
-            required=True,
-            metavar="DESCRIPTION",
-        ),
-        Flag("-vlan", description="VLAN.", default=None, metavar="VLAN"),
-        Flag("-category", description="Category.", default=None, metavar="Category"),
-        Flag("-location", description="Location.", default=None, metavar="LOCATION"),
-        Flag("-frozen", description="Set frozen network.", action="store_true"),
-    ],
-)
-
-
-########################################
-# Implementation of sub command 'info' #
-########################################
-
-
-def info(args: argparse.Namespace) -> None:
-    """Display network info.
-
-    :param args: argparse.Namespace (networks)
-    """
-    for net in args.networks:
-        print_network_info(net)
-
-
-network.add_command(
+@command_registry.register_command(
     prog="info",
     description="Display network info for one or more networks.",
     short_desc="Display network info.",
-    callback=info,
     flags=[
         Flag(
             "networks",
@@ -204,6 +181,13 @@ network.add_command(
         ),
     ],
 )
+def info(args: argparse.Namespace) -> None:
+    """Display network info.
+
+    :param args: argparse.Namespace (networks)
+    """
+    for net in args.networks:
+        print_network_info(net)
 
 
 def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
@@ -250,79 +234,10 @@ def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
     cli_info(f"printed network info for {ip_range}")
 
 
-########################################
-# Implementation of sub command 'find' #
-########################################
-
-
-def find(args: argparse.Namespace) -> None:
-    """List networks matching search criteria.
-
-    :param args: argparse.Namespace (limit, silent, addr_only, ip, network, description, vlan,
-                                     dns_delegated, category, location, frozen, reserved)
-    """
-    args_dict = vars(args)
-
-    ip_arg = args_dict.get("ip")
-
-    if ip_arg:
-        ip_range = get_network_range_from_input(ip_arg)
-        network_info = get_network(ip_range)
-        networks = [network_info]
-    else:
-        params = {}
-        param_names = [
-            "network",
-            "description",
-            "vlan",
-            "dns_delegated",
-            "category",
-            "location",
-            "frozen",
-            "reserved",
-        ]
-        for name in param_names:
-            value = args_dict.get(name)
-            if value is None:
-                continue
-            param, val = convert_wildcard_to_regex(name, value)
-            params[param] = val
-
-        if not params:
-            cli_warning("Need at least one search criteria")
-
-        path = "/api/v1/networks/"
-        networks = get_list(path, params)
-
-    if not networks:
-        cli_warning("No networks matching the query were found.")
-
-    manager = OutputManager()
-
-    n_networks = len(networks)
-    for i, nwork in enumerate(networks):
-        if args.limit and i >= args.limit:
-            omitted = n_networks - i
-            if not args.silent:
-                s = "s" if omitted > 1 else ""
-                manager.add_line(f"Reached limit ({args.limit}). Omitted {omitted} network{s}.")
-            break
-        if args.addr_only:
-            manager.add_line(nwork["network"])
-        else:
-            print_network_info(nwork)
-            manager.add_line("")  # Blank line between networks
-
-    if not args.silent:
-        s = "s" if n_networks > 1 else ""
-        manager.add_line(f"Found {n_networks} network{s} matching the search criteria.")
-
-
-network.add_command(
+@command_registry.register_command(
     prog="find",
     description="Search for networks based on a range of search parameters",
     short_desc="Search for networks",
-    callback=find,
     flags=[
         Flag(
             "-ip",
@@ -387,13 +302,77 @@ network.add_command(
         ),
     ],
 )
+def find(args: argparse.Namespace) -> None:
+    """List networks matching search criteria.
+
+    :param args: argparse.Namespace (limit, silent, addr_only, ip, network, description, vlan,
+                                     dns_delegated, category, location, frozen, reserved)
+    """
+    args_dict = vars(args)
+
+    ip_arg = args_dict.get("ip")
+
+    if ip_arg:
+        ip_range = get_network_range_from_input(ip_arg)
+        network_info = get_network(ip_range)
+        networks = [network_info]
+    else:
+        params = {}
+        param_names = [
+            "network",
+            "description",
+            "vlan",
+            "dns_delegated",
+            "category",
+            "location",
+            "frozen",
+            "reserved",
+        ]
+        for name in param_names:
+            value = args_dict.get(name)
+            if value is None:
+                continue
+            param, val = convert_wildcard_to_regex(name, value)
+            params[param] = val
+
+        if not params:
+            cli_warning("Need at least one search criteria")
+
+        path = "/api/v1/networks/"
+        networks = get_list(path, params)
+
+    if not networks:
+        cli_warning("No networks matching the query were found.")
+
+    manager = OutputManager()
+
+    n_networks = len(networks)
+    for i, nwork in enumerate(networks):
+        if args.limit and i >= args.limit:
+            omitted = n_networks - i
+            if not args.silent:
+                s = "s" if omitted > 1 else ""
+                manager.add_line(f"Reached limit ({args.limit}). Omitted {omitted} network{s}.")
+            break
+        if args.addr_only:
+            manager.add_line(nwork["network"])
+        else:
+            print_network_info(nwork)
+            manager.add_line("")  # Blank line between networks
+
+    if not args.silent:
+        s = "s" if n_networks > 1 else ""
+        manager.add_line(f"Found {n_networks} network{s} matching the search criteria.")
 
 
-#########################################################
-# Implementation of sub command 'list_unused_addresses' #
-#########################################################
-
-
+@command_registry.register_command(
+    prog="list_unused_addresses",
+    description="Lists all the unused addresses for a network",
+    short_desc="Lists unused addresses",
+    flags=[
+        Flag("network", description="Network.", metavar="NETWORK"),
+    ],
+)
 def list_unused_addresses(args: argparse.Namespace) -> None:
     """List all the unused addresses for a network.
 
@@ -408,22 +387,14 @@ def list_unused_addresses(args: argparse.Namespace) -> None:
         OutputManager().add_line("{1:<{0}}".format(25, address))
 
 
-network.add_command(
-    prog="list_unused_addresses",
-    description="Lists all the unused addresses for a network",
-    short_desc="Lists unused addresses",
-    callback=list_unused_addresses,
+@command_registry.register_command(
+    prog="list_used_addresses",
+    description="Lists all the used addresses for a network",
+    short_desc="Lists all the used addresses for a network",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
     ],
 )
-
-
-#######################################################
-# Implementation of sub command 'list_used_addresses' #
-#######################################################
-
-
 def list_used_addresses(args: argparse.Namespace) -> None:
     """List all the used addresses for a network.
 
@@ -433,10 +404,8 @@ def list_used_addresses(args: argparse.Namespace) -> None:
     urlencoded_ip_range = urllib.parse.quote(ip_range)
 
     path = f"/api/v1/networks/{urlencoded_ip_range}/used_host_list"
-    history.record_get(path)
     ip2host = get(path).json()
     path = f"/api/v1/networks/{urlencoded_ip_range}/ptroverride_host_list"
-    history.record_get(path)
     ptr2host = get(path).json()
 
     ips = ipsort(set(list(ip2host.keys()) + list(ptr2host.keys())))
@@ -457,22 +426,15 @@ def list_used_addresses(args: argparse.Namespace) -> None:
             manager.add_line("{1:<{0}}{2}".format(25, ip, host))
 
 
-network.add_command(
-    prog="list_used_addresses",
-    description="Lists all the used addresses for a network",
-    short_desc="Lists all the used addresses for a network",
-    callback=list_used_addresses,
+@command_registry.register_command(
+    prog="remove",
+    description="Remove network",
+    short_desc="Remove network",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
-
-
-##########################################
-# Implementation of sub command 'remove' #
-##########################################
-
-
 def remove(args: argparse.Namespace) -> None:
     """Remove network.
 
@@ -490,23 +452,16 @@ def remove(args: argparse.Namespace) -> None:
     cli_info("removed network {}".format(args.network), True)
 
 
-network.add_command(
-    prog="remove",
-    description="Remove network",
-    short_desc="Remove network",
-    callback=remove,
+@command_registry.register_command(
+    prog="add_excluded_range",
+    description="Add an excluded range to a network",
+    short_desc="Add an excluded range to a network",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
-        Flag("-force", action="store_true", description="Enable force."),
+        Flag("start_ip", description="Start ipaddress", metavar="STARTIP"),
+        Flag("end_ip", description="End ipaddress", metavar="ENDIP"),
     ],
 )
-
-
-######################################################
-# Implementation of sub command 'add_excluded_range' #
-######################################################
-
-
 def add_excluded_range(args: argparse.Namespace) -> None:
     """Add an excluded range to a network.
 
@@ -525,24 +480,16 @@ def add_excluded_range(args: argparse.Namespace) -> None:
     cli_info(f"Added exclude range to {network}", True)
 
 
-network.add_command(
-    prog="add_excluded_range",
-    description="Add an excluded range to a network",
-    short_desc="Add an excluded range to a network",
-    callback=add_excluded_range,
+@command_registry.register_command(
+    prog="remove_excluded_range",
+    description="Remove an excluded range to a network",
+    short_desc="Remove an excluded range to a network",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
         Flag("start_ip", description="Start ipaddress", metavar="STARTIP"),
         Flag("end_ip", description="End ipaddress", metavar="ENDIP"),
     ],
 )
-
-
-#########################################################
-# Implementation of sub command 'remove_excluded_range' #
-#########################################################
-
-
 def remove_excluded_range(args: argparse.Namespace) -> None:
     """Remove an excluded range to a network.
 
@@ -569,24 +516,15 @@ def remove_excluded_range(args: argparse.Namespace) -> None:
     cli_info(f"Removed exclude range from {network}", True)
 
 
-network.add_command(
-    prog="remove_excluded_range",
-    description="Remove an excluded range to a network",
-    short_desc="Remove an excluded range to a network",
-    callback=remove_excluded_range,
+@command_registry.register_command(
+    prog="set_category",
+    description="Set category tag for network",
+    short_desc="Set category tag for network",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
-        Flag("start_ip", description="Start ipaddress", metavar="STARTIP"),
-        Flag("end_ip", description="End ipaddress", metavar="ENDIP"),
+        Flag("category", description="Category tag.", metavar="CATEGORY-TAG"),
     ],
 )
-
-
-################################################
-# Implementation of sub command 'set_category' #
-################################################
-
-
 def set_category(args: argparse.Namespace) -> None:
     """Set category tag for network.
 
@@ -604,23 +542,15 @@ def set_category(args: argparse.Namespace) -> None:
     )
 
 
-network.add_command(
-    prog="set_category",
-    description="Set category tag for network",
-    short_desc="Set category tag for network",
-    callback=set_category,
+@command_registry.register_command(
+    prog="set_description",  # <network> <description>
+    description="Set description for network",
+    short_desc="Set description for network",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
-        Flag("category", description="Category tag.", metavar="CATEGORY-TAG"),
+        Flag("description", description="Network description.", metavar="DESC"),
     ],
 )
-
-
-###################################################
-# Implementation of sub command 'set_description' #
-###################################################
-
-
 def set_description(args: argparse.Namespace) -> None:
     """Set description for network.
 
@@ -635,23 +565,14 @@ def set_description(args: argparse.Namespace) -> None:
     )
 
 
-network.add_command(
-    prog="set_description",  # <network> <description>
-    description="Set description for network",
-    short_desc="Set description for network",
-    callback=set_description,
+@command_registry.register_command(
+    prog="set_dns_delegated",
+    description="Set that DNS-administration is being handled elsewhere.",
+    short_desc="Set that DNS-administration is being handled elsewhere.",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
-        Flag("description", description="Network description.", metavar="DESC"),
     ],
 )
-
-
-#####################################################
-# Implementation of sub command 'set_dns_delegated' #
-#####################################################
-
-
 def set_dns_delegated(args: argparse.Namespace) -> None:
     """Set that DNS-administration is being handled elsewhere.
 
@@ -664,22 +585,14 @@ def set_dns_delegated(args: argparse.Namespace) -> None:
     cli_info(f"updated dns_delegated to 'True' for {ip_range}", print_msg=True)
 
 
-network.add_command(
-    prog="set_dns_delegated",
-    description="Set that DNS-administration is being handled elsewhere.",
-    short_desc="Set that DNS-administration is being handled elsewhere.",
-    callback=set_dns_delegated,
+@command_registry.register_command(
+    prog="set_frozen",
+    description="Freeze a network.",
+    short_desc="Freeze a network.",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
     ],
 )
-
-
-##############################################
-# Implementation of sub command 'set_frozen' #
-##############################################
-
-
 def set_frozen(args: argparse.Namespace) -> None:
     """Freeze a network.
 
@@ -692,22 +605,15 @@ def set_frozen(args: argparse.Namespace) -> None:
     cli_info(f"updated frozen to 'True' for {ip_range}", print_msg=True)
 
 
-network.add_command(
-    prog="set_frozen",
-    description="Freeze a network.",
-    short_desc="Freeze a network.",
-    callback=set_frozen,
+@command_registry.register_command(
+    prog="set_location",
+    description="Set location tag for network",
+    short_desc="Set location tag for network",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
+        Flag("location", description="Location tag.", metavar="LOCATION-TAG"),
     ],
 )
-
-
-################################################
-# Implementation of sub command 'set_location' #
-################################################
-
-
 def set_location(args: argparse.Namespace) -> None:
     """Set location tag for network.
 
@@ -723,23 +629,20 @@ def set_location(args: argparse.Namespace) -> None:
     cli_info("updated location tag to '{}' for {}".format(args.location, ip_range), True)
 
 
-network.add_command(
-    prog="set_location",
-    description="Set location tag for network",
-    short_desc="Set location tag for network",
-    callback=set_location,
+@command_registry.register_command(
+    prog="set_reserved",
+    description="Set number of reserved hosts.",
+    short_desc="Set number of reserved hosts.",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
-        Flag("location", description="Location tag.", metavar="LOCATION-TAG"),
+        Flag(
+            "number",
+            description="Number of reserved hosts.",
+            flag_type=int,
+            metavar="NUM",
+        ),
     ],
 )
-
-
-################################################
-# Implementation of sub command 'set_reserved' #
-################################################
-
-
 def set_reserved(args: argparse.Namespace) -> None:
     """Set number of reserved hosts.
 
@@ -753,28 +656,15 @@ def set_reserved(args: argparse.Namespace) -> None:
     cli_info(f"updated reserved to '{reserved}' for {ip_range}", print_msg=True)
 
 
-network.add_command(
-    prog="set_reserved",
-    description="Set number of reserved hosts.",
-    short_desc="Set number of reserved hosts.",
-    callback=set_reserved,
+@command_registry.register_command(
+    prog="set_vlan",  # <network> <vlan>
+    description="Set VLAN for network",
+    short_desc="Set VLAN for network",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
-        Flag(
-            "number",
-            description="Number of reserved hosts.",
-            flag_type=int,
-            metavar="NUM",
-        ),
+        Flag("vlan", description="VLAN.", flag_type=int, metavar="VLAN"),
     ],
 )
-
-
-############################################
-# Implementation of sub command 'set_vlan' #
-############################################
-
-
 def set_vlan(args: argparse.Namespace) -> None:
     """Set VLAN for network.
 
@@ -787,23 +677,14 @@ def set_vlan(args: argparse.Namespace) -> None:
     cli_info(f"updated vlan to {args.vlan} for {ip_range}", print_msg=True)
 
 
-network.add_command(
-    prog="set_vlan",  # <network> <vlan>
-    description="Set VLAN for network",
-    short_desc="Set VLAN for network",
-    callback=set_vlan,
+@command_registry.register_command(
+    prog="unset_dns_delegated",
+    description="Set that DNS-administration is not being handled elsewhere.",
+    short_desc="Set that DNS-administration is not being handled elsewhere.",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
-        Flag("vlan", description="VLAN.", flag_type=int, metavar="VLAN"),
     ],
 )
-
-
-#######################################################
-# Implementation of sub command 'unset_dns_delegated' #
-#######################################################
-
-
 def unset_dns_delegated(args: argparse.Namespace) -> None:
     """Set that DNS-administration is not being handled elsewhere.
 
@@ -816,22 +697,14 @@ def unset_dns_delegated(args: argparse.Namespace) -> None:
     cli_info(f"updated dns_delegated to 'False' for {ip_range}", print_msg=True)
 
 
-network.add_command(
-    prog="unset_dns_delegated",
-    description="Set that DNS-administration is not being handled elsewhere.",
-    short_desc="Set that DNS-administration is not being handled elsewhere.",
-    callback=unset_dns_delegated,
+@command_registry.register_command(
+    prog="unset_frozen",
+    description="Unfreeze a network.",
+    short_desc="Unfreeze a network.",
     flags=[
         Flag("network", description="Network.", metavar="NETWORK"),
     ],
 )
-
-
-################################################
-# Implementation of sub command 'unset_frozen' #
-################################################
-
-
 def unset_frozen(args: argparse.Namespace) -> None:
     """Unfreeze a network.
 
@@ -842,14 +715,3 @@ def unset_frozen(args: argparse.Namespace) -> None:
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
     patch(path, frozen=False)
     cli_info(f"updated frozen to 'False' for {ip_range}", print_msg=True)
-
-
-network.add_command(
-    prog="unset_frozen",
-    description="Unfreeze a network.",
-    short_desc="Unfreeze a network.",
-    callback=unset_frozen,
-    flags=[
-        Flag("network", description="Network.", metavar="NETWORK"),
-    ],
-)

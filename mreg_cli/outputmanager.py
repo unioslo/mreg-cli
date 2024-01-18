@@ -10,7 +10,7 @@ import datetime
 import json
 import os
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
@@ -18,9 +18,22 @@ import requests
 from mreg_cli.exceptions import CliError
 from mreg_cli.types import RecordingEntry, TimeInfo
 
+if TYPE_CHECKING:
+    from typing_extensions import Literal
 
-# These functions are for generic output usage, but can't be in util.py
-# because we would get a circular import.
+
+@overload
+def find_char_outside_quotes(line: str, target_char: str, return_position: "Literal[True]") -> int:
+    ...
+
+
+@overload
+def find_char_outside_quotes(
+    line: str, target_char: str, return_position: "Literal[False]"
+) -> str:
+    ...
+
+
 def find_char_outside_quotes(
     line: str, target_char: str, return_position: bool = False
 ) -> Union[str, int]:
@@ -57,8 +70,7 @@ def remove_comments(line: str) -> str:
     :param line: The line of text to process.
     :return: The line with comments removed.
     """
-    # Yes, this will always be a string, but linters fail to understand that.
-    return cast(str, find_char_outside_quotes(line, "#", False)).rstrip(" ")
+    return find_char_outside_quotes(line, "#", False).rstrip(" ")
 
 
 def remove_dict_key_recursive(obj: object, key: str) -> None:
@@ -79,7 +91,7 @@ def remove_dict_key_recursive(obj: object, key: str) -> None:
             remove_dict_key_recursive(other_value, key)
 
 
-def urlpath(url: str, params: str) -> str:
+def urlpath(url: str, params: Dict[str, Any]) -> str:
     """Return the path and query string of a URL."""
     if params:
         url = f"{url}?{urlencode(params)}"
@@ -134,7 +146,7 @@ class OutputManager:
         self._warnings: List[str] = []
         self._errors: List[str] = []
 
-        self._api_requests: List[str] = []
+        self._api_requests: List[Dict[str, Any]] = []
 
         self._time_started: datetime.datetime = datetime.datetime.now()
 
@@ -142,7 +154,7 @@ class OutputManager:
         """Clear the recording data."""
         self._recorded_data: List[RecordingEntry] = []
         self._recording: bool = False
-        self._filename: str = None
+        self._filename: str
         self._record_timestamps: bool = True
 
     def record_timestamps(self, state: bool) -> None:
@@ -260,7 +272,12 @@ class OutputManager:
         self._recorded_data.append(self.recording_entry())
 
     def recording_request(
-        self, method: str, url: str, params: str, data: Dict[str, Any], result: requests.Response
+        self,
+        method: str,
+        url: str,
+        params: Dict[str, Any],
+        data: Dict[str, Any],
+        result: requests.Response,
     ) -> None:
         """Record a request, if recording is active."""
         if not self.recording_active():
@@ -286,7 +303,7 @@ class OutputManager:
 
     def has_output(self) -> bool:
         """Return True if there is output to display."""
-        return len(self._lines) > 0
+        return len(self._output) > 0
 
     def from_command(self, command: str) -> str:
         """Add the command that generated the output.
@@ -388,8 +405,8 @@ class OutputManager:
         keys: Sequence[str],
         data: List[Dict[str, Any]],
         indent: int = 0,
-    ) -> str:
-        """Format and add a table of data.
+    ) -> None:
+        """Format and add a table of data to the output.
 
         Generates a table of data from the given headers, keys, and data. The
         headers are used as the column headers, and the keys are used to
@@ -406,6 +423,8 @@ class OutputManager:
         self.add_line(raw_format.format(*headers))
         for d in data:
             self.add_line(raw_format.format(*[d[key] for key in keys]))
+
+        return
 
     def filtered_output(self) -> List[str]:
         """Return the lines of output.
@@ -435,4 +454,4 @@ class OutputManager:
 
     def __str__(self) -> str:
         """Return the formatted output as a single string."""
-        return "\n".join(self._lines)
+        return "\n".join(self._output)

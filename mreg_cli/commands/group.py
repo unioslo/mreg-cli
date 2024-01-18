@@ -4,24 +4,24 @@ import argparse
 from itertools import chain
 from typing import Any, Dict, List
 
-from .cli import Flag, cli
-from .history import history
-from .history_log import format_history_items, get_history_items
-from .log import cli_error, cli_info, cli_warning
-from .outputmanager import OutputManager
-from .util import delete, get_list, host_info_by_name, patch, post
+from mreg_cli.commands.base import BaseCommand
+from mreg_cli.commands.registry import CommandRegistry
+from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag
+from mreg_cli.utilities.api import delete, get_list, patch, post
+from mreg_cli.utilities.history import format_history_items, get_history_items
+from mreg_cli.utilities.host import host_info_by_name
 
-##################################
-#  Add the main command 'group'  #
-##################################
+command_registry = CommandRegistry()
 
-group = cli.add_command(
-    prog="group",
-    description="Manage hostgroups.",
-    short_desc="Manage hostgroups",
-)
 
-# Utility functions
+class GroupCommands(BaseCommand):
+    """Group commands for the CLI."""
+
+    def __init__(self, cli: Any) -> None:
+        """Initialize the group commands."""
+        super().__init__(cli, command_registry, "group", "Manage hostgroups.", "Manage hostgroups")
 
 
 def get_hostgroup(name: str) -> Dict[str, Any]:
@@ -32,11 +32,15 @@ def get_hostgroup(name: str) -> Dict[str, Any]:
     return ret[0]
 
 
-##########################################
-# Implementation of sub command 'create' #
-##########################################
-
-
+@command_registry.register_command(
+    prog="create",
+    description="Create a new host group",
+    short_desc="Create a new host group",
+    flags=[
+        Flag("name", description="Group name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+    ],
+)
 def create(args: argparse.Namespace) -> None:
     """Create a new host group.
 
@@ -49,28 +53,18 @@ def create(args: argparse.Namespace) -> None:
     data = {"name": args.name, "description": args.description}
 
     path = "/api/v1/hostgroups/"
-    history.record_post(path, "", data, undoable=False)
     post(path, **data)
     cli_info(f"Created new group {args.name!r}", print_msg=True)
 
 
-group.add_command(
-    prog="create",
-    description="Create a new host group",
-    short_desc="Create a new host group",
-    callback=create,
+@command_registry.register_command(
+    prog="info",
+    description="Shows group info with description, member count and owner(s)",
+    short_desc="Group info",
     flags=[
-        Flag("name", description="Group name", metavar="NAME"),
-        Flag("description", description="Description", metavar="DESCRIPTION"),
+        Flag("name", description="Group name", nargs="+", metavar="NAME"),
     ],
 )
-
-
-########################################
-# Implementation of sub command 'info' #
-########################################
-
-
 def info(args: argparse.Namespace) -> None:
     """Show host group info.
 
@@ -83,7 +77,7 @@ def info(args: argparse.Namespace) -> None:
 
         manager.add_formatted_line("Name:", info["name"])
         manager.add_formatted_line("Description:", info["description"])
-        members = []
+        members: List[str] = []
         count = len(info["hosts"])
         if count:
             members.append("{} host{}".format(count, "s" if count > 1 else ""))
@@ -96,22 +90,15 @@ def info(args: argparse.Namespace) -> None:
             manager.add_formatted_line("Owners:", owners)
 
 
-group.add_command(
-    prog="info",
-    description="Shows group info with description, member count and owner(s)",
-    short_desc="Group info",
-    callback=info,
+@command_registry.register_command(
+    prog="rename",
+    description="Rename a group",
+    short_desc="Rename a group",
     flags=[
-        Flag("name", description="Group name", nargs="+", metavar="NAME"),
+        Flag("oldname", description="Existing name", metavar="OLDNAME"),
+        Flag("newname", description="New name", metavar="NEWNAME"),
     ],
 )
-
-
-##########################################
-# Implementation of sub command 'rename' #
-##########################################
-
-
 def rename(args: argparse.Namespace) -> None:
     """Rename group.
 
@@ -122,24 +109,16 @@ def rename(args: argparse.Namespace) -> None:
     cli_info(f"Renamed group {args.oldname!r} to {args.newname!r}", True)
 
 
-group.add_command(
-    prog="rename",
-    description="Rename a group",
-    short_desc="Rename a group",
-    callback=rename,
+@command_registry.register_command(
+    prog="list",
+    description="List group members",
+    short_desc="List group members",
     flags=[
-        Flag("oldname", description="Existing name", metavar="OLDNAME"),
-        Flag("newname", description="New name", metavar="NEWNAME"),
+        Flag("name", description="Group name", metavar="NAME"),
+        Flag("-expand", description="Expand group members", action="store_true"),
     ],
 )
-
-
-########################################
-# Implementation of sub command 'list' #
-########################################
-
-
-def _list(args: argparse.Namespace) -> None:
+def group_list(args: argparse.Namespace) -> None:
     """List group members.
 
     :param args: argparse.Namespace (name, expand)
@@ -173,23 +152,16 @@ def _list(args: argparse.Namespace) -> None:
             manager.add_formatted_line("group", group["name"])
 
 
-group.add_command(
-    prog="list",
-    description="List group members",
-    short_desc="List group members",
-    callback=_list,
+@command_registry.register_command(
+    prog="delete",
+    description="Delete host group",
+    short_desc="Delete host group",
     flags=[
         Flag("name", description="Group name", metavar="NAME"),
-        Flag("-expand", description="Expand group members", action="store_true"),
+        Flag("-force", action="store_true", description="Enable force"),
     ],
 )
-
-##########################################
-# Implementation of sub command 'delete' #
-##########################################
-
-
-def _delete(args: argparse.Namespace) -> None:
+def group_delete(args: argparse.Namespace) -> None:
     """Delete a host group.
 
     :param args: argparse.Namespace (name, force)
@@ -203,52 +175,19 @@ def _delete(args: argparse.Namespace) -> None:
         )
 
     path = f"/api/v1/hostgroups/{args.name}"
-    history.record_delete(path, dict())
     delete(path)
     cli_info(f"Deleted group {args.name!r}", print_msg=True)
 
 
-group.add_command(
-    prog="delete",
-    description="Delete host group",
-    short_desc="Delete host group",
-    callback=_delete,
+@command_registry.register_command(
+    prog="group_add",
+    description="Add source group(s) to destination group",
+    short_desc="Add group(s) to group",
     flags=[
-        Flag("name", description="Group name", metavar="NAME"),
-        Flag("-force", action="store_true", description="Enable force"),
+        Flag("dstgroup", description="destination group", metavar="DSTGROUP"),
+        Flag("srcgroup", description="source group", nargs="+", metavar="SRCGROUP"),
     ],
 )
-
-###########################################
-# Implementation of sub command 'history' #
-###########################################
-
-
-def _history(args: argparse.Namespace) -> None:
-    """Show host history for name.
-
-    :param args: argparse.Namespace (name)
-    """
-    items = get_history_items(args.name, "group", data_relation="groups")
-    format_history_items(args.name, items)
-
-
-group.add_command(
-    prog="history",
-    description="Show history for group name",
-    short_desc="Show history for group name",
-    callback=_history,
-    flags=[
-        Flag("name", description="Group name", metavar="NAME"),
-    ],
-)
-
-
-#############################################
-# Implementation of sub command 'group_add' #
-#############################################
-
-
 def group_add(args: argparse.Namespace) -> None:
     """Add group(s) to group.
 
@@ -263,27 +202,19 @@ def group_add(args: argparse.Namespace) -> None:
         }
 
         path = f"/api/v1/hostgroups/{args.dstgroup}/groups/"
-        history.record_post(path, "", data, undoable=False)
         post(path, **data)
         cli_info(f"Added group {src!r} to {args.dstgroup!r}", print_msg=True)
 
 
-group.add_command(
-    prog="group_add",
-    description="Add source group(s) to destination group",
-    short_desc="Add group(s) to group",
-    callback=group_add,
+@command_registry.register_command(
+    prog="group_remove",
+    description="Remove source group(s) from destination group",
+    short_desc="Remove group(s) from group",
     flags=[
         Flag("dstgroup", description="destination group", metavar="DSTGROUP"),
         Flag("srcgroup", description="source group", nargs="+", metavar="SRCGROUP"),
     ],
 )
-
-################################################
-# Implementation of sub command 'group_remove' #
-################################################
-
-
 def group_remove(args: argparse.Namespace) -> None:
     """Remove group(s) from group.
 
@@ -297,34 +228,26 @@ def group_remove(args: argparse.Namespace) -> None:
 
     for src in args.srcgroup:
         path = f"/api/v1/hostgroups/{args.dstgroup}/groups/{src}"
-        history.record_delete(path, dict())
         delete(path)
         cli_info(f"Removed group {src!r} from {args.dstgroup!r}", print_msg=True)
 
 
-group.add_command(
-    prog="group_remove",
-    description="Remove source group(s) from destination group",
-    short_desc="Remove group(s) from group",
-    callback=group_remove,
+@command_registry.register_command(
+    prog="host_add",
+    description="Add host(s) to group",
+    short_desc="Add host(s) to group",
     flags=[
-        Flag("dstgroup", description="destination group", metavar="DSTGROUP"),
-        Flag("srcgroup", description="source group", nargs="+", metavar="SRCGROUP"),
+        Flag("group", description="group", metavar="GROUP"),
+        Flag("hosts", description="hosts", nargs="+", metavar="HOST"),
     ],
 )
-
-############################################
-# Implementation of sub command 'host_add' #
-############################################
-
-
 def host_add(args: argparse.Namespace) -> None:
     """Add host(s) to group.
 
     :param args: argparse.Namespace (group, hosts)
     """
     get_hostgroup(args.group)
-    info = []
+    info: List[Dict[str, str]] = []
     for name in args.hosts:
         info.append(host_info_by_name(name, follow_cname=False))
 
@@ -334,61 +257,44 @@ def host_add(args: argparse.Namespace) -> None:
             "name": name,
         }
         path = f"/api/v1/hostgroups/{args.group}/hosts/"
-        history.record_post(path, "", data, undoable=False)
         post(path, **data)
         cli_info(f"Added host {name!r} to {args.group!r}", print_msg=True)
 
 
-group.add_command(
-    prog="host_add",
-    description="Add host(s) to group",
-    short_desc="Add host(s) to group",
-    callback=host_add,
+@command_registry.register_command(
+    prog="host_remove",
+    description="Remove host(s) from group",
+    short_desc="Remove host(s) from group",
     flags=[
         Flag("group", description="group", metavar="GROUP"),
-        Flag("hosts", description="hosts", nargs="+", metavar="HOST"),
+        Flag("hosts", description="host", nargs="+", metavar="HOST"),
     ],
 )
-
-###############################################
-# Implementation of sub command 'host_remove' #
-###############################################
-
-
 def host_remove(args: argparse.Namespace) -> None:
     """Remove host(s) from group.
 
     :param args: argparse.Namespace (group, hosts)
     """
     get_hostgroup(args.group)
-    info = []
+    info: List[Dict[str, str]] = []
     for name in args.hosts:
         info.append(host_info_by_name(name, follow_cname=False))
 
     for i in info:
         name = i["name"]
         path = f"/api/v1/hostgroups/{args.group}/hosts/{name}"
-        history.record_delete(path, dict())
         delete(path)
         cli_info(f"Removed host {name!r} from {args.group!r}", print_msg=True)
 
 
-group.add_command(
-    prog="host_remove",
-    description="Remove host(s) from group",
-    short_desc="Remove host(s) from group",
-    callback=host_remove,
+@command_registry.register_command(
+    prog="host_list",
+    description="List host's group memberships",
+    short_desc="List host's group memberships",
     flags=[
-        Flag("group", description="group", metavar="GROUP"),
-        Flag("hosts", description="host", nargs="+", metavar="HOST"),
+        Flag("host", description="hostname", metavar="HOST"),
     ],
 )
-
-#############################################
-# Implementation of sub command 'host_list' #
-#############################################
-
-
 def host_list(args: argparse.Namespace) -> None:
     """List group memberships for host.
 
@@ -407,21 +313,15 @@ def host_list(args: argparse.Namespace) -> None:
         manager.add_line(f"  {group['name']}")
 
 
-group.add_command(
-    prog="host_list",
-    description="List host's group memberships",
-    short_desc="List host's group memberships",
-    callback=host_list,
+@command_registry.register_command(
+    prog="owner_add",
+    description="Add owner(s) to group",
+    short_desc="Add owner(s) to group",
     flags=[
-        Flag("host", description="hostname", metavar="HOST"),
+        Flag("group", description="group", metavar="GROUP"),
+        Flag("owners", description="owners", nargs="+", metavar="OWNER"),
     ],
 )
-
-#############################################
-# Implementation of sub command 'owner_add' #
-#############################################
-
-
 def owner_add(args: argparse.Namespace) -> None:
     """Add owner(s) to group.
 
@@ -434,27 +334,19 @@ def owner_add(args: argparse.Namespace) -> None:
             "name": name,
         }
         path = f"/api/v1/hostgroups/{args.group}/owners/"
-        history.record_post(path, "", data, undoable=False)
         post(path, **data)
         cli_info(f"Added {name!r} as owner of {args.group!r}", print_msg=True)
 
 
-group.add_command(
-    prog="owner_add",
-    description="Add owner(s) to group",
-    short_desc="Add owner(s) to group",
-    callback=owner_add,
+@command_registry.register_command(
+    prog="owner_remove",
+    description="Remove owner(s) from group",
+    short_desc="Remove owner(s) from group",
     flags=[
         Flag("group", description="group", metavar="GROUP"),
-        Flag("owners", description="owners", nargs="+", metavar="OWNER"),
+        Flag("owners", description="owner", nargs="+", metavar="OWNER"),
     ],
 )
-
-################################################
-# Implementation of sub command 'owner_remove' #
-################################################
-
-
 def owner_remove(args: argparse.Namespace) -> None:
     """Remove owner(s) from group.
 
@@ -468,27 +360,19 @@ def owner_remove(args: argparse.Namespace) -> None:
 
     for i in args.owners:
         path = f"/api/v1/hostgroups/{args.group}/owners/{i}"
-        history.record_delete(path, dict())
         delete(path)
         cli_info(f"Removed {i!r} as owner of {args.group!r}", print_msg=True)
 
 
-group.add_command(
-    prog="owner_remove",
-    description="Remove owner(s) from group",
-    short_desc="Remove owner(s) from group",
-    callback=owner_remove,
+@command_registry.register_command(
+    prog="set_description",
+    description="Set description for group",
+    short_desc="Set description for group",
     flags=[
-        Flag("group", description="group", metavar="GROUP"),
-        Flag("owners", description="owner", nargs="+", metavar="OWNER"),
+        Flag("name", description="Group", metavar="GROUP"),
+        Flag("description", description="Group description.", metavar="DESC"),
     ],
 )
-
-###################################################
-# Implementation of sub command 'set_description' #
-###################################################
-
-
 def set_description(args: argparse.Namespace) -> None:
     """Set description for group.
 
@@ -499,13 +383,18 @@ def set_description(args: argparse.Namespace) -> None:
     cli_info(f"updated description to {args.description!r} for {args.name!r}", True)
 
 
-group.add_command(
-    prog="set_description",
-    description="Set description for group",
-    short_desc="Set description for group",
-    callback=set_description,
+@command_registry.register_command(
+    prog="history",
+    description="Show history for group name",
+    short_desc="Show history for group name",
     flags=[
-        Flag("name", description="Group", metavar="GROUP"),
-        Flag("description", description="Group description.", metavar="DESC"),
+        Flag("name", description="Group name", metavar="NAME"),
     ],
 )
+def history(args: argparse.Namespace) -> None:
+    """Show host history for name.
+
+    :param args: argparse.Namespace (name)
+    """
+    items = get_history_items(args.name, "group", data_relation="groups")
+    format_history_items(args.name, items)

@@ -3,20 +3,24 @@
 import argparse
 from typing import Any, Dict, Tuple
 
-from .cli import Flag, cli
-from .exceptions import HostNotFoundWarning
-from .log import cli_error, cli_info, cli_warning
-from .outputmanager import OutputManager
-from .util import delete, get, get_list, host_info_by_name, patch, post
+from mreg_cli.commands.base import BaseCommand
+from mreg_cli.commands.registry import CommandRegistry
+from mreg_cli.exceptions import HostNotFoundWarning
+from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag
+from mreg_cli.utilities.api import delete, get, get_list, patch, post
+from mreg_cli.utilities.host import host_info_by_name
 
-#################################
-#  Add the main command 'zone'  #
-#################################
+command_registry = CommandRegistry()
 
-zone = cli.add_command(
-    prog="zone",
-    description="Manage zones.",
-)
+
+class ZoneCommands(BaseCommand):
+    """Zone commands for the CLI."""
+
+    def __init__(self, cli: Any) -> None:
+        """Initialize the zone commands."""
+        super().__init__(cli, command_registry, "zone", "Manage zones.", "Manage zones")
 
 
 def _verify_nameservers(nameservers: str, force: bool) -> None:
@@ -68,11 +72,17 @@ def get_zone(name: str) -> Tuple[Dict[str, Any], str]:
     return zone.json(), path
 
 
-##########################################
-# Implementation of sub command 'create' #
-##########################################
-
-
+@command_registry.register_command(
+    prog="create",
+    description="Create new zone.",
+    short_desc="Create new zone.",
+    flags=[
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag("email", description="Contact email.", metavar="EMAIL"),
+        Flag("ns", description="Nameservers of the zone.", nargs="+", metavar="NS"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
 def create(args: argparse.Namespace) -> None:
     """Create a new zone.
 
@@ -84,25 +94,18 @@ def create(args: argparse.Namespace) -> None:
     cli_info("created zone {}".format(args.zone), True)
 
 
-zone.add_command(
-    prog="create",
-    description="Create new zone.",
-    short_desc="Create new zone.",
-    callback=create,
+@command_registry.register_command(
+    prog="delegation_create",
+    description="Create new zone delegation.",
+    short_desc="Create new zone delegation.",
     flags=[
         Flag("zone", description="Zone name.", metavar="ZONE"),
-        Flag("email", description="Contact email.", metavar="EMAIL"),
-        Flag("ns", description="Nameservers of the zone.", nargs="+", metavar="NS"),
+        Flag("delegation", description="Delegation", metavar="DELEGATION"),
+        Flag("ns", description="Nameservers for the delegation.", nargs="+", metavar="NS"),
+        Flag("-comment", description="Comment with a description", metavar="COMMENT"),
         Flag("-force", action="store_true", description="Enable force."),
     ],
 )
-
-
-#####################################################
-# Implementation of sub command 'delegation_create' #
-#####################################################
-
-
 def delegation_create(args: argparse.Namespace) -> None:
     """Create a new zone delegation.
 
@@ -121,26 +124,15 @@ def delegation_create(args: argparse.Namespace) -> None:
     cli_info("created zone delegation {}".format(args.delegation), True)
 
 
-zone.add_command(
-    prog="delegation_create",
-    description="Create new zone delegation.",
-    short_desc="Create new zone delegation.",
-    callback=delegation_create,
+@command_registry.register_command(
+    prog="delete",
+    description="Delete a zone",
+    short_desc="Delete a zone",
     flags=[
         Flag("zone", description="Zone name.", metavar="ZONE"),
-        Flag("delegation", description="Delegation", metavar="DELEGATION"),
-        Flag("ns", description="Nameservers for the delegation.", nargs="+", metavar="NS"),
-        Flag("-comment", description="Comment with a description", metavar="COMMENT"),
         Flag("-force", action="store_true", description="Enable force."),
     ],
 )
-
-
-##########################################
-# Implementation of sub command 'delete' #
-##########################################
-
-
 def zone_delete(args: argparse.Namespace) -> None:
     """Delete a zone.
 
@@ -162,23 +154,15 @@ def zone_delete(args: argparse.Namespace) -> None:
     cli_info("deleted zone {}".format(zone["name"]), True)
 
 
-zone.add_command(
-    prog="delete",
-    description="Delete a zone",
-    short_desc="Delete a zone",
-    callback=zone_delete,
+@command_registry.register_command(
+    prog="delegation_delete",
+    description="Delete a zone delegation",
+    short_desc="Delete a zone delegation",
     flags=[
         Flag("zone", description="Zone name.", metavar="ZONE"),
-        Flag("-force", action="store_true", description="Enable force."),
+        Flag("delegation", description="Delegation", metavar="DELEGATION"),
     ],
 )
-
-
-#####################################################
-# Implementation of sub command 'delegation_delete' #
-#####################################################
-
-
 def delegation_delete(args: argparse.Namespace) -> None:
     """Delete a zone delegation.
 
@@ -191,23 +175,14 @@ def delegation_delete(args: argparse.Namespace) -> None:
     cli_info("Removed zone delegation {}".format(args.delegation), True)
 
 
-zone.add_command(
-    prog="delegation_delete",
-    description="Delete a zone delegation",
-    short_desc="Delete a zone delegation",
-    callback=delegation_delete,
+@command_registry.register_command(
+    prog="info",
+    description="Delete a zone",
+    short_desc="Delete a zone",
     flags=[
         Flag("zone", description="Zone name.", metavar="ZONE"),
-        Flag("delegation", description="Delegation", metavar="DELEGATION"),
     ],
 )
-
-
-##########################################
-# Implementation of sub command 'info' #
-##########################################
-
-
 def info(args: argparse.Namespace) -> None:
     """Show SOA info for a existing zone.
 
@@ -236,22 +211,25 @@ def info(args: argparse.Namespace) -> None:
     print_soa("Default TTL:", zone["default_ttl"])
 
 
-zone.add_command(
-    prog="info",
-    description="Delete a zone",
-    short_desc="Delete a zone",
-    callback=info,
+@command_registry.register_command(
+    prog="list",
+    description="List zones",
+    short_desc="List zones",
     flags=[
-        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag(
+            "-forward",
+            action="store_true",
+            short_desc="List all forward zones",
+            description="List all forward zones",
+        ),
+        Flag(
+            "-reverse",
+            action="store_true",
+            short_desc="List all reverse zones",
+            description="List all reverse zones",
+        ),
     ],
 )
-
-
-##########################################
-# Implementation of sub command 'list' #
-##########################################
-
-
 def zone_list(args: argparse.Namespace) -> None:
     """List all zones.
 
@@ -281,33 +259,14 @@ def zone_list(args: argparse.Namespace) -> None:
         manager.add_line("No zones found.")
 
 
-zone.add_command(
-    prog="list",
-    description="List zones",
-    short_desc="List zones",
-    callback=zone_list,
+@command_registry.register_command(
+    prog="delegation_list",
+    description="List a zone's delegations",
+    short_desc="List a zone's delegations",
     flags=[
-        Flag(
-            "-forward",
-            action="store_true",
-            short_desc="List all forward zones",
-            description="List all forward zones",
-        ),
-        Flag(
-            "-reverse",
-            action="store_true",
-            short_desc="List all reverse zones",
-            description="List all reverse zones",
-        ),
+        Flag("zone", description="Zone name.", metavar="ZONE"),
     ],
 )
-
-
-###################################################
-# Implementation of sub command 'delegation_list' #
-###################################################
-
-
 def zone_delegation_list(args: argparse.Namespace) -> None:
     """List a zone's delegations.
 
@@ -330,34 +289,29 @@ def zone_delegation_list(args: argparse.Namespace) -> None:
         cli_info(f"No delegations for {args.zone}", True)
 
 
-zone.add_command(
-    prog="delegation_list",
-    description="List a zone's delegations",
-    short_desc="List a zone's delegations",
-    callback=zone_delegation_list,
-    flags=[
-        Flag("zone", description="Zone name.", metavar="ZONE"),
-    ],
-)
-
-##########################################################
-# Implementation of sub command 'delegation_comment_set' #
-##########################################################
-
-
 def _get_delegation_path(zone: str, delegation: str) -> str:
     """Return the path for a delegation."""
     if not delegation.endswith(f".{zone}"):
         cli_warning(f"Delegation '{delegation}' is not in '{zone}'")
     _, path = get_zone(zone)
     path = f"{path}/delegations/{delegation}"
-    delegation = get(path, ok404=True)
-    if delegation is not None:
+    response = get(path, ok404=True)
+    if response is not None:
         return path
     else:
         cli_error("Delegation {delegation} not found")
 
 
+@command_registry.register_command(
+    prog="delegation_comment_set",
+    description="Set a comment for zone delegation",
+    short_desc="Set a comment for zone delegation",
+    flags=[
+        Flag("zone", description="Zone name", metavar="ZONE"),
+        Flag("delegation", description="Delegation", metavar="DELEGATION"),
+        Flag("comment", description="Comment", metavar="COMMENT"),
+    ],
+)
 def zone_delegation_comment_set(args: argparse.Namespace) -> None:
     """Set a delegation's comment.
 
@@ -368,19 +322,15 @@ def zone_delegation_comment_set(args: argparse.Namespace) -> None:
     cli_info(f"Updated comment for {args.delegation}", True)
 
 
-zone.add_command(
-    prog="delegation_comment_set",
-    description="Set a comment for zone delegation",
-    short_desc="Set a comment for zone delegation",
-    callback=zone_delegation_comment_set,
+@command_registry.register_command(
+    prog="delegation_comment_remove",
+    description="Remove a comment for zone delegation",
+    short_desc="Remove a comment for zone delegation",
     flags=[
         Flag("zone", description="Zone name", metavar="ZONE"),
         Flag("delegation", description="Delegation", metavar="DELEGATION"),
-        Flag("comment", description="Comment", metavar="COMMENT"),
     ],
 )
-
-
 def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
     """Set a delegation's comment.
 
@@ -391,23 +341,16 @@ def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
     cli_info(f"Removed comment for {args.delegation}", True)
 
 
-zone.add_command(
-    prog="delegation_comment_remove",
-    description="Remove a comment for zone delegation",
-    short_desc="Remove a comment for zone delegation",
-    callback=zone_delegation_comment_remove,
+@command_registry.register_command(
+    prog="set_ns",
+    description="Update nameservers for an existing zone.",
+    short_desc="Update nameservers for an existing zone.",
     flags=[
-        Flag("zone", description="Zone name", metavar="ZONE"),
-        Flag("delegation", description="Delegation", metavar="DELEGATION"),
+        Flag("zone", description="Zone name.", metavar="ZONE"),
+        Flag("ns", description="Nameservers of the zone.", nargs="+", metavar="NS"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
-
-
-##########################################
-# Implementation of sub command 'set_ns' #
-##########################################
-
-
 def set_ns(args: argparse.Namespace) -> None:
     """Update nameservers for an existing zone.
 
@@ -419,24 +362,21 @@ def set_ns(args: argparse.Namespace) -> None:
     cli_info("updated nameservers for {}".format(args.zone), True)
 
 
-zone.add_command(
-    prog="set_ns",
-    description="Update nameservers for an existing zone.",
-    short_desc="Update nameservers for an existing zone.",
-    callback=set_ns,
+@command_registry.register_command(
+    prog="set_soa",
+    description="Updated the SOA of a zone.",
+    short_desc="Updated the SOA of a zone.",
     flags=[
         Flag("zone", description="Zone name.", metavar="ZONE"),
-        Flag("ns", description="Nameservers of the zone.", nargs="+", metavar="NS"),
-        Flag("-force", action="store_true", description="Enable force."),
+        Flag("-ns", description="Primary nameserver (SOA MNAME).", metavar="PRIMARY-NS"),
+        Flag("-email", description="Zone contact email.", metavar="EMAIL"),
+        Flag("-serialno", description="Serial number.", flag_type=int, metavar="SERIALNO"),
+        Flag("-refresh", description="Refresh time.", flag_type=int, metavar="REFRESH"),
+        Flag("-retry", description="Retry time.", flag_type=int, metavar="RETRY"),
+        Flag("-expire", description="Expire time.", flag_type=int, metavar="EXPIRE"),
+        Flag("-soa-ttl", description="SOA Time To Live", flag_type=int, metavar="TTL"),
     ],
 )
-
-
-###########################################
-# Implementation of sub command 'set_soa' #
-###########################################
-
-
 def set_soa(args: argparse.Namespace) -> None:
     """Update the SOA of a zone.
 
@@ -465,28 +405,15 @@ def set_soa(args: argparse.Namespace) -> None:
         cli_info("No options set, so unchanged.", True)
 
 
-zone.add_command(
-    prog="set_soa",
-    description="Updated the SOA of a zone.",
-    short_desc="Updated the SOA of a zone.",
-    callback=set_soa,
+@command_registry.register_command(
+    prog="set_default_ttl",
+    description="Set the default TTL of a zone.",
+    short_desc="Set the default TTL of a zone.",
     flags=[
         Flag("zone", description="Zone name.", metavar="ZONE"),
-        Flag("-ns", description="Primary nameserver (SOA MNAME).", metavar="PRIMARY-NS"),
-        Flag("-email", description="Zone contact email.", metavar="EMAIL"),
-        Flag("-serialno", description="Serial number.", flag_type=int, metavar="SERIALNO"),
-        Flag("-refresh", description="Refresh time.", flag_type=int, metavar="REFRESH"),
-        Flag("-retry", description="Retry time.", flag_type=int, metavar="RETRY"),
-        Flag("-expire", description="Expire time.", flag_type=int, metavar="EXPIRE"),
-        Flag("-soa-ttl", description="SOA Time To Live", flag_type=int, metavar="TTL"),
+        Flag("ttl", description="Default Time To Live.", flag_type=int, metavar="TTL"),
     ],
 )
-
-###################################################
-# Implementation of sub command 'set_default_ttl' #
-###################################################
-
-
 def set_default_ttl(args: argparse.Namespace) -> None:
     """Update the default TTL of a zone.
 
@@ -496,15 +423,3 @@ def set_default_ttl(args: argparse.Namespace) -> None:
     data = {"default_ttl": args.ttl}
     patch(path, **data)
     cli_info("set default TTL for {}".format(args.zone), True)
-
-
-zone.add_command(
-    prog="set_default_ttl",
-    description="Set the default TTL of a zone.",
-    short_desc="Set the default TTL of a zone.",
-    callback=set_default_ttl,
-    flags=[
-        Flag("zone", description="Zone name.", metavar="ZONE"),
-        Flag("ttl", description="Default Time To Live.", flag_type=int, metavar="TTL"),
-    ],
-)
