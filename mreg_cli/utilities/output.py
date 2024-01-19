@@ -139,6 +139,16 @@ def output_bacnetid(bacnetid: Union[Dict[str, Any], None], padding: int = 14) ->
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "BACnet ID:", bacnetid["id"]))
 
 
+def output_policies(policies: List[str], padding: int = 14) -> None:
+    """Pretty print given policies.
+
+    This follows the output policy of printing nothing if there are no policies.
+    """
+    if not policies:
+        return
+    OutputManager().add_line("{1:<{0}}{2}".format(padding, "Policies:", ", ".join(policies)))
+
+
 def output_srv(srvs: Optional[List[Dict[str, Any]]] = None, host_id: Optional[str] = None) -> None:
     """Pretty print given srv."""
     assert srvs is not None or host_id is not None
@@ -278,6 +288,10 @@ def output_host_info(info: Dict[str, Any]) -> None:
     output_sshfp(info)
     if "bacnetid" in info:
         output_bacnetid(info.get("bacnetid"))
+
+    policies = get_list("/api/v1/hostpolicy/roles/", params={"hosts__name": info["name"]})
+    output_policies([p["name"] for p in policies])
+
     cli_info("printed host info for {}".format(info["name"]))
 
 
