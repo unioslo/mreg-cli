@@ -147,10 +147,12 @@ policy atom_delete apple
 policy set_description orange "Juicy"
 policy rename orange tangerine
 host add foo
+host info foo
 policy host_add tangerine foo # should fail, tangerine is an atom, not a role
 policy host_add fruit foo
 policy list_hosts fruit
 policy host_list foo
+host info foo
 policy host_remove fruit foo
 policy remove_atom fruit banana # should fail
 policy remove_atom fruit tangerine

@@ -9441,6 +9441,18 @@
           "previous": null,
           "results": []
         }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts__name=tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -9521,6 +9533,18 @@
       {
         "method": "GET",
         "url": "/api/v1/sshfps/?host=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts__name=tinyhost.example.org",
         "data": {},
         "status": 200,
         "response": {
@@ -10399,10 +10423,10 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-01-11 16:14:50 [system-signals]: Txt create: txt = 'v=spf1 -all'",
-      "2024-01-11 16:14:50 [test]: Host create: name = 'somehost.example.org', contact = 'support@example.org'",
-      "2024-01-11 16:14:50 [test]: Ipaddress create: ipaddress = '10.0.1.4'",
-      "2024-01-11 16:14:50 [test]: Host update: contact: support@example.org -> new-support@example.org"
+      "2024-01-19 07:52:52 [system-signals]: Txt create: txt = 'v=spf1 -all'",
+      "2024-01-19 07:52:52 [test]: Host create: name = 'somehost.example.org', contact = 'support@example.org'",
+      "2024-01-19 07:52:52 [test]: Ipaddress create: ipaddress = '10.0.1.4'",
+      "2024-01-19 07:52:52 [test]: Host update: contact: support@example.org -> new-support@example.org"
     ],
     "api_requests": [
       {
@@ -10416,7 +10440,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-11T16:14:50.091712+01:00",
+              "timestamp": "2024-01-19T07:52:52.603073+01:00",
               "user": "system-signals",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10428,7 +10452,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:50.096726+01:00",
+              "timestamp": "2024-01-19T07:52:52.607098+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10438,7 +10462,7 @@
               "data": "{\"name\": \"somehost.example.org\", \"contact\": \"support@example.org\"}"
             },
             {
-              "timestamp": "2024-01-11T16:14:50.102742+01:00",
+              "timestamp": "2024-01-19T07:52:52.612085+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10448,14 +10472,14 @@
               "data": "{\"ipaddress\": \"10.0.1.4\"}"
             },
             {
-              "timestamp": "2024-01-11T16:14:50.615831+01:00",
+              "timestamp": "2024-01-19T07:52:52.829508+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
               "model_id": 4,
               "model": "Host",
               "action": "update",
-              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-01-11T16:14:50.102158+01:00\", \"updated_at\": \"2024-01-11T16:14:50.102168+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-01-11T16:14:50.091185+01:00\", \"updated_at\": \"2024-01-11T16:14:50.091195+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-01-11T16:14:50.089382+01:00\", \"updated_at\": \"2024-01-11T16:14:50.089393+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
+              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-01-19T07:52:52.611490+01:00\", \"updated_at\": \"2024-01-19T07:52:52.611499+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-01-19T07:52:52.602663+01:00\", \"updated_at\": \"2024-01-19T07:52:52.602671+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-01-19T07:52:52.601169+01:00\", \"updated_at\": \"2024-01-19T07:52:52.601177+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
             }
           ]
         }
@@ -10471,7 +10495,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-11T16:14:50.091712+01:00",
+              "timestamp": "2024-01-19T07:52:52.603073+01:00",
               "user": "system-signals",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10483,7 +10507,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:50.096726+01:00",
+              "timestamp": "2024-01-19T07:52:52.607098+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10493,7 +10517,7 @@
               "data": "{\"name\": \"somehost.example.org\", \"contact\": \"support@example.org\"}"
             },
             {
-              "timestamp": "2024-01-11T16:14:50.102742+01:00",
+              "timestamp": "2024-01-19T07:52:52.612085+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10503,14 +10527,14 @@
               "data": "{\"ipaddress\": \"10.0.1.4\"}"
             },
             {
-              "timestamp": "2024-01-11T16:14:50.615831+01:00",
+              "timestamp": "2024-01-19T07:52:52.829508+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
               "model_id": 4,
               "model": "Host",
               "action": "update",
-              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-01-11T16:14:50.102158+01:00\", \"updated_at\": \"2024-01-11T16:14:50.102168+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-01-11T16:14:50.091185+01:00\", \"updated_at\": \"2024-01-11T16:14:50.091195+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-01-11T16:14:50.089382+01:00\", \"updated_at\": \"2024-01-11T16:14:50.089393+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
+              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-01-19T07:52:52.611490+01:00\", \"updated_at\": \"2024-01-19T07:52:52.611499+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-01-19T07:52:52.602663+01:00\", \"updated_at\": \"2024-01-19T07:52:52.602671+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-01-19T07:52:52.601169+01:00\", \"updated_at\": \"2024-01-19T07:52:52.601177+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
             }
           ]
         }
@@ -12260,11 +12284,11 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-01-11 16:14:52 [test]: HostGroup create: name = 'mygroup', description = 'This describes the group'",
-      "2024-01-11 16:14:52 [test]: Host add: testhost1.example.org",
-      "2024-01-11 16:14:52 [test]: Host add: testhost2.example.org",
-      "2024-01-11 16:14:52 [test]: Group add: myself",
-      "2024-01-11 16:14:52 [test]: Host remove: testhost2.example.org"
+      "2024-01-19 07:52:53 [test]: HostGroup create: name = 'mygroup', description = 'This describes the group'",
+      "2024-01-19 07:52:54 [test]: Host add: testhost1.example.org",
+      "2024-01-19 07:52:54 [test]: Host add: testhost2.example.org",
+      "2024-01-19 07:52:54 [test]: Group add: myself",
+      "2024-01-19 07:52:54 [test]: Host remove: testhost2.example.org"
     ],
     "api_requests": [
       {
@@ -12278,7 +12302,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-11T16:14:52.362026+01:00",
+              "timestamp": "2024-01-19T07:52:53.961691+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12288,7 +12312,7 @@
               "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
             },
             {
-              "timestamp": "2024-01-11T16:14:52.641729+01:00",
+              "timestamp": "2024-01-19T07:52:54.141363+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12301,7 +12325,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:52.721709+01:00",
+              "timestamp": "2024-01-19T07:52:54.193994+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12314,7 +12338,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:52.781044+01:00",
+              "timestamp": "2024-01-19T07:52:54.226479+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12327,7 +12351,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:52.860823+01:00",
+              "timestamp": "2024-01-19T07:52:54.275794+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12353,7 +12377,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-11T16:14:52.362026+01:00",
+              "timestamp": "2024-01-19T07:52:53.961691+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12363,7 +12387,7 @@
               "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
             },
             {
-              "timestamp": "2024-01-11T16:14:52.641729+01:00",
+              "timestamp": "2024-01-19T07:52:54.141363+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12376,7 +12400,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:52.721709+01:00",
+              "timestamp": "2024-01-19T07:52:54.193994+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12389,7 +12413,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:52.781044+01:00",
+              "timestamp": "2024-01-19T07:52:54.226479+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12402,7 +12426,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:52.860823+01:00",
+              "timestamp": "2024-01-19T07:52:54.275794+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12760,15 +12784,15 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-01-12 08:11:52 [test]: HostGroup create: name = 'mygroup', description = 'This describes the group'",
-      "2024-01-12 08:11:53 [test]: Host add: testhost1.example.org",
-      "2024-01-12 08:11:53 [test]: Host add: testhost2.example.org",
-      "2024-01-12 08:11:53 [test]: Group add: myself",
-      "2024-01-12 08:11:53 [test]: Host remove: testhost2.example.org",
-      "2024-01-12 08:11:53 [test]: HostGroup add: yourgroup",
-      "2024-01-12 08:11:53 [test]: HostGroup remove: yourgroup",
-      "2024-01-12 08:11:53 [test]: Group add: anotherowner",
-      "2024-01-12 08:11:53 [test]: Group remove: myself"
+      "2024-01-19 07:52:53 [test]: HostGroup create: name = 'mygroup', description = 'This describes the group'",
+      "2024-01-19 07:52:54 [test]: Host add: testhost1.example.org",
+      "2024-01-19 07:52:54 [test]: Host add: testhost2.example.org",
+      "2024-01-19 07:52:54 [test]: Group add: myself",
+      "2024-01-19 07:52:54 [test]: Host remove: testhost2.example.org",
+      "2024-01-19 07:52:54 [test]: HostGroup add: yourgroup",
+      "2024-01-19 07:52:54 [test]: HostGroup remove: yourgroup",
+      "2024-01-19 07:52:54 [test]: Group add: anotherowner",
+      "2024-01-19 07:52:54 [test]: Group remove: myself"
     ],
     "api_requests": [
       {
@@ -12782,7 +12806,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-12T08:11:52.995973+01:00",
+              "timestamp": "2024-01-19T07:52:53.961691+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12792,7 +12816,7 @@
               "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
             },
             {
-              "timestamp": "2024-01-12T08:11:53.190982+01:00",
+              "timestamp": "2024-01-19T07:52:54.141363+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12805,7 +12829,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.241878+01:00",
+              "timestamp": "2024-01-19T07:52:54.193994+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12818,7 +12842,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.275976+01:00",
+              "timestamp": "2024-01-19T07:52:54.226479+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12831,7 +12855,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.324670+01:00",
+              "timestamp": "2024-01-19T07:52:54.275794+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12844,7 +12868,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.419080+01:00",
+              "timestamp": "2024-01-19T07:52:54.409832+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12857,7 +12881,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.467973+01:00",
+              "timestamp": "2024-01-19T07:52:54.459050+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12870,7 +12894,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.500674+01:00",
+              "timestamp": "2024-01-19T07:52:54.492491+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12883,7 +12907,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.534481+01:00",
+              "timestamp": "2024-01-19T07:52:54.525855+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12909,7 +12933,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-12T08:11:52.995973+01:00",
+              "timestamp": "2024-01-19T07:52:53.961691+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12919,7 +12943,7 @@
               "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
             },
             {
-              "timestamp": "2024-01-12T08:11:53.190982+01:00",
+              "timestamp": "2024-01-19T07:52:54.141363+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12932,7 +12956,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.241878+01:00",
+              "timestamp": "2024-01-19T07:52:54.193994+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12945,7 +12969,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.275976+01:00",
+              "timestamp": "2024-01-19T07:52:54.226479+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12958,7 +12982,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.324670+01:00",
+              "timestamp": "2024-01-19T07:52:54.275794+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12971,7 +12995,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.419080+01:00",
+              "timestamp": "2024-01-19T07:52:54.409832+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12984,7 +13008,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.467973+01:00",
+              "timestamp": "2024-01-19T07:52:54.459050+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12997,7 +13021,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.500674+01:00",
+              "timestamp": "2024-01-19T07:52:54.492491+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -13010,7 +13034,7 @@
               }
             },
             {
-              "timestamp": "2024-01-12T08:11:53.534481+01:00",
+              "timestamp": "2024-01-19T07:52:54.525855+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -14264,7 +14288,7 @@
     "error": [],
     "output": [
       "Name:          fruit",
-      "Created:       2024-01-12",
+      "Created:       2024-01-19",
       "Description:   5 a day",
       "Atom members:",
       "               apple",
@@ -14368,8 +14392,8 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-01-12 08:11:54 [test]: HostPolicyAtom create: description = 'Here's the description', name = 'apple'",
-      "2024-01-12 08:11:54 [test]: HostPolicyAtom add to: hostpolicy_role fruit"
+      "2024-01-19 07:52:55 [test]: HostPolicyAtom create: description = 'Here's the description', name = 'apple'",
+      "2024-01-19 07:52:55 [test]: HostPolicyAtom add to: hostpolicy_role fruit"
     ],
     "api_requests": [
       {
@@ -14383,7 +14407,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-12T08:11:54.227271+01:00",
+              "timestamp": "2024-01-19T07:52:55.216591+01:00",
               "user": "test",
               "resource": "hostpolicy_atom",
               "name": "apple",
@@ -14406,7 +14430,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-12T08:11:54.227271+01:00",
+              "timestamp": "2024-01-19T07:52:55.216591+01:00",
               "user": "test",
               "resource": "hostpolicy_atom",
               "name": "apple",
@@ -14429,7 +14453,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-12T08:11:54.409726+01:00",
+              "timestamp": "2024-01-19T07:52:55.407520+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -14568,9 +14592,9 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-01-11 16:14:54 [test]: HostPolicyAtom create: description = 'Here's the description', name = 'apple'",
-      "2024-01-11 16:14:54 [test]: HostPolicyAtom add to: hostpolicy_role fruit",
-      "2024-01-11 16:14:54 [test]: HostPolicyAtom remove from: hostpolicy_role fruit"
+      "2024-01-19 07:52:55 [test]: HostPolicyAtom create: description = 'Here's the description', name = 'apple'",
+      "2024-01-19 07:52:55 [test]: HostPolicyAtom add to: hostpolicy_role fruit",
+      "2024-01-19 07:52:55 [test]: HostPolicyAtom remove from: hostpolicy_role fruit"
     ],
     "api_requests": [
       {
@@ -14584,7 +14608,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-11T16:14:54.310641+01:00",
+              "timestamp": "2024-01-19T07:52:55.216591+01:00",
               "user": "test",
               "resource": "hostpolicy_atom",
               "name": "apple",
@@ -14607,7 +14631,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-11T16:14:54.310641+01:00",
+              "timestamp": "2024-01-19T07:52:55.216591+01:00",
               "user": "test",
               "resource": "hostpolicy_atom",
               "name": "apple",
@@ -14630,7 +14654,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-11T16:14:54.602354+01:00",
+              "timestamp": "2024-01-19T07:52:55.407520+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -14643,7 +14667,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:54.906978+01:00",
+              "timestamp": "2024-01-19T07:52:55.618731+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -14879,6 +14903,100 @@
     "time": null
   },
   {
+    "command": "host info foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host info foo",
+    "ok": [
+      "OK: : printed host info for foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         foo.example.org",
+      "Contact:      ",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 12
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=12",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=12",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=12",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "policy host_add tangerine foo",
     "command_filter": null,
     "command_filter_negate": false,
@@ -15059,6 +15177,117 @@
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "hosts": [
+                {
+                  "name": "foo.example.org"
+                }
+              ],
+              "atoms": [
+                {
+                  "name": "tangerine"
+                }
+              ],
+              "description": "5 a day",
+              "name": "fruit",
+              "labels": []
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host info foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host info foo",
+    "ok": [
+      "OK: : printed host info for foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         foo.example.org",
+      "Contact:      ",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Policies:     fruit"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 12
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=12",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=12",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=12",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
         }
       },
       {
@@ -15287,13 +15516,13 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-01-11 16:14:54 [test]: HostPolicyRole create: description = '5 a day', name = 'fruit', labels = '[]'",
-      "2024-01-11 16:14:54 [test]: HostPolicyAtom add: apple",
-      "2024-01-11 16:14:54 [test]: HostPolicyAtom add: orange",
-      "2024-01-11 16:14:54 [test]: HostPolicyAtom remove: apple",
-      "2024-01-11 16:14:55 [test]: Host add: foo.example.org",
-      "2024-01-11 16:14:55 [test]: Host remove: foo.example.org",
-      "2024-01-11 16:14:55 [test]: HostPolicyAtom remove: tangerine"
+      "2024-01-19 07:52:55 [test]: HostPolicyRole create: description = '5 a day', name = 'fruit', labels = '[]'",
+      "2024-01-19 07:52:55 [test]: HostPolicyAtom add: apple",
+      "2024-01-19 07:52:55 [test]: HostPolicyAtom add: orange",
+      "2024-01-19 07:52:55 [test]: HostPolicyAtom remove: apple",
+      "2024-01-19 07:52:55 [test]: Host add: foo.example.org",
+      "2024-01-19 07:52:56 [test]: Host remove: foo.example.org",
+      "2024-01-19 07:52:56 [test]: HostPolicyAtom remove: tangerine"
     ],
     "api_requests": [
       {
@@ -15307,7 +15536,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-11T16:14:54.441616+01:00",
+              "timestamp": "2024-01-19T07:52:55.304769+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15317,7 +15546,7 @@
               "data": "{\"description\": \"5 a day\", \"name\": \"fruit\", \"labels\": []}"
             },
             {
-              "timestamp": "2024-01-11T16:14:54.602354+01:00",
+              "timestamp": "2024-01-19T07:52:55.407520+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15330,7 +15559,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:54.683013+01:00",
+              "timestamp": "2024-01-19T07:52:55.457739+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15343,7 +15572,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:54.906978+01:00",
+              "timestamp": "2024-01-19T07:52:55.618731+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15356,7 +15585,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:55.430476+01:00",
+              "timestamp": "2024-01-19T07:52:55.982189+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15369,7 +15598,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:55.608986+01:00",
+              "timestamp": "2024-01-19T07:52:56.158039+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15382,7 +15611,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:55.691687+01:00",
+              "timestamp": "2024-01-19T07:52:56.206994+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15408,7 +15637,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-01-11T16:14:54.441616+01:00",
+              "timestamp": "2024-01-19T07:52:55.304769+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15418,7 +15647,7 @@
               "data": "{\"description\": \"5 a day\", \"name\": \"fruit\", \"labels\": []}"
             },
             {
-              "timestamp": "2024-01-11T16:14:54.602354+01:00",
+              "timestamp": "2024-01-19T07:52:55.407520+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15431,7 +15660,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:54.683013+01:00",
+              "timestamp": "2024-01-19T07:52:55.457739+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15444,7 +15673,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:54.906978+01:00",
+              "timestamp": "2024-01-19T07:52:55.618731+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15457,7 +15686,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:55.430476+01:00",
+              "timestamp": "2024-01-19T07:52:55.982189+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15470,7 +15699,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:55.608986+01:00",
+              "timestamp": "2024-01-19T07:52:56.158039+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15483,7 +15712,7 @@
               }
             },
             {
-              "timestamp": "2024-01-11T16:14:55.691687+01:00",
+              "timestamp": "2024-01-19T07:52:56.206994+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -16911,6 +17140,18 @@
       {
         "method": "GET",
         "url": "/api/v1/sshfps/?host=14",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts__name=foo.example.org",
         "data": {},
         "status": 200,
         "response": {
@@ -22610,7 +22851,7 @@
     "error": [],
     "output": [
       "Name:          myrole",
-      "Created:       2024-01-12",
+      "Created:       2024-01-19",
       "Description:   This is the description",
       "Atom members:",
       "               None",
