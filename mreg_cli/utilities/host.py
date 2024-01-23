@@ -102,7 +102,7 @@ def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
 
         net1 = get_network_by_ip(ip1)
         net2 = get_network_by_ip(ip2)
-        if net1["vlan"] == net2["vlan"]:
+        if net1["vlan"] and net2["vlan"] and net1["vlan"] == net2["vlan"]:
             # In the case of the host having IPv4 and IPv6 on the same VLAN, we return the IPv4
             # address. This works "okay" for now as its the only DUID type they can share.
             if is_valid_ipv4(ip1):
