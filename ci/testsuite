@@ -173,7 +173,7 @@ permission network_remove 10.0.0.0/24 somegroup "[abc]+.uio.no"
 
 ##### Tests: DHCP
 #   - associate / disassociate ip with mac address
-network create -network 10.0.0.0/24 -desc foo
+network create -network 10.0.0.0/24 -desc foo -vlan 1234
 host add foo
 host a_add foo 10.0.0.5
 dhcp assoc 1.2.3.4 aa:bb:cc:dd:ee:ff  # doesn't work, because ip addr doesn't exist
@@ -186,8 +186,24 @@ dhcp disassoc foo
 dhcp disassoc meh   # host not found
 host a_remove foo 10.0.0.5
 dhcp assoc foo aa:bb:cc:dd:ee:ff # doesn't work, because the host doesn't have any ip addresses
-host remove foo
+
+# Test handling of multiple IPs on a host
+host a_add foo 10.0.0.5
+host a_add foo 10.0.0.6 -f
+dhcp assoc foo aa:bb:cc:dd:ee:ff # should fail, two IPs of same type
+host a_remove foo 10.0.0.6
+network create -network 2001:db8::/64 -desc "foo_ipv6" -vlan 1234
+network create -network 2001:db9::/64 -desc "notfoo_ipv6" -vlan 1235
+host aaaa_add foo 2001:db9::5 -f
+dhcp assoc foo aa:bb:cc:dd:ee:ff # should fail, the host has two IPs of different types on different VLANs.
+host aaaa_remove foo 2001:db9::5
+host aaaa_add foo 2001:db8::5 -f
+dhcp assoc foo aa:bb:cc:dd:ee:ff # should work, the host now has two IPs of different types on the same VLAN.
+
+host remove foo -f
 network remove 10.0.0.0/24 -f
+network remove 2001:db8::/64 -f
+network remove 2001:db9::/64 -f
 
 
 ##### Tests: host
