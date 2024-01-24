@@ -62,12 +62,16 @@ def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
     """Get A/AAAA record by either ip address or host name.
 
     This will fail if:
-        - The host has multiple A/AAAA records.
+        - The host has multiple A/AAAA records and they are on different VLANs.
         - The host has no A/AAAA records.
         - The IP is used by multiple hosts.
         - The IP or host doesn't exist.
 
+    If the host has one A and AAAA record on the same VLAN, the IPv4 address is returned.
+
     :param arg: ip address or host name (as a string)
+
+    :return: A dict with the ip address information.
     """
     if is_valid_ip(arg):
         path = "/api/v1/ipaddresses/"
@@ -79,23 +83,53 @@ def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
             cli_warning(f"ip {arg} doesn't exist.")
         elif len(ips) > 1:
             cli_warning("ip {} is in use by {} hosts".format(arg, len(ips)))
-        ip = ips[0]
-    else:
-        info = host_info_by_name(arg)
-        if len(info["ipaddresses"]) > 1:
+        return ips[0]
+
+    # We were not given an IP, so resolve as a host.
+    info = host_info_by_name(arg)
+    if len(info["ipaddresses"]) == 2:
+        # one of these may be is_valid_ip4 and the other is_valid_ip6.
+        ip1 = info["ipaddresses"][0]["ipaddress"]
+        ip2 = info["ipaddresses"][1]["ipaddress"]
+
+        if not (is_valid_ipv4(ip1) and is_valid_ipv6(ip2)) or (
+            is_valid_ipv6(ip1) and is_valid_ipv4(ip2)
+        ):
             cli_warning(
-                "{} has {} ip addresses, please enter one of the addresses instead.".format(
-                    info["name"],
-                    len(info["ipaddresses"]),
+                "{} has multiple addresses in the same address family.".format(arg)
+                + " Please specify a specific address to use instead."
+            )
+
+        net1 = get_network_by_ip(ip1)
+        net2 = get_network_by_ip(ip2)
+        if net1["vlan"] and net2["vlan"] and net1["vlan"] == net2["vlan"]:
+            # In the case of the host having IPv4 and IPv6 on the same VLAN, we return the IPv4
+            # address. This works "okay" for now as its the only DUID type they can share.
+            if is_valid_ipv4(ip1):
+                return info["ipaddresses"][0]
+            return info["ipaddresses"][1]
+        else:
+            cli_warning(
+                "{} has one IPv4 and one IPv6 address, but they are on different VLANs.".format(
+                    info["name"]
                 )
+                + " Please specify a specific address to use instead."
             )
-        if len(info["ipaddresses"]) == 0:
-            cli_warning(
-                "{} doesn't have any ip addresses.".format(arg),
-                raise_exception=True,
-                exception=CliWarning,
+
+    elif len(info["ipaddresses"]) > 1:
+        cli_warning(
+            "{} has {} ip addresses, please enter one of the addresses instead.".format(
+                info["name"],
+                len(info["ipaddresses"]),
             )
-        ip = info["ipaddresses"][0]
+        )
+    if len(info["ipaddresses"]) == 0:
+        cli_warning(
+            "{} doesn't have any ip addresses.".format(arg),
+            raise_exception=True,
+            exception=CliWarning,
+        )
+    ip = info["ipaddresses"][0]
     return ip
 
 
