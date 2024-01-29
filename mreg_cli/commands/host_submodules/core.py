@@ -221,6 +221,29 @@ def remove(args: argparse.Namespace) -> None:
 
 
 @command_registry.register_command(
+    prog="info_pydantic",
+    description="Print info about one or more hosts.",
+    short_desc="Print info about one or more hosts.",
+    flags=[
+        Flag(
+            "hosts",
+            description="One or more hosts given by their name, ip or mac.",
+            short_desc="One or more names, ips or macs.",
+            nargs="+",
+            metavar="NAME/IP/MAC",
+        )
+    ],
+)
+def host_info_pydantic(args: argparse.Namespace) -> None:
+    """Print information about host."""
+    import mreg_cli.api as api
+
+    host = api.get_host(args.hosts[0])
+    print(host)
+    host.output_host_info()
+
+
+@command_registry.register_command(
     prog="info",
     description="Print info about one or more hosts.",
     short_desc="Print info about one or more hosts.",
