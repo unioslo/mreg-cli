@@ -752,8 +752,8 @@ host.add_command(
         Flag(
             "old_name",
             description=(
-                "Host name of the host to rename. May be an alias. ",
-                "If it is an alias then the alias is renamed.",
+                "Host name of the host to rename. May be an alias. "
+                "If it is an alias then the alias is renamed."
             ),
             short_desc="Existing host name.",
             metavar="OLD",
@@ -1414,8 +1414,8 @@ def cname_add(args: argparse.Namespace) -> None:
 host.add_command(
     prog="cname_add",
     description=(
-        "Add a CNAME record to host. If NAME is an alias ",
-        "the cname host is used as target for ALIAS.",
+        "Add a CNAME record to host. If NAME is an alias "
+        "the cname host is used as target for ALIAS."
     ),
     short_desc="Add CNAME.",
     callback=cname_add,
@@ -1533,8 +1533,8 @@ def cname_show(args: argparse.Namespace) -> None:
 host.add_command(
     prog="cname_show",
     description=(
-        "Show CNAME records for host. If NAME is an alias the cname ",
-        "hosts aliases are shown.",
+        "Show CNAME records for host. If NAME is an alias the cname "
+        "hosts aliases are shown."
     ),
     short_desc="Show CNAME records.",
     callback=cname_show,
@@ -2717,8 +2717,8 @@ def sshfp_remove(args: argparse.Namespace) -> None:
 host.add_command(
     prog="sshfp_remove",
     description=(
-        "Remove SSHFP record with a given fingerprint from the host. ",
-        "A missing fingerprint removes all SSHFP records for the host.",
+        "Remove SSHFP record with a given fingerprint from the host. "
+        "A missing fingerprint removes all SSHFP records for the host."
     ),
     callback=sshfp_remove,
     flags=[
@@ -2862,8 +2862,8 @@ def ttl_set(args: argparse.Namespace) -> None:
 host.add_command(
     prog="ttl_set",
     description=(
-        "Set ttl for host. Valid values are 300 <= TTL <= 68400 or ",
-        '"default". If NAME is an alias the alias host is updated.',
+        "Set ttl for host. Valid values are 300 <= TTL <= 68400 or "
+        '"default". If NAME is an alias the alias host is updated.'
     ),
     short_desc="Set TTL record.",
     callback=ttl_set,
@@ -2940,8 +2940,8 @@ def txt_add(args: argparse.Namespace) -> None:
 host.add_command(
     prog="txt_add",
     description=(
-        "Add a txt record to host. TEXT must be enclosed in double ",
-        "quotes if it contains more than one word.",
+        "Add a txt record to host. TEXT must be enclosed in double "
+        "quotes if it contains more than one word."
     ),
     short_desc="Add TXT record.",
     callback=txt_add,

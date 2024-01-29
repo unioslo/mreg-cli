@@ -339,8 +339,8 @@ def undo(args: argparse.Namespace):
 history_.add_command(
     prog="undo",
     description=(
-        "Undo some history event given by <history-number> (GET ",
-        "requests are not redone)",
+        "Undo some history event given by <history-number> (GET "
+        "requests are not redone)"
     ),
     short_desc="Undo history.",
     callback=undo,
