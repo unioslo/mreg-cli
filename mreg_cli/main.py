@@ -11,8 +11,9 @@ from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 import mreg_cli.utilities.api as api
 from mreg_cli.cli import cli, source
 from mreg_cli.config import MregCliConfig
+from mreg_cli.exceptions import LoginFailedError
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.utilities.api import login1
+from mreg_cli.utilities.api import try_token_or_login
 
 from . import log
 
@@ -134,9 +135,9 @@ def main():
         return
 
     try:
-        login1(config.get("user"), config.get("url"))
-    except (EOFError, KeyboardInterrupt):
-        print("")
+        try_token_or_login(config.get("user"), config.get("url"))
+    except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
+        print(e)
         raise SystemExit() from None
     if args.show_token:
         print(api.session.headers["Authorization"])
