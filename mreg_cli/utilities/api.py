@@ -60,6 +60,8 @@ def try_token_or_login(user: str, url: str) -> None:
     :param user: Username to login with.
     :param url: URL to MREG.
 
+    :raises LoginFailedError: If login fails.
+
     :returns: Nothing.
     """
     if os.path.isfile(mreg_auth_token_file):
