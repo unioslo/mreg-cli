@@ -58,3 +58,20 @@ class NetworkNotFoundWarning(CliWarning):
     """Warning class for network not found."""
 
     pass
+
+
+class LoginFailedError(CliException):
+    """Error class for login failure."""
+
+    def formatted_exception(self) -> str:
+        """Return a string formatted with 'Login failed:' prefixing the error message.
+
+        :returns: Formatted error message.
+        """
+        return f"Login failed: {super().__str__()}"
+
+    def __str__(self) -> str:
+        """Return the error message."""
+        return "Login failed"
+
+    pass
