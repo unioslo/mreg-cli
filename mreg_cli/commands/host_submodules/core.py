@@ -297,7 +297,7 @@ def host_info(args: argparse.Namespace) -> None:
             "-comment",
             description="Comment or part of comment",
             short_desc="Comment or part of comment",
-            metavar="CONTACT",
+            metavar="COMMENT",
         ),
         Flag(
             "-contact",
