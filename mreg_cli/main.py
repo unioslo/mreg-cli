@@ -113,6 +113,14 @@ def main():
     )
 
     output_args.add_argument(
+        "--token-only",
+        dest="token_only",
+        action="store_true",
+        default=False,
+        help="Only attempt token login, this will avoid interactive prompts.",
+    )
+
+    output_args.add_argument(
         "command", metavar="command", nargs="*", help="Oneshot command to issue to the cli."
     )
 
@@ -139,7 +147,10 @@ def main():
         return
 
     try:
-        try_token_or_login(config.get("user"), config.get("url"))
+        try_token_or_login(
+            config.get("user"), config.get("url"), fail_without_token=args.token_only
+        )
+
     except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
         print(e)
         raise SystemExit() from None
