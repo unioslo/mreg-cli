@@ -112,6 +112,10 @@ def main():
         metavar="SOURCE",
     )
 
+    output_args.add_argument(
+        "command", metavar="command", nargs="*", help="Oneshot command to issue to the cli."
+    )
+
     args = parser.parse_args()
     setup_logging(args.verbosity)
     logger.debug(f"args: {args}")
@@ -170,6 +174,16 @@ def main():
         for command in source([conf["source"]], "verbosity" in conf, False):
             cli.process_command_line(command)
         return
+
+    # Check if we got a oneshot command. If so, execute it and exit.
+    if args.command:
+        cmd = " ".join(args.command)
+        try:
+            cli.process_command_line(cmd)
+        except ValueError as e:
+            print(e)
+
+        raise SystemExit() from None
 
     # The app runs in an infinite loop and is expected to exit using sys.exit()
     while True:
