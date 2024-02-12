@@ -52,7 +52,7 @@ def set_file_permissions(f: str, mode: int) -> None:
         pass
 
 
-def try_token_or_login(user: str, url: str) -> None:
+def try_token_or_login(user: str, url: str, fail_without_token: bool = False) -> None:
     """Check for a valid token or interactively log in to MREG.
 
     Exits on connection failure.
@@ -90,6 +90,8 @@ def try_token_or_login(user: str, url: str) -> None:
         error(f"Could not connect to {url}")
 
     if ret.status_code == 401:
+        if fail_without_token:
+            raise SystemExit("Token only login failed.")
         prompt_for_password_and_login(user, url, catch_exception=False)
 
 
