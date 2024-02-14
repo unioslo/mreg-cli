@@ -86,8 +86,8 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
             params={"page_size": 1},
             timeout=5,
         )
-    except requests.exceptions.ConnectionError:
-        error(f"Could not connect to {url}")
+    except requests.exceptions.ConnectionError as e:
+        error(f"Could not connect to {url}: {e}")
 
     if ret.status_code == 401:
         if fail_without_token:
