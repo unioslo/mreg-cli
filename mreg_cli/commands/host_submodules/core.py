@@ -161,6 +161,9 @@ def remove(args: argparse.Namespace) -> None:
     if len(info["ipaddresses"]) > 1 and not args.force:
         warn_msg += "{} ipaddresses. ".format(len(info["ipaddresses"]))
 
+    if len(info["mxs"]) > 0 and not args.force:
+        warn_msg += "MX record(s). "
+
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
     path = "/api/v1/naptrs/"
