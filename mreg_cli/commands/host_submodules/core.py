@@ -12,7 +12,7 @@ Commands implemented:
 """
 
 import argparse
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import HostNotFoundWarning
@@ -140,6 +140,12 @@ def add(args: argparse.Namespace) -> None:
             metavar="NAME/IP",
         ),
         Flag("-force", action="store_true", description="Enable force."),
+        Flag(
+            "-override",
+            short_desc="Override list",
+            description="Override list for forcing (cname, naptr, srv, ptr)",
+            metavar="OVERRIDE",
+        ),
     ],
 )
 def remove(args: argparse.Namespace) -> None:
@@ -149,16 +155,27 @@ def remove(args: argparse.Namespace) -> None:
     """
     # Get host info or raise exception
     info = host_info_by_name_or_ip(args.name)
+    overrides: List[str] = args.override.split(",") if args.override else []
+
+    def forced(override_required: str = None) -> bool:
+        # If force wasn't set at all, return false.
+        if not args.force:
+            return False
+
+        if override_required:
+            return override_required in overrides
+
+        return False
 
     warn_msg = ""
     # Require force if host has any cnames.
     cnames = info["cnames"]
     if len(cnames):
-        if not args.force:
+        if not forced("cnames"):
             warn_msg += "{} cnames. ".format(len(cnames))
 
     # Require force if host has multiple A/AAAA records
-    if len(info["ipaddresses"]) > 1 and not args.force:
+    if len(info["ipaddresses"]) > 1 and not forced():
         warn_msg += "{} ipaddresses. ".format(len(info["ipaddresses"]))
 
     if len(info["mxs"]) > 0 and not args.force:
