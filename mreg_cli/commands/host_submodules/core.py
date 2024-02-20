@@ -143,9 +143,9 @@ def add(args: argparse.Namespace) -> None:
         Flag("-force", action="store_true", description="Enable force."),
         Flag(
             "-override",
-            short_desc="Comma separated override list",
+            short_desc="Comma separated override list, requires -force.",
             description=(
-                "Comma separated overrides for forced removal. "
+                "Comma separated overrides for forced removal. Requires -force."
                 "Supports the following overrides: 'cname', 'naptr', 'mxs', 'srv', 'ptr'. "
                 "Example usage: '-override cnames,ipaddresses,mxs'"
             ),
@@ -260,7 +260,9 @@ def remove(args: argparse.Namespace) -> None:
     # Warn user and raise exception if any force requirements was found
     if warnings:
         warn_msg = "\n".join(warnings)
-        cli_warning("{} will require override for deletion:\n{}".format(info["name"], warn_msg))
+        cli_warning(
+            "{} requires force and override for deletion:\n{}".format(info["name"], warn_msg)
+        )
 
     # Delete host
     path = f"/api/v1/hosts/{info['name']}"
