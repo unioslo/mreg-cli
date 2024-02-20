@@ -38,10 +38,19 @@ def main():
 
     parser = argparse.ArgumentParser(description="The MREG cli")
 
+    # Accept empty url as the default option for the --url parameter.
+    # If the user never sets the URL we will throw a value error on
+    # the initial connection attempt.
+    default_url = ""
+    try:
+        default_url = config.get_url()
+    except ValueError:
+        pass
+
     connect_args = parser.add_argument_group("connection settings")
     connect_args.add_argument(
         "--url",
-        default=config.get_url(),
+        default=default_url,
         help="use mreg server at %(metavar)s (default: %(default)s)",
         metavar="URL",
     )
