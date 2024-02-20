@@ -146,7 +146,7 @@ def add(args: argparse.Namespace) -> None:
             short_desc="Comma separated override list, requires -force.",
             description=(
                 "Comma separated overrides for forced removal. Requires -force."
-                "Supports the following overrides: 'cname', 'naptr', 'mxs', 'srv', 'ptr'. "
+                "Supports the following overrides: 'cname', 'mxs', 'srv', 'ptr', 'naptr'."
                 "Example usage: '-override cnames,ipaddresses,mxs'"
             ),
             metavar="OVERRIDE",
@@ -161,7 +161,6 @@ def remove(args: argparse.Namespace) -> None:
     # Get host info or raise exception
     info = host_info_by_name_or_ip(args.name)
     overrides: List[str] = args.override.split(",") if args.override else []
-    required_overrides: List[str] = []
 
     def forced(override_required: str = None) -> bool:
         # If we require an override, check if it's in the list of provided overrides.
@@ -177,8 +176,7 @@ def remove(args: argparse.Namespace) -> None:
 
     warnings: List[str] = []
     # Require force if host has any cnames.
-    if info["cnames"] and not forced("cnames"):
-        required_overrides.append("cnames")
+    if info["cnames"] and not args.force:
         warnings.append(f"  {len(info['cnames'])} cnames, override with 'cnames'")
         for cname in info["cnames"]:
             warnings.append(f"    - {cname['name']}")
@@ -190,7 +188,6 @@ def remove(args: argparse.Namespace) -> None:
         if same_vlan and not forced():
             warnings.append("  multiple ipaddresses on the same VLAN. Must use 'force'.")
         elif not same_vlan and not forced("ipaddresses"):
-            required_overrides.append("ipaddresses")
             warnings.append(
                 "  {} ipaddresses on distinct VLANs, override with 'ipadresses'".format(
                     len(info["ipaddresses"])
@@ -201,7 +198,6 @@ def remove(args: argparse.Namespace) -> None:
                 warnings.append(f"   - {ip['ipaddress']} (vlan: {vlan})")
 
     if info["mxs"] and not forced("mxs"):
-        required_overrides.append("mxs")
         warnings.append(f"  {len(info['mxs'])} MX records, override with 'mxs'")
         for mx in info["mxs"]:
             warnings.append(f"    - {mx['mx']} (priority: {mx['priority']})")
@@ -212,7 +208,6 @@ def remove(args: argparse.Namespace) -> None:
     naptrs = get_list(path, params={"host": info["id"]})
     if len(naptrs) > 0:
         if not forced("naptrs"):
-            required_overrides.append("naptrs")
             warnings.append("  {} NAPTR records. ".format(len(naptrs)))
             for naptr in naptrs:
                 warnings.append(f"    - {naptr['replacement']}")
@@ -230,7 +225,6 @@ def remove(args: argparse.Namespace) -> None:
     srvs = get_list(path, params={"host__name": info["name"]})
     if len(srvs) > 0:
         if not forced("srvs"):
-            required_overrides.append("srvs")
             warnings.append(f"  {len(srvs)} SRV records, override with 'srvs'")
             for srv in srvs:
                 warnings.append(f"    - {srv['name']}")
@@ -246,7 +240,6 @@ def remove(args: argparse.Namespace) -> None:
     # Require force if host has any PTR records. Delete the PTR records if force
     if len(info["ptr_overrides"]) > 0:
         if not forced("ptr"):
-            required_overrides.append("ptr")
             warnings.append(f"  {len(info['ptr_overrides'])} PTR records, override with 'ptr'")
             for ptr in info["ptr_overrides"]:
                 warnings.append(f"    - {ptr['ipaddress']}")
@@ -267,13 +260,8 @@ def remove(args: argparse.Namespace) -> None:
     # Warn user and raise exception if any force requirements was found
     if warnings:
         warn_msg = "\n".join(warnings)
-        override_str = (
-            "and '{}' as overrides ".format(",".join(required_overrides))
-            if required_overrides
-            else ""
-        )
         cli_warning(
-            "{} requires force {}for deletion:\n{}".format(info["name"], override_str, warn_msg)
+            "{} requires force and override for deletion:\n{}".format(info["name"], warn_msg)
         )
 
     # Delete host
