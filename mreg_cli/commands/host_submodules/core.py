@@ -146,7 +146,7 @@ def add(args: argparse.Namespace) -> None:
             short_desc="Comma separated override list, requires -force.",
             description=(
                 "Comma separated overrides for forced removal. Requires -force."
-                "Supports the following overrides: 'cname', 'mxs', 'srv', 'ptr', 'naptr'."
+                "Accepted overrides: 'cname', 'ipadresses', 'mxs', 'srv', 'ptr', 'naptr'."
                 "Example usage: '-override cnames,ipaddresses,mxs'"
             ),
             metavar="OVERRIDE",
@@ -161,6 +161,11 @@ def remove(args: argparse.Namespace) -> None:
     # Get host info or raise exception
     info = host_info_by_name_or_ip(args.name)
     overrides: List[str] = args.override.split(",") if args.override else []
+
+    accepted_overrides = ["cnames", "ipaddresses", "mxs", "srvs", "ptr", "naptrs"]
+    for override in overrides:
+        if override not in accepted_overrides:
+            cli_warning(f"Invalid override: {override}. Accepted overrides: {accepted_overrides}")
 
     def forced(override_required: str = None) -> bool:
         # If we require an override, check if it's in the list of provided overrides.
