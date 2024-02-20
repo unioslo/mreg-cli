@@ -234,7 +234,7 @@ host a_show baz
 host aaaa_add bar 2001:db8::/64  # must force
 host aaaa_add bar 2001:db8::11 -f
 host aaaa_add bar 2001:db8::12 -macaddress 11:22:33:44:55:67 -f
-host remove bar # should fail, because it has mulitple addresses, must force
+host remove bar # should fail, because it has multiple addresses, must force
 host aaaa_show bar
 host aaaa_change -old 2001:db8::11 -new 2001:db8::13 bar
 host aaaa_change -old 2001:db8::12 -new 2001:db8::14 bar  # has mac addr, should keep it assigned to the new ip

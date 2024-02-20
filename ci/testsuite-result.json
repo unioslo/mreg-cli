@@ -19824,7 +19824,7 @@
     "command": "host remove bar",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host remove bar # should fail, because it has mulitple addresses, must force",
+    "command_issued": "host remove bar # should fail, because it has multiple addresses, must force",
     "ok": [],
     "warning": [
       "WARNING: : bar.example.org has: 4 ipaddresses. Must force"
