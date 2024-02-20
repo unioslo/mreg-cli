@@ -56,7 +56,7 @@ def ips_are_in_same_vlan(ips: List[str]) -> bool:
 
         last_vlan = network["vlan"]
 
-    return False
+    return True
 
 
 def get_network_by_ip(ip: str) -> Dict[str, Any]:
