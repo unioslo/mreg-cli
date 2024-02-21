@@ -28,6 +28,7 @@ from mreg_cli.exceptions import CliError, CliWarning
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
+from mreg_cli.utilities.api import create_and_set_corrolation_id
 from mreg_cli.utilities.api import logout as _force_logout
 
 if TYPE_CHECKING:
@@ -246,6 +247,10 @@ class Command(Completer):
         # Set the command that generated the output
         # Also remove filters and other noise.
         cmd = output.from_command(line)
+        # Create and set the corrolation id, using the cleaned command
+        # as the suffix. This is used to track the command in the logs
+        # on the server side.
+        create_and_set_corrolation_id(cmd)
         # Run the command
         cli.parse(cmd)
         # Render the output
