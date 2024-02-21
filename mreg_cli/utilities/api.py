@@ -59,11 +59,6 @@ def create_and_set_corrolation_id(suffix: str) -> str:
     return corrolation_id
 
 
-def set_headers(headers: Dict[str, str]) -> None:
-    """Set headers for the session."""
-    session.headers.update(headers)
-
-
 def set_file_permissions(f: str, mode: int) -> None:
     """Set file permissions on a file."""
     try:
