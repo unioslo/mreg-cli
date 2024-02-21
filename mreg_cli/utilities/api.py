@@ -7,9 +7,11 @@ And this rule is promptly broken by importing from mreg_cli.outputmanager...
 import json
 import logging
 import os
+import re
 import sys
 from typing import TYPE_CHECKING, Any, Dict, List, NoReturn, Optional, Union, cast, overload
 from urllib.parse import urljoin
+from uuid import uuid4
 
 import requests
 
@@ -40,6 +42,22 @@ def error(msg: Union[str, Exception], code: int = os.EX_UNAVAILABLE) -> NoReturn
     """Print an error message and exits with the given code."""
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(code)
+
+
+def create_and_set_corrolation_id(suffix: str) -> str:
+    """Set currently active corrolation id.
+
+    This will take a suffix and append it to a generated UUIDv4 and set it as the corrolation id.
+
+    :param suffix: The suffix to use for the corrolation id.
+
+    :returns: The generated corrolation id.
+    """
+    suffix = re.sub(r"\s+", "_", suffix)
+    correlation_id = f"{uuid4()}-{suffix}"
+
+    session.headers.update({"X-Correlation-ID": correlation_id})
+    return correlation_id
 
 
 def set_file_permissions(f: str, mode: int) -> None:
