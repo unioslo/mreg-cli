@@ -146,8 +146,8 @@ def add(args: argparse.Namespace) -> None:
             short_desc="Comma separated override list, requires -force.",
             description=(
                 "Comma separated overrides for forced removal. Requires -force."
-                "Accepted overrides: 'cname', 'ipadresses', 'mxs', 'srv', 'ptr', 'naptr'."
-                "Example usage: '-override cnames,ipaddresses,mxs'"
+                "Accepted overrides: 'cname', 'ipadress', 'mx', 'srv', 'ptr', 'naptr'."
+                "Example usage: '-override cname,ipaddress,mx'"
             ),
             metavar="OVERRIDE",
         ),
@@ -162,7 +162,7 @@ def remove(args: argparse.Namespace) -> None:
     info = host_info_by_name_or_ip(args.name)
     overrides: List[str] = args.override.split(",") if args.override else []
 
-    accepted_overrides = ["cnames", "ipaddresses", "mxs", "srvs", "ptr", "naptrs"]
+    accepted_overrides = ["cname", "ipaddress", "mx", "srv", "ptr", "naptr"]
     for override in overrides:
         if override not in accepted_overrides:
             cli_warning(f"Invalid override: {override}. Accepted overrides: {accepted_overrides}")
@@ -202,8 +202,8 @@ def remove(args: argparse.Namespace) -> None:
                 vlan = get_network_by_ip(ip["ipaddress"]).get("vlan")
                 warnings.append(f"   - {ip['ipaddress']} (vlan: {vlan})")
 
-    if info["mxs"] and not forced("mxs"):
-        warnings.append(f"  {len(info['mxs'])} MX records, override with 'mxs'")
+    if info["mxs"] and not forced("mx"):
+        warnings.append(f"  {len(info['mxs'])} MX records, override with 'mx'")
         for mx in info["mxs"]:
             warnings.append(f"    - {mx['mx']} (priority: {mx['priority']})")
 
@@ -212,7 +212,7 @@ def remove(args: argparse.Namespace) -> None:
     path = "/api/v1/naptrs/"
     naptrs = get_list(path, params={"host": info["id"]})
     if len(naptrs) > 0:
-        if not forced("naptrs"):
+        if not forced("naptr"):
             warnings.append("  {} NAPTR records. ".format(len(naptrs)))
             for naptr in naptrs:
                 warnings.append(f"    - {naptr['replacement']}")
@@ -229,7 +229,7 @@ def remove(args: argparse.Namespace) -> None:
     path = "/api/v1/srvs/"
     srvs = get_list(path, params={"host__name": info["name"]})
     if len(srvs) > 0:
-        if not forced("srvs"):
+        if not forced("srv"):
             warnings.append(f"  {len(srvs)} SRV records, override with 'srvs'")
             for srv in srvs:
                 warnings.append(f"    - {srv['name']}")
