@@ -10423,10 +10423,10 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-02-28 12:07:39 [system-signals]: Txt create: txt = 'v=spf1 -all'",
-      "2024-02-28 12:07:39 [test]: Host create: name = 'somehost.example.org', contact = 'support@example.org'",
-      "2024-02-28 12:07:39 [test]: Ipaddress create: ipaddress = '10.0.1.4'",
-      "2024-02-28 12:07:39 [test]: Host update: contact: support@example.org -> new-support@example.org"
+      "2024-02-28 12:23:39 [system-signals]: Txt create: txt = 'v=spf1 -all'",
+      "2024-02-28 12:23:39 [test]: Host create: name = 'somehost.example.org', contact = 'support@example.org'",
+      "2024-02-28 12:23:39 [test]: Ipaddress create: ipaddress = '10.0.1.4'",
+      "2024-02-28 12:23:39 [test]: Host update: contact: support@example.org -> new-support@example.org"
     ],
     "api_requests": [
       {
@@ -10440,7 +10440,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:39.313098+01:00",
+              "timestamp": "2024-02-28T12:23:39.579919+01:00",
               "user": "system-signals",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10452,7 +10452,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:39.318441+01:00",
+              "timestamp": "2024-02-28T12:23:39.584355+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10462,7 +10462,7 @@
               "data": "{\"name\": \"somehost.example.org\", \"contact\": \"support@example.org\"}"
             },
             {
-              "timestamp": "2024-02-28T12:07:39.324230+01:00",
+              "timestamp": "2024-02-28T12:23:39.589814+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10472,14 +10472,14 @@
               "data": "{\"ipaddress\": \"10.0.1.4\"}"
             },
             {
-              "timestamp": "2024-02-28T12:07:39.538547+01:00",
+              "timestamp": "2024-02-28T12:23:39.815065+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
               "model_id": 4,
               "model": "Host",
               "action": "update",
-              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-02-28T12:07:39.323605+01:00\", \"updated_at\": \"2024-02-28T12:07:39.323614+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-02-28T12:07:39.312658+01:00\", \"updated_at\": \"2024-02-28T12:07:39.312666+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-02-28T12:07:39.310933+01:00\", \"updated_at\": \"2024-02-28T12:07:39.310943+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
+              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-02-28T12:23:39.589266+01:00\", \"updated_at\": \"2024-02-28T12:23:39.589274+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-02-28T12:23:39.579426+01:00\", \"updated_at\": \"2024-02-28T12:23:39.579436+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-02-28T12:23:39.577802+01:00\", \"updated_at\": \"2024-02-28T12:23:39.577810+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
             }
           ]
         }
@@ -10495,7 +10495,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:39.313098+01:00",
+              "timestamp": "2024-02-28T12:23:39.579919+01:00",
               "user": "system-signals",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10507,7 +10507,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:39.318441+01:00",
+              "timestamp": "2024-02-28T12:23:39.584355+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10517,7 +10517,7 @@
               "data": "{\"name\": \"somehost.example.org\", \"contact\": \"support@example.org\"}"
             },
             {
-              "timestamp": "2024-02-28T12:07:39.324230+01:00",
+              "timestamp": "2024-02-28T12:23:39.589814+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -10527,14 +10527,14 @@
               "data": "{\"ipaddress\": \"10.0.1.4\"}"
             },
             {
-              "timestamp": "2024-02-28T12:07:39.538547+01:00",
+              "timestamp": "2024-02-28T12:23:39.815065+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
               "model_id": 4,
               "model": "Host",
               "action": "update",
-              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-02-28T12:07:39.323605+01:00\", \"updated_at\": \"2024-02-28T12:07:39.323614+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-02-28T12:07:39.312658+01:00\", \"updated_at\": \"2024-02-28T12:07:39.312666+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-02-28T12:07:39.310933+01:00\", \"updated_at\": \"2024-02-28T12:07:39.310943+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
+              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2024-02-28T12:23:39.589266+01:00\", \"updated_at\": \"2024-02-28T12:23:39.589274+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2024-02-28T12:23:39.579426+01:00\", \"updated_at\": \"2024-02-28T12:23:39.579436+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"created_at\": \"2024-02-28T12:23:39.577802+01:00\", \"updated_at\": \"2024-02-28T12:23:39.577810+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
             }
           ]
         }
@@ -12284,11 +12284,11 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-02-28 12:07:40 [test]: HostGroup create: name = 'mygroup', description = 'This describes the group'",
-      "2024-02-28 12:07:40 [test]: Host add: testhost1.example.org",
-      "2024-02-28 12:07:41 [test]: Host add: testhost2.example.org",
-      "2024-02-28 12:07:41 [test]: Group add: myself",
-      "2024-02-28 12:07:41 [test]: Host remove: testhost2.example.org"
+      "2024-02-28 12:23:41 [test]: HostGroup create: name = 'mygroup', description = 'This describes the group'",
+      "2024-02-28 12:23:41 [test]: Host add: testhost1.example.org",
+      "2024-02-28 12:23:41 [test]: Host add: testhost2.example.org",
+      "2024-02-28 12:23:41 [test]: Group add: myself",
+      "2024-02-28 12:23:41 [test]: Host remove: testhost2.example.org"
     ],
     "api_requests": [
       {
@@ -12302,7 +12302,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:40.750479+01:00",
+              "timestamp": "2024-02-28T12:23:41.057394+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12312,7 +12312,7 @@
               "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
             },
             {
-              "timestamp": "2024-02-28T12:07:40.937778+01:00",
+              "timestamp": "2024-02-28T12:23:41.248132+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12325,7 +12325,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.008699+01:00",
+              "timestamp": "2024-02-28T12:23:41.298688+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12338,7 +12338,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.047946+01:00",
+              "timestamp": "2024-02-28T12:23:41.333278+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12351,7 +12351,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.101268+01:00",
+              "timestamp": "2024-02-28T12:23:41.382245+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12377,7 +12377,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:40.750479+01:00",
+              "timestamp": "2024-02-28T12:23:41.057394+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12387,7 +12387,7 @@
               "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
             },
             {
-              "timestamp": "2024-02-28T12:07:40.937778+01:00",
+              "timestamp": "2024-02-28T12:23:41.248132+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12400,7 +12400,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.008699+01:00",
+              "timestamp": "2024-02-28T12:23:41.298688+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12413,7 +12413,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.047946+01:00",
+              "timestamp": "2024-02-28T12:23:41.333278+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12426,7 +12426,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.101268+01:00",
+              "timestamp": "2024-02-28T12:23:41.382245+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12784,15 +12784,15 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-02-28 12:07:40 [test]: HostGroup create: name = 'mygroup', description = 'This describes the group'",
-      "2024-02-28 12:07:40 [test]: Host add: testhost1.example.org",
-      "2024-02-28 12:07:41 [test]: Host add: testhost2.example.org",
-      "2024-02-28 12:07:41 [test]: Group add: myself",
-      "2024-02-28 12:07:41 [test]: Host remove: testhost2.example.org",
-      "2024-02-28 12:07:41 [test]: HostGroup add: yourgroup",
-      "2024-02-28 12:07:41 [test]: HostGroup remove: yourgroup",
-      "2024-02-28 12:07:41 [test]: Group add: anotherowner",
-      "2024-02-28 12:07:41 [test]: Group remove: myself"
+      "2024-02-28 12:23:41 [test]: HostGroup create: name = 'mygroup', description = 'This describes the group'",
+      "2024-02-28 12:23:41 [test]: Host add: testhost1.example.org",
+      "2024-02-28 12:23:41 [test]: Host add: testhost2.example.org",
+      "2024-02-28 12:23:41 [test]: Group add: myself",
+      "2024-02-28 12:23:41 [test]: Host remove: testhost2.example.org",
+      "2024-02-28 12:23:41 [test]: HostGroup add: yourgroup",
+      "2024-02-28 12:23:41 [test]: HostGroup remove: yourgroup",
+      "2024-02-28 12:23:41 [test]: Group add: anotherowner",
+      "2024-02-28 12:23:41 [test]: Group remove: myself"
     ],
     "api_requests": [
       {
@@ -12806,7 +12806,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:40.750479+01:00",
+              "timestamp": "2024-02-28T12:23:41.057394+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12816,7 +12816,7 @@
               "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
             },
             {
-              "timestamp": "2024-02-28T12:07:40.937778+01:00",
+              "timestamp": "2024-02-28T12:23:41.248132+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12829,7 +12829,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.008699+01:00",
+              "timestamp": "2024-02-28T12:23:41.298688+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12842,7 +12842,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.047946+01:00",
+              "timestamp": "2024-02-28T12:23:41.333278+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12855,7 +12855,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.101268+01:00",
+              "timestamp": "2024-02-28T12:23:41.382245+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12868,7 +12868,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.242816+01:00",
+              "timestamp": "2024-02-28T12:23:41.521894+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12881,7 +12881,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.293766+01:00",
+              "timestamp": "2024-02-28T12:23:41.573469+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12894,7 +12894,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.326986+01:00",
+              "timestamp": "2024-02-28T12:23:41.605128+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12907,7 +12907,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.367777+01:00",
+              "timestamp": "2024-02-28T12:23:41.638332+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12933,7 +12933,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:40.750479+01:00",
+              "timestamp": "2024-02-28T12:23:41.057394+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12943,7 +12943,7 @@
               "data": "{\"name\": \"mygroup\", \"description\": \"This describes the group\"}"
             },
             {
-              "timestamp": "2024-02-28T12:07:40.937778+01:00",
+              "timestamp": "2024-02-28T12:23:41.248132+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12956,7 +12956,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.008699+01:00",
+              "timestamp": "2024-02-28T12:23:41.298688+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12969,7 +12969,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.047946+01:00",
+              "timestamp": "2024-02-28T12:23:41.333278+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12982,7 +12982,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.101268+01:00",
+              "timestamp": "2024-02-28T12:23:41.382245+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -12995,7 +12995,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.242816+01:00",
+              "timestamp": "2024-02-28T12:23:41.521894+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -13008,7 +13008,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.293766+01:00",
+              "timestamp": "2024-02-28T12:23:41.573469+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -13021,7 +13021,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.326986+01:00",
+              "timestamp": "2024-02-28T12:23:41.605128+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -13034,7 +13034,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:41.367777+01:00",
+              "timestamp": "2024-02-28T12:23:41.638332+01:00",
               "user": "test",
               "resource": "group",
               "name": "mygroup",
@@ -14392,8 +14392,8 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-02-28 12:07:42 [test]: HostPolicyAtom create: description = 'Here's the description', name = 'apple'",
-      "2024-02-28 12:07:42 [test]: HostPolicyAtom add to: hostpolicy_role fruit"
+      "2024-02-28 12:23:42 [test]: HostPolicyAtom create: description = 'Here's the description', name = 'apple'",
+      "2024-02-28 12:23:42 [test]: HostPolicyAtom add to: hostpolicy_role fruit"
     ],
     "api_requests": [
       {
@@ -14407,7 +14407,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:42.125609+01:00",
+              "timestamp": "2024-02-28T12:23:42.361063+01:00",
               "user": "test",
               "resource": "hostpolicy_atom",
               "name": "apple",
@@ -14430,7 +14430,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:42.125609+01:00",
+              "timestamp": "2024-02-28T12:23:42.361063+01:00",
               "user": "test",
               "resource": "hostpolicy_atom",
               "name": "apple",
@@ -14453,7 +14453,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:42.346772+01:00",
+              "timestamp": "2024-02-28T12:23:42.572360+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -14592,9 +14592,9 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-02-28 12:07:42 [test]: HostPolicyAtom create: description = 'Here's the description', name = 'apple'",
-      "2024-02-28 12:07:42 [test]: HostPolicyAtom add to: hostpolicy_role fruit",
-      "2024-02-28 12:07:42 [test]: HostPolicyAtom remove from: hostpolicy_role fruit"
+      "2024-02-28 12:23:42 [test]: HostPolicyAtom create: description = 'Here's the description', name = 'apple'",
+      "2024-02-28 12:23:42 [test]: HostPolicyAtom add to: hostpolicy_role fruit",
+      "2024-02-28 12:23:42 [test]: HostPolicyAtom remove from: hostpolicy_role fruit"
     ],
     "api_requests": [
       {
@@ -14608,7 +14608,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:42.125609+01:00",
+              "timestamp": "2024-02-28T12:23:42.361063+01:00",
               "user": "test",
               "resource": "hostpolicy_atom",
               "name": "apple",
@@ -14631,7 +14631,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:42.125609+01:00",
+              "timestamp": "2024-02-28T12:23:42.361063+01:00",
               "user": "test",
               "resource": "hostpolicy_atom",
               "name": "apple",
@@ -14654,7 +14654,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:42.346772+01:00",
+              "timestamp": "2024-02-28T12:23:42.572360+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -14667,7 +14667,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:42.598271+01:00",
+              "timestamp": "2024-02-28T12:23:42.813592+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15516,13 +15516,13 @@
     "warning": [],
     "error": [],
     "output": [
-      "2024-02-28 12:07:42 [test]: HostPolicyRole create: description = '5 a day', name = 'fruit', labels = '[]'",
-      "2024-02-28 12:07:42 [test]: HostPolicyAtom add: apple",
-      "2024-02-28 12:07:42 [test]: HostPolicyAtom add: orange",
-      "2024-02-28 12:07:42 [test]: HostPolicyAtom remove: apple",
-      "2024-02-28 12:07:42 [test]: Host add: foo.example.org",
-      "2024-02-28 12:07:43 [test]: Host remove: foo.example.org",
-      "2024-02-28 12:07:43 [test]: HostPolicyAtom remove: tangerine"
+      "2024-02-28 12:23:42 [test]: HostPolicyRole create: description = '5 a day', name = 'fruit', labels = '[]'",
+      "2024-02-28 12:23:42 [test]: HostPolicyAtom add: apple",
+      "2024-02-28 12:23:42 [test]: HostPolicyAtom add: orange",
+      "2024-02-28 12:23:42 [test]: HostPolicyAtom remove: apple",
+      "2024-02-28 12:23:43 [test]: Host add: foo.example.org",
+      "2024-02-28 12:23:43 [test]: Host remove: foo.example.org",
+      "2024-02-28 12:23:43 [test]: HostPolicyAtom remove: tangerine"
     ],
     "api_requests": [
       {
@@ -15536,7 +15536,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:42.222611+01:00",
+              "timestamp": "2024-02-28T12:23:42.465128+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15546,7 +15546,7 @@
               "data": "{\"description\": \"5 a day\", \"name\": \"fruit\", \"labels\": []}"
             },
             {
-              "timestamp": "2024-02-28T12:07:42.346772+01:00",
+              "timestamp": "2024-02-28T12:23:42.572360+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15559,7 +15559,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:42.404587+01:00",
+              "timestamp": "2024-02-28T12:23:42.618867+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15572,7 +15572,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:42.598271+01:00",
+              "timestamp": "2024-02-28T12:23:42.813592+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15585,7 +15585,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:42.988448+01:00",
+              "timestamp": "2024-02-28T12:23:43.177707+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15598,7 +15598,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:43.177647+01:00",
+              "timestamp": "2024-02-28T12:23:43.375246+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15611,7 +15611,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:43.234473+01:00",
+              "timestamp": "2024-02-28T12:23:43.429510+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15637,7 +15637,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2024-02-28T12:07:42.222611+01:00",
+              "timestamp": "2024-02-28T12:23:42.465128+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15647,7 +15647,7 @@
               "data": "{\"description\": \"5 a day\", \"name\": \"fruit\", \"labels\": []}"
             },
             {
-              "timestamp": "2024-02-28T12:07:42.346772+01:00",
+              "timestamp": "2024-02-28T12:23:42.572360+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15660,7 +15660,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:42.404587+01:00",
+              "timestamp": "2024-02-28T12:23:42.618867+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15673,7 +15673,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:42.598271+01:00",
+              "timestamp": "2024-02-28T12:23:42.813592+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15686,7 +15686,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:42.988448+01:00",
+              "timestamp": "2024-02-28T12:23:43.177707+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15699,7 +15699,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:43.177647+01:00",
+              "timestamp": "2024-02-28T12:23:43.375246+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -15712,7 +15712,7 @@
               }
             },
             {
-              "timestamp": "2024-02-28T12:07:43.234473+01:00",
+              "timestamp": "2024-02-28T12:23:43.429510+01:00",
               "user": "test",
               "resource": "hostpolicy_role",
               "name": "fruit",
@@ -20652,7 +20652,7 @@
     "command": "host remove bar",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host remove bar # should fail, because it has a cname record, must force",
+    "command_issued": "host remove bar # should fail, because it has a cname record, must force and override with 'cname'",
     "ok": [],
     "warning": [
       "WARNING: : bar.example.org requires force and override for deletion:\n  1 cnames, override with 'cname'\n    - fubar.example.org\n  multiple ipaddresses on the same VLAN. Must use 'force'."
@@ -21411,7 +21411,7 @@
     "command": "host remove baz",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host remove baz # Should fail, because it has an MX record, must force",
+    "command_issued": "host remove baz # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
       "WARNING: : baz.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN. Must use 'force'.\n  1 MX records, override with 'mx'\n    - mail.example.org (priority: 10)"
@@ -23885,6 +23885,2789 @@
       {
         "method": "DELETE",
         "url": "/api/v1/hosts/clover.example.org",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "ok": [
+      "OK: : created host foo.example.org with IP 10.0.0.10"
+    ],
+    "warning": [
+      "WARNING: : host not found: foo.example.org"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.0.0",
+          "10.0.0.1",
+          "10.0.0.2",
+          "10.0.0.3",
+          "10.0.0.255"
+        ]
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "comment": null,
+          "ipaddress": "10.0.0.10"
+        },
+        "status": 201
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host mx_add foo 10 mail.example.org",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host mx_add foo 10 mail.example.org",
+    "ok": [
+      "OK: : Added MX record to foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 18
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 18
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/mxs/",
+        "data": {
+          "host": 18,
+          "priority": 10,
+          "mx": "mail.example.org"
+        },
+        "status": 201,
+        "response": {
+          "priority": 10,
+          "mx": "mail.example.org",
+          "host": 18
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo # Should fail, because it has an MX record, must force and override with 'mx'",
+    "ok": [],
+    "warning": [
+      "WARNING: : foo.example.org requires force and override for deletion:\n  1 MX records, override with 'mx'\n    - mail.example.org (priority: 10)"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 18
+            }
+          ],
+          "cnames": [],
+          "mxs": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 18
+            }
+          ],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 18
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=18",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo -force -override mx",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo -force -override mx",
+    "ok": [
+      "OK: : removed foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 18
+            }
+          ],
+          "cnames": [],
+          "mxs": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 18
+            }
+          ],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 18
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=18",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "ok": [
+      "OK: : created host foo.example.org with IP 10.0.0.10"
+    ],
+    "warning": [
+      "WARNING: : host not found: foo.example.org"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.0.0",
+          "10.0.0.1",
+          "10.0.0.2",
+          "10.0.0.3",
+          "10.0.0.255"
+        ]
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "comment": null,
+          "ipaddress": "10.0.0.10"
+        },
+        "status": 201
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host ptr_add 10.0.0.11 foo.example.org",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host ptr_add 10.0.0.11 foo.example.org",
+    "ok": [
+      "OK: : Added PTR record 10.0.0.11 to foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.11",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 19
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 19
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ptroverrides/?ipaddress=10.0.0.11",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.11",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.0.0",
+          "10.0.0.1",
+          "10.0.0.2",
+          "10.0.0.3",
+          "10.0.0.255"
+        ]
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/ptroverrides/",
+        "data": {
+          "host": 19,
+          "ipaddress": "10.0.0.11"
+        },
+        "status": 201,
+        "response": {
+          "ipaddress": "10.0.0.11",
+          "host": 19
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo # Should fail, because it has a PTR record, must force and override with 'ptr'",
+    "ok": [],
+    "warning": [
+      "WARNING: : foo.example.org requires force and override for deletion:\n  1 PTR records, override with 'ptr'\n    - 10.0.0.11"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 19
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 19
+            }
+          ],
+          "ptr_overrides": [
+            {
+              "ipaddress": "10.0.0.11",
+              "host": 19
+            }
+          ],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=19",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo -force -override ptr",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo -force -override ptr",
+    "ok": [
+      "OK: : deleted PTR record 10.0.0.11 when removing foo.example.org",
+      "OK: : removed foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 19
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 19
+            }
+          ],
+          "ptr_overrides": [
+            {
+              "ipaddress": "10.0.0.11",
+              "host": 19
+            }
+          ],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=19",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "ok": [
+      "OK: : created host foo.example.org with IP 10.0.0.10"
+    ],
+    "warning": [
+      "WARNING: : host not found: foo.example.org"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.0.0",
+          "10.0.0.1",
+          "10.0.0.2",
+          "10.0.0.3",
+          "10.0.0.255"
+        ]
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "comment": null,
+          "ipaddress": "10.0.0.10"
+        },
+        "status": 201
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host naptr_add -name foo -preference 16384 -order 3 -flag u -service \"SIP\" -regex \"[abc]+\" -replacement \"wonk\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host naptr_add -name foo -preference 16384 -order 3 -flag u -service \"SIP\" -regex \"[abc]+\" -replacement \"wonk\"",
+    "ok": [
+      "OK: : created NAPTR record for foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 20
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 20
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/naptrs/",
+        "data": {
+          "preference": 16384,
+          "order": 3,
+          "flag": "u",
+          "service": "SIP",
+          "regex": "[abc]+",
+          "replacement": "wonk",
+          "host": 20
+        },
+        "status": 201,
+        "response": {
+          "preference": 16384,
+          "order": 3,
+          "flag": "u",
+          "service": "SIP",
+          "regex": "[abc]+",
+          "replacement": "wonk",
+          "host": 20
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo",
+    "ok": [],
+    "warning": [
+      "WARNING: : foo.example.org requires force and override for deletion:\n  1 NAPTR records, override with 'naptr'\n    - wonk"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 20
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 20
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=20",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "preference": 16384,
+              "order": 3,
+              "flag": "u",
+              "service": "sip",
+              "regex": "[abc]+",
+              "replacement": "wonk",
+              "host": 20
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo -force -override naptr",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo -force -override naptr",
+    "ok": [
+      "OK: : deleted NAPTR record wonk when removing foo.example.org",
+      "OK: : removed foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 20
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 20
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=20",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "preference": 16384,
+              "order": 3,
+              "flag": "u",
+              "service": "sip",
+              "regex": "[abc]+",
+              "replacement": "wonk",
+              "host": 20
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "ok": [
+      "OK: : created host foo.example.org with IP 10.0.0.10"
+    ],
+    "warning": [
+      "WARNING: : host not found: foo.example.org"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.0.0",
+          "10.0.0.1",
+          "10.0.0.2",
+          "10.0.0.3",
+          "10.0.0.255"
+        ]
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "comment": null,
+          "ipaddress": "10.0.0.10"
+        },
+        "status": 201
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host srv_add -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host foo.example.org",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host srv_add -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host foo.example.org",
+    "ok": [
+      "OK: : Added SRV record _sip._tcp.example.org with target foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/_sip._tcp.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 21
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 21
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/srvs/",
+        "data": {
+          "name": "_sip._tcp.example.org",
+          "priority": "10",
+          "weight": "5",
+          "port": "3456",
+          "host": 21,
+          "ttl": null
+        },
+        "status": 201,
+        "response": {
+          "name": "_sip._tcp.example.org",
+          "priority": 10,
+          "weight": 5,
+          "port": 3456,
+          "ttl": null,
+          "zone": 1,
+          "host": 21
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo # Should fail, because it has an SRV record, must force and override with 'srv'",
+    "ok": [],
+    "warning": [
+      "WARNING: : foo.example.org requires force and override for deletion:\n  1 SRV records, override with 'srv'\n    - _sip._tcp.example.org"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 21
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 21
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=21",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "_sip._tcp.example.org",
+              "priority": 10,
+              "weight": 5,
+              "port": 3456,
+              "ttl": null,
+              "zone": 1,
+              "host": 21
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo -force -override srv",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo -force -override srv",
+    "ok": [
+      "OK: : deleted SRV record _sip._tcp.example.org when removing foo.example.org",
+      "OK: : removed foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 21
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 21
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=21",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "_sip._tcp.example.org",
+              "priority": 10,
+              "weight": 5,
+              "port": 3456,
+              "ttl": null,
+              "zone": 1,
+              "host": 21
+            }
+          ]
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "ok": [
+      "OK: : created host foo.example.org with IP 10.0.0.10"
+    ],
+    "warning": [
+      "WARNING: : host not found: foo.example.org"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.0.0",
+          "10.0.0.1",
+          "10.0.0.2",
+          "10.0.0.3",
+          "10.0.0.255"
+        ]
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "comment": null,
+          "ipaddress": "10.0.0.10"
+        },
+        "status": 201
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host cname_add foo fubar",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host cname_add foo fubar",
+    "ok": [
+      "OK: : Added cname alias fubar.example.org for foo.example.org"
+    ],
+    "warning": [
+      "WARNING: : host not found: 'fubar.example.org'"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 22
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 22
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/fubar.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?cnames__name=fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?name=fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/cnames/",
+        "data": {
+          "host": 22,
+          "name": "fubar.example.org"
+        },
+        "status": 201,
+        "response": {
+          "name": "fubar.example.org",
+          "ttl": null,
+          "zone": 1,
+          "host": 22
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo # Should fail, because it has a CNAME record, must force and override with 'cname'",
+    "ok": [],
+    "warning": [
+      "WARNING: : foo.example.org requires force and override for deletion:\n  1 cnames, override with 'cname'\n    - fubar.example.org"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 22
+            }
+          ],
+          "cnames": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 22
+            }
+          ],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 22
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=22",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo -force -override cname",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo -force -override cname",
+    "ok": [
+      "OK: : removed foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 22
+            }
+          ],
+          "cnames": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 22
+            }
+          ],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 22
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=22",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host add foo -ip 10.0.0.10 -contact \"foo@example.org\"",
+    "ok": [
+      "OK: : created host foo.example.org with IP 10.0.0.10"
+    ],
+    "warning": [
+      "WARNING: : host not found: foo.example.org"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.0.0",
+          "10.0.0.1",
+          "10.0.0.2",
+          "10.0.0.3",
+          "10.0.0.255"
+        ]
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "comment": null,
+          "ipaddress": "10.0.0.10"
+        },
+        "status": 201
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host mx_add foo 10 mail.example.org",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host mx_add foo 10 mail.example.org",
+    "ok": [
+      "OK: : Added MX record to foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 23
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 23
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/mxs/",
+        "data": {
+          "host": 23,
+          "priority": 10,
+          "mx": "mail.example.org"
+        },
+        "status": 201,
+        "response": {
+          "priority": 10,
+          "mx": "mail.example.org",
+          "host": 23
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host ptr_add 10.0.0.11 foo.example.org",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host ptr_add 10.0.0.11 foo.example.org",
+    "ok": [
+      "OK: : Added PTR record 10.0.0.11 to foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.11",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 23
+            }
+          ],
+          "cnames": [],
+          "mxs": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 23
+            }
+          ],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 23
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ptroverrides/?ipaddress=10.0.0.11",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.11",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.0.0",
+          "10.0.0.1",
+          "10.0.0.2",
+          "10.0.0.3",
+          "10.0.0.255"
+        ]
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/ptroverrides/",
+        "data": {
+          "host": 23,
+          "ipaddress": "10.0.0.11"
+        },
+        "status": 201,
+        "response": {
+          "ipaddress": "10.0.0.11",
+          "host": 23
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host naptr_add -name foo -preference 16384 -order 3 -flag u -service \"SIP\" -regex \"[abc]+\" -replacement \"wonk\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host naptr_add -name foo -preference 16384 -order 3 -flag u -service \"SIP\" -regex \"[abc]+\" -replacement \"wonk\"",
+    "ok": [
+      "OK: : created NAPTR record for foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 23
+            }
+          ],
+          "cnames": [],
+          "mxs": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 23
+            }
+          ],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 23
+            }
+          ],
+          "ptr_overrides": [
+            {
+              "ipaddress": "10.0.0.11",
+              "host": 23
+            }
+          ],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/naptrs/",
+        "data": {
+          "preference": 16384,
+          "order": 3,
+          "flag": "u",
+          "service": "SIP",
+          "regex": "[abc]+",
+          "replacement": "wonk",
+          "host": 23
+        },
+        "status": 201,
+        "response": {
+          "preference": 16384,
+          "order": 3,
+          "flag": "u",
+          "service": "SIP",
+          "regex": "[abc]+",
+          "replacement": "wonk",
+          "host": 23
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host srv_add -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host foo.example.org",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host srv_add -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host foo.example.org",
+    "ok": [
+      "OK: : Added SRV record _sip._tcp.example.org with target foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/_sip._tcp.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 23
+            }
+          ],
+          "cnames": [],
+          "mxs": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 23
+            }
+          ],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 23
+            }
+          ],
+          "ptr_overrides": [
+            {
+              "ipaddress": "10.0.0.11",
+              "host": 23
+            }
+          ],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/srvs/",
+        "data": {
+          "name": "_sip._tcp.example.org",
+          "priority": "10",
+          "weight": "5",
+          "port": "3456",
+          "host": 23,
+          "ttl": null
+        },
+        "status": 201,
+        "response": {
+          "name": "_sip._tcp.example.org",
+          "priority": 10,
+          "weight": 5,
+          "port": 3456,
+          "ttl": null,
+          "zone": 1,
+          "host": 23
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host cname_add foo fubar",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host cname_add foo fubar",
+    "ok": [
+      "OK: : Added cname alias fubar.example.org for foo.example.org"
+    ],
+    "warning": [
+      "WARNING: : host not found: 'fubar.example.org'"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 23
+            }
+          ],
+          "cnames": [],
+          "mxs": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 23
+            }
+          ],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 23
+            }
+          ],
+          "ptr_overrides": [
+            {
+              "ipaddress": "10.0.0.11",
+              "host": 23
+            }
+          ],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/fubar.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?cnames__name=fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?name=fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/cnames/",
+        "data": {
+          "host": 23,
+          "name": "fubar.example.org"
+        },
+        "status": 201,
+        "response": {
+          "name": "fubar.example.org",
+          "ttl": null,
+          "zone": 1,
+          "host": 23
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo # Should fail, because it has multiple records, must force and override with everything.",
+    "ok": [],
+    "warning": [
+      "WARNING: : foo.example.org requires force and override for deletion:\n  1 cnames, override with 'cname'\n    - fubar.example.org\n  1 MX records, override with 'mx'\n    - mail.example.org (priority: 10)\n  1 NAPTR records, override with 'naptr'\n    - wonk\n  1 SRV records, override with 'srv'\n    - _sip._tcp.example.org\n  1 PTR records, override with 'ptr'\n    - 10.0.0.11"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 23
+            }
+          ],
+          "cnames": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 23
+            }
+          ],
+          "mxs": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 23
+            }
+          ],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 23
+            }
+          ],
+          "ptr_overrides": [
+            {
+              "ipaddress": "10.0.0.11",
+              "host": 23
+            }
+          ],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=23",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "preference": 16384,
+              "order": 3,
+              "flag": "u",
+              "service": "sip",
+              "regex": "[abc]+",
+              "replacement": "wonk",
+              "host": 23
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "_sip._tcp.example.org",
+              "priority": 10,
+              "weight": 5,
+              "port": 3456,
+              "ttl": null,
+              "zone": 1,
+              "host": 23
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove foo -force -override mx,ptr,naptr,srv,cname",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove foo -force -override mx,ptr,naptr,srv,cname",
+    "ok": [
+      "OK: : deleted NAPTR record wonk when removing foo.example.org",
+      "OK: : deleted SRV record _sip._tcp.example.org when removing foo.example.org",
+      "OK: : deleted PTR record 10.0.0.11 when removing foo.example.org",
+      "OK: : removed foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.0.10",
+              "host": 23
+            }
+          ],
+          "cnames": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 23
+            }
+          ],
+          "mxs": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 23
+            }
+          ],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 23
+            }
+          ],
+          "ptr_overrides": [
+            {
+              "ipaddress": "10.0.0.11",
+              "host": 23
+            }
+          ],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=23",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "preference": 16384,
+              "order": 3,
+              "flag": "u",
+              "service": "sip",
+              "regex": "[abc]+",
+              "replacement": "wonk",
+              "host": 23
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "_sip._tcp.example.org",
+              "priority": 10,
+              "weight": 5,
+              "port": 3456,
+              "ttl": null,
+              "zone": 1,
+              "host": 23
+            }
+          ]
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hosts/foo.example.org",
         "data": {},
         "status": 204
       }
