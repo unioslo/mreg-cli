@@ -182,7 +182,7 @@ def remove(args: argparse.Namespace) -> None:
     warnings: List[str] = []
     # Require force if host has any cnames.
     if info["cnames"] and not args.force:
-        warnings.append(f"  {len(info['cnames'])} cnames, override with 'cnames'")
+        warnings.append(f"  {len(info['cnames'])} cnames, override with 'cname'")
         for cname in info["cnames"]:
             warnings.append(f"    - {cname['name']}")
 
@@ -194,7 +194,7 @@ def remove(args: argparse.Namespace) -> None:
             warnings.append("  multiple ipaddresses on the same VLAN. Must use 'force'.")
         elif not same_vlan and not forced("ipaddresses"):
             warnings.append(
-                "  {} ipaddresses on distinct VLANs, override with 'ipadresses'".format(
+                "  {} ipaddresses on distinct VLANs, override with 'ipadress'".format(
                     len(info["ipaddresses"])
                 )
             )
@@ -213,7 +213,7 @@ def remove(args: argparse.Namespace) -> None:
     naptrs = get_list(path, params={"host": info["id"]})
     if len(naptrs) > 0:
         if not forced("naptr"):
-            warnings.append("  {} NAPTR records. ".format(len(naptrs)))
+            warnings.append("  {} NAPTR records, override with 'naptr'".format(len(naptrs)))
             for naptr in naptrs:
                 warnings.append(f"    - {naptr['replacement']}")
         else:
@@ -230,7 +230,7 @@ def remove(args: argparse.Namespace) -> None:
     srvs = get_list(path, params={"host__name": info["name"]})
     if len(srvs) > 0:
         if not forced("srv"):
-            warnings.append(f"  {len(srvs)} SRV records, override with 'srvs'")
+            warnings.append(f"  {len(srvs)} SRV records, override with 'srv'")
             for srv in srvs:
                 warnings.append(f"    - {srv['name']}")
         else:
