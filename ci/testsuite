@@ -199,7 +199,6 @@ dhcp assoc foo aa:bb:cc:dd:ee:ff # should fail, the host has two IPs of differen
 host aaaa_remove foo 2001:db9::5
 host aaaa_add foo 2001:db8::5 -f
 dhcp assoc foo aa:bb:cc:dd:ee:ff # should work, the host now has two IPs of different types on the same VLAN.
-
 host remove foo -f
 network remove 10.0.0.0/24 -f
 network remove 2001:db8::/64 -f
@@ -234,6 +233,7 @@ host a_show baz
 host aaaa_add bar 2001:db8::/64  # must force
 host aaaa_add bar 2001:db8::11 -f
 host aaaa_add bar 2001:db8::12 -macaddress 11:22:33:44:55:67 -f
+host remove bar # should fail, because it has multiple addresses, must force
 host aaaa_show bar
 host aaaa_change -old 2001:db8::11 -new 2001:db8::13 bar
 host aaaa_change -old 2001:db8::12 -new 2001:db8::14 bar  # has mac addr, should keep it assigned to the new ip
@@ -242,6 +242,7 @@ host aaaa_move -ip 2001:db8::14 -fromhost bar -tohost baz
 host a_show baz
 # CNAME
 host cname_add bar fubar
+host remove bar # should fail, because it has a cname record, must force and override with 'cname'
 host cname_show bar
 host cname_remove bar fubar
 # HINFO
@@ -255,6 +256,7 @@ host loc_remove baz
 # MX
 host mx_add baz 10 mail.example.org
 host mx_show baz
+host remove baz # Should fail, because it has an MX record, must force and override with 'mx'
 host mx_remove baz 10 mail.example.org
 # NAPTR
 host naptr_add -name baz -preference 16384 -order 3 -flag u -service "SIP" -regex "[abc]+" -replacement "wonk"
@@ -293,6 +295,49 @@ host remove *.example.org
 host remove bar -f
 host remove baz -f
 host remove clover
+
+# Test handling of overrides
+# MX
+host add foo -ip 10.0.0.10 -contact "foo@example.org"
+host mx_add foo 10 mail.example.org
+host remove foo # Should fail, because it has an MX record, must force and override with 'mx'
+host remove foo -force -override mx
+
+# PTR
+host add foo -ip 10.0.0.10 -contact "foo@example.org"
+host ptr_add 10.0.0.11 foo.example.org
+host remove foo # Should fail, because it has a PTR record, must force and override with 'ptr'
+host remove foo -force -override ptr
+
+# NAPTR
+host add foo -ip 10.0.0.10 -contact "foo@example.org"
+host naptr_add -name foo -preference 16384 -order 3 -flag u -service "SIP" -regex "[abc]+" -replacement "wonk"
+host remove foo
+host remove foo -force -override naptr
+
+# SRV
+host add foo -ip 10.0.0.10 -contact "foo@example.org"
+host srv_add -name "_sip._tcp.example.org" -priority 10 -weight 5 -port 3456 -host foo.example.org
+host remove foo # Should fail, because it has an SRV record, must force and override with 'srv'
+host remove foo -force -override srv
+
+# CNAME
+host add foo -ip 10.0.0.10 -contact "foo@example.org"
+host cname_add foo fubar
+host remove foo # Should fail, because it has a CNAME record, must force and override with 'cname'
+host remove foo -force -override cname
+
+# All of the above
+host add foo -ip 10.0.0.10 -contact "foo@example.org"
+host mx_add foo 10 mail.example.org
+host ptr_add 10.0.0.11 foo.example.org
+host naptr_add -name foo -preference 16384 -order 3 -flag u -service "SIP" -regex "[abc]+" -replacement "wonk"
+host srv_add -name "_sip._tcp.example.org" -priority 10 -weight 5 -port 3456 -host foo.example.org
+host cname_add foo fubar
+host remove foo # Should fail, because it has multiple records, must force and override with everything.
+host remove foo -force -override mx,ptr,naptr,srv,cname
+
+
 network remove 10.0.0.0/24 -f
 network remove 2001:db8::/64 -f
 

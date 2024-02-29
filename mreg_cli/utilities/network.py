@@ -39,6 +39,26 @@ def ipsort(ips: Iterable[Any]) -> List[Any]:
     return sorted(ips, key=lambda i: ipaddress.ip_address(i))
 
 
+def ips_are_in_same_vlan(ips: List[str]) -> bool:
+    """Return True if all ips are in the same vlan."""
+    # IPs must be in a network, and that network must have a vlan for this to work.
+    last_vlan = ""
+    for ip in ips:
+        network = get_network_by_ip(ip)
+        if not network:
+            return False
+
+        if "vlan" not in network:
+            return False
+
+        if last_vlan and network["vlan"] != last_vlan:
+            return False
+
+        last_vlan = network["vlan"]
+
+    return True
+
+
 def get_network_by_ip(ip: str) -> Dict[str, Any]:
     """Return a network associated with given IP."""
     if is_valid_ip(ip):
