@@ -12,7 +12,7 @@ Commands implemented:
 """
 
 import argparse
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import HostNotFoundWarning
@@ -167,7 +167,7 @@ def remove(args: argparse.Namespace) -> None:
         if override not in accepted_overrides:
             cli_warning(f"Invalid override: {override}. Accepted overrides: {accepted_overrides}")
 
-    def forced(override_required: str = None) -> bool:
+    def forced(override_required: Optional[str] = None) -> bool:
         # If we require an override, check if it's in the list of provided overrides.
         if override_required:
             return override_required in overrides
