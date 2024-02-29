@@ -12,7 +12,7 @@ Commands implemented:
 """
 
 import argparse
-from typing import Dict, Union
+from typing import Dict, List, Optional, Union
 
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import HostNotFoundWarning
@@ -30,6 +30,7 @@ from mreg_cli.utilities.host import (
     host_info_by_name,
     host_info_by_name_or_ip,
 )
+from mreg_cli.utilities.network import get_network_by_ip, ips_are_in_same_vlan
 from mreg_cli.utilities.output import output_host_info, output_ip_info
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, format_mac
 from mreg_cli.utilities.validators import is_valid_email, is_valid_ip, is_valid_mac
@@ -140,34 +141,81 @@ def add(args: argparse.Namespace) -> None:
             metavar="NAME/IP",
         ),
         Flag("-force", action="store_true", description="Enable force."),
+        Flag(
+            "-override",
+            short_desc="Comma separated override list, requires -force.",
+            description=(
+                "Comma separated overrides for forced removal. Requires -force."
+                "Accepted overrides: 'cname', 'ipadress', 'mx', 'srv', 'ptr', 'naptr'."
+                "Example usage: '-override cname,ipaddress,mx'"
+            ),
+            metavar="OVERRIDE",
+        ),
     ],
 )
 def remove(args: argparse.Namespace) -> None:
     """Remove host.
 
-    :param args: argparse.Namespace (name, force)
+    :param args: argparse.Namespace (name, force, override)
     """
     # Get host info or raise exception
     info = host_info_by_name_or_ip(args.name)
+    overrides: List[str] = args.override.split(",") if args.override else []
 
-    warn_msg = ""
+    accepted_overrides = ["cname", "ipaddress", "mx", "srv", "ptr", "naptr"]
+    for override in overrides:
+        if override not in accepted_overrides:
+            cli_warning(f"Invalid override: {override}. Accepted overrides: {accepted_overrides}")
+
+    def forced(override_required: Optional[str] = None) -> bool:
+        # If we require an override, check if it's in the list of provided overrides.
+        if override_required:
+            return override_required in overrides
+
+        # We didn't require an override, so we only need to check for force.
+        if args.force:
+            return True
+
+        # And the fallback is "no".
+        return False
+
+    warnings: List[str] = []
     # Require force if host has any cnames.
-    cnames = info["cnames"]
-    if len(cnames):
-        if not args.force:
-            warn_msg += "{} cnames. ".format(len(cnames))
+    if info["cnames"] and not args.force:
+        warnings.append(f"  {len(info['cnames'])} cnames, override with 'cname'")
+        for cname in info["cnames"]:
+            warnings.append(f"    - {cname['name']}")
 
-    # Require force if host has multiple A/AAAA records
-    if len(info["ipaddresses"]) > 1 and not args.force:
-        warn_msg += "{} ipaddresses. ".format(len(info["ipaddresses"]))
+    # Require force if host has multiple A/AAAA records and they are not in the same VLAN.
+    if len(info["ipaddresses"]) > 1:
+        same_vlan = ips_are_in_same_vlan([ip["ipaddress"] for ip in info["ipaddresses"]])
+
+        if same_vlan and not forced():
+            warnings.append("  multiple ipaddresses on the same VLAN. Must use 'force'.")
+        elif not same_vlan and not forced("ipaddresses"):
+            warnings.append(
+                "  {} ipaddresses on distinct VLANs, override with 'ipadress'".format(
+                    len(info["ipaddresses"])
+                )
+            )
+            for ip in info["ipaddresses"]:
+                vlan = get_network_by_ip(ip["ipaddress"]).get("vlan")
+                warnings.append(f"   - {ip['ipaddress']} (vlan: {vlan})")
+
+    if info["mxs"] and not forced("mx"):
+        warnings.append(f"  {len(info['mxs'])} MX records, override with 'mx'")
+        for mx in info["mxs"]:
+            warnings.append(f"    - {mx['mx']} (priority: {mx['priority']})")
 
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
     path = "/api/v1/naptrs/"
     naptrs = get_list(path, params={"host": info["id"]})
     if len(naptrs) > 0:
-        if not args.force:
-            warn_msg += "{} NAPTR records. ".format(len(naptrs))
+        if not forced("naptr"):
+            warnings.append("  {} NAPTR records, override with 'naptr'".format(len(naptrs)))
+            for naptr in naptrs:
+                warnings.append(f"    - {naptr['replacement']}")
         else:
             for naptr in naptrs:
                 cli_info(
@@ -181,8 +229,10 @@ def remove(args: argparse.Namespace) -> None:
     path = "/api/v1/srvs/"
     srvs = get_list(path, params={"host__name": info["name"]})
     if len(srvs) > 0:
-        if not args.force:
-            warn_msg += "{} SRV records. ".format(len(srvs))
+        if not forced("srv"):
+            warnings.append(f"  {len(srvs)} SRV records, override with 'srv'")
+            for srv in srvs:
+                warnings.append(f"    - {srv['name']}")
         else:
             for srv in srvs:
                 cli_info(
@@ -194,8 +244,10 @@ def remove(args: argparse.Namespace) -> None:
 
     # Require force if host has any PTR records. Delete the PTR records if force
     if len(info["ptr_overrides"]) > 0:
-        if not args.force:
-            warn_msg += "{} PTR records. ".format(len(info["ptr_overrides"]))
+        if not forced("ptr"):
+            warnings.append(f"  {len(info['ptr_overrides'])} PTR records, override with 'ptr'")
+            for ptr in info["ptr_overrides"]:
+                warnings.append(f"    - {ptr['ipaddress']}")
         else:
             for ptr in info["ptr_overrides"]:
                 cli_info(
@@ -211,8 +263,11 @@ def remove(args: argparse.Namespace) -> None:
         info["ipaddress"] = info["ipaddresses"][0]["ipaddress"]
 
     # Warn user and raise exception if any force requirements was found
-    if warn_msg:
-        cli_warning("{} has: {}Must force".format(info["name"], warn_msg))
+    if warnings:
+        warn_msg = "\n".join(warnings)
+        cli_warning(
+            "{} requires force and override for deletion:\n{}".format(info["name"], warn_msg)
+        )
 
     # Delete host
     path = f"/api/v1/hosts/{info['name']}"
