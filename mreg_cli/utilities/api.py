@@ -221,27 +221,57 @@ def get(
 
 
 def get_list(
-    path: Optional[str], params: Optional[Dict[str, Any]] = None, ok404: bool = False
+    path: str,
+    params: Optional[Dict[str, Any]] = None,
+    ok404: bool = False,
+    max_hits_to_allow: Optional[int] = 500,
 ) -> List[Dict[str, Any]]:
     """Make a get request that produces a list.
 
-    Will iterate over paginated results and return result as list.
+    Will iterate over paginated results and return result as list. If the number of hits is
+    greater than max_hits_to_allow, the function will raise an exception.
+
+    Parameters
+    ----------
+    path : str
+        The path to the API endpoint.
+    params : dict, optional
+        The parameters to pass to the API endpoint.
+    ok404 : bool, optional
+        Whether to allow 404 responses.
+    max_hits_to_allow : int, optional
+        The maximum number of hits to allow. If the number of hits is greater than this, the
+        function will raise an exception.
+
+    Returns
+    -------
+    * A list of dictionaries.
+
     """
     if params is None:
         params = {}
+
     ret: List[Dict[str, Any]] = []
-    while path:
+
+    # Get the first page to check the number of hits, and raise an exception if it is too high.
+    get_params = params.copy()
+    get_params["page_size"] = 1
+    resp = get(path, get_params).json()
+    if "count" in resp and resp["count"] > max_hits_to_allow:
+        raise cli_warning(f"Too many hits ({resp['count']}), please refine your search criteria.")
+
+    while True:
         resp = get(path, params=params, ok404=ok404)
         if resp is None:
             return ret
         result = resp.json()
 
-        if "next" in result:
+        ret.extend(result["results"])
+
+        if "next" in result and result["next"]:
             path = result["next"]
-            ret.extend(result["results"])
         else:
-            path = None
-    return ret
+            return ret
 
 
 def post(

@@ -239,7 +239,6 @@ def host_info_pydantic(args: argparse.Namespace) -> None:
     import mreg_cli.api as api
 
     host = api.get_host(args.hosts[0])
-    print(host)
     host.output_host_info()
 
 
@@ -354,6 +353,58 @@ def find(args: argparse.Namespace) -> None:
     _print("Name", "Contact", "Comment")
     for i in ret:
         _print(i["name"], i["contact"], i["comment"])
+
+
+@command_registry.register_command(
+    prog="find_pydantic",
+    description="Lists hosts matching search criteria",
+    short_desc="Lists hosts matching search criteria",
+    flags=[
+        Flag(
+            "-name",
+            description="Name or part of name",
+            short_desc="Name or part of name",
+            metavar="NAME",
+        ),
+        Flag(
+            "-comment",
+            description="Comment or part of comment",
+            short_desc="Comment or part of comment",
+            metavar="CONTACT",
+        ),
+        Flag(
+            "-contact",
+            description="Contact or part of contact",
+            short_desc="Contact or part of contact",
+            metavar="CONTACT",
+        ),
+    ],
+)
+def find_pydantic(args: argparse.Namespace) -> None:
+    """List hosts maching search criteria.
+
+    :param args: argparse.Namespace (name, comment, contact)
+    """
+    import mreg_cli.api as api
+
+    def _add_param(param: str, value: str) -> None:
+        param, value = convert_wildcard_to_regex(param, value, True)
+        params[param] = value
+
+    if not any([args.name, args.comment, args.contact]):
+        cli_warning("Need at least one search critera")
+
+    params: Dict[str, Union[str, int]] = {
+        "ordering": "name",
+    }
+
+    for param in ("contact", "comment", "name"):
+        value = getattr(args, param)
+        if value:
+            _add_param(param, value)
+
+    hostlist = api.get_hosts(params)
+    hostlist.output_host_list()
 
 
 @command_registry.register_command(

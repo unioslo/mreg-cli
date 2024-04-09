@@ -6,8 +6,10 @@ fix that by using pydantic models to validate incoming data so the client code h
 guarantees about the data it is working with.
 """
 
-from mreg_cli.api.models import HostModel
-from mreg_cli.utilities.api import get
+from typing import Dict, Union
+
+from mreg_cli.api.models import HostList, HostModel
+from mreg_cli.utilities.api import get, get_list
 from mreg_cli.utilities.host import clean_hostname
 
 
@@ -16,3 +18,10 @@ def get_host(name: str) -> HostModel:
     hostname = clean_hostname(name)
     data = get(f"/api/v1/hosts/{hostname}")
     return HostModel(**data.json())
+
+
+def get_hosts(params: Dict[str, Union[str, int]]) -> HostList:
+    """Get a list of hosts."""
+    endpoint = "/api/v1/hosts/"
+    data = get_list(endpoint, params=params)
+    return HostList(results=[HostModel(**host_data) for host_data in data])
