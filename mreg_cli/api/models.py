@@ -2,28 +2,56 @@
 
 
 import ipaddress
+import re
 from typing import Annotated, Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, EmailStr, root_validator, validator
 from pydantic.types import StringConstraints
 
+from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.utilities.api import get_list, patch
 
-MACAddressT = Annotated[
-    str, StringConstraints(pattern=r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$")
-]
-
+IPAddressT = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
 HostT = Annotated[str, StringConstraints(min_length=1, max_length=255)]
+
+_mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
+
+
+class MACAddressField(BaseModel):
+    """Represents a MAC address."""
+
+    address: str
+
+    @validator("address", pre=True)
+    def validate_and_format_mac(cls, v: str) -> str:
+        """Validate and normalize MAC address to 'aa:bb:cc:dd:ee:ff' format.
+
+        :param v: The input MAC address string.
+        :raises ValueError: If the input does not match the expected MAC address pattern.
+        :returns: The normalized MAC address.
+        """
+        # Validate input format
+        if not _mac_regex.match(v):
+            raise ValueError("Invalid MAC address format")
+
+        # Normalize MAC address
+        v = re.sub(r"[.:-]", "", v).lower()
+        return ":".join(v[i : i + 2] for i in range(0, 12, 2))
+
+    def __str__(self) -> str:
+        """Return the MAC address as a string."""
+        return self.address
 
 
 class IPAddressField(BaseModel):
     """Represents an IP address, automatically determines if it's IPv4 or IPv6."""
 
-    address: Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
+    address: IPAddressT
 
     @validator("address", pre=True)
-    def parse_ip_address(cls, value: str) -> Union[ipaddress.IPv4Address, ipaddress.IPv6Address]:
+    def parse_ip_address(cls, value: str) -> IPAddressT:
         """Parse and validate the IP address."""
         try:
             return ipaddress.ip_address(value)
@@ -46,14 +74,18 @@ class IPAddressField(BaseModel):
 class IPAddress(BaseModel):
     """Represents an IP address with associated details."""
 
-    macaddress: Optional[MACAddressT] = None
+    id: int  # noqa: A003
+    macaddress: Optional[MACAddressField] = None
     ipaddress: IPAddressField
     host: int
 
     @validator("macaddress", pre=True, allow_reuse=True)
-    def empty_string_to_none(cls, v: str):
-        """Convert empty strings to None."""
-        return v or None
+    def create_valid_macadress_or_none(cls, v: str):
+        """Create macaddress or convert empty strings to None."""
+        if v:
+            return MACAddressField(address=v)
+
+        return None
 
     @root_validator(pre=True)
     def convert_ip_address(cls, values: Any):
@@ -74,6 +106,21 @@ class IPAddress(BaseModel):
     def is_ipv6(self) -> bool:
         """Return True if the IP address is IPv6."""
         return self.ipaddress.is_ipv6()
+
+    def ip(self) -> IPAddressT:
+        """Return the IP address."""
+        return self.ipaddress.address
+
+    def associate_mac(self, mac: Union[MACAddressField, str], force: bool = False):
+        """Associate a MAC address with the IP address."""
+        if isinstance(mac, str):
+            mac = MACAddressField(address=mac)
+
+        if self.macaddress and not force:
+            cli_warning(f"IP address {self.ipaddress} already has MAC address {self.macaddress}.")
+
+        self.macaddress = mac
+        patch(Endpoint.Ipaddresses.with_id(self.id), macaddress=mac.address)
 
 
 class CNAME(BaseModel):
@@ -98,6 +145,7 @@ class HostModel(BaseModel):
     This is the endpoint at /api/v1/hosts/<id>.
     """
 
+    id: int  # noqa: A003
     name: HostT
     ipaddresses: List[IPAddress]
     cnames: List[CNAME] = []
@@ -124,6 +172,37 @@ class HostModel(BaseModel):
     def ipv6_addresses(self):
         """Return a list of IPv6 addresses."""
         return [ip for ip in self.ipaddresses if ip.is_ipv6()]
+
+    def associate_mac_to_ip(
+        self, mac: Union[MACAddressField, str], ip: IPAddressField, force: bool = False
+    ):
+        """Associate a MAC address to an IP address."""
+        if isinstance(mac, str):
+            mac = MACAddressField(address=mac)
+
+        params = {
+            "macaddress": mac.address,
+            "ordering": "ipaddress",
+        }
+
+        data = get_list(Endpoint.Ipaddresses, params=params)
+        ipadresses = [IPAddress(**ip) for ip in data]
+
+        if ip in [ip.ipaddress for ip in ipadresses]:
+            cli_warning(f"IP address {ip} already has MAC address {mac} associated.")
+
+        if len(ipadresses) and not force:
+            cli_warning(
+                "mac {} already in use by: {}. Use force to add {} -> {} as well.".format(
+                    mac, ipadresses, ip.address, mac
+                )
+            )
+
+        for myip in self.ipaddresses:
+            if myip.ipaddress.address == ip.address:
+                myip.associate_mac(mac, force=force)
+
+        cli_warning(f"IP address {ip} not found in host {self.name}.")
 
     def output_host_info(self, names: bool = False):
         """Output host information to the console with padding."""

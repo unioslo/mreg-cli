@@ -272,23 +272,78 @@ def get_list(
     Will iterate over paginated results and return result as list. If the number of hits is
     greater than max_hits_to_allow, the function will raise an exception.
 
-    Parameters
-    ----------
-    path : str
-        The path to the API endpoint.
-    params : dict, optional
-        The parameters to pass to the API endpoint.
-    ok404 : bool, optional
-        Whether to allow 404 responses.
-    max_hits_to_allow : int, optional
-        The maximum number of hits to allow. If the number of hits is greater than this, the
-        function will raise an exception.
+    :param path: The path to the API endpoint.
+    :param params: The parameters to pass to the API endpoint.
+    :param ok404: Whether to allow 404 responses.
+    :param max_hits_to_allow: The maximum number of hits to allow. If the number of hits is
+                                greater than this, the function will raise an exception.
 
-    Returns
-    -------
-    * A list of dictionaries.
-
+    :returns: A list of dictionaries.
     """
+    ret = get_list_generic(path, params, ok404, max_hits_to_allow, expect_one_result=False)
+
+    if not isinstance(ret, list):
+        raise CliError(f"Expected a list of results, got {type(ret)}.")
+
+    return ret
+
+
+def get_list_unique(
+    path: str,
+    params: Optional[Dict[str, Any]] = None,
+    ok404: bool = False,
+) -> Dict[str, Any]:
+    """Do a get request that returns a single result from a search.
+
+    :param path: The path to the API endpoint.
+    :param params: The parameters to pass to the API endpoint.
+    :param ok404: Whether to allow 404 responses.
+
+    :returns: A single dictionary.
+    """
+    ret = get_list_generic(path, params, ok404, expect_one_result=True)
+
+    if not isinstance(ret, dict):
+        raise CliError(f"Expected a single result, got {type(ret)}.")
+
+    return ret
+
+
+def get_list_generic(
+    path: str,
+    params: Optional[Dict[str, Any]] = None,
+    ok404: bool = False,
+    max_hits_to_allow: Optional[int] = 500,
+    expect_one_result: Optional[bool] = False,
+) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    """Make a get request that produces a list.
+
+    Will iterate over paginated results and return result as list. If the number of hits is
+    greater than max_hits_to_allow, the function will raise an exception.
+
+    :param path: The path to the API endpoint.
+    :param params: The parameters to pass to the API endpoint.
+    :param ok404: Whether to allow 404 responses.
+    :param max_hits_to_allow: The maximum number of hits to allow. If the number of hits is
+                                greater than this, the function will raise an exception.
+    :param expect_one_result: If True, expect exactly one result and return it as a list.
+
+    :returns: A list of dictionaries or a dictionary if expect_one_result is True.
+    """
+
+    def _check_expect_one_result(
+        ret: List[Dict[str, Any]]
+    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        if expect_one_result:
+            if len(ret) != 1:
+                raise CliError(f"Expected exactly one result, got {len(ret)}.")
+            if "results" not in ret[0]:
+                raise CliError("Expected 'results' in response, got none.")
+
+            return ret[0]["results"]
+
+        return ret
+
     if params is None:
         params = {}
 
@@ -296,15 +351,20 @@ def get_list(
 
     # Get the first page to check the number of hits, and raise an exception if it is too high.
     get_params = params.copy()
-    get_params["page_size"] = 1
+    # get_params["page_size"] = 1
     resp = get(path, get_params).json()
     if "count" in resp and resp["count"] > max_hits_to_allow:
         raise cli_warning(f"Too many hits ({resp['count']}), please refine your search criteria.")
 
+    # Short circuit if there are no more pages. This means that there are no more results to
+    # be had so we can return the results we already have.
+    if "next" in resp and not resp["next"]:
+        return _check_expect_one_result(resp["results"])
+
     while True:
         resp = get(path, params=params, ok404=ok404)
         if resp is None:
-            return ret
+            return _check_expect_one_result(ret)
         result = resp.json()
 
         ret.extend(result["results"])
@@ -312,7 +372,7 @@ def get_list(
         if "next" in result and result["next"]:
             path = result["next"]
         else:
-            return ret
+            return _check_expect_one_result(ret)
 
 
 def post(

@@ -19,10 +19,9 @@ from mreg_cli.exceptions import HostNotFoundWarning
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch, post
+from mreg_cli.utilities.api import delete, get, get_list, patch
 from mreg_cli.utilities.history import format_history_items, get_history_items
 from mreg_cli.utilities.host import (
-    assoc_mac_to_ip,
     clean_hostname,
     cname_exists,
     get_host_by_name,
@@ -109,20 +108,23 @@ def add(args: argparse.Namespace) -> None:
         )
 
     # Create the new host with an ip address
-    path = "/api/v1/hosts/"
-    data = {
+    data: Dict[str, Union[str, None]] = {
         "name": name,
         "contact": args.contact or None,
         "comment": args.comment or None,
     }
+
     if args.ip and ip:
         data["ipaddress"] = ip
 
-    post(path, params=None, **data)
+    from mreg_cli.api import add_host, get_host
+
+    add_host(data)
+
     if args.macaddress is not None:
-        # It can only be one, as it was just created.
-        ipdata = get(f"{path}{name}").json()["ipaddresses"][0]
-        assoc_mac_to_ip(args.macaddress, ipdata, force=args.force)
+        # There can only be one, as it was just created.
+        host = get_host(name)
+        host.associate_mac_to_ip(args.macaddress, host.ipaddresses[0].ipaddress)
     msg = f"created host {name}"
     if args.ip:
         msg += f" with IP {ip}"
