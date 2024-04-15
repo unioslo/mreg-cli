@@ -19,7 +19,7 @@ from mreg_cli.exceptions import HostNotFoundWarning
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch
+from mreg_cli.utilities.api import get, get_list, patch
 from mreg_cli.utilities.history import format_history_items, get_history_items
 from mreg_cli.utilities.host import (
     clean_hostname,
@@ -27,9 +27,7 @@ from mreg_cli.utilities.host import (
     get_host_by_name,
     get_requested_ip,
     host_info_by_name,
-    host_info_by_name_or_ip,
 )
-from mreg_cli.utilities.network import get_network_by_ip, ips_are_in_same_vlan
 from mreg_cli.utilities.output import output_host_info, output_ip_info
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, format_mac
 from mreg_cli.utilities.validators import is_valid_email, is_valid_ip, is_valid_mac
@@ -76,24 +74,22 @@ def add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ip, contact, comment, force, macaddress)
     """
-    # Fail if given host exists
+    import mreg_cli.api as api
 
     ip = None
     name = clean_hostname(args.name)
-    try:
-        name = get_host_by_name(name)
-    except HostNotFoundWarning:
-        pass
-    else:
-        cli_warning("host {} already exists".format(name))
+    host = api.get_host(name, ok404=True)
+
+    if host:
+        if host.name != name:
+            cli_warning(f"{name} is a CNAME pointing to {host.name}")
+        else:
+            cli_warning(f"Host {name} already exists.")
 
     if "*" in name and not args.force:
         cli_warning("Wildcards must be forced.")
 
     zone_check_for_hostname(name, args.force)
-
-    if cname_exists(name):
-        cli_warning("the name is already in use by a cname")
 
     if args.macaddress is not None and not is_valid_mac(args.macaddress):
         cli_warning("invalid MAC address: {}".format(args.macaddress))
@@ -117,17 +113,19 @@ def add(args: argparse.Namespace) -> None:
     if args.ip and ip:
         data["ipaddress"] = ip
 
-    from mreg_cli.api import add_host, get_host
+    if not api.add_host(data):
+        cli_warning("Failed to add host.")
 
-    add_host(data)
+    if args.macaddress is not None and ip:
+        host = api.get_host(name)
+        if host is None:
+            cli_warning("Host not existing after creation.")
 
-    if args.macaddress is not None:
-        # There can only be one, as it was just created.
-        host = get_host(name)
-        host.associate_mac_to_ip(args.macaddress, host.ipaddresses[0].ipaddress)
+        host.associate_mac_to_ip(args.macaddress, ip)
     msg = f"created host {name}"
     if args.ip:
         msg += f" with IP {ip}"
+
     cli_info(msg, print_msg=True)
 
 
@@ -160,8 +158,14 @@ def remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, force, override)
     """
-    # Get host info or raise exception
-    info = host_info_by_name_or_ip(args.name)
+    import mreg_cli.api as api
+
+    hostname = clean_hostname(args.name)
+    host = api.get_host(hostname)
+
+    if host is None:
+        cli_warning(f"Host {args.name} not found.")
+
     overrides: List[str] = args.override.split(",") if args.override else []
 
     accepted_overrides = ["cname", "ipaddress", "mx", "srv", "ptr", "naptr"]
@@ -183,98 +187,95 @@ def remove(args: argparse.Namespace) -> None:
 
     warnings: List[str] = []
     # Require force if host has any cnames.
-    if info["cnames"] and not args.force:
-        warnings.append(f"  {len(info['cnames'])} cnames, override with 'cname'")
-        for cname in info["cnames"]:
-            warnings.append(f"    - {cname['name']}")
+    if host.cnames and not args.force:
+        warnings.append(f"  {len(host.cnames)} cnames, override with 'cname'")
+        for cname in host.cnames:
+            warnings.append(f"    - {cname.name}")
 
     # Require force if host has multiple A/AAAA records and they are not in the same VLAN.
-    if len(info["ipaddresses"]) > 1:
-        same_vlan = ips_are_in_same_vlan([ip["ipaddress"] for ip in info["ipaddresses"]])
+    if len(host.ipaddresses) > 1:
+        host_vlans = host.vlans()
+        same_vlan = len(host_vlans) == 1
 
         if same_vlan and not forced():
             warnings.append("  multiple ipaddresses on the same VLAN. Must use 'force'.")
         elif not same_vlan and not forced("ipaddresses"):
             warnings.append(
                 "  {} ipaddresses on distinct VLANs, override with 'ipadress'".format(
-                    len(info["ipaddresses"])
+                    len(host.ipaddresses)
                 )
             )
-            for ip in info["ipaddresses"]:
-                vlan = get_network_by_ip(ip["ipaddress"]).get("vlan")
-                warnings.append(f"   - {ip['ipaddress']} (vlan: {vlan})")
+            for vlan in host_vlans:
+                vlan = host_vlans[vlan]
+                ip_strings = [str(ip.ipaddress.address) for ip in vlan]
+                ip_strings.sort()
+                warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan})")
 
-    if info["mxs"] and not forced("mx"):
-        warnings.append(f"  {len(info['mxs'])} MX records, override with 'mx'")
-        for mx in info["mxs"]:
-            warnings.append(f"    - {mx['mx']} (priority: {mx['priority']})")
+    if host.mxs and not forced("mx"):
+        warnings.append(f"  {len(host.mxs)} MX records, override with 'mx'")
+        for mx in host.mxs:
+            warnings.append(f"    - {mx.mx} (priority: {mx.priority})")
 
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
-    path = "/api/v1/naptrs/"
-    naptrs = get_list(path, params={"host": info["id"]})
+    cli_info("host.naptrs()")
+    naptrs = host.naptrs()
     if len(naptrs) > 0:
         if not forced("naptr"):
             warnings.append("  {} NAPTR records, override with 'naptr'".format(len(naptrs)))
             for naptr in naptrs:
-                warnings.append(f"    - {naptr['replacement']}")
+                warnings.append(f"    - {naptr.replacement}")
         else:
             for naptr in naptrs:
                 cli_info(
                     "deleted NAPTR record {} when removing {}".format(
-                        naptr["replacement"],
-                        info["name"],
+                        naptr.replacement,
+                        host.name,
                     )
                 )
 
     # Require force if host has any SRV records. Delete the SRV records if force
-    path = "/api/v1/srvs/"
-    srvs = get_list(path, params={"host__name": info["name"]})
+    srvs = host.srvs()
     if len(srvs) > 0:
         if not forced("srv"):
             warnings.append(f"  {len(srvs)} SRV records, override with 'srv'")
             for srv in srvs:
-                warnings.append(f"    - {srv['name']}")
+                warnings.append(f"    - {srv.name}")
         else:
             for srv in srvs:
                 cli_info(
                     "deleted SRV record {} when removing {}".format(
-                        srv["name"],
-                        info["name"],
+                        srv.name,
+                        host.name,
                     )
                 )
 
     # Require force if host has any PTR records. Delete the PTR records if force
-    if len(info["ptr_overrides"]) > 0:
+    if len(host.ptr_overrides) > 0:
         if not forced("ptr"):
-            warnings.append(f"  {len(info['ptr_overrides'])} PTR records, override with 'ptr'")
-            for ptr in info["ptr_overrides"]:
-                warnings.append(f"    - {ptr['ipaddress']}")
+            warnings.append(f"  {len(host.ptr_overrides)} PTR records, override with 'ptr'")
+            for ptr in host.ptr_overrides:
+                warnings.append(f"    - {ptr.ipaddress}")
         else:
-            for ptr in info["ptr_overrides"]:
+            for ptr in host.ptr_overrides:
                 cli_info(
                     "deleted PTR record {} when removing {}".format(
-                        ptr["ipaddress"],
-                        info["name"],
+                        ptr.ipaddress,
+                        host.name,
                     )
                 )
-
-    # To be able to undo the delete the ipaddress field of the 'old_data' has to
-    # be an ipaddress string
-    if len(info["ipaddresses"]) > 0:
-        info["ipaddress"] = info["ipaddresses"][0]["ipaddress"]
 
     # Warn user and raise exception if any force requirements was found
     if warnings:
         warn_msg = "\n".join(warnings)
-        cli_warning(
-            "{} requires force and override for deletion:\n{}".format(info["name"], warn_msg)
-        )
+        cli_warning("{} requires force and override for deletion:\n{}".format(host.name, warn_msg))
 
-    # Delete host
-    path = f"/api/v1/hosts/{info['name']}"
-    delete(path)
-    cli_info("removed {}".format(info["name"]), print_msg=True)
+    cli_info(f"removing {host.name}...")
+
+    if host.delete():
+        cli_info("removed {}".format(host.name), print_msg=True)
+    else:
+        cli_warning("failed to remove {}".format(host.name))
 
 
 @command_registry.register_command(
@@ -296,6 +297,9 @@ def host_info_pydantic(args: argparse.Namespace) -> None:
     import mreg_cli.api as api
 
     host = api.get_host(args.hosts[0])
+    if host is None:
+        cli_warning(f"Host {args.hosts[0]} not found.")
+
     host.output_host_info()
 
 

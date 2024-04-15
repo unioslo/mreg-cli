@@ -278,6 +278,8 @@ def get_list(
     :param max_hits_to_allow: The maximum number of hits to allow. If the number of hits is
                                 greater than this, the function will raise an exception.
 
+    :raises CliError: If the result from get_list_generic is not a list.
+
     :returns: A list of dictionaries.
     """
     ret = get_list_generic(path, params, ok404, max_hits_to_allow, expect_one_result=False)
@@ -288,23 +290,48 @@ def get_list(
     return ret
 
 
+def get_item_by_key_value(
+    path: str,
+    search_field: str,
+    search_value: str,
+    ok404: bool = False,
+) -> Union[None, Dict[str, Any]]:
+    """Get an item by a key value pair.
+
+    :param path: The path to the API endpoint.
+    :param search_field: The field to search for.
+    :param search_value: The value to search for.
+    :param ok404: Whether to allow 404 responses.
+
+    :raises CliWarning: If no result was found and ok404 is False.
+
+    :returns: A single dictionary, or None if no result was found and ok404 is True.
+    """
+    return get_list_unique(path, params={search_field: search_value}, ok404=ok404)
+
+
 def get_list_unique(
     path: str,
-    params: Optional[Dict[str, Any]] = None,
+    params: Dict[str, str],
     ok404: bool = False,
-) -> Dict[str, Any]:
+) -> Union[None, Dict[str, Any]]:
     """Do a get request that returns a single result from a search.
 
     :param path: The path to the API endpoint.
     :param params: The parameters to pass to the API endpoint.
     :param ok404: Whether to allow 404 responses.
 
-    :returns: A single dictionary.
+    :raises CliWarning: If no result was found and ok404 is False.
+
+    :returns: A single dictionary, or None if no result was found and ok404 is True.
     """
     ret = get_list_generic(path, params, ok404, expect_one_result=True)
 
     if not isinstance(ret, dict):
         raise CliError(f"Expected a single result, got {type(ret)}.")
+
+    if not ret:
+        return None
 
     return ret
 
@@ -328,6 +355,10 @@ def get_list_generic(
                                 greater than this, the function will raise an exception.
     :param expect_one_result: If True, expect exactly one result and return it as a list.
 
+    :raises CliError: If expect_one_result is True and the number of results is not zero or one.
+    :raises CliError: If expect_one_result is True and there is a response without a 'results' key.
+    :raises CliError: If the number of hits is greater than max_hits_to_allow.
+
     :returns: A list of dictionaries or a dictionary if expect_one_result is True.
     """
 
@@ -335,6 +366,8 @@ def get_list_generic(
         ret: List[Dict[str, Any]]
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         if expect_one_result:
+            if len(ret) == 0:
+                return {}
             if len(ret) != 1:
                 raise CliError(f"Expected exactly one result, got {len(ret)}.")
             if "results" not in ret[0]:
