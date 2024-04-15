@@ -10,13 +10,13 @@ from ipaddress import ip_address
 from typing import Dict, Union
 
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.api.models import HostList, HostModel, MACAddressField
+from mreg_cli.api.models import Host, HostList, MACAddressField
 from mreg_cli.log import cli_warning
 from mreg_cli.utilities.api import get, get_item_by_key_value, get_list, post
 from mreg_cli.utilities.host import clean_hostname
 
 
-def get_host(identifier: str, ok404: bool = False) -> Union[None, HostModel]:
+def get_host(identifier: str, ok404: bool = False) -> Union[None, Host]:
     """Get a host by the given identifier.
 
     - If the identifier is numeric, it will be treated as an ID.
@@ -42,7 +42,7 @@ def get_host(identifier: str, ok404: bool = False) -> Union[None, HostModel]:
 
     :raises CliWarning: If we don't find the host and `ok404` is False.
 
-    :returns: A HostModel object if the host was found, otherwise None.
+    :returns: A Host object if the host was found, otherwise None.
     """
     data = None
     if identifier.isdigit():
@@ -76,7 +76,7 @@ def get_host(identifier: str, ok404: bool = False) -> Union[None, HostModel]:
     if data is None:
         return None
 
-    return HostModel(**data)
+    return Host(**data)
 
 
 def delete_host(identifier: str) -> bool:
@@ -91,7 +91,7 @@ def delete_host(identifier: str) -> bool:
 def get_hosts(params: Dict[str, Union[str, int]]) -> HostList:
     """Get a list of hosts."""
     data = get_list(Endpoint.Hosts, params=params)
-    return HostList(results=[HostModel(**host_data) for host_data in data])
+    return HostList(results=[Host(**host_data) for host_data in data])
 
 
 def add_host(data: Dict[str, Union[str, None]]) -> bool:

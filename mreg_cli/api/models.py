@@ -251,7 +251,7 @@ class PTR_override(FrozenModel):
     ipaddress: str  # For now, should be an IP address
 
 
-class HostModel(FrozenModel):
+class Host(FrozenModel):
     """Model for an individual host.
 
     This is the endpoint at /api/v1/hosts/<id>.
@@ -302,13 +302,13 @@ class HostModel(FrozenModel):
 
     def associate_mac_to_ip(
         self, mac: Union[MACAddressField, str], ip: Union[IPAddressField, str], force: bool = False
-    ) -> "HostModel":
+    ) -> "Host":
         """Associate a MAC address to an IP address.
 
         :param mac: The MAC address to associate.
         :param ip: The IP address to associate.
 
-        :returns: A new HostModel object with the updated IP address.
+        :returns: A new Host object with the updated IP address.
         """
         if isinstance(mac, str):
             mac = MACAddressField(address=mac)
@@ -470,7 +470,7 @@ class HostList(FrozenModel):
     This is the endpoint at /api/v1/hosts/.
     """
 
-    results: List[HostModel]
+    results: List[Host]
 
     @validator("results", pre=True)
     def check_results(cls, v: List[Dict[str, str]]):
@@ -481,7 +481,7 @@ class HostList(FrozenModel):
         """Return the number of results."""
         return len(self.results)
 
-    def __getitem__(self, key: int) -> HostModel:
+    def __getitem__(self, key: int) -> Host:
         """Get a result by index."""
         return self.results[key]
 
