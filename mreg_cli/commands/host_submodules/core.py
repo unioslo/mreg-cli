@@ -218,7 +218,6 @@ def remove(args: argparse.Namespace) -> None:
 
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
-    cli_info("host.naptrs()")
     naptrs = host.naptrs()
     if len(naptrs) > 0:
         if not forced("naptr"):
@@ -269,8 +268,6 @@ def remove(args: argparse.Namespace) -> None:
     if warnings:
         warn_msg = "\n".join(warnings)
         cli_warning("{} requires force and override for deletion:\n{}".format(host.name, warn_msg))
-
-    cli_info(f"removing {host.name}...")
 
     if host.delete():
         cli_info("removed {}".format(host.name), print_msg=True)

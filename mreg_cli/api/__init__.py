@@ -64,14 +64,14 @@ def get_host(identifier: str, ok404: bool = False) -> Union[None, HostModel]:
 
         data = get(Endpoint.Hosts.with_id(hostname), ok404=ok404)
 
-        if data is None:
+        if data:
+            data = data.json()
+        else:
             data = get_item_by_key_value(Endpoint.Cnames, "name", hostname, ok404=ok404)
             # If we found a CNAME, get the host it points to. We're not interested in the CNAME
             # itself. Also, no point in pydantic-ifying the CNAME data since we're not using it.
             if data is not None:
                 data = get_item_by_key_value(Endpoint.Hosts, "id", data["host"], ok404=ok404)
-        else:
-            data = data.json()
 
     if data is None:
         return None
