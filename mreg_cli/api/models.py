@@ -47,10 +47,7 @@ class FrozenModel(BaseModel):
 
 
 class Network(FrozenModel):
-    """Model for a network.
-
-    Note that this model is immutable due to it being used as a key in a dictionary.
-    """
+    """Model for a network."""
 
     id: int  # noqa: A003
     excluded_ranges: List[str]
