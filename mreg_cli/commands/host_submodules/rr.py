@@ -45,7 +45,7 @@ from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.api import delete, get_list, patch, post
-from mreg_cli.utilities.host import clean_hostname, get_info_by_name, host_info_by_name
+from mreg_cli.utilities.host import get_info_by_name, host_info_by_name
 from mreg_cli.utilities.network import get_network_by_ip, get_network_reserved_ips, ip_in_mreg_net
 from mreg_cli.utilities.output import (
     output_hinfo,
@@ -57,6 +57,7 @@ from mreg_cli.utilities.output import (
     output_ttl,
     output_txt,
 )
+from mreg_cli.utilities.shared import clean_hostname
 from mreg_cli.utilities.validators import is_valid_ip, is_valid_ttl
 from mreg_cli.utilities.zone import zone_check_for_hostname
 
@@ -585,8 +586,13 @@ def ptr_add(args: argparse.Namespace) -> None:
     if info["zone"] is None and not args.force:
         cli_warning("{} isn't in a zone controlled by MREG, must force".format(info["name"]))
 
-    network = get_network_by_ip(args.ip)
-    reserved_addresses = get_network_reserved_ips(network["network"])
+    import ipaddress
+
+    network = get_network_by_ip(ipaddress.ip_address(args.ip))
+    if network is None:
+        cli_warning("No network found for {}".format(args.ip))
+
+    reserved_addresses = get_network_reserved_ips(str(network["network"]))
     if args.ip in reserved_addresses and not args.force:
         cli_warning("Address is reserved. Requires force")
 

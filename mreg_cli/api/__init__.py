@@ -6,17 +6,21 @@ fix that by using pydantic models to validate incoming data so the client code h
 guarantees about the data it is working with.
 """
 
+import re
 from ipaddress import ip_address
 from typing import Dict, Union
 
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.api.models import Host, HostList, MACAddressField
+from mreg_cli.api.models import Host, HostList, IPAddressT, MACAddressField
+from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import get, get_item_by_key_value, get_list, post
-from mreg_cli.utilities.host import clean_hostname
 
 
-def get_host(identifier: str, ok404: bool = False) -> Union[None, Host]:
+def get_host(
+    identifier: str, ok404: bool = False, inform_as_cname: bool = False
+) -> Union[None, Host]:
     """Get a host by the given identifier.
 
     - If the identifier is numeric, it will be treated as an ID.
@@ -28,7 +32,7 @@ def get_host(identifier: str, ok404: bool = False) -> Union[None, Host]:
     To check if a returned host is a cname, one can do the following:
 
     ```python
-    hostname = "example.com"
+    hostname = "host.example.com"
     host = get_host(hostname, ok404=True)
     if host is None:
         print("Host not found.")
@@ -38,7 +42,12 @@ def get_host(identifier: str, ok404: bool = False) -> Union[None, Host]:
         print(f"{host.name} is a host.")
     ```
 
+    Note that get_host will perform a case-insensitive search for a fully qualified version
+    of the hostname, so the comparison above may fail.
+
     :param identifier: The identifier to search for.
+    :param ok404: If True, don't raise a CliWarning if the host is not found.
+    :param inform_as_cname: If True, inform the user if the host is a CNAME.
 
     :raises CliWarning: If we don't find the host and `ok404` is False.
 
@@ -62,7 +71,7 @@ def get_host(identifier: str, ok404: bool = False) -> Union[None, Host]:
 
         hostname = clean_hostname(identifier)
 
-        data = get(Endpoint.Hosts.with_id(hostname), ok404=ok404)
+        data = get(Endpoint.Hosts.with_id(hostname), ok404=True)
 
         if data:
             data = data.json()
@@ -73,7 +82,13 @@ def get_host(identifier: str, ok404: bool = False) -> Union[None, Host]:
             if data is not None:
                 data = get_item_by_key_value(Endpoint.Hosts, "id", data["host"], ok404=ok404)
 
+            if data and inform_as_cname:
+                OutputManager().add_line(f"{hostname} is a CNAME for {data['name']}")
+
     if data is None:
+        if not ok404:
+            cli_warning(f"Host {identifier} not found.")
+
         return None
 
     return Host(**data)
@@ -102,3 +117,46 @@ def add_host(data: Dict[str, Union[str, None]]) -> bool:
         return True
 
     return False
+
+
+def get_network_by_ip(ip: IPAddressT) -> Union[None, Dict[str, Union[str, int]]]:
+    """Return a network associated with given IP."""
+    return get(Endpoint.NetworksByIP.with_id(str(ip))).json()
+
+
+def clean_hostname(name: Union[str, bytes]) -> str:
+    """Ensure hostname is fully qualified, lowercase, and has valid characters.
+
+    :param name: The hostname to clean.
+
+    :raises CliWarning: If the hostname is invalid.
+
+    :returns: The cleaned hostname.
+    """
+    # bytes?
+    if not isinstance(name, (str, bytes)):
+        cli_warning("Invalid input for hostname: {}".format(name))
+
+    if isinstance(name, bytes):
+        name = name.decode()
+
+    name = name.lower()
+
+    # invalid characters?
+    if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", name) is None:
+        cli_warning("Invalid input for hostname: {}".format(name))
+
+    # Assume user is happy with domain, but strip the dot.
+    if name.endswith("."):
+        return name[:-1]
+
+    # If a dot in name, assume long name.
+    if "." in name:
+        return name
+
+    config = MregCliConfig()
+    default_domain = config.get("domain")
+    # Append domain name if in config and it does not end with it
+    if default_domain and not name.endswith(default_domain):
+        return "{}.{}".format(name, default_domain)
+    return name

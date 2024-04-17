@@ -3,6 +3,7 @@
 import ipaddress
 import re
 import sys
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, root_validator, validator
@@ -11,7 +12,7 @@ from pydantic.types import StringConstraints
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.utilities.api import delete, get, get_list, patch
+from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list, get_list_in, patch
 
 IPAddressT = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
 
@@ -46,7 +47,68 @@ class FrozenModel(BaseModel):
         frozen = True
 
 
-class Network(FrozenModel):
+class FrozenModelWithTimestamps(FrozenModel):
+    """Model with created_at and updated_at fields."""
+
+    created_at: datetime
+    updated_at: datetime
+
+    def output_timestamps(self, padding: int = 14) -> None:
+        """Output the created and updated timestamps to the console."""
+        output_manager = OutputManager()
+        output_manager.add_line(f"{'Created:':<{padding}}{self.created_at:%c}")
+        output_manager.add_line(f"{'Updated:':<{padding}}{self.updated_at:%c}")
+
+
+class WithHost(BaseModel):
+    """Model for an object that has a host element."""
+
+    host: int
+
+    def resolve_host(self) -> Union["Host", None]:
+        """Resolve the host ID to a Host object.
+
+        Notes
+        -----
+            - This method will call the API to resolve the host ID to a Host object.
+            - This assumes that there is a host attribute in the object.
+
+        """
+        data = get_item_by_key_value(Endpoint.Hosts, "id", str(self.host))
+
+        if not data:
+            return None
+
+        return Host(**data)
+
+
+class NameServer(FrozenModelWithTimestamps):
+    """Model for representing a nameserver within a DNS zone."""
+
+    id: int  # noqa: A003
+    name: str
+    ttl: Optional[int] = None
+
+
+class Zone(FrozenModelWithTimestamps):
+    """Model representing a DNS zone with various attributes and related nameservers."""
+
+    id: int  # noqa: A003
+    nameservers: List[NameServer]
+    updated: bool
+    primary_ns: str
+    email: str
+    serialno: int
+    serialno_updated_at: datetime
+    refresh: int
+    retry: int
+    expire: int
+    soa_ttl: int
+    default_ttl: int
+    name: str
+
+
+class Network(FrozenModelWithTimestamps):
     """Model for a network."""
 
     id: int  # noqa: A003
@@ -121,13 +183,12 @@ class IPAddressField(FrozenModel):
         return hash(self.address)
 
 
-class IPAddress(FrozenModel):
+class IPAddress(FrozenModelWithTimestamps, WithHost):
     """Represents an IP address with associated details."""
 
     id: int  # noqa: A003
     macaddress: Optional[MACAddressField] = None
     ipaddress: IPAddressField
-    host: int
 
     @validator("macaddress", pre=True, allow_reuse=True)
     def create_valid_macadress_or_none(cls, v: str):
@@ -188,40 +249,146 @@ class IPAddress(FrozenModel):
         patch(Endpoint.Ipaddresses.with_id(self.id), macaddress=mac.address)
         return self.model_copy(update={"macaddress": mac})
 
+    def output(self, len_ip: int, len_names: int, names: bool = False):
+        """Output the IP address to the console."""
+        ip = self.ipaddress.__str__()
+        mac = self.macaddress if self.macaddress else "<not set>"
+        name = str(self.host) if names else ""
+        OutputManager().add_line(f"{name:<{len_names}}{ip:<{len_ip}}{mac}")
+
+    @classmethod
+    def output_multiple(cls, ips: List["IPAddress"], padding: int = 14, names: bool = False):
+        """Output IP addresses to the console."""
+        output_manager = OutputManager()
+        len_ip = max(padding, max([len(str(ip.ipaddress)) for ip in ips], default=0) + 2)
+
+        # This seems completely broken, we need to look up all the hosts and get their names.
+        # This again requires a fetch_hosts() call that takes a series of identifiers using
+        # id__in.
+        len_names = (
+            padding
+            if not names
+            else max(padding, max([len(str(ip.host)) for ip in ips], default=0) + 2)
+        )
+
+        # Separate and output A and AAAA records
+        for record_type, records in (
+            ("A_Records", [ip for ip in ips if ip.is_ipv4()]),
+            ("AAAA_Records", [ip for ip in ips if ip.is_ipv6()]),
+        ):
+            if records:
+                output_manager.add_line(f"{record_type:<{len_names}}IP{' ' * (len_ip - 2)}MAC")
+                for record in records:
+                    record.output(len_ip=len_ip, len_names=len_names, names=names)
+
     def __hash__(self):
         """Return a hash of the IP address."""
         return hash((self.id, self.ipaddress.address, self.macaddress))
 
 
-class CNAME(FrozenModel):
+class HInfo(FrozenModelWithTimestamps, WithHost):
+    """Represents a HINFO record."""
+
+    cpu: str
+    os: str
+
+    def output(self, padding: int = 14):
+        """Output the HINFO record to the console."""
+        OutputManager().add_line(
+            "{1:<{0}}cpu={2} os={3}".format(padding, "Hinfo:", self.cpu, self.os)
+        )
+
+
+class CNAME(FrozenModelWithTimestamps, WithHost):
     """Represents a CNAME record."""
 
     name: HostT
     ttl: Optional[int] = None
     zone: int
-    host: int
+
+    def output(self, padding: int = 14) -> None:
+        """Output the CNAME record to the console.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        actual_host = self.resolve_host()
+        host = actual_host.name if actual_host else "<Not found>"
+
+        OutputManager().add_line(f"{'Cname:':<{padding}}{self.name} -> {host}")
+
+    @classmethod
+    def output_multiple(cls, cnames: List["CNAME"], padding: int = 14) -> None:
+        """Output multiple CNAME records to the console.
+
+        :param cnames: List of CNAME records to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        if not cnames:
+            return
+
+        for cname in cnames:
+            cname.output(padding=padding)
 
 
-class TXT(FrozenModel):
+class TXT(FrozenModelWithTimestamps):
     """Represents a TXT record."""
 
     txt: str
     host: int
 
+    def output(self, padding: int = 14) -> None:
+        """Output the TXT record to the console.
 
-class MX(FrozenModel):
+        :param padding: Number of spaces for left-padding the output.
+        """
+        OutputManager().add_line(f"{'TXT:':<{padding}}{self.txt}")
+
+    @classmethod
+    def output_multiple(cls, txts: List["TXT"], padding: int = 14) -> None:
+        """Output multiple TXT records to the console.
+
+        :param txts: List of TXT records to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        if not txts:
+            return
+
+        for txt in txts:
+            txt.output(padding=padding)
+
+
+class MX(FrozenModelWithTimestamps, WithHost):
     """Represents a MX record."""
 
     mx: str
     priority: int
     host: int
 
+    def output(self, padding: int = 14) -> None:
+        """Output the MX record to the console.
 
-class NAPTR(FrozenModel):
+        :param padding: Number of spaces for left-padding the output.
+        """
+        len_pri = len("Priority")
+        OutputManager().add_line(
+            "{1:<{0}}{2:>{3}} {4}".format(padding, "", self.priority, len_pri, self.mx)
+        )
+
+    @classmethod
+    def output_multiple(cls, mxs: List["MX"], padding: int = 14) -> None:
+        """Output MX records to the console."""
+        if not mxs:
+            return
+
+        OutputManager().add_line("{1:<{0}}{2} {3}".format(padding, "MX:", "Priority", "Server"))
+        for mx in sorted(mxs, key=lambda i: i.priority):
+            mx.output(padding=padding)
+
+
+class NAPTR(FrozenModelWithTimestamps, WithHost):
     """Represents a NAPTR record."""
 
     id: int  # noqa: A003
-    host: int
     preference: int
     order: int
     flag: Optional[str]
@@ -229,8 +396,50 @@ class NAPTR(FrozenModel):
     regex: Optional[str]
     replacement: str
 
+    def output(self, padding: int = 14) -> None:
+        """Output the NAPTR record to the console.
 
-class Srv(FrozenModel):
+        :param padding: Number of spaces for left-padding the output.
+        """
+        row_format = f"{{:<{padding}}}" * len(NAPTR.headers())
+        OutputManager().add_line(
+            row_format.format(
+                "",
+                self.preference,
+                self.order,
+                self.flag,
+                self.service,
+                self.regex or '""',
+                self.replacement,
+            )
+        )
+
+    @classmethod
+    def headers(cls) -> List[str]:
+        """Return the headers for the NAPTR record."""
+        return [
+            "NAPTRs:",
+            "Preference",
+            "Order",
+            "Flag",
+            "Service",
+            "Regex",
+            "Replacement",
+        ]
+
+    @classmethod
+    def output_multiple(cls, naptrs: List["NAPTR"], padding: int = 14) -> None:
+        """Output multiple NAPTR records to the console."""
+        headers = cls.headers()
+        row_format = f"{{:<{padding}}}" * len(headers)
+        manager = OutputManager()
+        if naptrs:
+            manager.add_line(row_format.format(*headers))
+            for naptr in naptrs:
+                naptr.output(padding=padding)
+
+
+class Srv(FrozenModelWithTimestamps, WithHost):
     """Represents a SRV record."""
 
     id: int  # noqa: A003
@@ -240,18 +449,102 @@ class Srv(FrozenModel):
     port: int
     ttl: Optional[int]
     zone: int
-    host: int
+
+    def output(self, padding: int = 14, host_id_name_map: Optional[Dict[int, str]] = None) -> None:
+        """Output the SRV record to the console.
+
+        The output will include the record name, priority, weight, port,
+        and the associated host name. Optionally uses a mapping of host IDs
+        to host names to avoid repeated lookups.
+
+        :param padding: Number of spaces for left-padding the output.
+        :param host_names: Optional dictionary mapping host IDs to host names.
+        """
+        host_name = "<Not found>"
+        if host_id_name_map and self.host in host_id_name_map:
+            host_name = host_id_name_map[self.host]
+        elif not host_id_name_map or self.host not in host_id_name_map:
+            host = self.resolve_host()
+            if host:
+                host_name = host.name
+
+        # Format the output string to include padding and center alignment
+        # for priority, weight, and port.
+        output_manager = OutputManager()
+        format_str = "SRV: {:<{padding}} {:^6} {:^6} {:^6} {}"
+        output_manager.add_line(
+            format_str.format(
+                self.name,
+                str(self.priority),
+                str(self.weight),
+                str(self.port),
+                host_name,
+                padding=padding,
+            )
+        )
+
+    @classmethod
+    def output_multiple(cls, srvs: List["Srv"], padding: int = 14) -> None:
+        """Output multiple SRV records.
+
+        This method adjusts the padding dynamically based on the longest record name.
+
+        :param srvs: List of Srv records to output.
+        :param padding: Minimum number of spaces for left-padding the output.
+        """
+        if not srvs:
+            return
+
+        host_ids = {srv.host for srv in srvs}
+
+        host_data = get_list_in(Endpoint.Hosts, "id", list(host_ids))
+        hosts = [Host(**host) for host in host_data]
+
+        host_id_name_map = {host.id: host.name for host in hosts}
+
+        host_id_name_map.update(
+            {host_id: host_id_name_map.get(host_id, "<Not found>") for host_id in host_ids}
+        )
+
+        padding = max((len(srv.name) for srv in srvs), default=padding)
+
+        # Output each SRV record with the optimized host name lookup
+        for srv in srvs:
+            srv.output(padding=padding, host_id_name_map=host_id_name_map)
 
 
-class PTR_override(FrozenModel):
+class PTR_override(FrozenModelWithTimestamps, WithHost):
     """Represents a PTR override record."""
 
     id: int  # noqa: A003
     host: int
     ipaddress: str  # For now, should be an IP address
 
+    def output(self, padding: int = 14):
+        """Output the PTR override record to the console.
 
-class Host(FrozenModel):
+        :param padding: Number of spaces for left-padding the output.
+        """
+        host = self.resolve_host()
+        hostname = host.name if host else "<Not found>"
+
+        OutputManager().add_line(f"{'PTR override:':<{padding}}{self.ipaddress} -> {hostname}")
+
+    @classmethod
+    def output_multiple(cls, ptrs: List["PTR_override"], padding: int = 14):
+        """Output multiple PTR override records to the console.
+
+        :param ptrs: List of PTR override records to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        if not ptrs:
+            return
+
+        for ptr in ptrs:
+            ptr.output(padding=padding)
+
+
+class Host(FrozenModelWithTimestamps):
     """Model for an individual host.
 
     This is the endpoint at /api/v1/hosts/<id>.
@@ -264,7 +557,7 @@ class Host(FrozenModel):
     mxs: List[MX] = []
     txts: List[TXT] = []
     ptr_overrides: List[PTR_override] = []
-    hinfo: Optional[str] = None
+    hinfo: Optional[HInfo] = None
     loc: Optional[str] = None
     bacnetid: Optional[str] = None
     contact: str
@@ -389,7 +682,7 @@ class Host(FrozenModel):
 
         return ret_dict
 
-    # This wouold be greatly improved by having a proper error returned to avoid the need for
+    # This would be greatly improved by having a proper error returned to avoid the need for
     # manually calling networks() or vlans() to determine the issue. One option is to use
     # a custom exception, or to return a tuple of (bool, str) where the str is the error message.
     def all_ips_on_same_vlan(self) -> bool:
@@ -424,40 +717,58 @@ class Host(FrozenModel):
 
     def srvs(self) -> List[Srv]:
         """Return a list of SRV records."""
-        # We should access by ID, but the current tests use host__name, so to reduce
-        # the number of changes, we'll use name for now.
-        # srvs = get_list(Endpoint.Srvs, params={"host": self.id})
-        srvs = get_list(Endpoint.Srvs, params={"host__name": self.name})
+        srvs = get_list(Endpoint.Srvs, params={"host": self.id})
         return [Srv(**srv) for srv in srvs]
 
     def output_host_info(self, names: bool = False):
         """Output host information to the console with padding."""
+        padding = 14
+
         output_manager = OutputManager()
-        output_manager.add_line(f"Name:         {self.name}")
-        output_manager.add_line(f"Contact:      {self.contact}")
+        output_manager.add_line(f"{'Name:':<{padding}}{self.name}")
+        output_manager.add_line(f"{'Contact:':<{padding}}{self.contact}")
 
-        # Calculate padding
-        len_ip = max(
-            14, max([len(ip.ipaddress.__str__()) for ip in self.ipaddresses], default=0) + 1
-        )
-        len_names = (
-            14
-            if not names
-            else max(14, max([len(str(ip.host)) for ip in self.ipaddresses], default=0) + 1)
-        )
+        if self.comment:
+            output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
 
-        # Separate and output A and AAAA records
-        for record_type, records in (
-            ("A_Records", self.ipv4_addresses()),
-            ("AAAA_Records", self.ipv6_addresses()),
-        ):
-            if records:
-                output_manager.add_line(f"{record_type:<{len_names}}IP{' ' * (len_ip - 2)}MAC")
-                for record in records:
-                    ip = record.ipaddress.__str__()
-                    mac = record.macaddress if record.macaddress else "<not set>"
-                    name = str(record.host) if names else ""
-                    output_manager.add_line(f"{name:<{len_names}}{ip:<{len_ip}}{mac}")
+        IPAddress.output_multiple(self.ipaddresses, padding=padding, names=names)
+        PTR_override.output_multiple(self.ptr_overrides, padding=padding)
+
+        output_manager.add_line("{1:<{0}}{2}".format(padding, "TTL:", self.ttl or "(Default)"))
+
+        MX.output_multiple(self.mxs, padding=padding)
+
+        if self.hinfo:
+            self.hinfo.output(padding=padding)
+
+        if self.loc:
+            output_manager.add_line(f"{'Loc:':<{padding}}{self.loc}")
+
+        CNAME.output_multiple(self.cnames, padding=padding)
+        TXT.output_multiple(self.txts, padding=padding)
+        Srv.output_multiple(self.srvs(), padding=padding)
+        NAPTR.output_multiple(self.naptrs(), padding=padding)
+
+        # output_hinfo(info["hinfo"])
+
+        # if info["loc"]:
+        #     output_loc(info["loc"])
+        # for cname in info["cnames"]:
+        #     output_cname(cname["name"], info["name"])
+        # for txt in info["txts"]:
+        #     output_txt(txt["txt"])
+        # output_srv(host_id=info["id"])
+        # output_naptr(info)
+        # output_sshfp(info)
+        # if "bacnetid" in info:
+        #     output_bacnetid(info.get("bacnetid"))
+
+        # policies = get_list("/api/v1/hostpolicy/roles/", params={"hosts__name": info["name"]})
+        # output_policies([p["name"] for p in policies])
+
+        # cli_info("printed host info for {}".format(info["name"]))
+
+        self.output_timestamps()
 
     def __hash__(self):
         """Return a hash of the host."""

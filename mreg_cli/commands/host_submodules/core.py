@@ -22,14 +22,13 @@ from mreg_cli.types import Flag
 from mreg_cli.utilities.api import get, get_list, patch
 from mreg_cli.utilities.history import format_history_items, get_history_items
 from mreg_cli.utilities.host import (
-    clean_hostname,
     cname_exists,
     get_host_by_name,
     get_requested_ip,
     host_info_by_name,
 )
 from mreg_cli.utilities.output import output_host_info, output_ip_info
-from mreg_cli.utilities.shared import convert_wildcard_to_regex, format_mac
+from mreg_cli.utilities.shared import clean_hostname, convert_wildcard_to_regex, format_mac
 from mreg_cli.utilities.validators import is_valid_email, is_valid_ip, is_valid_mac
 from mreg_cli.utilities.zone import zone_check_for_hostname
 
@@ -77,7 +76,7 @@ def add(args: argparse.Namespace) -> None:
     import mreg_cli.api as api
 
     ip = None
-    name = clean_hostname(args.name)
+    name = args.name
     host = api.get_host(name, ok404=True)
 
     if host:
@@ -160,7 +159,7 @@ def remove(args: argparse.Namespace) -> None:
     """
     import mreg_cli.api as api
 
-    hostname = clean_hostname(args.name)
+    hostname = args.name
     host = api.get_host(hostname)
 
     if host is None:
@@ -293,7 +292,7 @@ def host_info_pydantic(args: argparse.Namespace) -> None:
     """Print information about host."""
     import mreg_cli.api as api
 
-    host = api.get_host(args.hosts[0])
+    host = api.get_host(args.hosts[0], inform_as_cname=True)
     if host is None:
         cli_warning(f"Host {args.hosts[0]} not found.")
 
@@ -333,6 +332,8 @@ def host_info(args: argparse.Namespace) -> None:
             else:
                 cli_warning(f"Found no host with macaddress: {mac}")
         else:
+            from mreg_cli.api import clean_hostname
+
             info = host_info_by_name(name_or_ip)
             name = clean_hostname(name_or_ip)
             if any(cname["name"] == name for cname in info["cnames"]):

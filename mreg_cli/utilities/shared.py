@@ -1,9 +1,53 @@
 """Shared utilities for the mreg_cli package."""
 
 import re
-from typing import Any, Tuple
+from typing import Any, Tuple, Union
 
 from mreg_cli.log import cli_warning
+
+
+# Temporary, to avoid circular imports and to allow old code to remain without
+# breaking. This should be removed once the all the old code is refactored.
+def clean_hostname(name: Union[str, bytes]) -> str:
+    """Ensure hostname is fully qualified, lowercase, and has valid characters.
+
+    :param name: The hostname to clean.
+
+    :raises CliWarning: If the hostname is invalid.
+
+    :returns: The cleaned hostname.
+    """
+    import re
+
+    from mreg_cli.config import MregCliConfig
+
+    # bytes?
+    if not isinstance(name, (str, bytes)):
+        cli_warning("Invalid input for hostname: {}".format(name))
+
+    if isinstance(name, bytes):
+        name = name.decode()
+
+    name = name.lower()
+
+    # invalid characters?
+    if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", name) is None:
+        cli_warning("Invalid input for hostname: {}".format(name))
+
+    # Assume user is happy with domain, but strip the dot.
+    if name.endswith("."):
+        return name[:-1]
+
+    # If a dot in name, assume long name.
+    if "." in name:
+        return name
+
+    config = MregCliConfig()
+    default_domain = config.get("domain")
+    # Append domain name if in config and it does not end with it
+    if default_domain and not name.endswith(default_domain):
+        return "{}.{}".format(name, default_domain)
+    return name
 
 
 def string_to_int(value: Any, error_tag: str) -> int:

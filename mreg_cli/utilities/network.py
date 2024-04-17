@@ -9,10 +9,9 @@ import sys
 import urllib.parse
 from typing import Any, Dict, Iterable, List
 
+from mreg_cli.api import get_network_by_ip
 from mreg_cli.log import cli_warning
 from mreg_cli.types import IP_networkT
-from mreg_cli.utilities.api import get
-from mreg_cli.utilities.validators import is_valid_ip, is_valid_network
 
 
 def get_network_first_unused_ip(network: Dict[str, Any]) -> str:
@@ -30,7 +29,8 @@ def get_network_first_unused_ip(network: Dict[str, Any]) -> str:
 
 def ip_in_mreg_net(ip: str) -> bool:
     """Return true if the ip is in a MREG controlled network."""
-    net = get_network_by_ip(ip)
+    ipt = ipaddress.ip_address(ip)
+    net = get_network_by_ip(ipt)
     return bool(net)
 
 
@@ -44,7 +44,7 @@ def ips_are_in_same_vlan(ips: List[str]) -> bool:
     # IPs must be in a network, and that network must have a vlan for this to work.
     last_vlan = ""
     for ip in ips:
-        network = get_network_by_ip(ip)
+        network = get_network_by_ip(ipaddress.ip_address(ip))
         if not network:
             return False
 
@@ -59,26 +59,13 @@ def ips_are_in_same_vlan(ips: List[str]) -> bool:
     return True
 
 
-def get_network_by_ip(ip: str) -> Dict[str, Any]:
-    """Return a network associated with given IP."""
-    if is_valid_ip(ip):
-        path = f"/api/v1/networks/ip/{urllib.parse.quote(ip)}"
-        net = get(path, ok404=True)
-        if net:
-            return net.json()
-        else:
-            return {}
-    else:
-        cli_warning("Not a valid ip address")
-
-
 def get_network(ip: str) -> Dict[str, Any]:
     """Return a network associated with given range or IP."""
     if is_valid_network(ip):
         path = f"/api/v1/networks/{urllib.parse.quote(ip)}"
         return get(path).json()
     elif is_valid_ip(ip):
-        net = get_network_by_ip(ip)
+        net = get_network_by_ip(ipaddress.ip_address(ip))
         if net:
             return net
         cli_warning("ip address exists but is not an address in any existing network")

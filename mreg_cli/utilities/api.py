@@ -290,6 +290,28 @@ def get_list(
     return ret
 
 
+def get_list_in(
+    path: str,
+    search_field: str,
+    search_values: List[int],
+    ok404: bool = False,
+) -> List[Dict[str, Any]]:
+    """Get a list of items by a key value pair.
+
+    :param path: The path to the API endpoint.
+    :param search_field: The field to search for.
+    :param search_values: The values to search for.
+    :param ok404: Whether to allow 404 responses.
+
+    :returns: A list of dictionaries.
+    """
+    return get_list(
+        path,
+        params={f"{search_field}__in": ",".join(str(x) for x in search_values)},
+        ok404=ok404,
+    )
+
+
 def get_item_by_key_value(
     path: str,
     search_field: str,
@@ -370,10 +392,8 @@ def get_list_generic(
                 return {}
             if len(ret) != 1:
                 raise CliError(f"Expected exactly one result, got {len(ret)}.")
-            if "results" not in ret[0]:
-                raise CliError("Expected 'results' in response, got none.")
 
-            return ret[0]["results"]
+            return ret[0]
 
         return ret
 
