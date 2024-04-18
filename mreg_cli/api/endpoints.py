@@ -15,6 +15,14 @@ class Endpoint(str, Enum):
     Naptrs = "/api/v1/naptrs/"
     Srvs = "/api/v1/srvs/"
     Cnames = "/api/v1/cnames/"
+    Sshfps = "/api/v1/sshfps/"
+    Zones = "/api/v1/zones/"
+
+    HostPolicyRoles = "/api/v1/hostpolicy/roles/"
+
+    ForwardZones = f"{Zones}forward/"
+    ReverseZones = f"{Zones}reverse/"
+    ZoneForHost = f"{ForwardZones}hostname/"
 
     def with_id(self, identity: Union[str, int]) -> str:
         """Return the endpoint with an ID."""

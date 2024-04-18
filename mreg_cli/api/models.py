@@ -2,29 +2,56 @@
 
 import ipaddress
 import re
-import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, root_validator, validator
-from pydantic.types import StringConstraints
+from pydantic import AliasChoices, BaseModel, Field, root_validator, validator
 
 from mreg_cli.api.endpoints import Endpoint
+from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import IP_AddressT
 from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list, get_list_in, patch
 
-IPAddressT = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
-
-# Sigh... Python 3.7 and earlier doesn't have Annotated, so we, well, cry.
-if sys.version_info >= (3, 8):
-    from typing import Annotated
-
-    HostT = Annotated[str, StringConstraints(min_length=1, max_length=255)]
-else:
-    HostT = str
-
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
+
+
+class HostT(BaseModel):
+    """A type for a hostname."""
+
+    hostname: str
+
+    @validator("hostname")
+    def validate_hostname(cls, value: str) -> str:
+        """Validate the hostname."""
+        value = value.lower()
+
+        if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", value) is None:
+            cli_warning(f"Invalid input for hostname: {value}")
+
+        # Assume user is happy with domain, but strip the dot.
+        if value.endswith("."):
+            return value[:-1]
+
+        # If a dot in name, assume long name.
+        if "." in value:
+            return value
+
+        config = MregCliConfig()
+        default_domain = config.get("domain")
+        # Append domain name if in config and it does not end with it
+        if default_domain and not value.endswith(default_domain):
+            return "f{name}.{default_domain}"
+        return value
+
+    def __str__(self) -> str:
+        """Return the hostname as a string."""
+        return self.hostname
+
+    def __repr__(self) -> str:
+        """Return the hostname as a string."""
+        return self.hostname
 
 
 class FrozenModel(BaseModel):
@@ -82,6 +109,28 @@ class WithHost(BaseModel):
         return Host(**data)
 
 
+class WithZone(BaseModel):
+    """Model for an object that has a zone element."""
+
+    zone: int
+
+    def resolve_zone(self) -> Union["Zone", None]:
+        """Resolve the zone ID to a (Forward)Zone object.
+
+        Notes
+        -----
+            - This method will call the API to resolve the zone ID to a Zone object.
+            - This assumes that there is a zone attribute in the object.
+
+        """
+        data = get_item_by_key_value(Endpoint.ForwardZones, "id", str(self.zone))
+
+        if not data:
+            return None
+
+        return Zone(**data)
+
+
 class NameServer(FrozenModelWithTimestamps):
     """Model for representing a nameserver within a DNS zone."""
 
@@ -106,6 +155,78 @@ class Zone(FrozenModelWithTimestamps):
     soa_ttl: int
     default_ttl: int
     name: str
+
+    def is_delegated(self) -> bool:
+        """Return True if the zone is delegated."""
+        return False
+
+
+class Delegation(FrozenModelWithTimestamps, WithZone):
+    """A delegated zone."""
+
+    id: int  # noqa: A003
+    nameservers: List[NameServer]
+    name: str
+    comment: Optional[str] = None
+
+    def is_delegated(self) -> bool:
+        """Return True if the zone is delegated."""
+        return True
+
+
+class Role(FrozenModelWithTimestamps):
+    """Model for a role.
+
+    Note that HostPolicy throws out `create_date` as the date only, not as a
+    proper datetime object, and not with the expected name `created_at`.
+    """
+
+    id: int  # noqa: A003
+    created_at: datetime = Field(..., validation_alias=AliasChoices("create_date", "created_at"))
+    hosts: List[str]
+    atoms: List[str]
+    description: str
+    name: str
+    labels: List[int]
+
+    @validator("created_at", pre=True)
+    def validate_created_at(cls, value: str) -> datetime:
+        """Validate and convert the created_at field to datetime.
+
+        :param value: Input date string from the JSON.
+        :returns: Converted datetime object.
+        """
+        return datetime.fromisoformat(value)
+
+    @validator("hosts", "atoms", pre=True, each_item=True)
+    def extract_name(cls, v: Dict[str, str]) -> str:
+        """Extract the name from the dictionary.
+
+        :param v: Dictionary containing the name.
+        :returns: Extracted name as a string.
+        """
+        return v["name"]
+
+    def output(self, padding: int = 14) -> None:
+        """Output the role to the console.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        OutputManager().add_line(f"{'Role:':<{padding}}{self.name} ({self.description})")
+
+    @classmethod
+    def output_multiple(cls, roles: List["Role"], padding: int = 14) -> None:
+        """Output multiple roles to the console.
+
+        :param roles: List of roles to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        if not roles:
+            return
+
+        OutputManager().add_line(
+            "{1:<{0}}{2}".format(padding, "Roles:", ", ".join([role.name for role in roles]))
+        )
 
 
 class Network(FrozenModelWithTimestamps):
@@ -156,10 +277,10 @@ class MACAddressField(FrozenModel):
 class IPAddressField(FrozenModel):
     """Represents an IP address, automatically determines if it's IPv4 or IPv6."""
 
-    address: IPAddressT
+    address: IP_AddressT
 
     @validator("address", pre=True)
-    def parse_ip_address(cls, value: str) -> IPAddressT:
+    def parse_ip_address(cls, value: str) -> IP_AddressT:
         """Parse and validate the IP address."""
         try:
             return ipaddress.ip_address(value)
@@ -227,7 +348,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost):
         """Return the VLAN of the IP address."""
         return self.network().vlan
 
-    def ip(self) -> IPAddressT:
+    def ip(self) -> IP_AddressT:
         """Return the IP address."""
         return self.ipaddress.address
 
@@ -299,12 +420,16 @@ class HInfo(FrozenModelWithTimestamps, WithHost):
         )
 
 
-class CNAME(FrozenModelWithTimestamps, WithHost):
+class CNAME(FrozenModelWithTimestamps, WithHost, WithZone):
     """Represents a CNAME record."""
 
     name: HostT
     ttl: Optional[int] = None
-    zone: int
+
+    @validator("name", pre=True)
+    def validate_name(cls, value: str) -> HostT:
+        """Validate the hostname."""
+        return HostT(hostname=value)
 
     def output(self, padding: int = 14) -> None:
         """Output the CNAME record to the console.
@@ -330,11 +455,10 @@ class CNAME(FrozenModelWithTimestamps, WithHost):
             cname.output(padding=padding)
 
 
-class TXT(FrozenModelWithTimestamps):
+class TXT(FrozenModelWithTimestamps, WithHost):
     """Represents a TXT record."""
 
     txt: str
-    host: int
 
     def output(self, padding: int = 14) -> None:
         """Output the TXT record to the console.
@@ -362,7 +486,6 @@ class MX(FrozenModelWithTimestamps, WithHost):
 
     mx: str
     priority: int
-    host: int
 
     def output(self, padding: int = 14) -> None:
         """Output the MX record to the console.
@@ -439,7 +562,7 @@ class NAPTR(FrozenModelWithTimestamps, WithHost):
                 naptr.output(padding=padding)
 
 
-class Srv(FrozenModelWithTimestamps, WithHost):
+class Srv(FrozenModelWithTimestamps, WithHost, WithZone):
     """Represents a SRV record."""
 
     id: int  # noqa: A003
@@ -448,7 +571,6 @@ class Srv(FrozenModelWithTimestamps, WithHost):
     weight: int
     port: int
     ttl: Optional[int]
-    zone: int
 
     def output(self, padding: int = 14, host_id_name_map: Optional[Dict[int, str]] = None) -> None:
         """Output the SRV record to the console.
@@ -500,7 +622,7 @@ class Srv(FrozenModelWithTimestamps, WithHost):
         host_data = get_list_in(Endpoint.Hosts, "id", list(host_ids))
         hosts = [Host(**host) for host in host_data]
 
-        host_id_name_map = {host.id: host.name for host in hosts}
+        host_id_name_map = {host.id: str(host.name) for host in hosts}
 
         host_id_name_map.update(
             {host_id: host_id_name_map.get(host_id, "<Not found>") for host_id in host_ids}
@@ -517,7 +639,6 @@ class PTR_override(FrozenModelWithTimestamps, WithHost):
     """Represents a PTR override record."""
 
     id: int  # noqa: A003
-    host: int
     ipaddress: str  # For now, should be an IP address
 
     def output(self, padding: int = 14):
@@ -544,6 +665,46 @@ class PTR_override(FrozenModelWithTimestamps, WithHost):
             ptr.output(padding=padding)
 
 
+class SSHFP(FrozenModelWithTimestamps, WithHost):
+    """Represents a SSHFP record."""
+
+    id: int  # noqa: A003
+    algorithm: int
+    hash_type: int
+    fingerprint: str
+    ttl: Optional[int] = None
+
+    def output(self, padding: int = 14):
+        """Output the SSHFP record to the console.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        row_format = f"{{:<{padding}}}" * len(SSHFP.headers())
+        OutputManager().add_line(
+            row_format.format("", self.algorithm, self.hash_type, self.fingerprint)
+        )
+
+    @classmethod
+    def output_multiple(cls, sshfps: List["SSHFP"], padding: int = 14):
+        """Output multiple SSHFP records to the console.
+
+        :param sshfps: List of SSHFP records to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        headers = cls.headers()
+        row_format = f"{{:<{padding}}}" * len(headers)
+        manager = OutputManager()
+        if sshfps:
+            manager.add_line(row_format.format(*headers))
+            for sshfp in sshfps:
+                sshfp.output(padding=padding)
+
+    @classmethod
+    def headers(cls) -> List[str]:
+        """Return the headers for the SSHFP record."""
+        return ["SSHFPs:", "Algorithm", "Hash Type", "Fingerprint"]
+
+
 class Host(FrozenModelWithTimestamps):
     """Model for an individual host.
 
@@ -563,7 +724,14 @@ class Host(FrozenModelWithTimestamps):
     contact: str
     ttl: Optional[int] = None
     comment: Optional[str] = None
+
+    # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: Optional[int] = None
+
+    @validator("name", pre=True)
+    def validate_name(cls, value: str) -> HostT:
+        """Validate the hostname."""
+        return HostT(hostname=value)
 
     @validator("comment", pre=True, allow_reuse=True)
     def empty_string_to_none(cls, v: str):
@@ -579,7 +747,7 @@ class Host(FrozenModelWithTimestamps):
         """
         # Note, we can't use .id as the identifier here, as the host name is used
         # in the endpoint URL...
-        op = delete(Endpoint.Hosts.with_id(self.name))
+        op = delete(Endpoint.Hosts.with_id(str(self.name)))
         if not op:
             cli_warning(f"Failed to delete host {self.name}, operation failed.")
 
@@ -682,6 +850,37 @@ class Host(FrozenModelWithTimestamps):
 
         return ret_dict
 
+    def resolve_zone(
+        self, accept_delegation: bool = False, validate_zone_resolution: bool = False
+    ) -> Optional[Union[Zone, Delegation]]:
+        """Return the zone for the host.
+
+        :param accept_delegation: If True, accept delegation and return a Delegation object if the
+                                    zone of the host is delegated. Otherwise raise a cli_warning.
+        :param validate_zone_resolution: If True, validate that the resolved zone matches the
+                                          expected zone ID. Fail with a cli_warning if it does not.
+        """
+        if not self.zone:
+            return None
+
+        data = get(Endpoint.ZoneForHost.with_id(str(self.name)))
+        data_as_dict = data.json()
+
+        if data_as_dict["zone"]:
+            zone = Zone(**data_as_dict["zone"])
+            if validate_zone_resolution and zone.id != self.zone:
+                cli_warning(f"Expected zone ID {self.zone} but resovled as {zone.id}.")
+            return zone
+
+        if data_as_dict["delegation"]:
+            if not accept_delegation:
+                cli_warning(
+                    f"Host {self.name} is delegated to zone {data_as_dict['delegation']['name']}."
+                )
+            return Delegation(**data_as_dict["delegation"])
+
+        cli_warning(f"Failed to resolve zone for host {self.name}.")
+
     # This would be greatly improved by having a proper error returned to avoid the need for
     # manually calling networks() or vlans() to determine the issue. One option is to use
     # a custom exception, or to return a tuple of (bool, str) where the str is the error message.
@@ -720,7 +919,17 @@ class Host(FrozenModelWithTimestamps):
         srvs = get_list(Endpoint.Srvs, params={"host": self.id})
         return [Srv(**srv) for srv in srvs]
 
-    def output_host_info(self, names: bool = False):
+    def sshfps(self) -> List[SSHFP]:
+        """Return a list of SSHFP records."""
+        sshfps = get_list(Endpoint.Sshfps, params={"host": self.id})
+        return [SSHFP(**sshfp) for sshfp in sshfps]
+
+    def roles(self) -> List[Role]:
+        """List all roles for the host."""
+        roles = get_list(Endpoint.HostPolicyRoles, params={"hosts": self.id})
+        return [Role(**role) for role in roles]
+
+    def output(self, names: bool = False):
         """Output host information to the console with padding."""
         padding = 14
 
@@ -748,6 +957,8 @@ class Host(FrozenModelWithTimestamps):
         TXT.output_multiple(self.txts, padding=padding)
         Srv.output_multiple(self.srvs(), padding=padding)
         NAPTR.output_multiple(self.naptrs(), padding=padding)
+        SSHFP.output_multiple(self.sshfps(), padding=padding)
+        Role.output_multiple(self.roles(), padding=padding)
 
         # output_hinfo(info["hinfo"])
 
@@ -815,7 +1026,7 @@ class HostList(FrozenModel):
 
         max_name = max_contact = 20
         for i in self.results:
-            max_name = max(max_name, len(i.name))
+            max_name = max(max_name, len(str(i.name)))
             max_contact = max(max_contact, len(i.contact))
 
         def _format(name: str, contact: str, comment: str) -> None:
@@ -825,4 +1036,4 @@ class HostList(FrozenModel):
 
         _format("Name", "Contact", "Comment")
         for i in self.results:
-            _format(i.name, i.contact, i.comment or "")
+            _format(str(i.name), i.contact, i.comment or "")

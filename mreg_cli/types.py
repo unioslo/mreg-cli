@@ -44,6 +44,8 @@ else:
 
 IP_Version: "TypeAlias" = "Literal[4, 6]"
 IP_networkT = TypeVar("IP_networkT", ipaddress.IPv4Network, ipaddress.IPv6Network)
+IP_AddressT = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
+
 
 if TYPE_CHECKING:
     # https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43

@@ -11,10 +11,11 @@ from ipaddress import ip_address
 from typing import Dict, Union
 
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.api.models import Host, HostList, IPAddressT, MACAddressField
+from mreg_cli.api.models import Delegation, Host, HostList, MACAddressField, Zone
 from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import IP_AddressT
 from mreg_cli.utilities.api import get, get_item_by_key_value, get_list, post
 
 
@@ -119,9 +120,27 @@ def add_host(data: Dict[str, Union[str, None]]) -> bool:
     return False
 
 
-def get_network_by_ip(ip: IPAddressT) -> Union[None, Dict[str, Union[str, int]]]:
+def get_network_by_ip(ip: IP_AddressT) -> Union[None, Dict[str, Union[str, int]]]:
     """Return a network associated with given IP."""
     return get(Endpoint.NetworksByIP.with_id(str(ip))).json()
+
+
+def get_zone_from_hostname(hostname: str) -> Union[Delegation, Zone, None]:
+    """Return a zone associated with a hostname."""
+    hostname = clean_hostname(hostname)
+    data = get(Endpoint.ZoneForHost.with_id(hostname), ok404=True)
+    if data is None:
+        return None
+
+    zoneblob = data.json()
+
+    if "delegate" in zoneblob:
+        return Delegation(**zoneblob)
+
+    if "zone" in zoneblob:
+        return Zone(**zoneblob["zone"])
+
+    cli_warning(f"Unexpected response from server: {zoneblob}")
 
 
 def clean_hostname(name: Union[str, bytes]) -> str:

@@ -14,6 +14,8 @@ Commands implemented:
 import argparse
 from typing import Dict, List, Optional, Union
 
+from mreg_cli.api import get_zone_from_hostname
+from mreg_cli.api.models import MACAddressField
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import HostNotFoundWarning
 from mreg_cli.log import cli_info, cli_warning
@@ -71,13 +73,30 @@ from mreg_cli.utilities.zone import zone_check_for_hostname
 def add(args: argparse.Namespace) -> None:
     """Add a new host with the given name.
 
+    Required arguments in argparse:
+        - name: Name of new host
+        - ip: An ip or network
+
+    Optional arguments in argparse:
+        - contact: Contact mail for the host
+        - comment: A comment
+        - macaddress: Mac address for assocation to the IP
+
     :param args: argparse.Namespace (name, ip, contact, comment, force, macaddress)
+
     """
     import mreg_cli.api as api
 
-    ip = None
+    ip = args.ip
     name = args.name
+    macaddress = args.macaddress
     host = api.get_host(name, ok404=True)
+
+    if macaddress is not None:
+        try:
+            macaddress = MACAddressField(address=macaddress)
+        except ValueError:
+            cli_warning(f"invalid MAC address: {macaddress}")
 
     if host:
         if host.name != name:
@@ -85,13 +104,14 @@ def add(args: argparse.Namespace) -> None:
         else:
             cli_warning(f"Host {name} already exists.")
 
+    zone = get_zone_from_hostname(name)
+    if not zone and not args.force:
+        cli_warning(f"{name} isn't in a zone controlled by MREG, must force")
+    if zone and zone.is_delegated() and not args.force:
+        cli_warning(f"{name} is in zone delegation {zone.name}, must force")
+
     if "*" in name and not args.force:
         cli_warning("Wildcards must be forced.")
-
-    zone_check_for_hostname(name, args.force)
-
-    if args.macaddress is not None and not is_valid_mac(args.macaddress):
-        cli_warning("invalid MAC address: {}".format(args.macaddress))
 
     if args.ip:
         ip = get_requested_ip(args.ip, args.force)
@@ -296,7 +316,7 @@ def host_info_pydantic(args: argparse.Namespace) -> None:
     if host is None:
         cli_warning(f"Host {args.hosts[0]} not found.")
 
-    host.output_host_info()
+    host.output()
 
 
 @command_registry.register_command(
