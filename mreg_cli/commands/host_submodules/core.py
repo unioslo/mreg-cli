@@ -97,7 +97,7 @@ def add(args: argparse.Namespace) -> None:
             cli_warning(f"invalid MAC address: {macaddress}")
 
     if host:
-        if host.name != name:
+        if host.name.hostname != name:
             cli_warning(f"{name} is a CNAME pointing to {host.name}")
         else:
             cli_warning(f"Host {name} already exists.")
