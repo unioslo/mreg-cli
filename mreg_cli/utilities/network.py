@@ -12,6 +12,8 @@ from typing import Any, Dict, Iterable, List
 from mreg_cli.api import get_network_by_ip
 from mreg_cli.log import cli_warning
 from mreg_cli.types import IP_networkT
+from mreg_cli.utilities.api import get
+from mreg_cli.utilities.validators import is_valid_ip, is_valid_network
 
 
 def get_network_first_unused_ip(network: Dict[str, Any]) -> str:

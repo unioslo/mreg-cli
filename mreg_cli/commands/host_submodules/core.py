@@ -15,7 +15,7 @@ import argparse
 from typing import Dict, List, Optional, Union
 
 from mreg_cli.api import get_zone_from_hostname
-from mreg_cli.api.models import MACAddressField
+from mreg_cli.api.models import Host, HostT, MACAddressField
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import HostNotFoundWarning
 from mreg_cli.log import cli_info, cli_warning
@@ -85,12 +85,10 @@ def add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, ip, contact, comment, force, macaddress)
 
     """
-    import mreg_cli.api as api
-
     ip = args.ip
-    name = args.name
+    name = HostT(hostname=args.name).hostname
     macaddress = args.macaddress
-    host = api.get_host(name, ok404=True)
+    host = Host.get_by_any_means(name)
 
     if macaddress is not None:
         try:
@@ -132,14 +130,11 @@ def add(args: argparse.Namespace) -> None:
     if args.ip and ip:
         data["ipaddress"] = ip
 
-    if not api.add_host(data):
+    host = Host.create(data)
+    if not host:
         cli_warning("Failed to add host.")
 
     if args.macaddress is not None and ip:
-        host = api.get_host(name)
-        if host is None:
-            cli_warning("Host not existing after creation.")
-
         host.associate_mac_to_ip(args.macaddress, ip)
     msg = f"created host {name}"
     if args.ip:
@@ -310,9 +305,7 @@ def remove(args: argparse.Namespace) -> None:
 )
 def host_info_pydantic(args: argparse.Namespace) -> None:
     """Print information about host."""
-    import mreg_cli.api as api
-
-    host = api.get_host(args.hosts[0], inform_as_cname=True)
+    host = Host.get_by_any_means(args.hosts[0], inform_as_cname=True)
     if host is None:
         cli_warning(f"Host {args.hosts[0]} not found.")
 

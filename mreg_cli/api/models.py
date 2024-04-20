@@ -2,8 +2,9 @@
 
 import ipaddress
 import re
+from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, cast
 
 from pydantic import AliasChoices, BaseModel, Field, root_validator, validator
 
@@ -12,9 +13,19 @@ from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_AddressT
-from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list, get_list_in, patch
+from mreg_cli.utilities.api import (
+    delete,
+    get,
+    get_item_by_key_value,
+    get_list,
+    get_list_in,
+    patch,
+    post,
+)
 
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
+
+BMT = TypeVar("BMT", bound="BaseModel")
 
 
 class HostT(BaseModel):
@@ -42,7 +53,7 @@ class HostT(BaseModel):
         default_domain = config.get("domain")
         # Append domain name if in config and it does not end with it
         if default_domain and not value.endswith(default_domain):
-            return "f{name}.{default_domain}"
+            return f"{value}.{default_domain}"
         return value
 
     def __str__(self) -> str:
@@ -131,6 +142,185 @@ class WithZone(BaseModel):
         return Zone(**data)
 
 
+class APIMixin(Generic[BMT], ABC):
+    """A mixin for API-related methods."""
+
+    id: int  # noqa: A003
+
+    def id_for_endpoint(self) -> Union[int, str]:
+        """Return the appropriate id for the object for its endpoint.
+
+        For Hosts, this is the hosts name, for all others it is the id field.
+
+        :returns: The correct identifier for the endpoint.
+        """
+        if isinstance(self, "Host"):
+            return self.name.hostname
+        return self.id
+
+    @classmethod
+    @abstractmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the method."""
+        raise NotImplementedError("You must define an endpoint.")
+
+    @classmethod
+    def get(cls, _id: int) -> Optional[BMT]:
+        """Get an object.
+
+        This function is at its base a wrapper around the get_by_id function,
+        but it can be overridden to provide more specific functionality.
+
+        :param _id: The ID of the object.
+        :returns: The object if found, None otherwise.
+        """
+        return cls.get_by_id(_id)
+
+    @classmethod
+    def get_by_id(cls, _id: int) -> Optional[BMT]:
+        """Get an object by its ID.
+
+        Note that for Hosts, the ID is the name of the host.
+
+        :param _id: The ID of the object.
+        :returns: The object if found, None otherwise.
+        """
+        endpoint = cls.endpoint()
+
+        # Special case for Hosts, as the mreg server endpoint wants the name not the ID
+        # so we have to search for the host by ID...
+        if endpoint is Endpoint.Hosts:
+            data = get_item_by_key_value(cls.endpoint(), "id", str(_id))
+        else:
+            data = get(cls.endpoint().with_id(_id), ok404=True)
+            if not data:
+                return None
+            data = data.json()
+
+        if not data:
+            return None
+
+        return cast(BMT, cls(**data))
+
+    @classmethod
+    def get_by_field(cls, field: str, value: str) -> Optional[BMT]:
+        """Get an object by a field.
+
+        Note that for Hosts, passed the field "name", we will do a
+        direct lookup at the endpoint with the value as the "identifier".
+
+        :param field: The field to search by.
+        :param value: The value to search for.
+
+        :returns: The object if found, None otherwise.
+        """
+        endpoint = cls.endpoint()
+
+        if endpoint is Endpoint.Hosts and field == "name":
+            data = get(Endpoint.Hosts.with_id(value), ok404=True)
+            if not data:
+                return None
+            data = data.json()
+        else:
+            data = get_item_by_key_value(cls.endpoint(), field, value, ok404=True)
+
+        if not data:
+            return None
+
+        return cast(BMT, cls(**data))
+
+    @classmethod
+    def get_list_by_field(
+        cls, field: str, value: Union[str, int], ordering: Optional[str] = None
+    ) -> List[BMT]:
+        """Get a list of objects by a field.
+
+        :param field: The field to search by.
+        :param value: The value to search for.
+        :param ordering: The ordering to use when fetching the list.
+
+        :returns: A list of objects if found, an empty list otherwise.
+        """
+        params = {field: value}
+        if ordering:
+            params["ordering"] = ordering
+
+        data = get_list(cls.endpoint(), params=params)
+        return [cast(BMT, cls(**item)) for item in data]
+
+    def refetch(self) -> BMT:
+        """Fetch an updated version of the object.
+
+        Note that the caller (self) of this method will remain unchanged and can contain
+        outdated information. The returned object will be the updated version.
+
+        :returns: The fetched object.
+        """
+        obj = self.__class__.get_by_id(self.id)
+        if not obj:
+            cli_warning(f"Could not refresh {self.__class__.__name__} with ID {self.id}.")
+
+        return obj
+
+    def patch(self, fields: Dict[str, Any]) -> BMT:
+        """Patch the object with the given values.
+
+        :param kwargs: The values to patch.
+        :returns: The object refetched from the server.
+        """
+        patch(self.endpoint().with_id(self.id), fields)
+
+        new_object = self.refetch()
+
+        for key, value in fields.items():
+            nval = getattr(new_object, key)
+            if nval != value:
+                cli_warning(
+                    f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
+                )
+
+        return new_object
+
+    def delete(self) -> bool:
+        """Delete the object.
+
+        :returns: True if the object was deleted, False otherwise.
+        """
+        response = delete(self.endpoint().with_id(self.id_for_endpoint()))
+
+        if response and response.ok:
+            return True
+
+        return False
+
+    @classmethod
+    def create(cls, kwargs: Dict[str, Union[str, None]]) -> Union[None, BMT]:
+        """Create the object.
+
+        :returns: The object if created, None otherwise.
+        """
+        response = post(cls.endpoint(), params=None, **kwargs)
+
+        if response and response.ok:
+            location = response.headers.get("Location")
+            if location:
+                obj = None
+                if cls.endpoint() is Endpoint.Hosts:
+                    obj = cls.get_by_field("name", location.split("/")[-1])
+                else:
+                    obj = cls.get_by_id(int(location.split("/")[-1]))
+
+                if obj:
+                    return obj
+
+                cli_warning(f"Could not fetch object from location {location}.")
+
+            else:
+                cli_warning("No location header in response.")
+
+        return None
+
+
 class NameServer(FrozenModelWithTimestamps):
     """Model for representing a nameserver within a DNS zone."""
 
@@ -174,7 +364,7 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         return True
 
 
-class Role(FrozenModelWithTimestamps):
+class Role(FrozenModelWithTimestamps, APIMixin["Role"]):
     """Model for a role.
 
     Note that HostPolicy throws out `create_date` as the date only, not as a
@@ -207,6 +397,11 @@ class Role(FrozenModelWithTimestamps):
         """
         return v["name"]
 
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.HostPolicyRoles
+
     def output(self, padding: int = 14) -> None:
         """Output the role to the console.
 
@@ -229,7 +424,7 @@ class Role(FrozenModelWithTimestamps):
         )
 
 
-class Network(FrozenModelWithTimestamps):
+class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
     """Model for a network."""
 
     id: int  # noqa: A003
@@ -242,6 +437,11 @@ class Network(FrozenModelWithTimestamps):
     location: str
     frozen: bool
     reserved: int
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Networks
 
     def __hash__(self):
         """Return a hash of the network."""
@@ -304,7 +504,7 @@ class IPAddressField(FrozenModel):
         return hash(self.address)
 
 
-class IPAddress(FrozenModelWithTimestamps, WithHost):
+class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
     """Represents an IP address with associated details."""
 
     id: int  # noqa: A003
@@ -326,6 +526,11 @@ class IPAddress(FrozenModelWithTimestamps, WithHost):
         if isinstance(ip_address, str):
             values["ipaddress"] = {"address": ip_address}
         return values
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Ipaddresses
 
     def __str__(self):
         """Return the IP address as a string."""
@@ -359,7 +564,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost):
         :param force: If True, force the association even if the IP address already has
                       a MAC address.
 
-        :returns: A new IPAddress object with the updated MAC address.
+        :returns: A new IPAddress object fetched from the API with the updated MAC address.
         """
         if isinstance(mac, str):
             mac = MACAddressField(address=mac)
@@ -367,14 +572,18 @@ class IPAddress(FrozenModelWithTimestamps, WithHost):
         if self.macaddress and not force:
             cli_warning(f"IP address {self.ipaddress} already has MAC address {self.macaddress}.")
 
-        patch(Endpoint.Ipaddresses.with_id(self.id), macaddress=mac.address)
-        return self.model_copy(update={"macaddress": mac})
+        return self.patch(fields={"macaddress": mac.address})
 
     def output(self, len_ip: int, len_names: int, names: bool = False):
         """Output the IP address to the console."""
         ip = self.ipaddress.__str__()
         mac = self.macaddress if self.macaddress else "<not set>"
-        name = str(self.host) if names else ""
+
+        name = ""
+        if names:
+            name = Host.get_by_id(self.host)
+            name = name.name if name else "<Not found>"
+
         OutputManager().add_line(f"{name:<{len_names}}{ip:<{len_ip}}{mac}")
 
     @classmethod
@@ -420,7 +629,7 @@ class HInfo(FrozenModelWithTimestamps, WithHost):
         )
 
 
-class CNAME(FrozenModelWithTimestamps, WithHost, WithZone):
+class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["CNAME"]):
     """Represents a CNAME record."""
 
     name: HostT
@@ -430,6 +639,11 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone):
     def validate_name(cls, value: str) -> HostT:
         """Validate the hostname."""
         return HostT(hostname=value)
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Cnames
 
     def output(self, padding: int = 14) -> None:
         """Output the CNAME record to the console.
@@ -508,7 +722,7 @@ class MX(FrozenModelWithTimestamps, WithHost):
             mx.output(padding=padding)
 
 
-class NAPTR(FrozenModelWithTimestamps, WithHost):
+class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin["NAPTR"]):
     """Represents a NAPTR record."""
 
     id: int  # noqa: A003
@@ -538,6 +752,11 @@ class NAPTR(FrozenModelWithTimestamps, WithHost):
         )
 
     @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Naptrs
+
+    @classmethod
     def headers(cls) -> List[str]:
         """Return the headers for the NAPTR record."""
         return [
@@ -562,7 +781,7 @@ class NAPTR(FrozenModelWithTimestamps, WithHost):
                 naptr.output(padding=padding)
 
 
-class Srv(FrozenModelWithTimestamps, WithHost, WithZone):
+class Srv(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["Srv"]):
     """Represents a SRV record."""
 
     id: int  # noqa: A003
@@ -571,6 +790,11 @@ class Srv(FrozenModelWithTimestamps, WithHost, WithZone):
     weight: int
     port: int
     ttl: Optional[int]
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Srvs
 
     def output(self, padding: int = 14, host_id_name_map: Optional[Dict[int, str]] = None) -> None:
         """Output the SRV record to the console.
@@ -641,16 +865,6 @@ class PTR_override(FrozenModelWithTimestamps, WithHost):
     id: int  # noqa: A003
     ipaddress: str  # For now, should be an IP address
 
-    def output(self, padding: int = 14):
-        """Output the PTR override record to the console.
-
-        :param padding: Number of spaces for left-padding the output.
-        """
-        host = self.resolve_host()
-        hostname = host.name if host else "<Not found>"
-
-        OutputManager().add_line(f"{'PTR override:':<{padding}}{self.ipaddress} -> {hostname}")
-
     @classmethod
     def output_multiple(cls, ptrs: List["PTR_override"], padding: int = 14):
         """Output multiple PTR override records to the console.
@@ -664,8 +878,18 @@ class PTR_override(FrozenModelWithTimestamps, WithHost):
         for ptr in ptrs:
             ptr.output(padding=padding)
 
+    def output(self, padding: int = 14):
+        """Output the PTR override record to the console.
 
-class SSHFP(FrozenModelWithTimestamps, WithHost):
+        :param padding: Number of spaces for left-padding the output.
+        """
+        host = self.resolve_host()
+        hostname = host.name if host else "<Not found>"
+
+        OutputManager().add_line(f"{'PTR override:':<{padding}}{self.ipaddress} -> {hostname}")
+
+
+class SSHFP(FrozenModelWithTimestamps, WithHost, APIMixin["SSHFP"]):
     """Represents a SSHFP record."""
 
     id: int  # noqa: A003
@@ -674,15 +898,10 @@ class SSHFP(FrozenModelWithTimestamps, WithHost):
     fingerprint: str
     ttl: Optional[int] = None
 
-    def output(self, padding: int = 14):
-        """Output the SSHFP record to the console.
-
-        :param padding: Number of spaces for left-padding the output.
-        """
-        row_format = f"{{:<{padding}}}" * len(SSHFP.headers())
-        OutputManager().add_line(
-            row_format.format("", self.algorithm, self.hash_type, self.fingerprint)
-        )
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Sshfps
 
     @classmethod
     def output_multiple(cls, sshfps: List["SSHFP"], padding: int = 14):
@@ -704,12 +923,19 @@ class SSHFP(FrozenModelWithTimestamps, WithHost):
         """Return the headers for the SSHFP record."""
         return ["SSHFPs:", "Algorithm", "Hash Type", "Fingerprint"]
 
+    def output(self, padding: int = 14):
+        """Output the SSHFP record to the console.
 
-class Host(FrozenModelWithTimestamps):
-    """Model for an individual host.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        row_format = f"{{:<{padding}}}" * len(SSHFP.headers())
+        OutputManager().add_line(
+            row_format.format("", self.algorithm, self.hash_type, self.fingerprint)
+        )
 
-    This is the endpoint at /api/v1/hosts/<id>.
-    """
+
+class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
+    """Model for an individual host."""
 
     id: int  # noqa: A003
     name: HostT
@@ -737,6 +963,88 @@ class Host(FrozenModelWithTimestamps):
     def empty_string_to_none(cls, v: str):
         """Convert empty strings to None."""
         return v or None
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Hosts
+
+    @classmethod
+    def get_by_any_means(cls, identifier: str, inform_as_cname: bool = True) -> Optional["Host"]:
+        """Get a host by the given identifier.
+
+        - If the identifier is numeric, it will be treated as an ID.
+        - If the identifier is an IP address, it will be treated as an IP address (v4 or v6).
+        - If the identifier is a MAC address, it will be treated as a MAC address.
+        - Otherwise, it will be treated as a hostname. If the hostname is a CNAME,
+        the host it points to will be returned.
+
+        To check if a returned host is a cname, one can do the following:
+
+        ```python
+        hostname = "host.example.com"
+        host = get_host(hostname, ok404=True)
+        if host is None:
+            print("Host not found.")
+        elif host.name != hostname:
+            print(f"{hostname} is a CNAME pointing to {host.name}")
+        else:
+            print(f"{host.name} is a host.")
+        ```
+
+        Note that get_host will perform a case-insensitive search for a fully qualified version
+        of the hostname, so the comparison above may fail.
+
+        :param identifier: The identifier to search for.
+        :param ok404: If True, don't raise a CliWarning if the host is not found.
+        :param inform_as_cname: If True, inform the user if the host is a CNAME.
+
+        :raises CliWarning: If we don't find the host and `ok404` is False.
+
+        :returns: A Host object if the host was found, otherwise None.
+        """
+        host = None
+        if identifier.isdigit():
+            return Host.get_by_id(int(identifier))
+
+        try:
+            ipaddress.ip_address(identifier)
+
+            hosts = Host.get_list_by_field("ipaddresses__ipaddress", identifier, ordering="name")
+
+            if len(hosts) == 1:
+                return hosts[0]
+
+            if len(hosts) > 1:
+                cli_warning(f"Multiple hosts found with IP address {identifier}.")
+
+        except ValueError:
+            pass
+
+        try:
+            mac = MACAddressField(address=identifier)
+            return Host.get_by_field("macaddress", mac.address)
+        except ValueError:
+            pass
+
+        # Let us try to find the host by name...
+        hname = HostT(hostname=identifier)
+
+        host = Host.get_by_field("name", hname.hostname)
+
+        if host:
+            return host
+
+        cname = CNAME.get_by_field("name", hname.hostname)
+        # If we found a CNAME, get the host it points to. We're not interested in the
+        # CNAME itself.
+        if cname is not None:
+            host = Host.get_by_id(cname.host)
+
+            if host and inform_as_cname:
+                OutputManager().add_line(f"{hname} is a CNAME for {host.name}")
+
+        return host
 
     def delete(self) -> bool:
         """Delete the host.
@@ -769,7 +1077,7 @@ class Host(FrozenModelWithTimestamps):
         :param mac: The MAC address to associate.
         :param ip: The IP address to associate.
 
-        :returns: A new Host object with the updated IP address.
+        :returns: A new Host object fetched from the API after updating the IP address.
         """
         if isinstance(mac, str):
             mac = MACAddressField(address=mac)
@@ -809,7 +1117,7 @@ class Host(FrozenModelWithTimestamps):
         if not ip_found_in_host:
             cli_warning(f"IP address {ip} not found in host {self.name}.")
 
-        return self.model_copy(update={"ipaddresses": new_ips})
+        return self.refetch()
 
     def networks(self) -> Dict[Network, List[IPAddress]]:
         """Return a dict of unique networks and a list of associated IP addresses for the host.
@@ -911,23 +1219,19 @@ class Host(FrozenModelWithTimestamps):
 
     def naptrs(self) -> List[NAPTR]:
         """Return a list of NAPTR records."""
-        naptrs = get_list(Endpoint.Naptrs, params={"host": self.id})
-        return [NAPTR(**naptr) for naptr in naptrs]
+        return NAPTR.get_list_by_field("host", self.id)
 
     def srvs(self) -> List[Srv]:
         """Return a list of SRV records."""
-        srvs = get_list(Endpoint.Srvs, params={"host": self.id})
-        return [Srv(**srv) for srv in srvs]
+        return Srv.get_list_by_field("host", self.id)
 
     def sshfps(self) -> List[SSHFP]:
         """Return a list of SSHFP records."""
-        sshfps = get_list(Endpoint.Sshfps, params={"host": self.id})
-        return [SSHFP(**sshfp) for sshfp in sshfps]
+        return SSHFP.get_list_by_field("host", self.id)
 
     def roles(self) -> List[Role]:
         """List all roles for the host."""
-        roles = get_list(Endpoint.HostPolicyRoles, params={"hosts": self.id})
-        return [Role(**role) for role in roles]
+        return Role.get_list_by_field("hosts", self.id)
 
     def output(self, names: bool = False):
         """Output host information to the console with padding."""

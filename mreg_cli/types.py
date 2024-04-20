@@ -118,6 +118,11 @@ if TYPE_CHECKING:
             """Return the HTTP status reason."""
             ...
 
+        @property
+        def headers(self) -> Dict[str, Any]:
+            """Return the dictionary of response headers."""
+            ...
+
         def json(self, **kwargs: Any) -> Any:
             """Return the response body as JSON."""
             ...
