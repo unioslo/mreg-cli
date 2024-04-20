@@ -150,13 +150,19 @@ class APIMixin(Generic[BMT], ABC):
     def id_for_endpoint(self) -> Union[int, str]:
         """Return the appropriate id for the object for its endpoint.
 
-        For Hosts, this is the hosts name, for all others it is the id field.
-
         :returns: The correct identifier for the endpoint.
         """
-        if isinstance(self, "Host"):
-            return self.name.hostname
-        return self.id
+        field = self.endpoint().external_id_field()
+        return getattr(self, field)
+
+    @classmethod
+    def field_for_endpoint(cls) -> str:
+        """Return the appropriate field for the object for its endpoint.
+
+        :param field: The field to return.
+        :returns: The correct field for the endpoint.
+        """
+        return cls.endpoint().external_id_field()
 
     @classmethod
     @abstractmethod
@@ -187,9 +193,9 @@ class APIMixin(Generic[BMT], ABC):
         """
         endpoint = cls.endpoint()
 
-        # Special case for Hosts, as the mreg server endpoint wants the name not the ID
-        # so we have to search for the host by ID...
-        if endpoint is Endpoint.Hosts:
+        # Some endpoints do not use the ID field as the endpoint identifier,
+        # and in these cases we need to search for the ID... Lovely.
+        if endpoint.requires_search_for_id():
             data = get_item_by_key_value(cls.endpoint(), "id", str(_id))
         else:
             data = get(cls.endpoint().with_id(_id), ok404=True)
@@ -206,8 +212,16 @@ class APIMixin(Generic[BMT], ABC):
     def get_by_field(cls, field: str, value: str) -> Optional[BMT]:
         """Get an object by a field.
 
-        Note that for Hosts, passed the field "name", we will do a
-        direct lookup at the endpoint with the value as the "identifier".
+        Note that some endpoints do not use the ID field for lookups. We do some
+        magic mapping via endpoint introspection to perform the following mapping for
+        classes and their endpoint "id" fields:
+
+          - Hosts -> name
+          - Networks -> network
+
+        This implies that doing a get_by_field("name", value) on Hosts will *not*
+        result in a search, but a direct lookup at ../endpoint/name which is what
+        the mreg server expects for Hosts (and similar for Network).
 
         :param field: The field to search by.
         :param value: The value to search for.
@@ -216,8 +230,8 @@ class APIMixin(Generic[BMT], ABC):
         """
         endpoint = cls.endpoint()
 
-        if endpoint is Endpoint.Hosts and field == "name":
-            data = get(Endpoint.Hosts.with_id(value), ok404=True)
+        if endpoint.requires_search_for_id() and field == endpoint.external_id_field():
+            data = get(endpoint.with_id(value), ok404=True)
             if not data:
                 return None
             data = data.json()
@@ -465,6 +479,31 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.Networks
+
+    @classmethod
+    def get_by_ip(cls, ip: IP_AddressT) -> "Network":
+        """Get a network by IP address.
+
+        :param ip: The IP address to search for.
+        :returns: The network if found, None otherwise.
+        """
+        data = get(Endpoint.NetworksByIP.with_id(str(ip)))
+        return Network(**data.json())
+
+    @classmethod
+    def get_by_netmask(cls, netmask: str) -> "Network":
+        """Get a network by netmask.
+
+        :param netmask: The netmask to search for.
+        :returns: The network if found, None otherwise.
+        """
+        data = get(Endpoint.Networks.with_params(netmask))
+        return Network(**data.json())
+
+    def get_first_available_ip(self) -> IP_AddressT:
+        """Return the first available IPv4 address of the network."""
+        data = get(Endpoint.NetworkFirstUnused.with_params(self.network))
+        return ipaddress.ip_address(data.json())
 
     def __hash__(self):
         """Return a hash of the network."""
