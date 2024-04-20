@@ -14,8 +14,7 @@ Commands implemented:
 import argparse
 from typing import Dict, List, Optional, Union
 
-from mreg_cli.api import get_zone_from_hostname
-from mreg_cli.api.models import Host, HostT, MACAddressField
+from mreg_cli.api.models import Host, HostT, MACAddressField, Zone
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import HostNotFoundWarning
 from mreg_cli.log import cli_info, cli_warning
@@ -86,9 +85,9 @@ def add(args: argparse.Namespace) -> None:
 
     """
     ip = args.ip
-    name = HostT(hostname=args.name).hostname
+    hname = HostT(hostname=args.name)
     macaddress = args.macaddress
-    host = Host.get_by_any_means(name)
+    host = Host.get_by_any_means(hname)
 
     if macaddress is not None:
         try:
@@ -97,18 +96,18 @@ def add(args: argparse.Namespace) -> None:
             cli_warning(f"invalid MAC address: {macaddress}")
 
     if host:
-        if host.name.hostname != name:
-            cli_warning(f"{name} is a CNAME pointing to {host.name}")
+        if host.name.hostname != hname.hostname:
+            cli_warning(f"{hname} is a CNAME pointing to {host.name}")
         else:
-            cli_warning(f"Host {name} already exists.")
+            cli_warning(f"Host {hname} already exists.")
 
-    zone = get_zone_from_hostname(name)
+    zone = Zone.get_from_hostname(hname)
     if not zone and not args.force:
-        cli_warning(f"{name} isn't in a zone controlled by MREG, must force")
+        cli_warning(f"{hname} isn't in a zone controlled by MREG, must force")
     if zone and zone.is_delegated() and not args.force:
-        cli_warning(f"{name} is in zone delegation {zone.name}, must force")
+        cli_warning(f"{hname} is in zone delegation {zone.name}, must force")
 
-    if "*" in name and not args.force:
+    if "*" in hname.hostname and not args.force:
         cli_warning("Wildcards must be forced.")
 
     if args.ip:
@@ -122,7 +121,7 @@ def add(args: argparse.Namespace) -> None:
 
     # Create the new host with an ip address
     data: Dict[str, Union[str, None]] = {
-        "name": name,
+        "name": hname.hostname,
         "contact": args.contact or None,
         "comment": args.comment or None,
     }
@@ -136,7 +135,7 @@ def add(args: argparse.Namespace) -> None:
 
     if args.macaddress is not None and ip:
         host.associate_mac_to_ip(args.macaddress, ip)
-    msg = f"created host {name}"
+    msg = f"created host {hname}"
     if args.ip:
         msg += f" with IP {ip}"
 

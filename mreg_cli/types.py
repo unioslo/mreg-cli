@@ -98,6 +98,7 @@ DefaultType = TypeVar("DefaultType")
 if TYPE_CHECKING:
     from typing import Any
 
+    from requests.structures import CaseInsensitiveDict
     from typing_extensions import Protocol
 
     class ResponseLike(Protocol):
@@ -119,7 +120,7 @@ if TYPE_CHECKING:
             ...
 
         @property
-        def headers(self) -> Dict[str, Any]:
+        def headers(self) -> CaseInsensitiveDict[str]:
             """Return the dictionary of response headers."""
             ...
 

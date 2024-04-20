@@ -350,6 +350,29 @@ class Zone(FrozenModelWithTimestamps):
         """Return True if the zone is delegated."""
         return False
 
+    @classmethod
+    def get_from_hostname(cls, hostname: HostT) -> Union["Delegation", "Zone", None]:
+        """Get the zone from a hostname.
+
+        Note: This method may return either a Delegation or a Zone object.
+
+        :param hostname: The hostname to search for.
+        :returns: The zone if found, None otherwise.
+        """
+        data = get(Endpoint.ZoneForHost.with_id(hostname.hostname), ok404=True)
+        if not data:
+            return None
+
+        zoneblob = data.json()
+
+        if "delegate" in zoneblob:
+            return Delegation(**zoneblob)
+
+        if "zone" in zoneblob:
+            return Zone(**zoneblob["zone"])
+
+        cli_warning(f"Unexpected response from server: {zoneblob}")
+
 
 class Delegation(FrozenModelWithTimestamps, WithZone):
     """A delegated zone."""
@@ -970,7 +993,9 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         return Endpoint.Hosts
 
     @classmethod
-    def get_by_any_means(cls, identifier: str, inform_as_cname: bool = True) -> Optional["Host"]:
+    def get_by_any_means(
+        cls, identifier: Union[str, HostT], inform_as_cname: bool = True
+    ) -> Optional["Host"]:
         """Get a host by the given identifier.
 
         - If the identifier is numeric, it will be treated as an ID.
@@ -1004,45 +1029,50 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         :returns: A Host object if the host was found, otherwise None.
         """
         host = None
-        if identifier.isdigit():
-            return Host.get_by_id(int(identifier))
+        if not isinstance(identifier, HostT):
+            if identifier.isdigit():
+                return Host.get_by_id(int(identifier))
 
-        try:
-            ipaddress.ip_address(identifier)
+            try:
+                ipaddress.ip_address(identifier)
 
-            hosts = Host.get_list_by_field("ipaddresses__ipaddress", identifier, ordering="name")
+                hosts = Host.get_list_by_field(
+                    "ipaddresses__ipaddress", identifier, ordering="name"
+                )
 
-            if len(hosts) == 1:
-                return hosts[0]
+                if len(hosts) == 1:
+                    return hosts[0]
 
-            if len(hosts) > 1:
-                cli_warning(f"Multiple hosts found with IP address {identifier}.")
+                if len(hosts) > 1:
+                    cli_warning(f"Multiple hosts found with IP address {identifier}.")
 
-        except ValueError:
-            pass
+            except ValueError:
+                pass
 
-        try:
-            mac = MACAddressField(address=identifier)
-            return Host.get_by_field("macaddress", mac.address)
-        except ValueError:
-            pass
+            try:
+                mac = MACAddressField(address=identifier)
+                return Host.get_by_field("macaddress", mac.address)
+            except ValueError:
+                pass
 
-        # Let us try to find the host by name...
-        hname = HostT(hostname=identifier)
+            # Let us try to find the host by name...
+            name = HostT(hostname=identifier)
+        else:
+            name = identifier
 
-        host = Host.get_by_field("name", hname.hostname)
+        host = Host.get_by_field("name", name.hostname)
 
         if host:
             return host
 
-        cname = CNAME.get_by_field("name", hname.hostname)
+        cname = CNAME.get_by_field("name", name.hostname)
         # If we found a CNAME, get the host it points to. We're not interested in the
         # CNAME itself.
         if cname is not None:
             host = Host.get_by_id(cname.host)
 
             if host and inform_as_cname:
-                OutputManager().add_line(f"{hname} is a CNAME for {host.name}")
+                OutputManager().add_line(f"{name} is a CNAME for {host.name}")
 
         return host
 
