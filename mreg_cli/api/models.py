@@ -55,7 +55,7 @@ def get_model_aliases(model: BaseModel) -> Dict[str, str]:
 
     for field_name, field_info in model.model_fields.items():
         aliases = get_field_aliases(field_info)
-        if model.model_config["populate_by_name"]:
+        if model.model_config.get("populate_by_name"):
             aliases.add(field_name)
         # Assign aliases to field name in mapping
         for alias in aliases:
@@ -324,7 +324,7 @@ class APIMixin(Generic[BMT], ABC):
 
         aliases = get_model_aliases(new_object)
         for key, value in fields.items():
-            field_name = aliases.get(key, None)
+            field_name = aliases.get(key)
             if field_name is None:
                 cli_warning(f"Unknown field {key} in patch request.")
             try:
