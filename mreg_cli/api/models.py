@@ -4,9 +4,10 @@ import ipaddress
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union, cast
+from typing import Any, Dict, Generic, List, Optional, Set, TypeVar, Union, cast
 
 from pydantic import AliasChoices, BaseModel, Field, root_validator, validator
+from pydantic.fields import FieldInfo
 
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.config import MregCliConfig
@@ -26,6 +27,41 @@ from mreg_cli.utilities.api import (
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
 
 BMT = TypeVar("BMT", bound="BaseModel")
+
+
+def get_field_aliases(field_info: FieldInfo) -> Set[str]:
+    """Get all aliases for a Pydantic field."""
+    aliases = set()
+
+    if field_info.alias:
+        aliases.add(field_info.alias)
+
+    if field_info.validation_alias:
+        if isinstance(field_info.validation_alias, str):
+            aliases.add(field_info.validation_alias)
+        elif isinstance(field_info.validation_alias, AliasChoices):
+            for choice in field_info.validation_alias.choices:
+                if isinstance(choice, str):
+                    aliases.add(choice)
+    return aliases
+
+
+def get_model_aliases(model: BaseModel) -> Dict[str, str]:
+    """Get a mapping of aliases to field names for a Pydantic model.
+
+    Includes field names, alias, and validation alias(es).
+    """
+    fields = {}  # type: Dict[str, str]
+
+    for field_name, field_info in model.model_fields.items():
+        aliases = get_field_aliases(field_info)
+        if model.model_config["populate_by_name"]:
+            aliases.add(field_name)
+        # Assign aliases to field name in mapping
+        for alias in aliases:
+            fields[alias] = field_name
+
+    return fields
 
 
 class HostT(BaseModel):
@@ -286,10 +322,18 @@ class APIMixin(Generic[BMT], ABC):
 
         new_object = self.refetch()
 
+        aliases = get_model_aliases(new_object)
         for key, value in fields.items():
-            nval = getattr(new_object, key)
+            field_name = aliases.get(key, None)
+            if field_name is None:
+                cli_warning(f"Unknown field {key} in patch request.")
+            try:
+                nval = getattr(new_object, field_name)
+            except AttributeError:
+                cli_warning(f"Could not get value for {field_name} in patched object.")
             if str(nval) != str(value):
                 cli_warning(
+                    # Should this reference `field_name` instead of `key`?
                     f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
                 )
 
