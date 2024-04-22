@@ -31,7 +31,7 @@ BMT = TypeVar("BMT", bound="BaseModel")
 
 def get_field_aliases(field_info: FieldInfo) -> Set[str]:
     """Get all aliases for a Pydantic field."""
-    aliases = set()
+    aliases: set[str] = set()
 
     if field_info.alias:
         aliases.add(field_info.alias)
