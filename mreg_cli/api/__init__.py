@@ -16,7 +16,7 @@ from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_AddressT
-from mreg_cli.utilities.api import get, get_item_by_key_value, get_list, post
+from mreg_cli.utilities.api import get, get_item_by_key_value
 
 
 def get_host(
@@ -106,18 +106,12 @@ def delete_host(identifier: str) -> bool:
 
 def get_hosts(params: Dict[str, Union[str, int]]) -> HostList:
     """Get a list of hosts."""
-    data = get_list(Endpoint.Hosts, params=params)
-    return HostList(results=[Host(**host_data) for host_data in data])
+    return HostList.get(params=params)
 
 
-def add_host(data: Dict[str, Union[str, None]]) -> bool:
+def add_host(data: Dict[str, Union[str, None]]) -> Union[Host, None]:
     """Add a host."""
-    response = post(Endpoint.Hosts, params=None, **data)
-
-    if response and response.ok:
-        return True
-
-    return False
+    return Host.create(kwargs=data)
 
 
 def get_network_by_ip(ip: IP_AddressT) -> Union[None, Dict[str, Union[str, int]]]:

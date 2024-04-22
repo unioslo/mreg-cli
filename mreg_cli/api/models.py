@@ -282,13 +282,13 @@ class APIMixin(Generic[BMT], ABC):
         :param kwargs: The values to patch.
         :returns: The object refetched from the server.
         """
-        patch(self.endpoint().with_id(self.id), fields)
+        patch(self.endpoint().with_id(self.id), **fields)
 
         new_object = self.refetch()
 
         for key, value in fields.items():
             nval = getattr(new_object, key)
-            if nval != value:
+            if str(nval) != str(value):
                 cli_warning(
                     f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
                 )
@@ -588,6 +588,18 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
         if isinstance(ip_address, str):
             values["ipaddress"] = {"address": ip_address}
         return values
+
+    @classmethod
+    def get_by_ip(cls, ip: IP_AddressT) -> Union["IPAddress", None]:
+        """Get an IP address object by IP address.
+
+        :param ip: The IP address to search for.
+        :returns: The IP address if found, None otherwise.
+        """
+        data = get_item_by_key_value(Endpoint.Ipaddresses, "ipaddress", str(ip))
+        if not data:
+            return None
+        return cls(**data)
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -1366,6 +1378,25 @@ class HostList(FrozenModel):
     """
 
     results: List[Host]
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Hosts
+
+    @classmethod
+    def get(cls, params: Optional[Dict[str, Any]] = None) -> "HostList":
+        """Get a list of hosts.
+
+        :param params: Optional parameters to pass to the API.
+
+        :returns: A HostList object.
+        """
+        if params is None:
+            params = {}
+
+        data = get_list(cls.endpoint(), params=params)
+        return cls(results=[Host(**host) for host in data])
 
     @validator("results", pre=True)
     def check_results(cls, v: List[Dict[str, str]]):
