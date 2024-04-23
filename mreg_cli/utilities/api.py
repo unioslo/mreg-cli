@@ -9,7 +9,7 @@ import logging
 import os
 import re
 import sys
-from typing import TYPE_CHECKING, Any, Dict, List, NoReturn, Optional, Union, cast, overload
+from typing import TYPE_CHECKING, Any, NoReturn, Optional, cast, overload
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -18,7 +18,7 @@ import requests
 from mreg_cli.outputmanager import OutputManager
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
+    from typing import Literal
 
     from mreg_cli.types import ResponseLike
 
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 HTTP_TIMEOUT = 20
 
 
-def error(msg: Union[str, Exception], code: int = os.EX_UNAVAILABLE) -> NoReturn:
+def error(msg: str | Exception, code: int = os.EX_UNAVAILABLE) -> NoReturn:
     """Print an error message and exits with the given code."""
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(code)
@@ -154,7 +154,7 @@ def prompt_for_password_and_try_update_token() -> None:
         e.print_self()
 
 
-def auth_and_update_token(username: Optional[str], password: str) -> None:
+def auth_and_update_token(username: str | None, password: str) -> None:
     """Perform the actual token update."""
     tokenurl = urljoin(MregCliConfig().get_url(), "/api/token-auth/")
     try:
@@ -194,14 +194,14 @@ def result_check(result: "ResponseLike", operation_type: str, url: str) -> None:
         except ValueError:
             pass
         else:
-            message += "\n{}".format(json.dumps(body, indent=2))
+            message += f"\n{json.dumps(body, indent=2)}"
         cli_warning(message)
 
 
 def _request_wrapper(
     operation_type: str,
     path: str,
-    params: Optional[Dict[str, Any]] = None,
+    params: dict[str, Any] | None = None,
     ok404: bool = False,
     first: bool = True,
     use_json: bool = False,
@@ -233,27 +233,27 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: Dict[str, Any], ok404: "Literal[True]") -> Optional["ResponseLike"]:
+def get(path: str, params: dict[str, Any], ok404: "Literal[True]") -> Optional["ResponseLike"]:
     ...
 
 
 @overload
-def get(path: str, params: Dict[str, Any], ok404: "Literal[False]") -> "ResponseLike":
+def get(path: str, params: dict[str, Any], ok404: "Literal[False]") -> "ResponseLike":
     ...
 
 
 @overload
-def get(path: str, params: Dict[str, Any] = ..., *, ok404: bool) -> Optional["ResponseLike"]:
+def get(path: str, params: dict[str, Any] = ..., *, ok404: bool) -> Optional["ResponseLike"]:
     ...
 
 
 @overload
-def get(path: str, params: Dict[str, Any] = ...) -> "ResponseLike":
+def get(path: str, params: dict[str, Any] = ...) -> "ResponseLike":
     ...
 
 
 def get(
-    path: str, params: Optional[Dict[str, Any]] = None, ok404: bool = False
+    path: str, params: dict[str, Any] | None = None, ok404: bool = False
 ) -> Optional["ResponseLike"]:
     """Make a standard get request."""
     if params is None:
@@ -263,10 +263,10 @@ def get(
 
 def get_list(
     path: str,
-    params: Optional[Dict[str, Any]] = None,
+    params: dict[str, Any] | None = None,
     ok404: bool = False,
-    max_hits_to_allow: Optional[int] = 500,
-) -> List[Dict[str, Any]]:
+    max_hits_to_allow: int | None = 500,
+) -> list[dict[str, Any]]:
     """Make a get request that produces a list.
 
     Will iterate over paginated results and return result as list. If the number of hits is
@@ -293,9 +293,9 @@ def get_list(
 def get_list_in(
     path: str,
     search_field: str,
-    search_values: List[int],
+    search_values: list[int],
     ok404: bool = False,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Get a list of items by a key value pair.
 
     :param path: The path to the API endpoint.
@@ -317,7 +317,7 @@ def get_item_by_key_value(
     search_field: str,
     search_value: str,
     ok404: bool = False,
-) -> Union[None, Dict[str, Any]]:
+) -> None | dict[str, Any]:
     """Get an item by a key value pair.
 
     :param path: The path to the API endpoint.
@@ -334,9 +334,9 @@ def get_item_by_key_value(
 
 def get_list_unique(
     path: str,
-    params: Dict[str, str],
+    params: dict[str, str],
     ok404: bool = False,
-) -> Union[None, Dict[str, Any]]:
+) -> None | dict[str, Any]:
     """Do a get request that returns a single result from a search.
 
     :param path: The path to the API endpoint.
@@ -360,11 +360,11 @@ def get_list_unique(
 
 def get_list_generic(
     path: str,
-    params: Optional[Dict[str, Any]] = None,
+    params: dict[str, Any] | None = None,
     ok404: bool = False,
-    max_hits_to_allow: Optional[int] = 500,
-    expect_one_result: Optional[bool] = False,
-) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    max_hits_to_allow: int | None = 500,
+    expect_one_result: bool | None = False,
+) -> dict[str, Any] | list[dict[str, Any]]:
     """Make a get request that produces a list.
 
     Will iterate over paginated results and return result as list. If the number of hits is
@@ -385,8 +385,8 @@ def get_list_generic(
     """
 
     def _check_expect_one_result(
-        ret: List[Dict[str, Any]]
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        ret: list[dict[str, Any]]
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         if expect_one_result:
             if len(ret) == 0:
                 return {}
@@ -400,7 +400,7 @@ def get_list_generic(
     if params is None:
         params = {}
 
-    ret: List[Dict[str, Any]] = []
+    ret: list[dict[str, Any]] = []
 
     # Get the first page to check the number of hits, and raise an exception if it is too high.
     get_params = params.copy()
@@ -429,7 +429,7 @@ def get_list_generic(
 
 
 def post(
-    path: str, params: Optional[Dict[str, Any]] = None, **kwargs: Any
+    path: str, params: dict[str, Any] | None = None, **kwargs: Any
 ) -> Optional["ResponseLike"]:
     """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
@@ -438,7 +438,7 @@ def post(
 
 
 def patch(
-    path: str, params: Optional[Dict[str, Any]] = None, use_json: bool = False, **kwargs: Any
+    path: str, params: dict[str, Any] | None = None, use_json: bool = False, **kwargs: Any
 ) -> Optional["ResponseLike"]:
     """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
@@ -446,7 +446,7 @@ def patch(
     return _request_wrapper("patch", path, params=params, use_json=use_json, **kwargs)
 
 
-def delete(path: str, params: Optional[Dict[str, Any]] = None) -> Optional["ResponseLike"]:
+def delete(path: str, params: dict[str, Any] | None = None) -> Optional["ResponseLike"]:
     """Use requests to make a delete request."""
     if params is None:
         params = {}

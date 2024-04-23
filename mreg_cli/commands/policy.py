@@ -26,12 +26,12 @@ class PolicyCommands(BaseCommand):
         )
 
 
-def _get_atom(name: str) -> List[Dict[str, Any]]:
+def _get_atom(name: str) -> list[dict[str, Any]]:
     """Return a list with the atom info."""
     return get_list("/api/v1/hostpolicy/atoms/", params={"name": name})
 
 
-def get_atom(name: str) -> Dict[str, Any]:
+def get_atom(name: str) -> dict[str, Any]:
     """Return the atom info."""
     ret = _get_atom(name)
     if not ret:
@@ -39,12 +39,12 @@ def get_atom(name: str) -> Dict[str, Any]:
     return ret[0]
 
 
-def _get_role(name: str) -> List[Dict[str, Any]]:
+def _get_role(name: str) -> list[dict[str, Any]]:
     """Return a list with the role info."""
     return get_list("/api/v1/hostpolicy/roles/", params={"name": name})
 
 
-def get_role(name: str) -> Dict[str, Any]:
+def get_role(name: str) -> dict[str, Any]:
     """Return the role info."""
     ret = _get_role(name)
     if not ret:
@@ -52,7 +52,7 @@ def get_role(name: str) -> Dict[str, Any]:
     return ret[0]
 
 
-def get_atom_or_role(name: str) -> Tuple[str, Dict[str, Any]]:
+def get_atom_or_role(name: str) -> tuple[str, dict[str, Any]]:
     """Return the atom or role info."""
     atom = _get_atom(name)
     if atom:
@@ -445,7 +445,7 @@ def host_list(args: argparse.Namespace) -> None:
     """
     manager = OutputManager()
 
-    def _format(hostname: str, roleinfo: List[Dict[str, Any]]) -> None:
+    def _format(hostname: str, roleinfo: list[dict[str, Any]]) -> None:
         if not roleinfo:
             cli_info(f"Host {hostname!r} has no roles.", print_msg=True)
         else:

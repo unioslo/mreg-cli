@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, Set, TypeVar, Union, cast
+from typing import Any, Generic, TypeVar, cast
 
 from pydantic import AliasChoices, BaseModel
 from pydantic.fields import FieldInfo
@@ -15,9 +15,9 @@ from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list,
 BMT = TypeVar("BMT", bound="BaseModel")
 
 
-def get_field_aliases(field_info: FieldInfo) -> Set[str]:
+def get_field_aliases(field_info: FieldInfo) -> set[str]:
     """Get all aliases for a Pydantic field."""
-    aliases: Set[str] = set()
+    aliases: set[str] = set()
 
     if field_info.alias:
         aliases.add(field_info.alias)
@@ -32,12 +32,12 @@ def get_field_aliases(field_info: FieldInfo) -> Set[str]:
     return aliases
 
 
-def get_model_aliases(model: BaseModel) -> Dict[str, str]:
+def get_model_aliases(model: BaseModel) -> dict[str, str]:
     """Get a mapping of aliases to field names for a Pydantic model.
 
     Includes field names, alias, and validation alias(es).
     """
-    fields: Dict[str, str] = {}
+    fields: dict[str, str] = {}
 
     for field_name, field_info in model.model_fields.items():
         aliases = get_field_aliases(field_info)
@@ -88,7 +88,7 @@ class APIMixin(Generic[BMT], ABC):
 
     id: int  # noqa: A003
 
-    def id_for_endpoint(self) -> Union[int, str]:
+    def id_for_endpoint(self) -> int | str:
         """Return the appropriate id for the object for its endpoint.
 
         :returns: The correct identifier for the endpoint.
@@ -112,7 +112,7 @@ class APIMixin(Generic[BMT], ABC):
         raise NotImplementedError("You must define an endpoint.")
 
     @classmethod
-    def get(cls, _id: int) -> Optional[BMT]:
+    def get(cls, _id: int) -> BMT | None:
         """Get an object.
 
         This function is at its base a wrapper around the get_by_id function,
@@ -124,7 +124,7 @@ class APIMixin(Generic[BMT], ABC):
         return cls.get_by_id(_id)
 
     @classmethod
-    def get_by_id(cls, _id: int) -> Optional[BMT]:
+    def get_by_id(cls, _id: int) -> BMT | None:
         """Get an object by its ID.
 
         Note that for Hosts, the ID is the name of the host.
@@ -150,7 +150,7 @@ class APIMixin(Generic[BMT], ABC):
         return cast(BMT, cls(**data))
 
     @classmethod
-    def get_by_field(cls, field: str, value: str) -> Optional[BMT]:
+    def get_by_field(cls, field: str, value: str) -> BMT | None:
         """Get an object by a field.
 
         Note that some endpoints do not use the ID field for lookups. We do some
@@ -186,8 +186,8 @@ class APIMixin(Generic[BMT], ABC):
 
     @classmethod
     def get_list_by_field(
-        cls, field: str, value: Union[str, int], ordering: Optional[str] = None
-    ) -> List[BMT]:
+        cls, field: str, value: str | int, ordering: str | None = None
+    ) -> list[BMT]:
         """Get a list of objects by a field.
 
         :param field: The field to search by.
@@ -217,7 +217,7 @@ class APIMixin(Generic[BMT], ABC):
 
         return obj
 
-    def patch(self, fields: Dict[str, Any]) -> BMT:
+    def patch(self, fields: dict[str, Any]) -> BMT:
         """Patch the object with the given values.
 
         :param kwargs: The values to patch.
@@ -257,7 +257,7 @@ class APIMixin(Generic[BMT], ABC):
         return False
 
     @classmethod
-    def create(cls, kwargs: Dict[str, Union[str, None]]) -> Union[None, BMT]:
+    def create(cls, kwargs: dict[str, str | None]) -> None | BMT:
         """Create the object.
 
         :returns: The object if created, None otherwise.

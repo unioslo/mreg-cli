@@ -10,7 +10,8 @@ import datetime
 import json
 import os
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union, overload
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, Optional, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
@@ -19,7 +20,7 @@ from mreg_cli.exceptions import CliError
 from mreg_cli.types import RecordingEntry, TimeInfo
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
+    from typing import Literal
 
 
 @overload
@@ -36,7 +37,7 @@ def find_char_outside_quotes(
 
 def find_char_outside_quotes(
     line: str, target_char: str, return_position: bool = False
-) -> Union[str, int]:
+) -> str | int:
     """Find a specified character in a line outside of quoted sections.
 
     :param line: The line of text to process.
@@ -91,7 +92,7 @@ def remove_dict_key_recursive(obj: object, key: str) -> None:
             remove_dict_key_recursive(other_value, key)
 
 
-def urlpath(url: str, params: Dict[str, Any]) -> str:
+def urlpath(url: str, params: dict[str, Any]) -> str:
     """Return the path and query string of a URL."""
     if params:
         url = f"{url}?{urlencode(params)}"
@@ -136,23 +137,23 @@ class OutputManager:
 
     def clear(self) -> None:
         """Clear the object."""
-        self._output: List[str] = []
+        self._output: list[str] = []
         self._filter_re: Optional["re.Pattern[str]"] = None
         self._filter_negate: bool = False
         self._command_executed: str = ""
         self._command_issued: str = ""
 
-        self._ok: List[str] = []  # This is typically commands that went OK but returned no content
-        self._warnings: List[str] = []
-        self._errors: List[str] = []
+        self._ok: list[str] = []  # This is typically commands that went OK but returned no content
+        self._warnings: list[str] = []
+        self._errors: list[str] = []
 
-        self._api_requests: List[Dict[str, Any]] = []
+        self._api_requests: list[dict[str, Any]] = []
 
         self._time_started: datetime.datetime = datetime.datetime.now()
 
     def recording_clear(self) -> None:
         """Clear the recording data."""
-        self._recorded_data: List[RecordingEntry] = []
+        self._recorded_data: list[RecordingEntry] = []
         self._recording: bool = False
         self._filename: str
         self._record_timestamps: bool = True
@@ -176,7 +177,7 @@ class OutputManager:
             with open(filename, "w") as _:
                 pass
         except OSError as exc:
-            raise CliError("Unable open file for writing: {}".format(filename)) from exc
+            raise CliError(f"Unable open file for writing: {filename}") from exc
 
         self._recording = True
         self._filename = filename
@@ -249,7 +250,7 @@ class OutputManager:
         """Return True if recording is active."""
         return self._recording
 
-    def recording_filename(self) -> Optional[str]:
+    def recording_filename(self) -> str | None:
         """Return the filename being recorded to.
 
         Return gracefully if recording is not active.
@@ -275,14 +276,14 @@ class OutputManager:
         self,
         method: str,
         url: str,
-        params: Dict[str, Any],
-        data: Dict[str, Any],
+        params: dict[str, Any],
+        data: dict[str, Any],
         result: requests.Response,
     ) -> None:
         """Record a request, if recording is active."""
         if not self.recording_active():
             return
-        ret_dict: Dict[str, Any] = {
+        ret_dict: dict[str, Any] = {
             "method": method.upper(),
             "url": urlpath(url, params),
             "data": data,
@@ -360,7 +361,7 @@ class OutputManager:
 
     # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
     # don't have that type. So we use Any instead.
-    def get_filter(self, command: str) -> Tuple[str, Any, bool]:
+    def get_filter(self, command: str) -> tuple[str, Any, bool]:
         """Return the filter for the output.
 
         Parses the command string and extracts a filter if present, taking into
@@ -403,7 +404,7 @@ class OutputManager:
         self,
         headers: Sequence[str],
         keys: Sequence[str],
-        data: List[Dict[str, Any]],
+        data: list[dict[str, Any]],
         indent: int = 0,
     ) -> None:
         """Format and add a table of data to the output.
@@ -426,7 +427,7 @@ class OutputManager:
 
         return
 
-    def filtered_output(self) -> List[str]:
+    def filtered_output(self) -> list[str]:
         """Return the lines of output.
 
         If the command is set, and it has a filter, the lines will

@@ -24,7 +24,7 @@ class GroupCommands(BaseCommand):
         super().__init__(cli, command_registry, "group", "Manage hostgroups.", "Manage hostgroups")
 
 
-def get_hostgroup(name: str) -> Dict[str, Any]:
+def get_hostgroup(name: str) -> dict[str, Any]:
     """Get hostgroup info by name."""
     ret = get_list("/api/v1/hostgroups/", params={"name": name})
     if not ret:
@@ -77,7 +77,7 @@ def info(args: argparse.Namespace) -> None:
 
         manager.add_formatted_line("Name:", info["name"])
         manager.add_formatted_line("Description:", info["description"])
-        members: List[str] = []
+        members: list[str] = []
         count = len(info["hosts"])
         if count:
             members.append("{} host{}".format(count, "s" if count > 1 else ""))
@@ -125,7 +125,7 @@ def group_list(args: argparse.Namespace) -> None:
     """
     manager = OutputManager()
 
-    def _format_hosts(hosts: List[Dict[str, Any]], source: str = "") -> None:
+    def _format_hosts(hosts: list[dict[str, Any]], source: str = "") -> None:
         """Format hosts and add to output manager."""
         for host in hosts:
             manager.add_formatted_line_with_source("host", host["name"], source)
@@ -221,7 +221,7 @@ def group_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (dstgroup, srcgroup)
     """
     info = get_hostgroup(args.dstgroup)
-    group_names = set(i["name"] for i in info["groups"])
+    group_names = {i["name"] for i in info["groups"]}
     for name in args.srcgroup:
         if name not in group_names:
             cli_warning(f"{name!r} not a group member in {args.dstgroup!r}")
@@ -247,7 +247,7 @@ def host_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, hosts)
     """
     get_hostgroup(args.group)
-    info: List[Dict[str, str]] = []
+    info: list[dict[str, str]] = []
     for name in args.hosts:
         info.append(host_info_by_name(name, follow_cname=False))
 
@@ -276,7 +276,7 @@ def host_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, hosts)
     """
     get_hostgroup(args.group)
-    info: List[Dict[str, str]] = []
+    info: list[dict[str, str]] = []
     for name in args.hosts:
         info.append(host_info_by_name(name, follow_cname=False))
 
@@ -353,7 +353,7 @@ def owner_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, owners)
     """
     info = get_hostgroup(args.group)
-    names = set(i["name"] for i in info["owners"])
+    names = {i["name"] for i in info["owners"]}
     for i in args.owners:
         if i not in names:
             cli_warning(f"{i!r} not a owner of {args.group}")

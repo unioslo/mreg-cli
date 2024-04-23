@@ -3,7 +3,7 @@
 import argparse
 import ipaddress
 import urllib.parse
-from typing import Any, Dict, List, Union
+from typing import Any
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -65,7 +65,7 @@ def print_network_unused(count: int, padding: int = 25) -> None:
     )
 
 
-def format_network_excluded_ranges(info: List[Dict[str, Any]], padding: int = 25) -> None:
+def format_network_excluded_ranges(info: list[dict[str, Any]], padding: int = 25) -> None:
     """Pretty print excluded ranges."""
     if not info:
         return
@@ -105,7 +105,7 @@ def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> 
         )
 
 
-def print_network(info: Union[int, str], text: str, padding: int = 25) -> None:
+def print_network(info: int | str, text: str, padding: int = 25) -> None:
     """Pretty print network info."""
     OutputManager().add_line("{1:<{0}}{2}".format(padding, text, info))
 
@@ -165,7 +165,7 @@ def create(args: argparse.Namespace) -> None:
         location=args.location,
         frozen=frozen,
     )
-    cli_info("created network {}".format(args.network), True)
+    cli_info(f"created network {args.network}", True)
 
 
 @command_registry.register_command(
@@ -190,13 +190,13 @@ def info(args: argparse.Namespace) -> None:
         print_network_info(net)
 
 
-def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
+def print_network_info(network_info: str | dict[str, Any]) -> None:
     """Print info about a network.
 
     - Either a network address string (CIDR notation)
     - Or a network info dict fetched by `get_network()`
 
-    :param network_info: Union[str, Dict[str, Any]]
+    :param network_info: str | dict[str, Any]]
     :param padding: int
     """
     if isinstance(network_info, str):
@@ -449,7 +449,7 @@ def remove(args: argparse.Namespace) -> None:
         cli_warning("Must force.")
 
     delete(f"/api/v1/networks/{urllib.parse.quote(args.network)}")
-    cli_info("removed network {}".format(args.network), True)
+    cli_info(f"removed network {args.network}", True)
 
 
 @command_registry.register_command(
@@ -626,7 +626,7 @@ def set_location(args: argparse.Namespace) -> None:
 
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
     patch(path, location=args.location)
-    cli_info("updated location tag to '{}' for {}".format(args.location, ip_range), True)
+    cli_info(f"updated location tag to '{args.location}' for {ip_range}", True)
 
 
 @command_registry.register_command(

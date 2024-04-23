@@ -110,5 +110,5 @@ def bacnetid_list(args: argparse.Namespace) -> None:
         maxval = args.max
         if maxval > BACNET_MAX_ID:
             cli_error(f"The maximum ID value is {BACNET_MAX_ID}.")
-    r = get_list("/api/v1/bacnet/ids/", {"id__range": "{},{}".format(minval, maxval)})
+    r = get_list("/api/v1/bacnet/ids/", {"id__range": f"{minval},{maxval}"})
     OutputManager().add_formatted_table(("ID", "Hostname"), ("id", "hostname"), r)

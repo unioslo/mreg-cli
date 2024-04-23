@@ -73,18 +73,18 @@ def cname_remove(args: argparse.Namespace) -> None:
     alias = clean_hostname(args.alias)
 
     if not info["cnames"]:
-        cli_warning('"{}" doesn\'t have any CNAME records.'.format(hostname))
+        cli_warning(f'"{hostname}" doesn\'t have any CNAME records.')
 
     for cname in info["cnames"]:
         if cname["name"] == alias:
             break
     else:
-        cli_warning('"{}" is not an alias for "{}"'.format(alias, hostname))
+        cli_warning(f'"{alias}" is not an alias for "{hostname}"')
 
     # Delete CNAME host
     path = f"/api/v1/cnames/{alias}"
     delete(path)
-    cli_info("Removed cname alias {} for {}".format(alias, hostname), print_msg=True)
+    cli_info(f"Removed cname alias {alias} for {hostname}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -141,4 +141,4 @@ def cname_show(args: argparse.Namespace) -> None:
         cli_info("showed cname aliases for {}".format(info["name"]))
         return
     except HostNotFoundWarning:
-        cli_warning("No cname found for {}".format(args.name))
+        cli_warning(f"No cname found for {args.name}")

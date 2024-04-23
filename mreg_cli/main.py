@@ -3,7 +3,6 @@
 import argparse
 import getpass
 import logging
-from typing import Union
 
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
@@ -20,7 +19,7 @@ from . import log
 logger = logging.getLogger(__name__)
 
 
-def setup_logging(verbosity: Union[int, None] = None):
+def setup_logging(verbosity: int | None = None):
     """Configure logging verbosity."""
     if verbosity is None:
         root = logging.getLogger()

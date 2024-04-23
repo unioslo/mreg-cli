@@ -137,7 +137,7 @@ def hinfo_show(args: argparse.Namespace) -> None:
     if info["hinfo"]:
         output_hinfo(info["hinfo"])
     else:
-        cli_info("No hinfo for {}".format(args.name), print_msg=True)
+        cli_info(f"No hinfo for {args.name}", print_msg=True)
     cli_info("showed hinfo for {}".format(info["name"]))
 
 
@@ -214,11 +214,11 @@ def loc_show(args: argparse.Namespace) -> None:
     if info["loc"]:
         output_loc(info["loc"])
     else:
-        cli_info("No LOC for {}".format(args.name), print_msg=True)
+        cli_info(f"No LOC for {args.name}", print_msg=True)
     cli_info("showed LOC for {}".format(info["name"]))
 
 
-def _mx_in_mxs(mxs: List[Dict[str, str]], priority: str, mx: str) -> Optional[str]:
+def _mx_in_mxs(mxs: list[dict[str, str]], priority: str, mx: str) -> str | None:
     """Check that a matching mx record exists in the list of mxs.
 
     :param mxs: list of mx records (Dict[str, str])
@@ -357,7 +357,7 @@ def naptr_add(args: argparse.Namespace) -> None:
     # Get host info or raise exception
     info = host_info_by_name(args.name)
 
-    data: Dict[str, str] = {
+    data: dict[str, str] = {
         "preference": args.preference,
         "order": args.order,
         "flag": args.flag,
@@ -567,9 +567,9 @@ def ptr_add(args: argparse.Namespace) -> None:
     """
     # Ip sanity check
     if not is_valid_ip(args.ip):
-        cli_warning("invalid ip: {}".format(args.ip))
+        cli_warning(f"invalid ip: {args.ip}")
     if not ip_in_mreg_net(args.ip):
-        cli_warning("{} isn't in a network controlled by MREG".format(args.ip))
+        cli_warning(f"{args.ip} isn't in a network controlled by MREG")
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)
@@ -581,7 +581,7 @@ def ptr_add(args: argparse.Namespace) -> None:
     }
     ptrs = get_list(path, params=params)
     if len(ptrs):
-        cli_warning("{} already exist in a PTR record".format(args.ip))
+        cli_warning(f"{args.ip} already exist in a PTR record")
     # check if host is in mreg controlled zone, must force if not
     if info["zone"] is None and not args.force:
         cli_warning("{} isn't in a zone controlled by MREG, must force".format(info["name"]))
@@ -590,7 +590,7 @@ def ptr_add(args: argparse.Namespace) -> None:
 
     network = get_network_by_ip(ipaddress.ip_address(args.ip))
     if network is None:
-        cli_warning("No network found for {}".format(args.ip))
+        cli_warning(f"No network found for {args.ip}")
 
     reserved_addresses = get_network_reserved_ips(str(network["network"]))
     if args.ip in reserved_addresses and not args.force:
@@ -750,12 +750,12 @@ def srv_remove(args: argparse.Namespace) -> None:
     cli_info("deleted SRV record for {}".format(info["name"]), print_msg=True)
 
 
-def _srv_show(srvs: Optional[List[Dict[str, Any]]] = None, host_id: Optional[str] = None) -> None:
+def _srv_show(srvs: list[dict[str, Any]] | None = None, host_id: str | None = None) -> None:
     assert srvs is not None or host_id is not None
     hostid2name = dict()
     host_ids = set()
 
-    def print_srv(srv: Dict[str, Any], hostname: str, padding: int = 14) -> None:
+    def print_srv(srv: dict[str, Any], hostname: str, padding: int = 14) -> None:
         """Pretty print given srv."""
         OutputManager().add_line(
             "SRV: {1:<{0}} {2:^6} {3:^6} {4:^6} {5}".format(
@@ -825,10 +825,10 @@ def srv_show(args: argparse.Namespace) -> None:
     }
     srvs = get_list(path, params=params)
     if len(srvs) == 0:
-        cli_warning("no service matching {}".format(sname))
+        cli_warning(f"no service matching {sname}")
     else:
         _srv_show(srvs=srvs)
-    cli_info("showed entries for SRV {}".format(sname))
+    cli_info(f"showed entries for SRV {sname}")
 
 
 @command_registry.register_command(
@@ -890,7 +890,7 @@ def sshfp_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, fingerprint)
     """
 
-    def _delete_sshfp_record(sshfp: Dict[str, Any], hname: str) -> None:
+    def _delete_sshfp_record(sshfp: dict[str, Any], hname: str) -> None:
         """Delete SSHFP record from the host."""
         path = f"/api/v1/sshfps/{sshfp['id']}"
         delete(path)

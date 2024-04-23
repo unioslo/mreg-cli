@@ -3,7 +3,7 @@
 import argparse
 import ipaddress
 import urllib.parse
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Union
 
 from mreg_cli.exceptions import CliWarning, HostNotFoundWarning
 from mreg_cli.log import cli_error, cli_info, cli_warning
@@ -26,7 +26,7 @@ from mreg_cli.utilities.validators import (
 )
 
 
-def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
+def get_unique_ip_by_name_or_ip(arg: str) -> dict[str, Any]:
     """Get A/AAAA record by either ip address or host name.
 
     This will fail if:
@@ -50,7 +50,7 @@ def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
         if not len(ips):
             cli_warning(f"ip {arg} doesn't exist.")
         elif len(ips) > 1:
-            cli_warning("ip {} is in use by {} hosts".format(arg, len(ips)))
+            cli_warning(f"ip {arg} is in use by {len(ips)} hosts")
         return ips[0]
 
     # We were not given an IP, so resolve as a host.
@@ -64,8 +64,8 @@ def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
             is_valid_ipv6(ip1) and is_valid_ipv4(ip2)
         ):
             cli_warning(
-                "{} has multiple addresses in the same address family.".format(arg)
-                + " Please specify a specific address to use instead."
+                f"{arg} has multiple addresses in the same address family."
+                " Please specify a specific address to use instead."
             )
 
         if ips_are_in_same_vlan([ip1, ip2]):
@@ -91,7 +91,7 @@ def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
         )
     if len(info["ipaddresses"]) == 0:
         cli_warning(
-            "{} doesn't have any ip addresses.".format(arg),
+            f"{arg} doesn't have any ip addresses.",
             raise_exception=True,
             exception=CliWarning,
         )
@@ -99,7 +99,7 @@ def get_unique_ip_by_name_or_ip(arg: str) -> Dict[str, Any]:
     return ip
 
 
-def assoc_mac_to_ip(mac: str, ip: Dict[str, Any], force: bool = False) -> Union[str, None]:
+def assoc_mac_to_ip(mac: str, ip: dict[str, Any], force: bool = False) -> str | None:
     """Associate MAC address with IP address."""
     # MAC addr sanity check
     if is_valid_mac(mac):
@@ -118,7 +118,7 @@ def assoc_mac_to_ip(mac: str, ip: Dict[str, Any], force: bool = False) -> Union[
                 )
             )
     else:
-        cli_warning("invalid MAC address: {}".format(mac))
+        cli_warning(f"invalid MAC address: {mac}")
 
     old_mac = ip.get("macaddress")
     if old_mac == new_mac:
@@ -144,7 +144,7 @@ def cname_exists(cname: str) -> bool:
 
 
 def add_ip_to_host(
-    args: argparse.Namespace, ipversion: IP_Version, macaddress: Optional[str] = None
+    args: argparse.Namespace, ipversion: IP_Version, macaddress: str | None = None
 ) -> None:
     """Add an A record to host. If <name> is an alias the cname host is used.
 
@@ -273,7 +273,7 @@ def get_requested_ip(ip: str, force: bool, ipversion: Union[IP_Version, None] = 
     return ip
 
 
-def host_info_by_name_or_ip(name_or_ip: str) -> Dict[str, Any]:
+def host_info_by_name_or_ip(name_or_ip: str) -> dict[str, Any]:
     """Return a dict with host information about the given host, or the host owning the given ip.
 
     :param name_or_ip: Either a host name on short or long form or an ipv4/ipv6 address.
@@ -286,7 +286,7 @@ def host_info_by_name_or_ip(name_or_ip: str) -> Dict[str, Any]:
     return host_info_by_name(name)
 
 
-def _host_info_by_name(name: str, follow_cname: bool = True) -> Optional[Dict[str, Any]]:
+def _host_info_by_name(name: str, follow_cname: bool = True) -> dict[str, Any] | None:
     hostinfo = get(f"/api/v1/hosts/{urllib.parse.quote(name)}", ok404=True)
 
     if hostinfo:
@@ -301,7 +301,7 @@ def _host_info_by_name(name: str, follow_cname: bool = True) -> Optional[Dict[st
     return None
 
 
-def host_info_by_name(name: str, follow_cname: bool = True) -> Dict[str, Any]:
+def host_info_by_name(name: str, follow_cname: bool = True) -> dict[str, Any]:
     """Return a dict with host information about the given host.
 
     :param name: A host name on either short or long form.
@@ -336,10 +336,10 @@ def resolve_ip(ip: str) -> str:
 
     # Response data sanity check
     if len(hosts) > 1:
-        cli_error('resolve ip got multiple matches for ip "{}"'.format(ip))
+        cli_error(f'resolve ip got multiple matches for ip "{ip}"')
 
     if len(hosts) == 0:
-        cli_warning("{} doesnt belong to any host".format(ip), exception=HostNotFoundWarning)
+        cli_warning(f"{ip} doesnt belong to any host", exception=HostNotFoundWarning)
     return hosts[0]["name"]
 
 
@@ -356,10 +356,10 @@ def get_host_by_name(name: str) -> str:
     if len(hosts) == 1:
         assert hosts[0]["name"] == hostname
         return hostname
-    cli_warning("host not found: {}".format(name), exception=HostNotFoundWarning)
+    cli_warning(f"host not found: {name}", exception=HostNotFoundWarning)
 
 
-def _cname_info_by_name(name: str) -> Optional[Dict[str, Any]]:
+def _cname_info_by_name(name: str) -> dict[str, Any] | None:
     """Return a dict with information about the given cname."""
     path = "/api/v1/cnames/"
     params = {
@@ -371,7 +371,7 @@ def _cname_info_by_name(name: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def _srv_info_by_name(name: str) -> Optional[Dict[str, Any]]:
+def _srv_info_by_name(name: str) -> dict[str, Any] | None:
     """Return a dict with information about the given srv."""
     path = "/api/v1/srvs/"
     params = {
@@ -383,7 +383,7 @@ def _srv_info_by_name(name: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def get_info_by_name(name: str) -> Tuple[str, Dict[str, Any]]:
+def get_info_by_name(name: str) -> tuple[str, dict[str, Any]]:
     """Get host, cname or srv by name."""
     name = clean_hostname(name)
     info = _host_info_by_name(name, follow_cname=False)

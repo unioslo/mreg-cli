@@ -18,8 +18,8 @@ class BaseCommand:
         command_registry: CommandRegistry,
         command_name: str,
         description: str,
-        short_desc: Optional[str],
-        callback: Optional[CommandFunc] = None,
+        short_desc: str | None,
+        callback: CommandFunc | None = None,
     ) -> None:
         """Initialize the command class."""
         self.base_cli = cli
@@ -42,7 +42,7 @@ class BaseCommand:
         description: str,
         short_desc: str,
         callback: CommandFunc,
-        flags: Optional[List[Flag]] = None,
+        flags: list[Flag] | None = None,
     ) -> None:
         """Add a command to the registry."""
         self.scope.add_command(

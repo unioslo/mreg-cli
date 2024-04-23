@@ -5,9 +5,9 @@ And this rule is promptly broken by importing from mreg_cli.outputmanager...
 """
 
 import ipaddress
-import sys
 import urllib.parse
-from typing import Any, Dict, Iterable, List
+from collections.abc import Iterable
+from typing import Any
 
 from mreg_cli.api import get_network_by_ip
 from mreg_cli.log import cli_warning
@@ -16,7 +16,7 @@ from mreg_cli.utilities.api import get
 from mreg_cli.utilities.validators import is_valid_ip, is_valid_network
 
 
-def get_network_first_unused_ip(network: Dict[str, Any]) -> str:
+def get_network_first_unused_ip(network: dict[str, Any]) -> str:
     """Return the first unused ip from a given network.
 
     Assumes network exists.
@@ -36,12 +36,12 @@ def ip_in_mreg_net(ip: str) -> bool:
     return bool(net)
 
 
-def ipsort(ips: Iterable[Any]) -> List[Any]:
+def ipsort(ips: Iterable[Any]) -> list[Any]:
     """Sort a list of ips."""
     return sorted(ips, key=lambda i: ipaddress.ip_address(i))
 
 
-def ips_are_in_same_vlan(ips: List[str]) -> bool:
+def ips_are_in_same_vlan(ips: list[str]) -> bool:
     """Return True if all ips are in the same vlan."""
     # IPs must be in a network, and that network must have a vlan for this to work.
     last_vlan = ""
@@ -61,7 +61,7 @@ def ips_are_in_same_vlan(ips: List[str]) -> bool:
     return True
 
 
-def get_network(ip: str) -> Dict[str, Any]:
+def get_network(ip: str) -> dict[str, Any]:
     """Return a network associated with given range or IP."""
     if is_valid_network(ip):
         path = f"/api/v1/networks/{urllib.parse.quote(ip)}"
@@ -81,7 +81,7 @@ def get_network_used_count(ip_range: str) -> int:
     return get(path).json()
 
 
-def get_network_used_list(ip_range: str) -> List[str]:
+def get_network_used_list(ip_range: str) -> list[str]:
     """Return a list of the addresses in use on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/used_list"
     return get(path).json()
@@ -93,7 +93,7 @@ def get_network_unused_count(ip_range: str) -> int:
     return get(path).json()
 
 
-def get_network_unused_list(ip_range: str) -> List[str]:
+def get_network_unused_list(ip_range: str) -> list[str]:
     """Return a list of the unused addresses on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/unused_list"
     return get(path).json()
@@ -105,7 +105,7 @@ def get_network_first_unused(ip_range: str) -> str:
     return get(path).json()
 
 
-def get_network_reserved_ips(ip_range: str) -> List[str]:
+def get_network_reserved_ips(ip_range: str) -> list[str]:
     """Return the first unused address on a network, if any."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/reserved_list"
     return get(path).json()
@@ -113,9 +113,4 @@ def get_network_reserved_ips(ip_range: str) -> List[str]:
 
 def network_is_supernet(a: IP_networkT, b: IP_networkT) -> bool:
     """Return True if a is a supernet of b."""
-    if sys.version_info >= (3, 7):
-        return a.supernet_of(b)
-    else:
-        return (
-            a.network_address <= b.network_address and a.broadcast_address >= b.broadcast_address
-        )
+    return a.supernet_of(b)

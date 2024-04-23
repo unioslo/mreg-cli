@@ -6,7 +6,7 @@ Due to circular dependencies, be very aware of what you import here.
 
 import ipaddress
 import re
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
@@ -57,7 +57,7 @@ def is_valid_mac(mac: str) -> bool:
     return bool(re.match(r"^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", mac))
 
 
-def is_valid_ttl(ttl: Union[int, str, bytes]) -> bool:  # int?
+def is_valid_ttl(ttl: int | str | bytes) -> bool:  # int?
     """Check application specific ttl restrictions."""
     if ttl in ("", "default"):
         return True
@@ -69,7 +69,7 @@ def is_valid_ttl(ttl: Union[int, str, bytes]) -> bool:  # int?
     return 300 <= ttl <= 68400
 
 
-def is_valid_email(email: Union[str, bytes]) -> bool:
+def is_valid_email(email: str | bytes) -> bool:
     """Check if email looks like a valid email."""
     if not isinstance(email, str):
         try:

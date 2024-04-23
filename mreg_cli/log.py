@@ -4,7 +4,7 @@ import getpass
 import inspect
 import re
 from datetime import datetime
-from typing import NoReturn, Optional, Type
+from typing import NoReturn
 
 from .exceptions import CliError, CliWarning
 from .outputmanager import OutputManager
@@ -35,8 +35,8 @@ def _write_log(entry: str, end: str = "\n") -> None:
 
 
 def cli_error(
-    msg: str, raise_exception: bool = True, exception: Type[Exception] = CliError
-) -> Optional[NoReturn]:
+    msg: str, raise_exception: bool = True, exception: type[Exception] = CliError
+) -> NoReturn | None:
     """Write a ERROR log entry."""
     pre = _prefix_from_stack()
     s = "{} {} [ERROR] {}: {}".format(
@@ -46,7 +46,7 @@ def cli_error(
         msg,
     )
     _write_log(s)
-    msg = "ERROR: {}: {}".format(pre, msg)
+    msg = f"ERROR: {pre}: {msg}"
     OutputManager().add_error(msg)
     if raise_exception:
         # A simplified message for console
@@ -55,8 +55,8 @@ def cli_error(
 
 
 def cli_warning(
-    msg: str, raise_exception: bool = True, exception: Type[Exception] = CliWarning
-) -> Optional[NoReturn]:
+    msg: str, raise_exception: bool = True, exception: type[Exception] = CliWarning
+) -> NoReturn | None:
     """Write a WARNING log entry."""
     pre = _prefix_from_stack()
     s = "{} {} [WARNING] {}: {}".format(
@@ -66,7 +66,7 @@ def cli_warning(
         msg,
     )
     _write_log(s)
-    msg = "WARNING: {}: {}".format(pre, msg)
+    msg = f"WARNING: {pre}: {msg}"
     OutputManager().add_warning(msg)
     if raise_exception:
         # A simplified message for console
@@ -84,7 +84,7 @@ def cli_info(msg: str, print_msg: bool = False) -> None:
         msg,
     )
     _write_log(s)
-    msg = "OK: {}: {}".format(pre, msg)
+    msg = f"OK: {pre}: {msg}"
     OutputManager().add_ok(msg)
     if print_msg:
         # A simplified message for console

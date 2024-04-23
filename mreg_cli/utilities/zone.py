@@ -6,7 +6,7 @@ from mreg_cli.log import cli_warning
 from mreg_cli.utilities.api import get
 
 
-def zoneinfo_for_hostname(host: str) -> Optional[Dict[str, Any]]:
+def zoneinfo_for_hostname(host: str) -> dict[str, Any] | None:
     """Return zoneinfo for a hostname, or None if not found or invalid."""
     if "." not in host:
         return None

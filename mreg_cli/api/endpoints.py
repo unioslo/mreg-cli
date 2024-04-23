@@ -1,7 +1,6 @@
 """API endpoints for mreg."""
 
 from enum import Enum
-from typing import Union
 from urllib.parse import quote
 
 
@@ -45,13 +44,13 @@ class Endpoint(str, Enum):
             return "network"
         return "id"
 
-    def with_id(self, identity: Union[str, int]) -> str:
+    def with_id(self, identity: str | int) -> str:
         """Return the endpoint with an ID."""
         id_field = quote(str(identity))
 
         return f"{self.value}{id_field}"
 
-    def with_params(self, *params: Union[str, int]) -> str:
+    def with_params(self, *params: str | int) -> str:
         """Construct and return an endpoint URL by inserting parameters.
 
         :param params: A sequence of parameters to be inserted into the URL.

@@ -18,7 +18,7 @@ import configparser
 import logging
 import os
 import sys
-from typing import Any, Dict, Optional, Tuple, Union, overload
+from typing import Any, overload
 
 from mreg_cli.types import DefaultType
 
@@ -41,7 +41,7 @@ DEFAULT_CONFIG_PATH = tuple(
 LOGGING_FORMAT = "%(levelname)s - %(name)s - %(message)s"
 
 # Verbosity count to logging level
-LOGGING_VERBOSITY: Tuple[int, int, int, int] = (
+LOGGING_VERBOSITY: tuple[int, int, int, int] = (
     logging.ERROR,
     logging.WARNING,
     logging.INFO,
@@ -60,9 +60,9 @@ class MregCliConfig:
     """
 
     _instance = None
-    _config_cmd: Dict[str, str]
-    _config_file: Dict[str, str]
-    _config_env: Dict[str, str]
+    _config_cmd: dict[str, str]
+    _config_file: dict[str, str]
+    _config_env: dict[str, str]
 
     def __new__(cls) -> "MregCliConfig":
         """Create a new instance of the configuration class.
@@ -79,7 +79,7 @@ class MregCliConfig:
         return cls._instance
 
     @staticmethod
-    def _load_env_config() -> Dict[str, str]:
+    def _load_env_config() -> dict[str, str]:
         """Load environment variables into the configuration, filtering with 'MREGCLI_' prefix."""
         env_prefix = "MREGCLI_"
         return {
@@ -89,16 +89,14 @@ class MregCliConfig:
         }
 
     @overload
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         ...
 
     @overload
-    def get(self, key: str, default: DefaultType = ...) -> Union[str, DefaultType]:
+    def get(self, key: str, default: DefaultType = ...) -> str | DefaultType:
         ...
 
-    def get(
-        self, key: str, default: Optional[DefaultType] = None
-    ) -> Optional[Union[str, DefaultType]]:
+    def get(self, key: str, default: DefaultType | None = None) -> str | DefaultType | None:
         """Get a configuration value with priority: cmdline, env, file.
 
         :param str key: Configuration key.
@@ -110,7 +108,7 @@ class MregCliConfig:
             key, self._config_env.get(key, self._config_file.get(key, default))
         )
 
-    def set_cmd_config(self, cmd_config: Dict[str, Any]) -> None:
+    def set_cmd_config(self, cmd_config: dict[str, Any]) -> None:
         """Set command line configuration options.
 
         :param Dict[str, Any] cmd_config: Dictionary of command line configurations.
@@ -148,7 +146,7 @@ class MregCliConfig:
         """
         logging.basicConfig(level=level, format=LOGGING_FORMAT)
 
-    def get_config_file(self) -> Union[str, None]:
+    def get_config_file(self) -> str | None:
         """Get the first config file found in DEFAULT_CONFIG_PATH.
 
         :returns: path to config file, or None if no config file was found
@@ -174,7 +172,7 @@ class MregCliConfig:
             raise ValueError("No URL found in config, no defaults available!")
         return url
 
-    def _calculate_column_width(self, data: Dict[str, Any], min_width: int = 8) -> int:
+    def _calculate_column_width(self, data: dict[str, Any], min_width: int = 8) -> int:
         """Calculate the maximum column width, ensuring a minimum width.
 
         :param data: Dictionary of data for the column.

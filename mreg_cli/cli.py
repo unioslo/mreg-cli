@@ -7,7 +7,8 @@ import html
 import os
 import shlex
 import sys
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, NoReturn, Optional, Union
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, NoReturn, Optional
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
@@ -70,9 +71,9 @@ class Command(Completer):
     """
 
     # Used to detect an error when running commands from a source file.
-    last_errno: Union[str, int, None] = 0
+    last_errno: str | int | None = 0
 
-    def __init__(self, parser: argparse.ArgumentParser, flags: List[Flag], short_desc: str):
+    def __init__(self, parser: argparse.ArgumentParser, flags: list[Flag], short_desc: str):
         """Initialize a Command object."""
         self.parser = parser
         # sub is an object used for creating sub parser for this command. A
@@ -80,7 +81,7 @@ class Command(Completer):
         self.sub: Optional["SubparserType"] = None
 
         self.short_desc = short_desc
-        self.children: Dict[str, Command] = {}
+        self.children: dict[str, Command] = {}
         self.flags = {}
         for flag in flags:
             if flag.name.startswith("-"):
@@ -91,9 +92,9 @@ class Command(Completer):
         prog: str,
         description: str,
         short_desc: str = "",
-        epilog: Optional[str] = None,
-        callback: Optional[CommandFunc] = None,
-        flags: Union[List[Flag], None] = None,
+        epilog: str | None = None,
+        callback: CommandFunc | None = None,
+        flags: list[Flag] | None = None,
     ):
         """Add a command to the current parser.
 
@@ -112,7 +113,7 @@ class Command(Completer):
             # parameters are sent, or else exceptions are raised. Ex: if
             # required is passed with an argument which doesn't accept the
             # required option.
-            args: Dict[str, Any] = {
+            args: dict[str, Any] = {
                 "help": f.description,
             }
             if f.type:
@@ -171,7 +172,7 @@ class Command(Completer):
         self,
         document: document.Document,
         complete_event: CompleteEvent,  # noqa: ARG002
-    ) -> Generator[Union[Completion, Any], Any, None]:
+    ) -> Generator[Completion | Any, Any, None]:
         """Prepare completions for the current command.
 
         :param document: The current document.
@@ -183,7 +184,7 @@ class Command(Completer):
         words = document.text.strip().split(" ")
         yield from self.complete(cur, words)
 
-    def complete(self, cur: str, words: List[str]) -> Generator[Union[Completion, Any], Any, None]:
+    def complete(self, cur: str, words: list[str]) -> Generator[Completion | Any, Any, None]:
         """Generate completions during typing.
 
         :param cur: The current word.
@@ -351,7 +352,7 @@ recordings.add_command(
 )
 
 
-def source(files: List[str], ignore_errors: bool, verbose: bool) -> Generator[str, None, None]:
+def source(files: list[str], ignore_errors: bool, verbose: bool) -> Generator[str, None, None]:
     """Read commands from one or more source files and yield them.
 
     :param files: List of file paths to read commands from.
@@ -377,13 +378,9 @@ def source(files: List[str], ignore_errors: bool, verbose: bool) -> Generator[st
                     yield line
 
                     if cli.last_errno != 0:
+                        col = "ansired"
                         print_formatted_text(
-                            HTML(
-                                (
-                                    f"<ansired><i>{filename}</i>: "
-                                    f"Error on line {i + 1}</ansired>"
-                                )
-                            )
+                            HTML(f"<{col}><i>{filename}</i>: Error on line {i + 1}</{col}>")
                         )
                         OutputManager().add_error(f"{filename}: Error on line {i + 1}")
                         if not ignore_errors:

@@ -148,4 +148,4 @@ def label_rename(args: argparse.Namespace) -> None:
     if args.desc:
         data["description"] = args.desc
     patch(path, **data)
-    cli_info('Renamed label "{}" to "{}"'.format(args.oldname, args.newname), True)
+    cli_info(f'Renamed label "{args.oldname}" to "{args.newname}"', True)

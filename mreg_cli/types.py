@@ -2,8 +2,8 @@
 
 import argparse
 import ipaddress
-import sys
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, TypeVar, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, NamedTuple, Optional, TypedDict, TypeVar
 
 CommandFunc = Callable[[argparse.Namespace], None]
 
@@ -12,45 +12,41 @@ CommandFunc = Callable[[argparse.Namespace], None]
 # from typing_extensions. This hack is required for RHEL7 support that
 # has a typing_extensions library that has some issues.
 if TYPE_CHECKING:
-    from typing_extensions import Literal, TypeAlias  # noqa: F401
+    from typing import Literal, TypeAlias  # noqa: F401
 
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
 
-    class TimeInfo(TypedDict):
-        """Type definition for time-related information in the recording entry."""
+class TimeInfo(TypedDict):
+    """Type definition for time-related information in the recording entry."""
 
-        timestamp: str
-        timestamp_as_epoch: int
-        runtime_in_ms: int
+    timestamp: str
+    timestamp_as_epoch: int
+    runtime_in_ms: int
 
-    class RecordingEntry(TypedDict):
-        """Type definition for a recording entry."""
 
-        command: str
-        command_filter: Optional[str]
-        command_filter_negate: bool
-        command_issued: str
-        ok: List[str]
-        warning: List[str]
-        error: List[str]
-        output: List[str]
-        api_requests: List[Dict[str, Any]]
-        time: Optional[TimeInfo]
+class RecordingEntry(TypedDict):
+    """Type definition for a recording entry."""
 
-else:
-    TimeInfo = Dict[str, Any]
-    RecordingEntry = Dict[str, Any]
+    command: str
+    command_filter: str | None
+    command_filter_negate: bool
+    command_issued: str
+    ok: list[str]
+    warning: list[str]
+    error: list[str]
+    output: list[str]
+    api_requests: list[dict[str, Any]]
+    time: TimeInfo | None
+
 
 IP_Version: "TypeAlias" = "Literal[4, 6]"
 IP_networkT = TypeVar("IP_networkT", ipaddress.IPv4Network, ipaddress.IPv6Network)
-IP_AddressT = Union[ipaddress.IPv4Address, ipaddress.IPv6Address]
+IP_AddressT = ipaddress.IPv4Address | ipaddress.IPv6Address
 
 
 if TYPE_CHECKING:
     # https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
     NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
-    NargsType = Union[int, NargsStr]
+    NargsType = int | NargsStr
 
 
 class Flag:
@@ -64,10 +60,10 @@ class Flag:
         nargs: Optional["NargsType"] = None,
         default: Any = None,
         flag_type: Any = None,
-        choices: Optional[List[str]] = None,
+        choices: list[str] | None = None,
         required: bool = False,
-        metavar: Optional[str] = None,
-        action: Optional[str] = None,
+        metavar: str | None = None,
+        action: str | None = None,
     ):
         """Initialize a Flag object."""
         self.name = name
@@ -89,7 +85,7 @@ class Command(NamedTuple):
     description: str
     short_desc: str
     callback: CommandFunc
-    flags: Optional[List[Flag]] = None
+    flags: list[Flag] | None = None
 
 
 # Config

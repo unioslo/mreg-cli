@@ -5,7 +5,7 @@ import re
 from typing import Any, Dict, List
 
 from pydantic import BeforeValidator, field_validator
-from typing_extensions import Annotated
+from typing import Annotated
 
 from mreg_cli.api.abstracts import FrozenModel
 from mreg_cli.types import IP_AddressT
@@ -71,7 +71,7 @@ class IPAddressField(FrozenModel):
         return hash(self.address)
 
 
-def _extract_name(value: Dict[str, Any]) -> str:
+def _extract_name(value: dict[str, Any]) -> str:
     """Extract the name from the dictionary.
 
     :param v: Dictionary containing the name.
@@ -80,4 +80,4 @@ def _extract_name(value: Dict[str, Any]) -> str:
     return value["name"]
 
 
-NameList = List[Annotated[str, BeforeValidator(_extract_name)]]
+NameList = list[Annotated[str, BeforeValidator(_extract_name)]]

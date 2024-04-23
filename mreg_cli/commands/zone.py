@@ -63,7 +63,7 @@ def zone_path(name: str) -> str:
     return zone_basepath(name) + name
 
 
-def get_zone(name: str) -> Tuple[Dict[str, Any], str]:
+def get_zone(name: str) -> tuple[dict[str, Any], str]:
     """Return the zone and path for a zone."""
     path = zone_path(name)
     zone = get(path, ok404=True)
@@ -91,7 +91,7 @@ def create(args: argparse.Namespace) -> None:
     _verify_nameservers(args.ns, args.force)
     path = zone_basepath(args.zone)
     post(path, name=args.zone, email=args.email, primary_ns=args.ns)
-    cli_info("created zone {}".format(args.zone), True)
+    cli_info(f"created zone {args.zone}", True)
 
 
 @command_registry.register_command(
@@ -121,7 +121,7 @@ def delegation_create(args: argparse.Namespace) -> None:
         nameservers=args.ns,
         comment=args.comment,
     )
-    cli_info("created zone delegation {}".format(args.delegation), True)
+    cli_info(f"created zone delegation {args.delegation}", True)
 
 
 @command_registry.register_command(
@@ -172,7 +172,7 @@ def delegation_delete(args: argparse.Namespace) -> None:
     if not args.delegation.endswith(f".{args.zone}"):
         cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
     delete(f"{path}/delegations/{args.delegation}")
-    cli_info("Removed zone delegation {}".format(args.delegation), True)
+    cli_info(f"Removed zone delegation {args.delegation}", True)
 
 
 @command_registry.register_command(
@@ -359,7 +359,7 @@ def set_ns(args: argparse.Namespace) -> None:
     _verify_nameservers(args.ns, args.force)
     _, path = get_zone(args.zone)
     patch(f"{path}/nameservers", primary_ns=args.ns)
-    cli_info("updated nameservers for {}".format(args.zone), True)
+    cli_info(f"updated nameservers for {args.zone}", True)
 
 
 @command_registry.register_command(
@@ -400,7 +400,7 @@ def set_soa(args: argparse.Namespace) -> None:
 
     if data:
         patch(path, **data)
-        cli_info("set soa for {}".format(args.zone), True)
+        cli_info(f"set soa for {args.zone}", True)
     else:
         cli_info("No options set, so unchanged.", True)
 
@@ -422,4 +422,4 @@ def set_default_ttl(args: argparse.Namespace) -> None:
     _, path = get_zone(args.zone)
     data = {"default_ttl": args.ttl}
     patch(path, **data)
-    cli_info("set default TTL for {}".format(args.zone), True)
+    cli_info(f"set default TTL for {args.zone}", True)

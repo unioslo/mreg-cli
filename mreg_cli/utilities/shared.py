@@ -1,14 +1,14 @@
 """Shared utilities for the mreg_cli package."""
 
 import re
-from typing import Any, Tuple, Union
+from typing import Any
 
 from mreg_cli.log import cli_warning
 
 
 # Temporary, to avoid circular imports and to allow old code to remain without
 # breaking. This should be removed once the all the old code is refactored.
-def clean_hostname(name: Union[str, bytes]) -> str:
+def clean_hostname(name: str | bytes) -> str:
     """Ensure hostname is fully qualified, lowercase, and has valid characters.
 
     :param name: The hostname to clean.
@@ -23,7 +23,7 @@ def clean_hostname(name: Union[str, bytes]) -> str:
 
     # bytes?
     if not isinstance(name, (str, bytes)):
-        cli_warning("Invalid input for hostname: {}".format(name))
+        cli_warning(f"Invalid input for hostname: {name}")
 
     if isinstance(name, bytes):
         name = name.decode()
@@ -32,7 +32,7 @@ def clean_hostname(name: Union[str, bytes]) -> str:
 
     # invalid characters?
     if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", name) is None:
-        cli_warning("Invalid input for hostname: {}".format(name))
+        cli_warning(f"Invalid input for hostname: {name}")
 
     # Assume user is happy with domain, but strip the dot.
     if name.endswith("."):
@@ -46,7 +46,7 @@ def clean_hostname(name: Union[str, bytes]) -> str:
     default_domain = config.get("domain")
     # Append domain name if in config and it does not end with it
     if default_domain and not name.endswith(default_domain):
-        return "{}.{}".format(name, default_domain)
+        return f"{name}.{default_domain}"
     return name
 
 
@@ -69,7 +69,7 @@ def format_mac(mac: str) -> str:
 
 def convert_wildcard_to_regex(
     param: str, arg: str, autoWildcards: bool = False
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     """Convert wildcard filter "foo*bar*" to something DRF will understand.
 
     E.g. "foo*bar*" -> "?name__regex=$foo.*bar.*"

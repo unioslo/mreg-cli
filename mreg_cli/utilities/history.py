@@ -11,8 +11,8 @@ from mreg_cli.utilities.api import get_list
 
 
 def get_history_items(
-    name: str, resource: str, data_relation: Optional[str] = None
-) -> List[Dict[str, Any]]:
+    name: str, resource: str, data_relation: str | None = None
+) -> list[dict[str, Any]]:
     """Get history items for a given name and resource."""
     # First check if any model id with the name exists
     path = "/api/v1/history/"
@@ -39,10 +39,10 @@ def get_history_items(
     return ret
 
 
-def format_history_items(ownname: str, items: List[Dict[str, Any]]) -> None:
+def format_history_items(ownname: str, items: list[dict[str, Any]]) -> None:
     """Format history items for output."""
 
-    def _remove_unneded_keys(data: Dict[str, Any]):
+    def _remove_unneded_keys(data: dict[str, Any]):
         """Remove unneeded keys from data.
 
         Note: This modifies the data passed in.

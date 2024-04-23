@@ -13,7 +13,6 @@ Commands implemented:
 
 import argparse
 import ipaddress
-from typing import Dict, List, Optional, Union
 
 from mreg_cli.api.models import Host, HostT, MACAddressField, Zone
 from mreg_cli.commands.host import registry as command_registry
@@ -117,9 +116,7 @@ def add(args: argparse.Namespace) -> None:
 
     # Contact sanity check
     if args.contact and not is_valid_email(args.contact):
-        cli_warning(
-            "invalid mail address ({}) when trying to add {}".format(args.contact, args.name)
-        )
+        cli_warning(f"invalid mail address ({args.contact}) when trying to add {args.name}")
 
     if macaddress is not None:
         try:
@@ -127,7 +124,7 @@ def add(args: argparse.Namespace) -> None:
         except ValueError:
             cli_warning(f"invalid MAC address: {macaddress}")
 
-    data: Dict[str, Union[str, None]] = {
+    data: dict[str, str | None] = {
         "name": hname.hostname,
         "contact": args.contact or None,
         "comment": args.comment or None,
@@ -220,14 +217,14 @@ def remove(args: argparse.Namespace) -> None:
     if host is None:
         cli_warning(f"Host {args.name} not found.")
 
-    overrides: List[str] = args.override.split(",") if args.override else []
+    overrides: list[str] = args.override.split(",") if args.override else []
 
     accepted_overrides = ["cname", "ipaddress", "mx", "srv", "ptr", "naptr"]
     for override in overrides:
         if override not in accepted_overrides:
             cli_warning(f"Invalid override: {override}. Accepted overrides: {accepted_overrides}")
 
-    def forced(override_required: Optional[str] = None) -> bool:
+    def forced(override_required: str | None = None) -> bool:
         # If we require an override, check if it's in the list of provided overrides.
         if override_required:
             return override_required in overrides
@@ -239,7 +236,7 @@ def remove(args: argparse.Namespace) -> None:
         # And the fallback is "no".
         return False
 
-    warnings: List[str] = []
+    warnings: list[str] = []
     # Require force if host has any cnames.
     if host.cnames and not args.force:
         warnings.append(f"  {len(host.cnames)} cnames, override with 'cname'")
@@ -275,7 +272,7 @@ def remove(args: argparse.Namespace) -> None:
     naptrs = host.naptrs()
     if len(naptrs) > 0:
         if not forced("naptr"):
-            warnings.append("  {} NAPTR records, override with 'naptr'".format(len(naptrs)))
+            warnings.append(f"  {len(naptrs)} NAPTR records, override with 'naptr'")
             for naptr in naptrs:
                 warnings.append(f"    - {naptr.replacement}")
         else:
@@ -321,12 +318,12 @@ def remove(args: argparse.Namespace) -> None:
     # Warn user and raise exception if any force requirements was found
     if warnings:
         warn_msg = "\n".join(warnings)
-        cli_warning("{} requires force and override for deletion:\n{}".format(host.name, warn_msg))
+        cli_warning(f"{host.name} requires force and override for deletion:\n{warn_msg}")
 
     if host.delete():
-        cli_info("removed {}".format(host.name), print_msg=True)
+        cli_info(f"removed {host.name}", print_msg=True)
     else:
-        cli_warning("failed to remove {}".format(host.name))
+        cli_warning(f"failed to remove {host.name}")
 
 
 @command_registry.register_command(
@@ -432,7 +429,7 @@ def find(args: argparse.Namespace) -> None:
     if not any([args.name, args.comment, args.contact]):
         cli_warning("Need at least one search critera")
 
-    params: Dict[str, Union[str, int]] = {
+    params: dict[str, str | int] = {
         "ordering": "name",
         "page_size": 1,
     }
@@ -506,7 +503,7 @@ def find_pydantic(args: argparse.Namespace) -> None:
     if not any([args.name, args.comment, args.contact]):
         cli_warning("Need at least one search critera")
 
-    params: Dict[str, Union[str, int]] = {
+    params: dict[str, str | int] = {
         "ordering": "name",
     }
 
@@ -558,7 +555,7 @@ def rename(args: argparse.Namespace) -> None:
         pass
     else:
         if not args.force:
-            cli_warning("host {} already exists".format(new_name))
+            cli_warning(f"host {new_name} already exists")
 
     if cname_exists(new_name):
         cli_warning("the name is already in use by a cname")
@@ -574,7 +571,7 @@ def rename(args: argparse.Namespace) -> None:
     # Cannot redo/undo now since it changes name
     patch(path, name=new_name)
 
-    cli_info("renamed {} to {}".format(old_name, new_name), print_msg=True)
+    cli_info(f"renamed {old_name} to {new_name}", print_msg=True)
 
 
 # Add 'set_comment' as a sub command to the 'host' command
@@ -625,7 +622,7 @@ def set_contact(args: argparse.Namespace) -> None:
     """
     # Contact sanity check
     if not is_valid_email(args.contact):
-        cli_warning("invalid mail address {} (target host: {})".format(args.contact, args.name))
+        cli_warning(f"invalid mail address {args.contact} (target host: {args.name})")
 
     # Get host info or raise exception
     info = host_info_by_name(args.name)

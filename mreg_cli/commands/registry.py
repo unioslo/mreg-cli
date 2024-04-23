@@ -4,7 +4,8 @@ This module provides the :py:class:`CommandWrapper` class, which is used to wrap
 a command and its attributes, so it may be used as a subcommand of mreg-cli.
 """
 
-from typing import Callable, List, Optional
+from typing import List, Optional
+from collections.abc import Callable
 
 from mreg_cli.types import Command, CommandFunc, Flag
 
@@ -19,14 +20,14 @@ class CommandRegistry:
 
     def __init__(self) -> None:
         """Initialize the command registry."""
-        self._commands: List[Command] = []
+        self._commands: list[Command] = []
 
     def register_command(
         self,
         prog: str,
         description: str,
         short_desc: str,
-        flags: Optional[List[Flag]] = None,
+        flags: list[Flag] | None = None,
     ) -> Callable[[CommandFunc], CommandFunc]:
         """Register a command with the CLI.
 
@@ -46,6 +47,6 @@ class CommandRegistry:
 
         return decorator
 
-    def get_commands(self) -> List[Command]:
+    def get_commands(self) -> list[Command]:
         """Get the list of registered commands."""
         return self._commands

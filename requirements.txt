@@ -1,5 +1,5 @@
 python-dateutil
 prompt_toolkit>=2
 requests
-pydantic
+pydantic>=2.7
 pydantic[email]

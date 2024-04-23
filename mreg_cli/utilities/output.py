@@ -7,7 +7,8 @@ Note that these functions *may* themselves require API calls to get additional d
 related to the field or dataset being formatted.
 """
 
-from typing import Any, Dict, Iterable, List, Optional, Union
+from collections.abc import Iterable
+from typing import Any
 
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
@@ -15,7 +16,7 @@ from mreg_cli.utilities.api import get_list
 from mreg_cli.utilities.validators import is_valid_ipv4, is_valid_ipv6
 
 
-def output_hinfo(hinfo: Union[Dict[str, Any], None], padding: int = 14) -> None:
+def output_hinfo(hinfo: dict[str, Any] | None, padding: int = 14) -> None:
     """Pretty given hinfo id."""
     if hinfo is None:
         return
@@ -24,21 +25,21 @@ def output_hinfo(hinfo: Union[Dict[str, Any], None], padding: int = 14) -> None:
     )
 
 
-def output_host_name(name: Union[str, None], padding: int = 14) -> None:
+def output_host_name(name: str | None, padding: int = 14) -> None:
     """Pretty print given name."""
     if name is None:
         return
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "Name:", name))
 
 
-def output_contact(contact: Union[str, None], padding: int = 14) -> None:
+def output_contact(contact: str | None, padding: int = 14) -> None:
     """Pretty print given contact."""
     if contact is None:
         return
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "Contact:", contact))
 
 
-def output_comment(comment: Union[str, None], padding: int = 14) -> None:
+def output_comment(comment: str | None, padding: int = 14) -> None:
     """Pretty print given comment."""
     if comment is None:
         return
@@ -46,11 +47,11 @@ def output_comment(comment: Union[str, None], padding: int = 14) -> None:
 
 
 def output_ipaddresses(
-    ipaddresses: Iterable[Dict[str, Any]], names: bool = False, padding: int = 14
+    ipaddresses: Iterable[dict[str, Any]], names: bool = False, padding: int = 14
 ) -> None:
     """Pretty print given ip addresses."""
 
-    def _find_padding(lst: Iterable[Dict[str, Any]], attr: str):
+    def _find_padding(lst: Iterable[dict[str, Any]], attr: str):
         return max(padding, max([len(i[attr]) for i in lst]) + 1)
 
     manager = OutputManager()
@@ -95,7 +96,7 @@ def output_ttl(ttl: int, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "TTL:", ttl or "(Default)"))
 
 
-def output_loc(loc: Union[Dict[str, Any], None], padding: int = 14) -> None:
+def output_loc(loc: dict[str, Any] | None, padding: int = 14) -> None:
     """Pretty print given loc."""
     if loc is None:
         return
@@ -107,7 +108,7 @@ def output_cname(cname: str, host: str, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2} -> {3}".format(padding, "Cname:", cname, host))
 
 
-def output_mx(mxs: List[Dict[str, Any]], padding: int = 14) -> None:
+def output_mx(mxs: list[dict[str, Any]], padding: int = 14) -> None:
     """Pretty print all MXs."""
     if not mxs:
         return
@@ -125,21 +126,21 @@ def output_ptr(ip: str, host_name: str, padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2} -> {3}".format(padding, "PTR override:", ip, host_name))
 
 
-def output_txt(txt: Union[str, None], padding: int = 14) -> None:
+def output_txt(txt: str | None, padding: int = 14) -> None:
     """Pretty print given txt."""
     if txt is None:
         return
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "TXT:", txt))
 
 
-def output_bacnetid(bacnetid: Union[Dict[str, Any], None], padding: int = 14) -> None:
+def output_bacnetid(bacnetid: dict[str, Any] | None, padding: int = 14) -> None:
     """Pretty print given txt."""
     if bacnetid is None:
         return
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "BACnet ID:", bacnetid["id"]))
 
 
-def output_policies(policies: List[str], padding: int = 14) -> None:
+def output_policies(policies: list[str], padding: int = 14) -> None:
     """Pretty print given policies.
 
     This follows the output policy of printing nothing if there are no policies.
@@ -149,13 +150,13 @@ def output_policies(policies: List[str], padding: int = 14) -> None:
     OutputManager().add_line("{1:<{0}}{2}".format(padding, "Policies:", ", ".join(policies)))
 
 
-def output_srv(srvs: Optional[List[Dict[str, Any]]] = None, host_id: Optional[str] = None) -> None:
+def output_srv(srvs: list[dict[str, Any]] | None = None, host_id: str | None = None) -> None:
     """Pretty print given srv."""
     assert srvs is not None or host_id is not None
     hostid2name = dict()
     host_ids = set()
 
-    def print_srv(srv: Dict[str, Any], hostname: str, padding: int = 14) -> None:
+    def print_srv(srv: dict[str, Any], hostname: str, padding: int = 14) -> None:
         """Pretty print given srv."""
         OutputManager().add_line(
             "SRV: {1:<{0}} {2:^6} {3:^6} {4:^6} {5}".format(
@@ -203,7 +204,7 @@ def output_srv(srvs: Optional[List[Dict[str, Any]]] = None, host_id: Optional[st
             print_srv(srv, hostid2name[srv["host"]], padding)
 
 
-def output_naptr(info: Dict[str, str]) -> int:
+def output_naptr(info: dict[str, str]) -> int:
     """Pretty print given naptr."""
     path = "/api/v1/naptrs/"
     params = {
@@ -238,7 +239,7 @@ def output_naptr(info: Dict[str, str]) -> int:
     return len(naptrs)
 
 
-def output_sshfp(info: Dict[str, str]) -> int:
+def output_sshfp(info: dict[str, str]) -> int:
     """Show SSHFP records for the host."""
     path = "/api/v1/sshfps/"
     params = {
@@ -262,7 +263,7 @@ def output_sshfp(info: Dict[str, str]) -> int:
     return len(sshfps)
 
 
-def output_host_info(info: Dict[str, Any]) -> None:
+def output_host_info(info: dict[str, Any]) -> None:
     """Print all host info.
 
     :param info: Host info dict from API.
