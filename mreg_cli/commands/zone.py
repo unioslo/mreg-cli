@@ -1,7 +1,7 @@
 """Zone commands for mreg_cli."""
 
 import argparse
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry

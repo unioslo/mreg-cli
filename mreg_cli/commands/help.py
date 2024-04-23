@@ -1,4 +1,5 @@
 """Help command for the CLI."""
+
 import argparse
 from typing import Any
 

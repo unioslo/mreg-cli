@@ -385,7 +385,7 @@ def get_list_generic(
     """
 
     def _check_expect_one_result(
-        ret: list[dict[str, Any]]
+        ret: list[dict[str, Any]],
     ) -> dict[str, Any] | list[dict[str, Any]]:
         if expect_one_result:
             if len(ret) == 0:

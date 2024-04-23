@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools ~= 58.0"]
+requires = ["setuptools >= 68.0"]
 
 [tool.black]
 max-line-length = 99
@@ -9,6 +9,12 @@ profile = "black"
 line_length = 99
 
 [tool.ruff]
+line-length = 99
+# Assume Python 3.11.
+target-version = "py311"
+
+
+[tool.ruff.lint]
 select = [
     "A", # flake8-builtins
     # "ANN", # annotations
@@ -135,14 +141,9 @@ exclude = [
 ]
 per-file-ignores = {}
 
-line-length = 99
-
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.10.
-target-version = "py310"
-
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10

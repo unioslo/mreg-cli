@@ -3,7 +3,8 @@
 This module provides the :py:class:`BaseCommands` class, which is used as the
 base class for all CLI command classes.
 """
-from typing import Any, List, Optional
+
+from typing import Any
 
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.types import CommandFunc, Flag

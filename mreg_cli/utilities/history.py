@@ -1,7 +1,7 @@
 """History log related functions."""
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from dateutil.parser import parse
 

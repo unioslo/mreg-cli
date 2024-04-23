@@ -1,6 +1,6 @@
 """Zone-related utilities for mreg_cli."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from mreg_cli.log import cli_warning
 from mreg_cli.utilities.api import get

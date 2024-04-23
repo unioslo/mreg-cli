@@ -2,10 +2,9 @@
 
 import ipaddress
 import re
-from typing import Any, Dict, List
+from typing import Annotated, Any
 
 from pydantic import BeforeValidator, field_validator
-from typing import Annotated
 
 from mreg_cli.api.abstracts import FrozenModel
 from mreg_cli.types import IP_AddressT

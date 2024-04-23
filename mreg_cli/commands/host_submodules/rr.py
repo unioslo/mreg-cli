@@ -38,7 +38,7 @@ Commands implemented:
 """
 
 import argparse
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning

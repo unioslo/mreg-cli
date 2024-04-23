@@ -2,7 +2,7 @@
 
 import argparse
 from itertools import chain
-from typing import Any, Dict, List
+from typing import Any
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
