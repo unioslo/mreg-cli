@@ -3,7 +3,7 @@
 import ipaddress
 import re
 
-from pydantic import validator
+from pydantic import field_validator
 
 from mreg_cli.api.abstracts import FrozenModel
 from mreg_cli.types import IP_AddressT
@@ -16,7 +16,8 @@ class MACAddressField(FrozenModel):
 
     address: str
 
-    @validator("address", pre=True)
+    @field_validator("address", mode="before")
+    @classmethod
     def validate_and_format_mac(cls, v: str) -> str:
         """Validate and normalize MAC address to 'aa:bb:cc:dd:ee:ff' format.
 
@@ -42,7 +43,8 @@ class IPAddressField(FrozenModel):
 
     address: IP_AddressT
 
-    @validator("address", pre=True)
+    @field_validator("address", mode="before")
+    @classmethod
     def parse_ip_address(cls, value: str) -> IP_AddressT:
         """Parse and validate the IP address."""
         try:
