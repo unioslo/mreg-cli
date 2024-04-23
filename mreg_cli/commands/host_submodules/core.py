@@ -12,6 +12,7 @@ Commands implemented:
 """
 
 import argparse
+import ipaddress
 from typing import Dict, List, Optional, Union
 
 from mreg_cli.api.models import Host, HostT, MACAddressField, Zone
@@ -91,10 +92,11 @@ def add(args: argparse.Namespace) -> None:
 
     if macaddress is not None:
         try:
-            macaddress = MACAddressField(address=macaddress)
+            macaddress = MACAddressField(address=macaddress).address
         except ValueError:
             cli_warning(f"invalid MAC address: {macaddress}")
 
+    host = Host.get_by_any_means(hname)
     if host:
         if host.name.hostname != hname.hostname:
             cli_warning(f"{hname} is a CNAME pointing to {host.name}")
@@ -119,25 +121,64 @@ def add(args: argparse.Namespace) -> None:
             "invalid mail address ({}) when trying to add {}".format(args.contact, args.name)
         )
 
-    # Create the new host with an ip address
+    if macaddress is not None:
+        try:
+            macaddress = MACAddressField(address=macaddress)
+        except ValueError:
+            cli_warning(f"invalid MAC address: {macaddress}")
+
     data: Dict[str, Union[str, None]] = {
         "name": hname.hostname,
         "contact": args.contact or None,
         "comment": args.comment or None,
     }
 
-    if args.ip and ip:
-        data["ipaddress"] = ip
+    ip = None
+    network = None
+    if args.ip:
+        valid_input = False
+        try:
+            ip = ipaddress.ip_address(args.ip)
+            data["ipaddress"] = str(ip)
+            valid_input = True
+        except ValueError:
+            pass
+
+        if not valid_input:
+            try:
+                network = ipaddress.ip_network(args.ip)
+                data["network"] = str(network)
+                valid_input = True
+            except ValueError:
+                pass
+
+        if not valid_input:
+            cli_warning(f"Invalid ip or network: {args.ip}")
 
     host = Host.create(data)
     if not host:
         cli_warning("Failed to add host.")
 
-    if args.macaddress is not None and ip:
-        host.associate_mac_to_ip(args.macaddress, ip)
+    if macaddress is not None:
+        if ip:
+            host.associate_mac_to_ip(macaddress, str(ip))
+        else:
+            # We passed a network to create the host, so we need to find the IP
+            # that was assigned to the host. We don't get that in the response
+            # per se, so we check to see if there is only one IP in the host and
+            # use that. If there are more than one, we can't know which one was
+            # assigned to the host during create, so we abort.
+            if len(host.ipaddresses) == 1:
+                host.associate_mac_to_ip(macaddress, host.ipaddresses[0].ipaddress)
+            else:
+                cli_info(
+                    "Failed to associate MAC address to IP, multiple IP addresses after creation.",
+                    print_msg=True,
+                )
     msg = f"created host {hname}"
-    if args.ip:
-        msg += f" with IP {ip}"
+    if ip or len(host.ipaddresses) == 1:
+        output_ip = ip or host.ipaddresses[0].ipaddress
+        msg += f" with IP {output_ip}"
 
     cli_info(msg, print_msg=True)
 
