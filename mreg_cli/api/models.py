@@ -299,7 +299,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
 
     @field_validator("macaddress", mode="before")
     @classmethod
-    def create_valid_macadress_or_none(cls, v: str) -> MACAddressField | None:
+    def create_valid_macadress_or_none(cls, v: str) -> Union[MACAddressField, None]:
         """Create macaddress or convert empty strings to None."""
         if v:
             return MACAddressField(address=v)
@@ -763,7 +763,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
 
     @field_validator("comment", mode="before")
     @classmethod
-    def empty_string_to_none(cls, v: str) -> str | None:
+    def empty_string_to_none(cls, v: str) -> Union[str, None]:
         """Convert empty strings to None."""
         return v or None
 
