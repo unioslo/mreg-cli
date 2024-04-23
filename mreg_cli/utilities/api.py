@@ -407,7 +407,7 @@ def get_list_generic(
     # get_params["page_size"] = 1
     resp = get(path, get_params).json()
     if "count" in resp and resp["count"] > max_hits_to_allow:
-        raise cli_warning(f"Too many hits ({resp['count']}), please refine your search criteria.")
+        cli_warning(f"Too many hits ({resp['count']}), please refine your search criteria.")
 
     # Short circuit if there are no more pages. This means that there are no more results to
     # be had so we can return the results we already have.
