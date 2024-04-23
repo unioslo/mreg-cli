@@ -8,18 +8,14 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import (
     AliasChoices,
     BaseModel,
-    BeforeValidator,
-    ConfigDict,
     Field,
     field_validator,
     model_validator,
 )
-from pydantic.fields import FieldInfo
-from typing_extensions import Annotated
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.api.fields import IPAddressField, MACAddressField
+from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
@@ -175,18 +171,6 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
     def is_delegated(self) -> bool:
         """Return True if the zone is delegated."""
         return True
-
-
-def _extract_name(value: Dict[str, Any]) -> str:
-    """Extract the name from the dictionary.
-
-    :param v: Dictionary containing the name.
-    :returns: Extracted name as a string.
-    """
-    return value["name"]
-
-
-NameList = List[Annotated[str, BeforeValidator(_extract_name)]]
 
 
 class Role(FrozenModelWithTimestamps, APIMixin["Role"]):

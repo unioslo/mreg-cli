@@ -2,8 +2,10 @@
 
 import ipaddress
 import re
+from typing import Any, Dict, List
 
-from pydantic import field_validator
+from pydantic import BeforeValidator, field_validator
+from typing_extensions import Annotated
 
 from mreg_cli.api.abstracts import FrozenModel
 from mreg_cli.types import IP_AddressT
@@ -67,3 +69,15 @@ class IPAddressField(FrozenModel):
     def __hash__(self):
         """Return a hash of the IP address."""
         return hash(self.address)
+
+
+def _extract_name(value: Dict[str, Any]) -> str:
+    """Extract the name from the dictionary.
+
+    :param v: Dictionary containing the name.
+    :returns: Extracted name as a string.
+    """
+    return value["name"]
+
+
+NameList = List[Annotated[str, BeforeValidator(_extract_name)]]
