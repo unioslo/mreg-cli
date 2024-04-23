@@ -2,8 +2,10 @@
 
 import ipaddress
 import re
+from typing import Any, Dict, List
 
-from pydantic import validator
+from pydantic import BeforeValidator, field_validator
+from typing_extensions import Annotated
 
 from mreg_cli.api.abstracts import FrozenModel
 from mreg_cli.types import IP_AddressT
@@ -16,7 +18,8 @@ class MACAddressField(FrozenModel):
 
     address: str
 
-    @validator("address", pre=True)
+    @field_validator("address", mode="before")
+    @classmethod
     def validate_and_format_mac(cls, v: str) -> str:
         """Validate and normalize MAC address to 'aa:bb:cc:dd:ee:ff' format.
 
@@ -42,7 +45,8 @@ class IPAddressField(FrozenModel):
 
     address: IP_AddressT
 
-    @validator("address", pre=True)
+    @field_validator("address", mode="before")
+    @classmethod
     def parse_ip_address(cls, value: str) -> IP_AddressT:
         """Parse and validate the IP address."""
         try:
@@ -65,3 +69,15 @@ class IPAddressField(FrozenModel):
     def __hash__(self):
         """Return a hash of the IP address."""
         return hash(self.address)
+
+
+def _extract_name(value: Dict[str, Any]) -> str:
+    """Extract the name from the dictionary.
+
+    :param v: Dictionary containing the name.
+    :returns: Extracted name as a string.
+    """
+    return value["name"]
+
+
+NameList = List[Annotated[str, BeforeValidator(_extract_name)]]

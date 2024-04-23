@@ -5,11 +5,17 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AliasChoices, BaseModel, Field, root_validator, validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.api.fields import IPAddressField, MACAddressField
+from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
@@ -24,7 +30,8 @@ class HostT(BaseModel):
 
     hostname: str
 
-    @validator("hostname")
+    @field_validator("hostname")
+    @classmethod
     def validate_hostname(cls, value: str) -> str:
         """Validate the hostname."""
         value = value.lower()
@@ -175,13 +182,14 @@ class Role(FrozenModelWithTimestamps, APIMixin["Role"]):
 
     id: int  # noqa: A003
     created_at: datetime = Field(..., validation_alias=AliasChoices("create_date", "created_at"))
-    hosts: List[str]
-    atoms: List[str]
+    hosts: NameList
+    atoms: NameList
     description: str
     name: str
     labels: List[int]
 
-    @validator("created_at", pre=True)
+    @field_validator("created_at", mode="before")
+    @classmethod
     def validate_created_at(cls, value: str) -> datetime:
         """Validate and convert the created_at field to datetime.
 
@@ -189,15 +197,6 @@ class Role(FrozenModelWithTimestamps, APIMixin["Role"]):
         :returns: Converted datetime object.
         """
         return datetime.fromisoformat(value)
-
-    @validator("hosts", "atoms", pre=True, each_item=True)
-    def extract_name(cls, v: Dict[str, str]) -> str:
-        """Extract the name from the dictionary.
-
-        :param v: Dictionary containing the name.
-        :returns: Extracted name as a string.
-        """
-        return v["name"]
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -233,7 +232,7 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
     excluded_ranges: List[str]
     network: str  # for now
     description: str
-    vlan: Optional[int]
+    vlan: Optional[int] = None
     dns_delegated: bool
     category: str
     location: str
@@ -282,15 +281,17 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
     macaddress: Optional[MACAddressField] = None
     ipaddress: IPAddressField
 
-    @validator("macaddress", pre=True, allow_reuse=True)
-    def create_valid_macadress_or_none(cls, v: str):
+    @field_validator("macaddress", mode="before")
+    @classmethod
+    def create_valid_macadress_or_none(cls, v: str) -> Union[MACAddressField, None]:
         """Create macaddress or convert empty strings to None."""
         if v:
             return MACAddressField(address=v)
 
         return None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def convert_ip_address(cls, values: Any):
         """Convert ipaddress string to IPAddressField if necessary."""
         ip_address = values.get("ipaddress")
@@ -418,7 +419,8 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["CNAME"]):
     name: HostT
     ttl: Optional[int] = None
 
-    @validator("name", pre=True)
+    @field_validator("name", mode="before")
+    @classmethod
     def validate_name(cls, value: str) -> HostT:
         """Validate the hostname."""
         return HostT(hostname=value)
@@ -511,9 +513,9 @@ class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin["NAPTR"]):
     id: int  # noqa: A003
     preference: int
     order: int
-    flag: Optional[str]
-    service: Optional[str]
-    regex: Optional[str]
+    flag: Optional[str] = None
+    service: Optional[str] = None
+    regex: Optional[str] = None
     replacement: str
 
     def output(self, padding: int = 14) -> None:
@@ -572,7 +574,7 @@ class Srv(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["Srv"]):
     priority: int
     weight: int
     port: int
-    ttl: Optional[int]
+    ttl: Optional[int] = None
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -737,13 +739,15 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: Optional[int] = None
 
-    @validator("name", pre=True)
+    @field_validator("name", mode="before")
+    @classmethod
     def validate_name(cls, value: str) -> HostT:
         """Validate the hostname."""
         return HostT(hostname=value)
 
-    @validator("comment", pre=True, allow_reuse=True)
-    def empty_string_to_none(cls, v: str):
+    @field_validator("comment", mode="before")
+    @classmethod
+    def empty_string_to_none(cls, v: str) -> Union[str, None]:
         """Convert empty strings to None."""
         return v or None
 
@@ -1107,8 +1111,9 @@ class HostList(FrozenModel):
         data = get_list(cls.endpoint(), params=params)
         return cls(results=[Host(**host) for host in data])
 
-    @validator("results", pre=True)
-    def check_results(cls, v: List[Dict[str, str]]):
+    @field_validator("results", mode="before")
+    @classmethod
+    def check_results(cls, v: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """Check that the results are valid."""
         return v
 
