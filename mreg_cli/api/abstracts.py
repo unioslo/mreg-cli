@@ -1,12 +1,11 @@
 """Abstract models for the API."""
 
-
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, Set, TypeVar, Union, cast
 
-from pydantic import BaseModel
-from pydantic.fields import AliasChoices, FieldInfo
+from pydantic import AliasChoices, BaseModel
+from pydantic.fields import FieldInfo
 
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.log import cli_warning
@@ -18,7 +17,7 @@ BMT = TypeVar("BMT", bound="BaseModel")
 
 def get_field_aliases(field_info: FieldInfo) -> Set[str]:
     """Get all aliases for a Pydantic field."""
-    aliases: set[str] = set()
+    aliases: Set[str] = set()
 
     if field_info.alias:
         aliases.add(field_info.alias)
@@ -38,7 +37,7 @@ def get_model_aliases(model: BaseModel) -> Dict[str, str]:
 
     Includes field names, alias, and validation alias(es).
     """
-    fields = {}  # type: Dict[str, str]
+    fields: Dict[str, str] = {}
 
     for field_name, field_info in model.model_fields.items():
         aliases = get_field_aliases(field_info)
