@@ -3,3 +3,4 @@ prompt_toolkit>=2
 requests
 pydantic>=2.7
 pydantic[email]
+setuptools # required for python 3.12+
