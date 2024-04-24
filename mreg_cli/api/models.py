@@ -1099,16 +1099,9 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         direct = HostGroup.get_list_by_field("hosts", self.id)
         groups.extend(direct)
 
-        def _get_parent_groups(group: HostGroup):
-            for parent in group.parent:
-                pobj = HostGroup.get_by_field("name", parent)
-                if pobj:
-                    groups.append(pobj)
-                    _get_parent_groups(pobj)
-
         if traverse:
             for group in direct:
-                _get_parent_groups(group)
+                groups.extend(group.get_all_parents())
 
         return groups
 
@@ -1270,3 +1263,14 @@ class HostGroup(FrozenModelWithTimestamps, APIMixin["HostGroup"]):
         groups = ", ".join(sorted([group.name for group in hostgroups]))
 
         OutputManager().add_line("{1:<{0}}{2}".format(padding, "Groups:", groups))
+
+    def get_all_parents(self) -> list[HostGroup]:
+        """Return a list of all parent groups."""
+        parents: list[HostGroup] = []
+        for parent in self.parent:
+            pobj = HostGroup.get_by_field("name", parent)
+            if pobj:
+                parents.append(pobj)
+                parents.extend(pobj.get_all_parents())
+
+        return parents

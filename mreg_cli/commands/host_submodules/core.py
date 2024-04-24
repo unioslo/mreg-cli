@@ -322,7 +322,13 @@ def remove(args: argparse.Namespace) -> None:
     ],
 )
 def host_info(args: argparse.Namespace) -> None:
-    """Print information about host."""
+    """Print information about host.
+
+    :param args: argparse.Namespace (hosts, traverse_hostgroups)
+
+    Setting traverse hostgroups will show memberships of all parent groups as well as
+    direct groups.
+    """
     for host in args.hosts:
         Host.get_by_any_means_or_raise(host, inform_as_cname=True).output(
             traverse_hostgroups=args.traverse_hostgroups
