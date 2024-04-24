@@ -1,5 +1,7 @@
 """Zone-related utilities for mreg_cli."""
 
+from __future__ import annotations
+
 from typing import Any
 
 from mreg_cli.log import cli_warning

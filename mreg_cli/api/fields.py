@@ -1,5 +1,7 @@
 """Fields for models of the API."""
 
+from __future__ import annotations
+
 import ipaddress
 import re
 from typing import Annotated, Any

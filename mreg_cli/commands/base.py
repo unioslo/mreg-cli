@@ -4,6 +4,8 @@ This module provides the :py:class:`BaseCommands` class, which is used as the
 base class for all CLI command classes.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 from mreg_cli.commands.registry import CommandRegistry

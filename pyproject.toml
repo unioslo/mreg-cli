@@ -13,6 +13,8 @@ line-length = 99
 # Assume Python 3.11.
 target-version = "py311"
 
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint]
 select = [

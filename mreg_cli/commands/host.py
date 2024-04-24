@@ -5,6 +5,8 @@ submodules. This base module contains the registry that the submodules
 add their commands to.
 """
 
+from __future__ import annotations
+
 import importlib
 import os
 import pkgutil

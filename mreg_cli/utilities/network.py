@@ -4,6 +4,8 @@ Due to circular dependencies, this module is not allowed to import anything from
 And this rule is promptly broken by importing from mreg_cli.outputmanager...
 """
 
+from __future__ import annotations
+
 import ipaddress
 import urllib.parse
 from collections.abc import Iterable

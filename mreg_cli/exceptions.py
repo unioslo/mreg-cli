@@ -5,6 +5,8 @@ with appropriate formatting. This is useful for printing exceptions in the
 context of a CLI command.
 """
 
+from __future__ import annotations
+
 import sys
 
 from prompt_toolkit import print_formatted_text

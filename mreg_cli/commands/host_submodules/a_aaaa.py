@@ -13,6 +13,8 @@ Commands implemented:
     - aaaa_show
 """
 
+from __future__ import annotations
+
 import argparse
 
 from mreg_cli.commands.host import registry as command_registry

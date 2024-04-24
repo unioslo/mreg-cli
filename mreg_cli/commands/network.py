@@ -1,5 +1,7 @@
 """Network commands for mreg_cli."""
 
+from __future__ import annotations
+
 import argparse
 import ipaddress
 import urllib.parse

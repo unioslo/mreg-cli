@@ -1,5 +1,7 @@
 """API endpoints for mreg."""
 
+from __future__ import annotations
+
 from enum import Enum
 from urllib.parse import quote
 

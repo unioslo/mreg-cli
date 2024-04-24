@@ -4,16 +4,14 @@ Due to circular dependencies, be very aware of what you import here.
 
 """
 
+from __future__ import annotations
+
 import ipaddress
 import re
-from typing import TYPE_CHECKING
 
 from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
 from mreg_cli.types import IP_Version
-
-if TYPE_CHECKING:
-    pass
 
 
 def is_valid_ip(ip: str) -> bool:

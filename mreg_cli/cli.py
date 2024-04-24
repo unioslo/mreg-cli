@@ -3,13 +3,15 @@
 This file contains the main CLI class and the top level parser.
 """
 
+from __future__ import annotations
+
 import argparse
 import html
 import os
 import shlex
 import sys
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, NoReturn, Optional
+from typing import TYPE_CHECKING, Any, NoReturn
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
@@ -35,7 +37,7 @@ from mreg_cli.utilities.api import logout as _force_logout
 
 if TYPE_CHECKING:
     # Can't use _SubParsersAction as generic in Python <3.9
-    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]
+    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # type: ignore # private attribute
 
 
 class CliExit(Exception):
@@ -44,7 +46,7 @@ class CliExit(Exception):
     pass
 
 
-def _create_command_group(parent: argparse.ArgumentParser) -> "SubparserType":
+def _create_command_group(parent: argparse.ArgumentParser) -> SubparserType:
     """Create a sub parser for a command."""
     parent_name = parent.prog.strip()
 
@@ -79,7 +81,7 @@ class Command(Completer):
         self.parser = parser
         # sub is an object used for creating sub parser for this command. A
         # command/ArgParser can only have one of this object.
-        self.sub: Optional["SubparserType"] = None
+        self.sub: SubparserType | None = None
 
         self.short_desc = short_desc
         self.children: dict[str, Command] = {}

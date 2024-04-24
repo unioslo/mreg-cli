@@ -1,5 +1,7 @@
 """Logging functions for the CLI."""
 
+from __future__ import annotations
+
 import getpass
 import inspect
 import re

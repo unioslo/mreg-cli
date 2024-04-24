@@ -1,18 +1,15 @@
 """Typing definitions for mreg_cli."""
 
+from __future__ import annotations
+
 import argparse
 import ipaddress
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, NamedTuple, Optional, TypedDict, TypeVar
+from typing import Any, Literal, NamedTuple, Protocol, TypeAlias, TypedDict, TypeVar
+
+from requests.structures import CaseInsensitiveDict
 
 CommandFunc = Callable[[argparse.Namespace], None]
-
-# This is a seperate import due to using string annotation, so the
-# import can't be consolidated into a single line with other imports
-# from typing_extensions. This hack is required for RHEL7 support that
-# has a typing_extensions library that has some issues.
-if TYPE_CHECKING:
-    from typing import Literal, TypeAlias  # noqa: F401
 
 
 class TimeInfo(TypedDict):
@@ -38,15 +35,12 @@ class RecordingEntry(TypedDict):
     time: TimeInfo | None
 
 
-IP_Version: "TypeAlias" = "Literal[4, 6]"
+IP_Version: TypeAlias = Literal[4, 6]
 IP_networkT = TypeVar("IP_networkT", ipaddress.IPv4Network, ipaddress.IPv6Network)
 IP_AddressT = ipaddress.IPv4Address | ipaddress.IPv6Address
-
-
-if TYPE_CHECKING:
-    # https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
-    NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
-    NargsType = int | NargsStr
+# https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
+NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
+NargsType = int | NargsStr
 
 
 class Flag:
@@ -57,7 +51,7 @@ class Flag:
         name: str,
         description: str = "",
         short_desc: str = "",
-        nargs: Optional["NargsType"] = None,
+        nargs: NargsType | None = None,
         default: Any = None,
         flag_type: Any = None,
         choices: list[str] | None = None,
@@ -91,35 +85,30 @@ class Command(NamedTuple):
 # Config
 DefaultType = TypeVar("DefaultType")
 
-if TYPE_CHECKING:
-    from typing import Any
 
-    from requests.structures import CaseInsensitiveDict
-    from typing_extensions import Protocol
+class ResponseLike(Protocol):
+    """Interface for objects that resemble a requests.Response object."""
 
-    class ResponseLike(Protocol):
-        """Interface for objects that resemble a requests.Response object."""
+    @property
+    def ok(self) -> bool:
+        """Return True if the response was successful."""
+        ...
 
-        @property
-        def ok(self) -> bool:
-            """Return True if the response was successful."""
-            ...
+    @property
+    def status_code(self) -> int:
+        """Return the HTTP status code."""
+        ...
 
-        @property
-        def status_code(self) -> int:
-            """Return the HTTP status code."""
-            ...
+    @property
+    def reason(self) -> str:
+        """Return the HTTP status reason."""
+        ...
 
-        @property
-        def reason(self) -> str:
-            """Return the HTTP status reason."""
-            ...
+    @property
+    def headers(self) -> CaseInsensitiveDict[str]:
+        """Return the dictionary of response headers."""
+        ...
 
-        @property
-        def headers(self) -> CaseInsensitiveDict[str]:
-            """Return the dictionary of response headers."""
-            ...
-
-        def json(self, **kwargs: Any) -> Any:
-            """Return the response body as JSON."""
-            ...
+    def json(self, **kwargs: Any) -> Any:
+        """Return the response body as JSON."""
+        ...

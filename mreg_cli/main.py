@@ -1,5 +1,7 @@
 """Main entry point for mreg_cli."""
 
+from __future__ import annotations
+
 import argparse
 import getpass
 import logging

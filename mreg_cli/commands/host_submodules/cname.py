@@ -1,5 +1,7 @@
 """Sub module for the 'host' command handling CNAME records."""
 
+from __future__ import annotations
+
 import argparse
 
 from mreg_cli.commands.host import registry as command_registry
