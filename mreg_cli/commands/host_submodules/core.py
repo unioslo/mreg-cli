@@ -17,7 +17,7 @@ import argparse
 import ipaddress
 
 from mreg_cli.api.history import HistoryResource
-from mreg_cli.api.models import Host, HostT, MACAddressField, Zone
+from mreg_cli.api.models import Host, HostList, HostT, MACAddressField, Zone
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.types import Flag
@@ -193,13 +193,8 @@ def remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, force, override)
     """
-    import mreg_cli.api as api
-
     hostname = args.name
-    host = api.get_host(hostname)
-
-    if host is None:
-        cli_warning(f"Host {args.name} not found.")
+    host = Host.get_by_any_means_or_raise(hostname, inform_as_cname=True)
 
     overrides: list[str] = args.override.split(",") if args.override else []
 
@@ -326,11 +321,7 @@ def remove(args: argparse.Namespace) -> None:
 )
 def host_info(args: argparse.Namespace) -> None:
     """Print information about host."""
-    host = Host.get_by_any_means(args.hosts[0], inform_as_cname=True)
-    if host is None:
-        cli_warning(f"Host {args.hosts[0]} not found.")
-
-    host.output()
+    Host.get_by_any_means_or_raise(args.hosts[0], inform_as_cname=True).output()
 
 
 @command_registry.register_command(
@@ -363,7 +354,6 @@ def find(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, comment, contact)
     """
-    import mreg_cli.api as api
 
     def _add_param(param: str, value: str) -> None:
         param, value = convert_wildcard_to_regex(param, value, True)
@@ -381,8 +371,7 @@ def find(args: argparse.Namespace) -> None:
         if value:
             _add_param(param, value)
 
-    hostlist = api.get_hosts(params)
-    hostlist.output()
+    HostList.get(params=params).output()
 
 
 @command_registry.register_command(
@@ -415,10 +404,7 @@ def rename(args: argparse.Namespace) -> None:
 
     :return: The updated Host or None
     """
-    old_host = Host.get_by_any_means(args.old_name)
-    if not old_host:
-        cli_warning(f"host {args.old_name} not found")
-
+    old_host = Host.get_by_any_means_or_raise(args.old_name)
     new_name = HostT(hostname=args.new_name)
     new_host = Host.get_by_any_means(new_name, inform_as_cname=True)
     if new_host:
@@ -457,10 +443,7 @@ def set_comment(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, comment)
     """
-    host = Host.get_by_any_means(args.name, inform_as_cname=True)
-    if not host:
-        cli_warning(f"Host {args.name} not found")
-
+    host = Host.get_by_any_means_or_raise(args.name, inform_as_cname=True)
     updated_host = host.set_comment(args.comment)
 
     if not updated_host:
@@ -486,11 +469,12 @@ def set_contact(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, contact)
     """
-    host = Host.get_by_any_means(args.name, inform_as_cname=True)
-    if not host:
-        cli_warning(f"Host {args.name} not found")
+    host = Host.get_by_any_means_or_raise(args.name, inform_as_cname=True)
+    updated_host = host.set_contact(args.contact)
 
-    host = host.set_contact(args.contact)
+    if not updated_host:
+        cli_warning(f"Failed to update contact of {host.name}")
+
     cli_info(f"Updated contact of {host} to {args.contact}", print_msg=True)
 
 
@@ -525,8 +509,4 @@ def history_pydantic(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means(args.name)
-    if not host:
-        cli_warning(f"Host {args.name} not found")
-
-    host.output_history(HistoryResource.Host)
+    Host.get_by_any_means_or_raise(args.name).output_history(HistoryResource.Host)

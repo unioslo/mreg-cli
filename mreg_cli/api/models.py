@@ -753,6 +753,26 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         return Endpoint.Hosts
 
     @classmethod
+    def get_by_any_means_or_raise(
+        cls, identifier: str | HostT, inform_as_cname: bool = True
+    ) -> Host:
+        """Get a host by the given identifier or raise a CliWarning.
+
+        See also `get_by_any_means`.
+
+        :param identifier: The identifier to search for.
+        :param inform_as_cname: If True, inform the user if the host is a CNAME.
+
+        :raises CliWarning: If the host is not found.
+
+        :returns: A Host object if the host was found.
+        """
+        host = cls.get_by_any_means(identifier, inform_as_cname=inform_as_cname)
+        if not host:
+            cli_warning(f"Host {identifier} not found.")
+        return host
+
+    @classmethod
     def get_by_any_means(
         cls, identifier: str | HostT, inform_as_cname: bool = True
     ) -> Host | None:
