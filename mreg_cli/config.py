@@ -13,6 +13,7 @@ translated according to a mapping:
     2. :py:const:`logging.INFO`
     3. :py:const:`logging.DEBUG`
 """
+
 from __future__ import annotations
 
 import configparser

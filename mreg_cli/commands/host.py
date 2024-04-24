@@ -4,6 +4,7 @@ There are a huge amount of commands in this module, so it is broken up into
 submodules. This base module contains the registry that the submodules
 add their commands to.
 """
+
 from __future__ import annotations
 
 import importlib

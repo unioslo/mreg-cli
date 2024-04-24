@@ -4,6 +4,7 @@ Note that Cli exceptions offer a print_self() method that prints the exception
 with appropriate formatting. This is useful for printing exceptions in the
 context of a CLI command.
 """
+
 from __future__ import annotations
 
 import sys

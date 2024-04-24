@@ -12,6 +12,7 @@ Commands implemented:
     - aaaa_remove
     - aaaa_show
 """
+
 from __future__ import annotations
 
 import argparse

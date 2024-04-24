@@ -1,4 +1,5 @@
 """Shared utilities for the mreg_cli package."""
+
 from __future__ import annotations
 
 import re

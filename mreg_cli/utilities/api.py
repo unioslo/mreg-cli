@@ -3,6 +3,7 @@
 Due to circular dependencies, this module is not allowed to import anything from mreg_cli.
 And this rule is promptly broken by importing from mreg_cli.outputmanager...
 """
+
 from __future__ import annotations
 
 import json
@@ -10,24 +11,18 @@ import logging
 import os
 import re
 import sys
-from typing import TYPE_CHECKING, Any, NoReturn, cast, overload
+from typing import Any, Literal, NoReturn, cast, overload
 from urllib.parse import urljoin
 from uuid import uuid4
 
 import requests
-
-from mreg_cli.outputmanager import OutputManager
-
-if TYPE_CHECKING:
-    from typing import Literal
-
-    from mreg_cli.types import ResponseLike
-
 from prompt_toolkit import prompt
 
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError, LoginFailedError
 from mreg_cli.log import cli_error, cli_warning
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import ResponseLike
 
 session = requests.Session()
 session.headers.update({"User-Agent": "mreg-cli"})
@@ -425,9 +420,7 @@ def get_list_generic(
             return _check_expect_one_result(ret)
 
 
-def post(
-    path: str, params: dict[str, Any] | None = None, **kwargs: Any
-) -> ResponseLike | None:
+def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> ResponseLike | None:
     """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}

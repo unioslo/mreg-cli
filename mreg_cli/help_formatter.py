@@ -1,4 +1,5 @@
 """A formatter for the CLI that adds extra information and improves command formatting."""
+
 from __future__ import annotations
 
 import argparse

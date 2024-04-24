@@ -4,6 +4,7 @@ This is a singleton class that manages the output for the CLI. It stores the
 output lines and formats them for display. It also manages the filter for the
 command.
 """
+
 from __future__ import annotations
 
 import atexit
@@ -12,16 +13,13 @@ import json
 import os
 import re
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, overload
+from typing import Any, Literal, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
 
 from mreg_cli.exceptions import CliError
 from mreg_cli.types import RecordingEntry, TimeInfo
-
-if TYPE_CHECKING:
-    from typing import Literal
 
 
 @overload

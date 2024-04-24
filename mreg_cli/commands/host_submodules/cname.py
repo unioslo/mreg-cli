@@ -1,4 +1,5 @@
 """Sub module for the 'host' command handling CNAME records."""
+
 from __future__ import annotations
 
 import argparse

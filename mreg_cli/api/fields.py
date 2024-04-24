@@ -1,4 +1,5 @@
 """Fields for models of the API."""
+
 from __future__ import annotations
 
 import ipaddress

@@ -36,6 +36,7 @@ Commands implemented:
     - cname_replace
     - cname_show
 """
+
 from __future__ import annotations
 
 import argparse

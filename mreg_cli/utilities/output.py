@@ -6,6 +6,7 @@ shall queue the output directly to the OutputManager, and will not return anythi
 Note that these functions *may* themselves require API calls to get additional data
 related to the field or dataset being formatted.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable

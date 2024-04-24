@@ -3,6 +3,7 @@
 This module provides the :py:class:`CommandWrapper` class, which is used to wrap
 a command and its attributes, so it may be used as a subcommand of mreg-cli.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable

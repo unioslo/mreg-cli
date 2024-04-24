@@ -37,7 +37,7 @@ from mreg_cli.utilities.api import logout as _force_logout
 
 if TYPE_CHECKING:
     # Can't use _SubParsersAction as generic in Python <3.9
-    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]
+    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # type: ignore # private attribute
 
 
 class CliExit(Exception):
