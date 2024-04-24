@@ -22,6 +22,8 @@ class Endpoint(str, Enum):
 
     BacnetID = "/api/v1/bacnet/ids/"
 
+    HostGroups = "/api/v1/hostgroups/"
+
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
 
     ForwardZones = f"{Zones}forward/"
@@ -43,7 +45,7 @@ class Endpoint(str, Enum):
 
     def external_id_field(self) -> str:
         """Return the name of the field that holds the external ID."""
-        if self == Endpoint.Hosts:
+        if self == Endpoint.Hosts or self == Endpoint.HostGroups:
             return "name"
         if self == Endpoint.Networks:
             return "network"

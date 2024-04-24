@@ -24,10 +24,6 @@ from mreg_cli.types import Flag
 from mreg_cli.utilities.history import format_history_items, get_history_items
 from mreg_cli.utilities.shared import clean_hostname, convert_wildcard_to_regex
 
-#########################################
-#  Implementation of sub command 'add'  #
-#########################################
-
 
 @command_registry.register_command(
     prog="add",
@@ -316,13 +312,21 @@ def remove(args: argparse.Namespace) -> None:
             short_desc="One or more names, ips or macs.",
             nargs="+",
             metavar="NAME/IP/MAC",
-        )
+        ),
+        Flag(
+            "-traverse-hostgroups",
+            action="store_true",
+            description="Show memberships of all parent groups as well as direct groups.",
+            short_desc="Traverse hostgroups.",
+        ),
     ],
 )
 def host_info(args: argparse.Namespace) -> None:
     """Print information about host."""
     for host in args.hosts:
-        Host.get_by_any_means_or_raise(host, inform_as_cname=True).output()
+        Host.get_by_any_means_or_raise(host, inform_as_cname=True).output(
+            traverse_hostgroups=args.traverse_hostgroups
+        )
 
 
 @command_registry.register_command(

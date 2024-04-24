@@ -443,9 +443,6 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["CNAME"]):
         :param cnames: List of CNAME records to output.
         :param padding: Number of spaces for left-padding the output.
         """
-        if not cnames:
-            return
-
         for cname in cnames:
             cname.output(padding=padding)
 
@@ -469,9 +466,6 @@ class TXT(FrozenModelWithTimestamps, WithHost):
         :param txts: List of TXT records to output.
         :param padding: Number of spaces for left-padding the output.
         """
-        if not txts:
-            return
-
         for txt in txts:
             txt.output(padding=padding)
 
@@ -1094,7 +1088,31 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
 
         return BacnetID.get_by_id(self.bacnetid)
 
-    def output(self, names: bool = False):
+    def hostgroups(self, traverse: bool = False) -> list[HostGroup]:
+        """List all hostgroups for the host.
+
+        :param traverse: If True, traverse the parent groups and include them in the list.
+
+        :returns: A list of HostGroup objects.
+        """
+        groups: list[HostGroup] = []
+        direct = HostGroup.get_list_by_field("hosts", self.id)
+        groups.extend(direct)
+
+        def _get_parent_groups(group: HostGroup):
+            for parent in group.parent:
+                pobj = HostGroup.get_by_field("name", parent)
+                if pobj:
+                    groups.append(pobj)
+                    _get_parent_groups(pobj)
+
+        if traverse:
+            for group in direct:
+                _get_parent_groups(group)
+
+        return groups
+
+    def output(self, names: bool = False, traverse_hostgroups: bool = False):
         """Output host information to the console with padding."""
         padding = 14
 
@@ -1128,6 +1146,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
             output_manager.add_line(f"{'Bacnet ID:':<{padding}}{self.bacnetid}")
 
         Role.output_multiple(self.roles(), padding=padding)
+        HostGroup.output_multiple(self.hostgroups(traverse=traverse_hostgroups), padding=padding)
 
         self.output_timestamps()
 
@@ -1211,3 +1230,43 @@ class HostList(FrozenModel):
         _format("Name", "Contact", "Comment")
         for i in self.results:
             _format(str(i.name), i.contact, i.comment or "")
+
+
+class HostGroup(FrozenModelWithTimestamps, APIMixin["HostGroup"]):
+    """Model for a hostgroup."""
+
+    id: int  # noqa: A003
+    name: str
+    description: str | None = None
+    parent: list[str]
+    groups: list[str]
+    hosts: list[str]
+    owners: list[str]
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.HostGroups
+
+    @field_validator("parent", "groups", "hosts", "owners", mode="before")
+    @classmethod
+    def collapse_name(cls, v: list[dict[str, str]]) -> list[str]:
+        """Collapse the name field."""
+        if not v:
+            return []
+
+        return [i["name"] for i in v]
+
+    @classmethod
+    def output_multiple(cls, hostgroups: list[HostGroup], padding: int = 14) -> None:
+        """Output multiple hostgroups to the console.
+
+        :param hostgroups: List of HostGroup records to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        if not hostgroups:
+            return
+
+        groups = ", ".join(sorted([group.name for group in hostgroups]))
+
+        OutputManager().add_line("{1:<{0}}{2}".format(padding, "Groups:", groups))
