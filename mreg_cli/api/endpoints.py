@@ -20,6 +20,8 @@ class Endpoint(str, Enum):
     Zones = "/api/v1/zones/"
     History = "/api/v1/history/"
 
+    BacnetID = "/api/v1/bacnet/ids/"
+
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
 
     ForwardZones = f"{Zones}forward/"

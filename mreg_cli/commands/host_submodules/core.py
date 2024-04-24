@@ -321,7 +321,8 @@ def remove(args: argparse.Namespace) -> None:
 )
 def host_info(args: argparse.Namespace) -> None:
     """Print information about host."""
-    Host.get_by_any_means_or_raise(args.hosts[0], inform_as_cname=True).output()
+    for host in args.hosts:
+        Host.get_by_any_means_or_raise(host, inform_as_cname=True).output()
 
 
 @command_registry.register_command(

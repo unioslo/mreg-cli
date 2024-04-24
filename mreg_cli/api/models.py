@@ -715,6 +715,13 @@ class SSHFP(FrozenModelWithTimestamps, WithHost, APIMixin["SSHFP"]):
         )
 
 
+class BacnetID(FrozenModel, WithHost, APIMixin["BacnetID"]):
+    """Represents a Bacnet ID record."""
+
+    id: int  # noqa: A003
+    hostname: str
+
+
 class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
     """Model for an individual host."""
 
@@ -727,7 +734,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
     ptr_overrides: list[PTR_override] = []
     hinfo: HInfo | None = None
     loc: str | None = None
-    bacnetid: str | None = None
+    bacnetid: int | None = None
     contact: str
     ttl: int | None = None
     comment: str | None = None
@@ -746,6 +753,15 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
     def empty_string_to_none(cls, v: str) -> str | None:
         """Convert empty strings to None."""
         return v or None
+
+    @field_validator("bacnetid", mode="before")
+    @classmethod
+    def convert_bacnetid(cls, v: dict[str, int] | None) -> int | None:
+        """Convert json id field to int or None."""
+        if v and "id" in v:
+            return v["id"]
+
+        return None
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -1071,6 +1087,13 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         """List all roles for the host."""
         return Role.get_list_by_field("hosts", self.id)
 
+    def bacnet(self) -> BacnetID | None:
+        """Return the Bacnet ID for the host."""
+        if not self.bacnetid:
+            return None
+
+        return BacnetID.get_by_id(self.bacnetid)
+
     def output(self, names: bool = False):
         """Output host information to the console with padding."""
         padding = 14
@@ -1079,7 +1102,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         output_manager.add_line(f"{'Name:':<{padding}}{self.name}")
         output_manager.add_line(f"{'Contact:':<{padding}}{self.contact}")
 
-        if self.comment:
+        if self.comment is not None and self.comment != "":
             output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
 
         IPAddress.output_multiple(self.ipaddresses, padding=padding, names=names)
@@ -1100,26 +1123,11 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         Srv.output_multiple(self.srvs(), padding=padding)
         NAPTR.output_multiple(self.naptrs(), padding=padding)
         SSHFP.output_multiple(self.sshfps(), padding=padding)
+
+        if self.bacnetid is not None:  # This may be zero.
+            output_manager.add_line(f"{'Bacnet ID:':<{padding}}{self.bacnetid}")
+
         Role.output_multiple(self.roles(), padding=padding)
-
-        # output_hinfo(info["hinfo"])
-
-        # if info["loc"]:
-        #     output_loc(info["loc"])
-        # for cname in info["cnames"]:
-        #     output_cname(cname["name"], info["name"])
-        # for txt in info["txts"]:
-        #     output_txt(txt["txt"])
-        # output_srv(host_id=info["id"])
-        # output_naptr(info)
-        # output_sshfp(info)
-        # if "bacnetid" in info:
-        #     output_bacnetid(info.get("bacnetid"))
-
-        # policies = get_list("/api/v1/hostpolicy/roles/", params={"hosts__name": info["name"]})
-        # output_policies([p["name"] for p in policies])
-
-        # cli_info("printed host info for {}".format(info["name"]))
 
         self.output_timestamps()
 
