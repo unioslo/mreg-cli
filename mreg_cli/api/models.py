@@ -851,6 +851,34 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
 
         return op.status_code >= 200 and op.status_code < 300
 
+    def rename(self, new_name: HostT) -> Host:
+        """Rename the host.
+
+        :param new_name: The new name for the host.
+
+        :returns: A new Host object fetched from the API with the updated name.
+        """
+        return self.patch(fields={"name": new_name.hostname})
+
+    def set_comment(self, comment: str) -> Host:
+        """Set the comment for the host.
+
+        :param comment: The comment to set.
+
+        :returns: A new Host object fetched from the API with the updated comment.
+        """
+        return self.patch(fields={"comment": comment})
+
+    def set_contact(self, contact: str) -> Host:
+        """Set the contact for the host.
+
+        :param contact: The contact to set. Should be a valid email, but we leave it to the
+                        server to validate the data.
+
+        :returns: A new Host object fetched from the API with the updated contact.
+        """
+        return self.patch(fields={"contact": contact})
+
     def ipv4_addresses(self):
         """Return a list of IPv4 addresses."""
         return [ip for ip in self.ipaddresses if ip.is_ipv4()]
@@ -1075,6 +1103,10 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
 
         self.output_timestamps()
 
+    def __str__(self) -> str:
+        """Return the host name as a string."""
+        return self.name.hostname
+
     def __hash__(self):
         """Return a hash of the host."""
         return hash((self.id, self.name))
@@ -1133,7 +1165,7 @@ class HostList(FrozenModel):
         """Return the number of results."""
         return len(self.results)
 
-    def output_host_list(self):
+    def output(self):
         """Output a list of hosts to the console."""
         if not self.results:
             cli_warning("No hosts found.")

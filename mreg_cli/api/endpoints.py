@@ -18,6 +18,7 @@ class Endpoint(str, Enum):
     Cnames = "/api/v1/cnames/"
     Sshfps = "/api/v1/sshfps/"
     Zones = "/api/v1/zones/"
+    History = "/api/v1/history/"
 
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
 

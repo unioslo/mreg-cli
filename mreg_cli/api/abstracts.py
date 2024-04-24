@@ -10,6 +10,7 @@ from pydantic import AliasChoices, BaseModel
 from pydantic.fields import FieldInfo
 
 from mreg_cli.api.endpoints import Endpoint
+from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list, patch, post
@@ -225,15 +226,15 @@ class APIMixin(Generic[BMT], ABC):
         :param kwargs: The values to patch.
         :returns: The object refetched from the server.
         """
-        patch(self.endpoint().with_id(self.id), **fields)
+        patch(self.endpoint().with_id(self.id_for_endpoint()), **fields)
 
         new_object = self.refetch()
 
         aliases = get_model_aliases(new_object)
         for key, value in fields.items():
-            field_name = aliases.get(key)
-            if field_name is None:
-                cli_warning(f"Unknown field {key} in patch request.")
+            field_name = key
+            if key in aliases:
+                field_name = aliases[key]
             try:
                 nval = getattr(new_object, field_name)
             except AttributeError:
@@ -284,3 +285,21 @@ class APIMixin(Generic[BMT], ABC):
                 cli_warning("No location header in response.")
 
         return None
+
+    def history(self, resource: HistoryResource) -> list[HistoryItem]:
+        """Get the history of the object.
+
+        :param resource: The resource type to get the history for.
+
+        :returns: The history of the object.
+        """
+        name = self.id_for_endpoint()
+        return HistoryItem.get(str(name), resource)
+
+    def output_history(self, resource: HistoryResource) -> None:
+        """Output the history of the object.
+
+        :param resource: The resource type to get the history for.
+        """
+        items = self.history(resource)
+        HistoryItem.output_multiple(str(self.id_for_endpoint()), items)

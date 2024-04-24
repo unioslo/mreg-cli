@@ -16,24 +16,13 @@ from __future__ import annotations
 import argparse
 import ipaddress
 
+from mreg_cli.api.history import HistoryResource
 from mreg_cli.api.models import Host, HostT, MACAddressField, Zone
 from mreg_cli.commands.host import registry as command_registry
-from mreg_cli.exceptions import HostNotFoundWarning
 from mreg_cli.log import cli_info, cli_warning
-from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import get, get_list, patch
 from mreg_cli.utilities.history import format_history_items, get_history_items
-from mreg_cli.utilities.host import (
-    cname_exists,
-    get_host_by_name,
-    get_requested_ip,
-    host_info_by_name,
-)
-from mreg_cli.utilities.output import output_host_info, output_ip_info
-from mreg_cli.utilities.shared import clean_hostname, convert_wildcard_to_regex, format_mac
-from mreg_cli.utilities.validators import is_valid_email, is_valid_ip, is_valid_mac
-from mreg_cli.utilities.zone import zone_check_for_hostname
+from mreg_cli.utilities.shared import clean_hostname, convert_wildcard_to_regex
 
 #########################################
 #  Implementation of sub command 'add'  #
@@ -112,13 +101,6 @@ def add(args: argparse.Namespace) -> None:
 
     if "*" in hname.hostname and not args.force:
         cli_warning("Wildcards must be forced.")
-
-    if args.ip:
-        ip = get_requested_ip(args.ip, args.force)
-
-    # Contact sanity check
-    if args.contact and not is_valid_email(args.contact):
-        cli_warning(f"invalid mail address ({args.contact}) when trying to add {args.name}")
 
     if macaddress is not None:
         try:
@@ -329,29 +311,6 @@ def remove(args: argparse.Namespace) -> None:
 
 
 @command_registry.register_command(
-    prog="info_pydantic",
-    description="Print info about one or more hosts.",
-    short_desc="Print info about one or more hosts.",
-    flags=[
-        Flag(
-            "hosts",
-            description="One or more hosts given by their name, ip or mac.",
-            short_desc="One or more names, ips or macs.",
-            nargs="+",
-            metavar="NAME/IP/MAC",
-        )
-    ],
-)
-def host_info_pydantic(args: argparse.Namespace) -> None:
-    """Print information about host."""
-    host = Host.get_by_any_means(args.hosts[0], inform_as_cname=True)
-    if host is None:
-        cli_warning(f"Host {args.hosts[0]} not found.")
-
-    host.output()
-
-
-@command_registry.register_command(
     prog="info",
     description="Print info about one or more hosts.",
     short_desc="Print info about one or more hosts.",
@@ -366,31 +325,12 @@ def host_info_pydantic(args: argparse.Namespace) -> None:
     ],
 )
 def host_info(args: argparse.Namespace) -> None:
-    """Print information about host.
+    """Print information about host."""
+    host = Host.get_by_any_means(args.hosts[0], inform_as_cname=True)
+    if host is None:
+        cli_warning(f"Host {args.hosts[0]} not found.")
 
-    If <name> is an alias the cname hosts info is shown.
-
-    :param args: argparse.Namespace (hosts)
-    """
-    for name_or_ip in args.hosts:
-        # Get host info or raise exception
-        if is_valid_ip(name_or_ip):
-            output_ip_info(name_or_ip)
-        elif is_valid_mac(name_or_ip):
-            mac = format_mac(name_or_ip)
-            ret = get_list("api/v1/hosts/", params={"ipaddresses__macaddress": mac})
-            if ret:
-                output_host_info(ret[0])
-            else:
-                cli_warning(f"Found no host with macaddress: {mac}")
-        else:
-            from mreg_cli.api import clean_hostname
-
-            info = host_info_by_name(name_or_ip)
-            name = clean_hostname(name_or_ip)
-            if any(cname["name"] == name for cname in info["cnames"]):
-                OutputManager().add_line(f'{name} is a CNAME for {info["name"]}')
-            output_host_info(info)
+    host.output()
 
 
 @command_registry.register_command(
@@ -423,79 +363,6 @@ def find(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, comment, contact)
     """
-
-    def _add_param(param: str, value: str) -> None:
-        param, value = convert_wildcard_to_regex(param, value, True)
-        params[param] = value
-
-    if not any([args.name, args.comment, args.contact]):
-        cli_warning("Need at least one search critera")
-
-    params: dict[str, str | int] = {
-        "ordering": "name",
-        "page_size": 1,
-    }
-
-    for param in ("contact", "comment", "name"):
-        value = getattr(args, param)
-        if value:
-            _add_param(param, value)
-
-    path = "/api/v1/hosts/"
-    ret = get(path, params=params).json()
-
-    if ret["count"] == 0:
-        cli_warning("No hosts found.")
-    elif ret["count"] > 500:
-        cli_warning(f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.')
-
-    del params["page_size"]
-    ret = get_list(path, params=params)
-    max_name = max_contact = 20
-    for i in ret:
-        max_name = max(max_name, len(i["name"]))
-        max_contact = max(max_contact, len(i["contact"]))
-
-    def _print(name: str, contact: str, comment: str) -> None:
-        OutputManager().add_line(
-            "{0:<{1}} {2:<{3}} {4}".format(name, max_name, contact, max_contact, comment)
-        )
-
-    _print("Name", "Contact", "Comment")
-    for i in ret:
-        _print(i["name"], i["contact"], i["comment"])
-
-
-@command_registry.register_command(
-    prog="find_pydantic",
-    description="Lists hosts matching search criteria",
-    short_desc="Lists hosts matching search criteria",
-    flags=[
-        Flag(
-            "-name",
-            description="Name or part of name",
-            short_desc="Name or part of name",
-            metavar="NAME",
-        ),
-        Flag(
-            "-comment",
-            description="Comment or part of comment",
-            short_desc="Comment or part of comment",
-            metavar="CONTACT",
-        ),
-        Flag(
-            "-contact",
-            description="Contact or part of contact",
-            short_desc="Contact or part of contact",
-            metavar="CONTACT",
-        ),
-    ],
-)
-def find_pydantic(args: argparse.Namespace) -> None:
-    """List hosts maching search criteria.
-
-    :param args: argparse.Namespace (name, comment, contact)
-    """
     import mreg_cli.api as api
 
     def _add_param(param: str, value: str) -> None:
@@ -515,7 +382,7 @@ def find_pydantic(args: argparse.Namespace) -> None:
             _add_param(param, value)
 
     hostlist = api.get_hosts(params)
-    hostlist.output_host_list()
+    hostlist.output()
 
 
 @command_registry.register_command(
@@ -545,35 +412,28 @@ def rename(args: argparse.Namespace) -> None:
     """Rename host. If <old-name> is an alias then the alias is renamed.
 
     :param args: argparse.Namespace (old_name, new_name, force)
+
+    :return: The updated Host or None
     """
-    # Find old host
-    old_name = get_host_by_name(args.old_name)
+    old_host = Host.get_by_any_means(args.old_name)
+    if not old_host:
+        cli_warning(f"host {args.old_name} not found")
 
-    # Make sure new hostname does not exist.
-    new_name = clean_hostname(args.new_name)
-    try:
-        new_name = get_host_by_name(new_name)
-    except HostNotFoundWarning:
-        pass
-    else:
-        if not args.force:
-            cli_warning(f"host {new_name} already exists")
-
-    if cname_exists(new_name):
-        cli_warning("the name is already in use by a cname")
+    new_name = HostT(hostname=args.new_name)
+    new_host = Host.get_by_any_means(new_name, inform_as_cname=True)
+    if new_host:
+        cli_warning(f"host {new_host} already exists")
 
     # Require force if FQDN not in MREG zone
-    zone_check_for_hostname(new_name, args.force)
+    zone = Zone.get_from_hostname(new_name)
+    if not zone and not args.force:
+        cli_warning(f"{new_name} isn't in a zone controlled by MREG, must force")
 
-    if "*" in new_name and not args.force:
+    if "*" in new_name.hostname and not args.force:
         cli_warning("Wildcards must be forced.")
 
-    # Rename host
-    path = f"/api/v1/hosts/{old_name}"
-    # Cannot redo/undo now since it changes name
-    patch(path, name=new_name)
-
-    cli_info(f"renamed {old_name} to {new_name}", print_msg=True)
+    new_host = old_host.rename(new_name)
+    cli_info(f"renamed {old_host} to {new_name}", print_msg=True)
 
 
 # Add 'set_comment' as a sub command to the 'host' command
@@ -597,13 +457,17 @@ def set_comment(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, comment)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    # Update comment
-    path = f"/api/v1/hosts/{info['name']}"
-    patch(path, comment=args.comment)
+    host = Host.get_by_any_means(args.name, inform_as_cname=True)
+    if not host:
+        cli_warning(f"Host {args.name} not found")
+
+    updated_host = host.set_comment(args.comment)
+
+    if not updated_host:
+        cli_warning(f"Failed to update comment of {host.name}")
+
     cli_info(
-        'Updated comment of {} to "{}"'.format(info["name"], args.comment),
+        f"Updated comment of {host} to {args.comment}",
         print_msg=True,
     )
 
@@ -622,17 +486,12 @@ def set_contact(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, contact)
     """
-    # Contact sanity check
-    if not is_valid_email(args.contact):
-        cli_warning(f"invalid mail address {args.contact} (target host: {args.name})")
+    host = Host.get_by_any_means(args.name, inform_as_cname=True)
+    if not host:
+        cli_warning(f"Host {args.name} not found")
 
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-
-    # Update contact information
-    path = f"/api/v1/hosts/{info['name']}"
-    patch(path, contact=args.contact)
-    cli_info("Updated contact of {} to {}".format(info["name"], args.contact), print_msg=True)
+    host = host.set_contact(args.contact)
+    cli_info(f"Updated contact of {host} to {args.contact}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -651,3 +510,23 @@ def history(args: argparse.Namespace) -> None:
     hostname = clean_hostname(args.name)
     items = get_history_items(hostname, "host", data_relation="hosts")
     format_history_items(hostname, items)
+
+
+@command_registry.register_command(
+    prog="history_pydantic",
+    description="Show history for host.",
+    short_desc="Show history.",
+    flags=[
+        Flag("name", description="Host name", metavar="NAME"),
+    ],
+)
+def history_pydantic(args: argparse.Namespace) -> None:
+    """Show host history for name.
+
+    :param args: argparse.Namespace (name)
+    """
+    host = Host.get_by_any_means(args.name)
+    if not host:
+        cli_warning(f"Host {args.name} not found")
+
+    host.output_history(HistoryResource.Host)
