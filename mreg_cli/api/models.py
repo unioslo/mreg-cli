@@ -1,9 +1,11 @@
 """Pydantic models for the mreg_cli package."""
 
+from __future__ import annotations
+
 import ipaddress
 import re
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any
 
 from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 
@@ -62,7 +64,7 @@ class WithHost(BaseModel):
 
     host: int
 
-    def resolve_host(self) -> Union["Host", None]:
+    def resolve_host(self) -> Host | None:
         """Resolve the host ID to a Host object.
 
         Notes
@@ -84,7 +86,7 @@ class WithZone(BaseModel):
 
     zone: int
 
-    def resolve_zone(self) -> Union["Zone", None]:
+    def resolve_zone(self) -> Zone | None:
         """Resolve the zone ID to a (Forward)Zone object.
 
         Notes
@@ -131,7 +133,7 @@ class Zone(FrozenModelWithTimestamps):
         return False
 
     @classmethod
-    def get_from_hostname(cls, hostname: HostT) -> Union["Delegation", "Zone", None]:
+    def get_from_hostname(cls, hostname: HostT) -> Delegation | Zone | None:
         """Get the zone from a hostname.
 
         Note: This method may return either a Delegation or a Zone object.
@@ -205,7 +207,7 @@ class Role(FrozenModelWithTimestamps, APIMixin["Role"]):
         OutputManager().add_line(f"{'Role:':<{padding}}{self.name} ({self.description})")
 
     @classmethod
-    def output_multiple(cls, roles: list["Role"], padding: int = 14) -> None:
+    def output_multiple(cls, roles: list[Role], padding: int = 14) -> None:
         """Output multiple roles to the console.
 
         :param roles: List of roles to output.
@@ -239,7 +241,7 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
         return Endpoint.Networks
 
     @classmethod
-    def get_by_ip(cls, ip: IP_AddressT) -> "Network":
+    def get_by_ip(cls, ip: IP_AddressT) -> Network:
         """Get a network by IP address.
 
         :param ip: The IP address to search for.
@@ -249,7 +251,7 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
         return Network(**data.json())
 
     @classmethod
-    def get_by_netmask(cls, netmask: str) -> "Network":
+    def get_by_netmask(cls, netmask: str) -> Network:
         """Get a network by netmask.
 
         :param netmask: The netmask to search for.
@@ -294,7 +296,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
         return values
 
     @classmethod
-    def get_by_ip(cls, ip: IP_AddressT) -> Union["IPAddress", None]:
+    def get_by_ip(cls, ip: IP_AddressT) -> IPAddress | None:
         """Get an IP address object by IP address.
 
         :param ip: The IP address to search for.
@@ -335,7 +337,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
         """Return the IP address."""
         return self.ipaddress.address
 
-    def associate_mac(self, mac: MACAddressField | str, force: bool = False) -> "IPAddress":
+    def associate_mac(self, mac: MACAddressField | str, force: bool = False) -> IPAddress:
         """Associate a MAC address with the IP address.
 
         :param mac: The MAC address to associate.
@@ -365,7 +367,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
         OutputManager().add_line(f"{name:<{len_names}}{ip:<{len_ip}}{mac}")
 
     @classmethod
-    def output_multiple(cls, ips: list["IPAddress"], padding: int = 14, names: bool = False):
+    def output_multiple(cls, ips: list[IPAddress], padding: int = 14, names: bool = False):
         """Output IP addresses to the console."""
         output_manager = OutputManager()
         len_ip = max(padding, max([len(str(ip.ipaddress)) for ip in ips], default=0) + 2)
@@ -435,7 +437,7 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["CNAME"]):
         OutputManager().add_line(f"{'Cname:':<{padding}}{self.name} -> {host}")
 
     @classmethod
-    def output_multiple(cls, cnames: list["CNAME"], padding: int = 14) -> None:
+    def output_multiple(cls, cnames: list[CNAME], padding: int = 14) -> None:
         """Output multiple CNAME records to the console.
 
         :param cnames: List of CNAME records to output.
@@ -461,7 +463,7 @@ class TXT(FrozenModelWithTimestamps, WithHost):
         OutputManager().add_line(f"{'TXT:':<{padding}}{self.txt}")
 
     @classmethod
-    def output_multiple(cls, txts: list["TXT"], padding: int = 14) -> None:
+    def output_multiple(cls, txts: list[TXT], padding: int = 14) -> None:
         """Output multiple TXT records to the console.
 
         :param txts: List of TXT records to output.
@@ -491,7 +493,7 @@ class MX(FrozenModelWithTimestamps, WithHost):
         )
 
     @classmethod
-    def output_multiple(cls, mxs: list["MX"], padding: int = 14) -> None:
+    def output_multiple(cls, mxs: list[MX], padding: int = 14) -> None:
         """Output MX records to the console."""
         if not mxs:
             return
@@ -549,7 +551,7 @@ class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin["NAPTR"]):
         ]
 
     @classmethod
-    def output_multiple(cls, naptrs: list["NAPTR"], padding: int = 14) -> None:
+    def output_multiple(cls, naptrs: list[NAPTR], padding: int = 14) -> None:
         """Output multiple NAPTR records to the console."""
         headers = cls.headers()
         row_format = f"{{:<{padding}}}" * len(headers)
@@ -609,7 +611,7 @@ class Srv(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["Srv"]):
         )
 
     @classmethod
-    def output_multiple(cls, srvs: list["Srv"], padding: int = 14) -> None:
+    def output_multiple(cls, srvs: list[Srv], padding: int = 14) -> None:
         """Output multiple SRV records.
 
         This method adjusts the padding dynamically based on the longest record name.
@@ -645,7 +647,7 @@ class PTR_override(FrozenModelWithTimestamps, WithHost):
     ipaddress: str  # For now, should be an IP address
 
     @classmethod
-    def output_multiple(cls, ptrs: list["PTR_override"], padding: int = 14):
+    def output_multiple(cls, ptrs: list[PTR_override], padding: int = 14):
         """Output multiple PTR override records to the console.
 
         :param ptrs: List of PTR override records to output.
@@ -683,7 +685,7 @@ class SSHFP(FrozenModelWithTimestamps, WithHost, APIMixin["SSHFP"]):
         return Endpoint.Sshfps
 
     @classmethod
-    def output_multiple(cls, sshfps: list["SSHFP"], padding: int = 14):
+    def output_multiple(cls, sshfps: list[SSHFP], padding: int = 14):
         """Output multiple SSHFP records to the console.
 
         :param sshfps: List of SSHFP records to output.
@@ -753,7 +755,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
     @classmethod
     def get_by_any_means(
         cls, identifier: str | HostT, inform_as_cname: bool = True
-    ) -> Optional["Host"]:
+    ) -> Host | None:
         """Get a host by the given identifier.
 
         - If the identifier is numeric, it will be treated as an ID.
@@ -859,7 +861,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
 
     def associate_mac_to_ip(
         self, mac: MACAddressField | str, ip: IPAddressField | str, force: bool = False
-    ) -> "Host":
+    ) -> Host:
         """Associate a MAC address to an IP address.
 
         :param mac: The MAC address to associate.
@@ -1092,7 +1094,7 @@ class HostList(FrozenModel):
         return Endpoint.Hosts
 
     @classmethod
-    def get(cls, params: dict[str, Any] | None = None) -> "HostList":
+    def get(cls, params: dict[str, Any] | None = None) -> HostList:
         """Get a list of hosts.
 
         :param params: Optional parameters to pass to the API.

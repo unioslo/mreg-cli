@@ -10,6 +10,7 @@ Commands implemented:
     - set_comment
     - set_contact
 """
+from __future__ import annotations
 
 import argparse
 import ipaddress

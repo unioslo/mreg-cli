@@ -1,4 +1,5 @@
 """Policy commands for mreg_cli."""
+from __future__ import annotations
 
 import argparse
 from typing import Any

@@ -3,13 +3,14 @@
 Due to circular dependencies, this module is not allowed to import anything from mreg_cli.
 And this rule is promptly broken by importing from mreg_cli.outputmanager...
 """
+from __future__ import annotations
 
 import json
 import logging
 import os
 import re
 import sys
-from typing import TYPE_CHECKING, Any, NoReturn, Optional, cast, overload
+from typing import TYPE_CHECKING, Any, NoReturn, cast, overload
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -185,7 +186,7 @@ def auth_and_update_token(username: str | None, password: str) -> None:
     set_file_permissions(mreg_auth_token_file, 0o600)
 
 
-def result_check(result: "ResponseLike", operation_type: str, url: str) -> None:
+def result_check(result: ResponseLike, operation_type: str, url: str) -> None:
     """Check the result of a request."""
     if not result.ok:
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
@@ -206,7 +207,7 @@ def _request_wrapper(
     first: bool = True,
     use_json: bool = False,
     **data: Any,
-) -> Optional["ResponseLike"]:
+) -> ResponseLike | None:
     """Wrap request calls to MREG for logging and token management."""
     if params is None:
         params = {}
@@ -233,28 +234,24 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: dict[str, Any], ok404: "Literal[True]") -> Optional["ResponseLike"]:
-    ...
+def get(path: str, params: dict[str, Any], ok404: Literal[True]) -> ResponseLike | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any], ok404: "Literal[False]") -> "ResponseLike":
-    ...
+def get(path: str, params: dict[str, Any], ok404: Literal[False]) -> ResponseLike: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] = ..., *, ok404: bool) -> Optional["ResponseLike"]:
-    ...
+def get(path: str, params: dict[str, Any] = ..., *, ok404: bool) -> ResponseLike | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] = ...) -> "ResponseLike":
-    ...
+def get(path: str, params: dict[str, Any] = ...) -> ResponseLike: ...
 
 
 def get(
     path: str, params: dict[str, Any] | None = None, ok404: bool = False
-) -> Optional["ResponseLike"]:
+) -> ResponseLike | None:
     """Make a standard get request."""
     if params is None:
         params = {}
@@ -430,7 +427,7 @@ def get_list_generic(
 
 def post(
     path: str, params: dict[str, Any] | None = None, **kwargs: Any
-) -> Optional["ResponseLike"]:
+) -> ResponseLike | None:
     """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
@@ -439,14 +436,14 @@ def post(
 
 def patch(
     path: str, params: dict[str, Any] | None = None, use_json: bool = False, **kwargs: Any
-) -> Optional["ResponseLike"]:
+) -> ResponseLike | None:
     """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("patch", path, params=params, use_json=use_json, **kwargs)
 
 
-def delete(path: str, params: dict[str, Any] | None = None) -> Optional["ResponseLike"]:
+def delete(path: str, params: dict[str, Any] | None = None) -> ResponseLike | None:
     """Use requests to make a delete request."""
     if params is None:
         params = {}

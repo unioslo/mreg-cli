@@ -1,9 +1,10 @@
 """Typing definitions for mreg_cli."""
+from __future__ import annotations
 
 import argparse
 import ipaddress
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, NamedTuple, Optional, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Any, NamedTuple, TypedDict, TypeVar
 
 CommandFunc = Callable[[argparse.Namespace], None]
 
@@ -38,7 +39,7 @@ class RecordingEntry(TypedDict):
     time: TimeInfo | None
 
 
-IP_Version: "TypeAlias" = "Literal[4, 6]"
+IP_Version: TypeAlias = "Literal[4, 6]"
 IP_networkT = TypeVar("IP_networkT", ipaddress.IPv4Network, ipaddress.IPv6Network)
 IP_AddressT = ipaddress.IPv4Address | ipaddress.IPv6Address
 
@@ -57,7 +58,7 @@ class Flag:
         name: str,
         description: str = "",
         short_desc: str = "",
-        nargs: Optional["NargsType"] = None,
+        nargs: NargsType | None = None,
         default: Any = None,
         flag_type: Any = None,
         choices: list[str] | None = None,

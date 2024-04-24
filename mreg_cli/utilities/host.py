@@ -1,9 +1,10 @@
 """Host-related utilities."""
+from __future__ import annotations
 
 import argparse
 import ipaddress
 import urllib.parse
-from typing import Any, Union
+from typing import Any
 
 from mreg_cli.exceptions import CliWarning, HostNotFoundWarning
 from mreg_cli.log import cli_error, cli_info, cli_warning
@@ -204,7 +205,7 @@ def add_ip_to_host(
         cli_info(f"added ip {ip} to {info['name']}", print_msg=True)
 
 
-def get_requested_ip(ip: str, force: bool, ipversion: Union[IP_Version, None] = None) -> str:
+def get_requested_ip(ip: str, force: bool, ipversion: IP_Version | None = None) -> str:
     """Return an IP address from the given args.
 
     - If the given ip is an ip, then that ip is returned.

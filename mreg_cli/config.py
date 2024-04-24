@@ -13,6 +13,7 @@ translated according to a mapping:
     2. :py:const:`logging.INFO`
     3. :py:const:`logging.DEBUG`
 """
+from __future__ import annotations
 
 import configparser
 import logging
@@ -64,7 +65,7 @@ class MregCliConfig:
     _config_file: dict[str, str]
     _config_env: dict[str, str]
 
-    def __new__(cls) -> "MregCliConfig":
+    def __new__(cls) -> MregCliConfig:
         """Create a new instance of the configuration class.
 
         This ensures that only one instance of the configuration class is created.
@@ -89,12 +90,10 @@ class MregCliConfig:
         }
 
     @overload
-    def get(self, key: str) -> str | None:
-        ...
+    def get(self, key: str) -> str | None: ...
 
     @overload
-    def get(self, key: str, default: DefaultType = ...) -> str | DefaultType:
-        ...
+    def get(self, key: str, default: DefaultType = ...) -> str | DefaultType: ...
 
     def get(self, key: str, default: DefaultType | None = None) -> str | DefaultType | None:
         """Get a configuration value with priority: cmdline, env, file.

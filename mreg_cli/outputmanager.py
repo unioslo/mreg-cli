@@ -4,6 +4,7 @@ This is a singleton class that manages the output for the CLI. It stores the
 output lines and formats them for display. It also manages the filter for the
 command.
 """
+from __future__ import annotations
 
 import atexit
 import datetime
@@ -11,7 +12,7 @@ import json
 import os
 import re
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Optional, overload
+from typing import TYPE_CHECKING, Any, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
@@ -24,15 +25,15 @@ if TYPE_CHECKING:
 
 
 @overload
-def find_char_outside_quotes(line: str, target_char: str, return_position: "Literal[True]") -> int:
-    ...
+def find_char_outside_quotes(
+    line: str, target_char: str, return_position: Literal[True]
+) -> int: ...
 
 
 @overload
 def find_char_outside_quotes(
-    line: str, target_char: str, return_position: "Literal[False]"
-) -> str:
-    ...
+    line: str, target_char: str, return_position: Literal[False]
+) -> str: ...
 
 
 def find_char_outside_quotes(
@@ -138,7 +139,7 @@ class OutputManager:
     def clear(self) -> None:
         """Clear the object."""
         self._output: list[str] = []
-        self._filter_re: Optional["re.Pattern[str]"] = None
+        self._filter_re: re.Pattern[str] | None = None
         self._filter_negate: bool = False
         self._command_executed: str = ""
         self._command_issued: str = ""

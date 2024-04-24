@@ -5,6 +5,7 @@ This led to horrible code that was hard to maintain and debug. This module is an
 fix that by using pydantic models to validate incoming data so the client code has
 guarantees about the data it is working with.
 """
+from __future__ import annotations
 
 import re
 from ipaddress import ip_address

@@ -6,6 +6,7 @@ Commands implemented:
     - bacnetid_remove
     - bacnetid_list
 """
+from __future__ import annotations
 
 import argparse
 

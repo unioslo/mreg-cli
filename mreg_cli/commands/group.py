@@ -1,4 +1,5 @@
 """Hostgroups commands for mreg_cli."""
+from __future__ import annotations
 
 import argparse
 from itertools import chain

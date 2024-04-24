@@ -3,6 +3,7 @@
 Due to circular dependencies, be very aware of what you import here.
 
 """
+from __future__ import annotations
 
 import ipaddress
 import re
