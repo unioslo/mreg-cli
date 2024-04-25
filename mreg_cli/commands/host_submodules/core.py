@@ -74,7 +74,6 @@ def add(args: argparse.Namespace) -> None:
     ip = args.ip
     hname = HostT(hostname=args.name)
     macaddress = args.macaddress
-    host = Host.get_by_any_means(hname)
 
     if macaddress is not None:
         try:

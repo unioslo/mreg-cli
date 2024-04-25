@@ -3,7 +3,28 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any, Callable
 from urllib.parse import quote
+
+
+class hybridmethod:
+    """Decorator to allow a method to be called both as a class method and an instance method."""
+
+    def __init__(self, func: Callable[..., Any]):
+        """Initialize the hybrid method."""
+        self.func = func
+
+    def __get__(self, obj: object | None, cls: type | None = None):
+        """Return a method that can be called both as a class method and an instance method."""
+        if obj is None:
+            return classmethod(self.func).__get__(None, cls)
+        else:
+            # Called on an instance, act like an instance method
+            return self.func.__get__(obj)
+
+    def __call__(self, *args: Any, **kwargs: Any):
+        """Caller method."""
+        return self.func(*args, **kwargs)
 
 
 class Endpoint(str, Enum):
@@ -43,9 +64,10 @@ class Endpoint(str, Enum):
         """Return True if this endpoint requires a search for an ID."""
         return self in (Endpoint.Hosts, Endpoint.Networks)
 
+    @hybridmethod
     def external_id_field(self) -> str:
         """Return the name of the field that holds the external ID."""
-        if self == Endpoint.Hosts or self == Endpoint.HostGroups:
+        if self in (Endpoint.Hosts, Endpoint.HostGroups):
             return "name"
         if self == Endpoint.Networks:
             return "network"

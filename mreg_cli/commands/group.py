@@ -6,6 +6,7 @@ import argparse
 from itertools import chain
 from typing import Any
 
+from mreg_cli.api.models import HostGroup
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.log import cli_error, cli_info, cli_warning
@@ -90,6 +91,25 @@ def info(args: argparse.Namespace) -> None:
         if len(info["owners"]):
             owners = ", ".join([i["name"] for i in info["owners"]])
             manager.add_formatted_line("Owners:", owners)
+
+
+@command_registry.register_command(
+    prog="info_pydantic",
+    description="Shows group info with description, member count and owner(s)",
+    short_desc="Group info",
+    flags=[
+        Flag("name", description="Group name", nargs="+", metavar="NAME"),
+    ],
+)
+def info_pydantic(args: argparse.Namespace) -> None:
+    """Show host group info.
+
+    :param args: argparse.Namespace (name)
+    """
+    group = HostGroup.get_by_field("name", args.name)
+    if not group:
+        cli_warning(f'Group "{args.name}" not found.')
+    group.output()
 
 
 @command_registry.register_command(

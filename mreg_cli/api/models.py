@@ -1264,6 +1264,37 @@ class HostGroup(FrozenModelWithTimestamps, APIMixin["HostGroup"]):
 
         OutputManager().add_line("{1:<{0}}{2}".format(padding, "Groups:", groups))
 
+    def output(self, padding: int = 14) -> None:
+        """Output the hostgroup to the console.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        outputmanager = OutputManager()
+
+        parents = self.parent
+        inherited: list[str] = []
+
+        for p in self.get_all_parents():
+            if p.name not in parents:
+                inherited.append(p.name)
+
+        parentlist = ", ".join(parents)
+        if inherited:
+            parentlist += f" (Inherits: {', '.join(inherited)})"
+
+        output_tuples = (
+            ("Name:", self.name),
+            ("Description:", self.description or ""),
+            ("Owners:", ", ".join(self.owners if self.owners else [])),
+            ("Parents:", parentlist),
+            ("Groups:", ", ".join(self.groups if self.groups else [])),
+            ("Hosts:", len(self.hosts)),
+        )
+        for key, value in output_tuples:
+            outputmanager.add_line(f"{key:<{padding}}{value}")
+
+        self.output_timestamps()
+
     def get_all_parents(self) -> list[HostGroup]:
         """Return a list of all parent groups."""
         parents: list[HostGroup] = []

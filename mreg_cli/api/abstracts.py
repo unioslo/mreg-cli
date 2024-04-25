@@ -271,7 +271,7 @@ class APIMixin(Generic[BMT], ABC):
             location = response.headers.get("Location")
             if location:
                 obj = None
-                if cls.endpoint() is Endpoint.Hosts:
+                if cls.endpoint().external_id_field() == "name":
                     obj = cls.get_by_field("name", location.split("/")[-1])
                 else:
                     obj = cls.get_by_id(int(location.split("/")[-1]))
