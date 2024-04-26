@@ -32,27 +32,30 @@ class Endpoint(str, Enum):
 
     Hosts = "/api/v1/hosts/"
     Ipaddresses = "/api/v1/ipaddresses/"
-    Networks = "/api/v1/networks/"
-    NetworksByIP = "/api/v1/networks/ip/"
     Naptrs = "/api/v1/naptrs/"
     Srvs = "/api/v1/srvs/"
     Cnames = "/api/v1/cnames/"
     Sshfps = "/api/v1/sshfps/"
     Zones = "/api/v1/zones/"
     History = "/api/v1/history/"
+    PTR_overrides = "/api/v1/ptroverrides/"
+    HostGroups = "/api/v1/hostgroups/"
 
     BacnetID = "/api/v1/bacnet/ids/"
 
-    HostGroups = "/api/v1/hostgroups/"
+    Networks = "/api/v1/networks/"
+    NetworksByIP = "/api/v1/networks/ip/"
+    NetworksUsedCount = "/api/v1/networks/{}/used_count"
+    NetworksUsedList = "/api/v1/networks/{}/used_list"
+    NetworksUnusedCount = "/api/v1/networks/{}/unused_count"
+    NetworksUnusedList = "/api/v1/networks/{}/unused_list"
+    NetworksFirstUnused = "/api/v1/networks/{}/first_unused"
 
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
 
     ForwardZones = f"{Zones}forward/"
     ReverseZones = f"{Zones}reverse/"
     ZoneForHost = f"{ForwardZones}hostname/"
-
-    # Endpoints that require parameters
-    NetworkFirstUnused = "/api/v1/networks/{}/first_unused/"
 
     def __str__(self):
         """Prevent direct usage without parameters where needed."""

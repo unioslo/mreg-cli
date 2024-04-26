@@ -260,12 +260,16 @@ class APIMixin(Generic[BMT], ABC):
         return False
 
     @classmethod
-    def create(cls, kwargs: dict[str, str | None]) -> None | BMT:
+    def create(cls, params: dict[str, str | None]) -> None | BMT:
         """Create the object.
 
-        :returns: The object if created, None otherwise.
+        Note that several endpoints do not support location headers for created objects,
+        so we can't fetch the object after creation. In these cases, we return None even
+        if the object was created successfully...
+
+        :returns: The object if created and its fetchable, None otherwise.
         """
-        response = post(cls.endpoint(), params=None, **kwargs)
+        response = post(cls.endpoint(), params=None, **params)
 
         if response and response.ok:
             location = response.headers.get("Location")
@@ -281,8 +285,14 @@ class APIMixin(Generic[BMT], ABC):
 
                 cli_warning(f"Could not fetch object from location {location}.")
 
-            else:
-                cli_warning("No location header in response.")
+            # else:
+            # Lots of endpoints don't give locations on creation,
+            # so we can't fetch the object, but it's not an error...
+            # Per se.
+            # cli_warning("No location header in response.")
+
+        else:
+            cli_warning(f"Failed to create {cls} with {params} @ {cls.endpoint()}.")
 
         return None
 

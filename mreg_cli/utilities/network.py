@@ -11,9 +11,9 @@ import urllib.parse
 from collections.abc import Iterable
 from typing import Any
 
-from mreg_cli.api import get_network_by_ip
+from mreg_cli.api.models import Network
 from mreg_cli.log import cli_warning
-from mreg_cli.types import IP_networkT
+from mreg_cli.types import IP_networkTV
 from mreg_cli.utilities.api import get
 from mreg_cli.utilities.validators import is_valid_ip, is_valid_network
 
@@ -34,7 +34,7 @@ def get_network_first_unused_ip(network: dict[str, Any]) -> str:
 def ip_in_mreg_net(ip: str) -> bool:
     """Return true if the ip is in a MREG controlled network."""
     ipt = ipaddress.ip_address(ip)
-    net = get_network_by_ip(ipt)
+    net = Network.get_by_ip(ipt)
     return bool(net)
 
 
@@ -48,28 +48,28 @@ def ips_are_in_same_vlan(ips: list[str]) -> bool:
     # IPs must be in a network, and that network must have a vlan for this to work.
     last_vlan = ""
     for ip in ips:
-        network = get_network_by_ip(ipaddress.ip_address(ip))
+        network = Network.get_by_ip(ipaddress.ip_address(ip))
         if not network:
             return False
 
-        if "vlan" not in network:
+        if not network.vlan:
             return False
 
-        if last_vlan and network["vlan"] != last_vlan:
+        if last_vlan and network.vlan != last_vlan:
             return False
 
-        last_vlan = network["vlan"]
+        last_vlan = network.vlan
 
     return True
 
 
-def get_network(ip: str) -> dict[str, Any]:
+def get_network(ip: str) -> Network | None:
     """Return a network associated with given range or IP."""
     if is_valid_network(ip):
         path = f"/api/v1/networks/{urllib.parse.quote(ip)}"
         return get(path).json()
     elif is_valid_ip(ip):
-        net = get_network_by_ip(ipaddress.ip_address(ip))
+        net = Network.get_by_ip(ipaddress.ip_address(ip))
         if net:
             return net
         cli_warning("ip address exists but is not an address in any existing network")
@@ -113,6 +113,6 @@ def get_network_reserved_ips(ip_range: str) -> list[str]:
     return get(path).json()
 
 
-def network_is_supernet(a: IP_networkT, b: IP_networkT) -> bool:
+def network_is_supernet(a: IP_networkTV, b: IP_networkTV) -> bool:
     """Return True if a is a supernet of b."""
     return a.supernet_of(b)

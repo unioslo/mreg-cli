@@ -14,10 +14,9 @@ Commands implemented:
 from __future__ import annotations
 
 import argparse
-import ipaddress
 
 from mreg_cli.api.history import HistoryResource
-from mreg_cli.api.models import Host, HostList, HostT, MACAddressField, Zone
+from mreg_cli.api.models import Host, HostList, HostT, MACAddressField, NetworkOrIP, Zone
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.types import Flag
@@ -109,26 +108,13 @@ def add(args: argparse.Namespace) -> None:
         "comment": args.comment or None,
     }
 
-    ip = None
-    network = None
     if args.ip:
-        valid_input = False
-        try:
-            ip = ipaddress.ip_address(args.ip)
-            data["ipaddress"] = str(ip)
-            valid_input = True
-        except ValueError:
-            pass
-
-        if not valid_input:
-            try:
-                network = ipaddress.ip_network(args.ip)
-                data["network"] = str(network)
-                valid_input = True
-            except ValueError:
-                pass
-
-        if not valid_input:
+        net_or_ip = NetworkOrIP(ip_or_network=args.ip)
+        if net_or_ip.is_ip():
+            data["ipaddress"] = str(net_or_ip)
+        elif net_or_ip.is_network():
+            data["network"] = str(net_or_ip)
+        else:
             cli_warning(f"Invalid ip or network: {args.ip}")
 
     host = Host.create(data)
@@ -137,7 +123,7 @@ def add(args: argparse.Namespace) -> None:
 
     if macaddress is not None:
         if ip:
-            host.associate_mac_to_ip(macaddress, str(ip))
+            host = host.associate_mac_to_ip(macaddress, str(ip))
         else:
             # We passed a network to create the host, so we need to find the IP
             # that was assigned to the host. We don't get that in the response
@@ -145,18 +131,14 @@ def add(args: argparse.Namespace) -> None:
             # use that. If there are more than one, we can't know which one was
             # assigned to the host during create, so we abort.
             if len(host.ipaddresses) == 1:
-                host.associate_mac_to_ip(macaddress, host.ipaddresses[0].ipaddress)
+                host = host.associate_mac_to_ip(macaddress, host.ipaddresses[0].ipaddress)
             else:
                 cli_info(
                     "Failed to associate MAC address to IP, multiple IP addresses after creation.",
                     print_msg=True,
                 )
-    msg = f"created host {hname}"
-    if ip or len(host.ipaddresses) == 1:
-        output_ip = ip or host.ipaddresses[0].ipaddress
-        msg += f" with IP {output_ip}"
 
-    cli_info(msg, print_msg=True)
+    host.output()
 
 
 @command_registry.register_command(

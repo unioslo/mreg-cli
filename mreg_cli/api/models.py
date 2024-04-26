@@ -5,7 +5,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 
@@ -15,10 +15,80 @@ from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_warning
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT
+from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
 from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list, get_list_in
 
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
+
+
+class NetworkOrIP(BaseModel):
+    """A model for either a network or an IP address."""
+
+    ip_or_network: str | IP_AddressT | IP_NetworkT
+
+    @field_validator("ip_or_network", mode="before")
+    @classmethod
+    def validate_ip_or_network(cls, value: str) -> IP_AddressT | IP_NetworkT:
+        """Validate and convert the input to an IP address or network."""
+        try:
+            return ipaddress.ip_address(value)
+        except ValueError:
+            pass
+
+        try:
+            return ipaddress.ip_network(value)
+        except ValueError:
+            pass
+
+        cli_warning(f"Invalid input for IP address or network: {value}")
+
+    def __str__(self) -> str:
+        """Return the value as a string."""
+        return str(self.ip_or_network)
+
+    def is_ipv4(self) -> bool:
+        """Return True if the value is an IPv4 address."""
+        return isinstance(self.ip_or_network, ipaddress.IPv4Address)
+
+    def as_ipv4(self) -> ipaddress.IPv4Address:
+        """Return the value as an IPv4 address."""
+        if not self.is_ipv4():
+            raise ValueError("Value is not an IPv4 address.")
+        return cast(ipaddress.IPv4Address, self.ip_or_network)
+
+    def as_ipv6(self) -> ipaddress.IPv6Address:
+        """Return the value as an IPv6 address."""
+        if not self.is_ipv6():
+            raise ValueError("Value is not an IPv6 address.")
+        return cast(ipaddress.IPv6Address, self.ip_or_network)
+
+    def as_ip(self) -> IP_AddressT:
+        """Return the value as an IP address."""
+        return cast(IP_AddressT, self.ip_or_network)
+
+    def as_network(self) -> IP_NetworkT:
+        """Return the value as a network."""
+        return cast(IP_NetworkT, self.ip_or_network)
+
+    def is_ipv6(self) -> bool:
+        """Return True if the value is an IPv6 address."""
+        return isinstance(self.ip_or_network, ipaddress.IPv6Address)
+
+    def is_ipv4_network(self) -> bool:
+        """Return True if the value is an IPv4 network."""
+        return isinstance(self.ip_or_network, ipaddress.IPv4Network)
+
+    def is_ipv6_network(self) -> bool:
+        """Return True if the value is an IPv6 network."""
+        return isinstance(self.ip_or_network, ipaddress.IPv6Network)
+
+    def is_ip(self) -> bool:
+        """Return True if the value is an IP address."""
+        return self.is_ipv4() or self.is_ipv6()
+
+    def is_network(self) -> bool:
+        """Return True if the value is a network."""
+        return self.is_ipv4_network() or self.is_ipv6_network()
 
 
 class HostT(BaseModel):
@@ -257,12 +327,14 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
         :param netmask: The netmask to search for.
         :returns: The network if found, None otherwise.
         """
-        data = get(Endpoint.Networks.with_params(netmask))
-        return Network(**data.json())
+        data = get_item_by_key_value(Endpoint.Networks, "network", netmask)
+        if not data:
+            cli_warning(f"Network with netmask {netmask} not found.")
+        return Network(**data)
 
     def get_first_available_ip(self) -> IP_AddressT:
         """Return the first available IPv4 address of the network."""
-        data = get(Endpoint.NetworkFirstUnused.with_params(self.network))
+        data = get(Endpoint.NetworksFirstUnused.with_params(self.network))
         return ipaddress.ip_address(data.json())
 
     def __hash__(self):
@@ -296,16 +368,18 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
         return values
 
     @classmethod
-    def get_by_ip(cls, ip: IP_AddressT) -> IPAddress | None:
-        """Get an IP address object by IP address.
+    def get_by_ip(cls, ip: IP_AddressT) -> list[IPAddress]:
+        """Get a list of IP address objects by IP address.
+
+        Note that the IP addresses can be duplicated across hosts,
+        so this method may return multiple IP addresses.
 
         :param ip: The IP address to search for.
         :returns: The IP address if found, None otherwise.
         """
-        data = get_item_by_key_value(Endpoint.Ipaddresses, "ipaddress", str(ip))
-        if not data:
-            return None
-        return cls(**data)
+        params = {"ipaddress": str(ip)}
+        data = get_list(Endpoint.Ipaddresses, params=params)
+        return [IPAddress(**item) for item in data]
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -634,11 +708,16 @@ class Srv(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["Srv"]):
             srv.output(padding=padding, host_id_name_map=host_id_name_map)
 
 
-class PTR_override(FrozenModelWithTimestamps, WithHost):
+class PTR_override(FrozenModelWithTimestamps, WithHost, APIMixin["PTR_override"]):
     """Represents a PTR override record."""
 
     id: int  # noqa: A003
     ipaddress: str  # For now, should be an IP address
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.PTR_overrides
 
     @classmethod
     def output_multiple(cls, ptrs: list[PTR_override], padding: int = 14):
@@ -909,6 +988,49 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         """
         return self.patch(fields={"contact": contact})
 
+    def add_ip(self, ip: IP_AddressT, mac: MACAddressField | None = None) -> Host:
+        """Add an IP address to the host.
+
+        :param ip: The IP address to add. IPv4 or IPv6.
+
+        :returns: A new Host object fetched from the API with the updated IP address.
+        """
+        params: dict[str, str | None] = {"ipaddress": str(ip), "host": str(self.id)}
+        if mac:
+            params["macaddress"] = mac.address
+
+        print(params)
+
+        IPAddress.create(params=params)
+        return self.refetch()
+
+    def has_ip(self, arg_ip: IP_AddressT) -> bool:
+        """Check if the host has the given IP address.
+
+        :param ip: The IP address to check for.
+
+        :returns: True if the host has the IP address, False otherwise.
+        """
+        return any([ip.ipaddress.address == arg_ip for ip in self.ipaddresses])
+
+    def get_ip(self, arg_ip: IP_AddressT) -> IPAddress | None:
+        """Get the IP address object for the given IP address.
+
+        :param ip: The IP address to search for.
+
+        :returns: The IP address object if found, None otherwise.
+        """
+        return next((ip for ip in self.ipaddresses if ip.ipaddress.address == arg_ip), None)
+
+    def get_ptr_override(self, ip: IP_AddressT) -> PTR_override | None:
+        """Get the PTR override for the given IP address.
+
+        :param ip: The IP address to search for.
+
+        :returns: The PTR override object if found, None otherwise.
+        """
+        return next((ptr for ptr in self.ptr_overrides if ptr.ipaddress == ip), None)
+
     def ipv4_addresses(self):
         """Return a list of IPv4 addresses."""
         return [ip for ip in self.ipaddresses if ip.is_ipv4()]
@@ -1116,7 +1238,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         if self.comment is not None and self.comment != "":
             output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
 
-        IPAddress.output_multiple(self.ipaddresses, padding=padding, names=names)
+        self.output_ipaddresses(padding=padding, names=names)
         PTR_override.output_multiple(self.ptr_overrides, padding=padding)
 
         output_manager.add_line("{1:<{0}}{2}".format(padding, "TTL:", self.ttl or "(Default)"))
@@ -1142,6 +1264,20 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         HostGroup.output_multiple(self.hostgroups(traverse=traverse_hostgroups), padding=padding)
 
         self.output_timestamps()
+
+    def output_ipaddresses(
+        self, padding: int = 14, names: bool = False, only: IP_Version | None = None
+    ):
+        """Output the IP addresses for the host."""
+        if not self.ipaddresses:
+            return
+
+        if only and only == 4:
+            IPAddress.output_multiple(self.ipv4_addresses(), padding=padding, names=names)
+        elif only and only == 6:
+            IPAddress.output_multiple(self.ipv6_addresses(), padding=padding, names=names)
+        else:
+            IPAddress.output_multiple(self.ipaddresses, padding=padding, names=names)
 
     def __str__(self) -> str:
         """Return the host name as a string."""
@@ -1176,8 +1312,21 @@ class HostList(FrozenModel):
         if params is None:
             params = {}
 
+        if "ordering" not in params:
+            params["ordering"] = "name"
+
         data = get_list(cls.endpoint(), params=params)
         return cls(results=[Host(**host) for host in data])
+
+    @classmethod
+    def get_by_ip(cls, ip: IP_AddressT) -> HostList:
+        """Get a list of hosts by IP address.
+
+        :param ip: The IP address to search for.
+
+        :returns: A HostList object.
+        """
+        return cls.get(params={"ipaddresses__ipaddress": str(ip), "ordering": "name"})
 
     @field_validator("results", mode="before")
     @classmethod
@@ -1200,6 +1349,10 @@ class HostList(FrozenModel):
     def __repr__(self):
         """Return a string representation of the results."""
         return repr(self.results)
+
+    def hostnames(self) -> list[str]:
+        """Return a list of hostnames."""
+        return [host.name.hostname for host in self.results]
 
     def count(self):
         """Return the number of results."""
