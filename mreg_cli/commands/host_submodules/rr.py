@@ -42,7 +42,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import HInfo, Host
+from mreg_cli.api.models import HInfo, Host, Location
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
@@ -51,7 +51,6 @@ from mreg_cli.utilities.api import delete, get_list, patch, post
 from mreg_cli.utilities.host import get_info_by_name, host_info_by_name
 from mreg_cli.utilities.network import get_network_reserved_ips, ip_in_mreg_net
 from mreg_cli.utilities.output import (
-    output_loc,
     output_mx,
     output_naptr,
     output_ptr,
@@ -161,15 +160,14 @@ def loc_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    if not info["loc"]:
-        cli_warning(f"{info['name']} already has no loc set.")
-    host_id = info["id"]
-    path = f"/api/v1/locs/{host_id}"
-    delete(path)
+    host = Host.get_by_any_means_or_raise(args.name)
+    if not host.loc:
+        cli_warning(f"{host} already has no loc set.")
 
-    cli_info("removed LOC for {}".format(info["name"]), print_msg=True)
+    if host.loc.delete():
+        cli_info(f"Removed LOC for {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to remove LOC for {host}")
 
 
 @command_registry.register_command(
@@ -188,16 +186,18 @@ def loc_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, loc)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
+    host = Host.get_by_any_means_or_raise(args.name)
 
-    if info["loc"]:
-        cli_warning(f"{info['name']} already has loc set.")
+    if host.loc:
+        cli_warning(f"{host} already has loc set.")
 
-    data = {"host": info["id"], "loc": args.loc}
-    path = "/api/v1/locs/"
-    post(path, **data)
-    cli_info("added LOC '{}' for {}".format(args.loc, info["name"]), print_msg=True)
+    Location.create({"host": str(host.id), "loc": args.loc})
+    host = host.refetch()
+
+    if host.loc and host.loc.loc == args.loc:
+        cli_info(f"Added LOC record for {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to set LOC for {host}")
 
 
 @command_registry.register_command(
@@ -215,12 +215,11 @@ def loc_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = host_info_by_name(args.name)
-    if info["loc"]:
-        output_loc(info["loc"])
-    else:
-        cli_info(f"No LOC for {args.name}", print_msg=True)
-    cli_info("showed LOC for {}".format(info["name"]))
+    host = Host.get_by_any_means_or_raise(args.name)
+    if not host.loc:
+        cli_warning(f"No loc for {host.name.hostname}")
+
+    host.loc.output()
 
 
 def _mx_in_mxs(mxs: list[dict[str, str]], priority: str, mx: str) -> str | None:

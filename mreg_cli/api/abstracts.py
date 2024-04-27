@@ -228,10 +228,22 @@ class APIMixin(Generic[BMT], ABC):
         """
         id_field = self.field_for_endpoint()
         identifier = getattr(self, id_field)
+
         if not identifier:
             cli_error(f"Could not get identifier for {self.__class__.__name__} via {id_field}.")
 
-        obj = self.__class__.get_by_id(getattr(self, identifier))
+        lookup = None
+        # If we have and ID field, a refetch based on that is cleaner as a rename
+        # will change the name or whatever other insane field that are used for lookups...
+        # Let this be a lesson to you all, don't use mutable fields as identifiers. :)
+        if hasattr(self, "id"):
+            lookup = getattr(self, "id", None)
+            if not lookup:
+                cli_error(f"Could not get ID for {self.__class__.__name__} via 'id'.")
+        else:
+            lookup = getattr(self, identifier)
+
+        obj = self.__class__.get_by_id(lookup)
         if not obj:
             cli_warning(f"Could not refresh {self.__class__.__name__} with ID {identifier}.")
 

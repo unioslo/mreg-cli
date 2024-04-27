@@ -39,7 +39,9 @@ class Endpoint(str, Enum):
     Sshfps = "/api/v1/sshfps/"
     Zones = "/api/v1/zones/"
     History = "/api/v1/history/"
+    Txts = "/api/v1/txts/"
     PTR_overrides = "/api/v1/ptroverrides/"
+    Locs = "/api/v1/locs/"
     HostGroups = "/api/v1/hostgroups/"
 
     BacnetID = "/api/v1/bacnet/ids/"
@@ -56,7 +58,7 @@ class Endpoint(str, Enum):
 
     ForwardZones = f"{Zones}forward/"
     ReverseZones = f"{Zones}reverse/"
-    ZoneForHost = f"{ForwardZones}hostname/"
+    ForwardZoneForHost = f"{ForwardZones}hostname/"
 
     def __str__(self):
         """Prevent direct usage without parameters where needed."""
@@ -66,16 +68,30 @@ class Endpoint(str, Enum):
 
     def requires_search_for_id(self) -> bool:
         """Return True if this endpoint requires a search for an ID."""
-        return self in (Endpoint.Hosts, Endpoint.Networks, Endpoint.Cnames, Endpoint.Hinfos)
+        return self in (
+            Endpoint.Hosts,
+            Endpoint.Networks,
+            Endpoint.Cnames,
+            Endpoint.Hinfos,
+            Endpoint.Locs,
+            Endpoint.ForwardZones,
+            Endpoint.ReverseZones,
+        )
 
     @hybridmethod
     def external_id_field(self) -> str:
         """Return the name of the field that holds the external ID."""
-        if self in (Endpoint.Hosts, Endpoint.HostGroups, Endpoint.Cnames):
+        if self in (
+            Endpoint.Hosts,
+            Endpoint.HostGroups,
+            Endpoint.Cnames,
+            Endpoint.ForwardZones,
+            Endpoint.ReverseZones,
+        ):
             return "name"
         if self == Endpoint.Networks:
             return "network"
-        if self == Endpoint.Hinfos:
+        if self in (Endpoint.Hinfos, Endpoint.Locs):
             return "host"
         return "id"
 

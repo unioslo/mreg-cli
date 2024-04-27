@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.models import CNAME, Host, HostT, Zone
+from mreg_cli.api.models import CNAME, ForwardZone, Host, HostT
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.types import Flag
@@ -45,7 +45,7 @@ def cname_add(args: argparse.Namespace) -> None:
         # Catchall for any other case, should not be possible.
         cli_error("The alias name is in use by an existing host. Find a new alias.")
 
-    zone = Zone.get_from_hostname(alias)
+    zone = ForwardZone.get_from_hostname(alias)
     if not zone:
         cli_error(f"Could not find a zone for the alias {alias}.")
 

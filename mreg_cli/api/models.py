@@ -202,6 +202,15 @@ class Zone(FrozenModelWithTimestamps):
         """Return True if the zone is delegated."""
         return False
 
+
+class ForwardZone(Zone, APIMixin["ForwardZone"]):
+    """A forward zone."""
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.ForwardZones
+
     @classmethod
     def get_from_hostname(cls, hostname: HostT) -> Delegation | Zone | None:
         """Get the zone from a hostname.
@@ -211,7 +220,7 @@ class Zone(FrozenModelWithTimestamps):
         :param hostname: The hostname to search for.
         :returns: The zone if found, None otherwise.
         """
-        data = get(Endpoint.ZoneForHost.with_id(hostname.hostname), ok404=True)
+        data = get(Endpoint.ForwardZoneForHost.with_id(hostname.hostname), ok404=True)
         if not data:
             return None
 
@@ -221,7 +230,7 @@ class Zone(FrozenModelWithTimestamps):
             return Delegation(**zoneblob)
 
         if "zone" in zoneblob:
-            return Zone(**zoneblob["zone"])
+            return ForwardZone(**zoneblob["zone"])
 
         cli_warning(f"Unexpected response from server: {zoneblob}")
 
@@ -576,10 +585,16 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["CNAME"]):
             cname.output(padding=padding)
 
 
-class TXT(FrozenModelWithTimestamps, WithHost):
+class TXT(FrozenModelWithTimestamps, WithHost, APIMixin["TXT"]):
     """Represents a TXT record."""
 
+    id: int  # noqa: A003
     txt: str
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Txts
 
     def output(self, padding: int = 14) -> None:
         """Output the TXT record to the console.
@@ -599,9 +614,10 @@ class TXT(FrozenModelWithTimestamps, WithHost):
             txt.output(padding=padding)
 
 
-class MX(FrozenModelWithTimestamps, WithHost):
+class MX(FrozenModelWithTimestamps, WithHost, APIMixin["MX"]):
     """Represents a MX record."""
 
+    id: int  # noqa: A003
     mx: str
     priority: int
 
@@ -883,6 +899,24 @@ class BacnetID(FrozenModel, WithHost, APIMixin["BacnetID"]):
         OutputManager().add_formatted_table(("ID", "Hostname"), ("id", "hostname"), bacnetids)
 
 
+class Location(FrozenModelWithTimestamps, WithHost, APIMixin["Location"]):
+    """Represents a LOC record."""
+
+    loc: str
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Locs
+
+    def output(self, padding: int = 14):
+        """Output the LOC record to the console.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        OutputManager().add_line(f"{'LOC:':<{padding}}{self.loc}")
+
+
 class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
     """Model for an individual host."""
 
@@ -894,7 +928,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
     txts: list[TXT] = []
     ptr_overrides: list[PTR_override] = []
     hinfo: HInfo | None = None
-    loc: str | None = None
+    loc: Location | None = None
     bacnetid: int | None = None
     contact: str
     ttl: int | None = None
@@ -1229,7 +1263,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         if not self.zone:
             return None
 
-        data = get(Endpoint.ZoneForHost.with_id(str(self.name)))
+        data = get(Endpoint.ForwardZoneForHost.with_id(str(self.name)))
         data_as_dict = data.json()
 
         if data_as_dict["zone"]:
@@ -1337,7 +1371,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
             self.hinfo.output(padding=padding)
 
         if self.loc:
-            output_manager.add_line(f"{'Loc:':<{padding}}{self.loc}")
+            self.loc.output(padding=padding)
 
         self.output_cnames(padding=padding)
 

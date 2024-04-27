@@ -16,7 +16,7 @@ from __future__ import annotations
 import argparse
 
 from mreg_cli.api.history import HistoryResource
-from mreg_cli.api.models import Host, HostList, HostT, MACAddressField, NetworkOrIP, Zone
+from mreg_cli.api.models import ForwardZone, Host, HostList, HostT, MACAddressField, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.types import Flag
@@ -87,7 +87,7 @@ def add(args: argparse.Namespace) -> None:
         else:
             cli_warning(f"Host {hname} already exists.")
 
-    zone = Zone.get_from_hostname(hname)
+    zone = ForwardZone.get_from_hostname(hname)
     if not zone and not args.force:
         cli_warning(f"{hname} isn't in a zone controlled by MREG, must force")
     if zone and zone.is_delegated() and not args.force:
@@ -403,7 +403,7 @@ def rename(args: argparse.Namespace) -> None:
         cli_warning(f"host {new_host} already exists")
 
     # Require force if FQDN not in MREG zone
-    zone = Zone.get_from_hostname(new_name)
+    zone = ForwardZone.get_from_hostname(new_name)
     if not zone and not args.force:
         cli_warning(f"{new_name} isn't in a zone controlled by MREG, must force")
 
