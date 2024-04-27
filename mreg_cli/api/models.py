@@ -475,11 +475,16 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
         return hash((self.id, self.ipaddress.address, self.macaddress))
 
 
-class HInfo(FrozenModelWithTimestamps, WithHost):
+class HInfo(FrozenModelWithTimestamps, WithHost, APIMixin["HInfo"]):
     """Represents a HINFO record."""
 
     cpu: str
     os: str
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Hinfos
 
     def output(self, padding: int = 14):
         """Output the HINFO record to the console."""
@@ -526,14 +531,24 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["CNAME"]):
         :param name: The name to search for.
         :returns: The CNAME record if found, None otherwise.
         """
+        target_hostname = None
         if isinstance(host, HostT):
-            hostobj = Host.get_by_any_means(host)
+            hostobj = Host.get_by_any_means(host, inform_as_cname=False)
             if not hostobj:
                 cli_warning(f"Host with name {host.hostname} not found.")
 
             host = hostobj.id
+            target_hostname = hostobj.name.hostname
+        else:
+            hostobj = Host.get_by_id(host)
+            if not hostobj:
+                cli_warning(f"Host with ID {host} not found.")
+            target_hostname = hostobj.name.hostname
 
         results = cls.get_by_query({"host": str(host), "name": name.hostname})
+
+        if not results or len(results) == 0:
+            cli_warning(f"CNAME record for {name} not found for {target_hostname}.")
 
         if len(results) > 1:
             cli_error(f"Multiple CNAME records found for {host} with {name}!")

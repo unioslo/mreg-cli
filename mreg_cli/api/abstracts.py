@@ -11,7 +11,7 @@ from pydantic.fields import FieldInfo
 
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.history import HistoryItem, HistoryResource
-from mreg_cli.log import cli_warning
+from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list, patch, post
 
@@ -88,8 +88,6 @@ class FrozenModelWithTimestamps(FrozenModel):
 
 class APIMixin(Generic[BMT], ABC):
     """A mixin for API-related methods."""
-
-    id: int  # noqa: A003
 
     def id_for_endpoint(self) -> int | str:
         """Return the appropriate id for the object for its endpoint.
@@ -228,9 +226,14 @@ class APIMixin(Generic[BMT], ABC):
 
         :returns: The fetched object.
         """
-        obj = self.__class__.get_by_id(self.id)
+        id_field = self.field_for_endpoint()
+        identifier = getattr(self, id_field)
+        if not identifier:
+            cli_error(f"Could not get identifier for {self.__class__.__name__} via {id_field}.")
+
+        obj = self.__class__.get_by_id(getattr(self, identifier))
         if not obj:
-            cli_warning(f"Could not refresh {self.__class__.__name__} with ID {self.id}.")
+            cli_warning(f"Could not refresh {self.__class__.__name__} with ID {identifier}.")
 
         return obj
 

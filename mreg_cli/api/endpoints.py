@@ -34,6 +34,7 @@ class Endpoint(str, Enum):
     Ipaddresses = "/api/v1/ipaddresses/"
     Naptrs = "/api/v1/naptrs/"
     Srvs = "/api/v1/srvs/"
+    Hinfos = "/api/v1/hinfos/"
     Cnames = "/api/v1/cnames/"
     Sshfps = "/api/v1/sshfps/"
     Zones = "/api/v1/zones/"
@@ -65,7 +66,7 @@ class Endpoint(str, Enum):
 
     def requires_search_for_id(self) -> bool:
         """Return True if this endpoint requires a search for an ID."""
-        return self in (Endpoint.Hosts, Endpoint.Networks, Endpoint.Cnames)
+        return self in (Endpoint.Hosts, Endpoint.Networks, Endpoint.Cnames, Endpoint.Hinfos)
 
     @hybridmethod
     def external_id_field(self) -> str:
@@ -74,6 +75,8 @@ class Endpoint(str, Enum):
             return "name"
         if self == Endpoint.Networks:
             return "network"
+        if self == Endpoint.Hinfos:
+            return "host"
         return "id"
 
     def with_id(self, identity: str | int) -> str:

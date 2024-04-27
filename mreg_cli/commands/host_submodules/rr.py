@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from mreg_cli.api.models import HInfo, Host
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
@@ -50,7 +51,6 @@ from mreg_cli.utilities.api import delete, get_list, patch, post
 from mreg_cli.utilities.host import get_info_by_name, host_info_by_name
 from mreg_cli.utilities.network import get_network_reserved_ips, ip_in_mreg_net
 from mreg_cli.utilities.output import (
-    output_hinfo,
     output_loc,
     output_mx,
     output_naptr,
@@ -81,17 +81,17 @@ def hinfo_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, cpu, os)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
+    host = Host.get_by_any_means_or_raise(args.name)
+    if host.hinfo:
+        cli_warning(f"{host} already has hinfo set.")
 
-    if info["hinfo"]:
-        cli_warning(f"{info['name']} already has hinfo set.")
+    HInfo.create({"host": str(host.id), "cpu": args.cpu, "os": args.os})
+    host = host.refetch()
 
-    data = {"host": info["id"], "cpu": args.cpu, "os": args.os}
-    # Add HINFO record to host
-    path = "/api/v1/hinfos/"
-    post(path, **data)
-    cli_info("Added HINFO record to {}".format(info["name"]), print_msg=True)
+    if host.hinfo and host.hinfo.cpu == args.cpu and host.hinfo.os == args.os:
+        cli_info(f"Added HINFO record for {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to add HINFO for {host}")
 
 
 @command_registry.register_command(
@@ -109,15 +109,15 @@ def hinfo_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
+    host = Host.get_by_any_means_or_raise(args.name)
+    if not host.hinfo:
+        cli_warning(f"{host} already has no hinfo set.")
 
-    if not info["hinfo"]:
-        cli_warning(f"{info['name']} already has no hinfo set.")
-    host_id = info["id"]
-    path = f"/api/v1/hinfos/{host_id}"
-    delete(path)
-    cli_info("deleted HINFO from {}".format(info["name"]), True)
+    hinfo = HInfo.get_by_field("host", str(host.id))
+    if hinfo and hinfo.delete():
+        cli_info(f"Removed HINFO record for {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to remove HINFO for {host}")
 
 
 @command_registry.register_command(
@@ -135,12 +135,15 @@ def hinfo_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = host_info_by_name(args.name)
-    if info["hinfo"]:
-        output_hinfo(info["hinfo"])
+    host = Host.get_by_any_means_or_raise(args.name)
+    if not host.hinfo:
+        cli_info(f"No hinfo for {host.name.hostname}", print_msg=True)
+
+    hinfo = HInfo.get_by_field("host", str(host.id))
+    if hinfo:
+        hinfo.output()
     else:
-        cli_info(f"No hinfo for {args.name}", print_msg=True)
-    cli_info("showed hinfo for {}".format(info["name"]))
+        cli_info(f"No hinfo for {host.name.hostname}", print_msg=True)
 
 
 @command_registry.register_command(

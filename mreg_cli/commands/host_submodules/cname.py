@@ -6,7 +6,7 @@ import argparse
 
 from mreg_cli.api.models import CNAME, Host, HostT, Zone
 from mreg_cli.commands.host import registry as command_registry
-from mreg_cli.log import cli_error, cli_info
+from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.types import Flag
 
 
@@ -32,7 +32,7 @@ def cname_add(args: argparse.Namespace) -> None:
     host = Host.get_by_any_means_or_raise(args.name)
     alias = HostT(hostname=args.alias)
 
-    alias_in_use = Host.get_by_any_means(alias)
+    alias_in_use = Host.get_by_any_means(alias, inform_as_cname=False)
     if alias_in_use:
         if alias_in_use.id == host.id:
             cli_error(f"The alias {alias} is already active for {host}.")
@@ -75,9 +75,22 @@ def cname_remove(args: argparse.Namespace) -> None:
     host = Host.get_by_any_means_or_raise(args.name)
     alias = HostT(hostname=args.alias)
 
-    cname = CNAME.get_by_host_and_name(host.name, alias)
+    alias_as_host = Host.get_by_field("name", alias.hostname)
+    if alias_as_host:
+        cli_warning(f"The alias {alias} is a host, did you mix up the arguments?")
+
+    cname = CNAME.get_by_field("name", alias.hostname)
     if not cname:
-        cli_error(f"No CNAME record found for {alias} on {host.name}.")
+        cli_warning(f"No CNAME record found for {alias}.")
+
+    # Handle situation where the CNAME is not associated with the host we are removing it from.
+    if cname.host != host.id:
+        cname_host = Host.get_by_id(cname.host)
+        if not cname_host:
+            cli_error(f"Could not find the host for the CNAME {alias}.")
+        actual = cname_host.name.hostname
+        desired = host.name.hostname
+        cli_warning(f"The CNAME {cname.name} is associated with {actual}, NOT {desired}.")
 
     if cname.delete():
         cli_info(f"Removed CNAME {cname.name} for {host.name}.", print_msg=True)
