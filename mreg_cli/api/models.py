@@ -13,7 +13,7 @@ from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimesta
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
-from mreg_cli.log import cli_warning
+from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
 from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list, get_list_in
@@ -316,8 +316,11 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
 
         :param ip: The IP address to search for.
         :returns: The network if found, None otherwise.
+        :raises cli_warning: If the network is not found.
         """
         data = get(Endpoint.NetworksByIP.with_id(str(ip)))
+        if not data:
+            cli_warning(f"Network with IP address {ip} not found.")
         return Network(**data.json())
 
     @classmethod
@@ -326,6 +329,8 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
 
         :param netmask: The netmask to search for.
         :returns: The network if found, None otherwise.
+        :raises ValueError: If the netmask is invalid.
+        :raises cli_warning: If the network is not found.
         """
         data = get_item_by_key_value(Endpoint.Networks, "network", netmask)
         if not data:
@@ -486,6 +491,7 @@ class HInfo(FrozenModelWithTimestamps, WithHost):
 class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["CNAME"]):
     """Represents a CNAME record."""
 
+    id: int  # noqa: A003
     name: HostT
     ttl: int | None = None
 
@@ -499,6 +505,40 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["CNAME"]):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.Cnames
+
+    @classmethod
+    def get_by_name(cls, name: HostT) -> CNAME:
+        """Get a CNAME record by name.
+
+        :param name: The name to search for.
+        :returns: The CNAME record if found, None otherwise.
+        """
+        data = get_item_by_key_value(Endpoint.Cnames, "name", name.hostname)
+        if not data:
+            cli_warning(f"CNAME record for {name} not found.")
+        return CNAME(**data)
+
+    @classmethod
+    def get_by_host_and_name(cls, host: HostT | int, name: HostT) -> CNAME:
+        """Get a CNAME record by host and name.
+
+        :param host: The host to search for, either a hostname or an ID.
+        :param name: The name to search for.
+        :returns: The CNAME record if found, None otherwise.
+        """
+        if isinstance(host, HostT):
+            hostobj = Host.get_by_any_means(host)
+            if not hostobj:
+                cli_warning(f"Host with name {host.hostname} not found.")
+
+            host = hostobj.id
+
+        results = cls.get_by_query({"host": str(host), "name": name.hostname})
+
+        if len(results) > 1:
+            cli_error(f"Multiple CNAME records found for {host} with {name}!")
+
+        return results[0]
 
     def output(self, padding: int = 14) -> None:
         """Output the CNAME record to the console.
@@ -793,6 +833,39 @@ class BacnetID(FrozenModel, WithHost, APIMixin["BacnetID"]):
 
     id: int  # noqa: A003
     hostname: str
+
+    @classmethod
+    def MAX_ID(cls) -> int:
+        """Return the maximum ID for a Bacnet ID."""
+        return 4194302
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.BacnetID
+
+    @classmethod
+    def get_in_range(cls, start: int, end: int) -> list[BacnetID]:
+        """Get Bacnet IDs in a range.
+
+        :param start: The start of the range.
+        :param end: The end of the range.
+        :returns: List of BacnetID objects in the range.
+        """
+        params = {"id__range": f"{start},{end}"}
+        data = get_list(Endpoint.BacnetID, params=params)
+        return [BacnetID(**item) for item in data]
+
+    @classmethod
+    def output_multiple(cls, bacnetids: list[BacnetID]):
+        """Output multiple Bacnet ID records to the console.
+
+        :param bacnetids: List of Bacnet ID records to output.
+        """
+        if not bacnetids:
+            return
+
+        OutputManager().add_formatted_table(("ID", "Hostname"), ("id", "hostname"), bacnetids)
 
 
 class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
@@ -1204,7 +1277,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         return Role.get_list_by_field("hosts", self.id)
 
     def bacnet(self) -> BacnetID | None:
-        """Return the Bacnet ID for the host."""
+        """Return the BacnetID for the host."""
         if not self.bacnetid:
             return None
 
@@ -1251,7 +1324,8 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         if self.loc:
             output_manager.add_line(f"{'Loc:':<{padding}}{self.loc}")
 
-        CNAME.output_multiple(self.cnames, padding=padding)
+        self.output_cnames(padding=padding)
+
         TXT.output_multiple(self.txts, padding=padding)
         Srv.output_multiple(self.srvs(), padding=padding)
         NAPTR.output_multiple(self.naptrs(), padding=padding)
@@ -1278,6 +1352,13 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
             IPAddress.output_multiple(self.ipv6_addresses(), padding=padding, names=names)
         else:
             IPAddress.output_multiple(self.ipaddresses, padding=padding, names=names)
+
+    def output_cnames(self, padding: int = 14):
+        """Output the CNAME records for the host."""
+        if not self.cnames:
+            return
+
+        CNAME.output_multiple(self.cnames, padding=padding)
 
     def __str__(self) -> str:
         """Return the host name as a string."""

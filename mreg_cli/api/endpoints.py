@@ -65,12 +65,12 @@ class Endpoint(str, Enum):
 
     def requires_search_for_id(self) -> bool:
         """Return True if this endpoint requires a search for an ID."""
-        return self in (Endpoint.Hosts, Endpoint.Networks)
+        return self in (Endpoint.Hosts, Endpoint.Networks, Endpoint.Cnames)
 
     @hybridmethod
     def external_id_field(self) -> str:
         """Return the name of the field that holds the external ID."""
-        if self in (Endpoint.Hosts, Endpoint.HostGroups):
+        if self in (Endpoint.Hosts, Endpoint.HostGroups, Endpoint.Cnames):
             return "name"
         if self == Endpoint.Networks:
             return "network"
@@ -98,3 +98,12 @@ class Endpoint(str, Enum):
 
         encoded_params = (quote(str(param)) for param in params)
         return self.value.format(*encoded_params)
+
+    def with_query(self, query: dict[str, str]) -> str:
+        """Construct and return an endpoint URL with a query string.
+
+        :param query: A dictionary of query parameters.
+        :returns: A fully constructed endpoint URL with a query string.
+        """
+        query_string = "&".join(f"{quote(key)}={quote(value)}" for key, value in query.items())
+        return f"{self.value}?{query_string}"

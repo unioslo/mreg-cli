@@ -17,21 +17,20 @@ from typing import Any, Literal, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
+from pydantic import BaseModel
 
 from mreg_cli.exceptions import CliError
 from mreg_cli.types import RecordingEntry, TimeInfo
 
 
 @overload
-def find_char_outside_quotes(
-    line: str, target_char: str, return_position: Literal[True]
-) -> int: ...
+def find_char_outside_quotes(line: str, target_char: str, return_position: Literal[True]) -> int:
+    ...
 
 
 @overload
-def find_char_outside_quotes(
-    line: str, target_char: str, return_position: Literal[False]
-) -> str: ...
+def find_char_outside_quotes(line: str, target_char: str, return_position: Literal[False]) -> str:
+    ...
 
 
 def find_char_outside_quotes(
@@ -403,28 +402,33 @@ class OutputManager:
         self,
         headers: Sequence[str],
         keys: Sequence[str],
-        data: list[dict[str, Any]],
+        data: Sequence[dict[str, Any] | BaseModel],
         indent: int = 0,
     ) -> None:
         """Format and add a table of data to the output.
 
         Generates a table of data from the given headers, keys, and data. The
         headers are used as the column headers, and the keys are used to
-        extract the data from the dicts in the data list. The data is
-        formatted and added to the output.
+        extract the data from the dicts or Pydantic models in the data list.
+        The data is formatted and added to the output.
+
+        :param headers: Column headers for the table.
+        :param keys: Keys to extract data from each item in the data list.
+        :param data: A list (or any sequence) of dictionaries or Pydantic models.
+        :param indent: The indentation level for the table in the output.
         """
+        output_data = [item.model_dump() if isinstance(item, BaseModel) else item for item in data]
+
+        # Prepare the format string with dynamic padding based on the longest data
         raw_format = " " * indent
         for key, header in zip(keys, headers):
-            longest = len(header)
-            for d in data:
-                longest = max(longest, len(str(d[key])))
+            longest = max(len(header), *(len(str(d[key])) for d in output_data))
             raw_format += "{:<%d}   " % longest
 
+        # Add headers and rows to the output
         self.add_line(raw_format.format(*headers))
-        for d in data:
+        for d in output_data:
             self.add_line(raw_format.format(*[d[key] for key in keys]))
-
-        return
 
     def filtered_output(self) -> list[str]:
         """Return the lines of output.

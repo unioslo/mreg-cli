@@ -7,6 +7,7 @@ import ipaddress
 import urllib.parse
 from typing import Any
 
+from mreg_cli.api.models import Network
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.log import cli_error, cli_info, cli_warning
@@ -52,7 +53,9 @@ def get_network_range_from_input(net: str) -> str:
         net = net[:-1]
     if is_valid_ip(net):
         network = get_network(net)
-        return network["network"]
+        if not network:
+            cli_error(f"Network not found for ip {net}")
+        return network.network
     elif is_valid_network(net):
         return net
     else:
@@ -201,10 +204,11 @@ def print_network_info(network_info: str | dict[str, Any]) -> None:
     :param network_info: str | dict[str, Any]]
     :param padding: int
     """
+    return
     if isinstance(network_info, str):
         addr = network_info
         ip_range = get_network_range_from_input(addr)
-        network_info = get_network(ip_range)
+        network = Network.get_by_ip(ipaddress.ip_address(addr))
     elif isinstance(network_info, dict):
         ip_range = network_info["network"]
     else:
@@ -310,6 +314,7 @@ def find(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (limit, silent, addr_only, ip, network, description, vlan,
                                      dns_delegated, category, location, frozen, reserved)
     """
+    return
     args_dict = vars(args)
 
     ip_arg = args_dict.get("ip")
@@ -317,6 +322,8 @@ def find(args: argparse.Namespace) -> None:
     if ip_arg:
         ip_range = get_network_range_from_input(ip_arg)
         network_info = get_network(ip_range)
+        if not network_info:
+            cli_warning(f"No network found for ip {ip_arg}")
         networks = [network_info]
     else:
         params = {}
@@ -341,7 +348,7 @@ def find(args: argparse.Namespace) -> None:
             cli_warning("Need at least one search criteria")
 
         path = "/api/v1/networks/"
-        networks = get_list(path, params)
+        networks = Network.get_list(path, params)
 
     if not networks:
         cli_warning("No networks matching the query were found.")
@@ -357,7 +364,7 @@ def find(args: argparse.Namespace) -> None:
                 manager.add_line(f"Reached limit ({args.limit}). Omitted {omitted} network{s}.")
             break
         if args.addr_only:
-            manager.add_line(nwork["network"])
+            manager.add_line(nwork)
         else:
             print_network_info(nwork)
             manager.add_line("")  # Blank line between networks
@@ -470,14 +477,16 @@ def add_excluded_range(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
     info = get_network(args.network)
-    network = info["network"]
+    if not info:
+        cli_error(f"Network {args.network} not found")
+    network = info.network
     if not is_valid_ip(args.start_ip):
         cli_error(f"Start ipaddress {args.start_ip} not valid")
     if not is_valid_ip(args.end_ip):
         cli_error(f"End ipaddress {args.end_ip} not valid")
 
     path = f"/api/v1/networks/{urllib.parse.quote(network)}/excluded_ranges/"
-    data = {"network": info["id"], "start_ip": args.start_ip, "end_ip": args.end_ip}
+    data = {"network": info.id, "start_ip": args.start_ip, "end_ip": args.end_ip}
     post(path, **data)
     cli_info(f"Added exclude range to {network}", True)
 
@@ -497,18 +506,21 @@ def remove_excluded_range(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
+    return
     info = get_network(args.network)
-    network = info["network"]
+    if not info:
+        cli_warning(f"Network {args.network} not found")
+    network = info.network
 
     if not is_valid_ip(args.start_ip):
         cli_error(f"Start ipaddress {args.start_ip} not valid")
     if not is_valid_ip(args.end_ip):
         cli_error(f"End ipaddress {args.end_ip} not valid")
 
-    if not info["excluded_ranges"]:
+    if not info.excluded_ranges:
         cli_error(f"Network {network} has no excluded ranges")
 
-    for i in info["excluded_ranges"]:
+    for i in info.excluded_ranges:
         if i["start_ip"] == args.start_ip and i["end_ip"] == args.end_ip:
             path = f"/api/v1/networks/{urllib.parse.quote(network)}/excluded_ranges/{i['id']}"
             break
@@ -532,6 +544,7 @@ def set_category(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, category)
     """
+    return
     network = get_network(args.network)
     if not is_valid_category_tag(args.category):
         cli_warning("Not a valid category tag")
@@ -558,6 +571,7 @@ def set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, description)
     """
+    return
     network = get_network(args.network)
     path = f"/api/v1/networks/{urllib.parse.quote(network['network'])}"
     patch(path, description=args.description)

@@ -11,14 +11,10 @@ from __future__ import annotations
 
 import argparse
 
+from mreg_cli.api.models import BacnetID, Host
 from mreg_cli.commands.host import registry as command_registry
-from mreg_cli.log import cli_error, cli_info
-from mreg_cli.outputmanager import OutputManager
+from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, post
-from mreg_cli.utilities.host import host_info_by_name
-
-BACNET_MAX_ID = 4194302
 
 
 @command_registry.register_command(
@@ -27,7 +23,7 @@ BACNET_MAX_ID = 4194302
     short_desc="Add BACnet ID",
     flags=[
         Flag("name", description="Name of host.", metavar="NAME"),
-        Flag("-id", description="ID value (0-4194302)", metavar="ID"),
+        Flag("-id", description=f"ID value (0-{BacnetID.MAX_ID()})", metavar="ID"),
     ],
 )
 def bacnetid_add(args: argparse.Namespace) -> None:
@@ -35,23 +31,22 @@ def bacnetid_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, id)
     """
-    info = host_info_by_name(args.name)
-    if "bacnetid" in info and info["bacnetid"] is not None:
-        cli_error("{} already has BACnet ID {}.".format(info["name"], info["bacnetid"]["id"]))
-    postdata = {"hostname": info["name"]}
-    path = "/api/v1/bacnet/ids/"
-    bacnetid = args.id
-    if bacnetid:
-        response = get(path + bacnetid, ok404=True)
-        if response:
-            j = response.json()
-            cli_error("BACnet ID {} is already in use by {}".format(j["id"], j["hostname"]))
-        postdata["id"] = bacnetid
-    post(path, **postdata)
-    info = host_info_by_name(args.name)
-    if "bacnetid" in info and info["bacnetid"] is not None:
-        b = info["bacnetid"]
-        cli_info("Assigned BACnet ID {} to {}".format(b["id"], info["name"]), print_msg=True)
+    host = Host.get_by_any_means_or_raise(args.name)
+    host_bacnet = host.bacnet()
+    if host_bacnet is not None:
+        cli_error(f"{host.name} already has BACnet ID {host_bacnet.id}.")
+
+    existing = BacnetID.get(args.id)
+    if existing:
+        cli_error(f"BACnet ID {existing.id} is already in use by {existing.hostname}.")
+
+    BacnetID.create(params={"hostname": host.name.hostname, "id": args.id})
+
+    validator = BacnetID.get(args.id)
+    if validator and validator.hostname == host.name.hostname:
+        cli_info(f"Assigned BACnet ID {validator.id} to {validator.hostname}.", print_msg=True)
+    else:
+        cli_error(f"Failed to assign BACnet ID {args.id} to {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -67,15 +62,15 @@ def bacnetid_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = host_info_by_name(args.name)
-    if "bacnetid" not in info or info["bacnetid"] is None:
-        cli_error("{} does not have a BACnet ID assigned.".format(info["name"]))
-    path = "/api/v1/bacnet/ids/{}".format(info["bacnetid"]["id"])
-    delete(path)
-    cli_info(
-        "Unassigned BACnet ID {} from {}".format(info["bacnetid"]["id"], info["name"]),
-        print_msg=True,
-    )
+    host = Host.get_by_any_means_or_raise(args.name)
+    host_bacnet = host.bacnet()
+    if host_bacnet is None:
+        cli_error(f"{host.name} does not have a BACnet ID assigned.")
+
+    if host_bacnet.delete():
+        cli_info(f"Unassigned BACnet ID {host_bacnet.id} from {host.name}.", print_msg=True)
+    else:
+        cli_error(f"Failed to unassign BACnet ID {host_bacnet.id} from {host.name}.")
 
 
 @command_registry.register_command(
@@ -85,13 +80,13 @@ def bacnetid_remove(args: argparse.Namespace) -> None:
     flags=[
         Flag(
             "-min",
-            description="Minimum ID value (0-4194302)",
+            description=f"Minimum ID value (0-{BacnetID.MAX_ID()})",
             flag_type=int,
             metavar="MIN",
         ),
         Flag(
             "-max",
-            description="Maximum ID value (0-4194302)",
+            description=f"Maximum ID value (0-{BacnetID.MAX_ID()})",
             flag_type=int,
             metavar="MAX",
         ),
@@ -102,15 +97,20 @@ def bacnetid_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (min, max)
     """
-    minval = 0
-    if args.min is not None:
-        minval = args.min
-        if minval < 0:
-            cli_error("The minimum ID value is 0.")
-    maxval = 4194302
-    if args.max is not None:
-        maxval = args.max
-        if maxval > BACNET_MAX_ID:
-            cli_error(f"The maximum ID value is {BACNET_MAX_ID}.")
-    r = get_list("/api/v1/bacnet/ids/", {"id__range": f"{minval},{maxval}"})
-    OutputManager().add_formatted_table(("ID", "Hostname"), ("id", "hostname"), r)
+    min_id = args.min if args.min is not None else 0
+    max_id = args.max if args.max is not None else BacnetID.MAX_ID()
+
+    if min_id < 0:
+        cli_error("Minimum ID value cannot be less than 0.")
+
+    if min_id is not None and max_id is not None and min_id > max_id:
+        cli_error("Minimum ID value cannot be greater than maximum ID value.")
+
+    if max_id is not None and max_id > BacnetID.MAX_ID():
+        cli_error(f"The maximum ID value is {BacnetID.MAX_ID()}.")
+
+    bacnetids = BacnetID.get_in_range(min_id, max_id)
+    if not bacnetids:
+        cli_warning("No BACnet IDs found in the specified range.")
+
+    BacnetID.output_multiple(bacnetids)

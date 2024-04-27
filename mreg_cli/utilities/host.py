@@ -2,30 +2,15 @@
 
 from __future__ import annotations
 
-import argparse
-import ipaddress
 import urllib.parse
 from typing import Any
 
 from mreg_cli.exceptions import CliWarning, HostNotFoundWarning
 from mreg_cli.log import cli_error, cli_info, cli_warning
-from mreg_cli.types import IP_Version
-from mreg_cli.utilities.api import get, get_list, patch, post
-from mreg_cli.utilities.network import (
-    get_network,
-    get_network_by_ip,
-    get_network_first_unused_ip,
-    get_network_reserved_ips,
-    ips_are_in_same_vlan,
-)
+from mreg_cli.utilities.api import get, get_list, patch
+from mreg_cli.utilities.network import ips_are_in_same_vlan
 from mreg_cli.utilities.shared import clean_hostname, format_mac
-from mreg_cli.utilities.validators import (
-    is_valid_ip,
-    is_valid_ipv4,
-    is_valid_ipv6,
-    is_valid_mac,
-    is_valid_network,
-)
+from mreg_cli.utilities.validators import is_valid_ip, is_valid_ipv4, is_valid_ipv6, is_valid_mac
 
 
 def get_unique_ip_by_name_or_ip(arg: str) -> dict[str, Any]:
@@ -143,136 +128,6 @@ def cname_exists(cname: str) -> bool:
         return True
     else:
         return False
-
-
-def add_ip_to_host(
-    args: argparse.Namespace, ipversion: IP_Version, macaddress: str | None = None
-) -> None:
-    """Add an A record to host. If <name> is an alias the cname host is used.
-
-    :param args: argparse.Namespace (name, ip, force)
-    :param ipversion: 4 or 6
-    :param macaddress: macaddress to associate with the ip (optional)
-    """
-    info = None
-
-    if "*" in args.name and not args.force:
-        cli_warning("Wildcards must be forced.")
-
-    ip = get_requested_ip(args.ip, args.force, ipversion=ipversion)
-
-    try:
-        # Get host info for or raise exception
-        info = host_info_by_name(args.name)
-    except HostNotFoundWarning:
-        pass
-
-    if macaddress is not None:
-        if is_valid_mac(macaddress):
-            macaddress = format_mac(macaddress)
-        else:
-            cli_error(f"Invalid macaddress: {macaddress}")
-
-    if info is None:
-        hostname = clean_hostname(args.name)
-        data = {"name": hostname, "ipaddress": ip}
-        # Create new host with IP
-        path = "/api/v1/hosts/"
-        post(path, params=None, **data)
-        cli_info(f"Created host {hostname} with ip {ip}", print_msg=True)
-        if macaddress is not None:
-            # It can only be one, as it was just created.
-            new_ip = get(f"{path}{hostname}").json()["ipaddresses"][0]
-            assoc_mac_to_ip(macaddress, new_ip, force=args.force)
-
-    else:
-        # Require force if host has multiple A/AAAA records
-        if len(info["ipaddresses"]) and not args.force:
-            cli_warning("{} already has A/AAAA record(s), must force".format(info["name"]))
-
-        if any(args.ip == i["ipaddress"] for i in info["ipaddresses"]):
-            cli_warning(f"Host already has IP {args.ip}")
-
-        data = {
-            "host": info["id"],
-            "ipaddress": ip,
-        }
-        if macaddress is not None:
-            data["macaddress"] = macaddress
-
-        # Add IP
-        path = "/api/v1/ipaddresses/"
-        post(path, params=None, **data)
-        cli_info(f"added ip {ip} to {info['name']}", print_msg=True)
-
-
-def get_requested_ip(ip: str, force: bool, ipversion: IP_Version | None = None) -> str:
-    """Return an IP address from the given args.
-
-    - If the given ip is an ip, then that ip is returned.
-    - If the given ip is a network, then the first unused IP from that network is returned.
-    - If the given ip is a network without a mask, then network is deduced as per above.
-
-    Note that the ipversion is only used to check that the given ip is of the correct version.
-    """
-    # Try to fail fast for valid IP
-    if ipversion is not None and is_valid_ip(ip):
-        if ipversion == 4:
-            # Fail if input isn't ipv4
-            if is_valid_ipv6(ip):
-                cli_warning("got ipv6 address, want ipv4.")
-            if not is_valid_ipv4(ip):
-                cli_warning(f"not valid ipv4 address: {ip}")
-        elif ipversion == 6:
-            # Fail if input isn't ipv6
-            if is_valid_ipv4(ip):
-                cli_warning("got ipv4 address, want ipv6.")
-            if not is_valid_ipv6(ip):
-                cli_warning(f"not valid ipv6 address: {ip}")
-
-    # Handle arbitrary ip from network if received a network w/o mask
-    if ip.endswith("/"):
-        network = get_network(ip[:-1])
-        ip = get_network_first_unused_ip(network)
-    # Handle arbitrary ip from network if received a network w/mask
-    elif is_valid_network(ip):
-        network = get_network(ip)
-        ip = get_network_first_unused_ip(network)
-    elif is_valid_ip(ip):
-        path = "/api/v1/hosts/"
-        hosts = get_list(path, params={"ipaddresses__ipaddress": ip})
-        if hosts and not force:
-            hostnames = ",".join([i["name"] for i in hosts])
-            cli_warning(f"{ip} already in use by: {hostnames}. Must force")
-        network = get_network_by_ip(ipaddress.ip_address(ip))
-        if not network:
-            if force:
-                return ip
-            cli_warning(f"{ip} isn't in a network controlled by MREG, must force")
-    else:
-        cli_warning(f"Could not determine network for {ip}")
-
-    network_object = ipaddress.ip_network(network["network"])
-    if ipversion:
-        if network_object.version != ipversion:
-            if ipversion == 4:
-                cli_warning("Attemptet to get an ipv4 address, but input yielded ipv6")
-            elif ipversion == 6:
-                cli_warning("Attemptet to get an ipv6 address, but input yielded ipv4")
-
-    if network["frozen"] and not force:
-        cli_warning("network {} is frozen, must force".format(network["network"]))
-    # Chat the address given isn't reserved
-    reserved_addresses = get_network_reserved_ips(str(network["network"]))
-    if ip in reserved_addresses and not force:
-        cli_warning("Address is reserved. Requires force")
-    if network_object.num_addresses > 2:
-        if ip == network_object.network_address.exploded:
-            cli_warning("Can't overwrite the network address of the network")
-        if ip == network_object.broadcast_address.exploded:
-            cli_warning("Can't overwrite the broadcast address of the network")
-
-    return ip
 
 
 def host_info_by_name_or_ip(name_or_ip: str) -> dict[str, Any]:

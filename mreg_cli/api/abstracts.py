@@ -206,6 +206,20 @@ class APIMixin(Generic[BMT], ABC):
         data = get_list(cls.endpoint(), params=params)
         return [cast(BMT, cls(**item)) for item in data]
 
+    @classmethod
+    def get_by_query(cls, query: dict[str, str], ordering: str | None = None) -> list[BMT]:
+        """Get a list of objects by a query.
+
+        :param query: The query to search by.
+
+        :returns: A list of objects if found, an empty list otherwise.
+        """
+        if ordering:
+            query["ordering"] = ordering
+
+        data = get_list(cls.endpoint().with_query(query))
+        return [cast(BMT, cls(**item)) for item in data]
+
     def refetch(self) -> BMT:
         """Fetch an updated version of the object.
 

@@ -4,14 +4,10 @@ from __future__ import annotations
 
 import argparse
 
+from mreg_cli.api.models import CNAME, Host, HostT, Zone
 from mreg_cli.commands.host import registry as command_registry
-from mreg_cli.exceptions import HostNotFoundWarning
-from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.log import cli_error, cli_info
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, patch, post
-from mreg_cli.utilities.host import clean_hostname, cname_exists, host_info_by_name
-from mreg_cli.utilities.output import output_cname
-from mreg_cli.utilities.zone import zone_check_for_hostname
 
 
 @command_registry.register_command(
@@ -33,28 +29,33 @@ def cname_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, alias, force)
     """
     # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    alias = clean_hostname(args.alias)
+    host = Host.get_by_any_means_or_raise(args.name)
+    alias = HostT(hostname=args.alias)
 
-    # If alias name already exist as host, abort.
-    try:
-        host_info_by_name(alias)
+    alias_in_use = Host.get_by_any_means(alias)
+    if alias_in_use:
+        if alias_in_use.id == host.id:
+            cli_error(f"The alias {alias} is already active for {host}.")
+
+        if alias_in_use.name.hostname != alias.hostname:
+            cli_error(
+                f"The alias {alias} is already in use as a CNAME for {alias_in_use.name.hostname}."
+            )
+
+        # Catchall for any other case, should not be possible.
         cli_error("The alias name is in use by an existing host. Find a new alias.")
-    except HostNotFoundWarning:
-        pass
 
-    # Check if cname already in use
-    if cname_exists(alias):
-        cli_warning("The alias is already in use.")
+    zone = Zone.get_from_hostname(alias)
+    if not zone:
+        cli_error(f"Could not find a zone for the alias {alias}.")
 
-    # Check if the cname is in a zone controlled by mreg
-    zone_check_for_hostname(alias, args.force)
+    CNAME.create(params={"host": str(host.id), "name": alias.hostname})
+    cname = CNAME.get_by_host_and_name(host.name, alias)
 
-    data = {"host": info["id"], "name": alias}
-    # Create CNAME record
-    path = "/api/v1/cnames/"
-    post(path, **data)
-    cli_info("Added cname alias {} for {}".format(alias, info["name"]), print_msg=True)
+    if cname:
+        cli_info(f"Added CNAME {cname.name} for {host.name.hostname}.", print_msg=True)
+    else:
+        cli_error(f"Failed to add CNAME {alias} for {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -71,23 +72,17 @@ def cname_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, alias)
     """
-    info = host_info_by_name(args.name)
-    hostname = info["name"]
-    alias = clean_hostname(args.alias)
+    host = Host.get_by_any_means_or_raise(args.name)
+    alias = HostT(hostname=args.alias)
 
-    if not info["cnames"]:
-        cli_warning(f'"{hostname}" doesn\'t have any CNAME records.')
+    cname = CNAME.get_by_host_and_name(host.name, alias)
+    if not cname:
+        cli_error(f"No CNAME record found for {alias} on {host.name}.")
 
-    for cname in info["cnames"]:
-        if cname["name"] == alias:
-            break
+    if cname.delete():
+        cli_info(f"Removed CNAME {cname.name} for {host.name}.", print_msg=True)
     else:
-        cli_warning(f'"{alias}" is not an alias for "{hostname}"')
-
-    # Delete CNAME host
-    path = f"/api/v1/cnames/{alias}"
-    delete(path)
-    cli_info(f"Removed cname alias {alias} for {hostname}", print_msg=True)
+        cli_error(f"Failed to remove CNAME {cname.name} for {host.name}.")
 
 
 @command_registry.register_command(
@@ -104,26 +99,31 @@ def cname_replace(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (cname, host)
     """
-    cname = clean_hostname(args.cname)
-    host = clean_hostname(args.host)
+    cname = HostT(hostname=args.cname)
+    host = Host.get_by_any_means_or_raise(args.host)
 
-    cname_info = host_info_by_name(cname)
-    host_info = host_info_by_name(host)
+    cname_obj = CNAME.get_by_name(cname)
 
-    if cname_info["id"] == host_info["id"]:
-        cli_error(f"The CNAME {cname} already points to {host}.")
+    if not cname_obj:
+        cli_error(f"No CNAME record found for {cname}.")
 
-    # Update CNAME record.
-    data = {"host": host_info["id"], "name": cname}
-    path = f"/api/v1/cnames/{cname}"
-    patch(path, **data)
-    cli_info(f"Moved CNAME alias {cname}: {cname_info['name']} -> {host}", print_msg=True)
+    old_host = Host.get_by_id(cname_obj.host)
+    if not old_host:
+        cli_error(f"Could not find the host for the CNAME {cname}.")
+
+    updated_cname = cname_obj.patch({"host": host.id})
+    if updated_cname:
+        cli_info(
+            f"Moved CNAME alias {cname}: {old_host.name.hostname} -> {host.name}.", print_msg=True
+        )
+    else:
+        cli_error(f"Failed to move CNAME alias {cname}.")
 
 
 @command_registry.register_command(
     prog="cname_show",
     description=(
-        "Show CNAME records for host. If NAME is an alias the cname " "hosts aliases are shown."
+        "Show CNAME records for host. If NAME is an alias the cname hosts' aliases are shown."
     ),
     short_desc="Show CNAME records.",
     flags=[
@@ -137,11 +137,4 @@ def cname_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    try:
-        info = host_info_by_name(args.name)
-        for cname in info["cnames"]:
-            output_cname(cname["name"], info["name"])
-        cli_info("showed cname aliases for {}".format(info["name"]))
-        return
-    except HostNotFoundWarning:
-        cli_warning(f"No cname found for {args.name}")
+    Host.get_by_any_means_or_raise(args.name).output_cnames()
