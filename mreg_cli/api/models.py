@@ -16,7 +16,14 @@ from mreg_cli.config import MregCliConfig
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
-from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list, get_list_in
+from mreg_cli.utilities.api import (
+    delete,
+    get,
+    get_item_by_key_value,
+    get_list,
+    get_list_in,
+    get_list_unique,
+)
 
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
 
@@ -620,6 +627,36 @@ class MX(FrozenModelWithTimestamps, WithHost, APIMixin["MX"]):
     id: int  # noqa: A003
     mx: str
     priority: int
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Mxs
+
+    @classmethod
+    def get_by_all(cls, host: int, mx: str, priority: int) -> MX:
+        """Get an MX record by all fields.
+
+        :param host: The host ID.
+        :param mx: The MX record.
+        :param priority: The priority.
+        :returns: The MX record if found, None otherwise.
+        """
+        data = get_list_unique(
+            Endpoint.Mxs, params={"host": str(host), "mx": mx, "priority": str(priority)}
+        )
+        if not data:
+            cli_warning(f"MX record for {mx} not found.")
+        return MX(**data)
+
+    def has_mx_with_priority(self, mx: str, priority: int) -> bool:
+        """Return True if the MX record has the given MX and priority.
+
+        :param mx: The MX record to check.
+        :param priority: The priority to check.
+        :returns: True if the MX record has the given MX and priority.
+        """
+        return self.mx == mx and self.priority == priority
 
     def output(self, padding: int = 14) -> None:
         """Output the MX record to the console.
@@ -1331,6 +1368,16 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
             return None
 
         return BacnetID.get_by_id(self.bacnetid)
+
+    def has_mx_with_priority(self, mx_arg: str, priority: int) -> MX | None:
+        """Check if the host has an MX record.
+
+        :param mx: The MX record to check for.
+        :param priority: The priority of the MX record.
+
+        :returns: True if the host has the MX record, False otherwise.
+        """
+        return next((mx for mx in self.mxs if mx.has_mx_with_priority(mx_arg, priority)), None)
 
     def hostgroups(self, traverse: bool = False) -> list[HostGroup]:
         """List all hostgroups for the host.

@@ -42,6 +42,8 @@ class Endpoint(str, Enum):
     Txts = "/api/v1/txts/"
     PTR_overrides = "/api/v1/ptroverrides/"
     Locs = "/api/v1/locs/"
+    Mxs = "/api/v1/mxs/"
+    NAPTRs = "/api/v1/naptrs/"
     HostGroups = "/api/v1/hostgroups/"
 
     BacnetID = "/api/v1/bacnet/ids/"

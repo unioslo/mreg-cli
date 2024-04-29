@@ -42,7 +42,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import HInfo, Host, Location
+from mreg_cli.api.models import MX, HInfo, Host, Location
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
@@ -51,7 +51,6 @@ from mreg_cli.utilities.api import delete, get_list, patch, post
 from mreg_cli.utilities.host import get_info_by_name, host_info_by_name
 from mreg_cli.utilities.network import get_network_reserved_ips, ip_in_mreg_net
 from mreg_cli.utilities.output import (
-    output_mx,
     output_naptr,
     output_ptr,
     output_sshfp,
@@ -222,19 +221,6 @@ def loc_show(args: argparse.Namespace) -> None:
     host.loc.output()
 
 
-def _mx_in_mxs(mxs: list[dict[str, str]], priority: str, mx: str) -> str | None:
-    """Check that a matching mx record exists in the list of mxs.
-
-    :param mxs: list of mx records (Dict[str, str])
-    :param priority: priority of the target mx record
-    :param mx: mail exchange of the target mx record
-    """
-    for info in mxs:
-        if info["priority"] == priority and info["mx"] == mx:
-            return info["id"]
-    return None
-
-
 @command_registry.register_command(
     prog="mx_add",
     description="Add a MX record to host.",
@@ -252,16 +238,15 @@ def mx_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, mx)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    if _mx_in_mxs(info["mxs"], args.priority, args.mx):
-        cli_warning("{} already has that MX defined".format(info["name"]))
+    host = Host.get_by_any_means_or_raise(args.name)
+    if host.has_mx_with_priority(args.priority, args.mx):
+        cli_warning(f"{host} already has that MX defined.")
 
-    data = {"host": info["id"], "priority": args.priority, "mx": args.mx}
-    # Add MX record to host
-    path = "/api/v1/mxs/"
-    post(path, **data)
-    cli_info("Added MX record to {}".format(info["name"]), print_msg=True)
+    mx = MX.create({"host": str(host.id), "priority": args.priority, "mx": args.mx})
+    if mx:
+        cli_info(f"Added MX record to {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to add MX for {host}")
 
 
 @command_registry.register_command(
@@ -279,19 +264,22 @@ def mx_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, mx)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-
-    mx_id = _mx_in_mxs(info["mxs"], args.priority, args.mx)
-    if mx_id is None:
+    host = Host.get_by_any_means_or_raise(args.name)
+    if not host.has_mx_with_priority(args.priority, args.mx):
         cli_warning(
-            "{} has no MX records with priority {} and mail exhange {}".format(
-                info["name"], args.priority, args.mx
-            )
+            f"{host} has no MX record with priority {args.priority} and mail exhange {args.mx}"
         )
-    path = f"/api/v1/mxs/{mx_id}"
-    delete(path)
-    cli_info("deleted MX from {}".format(info["name"]), True)
+
+    mx = MX.get_by_all(host.id, args.mx, args.priority)
+    if not mx:
+        cli_warning(
+            f"{host} has no MX record with priority {args.priority} and mail exhange {args.mx}"
+        )
+
+    if mx.delete():
+        cli_info(f"deleted MX from {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to remove MX for {host}")
 
 
 @command_registry.register_command(
@@ -307,14 +295,7 @@ def mx_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = host_info_by_name(args.name)
-    path = "/api/v1/mxs/"
-    params = {
-        "host": info["id"],
-    }
-    mxs = get_list(path, params=params)
-    output_mx(mxs, padding=5)
-    cli_info("showed MX records for {}".format(info["name"]))
+    MX.output_multiple(Host.get_by_any_means_or_raise(args.name).mxs)
 
 
 @command_registry.register_command(
