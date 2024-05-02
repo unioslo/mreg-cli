@@ -11,12 +11,13 @@ import logging
 import os
 import re
 import sys
-from typing import Any, Literal, NoReturn, cast, overload
+from typing import Any, Literal, NoReturn, TypeVar, cast, overload
 from urllib.parse import urljoin
 from uuid import uuid4
 
 import requests
 from prompt_toolkit import prompt
+from pydantic import TypeAdapter
 
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError, LoginFailedError
@@ -32,6 +33,8 @@ mreg_auth_token_file = os.path.join(str(os.getenv("HOME")), ".mreg-cli_auth_toke
 logger = logging.getLogger(__name__)
 
 HTTP_TIMEOUT = 20
+
+T = TypeVar("T")
 
 
 def error(msg: str | Exception, code: int = os.EX_UNAVAILABLE) -> NoReturn:
@@ -229,19 +232,19 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: dict[str, Any], ok404: Literal[True]) -> ResponseLike | None: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> ResponseLike | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any], ok404: Literal[False]) -> ResponseLike: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> ResponseLike: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] = ..., *, ok404: bool) -> ResponseLike | None: ...
+def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> ResponseLike | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] = ...) -> ResponseLike: ...
+def get(path: str, params: dict[str, Any] | None = ...) -> ResponseLike: ...
 
 
 def get(
@@ -418,6 +421,25 @@ def get_list_generic(
             path = result["next"]
         else:
             return _check_expect_one_result(ret)
+
+
+def get_typed(path: str, type_: type[T], params: dict[str, Any] | None = None) -> T:
+    """Fetch and deserialize JSON from an endpoint into a specific type.
+
+    This function is a wrapper over the `get()` function, adding the additional
+    functionality of validating and converting the response data to the specified type.
+
+    :param path: The path to the API endpoint.
+    :param type_: The type to which the response data should be deserialized.
+    :param params: The parameters to pass to the API endpoint.
+
+    :raises ValidationError: If the response cannot be deserialized into the given type.
+
+    :returns: An instance of `type_` populated with data from the response.
+    """
+    resp = get(path, params=params)
+    adapter = TypeAdapter(type_)
+    return adapter.validate_json(resp.text)
 
 
 def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> ResponseLike | None:

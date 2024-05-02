@@ -14,7 +14,7 @@ from typing import Any
 from mreg_cli.api.models import Network
 from mreg_cli.log import cli_warning
 from mreg_cli.types import IP_networkTV
-from mreg_cli.utilities.api import get
+from mreg_cli.utilities.api import get, get_typed
 from mreg_cli.utilities.validators import is_valid_ip, is_valid_network
 
 
@@ -80,37 +80,37 @@ def get_network(ip: str) -> Network | None:
 def get_network_used_count(ip_range: str) -> int:
     """Return a count of the addresses in use on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/used_count"
-    return get(path).json()
+    return get_typed(path, int)
 
 
 def get_network_used_list(ip_range: str) -> list[str]:
     """Return a list of the addresses in use on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/used_list"
-    return get(path).json()
+    return get_typed(path, list[str])
 
 
 def get_network_unused_count(ip_range: str) -> int:
     """Return a count of the unused addresses on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/unused_count"
-    return get(path).json()
+    return get_typed(path, int)
 
 
 def get_network_unused_list(ip_range: str) -> list[str]:
     """Return a list of the unused addresses on a given network."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/unused_list"
-    return get(path).json()
+    return get_typed(path, list[str])
 
 
 def get_network_first_unused(ip_range: str) -> str:
     """Return the first unused address on a network, if any."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/first_unused"
-    return get(path).json()
+    return get_typed(path, str)
 
 
 def get_network_reserved_ips(ip_range: str) -> list[str]:
     """Return the first unused address on a network, if any."""
     path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}/reserved_list"
-    return get(path).json()
+    return get_typed(path, list[str])
 
 
 def network_is_supernet(a: IP_networkTV, b: IP_networkTV) -> bool:

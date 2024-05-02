@@ -113,6 +113,11 @@ class ResponseLike(Protocol):
         """Return the dictionary of response headers."""
         ...
 
+    @property
+    def text(self) -> str:
+        """Return the response body as text."""
+        ...
+
     def json(self, **kwargs: Any) -> Any:
         """Return the response body as JSON."""
         ...
