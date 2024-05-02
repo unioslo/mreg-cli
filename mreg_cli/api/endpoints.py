@@ -57,6 +57,7 @@ class Endpoint(str, Enum):
     NetworksFirstUnused = "/api/v1/networks/{}/first_unused"
 
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
+    HostPolicyAtoms = "/api/v1/hostpolicy/atoms/"
 
     ForwardZones = f"{Zones}forward/"
     ReverseZones = f"{Zones}reverse/"

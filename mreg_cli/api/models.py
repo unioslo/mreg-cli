@@ -4,10 +4,17 @@ from __future__ import annotations
 
 import ipaddress
 import re
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, cast
 
-from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
 from mreg_cli.api.endpoints import Endpoint
@@ -255,30 +262,58 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         return True
 
 
-class Role(FrozenModelWithTimestamps, APIMixin["Role"]):
-    """Model for a role.
+class HostPolicyBase(FrozenModelWithTimestamps):
+    """Base model for Host Policy objects.
 
-    Note that HostPolicy throws out `create_date` as the date only, not as a
-    proper datetime object, and not with the expected name `created_at`.
+    Note:
+    ----
+    Host policy models in MREG have a different `created_at` field than
+    other models. It is called `create_date` and is a date - not a datetime.
+
+    This model has a custom validator to validate and convert the `create_date`
+    field to a datetime object with the expected `created_at` name.
+
     """
 
-    id: int  # noqa: A003
     created_at: datetime = Field(..., validation_alias=AliasChoices("create_date", "created_at"))
-    hosts: NameList
-    atoms: NameList
-    description: str
     name: str
-    labels: list[int]
+    description: str
 
     @field_validator("created_at", mode="before")
     @classmethod
-    def validate_created_at(cls, value: str) -> datetime:
-        """Validate and convert the created_at field to datetime.
+    def validate_created_at(cls, value: Any) -> datetime:
+        """Convert a datetime string to a datetime object.
 
-        :param value: Input date string from the JSON.
-        :returns: Converted datetime object.
+        :param value: The input value - should be a datetime string.
+        :returns: The input value converted to a datetime object.
         """
-        return datetime.fromisoformat(value)
+        # Fast path for str (most likely input type)
+        if isinstance(value, str):
+            return datetime.fromisoformat(value)
+        elif isinstance(value, datetime):
+            return value
+        elif isinstance(value, date):
+            return datetime.combine(value, datetime.min.time())
+        return value  # let pydantic throw the ValidationError
+
+    @property
+    def created_at_with_tz(self) -> datetime:
+        """The constructed `created_at` field with timezone info from `updated_at`."""
+        return self.created_at.replace(tzinfo=self.updated_at.tzinfo)
+
+    @computed_field
+    def create_date(self) -> date:
+        """Original `create_date` field."""
+        return self.created_at.date()
+
+
+class Role(HostPolicyBase, APIMixin["Role"]):
+    """Model for a role."""
+
+    id: int  # noqa: A003
+    hosts: NameList
+    atoms: NameList
+    labels: list[int]
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -305,6 +340,18 @@ class Role(FrozenModelWithTimestamps, APIMixin["Role"]):
         OutputManager().add_line(
             "{1:<{0}}{2}".format(padding, "Roles:", ", ".join([role.name for role in roles]))
         )
+
+
+class Atom(HostPolicyBase, APIMixin["Role"]):
+    """Model for an atom."""
+
+    id: int
+    roles: NameList
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.HostPolicyAtoms
 
 
 class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
