@@ -276,6 +276,13 @@ class HostPolicyBase(FrozenModelWithTimestamps):
     """
 
     created_at: datetime = Field(..., validation_alias=AliasChoices("create_date", "created_at"))
+    """Constructed datetime field from `create_date` in the API.
+
+    WARNING
+    ----
+    DO NOT USE THIS FIELD FOR TIMEZONE-AWARE COMPARISONS!
+    Always use `created_at_with_tz` instead when comparing with timezone-aware
+    fields such as `update_time`."""
     name: str
     description: str
 
