@@ -417,7 +417,7 @@ class Role(HostPolicy, APIMixin["Role"]):
 class Atom(HostPolicy, APIMixin["Atom"]):
     """Model for an atom."""
 
-    id: int
+    id: int  # noqa: A003
     roles: NameList
 
     @classmethod
