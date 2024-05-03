@@ -20,6 +20,7 @@ from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimesta
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
+from mreg_cli.exceptions import CliWarning
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
@@ -326,7 +327,7 @@ class HostPolicy(FrozenModel):
         for func in [Atom.get_by_name, Role.get_by_name]:
             try:
                 role_or_atom = func(name)
-            except Exception:
+            except CliWarning:
                 pass
         if role_or_atom is None:
             cli_warning(f"Could not find an atom or a role with name: {name!r}")
