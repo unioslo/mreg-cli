@@ -262,7 +262,7 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         return True
 
 
-class HostPolicy(FrozenModelWithTimestamps):
+class HostPolicy(FrozenModel):
     """Base model for Host Policy objects.
 
     Note:
@@ -275,18 +275,24 @@ class HostPolicy(FrozenModelWithTimestamps):
 
     """
 
-    created_at: datetime = Field(..., validation_alias=AliasChoices("create_date", "created_at"))
+    created_at_tz_naive: datetime = Field(
+        ...,
+        validation_alias=AliasChoices("create_date", "created_at", "created_at_tz_naive"),
+        exclude=True,
+        repr=False,
+    )
     """Constructed datetime field from `create_date` in the API.
 
     WARNING
     ----
     DO NOT USE THIS FIELD FOR TIMEZONE-AWARE COMPARISONS!
-    Always use `created_at_with_tz` instead when comparing with timezone-aware
+    Always use `created_at` instead when comparing with timezone-aware
     fields such as `update_time`."""
+    updated_at: datetime
     name: str
     description: str
 
-    @field_validator("created_at", mode="before")
+    @field_validator("created_at_tz_naive", mode="before")
     @classmethod
     def validate_created_at(cls, value: Any) -> datetime:
         """Convert a datetime string to a datetime object.
@@ -303,15 +309,10 @@ class HostPolicy(FrozenModelWithTimestamps):
             return datetime.combine(value, datetime.min.time())
         return value  # let pydantic throw the ValidationError
 
-    @property
-    def created_at_with_tz(self) -> datetime:
-        """The constructed `created_at` field with timezone info from `updated_at`."""
-        return self.created_at.replace(tzinfo=self.updated_at.tzinfo)
-
     @computed_field
-    def create_date(self) -> date:
-        """Original `create_date` field."""
-        return self.created_at.date()
+    def created_at(self) -> datetime:
+        """Creation time."""
+        return self.created_at_tz_naive.replace(tzinfo=self.updated_at.tzinfo)
 
     @classmethod
     def get_by_name(cls, name: str) -> Atom | Role:
@@ -330,6 +331,12 @@ class HostPolicy(FrozenModelWithTimestamps):
         if role_or_atom is None:
             cli_warning(f"Could not find an atom or a role with name: {name!r}")
         return role_or_atom
+
+    def output_timestamps(self, padding: int = 14) -> None:
+        """Output the created and updated timestamps to the console."""
+        output_manager = OutputManager()
+        output_manager.add_line(f"{'Created:':<{padding}}{self.created_at:%c}")
+        output_manager.add_line(f"{'Updated:':<{padding}}{self.updated_at:%c}")
 
 
 class Role(HostPolicy, APIMixin["Role"]):
@@ -380,7 +387,7 @@ class Role(HostPolicy, APIMixin["Role"]):
         )
 
 
-class Atom(HostPolicy, APIMixin["Role"]):
+class Atom(HostPolicy, APIMixin["Atom"]):
     """Model for an atom."""
 
     id: int
