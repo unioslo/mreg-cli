@@ -42,23 +42,16 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import MX, HInfo, Host, Location
+from mreg_cli.api.models import MX, NAPTR, HInfo, Host, Location, NetworkOrIP, PTR_override
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.api import delete, get_list, patch, post
 from mreg_cli.utilities.host import get_info_by_name, host_info_by_name
-from mreg_cli.utilities.network import get_network_reserved_ips, ip_in_mreg_net
-from mreg_cli.utilities.output import (
-    output_naptr,
-    output_ptr,
-    output_sshfp,
-    output_ttl,
-    output_txt,
-)
+from mreg_cli.utilities.output import output_sshfp, output_ttl, output_txt
 from mreg_cli.utilities.shared import clean_hostname
-from mreg_cli.utilities.validators import is_valid_ip, is_valid_ttl
+from mreg_cli.utilities.validators import is_valid_ttl
 from mreg_cli.utilities.zone import zone_check_for_hostname
 
 
@@ -339,9 +332,7 @@ def naptr_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-
+    host = Host.get_by_any_means_or_raise(args.name)
     data: dict[str, str] = {
         "preference": args.preference,
         "order": args.order,
@@ -349,17 +340,27 @@ def naptr_add(args: argparse.Namespace) -> None:
         "service": args.service,
         "regex": args.regex,
         "replacement": args.replacement,
-        "host": info["id"],
+        "host": str(host.id),
     }
 
-    path = "/api/v1/naptrs/"
-    post(path, params=None, **data)
-    cli_info("created NAPTR record for {}".format(info["name"]), print_msg=True)
+    existing_naptr = NAPTR.get_with_data(data)
+    if existing_naptr:
+        cli_warning(f"{host} already has that NAPTR defined.")
+
+    arg_data: dict[str, str | None] = {}
+    for k, v in data.items():
+        arg_data[k] = v
+
+    naptr = NAPTR.create(arg_data)
+    if naptr:
+        cli_info(f"Added NAPTR record to {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to add NAPTR for {host}")
 
 
 @command_registry.register_command(
     prog="naptr_remove",
-    description="Remove NAPTR record.",
+    description="Remove matching NAPTR records from a host.",
     short_desc="Remove NAPTR record.",
     flags=[
         Flag(
@@ -391,45 +392,41 @@ def naptr_add(args: argparse.Namespace) -> None:
             required=True,
             metavar="REPLACEMENT",
         ),
+        Flag("-force", action="store_true", description="Force deletion for multiple records."),
     ],
 )
 def naptr_remove(args: argparse.Namespace) -> None:
-    """Remove NAPTR record.
+    """Remove NAPTR matching records from host.
 
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
+    host = Host.get_by_any_means_or_raise(args.name)
+    naptrs = host.naptrs()
 
-    # get the hosts NAPTR records where repl is a substring of the replacement
-    # field
-    path = "/api/v1/naptrs/"
-    params = {
-        "replacement__contains": args.replacement,
-        "host": info["id"],
-    }
-    naptrs = get_list(path, params=params)
+    to_delete: list[NAPTR] = []
 
-    data = None
-    attrs = (
-        "preference",
-        "order",
-        "flag",
-        "service",
-        "regex",
-        "replacement",
-    )
     for naptr in naptrs:
-        if all(naptr[attr] == getattr(args, attr) for attr in attrs):
-            data = naptr
+        for attribute in ("preference", "order", "flag", "service", "regex", "replacement"):
+            if getattr(args, attribute) and getattr(naptr, attribute) != getattr(args, attribute):
+                break
 
-    if data is None:
-        cli_warning("Did not find any matching NAPTR record.")
+        to_delete.append(naptr)
 
-    # Delete NAPTR record
-    path = f"/api/v1/naptrs/{data['id']}"
-    delete(path)
-    cli_info("deleted NAPTR record for {}".format(info["name"]), print_msg=True)
+    if not to_delete:
+        cli_warning(f"No matching NAPTR record found for {host}")
+
+    if len(to_delete) > 1 and not args.force:
+        cli_info("Found multiple matching NAPTR records:", print_msg=True)
+        NAPTR.output_multiple(to_delete)
+        cli_warning("Use --force to delete all matching records.")
+
+    # This should ideally be done in a transaction, but the API doesn't support it.
+    # Right now we may end up in a situation where some records are deleted and some are not.
+    for naptr in to_delete:
+        if naptr.delete():
+            cli_info(f"Deleted NAPTR record from {host.name.hostname}.", print_msg=True)
+        else:
+            cli_warning(f"Failed to remove NAPTR for {host}")
 
 
 @command_registry.register_command(
@@ -445,11 +442,7 @@ def naptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = host_info_by_name(args.name)
-    num_naptrs = output_naptr(info)
-    if num_naptrs == 0:
-        OutputManager().add_line(f"No naptrs for {info['name']}")
-    cli_info("showed {} NAPTR records for {}".format(num_naptrs, info["name"]))
+    NAPTR.output_multiple(Host.get_by_any_means_or_raise(args.host).naptrs())
 
 
 @command_registry.register_command(
@@ -474,35 +467,32 @@ def ptr_change(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, old, new, force)
     """
-    # Get host info or raise exception
-    old_info = host_info_by_name(args.old)
-    new_info = host_info_by_name(args.new)
+    old_host = Host.get_by_any_means_or_raise(args.old)
+    new_host = Host.get_by_any_means_or_raise(args.new)
 
-    # check that new host haven't got a ptr record already
-    if len(new_info["ptr_overrides"]):
-        cli_warning("{} already got a PTR record".format(new_info["name"]))
+    if new_host.ptr_overrides:
+        cli_warning(f"{new_host} already has a PTR record.")
 
-    # check that old host has a PTR record with the given ip
-    if not len(old_info["ptr_overrides"]):
-        cli_warning("no PTR record for {} with ip {}".format(old_info["name"], args.ip))
-    if old_info["ptr_overrides"][0]["ipaddress"] != args.ip:
-        cli_warning("{} PTR record doesn't match {}".format(old_info["name"], args.ip))
+    if not old_host.ptr_overrides:
+        cli_warning(f"No PTR records for {old_host}")
 
-    # change PTR record
-    data = {
-        "host": new_info["id"],
-    }
+    ip = NetworkOrIP(ip_or_network=args.ip)
+    if not ip.is_ip():
+        cli_warning(f"{args.ip} is not a valid IP")
 
-    path = "/api/v1/ptroverrides/{}".format(old_info["ptr_overrides"][0]["id"])
-    patch(path, **data)
-    cli_info(
-        "changed owner of PTR record {} from {} to {}".format(
-            args.ip,
-            old_info["name"],
-            new_info["name"],
-        ),
-        print_msg=True,
-    )
+    ip = ip.as_ip()
+    ptr_override = old_host.get_ptr_override(ip)
+    if not ptr_override:
+        cli_warning(f"No PTR record for {old_host} with IP {ip}")
+
+    data = {"host": new_host.id}
+    if not ptr_override.patch(data):
+        cli_warning(f"Failed to move PTR record from {old_host} to {new_host}")
+    else:
+        cli_info(
+            f"Moved PTR record {ip} from {old_host.name.hostname} to {new_host.name.hostname}.",
+            print_msg=True,
+        )
 
 
 @command_registry.register_command(
@@ -519,20 +509,20 @@ def ptr_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, name)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
+    host = Host.get_by_any_means_or_raise(args.name)
+    ip = NetworkOrIP(ip_or_network=args.ip)
+    if not ip.is_ip():
+        cli_warning(f"{args.ip} is not a valid IP")
 
-    for ptr in info["ptr_overrides"]:
-        if ptr["ipaddress"] == args.ip:
-            ptr_id = ptr["id"]
-            break
+    ip = ip.as_ip()
+    ptr_override = host.get_ptr_override(ip)
+    if not ptr_override:
+        cli_warning(f"No PTR record for {host} with IP {ip}")
+
+    if ptr_override.delete():
+        cli_info(f"Removed PTR record {ip} from {host.name.hostname}.", print_msg=True)
     else:
-        cli_warning("no PTR record for {} with ip {}".format(info["name"], args.ip))
-
-    # Delete record
-    path = f"/api/v1/ptroverrides/{ptr_id}"
-    delete(path)
-    cli_info("deleted PTR record {} for {}".format(args.ip, info["name"]), print_msg=True)
+        cli_warning(f"Failed to remove PTR record from {host}")
 
 
 @command_registry.register_command(
@@ -550,45 +540,37 @@ def ptr_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, name, force)
     """
-    # Ip sanity check
-    if not is_valid_ip(args.ip):
-        cli_warning(f"invalid ip: {args.ip}")
-    if not ip_in_mreg_net(args.ip):
-        cli_warning(f"{args.ip} isn't in a network controlled by MREG")
-
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-
-    # check that a PTR record with the given ip doesn't exist
-    path = "/api/v1/ptroverrides/"
-    params = {
-        "ipaddress": args.ip,
-    }
-    ptrs = get_list(path, params=params)
-    if len(ptrs):
-        cli_warning(f"{args.ip} already exist in a PTR record")
-    # check if host is in mreg controlled zone, must force if not
-    if info["zone"] is None and not args.force:
-        cli_warning("{} isn't in a zone controlled by MREG, must force".format(info["name"]))
-
-    import ipaddress
+    ip = NetworkOrIP(ip_or_network=args.ip)
+    if not ip.is_ip():
+        cli_warning(f"{args.ip} is not a valid IP")
+    ip = ip.as_ip()
 
     from mreg_cli.api.models import Network
 
-    network = Network.get_by_ip(ipaddress.ip_address(args.ip))
+    network = Network.get_by_ip(ip)
 
-    reserved_addresses = get_network_reserved_ips(str(network.network))
-    if args.ip in reserved_addresses and not args.force:
+    host = Host.get_by_any_means_or_raise(args.name)
+    existing_ptrs = PTR_override.get_list_by_field("ipaddress", str(ip))
+    if existing_ptrs:
+        cli_warning(f"{ip} already exists in a PTR record.")
+
+    if host.zone is None and not args.force:
+        cli_warning(f"{host} isn't in a zone controlled by MREG, must force")
+
+    from mreg_cli.api.models import Network
+
+    network = Network.get_by_ip(ip)
+    if not network:
+        cli_warning(f"{ip} isn't in a network controlled by MREG")
+
+    if network.is_reserved_ip(ip) and not args.force:
         cli_warning("Address is reserved. Requires force")
 
-    # create PTR record
-    data = {
-        "host": info["id"],
-        "ipaddress": args.ip,
-    }
-    path = "/api/v1/ptroverrides/"
-    post(path, **data)
-    cli_info("Added PTR record {} to {}".format(args.ip, info["name"]), print_msg=True)
+    new_ptr = PTR_override.create({"host": str(host.id), "ipaddress": str(ip)})
+    if new_ptr:
+        cli_info(f"Added PTR record {ip} to {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to add PTR record for {host}")
 
 
 @command_registry.register_command(
@@ -604,23 +586,17 @@ def ptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip)
     """
-    if not is_valid_ip(args.ip):
+    ip = NetworkOrIP(ip_or_network=args.ip)
+    if not ip.is_ip():
         cli_warning(f"{args.ip} is not a valid IP")
 
-    path = "/api/v1/hosts/"
-    params = {
-        "ptr_overrides__ipaddress": args.ip,
-    }
-    hosts = get_list(path, params=params)
+    host = Host.get_by_any_means_or_raise(str(ip), inform_as_ptr=False)
+    if not host.ptr_overrides:
+        cli_info(f"No PTR records for {host.name.hostname}", print_msg=True)
 
-    if hosts:
-        host = hosts[0]
-        for ptr in host["ptr_overrides"]:
-            if args.ip == ptr["ipaddress"]:
-                padding = len(args.ip)
-                output_ptr(args.ip, host["name"], padding)
-    else:
-        OutputManager().add_line(f"No PTR found for IP '{args.ip}'")
+    for ptr in host.ptr_overrides:
+        if ip.as_ip() == ptr.ipaddress:
+            ptr.output()
 
 
 @command_registry.register_command(

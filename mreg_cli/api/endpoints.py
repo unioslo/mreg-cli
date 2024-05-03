@@ -55,6 +55,7 @@ class Endpoint(str, Enum):
     NetworksUnusedCount = "/api/v1/networks/{}/unused_count"
     NetworksUnusedList = "/api/v1/networks/{}/unused_list"
     NetworksFirstUnused = "/api/v1/networks/{}/first_unused"
+    NetworksReservedList = "/api/v1/networks/{}/reserved_list"
 
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
 

@@ -23,6 +23,7 @@ from mreg_cli.utilities.api import (
     get_list,
     get_list_in,
     get_list_unique,
+    get_typed,
 )
 
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
@@ -355,8 +356,46 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
 
     def get_first_available_ip(self) -> IP_AddressT:
         """Return the first available IPv4 address of the network."""
-        data = get(Endpoint.NetworksFirstUnused.with_params(self.network))
-        return ipaddress.ip_address(data.json())
+        return ipaddress.ip_address(
+            get_typed(Endpoint.NetworksFirstUnused.with_params(self.network), str)
+        )
+
+    def get_reserved_ips(self) -> list[IP_AddressT]:
+        """Return the reserved IP addresses of the network."""
+        return [
+            ipaddress.ip_address(ip)
+            for ip in get_typed(Endpoint.NetworksReservedList.with_params(self.network), list[str])
+        ]
+
+    def get_used_count(self) -> int:
+        """Return the number of used IP addresses in the network."""
+        return get_typed(Endpoint.NetworksUsedCount.with_params(self.network), int)
+
+    def get_used_list(self) -> list[IP_AddressT]:
+        """Return the list of used IP addresses in the network."""
+        return [
+            ipaddress.ip_address(ip)
+            for ip in get_typed(Endpoint.NetworksUsedList.with_params(self.network), list[str])
+        ]
+
+    def get_unused_count(self) -> int:
+        """Return the number of unused IP addresses in the network."""
+        return get_typed(Endpoint.NetworksUnusedCount.with_params(self.network), int)
+
+    def get_unused_list(self) -> list[IP_AddressT]:
+        """Return the list of unused IP addresses in the network."""
+        return [
+            ipaddress.ip_address(ip)
+            for ip in get_typed(Endpoint.NetworksUnusedList.with_params(self.network), list[str])
+        ]
+
+    def is_reserved_ip(self, ip: IP_AddressT) -> bool:
+        """Return True if the IP address is in the reserved list.
+
+        :param ip: The IP address to check.
+        :returns: True if the IP address is in the reserved list.
+        """
+        return ip in self.get_reserved_ips()
 
     def __hash__(self):
         """Return a hash of the network."""
@@ -714,6 +753,18 @@ class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin["NAPTR"]):
         return Endpoint.Naptrs
 
     @classmethod
+    def get_with_data(cls, data: dict[str, str]) -> NAPTR:
+        """Get a NAPTR record with the given data.
+
+        :param data: The data to search for.
+        :returns: The NAPTR record if found, None otherwise.
+        """
+        obj_dict = get_list_unique(Endpoint.Naptrs, params=data)
+        if not obj_dict:
+            cli_warning(f"NAPTR record for {data} not found.")
+        return NAPTR(**obj_dict)
+
+    @classmethod
     def headers(cls) -> list[str]:
         """Return the headers for the NAPTR record."""
         return [
@@ -820,7 +871,7 @@ class PTR_override(FrozenModelWithTimestamps, WithHost, APIMixin["PTR_override"]
     """Represents a PTR override record."""
 
     id: int  # noqa: A003
-    ipaddress: str  # For now, should be an IP address
+    ipaddress: IP_AddressT
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -1002,7 +1053,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
 
     @classmethod
     def get_by_any_means_or_raise(
-        cls, identifier: str | HostT, inform_as_cname: bool = True
+        cls, identifier: str | HostT, inform_as_cname: bool = True, inform_as_ptr: bool = True
     ) -> Host:
         """Get a host by the given identifier or raise a CliWarning.
 
@@ -1010,19 +1061,22 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
 
         :param identifier: The identifier to search for.
         :param inform_as_cname: If True, inform the user if the host is a CNAME.
+        :param inform_as_ptr: If True, inform the user if the host is a PTR override.
 
         :raises CliWarning: If the host is not found.
 
         :returns: A Host object if the host was found.
         """
-        host = cls.get_by_any_means(identifier, inform_as_cname=inform_as_cname)
+        host = cls.get_by_any_means(
+            identifier, inform_as_cname=inform_as_cname, inform_as_ptr=inform_as_ptr
+        )
         if not host:
             cli_warning(f"Host {identifier} not found.")
         return host
 
     @classmethod
     def get_by_any_means(
-        cls, identifier: str | HostT, inform_as_cname: bool = True
+        cls, identifier: str | HostT, inform_as_cname: bool = True, inform_as_ptr: bool = True
     ) -> Host | None:
         """Get a host by the given identifier.
 
@@ -1051,6 +1105,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         :param identifier: The identifier to search for.
         :param ok404: If True, don't raise a CliWarning if the host is not found.
         :param inform_as_cname: If True, inform the user if the host is a CNAME.
+        :param inform_as_ptr: If True, inform the user if the host is a PTR override.
 
         :raises CliWarning: If we don't find the host and `ok404` is False.
 
@@ -1062,17 +1117,26 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
                 return Host.get_by_id(int(identifier))
 
             try:
+                ptr = False
                 ipaddress.ip_address(identifier)
 
                 hosts = Host.get_list_by_field(
                     "ipaddresses__ipaddress", identifier, ordering="name"
                 )
 
+                if not hosts:
+                    hosts = Host.get_list_by_field("ptr_overrides__ipaddress", identifier)
+                    ptr = True
+
                 if len(hosts) == 1:
+                    if ptr and inform_as_ptr:
+                        OutputManager().add_line(
+                            f"{identifier} is a PTR override for {hosts[0].name}"
+                        )
                     return hosts[0]
 
                 if len(hosts) > 1:
-                    cli_warning(f"Multiple hosts found with IP address {identifier}.")
+                    cli_warning(f"Multiple hosts found with IP address or PTR {identifier}.")
 
             except ValueError:
                 pass
@@ -1171,6 +1235,15 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         :returns: True if the host has the IP address, False otherwise.
         """
         return any([ip.ipaddress.address == arg_ip for ip in self.ipaddresses])
+
+    def has_ptr_override(self, arg_ip: IP_AddressT) -> bool:
+        """Check if the host has a PTR override for the given IP address.
+
+        :param ip: The IP address to check for.
+
+        :returns: True if the host has a PTR override for the IP address, False otherwise.
+        """
+        return any([ptr.ipaddress == arg_ip for ptr in self.ptr_overrides])
 
     def get_ip(self, arg_ip: IP_AddressT) -> IPAddress | None:
         """Get the IP address object for the given IP address.
