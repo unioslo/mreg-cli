@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from mreg_cli.api.models import HostPolicy
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.log import cli_error, cli_info, cli_warning
@@ -244,38 +245,10 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    manager = OutputManager()
-
-    def _format(key: str, value: str, padding: int = 14) -> None:
-        manager.add_formatted_line(key, value, padding)
-
-    for name in args.name:
-        policy, info = get_atom_or_role(name)
-        _format("Name:", info["name"])
-        _format("Created:", info["create_date"])
-        _format("Description:", info["description"])
-
-        if policy == "atom":
-            manager.add_line("Roles where this atom is a member:")
-            if info["roles"]:
-                for i in info["roles"]:
-                    _format("", i["name"])
-            else:
-                manager.add_line("None")
-        else:
-            manager.add_line("Atom members:")
-            if info["atoms"]:
-                for i in info["atoms"]:
-                    _format("", i["name"])
-            else:
-                _format("", "None")
-
-            manager.add_line("Labels:")
-            for i in info["labels"]:
-                lb = get(f"/api/v1/labels/{i}").json()
-                _format("", lb["name"])
-            if not info["labels"]:
-                _format("", "None")
+    names: list[str] = args.name
+    for name in names:
+        role_or_atom = HostPolicy.get_by_name(name)
+        role_or_atom.output()
 
 
 @command_registry.register_command(

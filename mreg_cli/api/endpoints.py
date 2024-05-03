@@ -48,6 +48,9 @@ class Endpoint(str, Enum):
 
     BacnetID = "/api/v1/bacnet/ids/"
 
+    Labels = "/api/v1/labels/"
+    LabelsByName = "/api/v1/labels/name/"
+
     Networks = "/api/v1/networks/"
     NetworksByIP = "/api/v1/networks/ip/"
     NetworksUsedCount = "/api/v1/networks/{}/used_count"
@@ -58,6 +61,7 @@ class Endpoint(str, Enum):
     NetworksReservedList = "/api/v1/networks/{}/reserved_list"
 
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
+    HostPolicyAtoms = "/api/v1/hostpolicy/atoms/"
 
     ForwardZones = f"{Zones}forward/"
     ReverseZones = f"{Zones}reverse/"
@@ -79,6 +83,8 @@ class Endpoint(str, Enum):
             Endpoint.Locs,
             Endpoint.ForwardZones,
             Endpoint.ReverseZones,
+            Endpoint.HostPolicyRoles,
+            Endpoint.HostPolicyAtoms,
         )
 
     @hybridmethod

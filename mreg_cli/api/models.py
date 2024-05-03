@@ -4,15 +4,23 @@ from __future__ import annotations
 
 import ipaddress
 import re
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, cast
 
-from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
+from mreg_cli.exceptions import CliWarning
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
@@ -256,42 +264,136 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         return True
 
 
-class Role(FrozenModelWithTimestamps, APIMixin["Role"]):
-    """Model for a role.
+class HostPolicy(FrozenModel):
+    """Base model for Host Policy objects.
 
-    Note that HostPolicy throws out `create_date` as the date only, not as a
-    proper datetime object, and not with the expected name `created_at`.
+    Note:
+    ----
+    Host policy models in MREG have a different `created_at` field than
+    other models. It is called `create_date` and is a date - not a datetime.
+
+    This model has a custom validator to validate and convert the `create_date`
+    field to a datetime object with the expected `created_at` name.
+
     """
 
+    created_at_tz_naive: datetime = Field(
+        ...,
+        validation_alias=AliasChoices("create_date", "created_at", "created_at_tz_naive"),
+        exclude=True,
+        repr=False,
+    )
+    """Constructed datetime field from `create_date` in the API.
+
+    WARNING
+    ----
+    DO NOT USE THIS FIELD FOR TIMEZONE-AWARE COMPARISONS!
+    Always use `created_at` instead when comparing with timezone-aware
+    fields such as `update_time`."""
+    updated_at: datetime
+    name: str
+    description: str
+
+    @field_validator("created_at_tz_naive", mode="before")
+    @classmethod
+    def validate_created_at(cls, value: Any) -> datetime:
+        """Convert a datetime string to a datetime object.
+
+        :param value: The input value - should be a datetime string.
+        :returns: The input value converted to a datetime object.
+        """
+        # Fast path for str (most likely input type)
+        if isinstance(value, str):
+            return datetime.fromisoformat(value)
+        elif isinstance(value, datetime):
+            return value
+        elif isinstance(value, date):
+            return datetime.combine(value, datetime.min.time())
+        return value  # let pydantic throw the ValidationError
+
+    @computed_field
+    def created_at(self) -> datetime:
+        """Creation time."""
+        return self.created_at_tz_naive.replace(tzinfo=self.updated_at.tzinfo)
+
+    @classmethod
+    def get_by_name(cls, name: str) -> Atom | Role:
+        """Get an Atom or Role by name.
+
+        :param name: The name to search for.
+        :returns: The Atom or Role if found.
+        :raises CliWarning: If the Atom or Role is not found.
+        """
+        role_or_atom: Role | Atom
+        for func in [Atom.get_by_name, Role.get_by_name]:
+            try:
+                role_or_atom = func(name)
+            except CliWarning:
+                pass  # try next function
+            else:
+                break  # found a match
+        else:
+            cli_warning(f"Could not find an atom or a role with name: {name!r}")
+        return role_or_atom
+
+    def output_timestamps(self, padding: int = 14) -> None:
+        """Output the created and updated timestamps to the console."""
+        output_manager = OutputManager()
+        output_manager.add_line(f"{'Created:':<{padding}}{self.created_at:%c}")
+        output_manager.add_line(f"{'Updated:':<{padding}}{self.updated_at:%c}")
+
+    def output(self, padding: int = 14) -> None:
+        """Output the host policy object to the console.
+
+        Subclasses should provide their own output method and call this method
+        first to output the commmon fields.
+        """
+        output_manager = OutputManager()
+        output_manager.add_line(f"{'Name:':<{padding}}{self.name}")
+        self.output_timestamps(padding=padding)
+        output_manager.add_line(f"{'Description:':<{padding}}{self.description}")
+
+
+class Role(HostPolicy, APIMixin["Role"]):
+    """Model for a role."""
+
     id: int  # noqa: A003
-    created_at: datetime = Field(..., validation_alias=AliasChoices("create_date", "created_at"))
     hosts: NameList
     atoms: NameList
-    description: str
-    name: str
     labels: list[int]
-
-    @field_validator("created_at", mode="before")
-    @classmethod
-    def validate_created_at(cls, value: str) -> datetime:
-        """Validate and convert the created_at field to datetime.
-
-        :param value: Input date string from the JSON.
-        :returns: Converted datetime object.
-        """
-        return datetime.fromisoformat(value)
 
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.HostPolicyRoles
 
+    @classmethod
+    def get_by_name(cls, name: str) -> Role:
+        """Get a Role by name.
+
+        :param name: The role name to search for.
+        :returns: The role if found.
+        :raises CliWarning: If the role is not found.
+        """
+        data = get_item_by_key_value(Endpoint.HostPolicyRoles, "name", name)
+        if not data:
+            cli_warning(f"Role with name {name} not found.")
+        return cls(**data)
+
     def output(self, padding: int = 14) -> None:
         """Output the role to the console.
 
         :param padding: Number of spaces for left-padding the output.
         """
-        OutputManager().add_line(f"{'Role:':<{padding}}{self.name} ({self.description})")
+        super().output(padding=padding)
+        output_manager = OutputManager()
+        output_manager.add_line("Atom members:")
+        for atom in self.atoms:
+            output_manager.add_formatted_line("", atom, padding)
+        labels = self.get_labels()
+        output_manager.add_line("Labels:")
+        for label in labels:
+            output_manager.add_formatted_line("", label.name, padding)
 
     @classmethod
     def output_multiple(cls, roles: list[Role], padding: int = 14) -> None:
@@ -306,6 +408,88 @@ class Role(FrozenModelWithTimestamps, APIMixin["Role"]):
         OutputManager().add_line(
             "{1:<{0}}{2}".format(padding, "Roles:", ", ".join([role.name for role in roles]))
         )
+
+    def get_labels(self) -> list[Label]:
+        """Get the labels associated with the role.
+
+        :returns: A list of Label objects.
+        """
+        return [Label.get_by_id_or_raise(id_) for id_ in self.labels]
+
+
+class Atom(HostPolicy, APIMixin["Atom"]):
+    """Model for an atom."""
+
+    id: int  # noqa: A003
+    roles: NameList
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.HostPolicyAtoms
+
+    @classmethod
+    def get_by_name(cls, name: str) -> Atom:
+        """Get an Atom by name.
+
+        :param name: The atom name to search for.
+        :returns: The atom if found.
+        :raises CliWarning: If the atom is not found.
+        """
+        data = get_item_by_key_value(Endpoint.HostPolicyAtoms, "name", name)
+        if not data:
+            cli_warning(f"Atom with name {name} not found.")
+        return cls(**data)
+
+    def output(self, padding: int = 14) -> None:
+        """Output the role to the console.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        super().output(padding=padding)
+        output_manager = OutputManager()
+        output_manager.add_line("Roles where this atom is a member:")
+        for role in self.roles:
+            output_manager.add_formatted_line("", role, padding)
+
+
+class Label(FrozenModelWithTimestamps, APIMixin["Label"]):
+    """Model for a label."""
+
+    id: int  # noqa: A003
+    name: str
+    description: str
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Labels
+
+    @classmethod
+    def get_by_name(cls, name: str) -> Label:
+        """Get a Label by name.
+
+        :param name: The Label name to search for.
+        :returns: The Label if found.
+        :raises CliWarning: If the Label is not found.
+        """
+        data = get_item_by_key_value(Endpoint.Labels, "name", name)
+        if not data:
+            cli_warning(f"Label with name {name} not found.")
+        return cls(**data)
+
+    @classmethod
+    def get_by_id_or_raise(cls, _id: int) -> Label:
+        """Get a Label by ID.
+
+        :param _id: The Label ID to search for.
+        :returns: The Label if found.
+        :raises CliWarning: If the Label is not found.
+        """
+        label = cls.get_by_id(_id)
+        if not label:
+            cli_warning(f"Label with ID {_id} not found.")
+        return label
 
 
 class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
