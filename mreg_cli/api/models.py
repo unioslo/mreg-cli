@@ -437,6 +437,17 @@ class Atom(HostPolicy, APIMixin["Atom"]):
             cli_warning(f"Atom with name {name} not found.")
         return cls(**data)
 
+    def output(self, padding: int = 14) -> None:
+        """Output the role to the console.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        super().output(padding=padding)
+        output_manager = OutputManager()
+        output_manager.add_line("Roles where this atom is a member:")
+        for role in self.roles:
+            output_manager.add_formatted_line("", role, padding)
+
 
 class Label(FrozenModelWithTimestamps, APIMixin["Label"]):
     """Model for a label."""
