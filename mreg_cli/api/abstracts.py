@@ -272,7 +272,13 @@ class APIMixin(Generic[BMT], ABC):
     def patch(self, fields: dict[str, Any]) -> BMT:
         """Patch the object with the given values.
 
-        :param kwargs: The values to patch.
+        Notes
+        -----
+          1. Depending on the endpoint, the server may not return the patched object.
+          2. Patching with None may not clear the field if it isn't nullable (which few fields
+             are). Odds are you want to pass an empty string instead.
+
+        :param fields: The values to patch.
         :returns: The object refetched from the server.
         """
         patch(self.endpoint().with_id(self.id_for_endpoint()), **fields)
@@ -288,7 +294,7 @@ class APIMixin(Generic[BMT], ABC):
                 nval = getattr(new_object, field_name)
             except AttributeError:
                 cli_warning(f"Could not get value for {field_name} in patched object.")
-            if str(nval) != str(value):
+            if value and str(nval) != str(value):
                 cli_warning(
                     # Should this reference `field_name` instead of `key`?
                     f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
@@ -316,6 +322,8 @@ class APIMixin(Generic[BMT], ABC):
         so we can't fetch the object after creation. In these cases, we return None even
         if the object was created successfully...
 
+        :param params: The parameters to create the object with.
+        :raises CliWarning: If the object could not be created.
         :returns: The object if created and its fetchable, None otherwise.
         """
         response = post(cls.endpoint(), params=None, **params)

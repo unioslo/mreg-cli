@@ -5,7 +5,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from pydantic import (
     AliasChoices,
@@ -189,15 +189,81 @@ class WithZone(BaseModel):
         return Zone(**data)
 
 
-class NameServer(FrozenModelWithTimestamps):
+class WithTTL(BaseModel):
+    """Model for an object that needs to work with TTL values."""
+
+    @property
+    def MAX_TTL(self) -> int:
+        """Return the maximum TTL value."""
+        return 68400
+
+    @property
+    def MIN_TTL(self) -> int:
+        """Return the minimum TTL value."""
+        return 300
+
+    def output_ttl(self, padding: int = 14, field: str = "ttl") -> None:
+        """Output a TTL value.
+
+        :param padding: Number of spaces for left-padding the output.
+        :param field: The field to output (defaults to 'ttl')
+        """
+        if not hasattr(self, field):
+            cli_error(f"Outputting TTL field {field} failed, field not found in object.")
+
+        ttl_value = getattr(self, field)
+        OutputManager().add_line("{1:<{0}}{2}".format(padding, "TTL:", ttl_value or "(Default)"))
+
+    def valid_ttl_patch_value_with_default(
+        self, ttl: int | Literal["default"] | None
+    ) -> int | Literal[""]:
+        """Return a valid TTL value for patching with a possible default value.
+
+        Note: The ttl fields are not nullable, so we need to convert None to an empty string.
+
+        Valid "proper" TTL values are: 300 - 68400.
+
+        The value of "default" sets the value to None, which is then converted to the empty string.
+
+        If a numeric TTL value is outside of the bounds, a cli_warning is raised.
+
+        :param ttl: The TTL target to set.
+        :raises CliWarning: If the TTL value is outside the bounds.
+        :returns: A valid TTL value that can be fed to the API.
+        """
+        if ttl == "default" or ttl is None:
+            return ""
+
+        try:
+            ttl = int(ttl)
+        except ValueError:
+            cli_warning(f"Invalid TTL value: {ttl}")
+
+        return self.valid_numeric_ttl(ttl)
+
+    def valid_numeric_ttl(self, ttl: int) -> int:
+        """Return a valid TTL value.
+
+        Valid TTL values are: 300 - 68400.
+
+        :param ttl: The TTL target to set.
+        :raises CliWarning: If the TTL value is outside the bounds.
+        :returns: A valid TTL vale
+        """
+        if ttl <= self.MIN_TTL or ttl >= self.MAX_TTL:
+            cli_warning(f"Invalid TTL value: {ttl} ({self.MIN_TTL}->{self.MAX_TTL})")
+
+        return ttl
+
+
+class NameServer(FrozenModelWithTimestamps, WithTTL):
     """Model for representing a nameserver within a DNS zone."""
 
     id: int  # noqa: A003
     name: str
-    ttl: int | None = None
 
 
-class Zone(FrozenModelWithTimestamps):
+class Zone(FrozenModelWithTimestamps, WithTTL):
     """Model representing a DNS zone with various attributes and related nameservers."""
 
     id: int  # noqa: A003
@@ -732,7 +798,7 @@ class HInfo(FrozenModelWithTimestamps, WithHost, APIMixin["HInfo"]):
         )
 
 
-class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["CNAME"]):
+class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin["CNAME"]):
     """Represents a CNAME record."""
 
     id: int  # noqa: A003
@@ -961,7 +1027,7 @@ class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin["NAPTR"]):
                 naptr.output(padding=padding)
 
 
-class Srv(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["Srv"]):
+class Srv(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin["Srv"]):
     """Represents a SRV record."""
 
     id: int  # noqa: A003
@@ -1038,6 +1104,10 @@ class Srv(FrozenModelWithTimestamps, WithHost, WithZone, APIMixin["Srv"]):
         for srv in srvs:
             srv.output(padding=padding, host_id_name_map=host_id_name_map)
 
+    def __str__(self) -> str:
+        """Return a string representation of the SRV record."""
+        return self.name
+
 
 class PTR_override(FrozenModelWithTimestamps, WithHost, APIMixin["PTR_override"]):
     """Represents a PTR override record."""
@@ -1074,7 +1144,7 @@ class PTR_override(FrozenModelWithTimestamps, WithHost, APIMixin["PTR_override"]
         OutputManager().add_line(f"{'PTR override:':<{padding}}{self.ipaddress} -> {hostname}")
 
 
-class SSHFP(FrozenModelWithTimestamps, WithHost, APIMixin["SSHFP"]):
+class SSHFP(FrozenModelWithTimestamps, WithHost, WithTTL, APIMixin["SSHFP"]):
     """Represents a SSHFP record."""
 
     id: int  # noqa: A003
@@ -1177,7 +1247,7 @@ class Location(FrozenModelWithTimestamps, WithHost, APIMixin["Location"]):
         OutputManager().add_line(f"{'LOC:':<{padding}}{self.loc}")
 
 
-class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
+class Host(FrozenModelWithTimestamps, WithTTL, APIMixin["Host"]):
     """Model for an individual host."""
 
     id: int  # noqa: A003
@@ -1417,6 +1487,15 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         """
         return any([ptr.ipaddress == arg_ip for ptr in self.ptr_overrides])
 
+    def has_txt(self, arg_txt: str) -> bool:
+        """Check if the host has the given TXT record.
+
+        :param txt: The TXT record to check for.
+
+        :returns: True if the host has the TXT record, False otherwise.
+        """
+        return any([txt.txt == arg_txt for txt in self.txts])
+
     def get_ip(self, arg_ip: IP_AddressT) -> IPAddress | None:
         """Get the IP address object for the given IP address.
 
@@ -1655,7 +1734,7 @@ class Host(FrozenModelWithTimestamps, APIMixin["Host"]):
         self.output_ipaddresses(padding=padding, names=names)
         PTR_override.output_multiple(self.ptr_overrides, padding=padding)
 
-        output_manager.add_line("{1:<{0}}{2}".format(padding, "TTL:", self.ttl or "(Default)"))
+        self.output_ttl(padding=padding)
 
         MX.output_multiple(self.mxs, padding=padding)
 

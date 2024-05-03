@@ -40,16 +40,18 @@ Commands implemented:
 from __future__ import annotations
 
 import argparse
-from typing import Any
 
 from mreg_cli.api.models import (
     MX,
     NAPTR,
+    SSHFP,
+    TXT,
     ForwardZone,
     HInfo,
     Host,
     HostT,
     Location,
+    Network,
     NetworkOrIP,
     PTR_override,
     Srv,
@@ -57,10 +59,6 @@ from mreg_cli.api.models import (
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get_list, patch, post
-from mreg_cli.utilities.host import get_info_by_name, host_info_by_name
-from mreg_cli.utilities.output import output_sshfp, output_ttl, output_txt
-from mreg_cli.utilities.validators import is_valid_ttl
 
 
 @command_registry.register_command(
@@ -243,11 +241,8 @@ def mx_add(args: argparse.Namespace) -> None:
     if host.has_mx_with_priority(args.priority, args.mx):
         cli_warning(f"{host} already has that MX defined.")
 
-    mx = MX.create({"host": str(host.id), "priority": args.priority, "mx": args.mx})
-    if mx:
-        cli_info(f"Added MX record to {host.name.hostname}.", print_msg=True)
-    else:
-        cli_warning(f"Failed to add MX for {host}")
+    MX.create({"host": str(host.id), "priority": args.priority, "mx": args.mx})
+    cli_info(f"Added MX record to {host.name.hostname}.", print_msg=True)
 
 
 @command_registry.register_command(
@@ -357,11 +352,8 @@ def naptr_add(args: argparse.Namespace) -> None:
 
     arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
 
-    naptr = NAPTR.create(arg_data)
-    if naptr:
-        cli_info(f"Added NAPTR record to {host.name.hostname}.", print_msg=True)
-    else:
-        cli_warning(f"Failed to add NAPTR for {host}")
+    NAPTR.create(arg_data)
+    cli_info(f"Added NAPTR record to {host.name.hostname}.", print_msg=True)
 
 
 @command_registry.register_command(
@@ -551,10 +543,6 @@ def ptr_add(args: argparse.Namespace) -> None:
         cli_warning(f"{args.ip} is not a valid IP")
     ip = ip.as_ip()
 
-    from mreg_cli.api.models import Network
-
-    network = Network.get_by_ip(ip)
-
     host = Host.get_by_any_means_or_raise(args.name)
     existing_ptrs = PTR_override.get_list_by_field("ipaddress", str(ip))
     if existing_ptrs:
@@ -563,8 +551,6 @@ def ptr_add(args: argparse.Namespace) -> None:
     if host.zone is None and not args.force:
         cli_warning(f"{host} isn't in a zone controlled by MREG, must force")
 
-    from mreg_cli.api.models import Network
-
     network = Network.get_by_ip(ip)
     if not network:
         cli_warning(f"{ip} isn't in a network controlled by MREG")
@@ -572,11 +558,8 @@ def ptr_add(args: argparse.Namespace) -> None:
     if network.is_reserved_ip(ip) and not args.force:
         cli_warning("Address is reserved. Requires force")
 
-    new_ptr = PTR_override.create({"host": str(host.id), "ipaddress": str(ip)})
-    if new_ptr:
-        cli_info(f"Added PTR record {ip} to {host.name.hostname}.", print_msg=True)
-    else:
-        cli_warning(f"Failed to add PTR record for {host}")
+    PTR_override.create({"host": str(host.id), "ipaddress": str(ip)})
+    cli_info(f"Added PTR record {ip} to {host.name.hostname}.", print_msg=True)
 
 
 @command_registry.register_command(
@@ -649,12 +632,9 @@ def srv_add(args: argparse.Namespace) -> None:
         cli_warning(f"{sname} already has that SRV defined.")
 
     arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
-    new_srv = Srv.create(arg_data)
 
-    if new_srv:
-        cli_info(f"Added SRV record {sname} with target {host.name.hostname}.", print_msg=True)
-    else:
-        cli_warning(f"Failed to add SRV for {sname}")
+    Srv.create(arg_data)
+    cli_info(f"Added SRV record {sname} with target {host}.", print_msg=True)
 
 
 @command_registry.register_command(
@@ -751,23 +731,22 @@ def sshfp_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, algorithm, hash_type, fingerprint)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
+    host = Host.get_by_any_means_or_raise(args.name)
 
-    data = {
+    data: dict[str, str] = {
         "algorithm": args.algorithm,
         "hash_type": args.hash_type,
         "fingerprint": args.fingerprint,
-        "host": info["id"],
+        "host": str(host.id),
     }
 
-    # Create new SSHFP record
-    path = "/api/v1/sshfps/"
-    post(path, **data)
-    cli_info(
-        "Added SSHFP record {} for host {}".format(args.fingerprint, info["name"]),
-        print_msg=True,
-    )
+    existing_sshfp = SSHFP.get_by_query_unique(data)
+    if existing_sshfp:
+        cli_warning(f"{host} already has that SSHFP defined.")
+
+    arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
+    SSHFP.create(arg_data)
+    cli_info(f"Added SSHFP record for {host.name.hostname}.", print_msg=True)
 
 
 @command_registry.register_command(
@@ -793,45 +772,28 @@ def sshfp_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, fingerprint)
     """
-
-    def _delete_sshfp_record(sshfp: dict[str, Any], hname: str) -> None:
-        """Delete SSHFP record from the host."""
-        path = f"/api/v1/sshfps/{sshfp['id']}"
-        delete(path)
-        cli_info(
-            "removed SSHFP record with fingerprint {} for {}".format(sshfp["fingerprint"], hname),
-            print_msg=True,
-        )
-
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    hid = info["id"]
-
-    # Get all matching SSHFP records
-    path = "/api/v1/sshfps/"
-    params = {
-        "host": hid,
-    }
-    sshfps = get_list(path, params=params)
-    if len(sshfps) < 1:
-        cli_warning("no SSHFP records matching {}".format(info["name"]))
+    host = Host.get_by_any_means_or_raise(args.name)
+    sshfps = None
 
     if args.fingerprint:
-        found = False
-        for sshfp in sshfps:
-            if sshfp["fingerprint"] == args.fingerprint:
-                _delete_sshfp_record(sshfp, info["name"])
-                found = True
-        if not found:
-            cli_info(
-                "found no SSHFP record with fingerprint {} for {}".format(
-                    args.fingerprint, info["name"]
-                ),
-                print_msg=True,
-            )
+        sshfps = [
+            SSHFP.get_by_query_unique({"fingerprint": args.fingerprint, "host": str(host.id)})
+        ]
+    else:
+        sshfps = host.sshfps()
+
+    if not sshfps:
+        cli_warning(f"No matching SSHFP records for {host}")
     else:
         for sshfp in sshfps:
-            _delete_sshfp_record(sshfp, info["name"])
+            if not sshfp.delete():
+                cli_warning(f"Failed to remove SSHFP for {host}")
+            else:
+                fp = sshfp.fingerprint
+                cli_info(
+                    f"Removed SSHFP record with fingerprint {fp} for {host}.",
+                    print_msg=True,
+                )
 
 
 @command_registry.register_command(
@@ -847,11 +809,13 @@ def sshfp_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    num_sshfps = output_sshfp(info)
-    if num_sshfps == 0:
-        cli_warning(f"no SSHFP records for {info['name']}")
+    host = Host.get_by_any_means_or_raise(args.name)
+    sshfps = host.sshfps()
+
+    if not sshfps:
+        cli_warning(f"No SSHFP records for {host}")
+
+    SSHFP.output_multiple(sshfps)
 
 
 @command_registry.register_command(
@@ -869,10 +833,8 @@ def ttl_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    target_type, info = get_info_by_name(args.name)
-    path = f"/api/v1/{target_type}s/{info['name']}"
-    patch(path, ttl="")
-    cli_info("removed TTL for {}".format(info["name"]), print_msg=True)
+    args.ttl = "default"
+    ttl_set(args)
 
 
 @command_registry.register_command(
@@ -895,23 +857,20 @@ def ttl_set(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ttl)
     """
-    target_type, info = get_info_by_name(args.name)
+    target = Host.get_by_any_means(args.name)
+    if not target:
+        target = Srv.get_by_field("name", args.name)
 
-    # TTL sanity check
-    if not is_valid_ttl(args.ttl):
-        cli_warning("invalid TTL value: {} (target host {})".format(args.ttl, info["name"]))
+    if not target:
+        cli_warning(f"No host or SRV record found for {args.name}")
 
-    new_data = {"ttl": args.ttl if args.ttl != "default" else ""}
+    valid_ttl = target.valid_ttl_patch_value_with_default(args.ttl)
 
-    # Update TTL
-    path = f"/api/v1/{target_type}s/{info['name']}"
-    patch(path, **new_data)
-    cli_info("updated TTL to {} for {}".format(args.ttl, info["name"]), print_msg=True)
-
-
-##############################################
-#  Implementation of sub command 'ttl_show'  #
-##############################################
+    result = target.patch({"ttl": valid_ttl})
+    if result:
+        cli_info(f"Set TTL for {target} to {args.ttl}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to set TTL for {target}")
 
 
 @command_registry.register_command(
@@ -929,10 +888,7 @@ def ttl_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = host_info_by_name(args.name)
-    _, info = get_info_by_name(args.name)
-    output_ttl(info["ttl"])
-    cli_info("showed TTL for {}".format(info["name"]))
+    Host.get_by_any_means_or_raise(args.name).output_ttl()
 
 
 @command_registry.register_command(
@@ -958,16 +914,12 @@ def txt_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, text)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    if any(args.text == i["txt"] for i in info["txts"]):
-        cli_warning("The TXT record already exists for {}".format(info["name"]))
+    host = Host.get_by_any_means_or_raise(args.name)
+    if host.has_txt(args.text):
+        cli_warning(f"{host} already has that TXT defined.")
 
-    data = {"host": info["id"], "txt": args.text}
-    # Add TXT record to host
-    path = "/api/v1/txts/"
-    post(path, **data)
-    cli_info("Added TXT record to {}".format(info["name"]), print_msg=True)
+    TXT.create({"host": str(host.id), "txt": args.text})
+    cli_info(f"Added TXT record to {host}.", print_msg=True)
 
 
 @command_registry.register_command(
@@ -989,20 +941,16 @@ def txt_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, text)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    hostname = info["name"]
+    host = Host.get_by_any_means_or_raise(args.name)
+    txt = TXT.get_by_query_unique({"host": str(host.id), "txt": args.text})
 
-    # Check for matching TXT records for host
-    path = "/api/v1/txts/"
-    txts = get_list(path, params={"host": info["id"], "txt": args.text})
-    if len(txts) == 0:
-        cli_warning(f"{hostname} has no TXT records equal: {args.text}")
+    if not txt:
+        cli_warning(f"{host} has no TXT record matching '{args.text}'")
 
-    txt = txts[0]
-    path = f"/api/v1/txts/{txt['id']}"
-    delete(path)
-    cli_info(f"deleted TXT records from {hostname}", print_msg=True)
+    if txt.delete():
+        cli_info(f"Removed TXT record '{args.text}' from {host}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to remove TXT with '{args.text}' for {host}")
 
 
 @command_registry.register_command(
@@ -1018,12 +966,10 @@ def txt_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = host_info_by_name(args.name)
-    path = "/api/v1/txts/"
-    params = {
-        "host": info["id"],
-    }
-    txts = get_list(path, params=params)
-    for txt in txts:
-        output_txt(txt["txt"], padding=5)
-    cli_info("showed TXT records for {}".format(info["name"]))
+    host = Host.get_by_any_means_or_raise(args.name)
+    txts = host.txts
+
+    if not txts:
+        cli_warning(f"No TXT records for {host}")
+
+    TXT.output_multiple(txts, padding=5)
