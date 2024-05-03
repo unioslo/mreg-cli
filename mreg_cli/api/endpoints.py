@@ -79,6 +79,8 @@ class Endpoint(str, Enum):
             Endpoint.Locs,
             Endpoint.ForwardZones,
             Endpoint.ReverseZones,
+            Endpoint.HostPolicyRoles,
+            Endpoint.HostPolicyAtoms,
         )
 
     @hybridmethod
