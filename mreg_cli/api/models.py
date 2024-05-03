@@ -338,6 +338,17 @@ class HostPolicy(FrozenModel):
         output_manager.add_line(f"{'Created:':<{padding}}{self.created_at:%c}")
         output_manager.add_line(f"{'Updated:':<{padding}}{self.updated_at:%c}")
 
+    def output(self, padding: int = 14) -> None:
+        """Output the host policy object to the console.
+
+        Subclasses should provide their own output method and call this method
+        first to output the commmon fields.
+        """
+        output_manager = OutputManager()
+        output_manager.add_line(f"{'Name:':<{padding}}{self.name}")
+        self.output_timestamps(padding=padding)
+        output_manager.add_line(f"{'Description:':<{padding}}{self.description}")
+
 
 class Role(HostPolicy, APIMixin["Role"]):
     """Model for a role."""
@@ -370,7 +381,15 @@ class Role(HostPolicy, APIMixin["Role"]):
 
         :param padding: Number of spaces for left-padding the output.
         """
-        OutputManager().add_line(f"{'Role:':<{padding}}{self.name} ({self.description})")
+        super().output(padding=padding)
+        output_manager = OutputManager()
+        output_manager.add_line("Atom members:")
+        for atom in self.atoms:
+            output_manager.add_formatted_line("", atom, padding)
+        labels = self.get_labels()
+        output_manager.add_line("Labels:")
+        for label in labels:
+            output_manager.add_formatted_line("", label.name, padding)
 
     @classmethod
     def output_multiple(cls, roles: list[Role], padding: int = 14) -> None:
@@ -385,6 +404,13 @@ class Role(HostPolicy, APIMixin["Role"]):
         OutputManager().add_line(
             "{1:<{0}}{2}".format(padding, "Roles:", ", ".join([role.name for role in roles]))
         )
+
+    def get_labels(self) -> list[Label]:
+        """Get the labels associated with the role.
+
+        :returns: A list of Label objects.
+        """
+        return [Label.get_by_id_or_raise(id_) for id_ in self.labels]
 
 
 class Atom(HostPolicy, APIMixin["Atom"]):
@@ -410,6 +436,45 @@ class Atom(HostPolicy, APIMixin["Atom"]):
         if not data:
             cli_warning(f"Atom with name {name} not found.")
         return cls(**data)
+
+
+class Label(FrozenModelWithTimestamps, APIMixin["Label"]):
+    """Model for a label."""
+
+    id: int  # noqa: A003
+    name: str
+    description: str
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Labels
+
+    @classmethod
+    def get_by_name(cls, name: str) -> Label:
+        """Get a Label by name.
+
+        :param name: The Label name to search for.
+        :returns: The Label if found.
+        :raises CliWarning: If the Label is not found.
+        """
+        data = get_item_by_key_value(Endpoint.Labels, "name", name)
+        if not data:
+            cli_warning(f"Label with name {name} not found.")
+        return cls(**data)
+
+    @classmethod
+    def get_by_id_or_raise(cls, _id: int) -> Label:
+        """Get a Label by ID.
+
+        :param _id: The Label ID to search for.
+        :returns: The Label if found.
+        :raises CliWarning: If the Label is not found.
+        """
+        label = cls.get_by_id(_id)
+        if not label:
+            cli_warning(f"Label with ID {_id} not found.")
+        return label
 
 
 class Network(FrozenModelWithTimestamps, APIMixin["Network"]):

@@ -48,6 +48,9 @@ class Endpoint(str, Enum):
 
     BacnetID = "/api/v1/bacnet/ids/"
 
+    Labels = "/api/v1/labels/"
+    LabelsByName = "/api/v1/labels/name/"
+
     Networks = "/api/v1/networks/"
     NetworksByIP = "/api/v1/networks/ip/"
     NetworksUsedCount = "/api/v1/networks/{}/used_count"
