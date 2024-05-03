@@ -13,7 +13,15 @@ from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.utilities.api import delete, get, get_item_by_key_value, get_list, patch, post
+from mreg_cli.utilities.api import (
+    delete,
+    get,
+    get_item_by_key_value,
+    get_list,
+    get_list_unique,
+    patch,
+    post,
+)
 
 BMT = TypeVar("BMT", bound="BaseModel")
 
@@ -217,6 +225,18 @@ class APIMixin(Generic[BMT], ABC):
 
         data = get_list(cls.endpoint().with_query(query))
         return [cast(BMT, cls(**item)) for item in data]
+
+    @classmethod
+    def get_by_query_unique(cls, data: dict[str, str]) -> BMT:
+        """Get an object with the given data.
+
+        :param data: The data to search for.
+        :returns: The object if found, None otherwise.
+        """
+        obj_dict = get_list_unique(cls.endpoint(), params=data)
+        if not obj_dict:
+            cli_warning(f"{cls.__name__} record for {data} not found.")
+        return cast(BMT, cls(**obj_dict))
 
     def refetch(self) -> BMT:
         """Fetch an updated version of the object.

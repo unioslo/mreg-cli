@@ -937,18 +937,6 @@ class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin["NAPTR"]):
         return Endpoint.Naptrs
 
     @classmethod
-    def get_with_data(cls, data: dict[str, str]) -> NAPTR:
-        """Get a NAPTR record with the given data.
-
-        :param data: The data to search for.
-        :returns: The NAPTR record if found, None otherwise.
-        """
-        obj_dict = get_list_unique(Endpoint.Naptrs, params=data)
-        if not obj_dict:
-            cli_warning(f"NAPTR record for {data} not found.")
-        return NAPTR(**obj_dict)
-
-    @classmethod
     def headers(cls) -> list[str]:
         """Return the headers for the NAPTR record."""
         return [

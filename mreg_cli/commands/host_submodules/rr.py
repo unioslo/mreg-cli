@@ -42,17 +42,25 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import MX, NAPTR, HInfo, Host, Location, NetworkOrIP, PTR_override
+from mreg_cli.api.models import (
+    MX,
+    NAPTR,
+    ForwardZone,
+    HInfo,
+    Host,
+    HostT,
+    Location,
+    NetworkOrIP,
+    PTR_override,
+    Srv,
+)
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.log import cli_info, cli_warning
-from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.api import delete, get_list, patch, post
 from mreg_cli.utilities.host import get_info_by_name, host_info_by_name
 from mreg_cli.utilities.output import output_sshfp, output_ttl, output_txt
-from mreg_cli.utilities.shared import clean_hostname
 from mreg_cli.utilities.validators import is_valid_ttl
-from mreg_cli.utilities.zone import zone_check_for_hostname
 
 
 @command_registry.register_command(
@@ -343,13 +351,11 @@ def naptr_add(args: argparse.Namespace) -> None:
         "host": str(host.id),
     }
 
-    existing_naptr = NAPTR.get_with_data(data)
+    existing_naptr = NAPTR.get_by_query_unique(data)
     if existing_naptr:
         cli_warning(f"{host} already has that NAPTR defined.")
 
-    arg_data: dict[str, str | None] = {}
-    for k, v in data.items():
-        arg_data[k] = v
+    arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
 
     naptr = NAPTR.create(arg_data)
     if naptr:
@@ -618,28 +624,37 @@ def srv_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, weight, port, host, ttl, force)
     """
-    sname = clean_hostname(args.name)
-    zone_check_for_hostname(sname, False, require_zone=True)
+    sname = HostT(hostname=args.name)
+    host = Host.get_by_any_means_or_raise(args.host)
 
-    # Require host target
-    info = host_info_by_name(args.host)
+    szone = ForwardZone.get_from_hostname(sname)
+    if not szone:
+        cli_warning(f"{sname} isn't in a zone controlled by MREG")
 
-    # Require force if target host not in MREG zone
-    zone_check_for_hostname(info["name"], args.force)
+    hzone = ForwardZone.get_from_hostname(host.name)
+    if not hzone:
+        cli_warning(f"{host} isn't in a zone controlled by MREG")
 
-    data = {
-        "name": sname,
+    data: dict[str, str] = {
+        "name": sname.hostname,
         "priority": args.priority,
         "weight": args.weight,
         "port": args.port,
-        "host": info["id"],
+        "host": str(host.id),
         "ttl": args.ttl,
     }
 
-    # Create new SRV record
-    path = "/api/v1/srvs/"
-    post(path, **data)
-    cli_info("Added SRV record {} with target {}".format(sname, info["name"]), print_msg=True)
+    existing_srv = Srv.get_by_query_unique(data)
+    if existing_srv:
+        cli_warning(f"{sname} already has that SRV defined.")
+
+    arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
+    new_srv = Srv.create(arg_data)
+
+    if new_srv:
+        cli_info(f"Added SRV record {sname} with target {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to add SRV for {sname}")
 
 
 @command_registry.register_command(
@@ -677,91 +692,25 @@ def srv_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, weight, port, host)
     """
-    info = host_info_by_name(args.host)
-    sname = clean_hostname(args.name)
+    host = Host.get_by_any_means_or_raise(args.host)
+    sname = HostT(hostname=args.name)
 
-    # Check if service exist
-    path = "/api/v1/srvs/"
-    params = {
-        "name": sname,
-        "host": info["id"],
+    data: dict[str, str] = {
+        "name": sname.hostname,
+        "host": str(host.id),
+        "priority": args.priority,
+        "port": args.port,
+        "weight": args.weight,
     }
-    srvs = get_list(path, params=params)
-    if len(srvs) == 0:
-        cli_warning(f"no service named {sname}")
 
-    data = None
-    attrs = (
-        "name",
-        "priority",
-        "weight",
-        "port",
-    )
-    for srv in srvs:
-        if all(srv[attr] == getattr(args, attr) for attr in attrs):
-            data = srv
-            break
+    srv = Srv.get_by_query_unique(data)
+    if not srv:
+        cli_warning(f"No SRV record for {sname} with target {host} matching the given values.")
 
-    if data is None:
-        cli_warning("Did not find any matching SRV records.")
-
-    # Delete SRV record
-    path = f"/api/v1/srvs/{data['id']}"
-    delete(path)
-    cli_info("deleted SRV record for {}".format(info["name"]), print_msg=True)
-
-
-def _srv_show(srvs: list[dict[str, Any]] | None = None, host_id: str | None = None) -> None:
-    assert srvs is not None or host_id is not None
-    hostid2name = dict()
-    host_ids = set()
-
-    def print_srv(srv: dict[str, Any], hostname: str, padding: int = 14) -> None:
-        """Pretty print given srv."""
-        OutputManager().add_line(
-            "SRV: {1:<{0}} {2:^6} {3:^6} {4:^6} {5}".format(
-                padding,
-                srv["name"],
-                srv["priority"],
-                srv["weight"],
-                srv["port"],
-                hostname,
-            )
-        )
-
-    if srvs is None:
-        path = "/api/v1/srvs/"
-        params = {
-            "host": host_id,
-        }
-        srvs = get_list(path, params=params)
-
-    if len(srvs) == 0:
-        return
-
-    padding = 0
-
-    # The assert at the start of the method doesn't catch the None case,
-    # so to make linters happy, we need to check for it explicitly here.
-    if srvs is not None:
-        for srv in srvs:
-            if len(srv["name"]) > padding:
-                padding = len(srv["name"])
-            host_ids.add(str(srv["host"]))
-
-    arg = ",".join(host_ids)
-    hosts = get_list("/api/v1/hosts/", params={"id__in": arg})
-    for host in hosts:
-        hostid2name[host["id"]] = host["name"]
-
-    prev_name = ""
-    if srvs is not None:
-        for srv in srvs:
-            if prev_name == srv["name"]:
-                srv["name"] = ""
-            else:
-                prev_name = srv["name"]
-            print_srv(srv, hostid2name[srv["host"]], padding)
+    if srv.delete():
+        cli_info(f"Removed SRV record {sname} from {host.name.hostname}.", print_msg=True)
+    else:
+        cli_warning(f"Failed to remove SRV for {sname}")
 
 
 @command_registry.register_command(
@@ -777,19 +726,13 @@ def srv_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (service)
     """
-    sname = clean_hostname(args.service)
+    sname = HostT(hostname=args.service)
+    srvs = Srv.get_list_by_field("name", sname.hostname)
 
-    # Get all matching SRV records
-    path = "/api/v1/srvs/"
-    params = {
-        "name": sname,
-    }
-    srvs = get_list(path, params=params)
     if len(srvs) == 0:
-        cli_warning(f"no service matching {sname}")
-    else:
-        _srv_show(srvs=srvs)
-    cli_info(f"showed entries for SRV {sname}")
+        cli_warning(f"No SRV records for {sname}")
+
+    Srv.output_multiple(srvs)
 
 
 @command_registry.register_command(
