@@ -262,7 +262,7 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         return True
 
 
-class HostPolicyBase(FrozenModelWithTimestamps):
+class HostPolicy(FrozenModelWithTimestamps):
     """Base model for Host Policy objects.
 
     Note:
@@ -313,8 +313,26 @@ class HostPolicyBase(FrozenModelWithTimestamps):
         """Original `create_date` field."""
         return self.created_at.date()
 
+    @classmethod
+    def get_by_name(cls, name: str) -> Atom | Role:
+        """Get an Atom or Role by name.
 
-class Role(HostPolicyBase, APIMixin["Role"]):
+        :param name: The name to search for.
+        :returns: The Atom or Role if found.
+        :raises CliWarning: If the Atom or Role is not found.
+        """
+        role_or_atom: Role | Atom | None = None
+        for func in [Atom.get_by_name, Role.get_by_name]:
+            try:
+                role_or_atom = func(name)
+            except Exception:
+                pass
+        if role_or_atom is None:
+            cli_warning(f"Could not find an atom or a role with name: {name!r}")
+        return role_or_atom
+
+
+class Role(HostPolicy, APIMixin["Role"]):
     """Model for a role."""
 
     id: int  # noqa: A003
@@ -326,6 +344,19 @@ class Role(HostPolicyBase, APIMixin["Role"]):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.HostPolicyRoles
+
+    @classmethod
+    def get_by_name(cls, name: str) -> Role:
+        """Get a Role by name.
+
+        :param name: The role name to search for.
+        :returns: The role if found.
+        :raises CliWarning: If the role is not found.
+        """
+        data = get_item_by_key_value(Endpoint.HostPolicyRoles, "name", name)
+        if not data:
+            cli_warning(f"Role with name {name} not found.")
+        return cls(**data)
 
     def output(self, padding: int = 14) -> None:
         """Output the role to the console.
@@ -349,7 +380,7 @@ class Role(HostPolicyBase, APIMixin["Role"]):
         )
 
 
-class Atom(HostPolicyBase, APIMixin["Role"]):
+class Atom(HostPolicy, APIMixin["Role"]):
     """Model for an atom."""
 
     id: int
@@ -359,6 +390,19 @@ class Atom(HostPolicyBase, APIMixin["Role"]):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.HostPolicyAtoms
+
+    @classmethod
+    def get_by_name(cls, name: str) -> Atom:
+        """Get an Atom by name.
+
+        :param name: The atom name to search for.
+        :returns: The atom if found.
+        :raises CliWarning: If the atom is not found.
+        """
+        data = get_item_by_key_value(Endpoint.HostPolicyAtoms, "name", name)
+        if not data:
+            cli_warning(f"Atom with name {name} not found.")
+        return cls(**data)
 
 
 class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
