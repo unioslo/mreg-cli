@@ -371,8 +371,10 @@ class HostPolicy(FrozenModel):
         # Fast path for str (most likely input type)
         if isinstance(value, str):
             return datetime.fromisoformat(value)
+        # Re-validating model (field is already a datetime object)
         elif isinstance(value, datetime):
             return value
+        # Date object is also valid input (parity with API)
         elif isinstance(value, date):
             return datetime.combine(value, datetime.min.time())
         return value  # let pydantic throw the ValidationError
