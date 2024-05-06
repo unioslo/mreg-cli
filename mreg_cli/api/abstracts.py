@@ -216,7 +216,7 @@ class APIMixin(Generic[BMT], ABC):
         obj = cls.get_by_field(field, value)
         if not obj:
             if not exc_message:
-                exc_message = f"{cls} with {field} {value!r} not found."
+                exc_message = f"{cls.__name__} with {field} {value!r} not found."
             raise exc_type(exc_message)
         return obj
 
@@ -242,7 +242,7 @@ class APIMixin(Generic[BMT], ABC):
         obj = cls.get_by_field(field, value)
         if obj:
             if not exc_message:
-                exc_message = f"{cls} with {field} {value!r} already exists."
+                exc_message = f"{cls.__name__} with {field} {value!r} already exists."
             raise exc_type(exc_message)
         return None
 

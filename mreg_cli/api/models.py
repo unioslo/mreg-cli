@@ -274,9 +274,7 @@ class WithName(APIMixin[BaseModel]):
 
         :param name: The name to check for existence.
         """
-        instance = cls.get_by_field_or_raise("name", name)
-        if not instance:
-            raise ValueError(f"{cls} with the name '{name}' does not exist.")
+        cls.get_by_field_or_raise("name", name)  # pyright: ignore[reportUnusedCallResult]
 
     @classmethod
     def get_by_name(cls, name: str) -> Self:
@@ -288,7 +286,7 @@ class WithName(APIMixin[BaseModel]):
         """
         data = get_item_by_key_value(cls.endpoint(), "name", name)
         if not data:
-            cli_warning(f"{cls} with name {name} not found.")
+            cli_warning(f"{cls.__name__} with name {name} not found.")
         return cls(**data)
 
 
