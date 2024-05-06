@@ -5,7 +5,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from typing import Any, Literal, cast
+from typing import Any, Literal, Self, cast
 
 from pydantic import (
     AliasChoices,
@@ -256,39 +256,40 @@ class WithTTL(BaseModel):
         return ttl
 
 
-class WithName:
+class WithName(APIMixin[Any]):
     """Model for an object that has a name element."""
 
-    # decorator required by pylance, even though PEP states
-    # __init_subclass__ is implictly a classmethod
     @classmethod
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        if hasattr(cls, "name"):
-            cls.ensure_name_not_exists = cls._ensure_name_not_exists
-            cls.ensure_name_exists = cls._ensure_name_exists
-
-    @classmethod
-    def _ensure_name_not_exists(cls, name: str) -> None:
+    def ensure_name_not_exists(cls, name: str) -> None:
         """Ensure a name is not already used.
 
         :param name: The name to check for uniqueness.
         """
-        # FIXME: need to stipulate that we can call this method
-        # OR extract it from APIMixin like get_item_by_key_value
-
         # TODO: pass in exception type and message?
         cls.get_by_field_and_raise("name", name)
 
     @classmethod
-    def _ensure_name_exists(cls, name: str) -> None:
+    def ensure_name_exists(cls, name: str) -> None:
         """Ensure a name exists.
 
         :param name: The name to check for existence.
         """
-        instance = cls.get_by_field("name", name)
+        instance = cls.get_by_field_or_raise("name", name)
         if not instance:
             raise ValueError(f"{cls} with the name '{name}' does not exist.")
+
+    @classmethod
+    def get_by_name(cls, name: str) -> Self:
+        """Get a resource by name.
+
+        :param name: The role name to search for.
+        :returns: The resource if found.
+        :raises CliWarning: If the role is not found.
+        """
+        data = get_item_by_key_value(cls.endpoint(), "name", name)
+        if not data:
+            cli_warning(f"{cls} with name {name} not found.")
+        return cls(**data)
 
 
 class NameServer(FrozenModelWithTimestamps, WithTTL):
@@ -420,7 +421,7 @@ class HostPolicy(FrozenModel):
         return self.created_at_tz_naive.replace(tzinfo=self.updated_at.tzinfo)
 
     @classmethod
-    def get_by_name(cls, name: str) -> Atom | Role:
+    def get_role_or_atom(cls, name: str) -> Atom | Role:
         """Get an Atom or Role by name.
 
         :param name: The name to search for.
@@ -457,7 +458,7 @@ class HostPolicy(FrozenModel):
         output_manager.add_line(f"{'Description:':<{padding}}{self.description}")
 
 
-class Role(HostPolicy, APIMixin["Role"]):
+class Role(HostPolicy, WithName, APIMixin["Role"]):
     """Model for a role."""
 
     id: int  # noqa: A003
@@ -469,19 +470,6 @@ class Role(HostPolicy, APIMixin["Role"]):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.HostPolicyRoles
-
-    @classmethod
-    def get_by_name(cls, name: str) -> Role:
-        """Get a Role by name.
-
-        :param name: The role name to search for.
-        :returns: The role if found.
-        :raises CliWarning: If the role is not found.
-        """
-        data = get_item_by_key_value(cls.endpoint(), "name", name)
-        if not data:
-            cli_warning(f"Role with name {name} not found.")
-        return cls(**data)
 
     def output(self, padding: int = 14) -> None:
         """Output the role to the console.
@@ -530,19 +518,6 @@ class Atom(HostPolicy, WithName, APIMixin["Atom"]):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.HostPolicyAtoms
-
-    @classmethod
-    def get_by_name(cls, name: str) -> Atom:
-        """Get an Atom by name.
-
-        :param name: The atom name to search for.
-        :returns: The atom if found.
-        :raises CliWarning: If the atom is not found.
-        """
-        data = get_item_by_key_value(cls.endpoint(), "name", name)
-        if not data:
-            cli_warning(f"Atom with name {name} not found.")
-        return cls(**data)
 
     def output(self, padding: int = 14) -> None:
         """Output the role to the console.
@@ -689,7 +664,7 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
         return hash((self.id, self.network))
 
 
-class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
+class IPAddress(FrozenModelWithTimestamps, WithHost, WithName, APIMixin["IPAddress"]):
     """Represents an IP address with associated details."""
 
     id: int  # noqa: A003
