@@ -195,6 +195,32 @@ class APIMixin(Generic[BMT], ABC):
         return cast(BMT, cls(**data))
 
     @classmethod
+    def get_by_field_or_raise(
+        cls,
+        field: str,
+        value: str,
+        exc_type: type[Exception] = CliError,
+        exc_message: str | None = None,
+    ) -> BMT:
+        """Get an object by a field and raise if not found.
+
+        Used for cases where the object must exist for the operation to continue.
+
+        :param field: The field to search by.
+        :param value: The value to search for.
+        :param exc_type: The exception type to raise.
+        :param exc_message: The exception message. Overrides the default message.
+
+        :returns: The object if found.
+        """
+        obj = cls.get_by_field(field, value)
+        if not obj:
+            if not exc_message:
+                exc_message = f"{cls} with {field} {value!r} not found."
+            raise exc_type(exc_message)
+        return obj
+
+    @classmethod
     def get_by_field_and_raise(
         cls,
         field: str,
@@ -204,7 +230,7 @@ class APIMixin(Generic[BMT], ABC):
     ) -> None:
         """Get an object by a field and raise if found.
 
-        Used for cases where the object must exist for the operation to continue.
+        Used for cases where the object must NOT exist for the operation to continue.
 
         :param field: The field to search by.
         :param value: The value to search for.
