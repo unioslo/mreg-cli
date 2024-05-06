@@ -256,6 +256,41 @@ class WithTTL(BaseModel):
         return ttl
 
 
+class WithName:
+    """Model for an object that has a name element."""
+
+    # decorator required by pylance, even though PEP states
+    # __init_subclass__ is implictly a classmethod
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if hasattr(cls, "name"):
+            cls.ensure_name_not_exists = cls._ensure_name_not_exists
+            cls.ensure_name_exists = cls._ensure_name_exists
+
+    @classmethod
+    def _ensure_name_not_exists(cls, name: str) -> None:
+        """Ensure a name is not already used.
+
+        :param name: The name to check for uniqueness.
+        """
+        # FIXME: need to stipulate that we can call this method
+        # OR extract it from APIMixin like get_item_by_key_value
+
+        # TODO: pass in exception type and message?
+        cls.get_by_field_and_raise("name", name)
+
+    @classmethod
+    def _ensure_name_exists(cls, name: str) -> None:
+        """Ensure a name exists.
+
+        :param name: The name to check for existence.
+        """
+        instance = cls.get_by_field("name", name)
+        if not instance:
+            raise ValueError(f"{cls} with the name '{name}' does not exist.")
+
+
 class NameServer(FrozenModelWithTimestamps, WithTTL):
     """Model for representing a nameserver within a DNS zone."""
 
@@ -443,7 +478,7 @@ class Role(HostPolicy, APIMixin["Role"]):
         :returns: The role if found.
         :raises CliWarning: If the role is not found.
         """
-        data = get_item_by_key_value(Endpoint.HostPolicyRoles, "name", name)
+        data = get_item_by_key_value(cls.endpoint(), "name", name)
         if not data:
             cli_warning(f"Role with name {name} not found.")
         return cls(**data)
@@ -485,7 +520,7 @@ class Role(HostPolicy, APIMixin["Role"]):
         return [Label.get_by_id_or_raise(id_) for id_ in self.labels]
 
 
-class Atom(HostPolicy, APIMixin["Atom"]):
+class Atom(HostPolicy, WithName, APIMixin["Atom"]):
     """Model for an atom."""
 
     id: int  # noqa: A003
@@ -504,7 +539,7 @@ class Atom(HostPolicy, APIMixin["Atom"]):
         :returns: The atom if found.
         :raises CliWarning: If the atom is not found.
         """
-        data = get_item_by_key_value(Endpoint.HostPolicyAtoms, "name", name)
+        data = get_item_by_key_value(cls.endpoint(), "name", name)
         if not data:
             cli_warning(f"Atom with name {name} not found.")
         return cls(**data)
