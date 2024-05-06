@@ -5,7 +5,7 @@ from __future__ import annotations
 import urllib.parse
 from typing import Any
 
-from mreg_cli.exceptions import CliWarning, HostNotFoundWarning
+from mreg_cli.exceptions import CliWarning, EntityNotFound
 from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.utilities.api import get, get_list, patch
 from mreg_cli.utilities.network import ips_are_in_same_vlan
@@ -170,7 +170,7 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict[str, Any]:
     name = clean_hostname(name)
     hostinfo = _host_info_by_name(name, follow_cname=follow_cname)
     if hostinfo is None:
-        cli_warning(f"host not found: {name!r}", exception=HostNotFoundWarning)
+        cli_warning(f"host not found: {name!r}", exception=EntityNotFound)
 
     return hostinfo
 
@@ -196,7 +196,7 @@ def resolve_ip(ip: str) -> str:
         cli_error(f'resolve ip got multiple matches for ip "{ip}"')
 
     if len(hosts) == 0:
-        cli_warning(f"{ip} doesnt belong to any host", exception=HostNotFoundWarning)
+        cli_warning(f"{ip} doesnt belong to any host", exception=EntityNotFound)
     return hosts[0]["name"]
 
 
@@ -213,7 +213,7 @@ def get_host_by_name(name: str) -> str:
     if len(hosts) == 1:
         assert hosts[0]["name"] == hostname
         return hostname
-    cli_warning(f"host not found: {name}", exception=HostNotFoundWarning)
+    cli_warning(f"host not found: {name}", exception=EntityNotFound)
 
 
 def _cname_info_by_name(name: str) -> dict[str, Any] | None:
@@ -252,4 +252,4 @@ def get_info_by_name(name: str) -> tuple[str, dict[str, Any]]:
     info = _srv_info_by_name(name)
     if info is not None:
         return "srv", info
-    cli_warning(f"not found: {name!r}", exception=HostNotFoundWarning)
+    cli_warning(f"not found: {name!r}", exception=EntityNotFound)

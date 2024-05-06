@@ -50,14 +50,44 @@ class CliWarning(CliException):
         return f"<i>{super().__str__()}</i>"
 
 
-class HostNotFoundWarning(CliWarning):
-    """Warning class for host not found."""
+class CreateFailure(CliError):
+    """Error class for failed creation."""
 
     pass
 
 
-class NetworkNotFoundWarning(CliWarning):
-    """Warning class for network not found."""
+class PatchFailure(CliError):
+    """Error class for failed patching."""
+
+    pass
+
+
+class DeleteFailure(CliError):
+    """Error class for failed deletion."""
+
+    pass
+
+
+class EntityNotFound(CliWarning):
+    """Warning class for an entity that was not found."""
+
+    pass
+
+
+class EntityAlreadyExists(CliWarning):
+    """Warning class for an entity that already exists."""
+
+    pass
+
+
+class InputFailure(CliWarning):
+    """Warning class for input failure."""
+
+    pass
+
+
+class ForceMissing(CliWarning):
+    """Warning class for missing force flag."""
 
     pass
 

@@ -7,7 +7,7 @@ from typing import Any
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import HostNotFoundWarning
+from mreg_cli.exceptions import EntityNotFound
 from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
@@ -34,7 +34,7 @@ def _verify_nameservers(nameservers: str, force: bool) -> None:
     for nameserver in nameservers:
         try:
             info = host_info_by_name(nameserver)
-        except HostNotFoundWarning:
+        except EntityNotFound:
             if not force:
                 errors.append(f"{nameserver} is not in mreg, must force")
         else:
