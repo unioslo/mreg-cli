@@ -256,7 +256,7 @@ class WithTTL(BaseModel):
         return ttl
 
 
-class WithName(APIMixin[Any]):
+class WithName(APIMixin[BaseModel]):
     """Model for an object that has a name element."""
 
     @classmethod
@@ -270,7 +270,7 @@ class WithName(APIMixin[Any]):
 
     @classmethod
     def ensure_name_exists(cls, name: str) -> None:
-        """Ensure a name exists.
+        """Ensure a resource with the name exists.
 
         :param name: The name to check for existence.
         """
