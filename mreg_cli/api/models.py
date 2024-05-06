@@ -664,7 +664,7 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
         return hash((self.id, self.network))
 
 
-class IPAddress(FrozenModelWithTimestamps, WithHost, WithName, APIMixin["IPAddress"]):
+class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
     """Represents an IP address with associated details."""
 
     id: int  # noqa: A003
