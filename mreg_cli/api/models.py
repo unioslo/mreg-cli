@@ -5,7 +5,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from typing import Any, Literal, cast
+from typing import Any, Literal, Self, cast
 
 from pydantic import (
     AliasChoices,
@@ -256,6 +256,48 @@ class WithTTL(BaseModel):
         return ttl
 
 
+class WithName(APIMixin[Any]):
+    """Mixin type for an object that has a name element."""
+
+    __name_field__: str = "name"
+    """Name of the API field that holds the object's name."""
+
+    @classmethod
+    def ensure_name_not_exists(cls, name: str) -> None:
+        """Ensure a name is not already used.
+
+        :param name: The name to check for uniqueness.
+        """
+        cls.get_by_field_and_raise(cls.__name_field__, name)
+
+    @classmethod
+    def ensure_name_exists(cls, name: str) -> None:
+        """Ensure a resource with the name exists.
+
+        :param name: The name to check for existence.
+        """
+        cls.get_by_name_or_raise(name)  # pyright: ignore[reportUnusedCallResult]
+
+    @classmethod
+    def get_by_name(cls, name: str) -> Self | None:
+        """Get a resource by name.
+
+        :param name: The resource name to search for.
+        :returns: The resource if found.
+        """
+        return cls.get_by_field(cls.__name_field__, name)
+
+    @classmethod
+    def get_by_name_or_raise(cls, name: str) -> Self:
+        """Get a resource by name, raising a CliWarning if not found.
+
+        :param name: The resource name to search for.
+        :returns: The resource.
+        :raises CliWarning: If the role is not found.
+        """
+        return cls.get_by_field_or_raise(cls.__name_field__, name)
+
+
 class NameServer(FrozenModelWithTimestamps, WithTTL):
     """Model for representing a nameserver within a DNS zone."""
 
@@ -385,7 +427,7 @@ class HostPolicy(FrozenModel):
         return self.created_at_tz_naive.replace(tzinfo=self.updated_at.tzinfo)
 
     @classmethod
-    def get_by_name(cls, name: str) -> Atom | Role:
+    def get_role_or_atom(cls, name: str) -> Atom | Role:
         """Get an Atom or Role by name.
 
         :param name: The name to search for.
@@ -401,7 +443,7 @@ class HostPolicy(FrozenModel):
             else:
                 break  # found a match
         else:
-            cli_warning(f"Could not find an atom or a role with name: {name!r}")
+            cli_warning(f"Could not find an atom or a role with name {name}")
         return role_or_atom
 
     def output_timestamps(self, padding: int = 14) -> None:
@@ -422,7 +464,7 @@ class HostPolicy(FrozenModel):
         output_manager.add_line(f"{'Description:':<{padding}}{self.description}")
 
 
-class Role(HostPolicy, APIMixin["Role"]):
+class Role(HostPolicy, WithName, APIMixin["Role"]):
     """Model for a role."""
 
     id: int  # noqa: A003
@@ -434,19 +476,6 @@ class Role(HostPolicy, APIMixin["Role"]):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.HostPolicyRoles
-
-    @classmethod
-    def get_by_name(cls, name: str) -> Role:
-        """Get a Role by name.
-
-        :param name: The role name to search for.
-        :returns: The role if found.
-        :raises CliWarning: If the role is not found.
-        """
-        data = get_item_by_key_value(Endpoint.HostPolicyRoles, "name", name)
-        if not data:
-            cli_warning(f"Role with name {name} not found.")
-        return cls(**data)
 
     def output(self, padding: int = 14) -> None:
         """Output the role to the console.
@@ -484,8 +513,18 @@ class Role(HostPolicy, APIMixin["Role"]):
         """
         return [Label.get_by_id_or_raise(id_) for id_ in self.labels]
 
+    @classmethod
+    def get_roles_with_atom(cls, name: str) -> list[Role]:
+        """Get all roles with a specific atom.
 
-class Atom(HostPolicy, APIMixin["Atom"]):
+        :param atom: Name of the atom to search for.
+        :returns: A list of Role objects.
+        """
+        data = get_list(cls.endpoint(), params={"atoms__name__exact": name})
+        return [Role(**item) for item in data]
+
+
+class Atom(HostPolicy, WithName, APIMixin["Atom"]):
     """Model for an atom."""
 
     id: int  # noqa: A003
@@ -495,19 +534,6 @@ class Atom(HostPolicy, APIMixin["Atom"]):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.HostPolicyAtoms
-
-    @classmethod
-    def get_by_name(cls, name: str) -> Atom:
-        """Get an Atom by name.
-
-        :param name: The atom name to search for.
-        :returns: The atom if found.
-        :raises CliWarning: If the atom is not found.
-        """
-        data = get_item_by_key_value(Endpoint.HostPolicyAtoms, "name", name)
-        if not data:
-            cli_warning(f"Atom with name {name} not found.")
-        return cls(**data)
 
     def output(self, padding: int = 14) -> None:
         """Output the role to the console.

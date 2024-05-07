@@ -11,6 +11,7 @@ from pydantic.fields import FieldInfo
 
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.history import HistoryItem, HistoryResource
+from mreg_cli.exceptions import CliError
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import (
@@ -192,6 +193,58 @@ class APIMixin(Generic[BMT], ABC):
             return None
 
         return cast(BMT, cls(**data))
+
+    @classmethod
+    def get_by_field_or_raise(
+        cls,
+        field: str,
+        value: str,
+        exc_type: type[Exception] = CliError,
+        exc_message: str | None = None,
+    ) -> BMT:
+        """Get an object by a field and raise if not found.
+
+        Used for cases where the object must exist for the operation to continue.
+
+        :param field: The field to search by.
+        :param value: The value to search for.
+        :param exc_type: The exception type to raise.
+        :param exc_message: The exception message. Overrides the default message.
+
+        :returns: The object if found.
+        """
+        obj = cls.get_by_field(field, value)
+        if not obj:
+            if not exc_message:
+                exc_message = f"{cls.__name__} with {field} {value!r} not found."
+            raise exc_type(exc_message)
+        return obj
+
+    @classmethod
+    def get_by_field_and_raise(
+        cls,
+        field: str,
+        value: str,
+        exc_type: type[Exception] = CliError,
+        exc_message: str | None = None,
+    ) -> None:
+        """Get an object by a field and raise if found.
+
+        Used for cases where the object must NOT exist for the operation to continue.
+
+        :param field: The field to search by.
+        :param value: The value to search for.
+        :param exc_type: The exception type to raise.
+        :param exc_message: The exception message. Overrides the default message.
+
+        :raises Exception: If the object is found.
+        """
+        obj = cls.get_by_field(field, value)
+        if obj:
+            if not exc_message:
+                exc_message = f"{cls.__name__} with {field} {value!r} already exists."
+            raise exc_type(exc_message)
+        return None
 
     @classmethod
     def get_list_by_field(

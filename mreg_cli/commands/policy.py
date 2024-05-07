@@ -247,7 +247,7 @@ def info(args: argparse.Namespace) -> None:
     """
     names: list[str] = args.name
     for name in names:
-        role_or_atom = HostPolicy.get_by_name(name)
+        role_or_atom = HostPolicy.get_role_or_atom(name)
         role_or_atom.output()
 
 
