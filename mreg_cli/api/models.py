@@ -21,7 +21,6 @@ from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
-    CliWarning,
     DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
@@ -31,6 +30,7 @@ from mreg_cli.exceptions import (
     InvalidIPAddress,
     InvalidIPv4Address,
     InvalidIPv6Address,
+    InvalidNetworkError,
     MultipleEntititesFound,
     UnexpectedDataError,
     ValidationError,
@@ -45,7 +45,9 @@ from mreg_cli.utilities.api import (
     get_list_in,
     get_list_unique,
     get_typed,
+    post,
 )
+from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
 
@@ -242,7 +244,7 @@ class WithTTL(BaseModel):
 
         The value of "default" sets the value to None, which is then converted to the empty string.
 
-        If a numeric TTL value is outside of the bounds, a cli_warning is raised.
+        If a numeric TTL value is outside of the bounds, InputFail is raised.
 
         :param ttl: The TTL target to set.
         :raises InputFailure: If the TTL value is outside the bounds.
@@ -280,22 +282,6 @@ class WithName(BaseModel, APIMixin):
     """Name of the API field that holds the object's name."""
 
     @classmethod
-    def ensure_name_not_exists(cls, name: str) -> None:
-        """Ensure a name is not already used.
-
-        :param name: The name to check for uniqueness.
-        """
-        cls.get_by_field_and_raise(cls.__name_field__, name)
-
-    @classmethod
-    def ensure_name_exists(cls, name: str) -> None:
-        """Ensure a resource with the name exists.
-
-        :param name: The name to check for existence.
-        """
-        cls.get_by_name_or_raise(name)  # pyright: ignore[reportUnusedCallResult]
-
-    @classmethod
     def get_by_name(cls, name: str) -> Self | None:
         """Get a resource by name.
 
@@ -305,14 +291,42 @@ class WithName(BaseModel, APIMixin):
         return cls.get_by_field(cls.__name_field__, name)
 
     @classmethod
+    def get_by_name_and_raise(cls, name: str) -> None:
+        """Get a resource by name, raising EntityAlreadyExists if found.
+
+        :param name: The resource name to search for.
+        :raises EntityAlreadyExists: If the resource is found.
+        """
+        return cls.get_by_field_and_raise(cls.__name_field__, name)
+
+    @classmethod
     def get_by_name_or_raise(cls, name: str) -> Self:
         """Get a resource by name, raising EntityNotFound if not found.
 
         :param name: The resource name to search for.
         :returns: The resource.
-        :raises EntityNotFound: If the role is not found.
+        :raises EntityNotFound: If the resource is not found.
         """
         return cls.get_by_field_or_raise(cls.__name_field__, name)
+
+    @classmethod
+    def get_list_by_name_regex(cls, name: str) -> list[Self]:
+        """Get multiple resources by a name regex.
+
+        :param name: The regex pattern for names to search for.
+        :returns: A list of resource objects.
+        """
+        param, value = convert_wildcard_to_regex(cls.__name_field__, name, True)
+        data = get_list(cls.endpoint(), params={param: value})
+        return [cls(**item) for item in data]
+
+    def rename(self, new_name: str) -> Self:
+        """Rename the resource.
+
+        :param new_name: The new name to set.
+        :returns: True if the rename was successful.
+        """
+        return self.patch({self.__name_field__: new_name})
 
 
 class NameServer(FrozenModelWithTimestamps, WithTTL):
@@ -389,7 +403,7 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         return True
 
 
-class HostPolicy(FrozenModel):
+class HostPolicy(FrozenModel, WithName):
     """Base model for Host Policy objects.
 
     Note:
@@ -443,25 +457,51 @@ class HostPolicy(FrozenModel):
         """Creation time."""
         return self.created_at_tz_naive.replace(tzinfo=self.updated_at.tzinfo)
 
+    # Fetching Host Policy objects is a special case where we cannot
+    # re-use the methods defined in WithName, because we don't have an endpoint
+    # defined on the class that can fetch both Roles and Atoms.
+    # Thus, we need to define our own implementations of these methods.
     @classmethod
-    def get_role_or_atom(cls, name: str) -> Atom | Role:
+    def get_role_or_atom(cls, name: str) -> Atom | Role | None:
         """Get an Atom or Role by name.
+
+        :param name: The name to search for.
+        :returns: The Atom or Role if found, else None.
+        """
+        for func in [Atom.get_by_name, Role.get_by_name]:
+            role_or_atom = func(name)
+            if role_or_atom:
+                return role_or_atom
+        return None
+
+    @classmethod
+    def get_role_or_atom_or_raise(cls, name: str) -> Atom | Role:
+        """Get an Atom or Role by name and raise if not found.
 
         :param name: The name to search for.
         :returns: The Atom or Role if found.
         :raises EntityNotFound: If the Atom or Role is not found.
         """
-        role_or_atom: Role | Atom
-        for func in [Atom.get_by_name, Role.get_by_name]:
-            try:
-                role_or_atom = func(name)
-            except CliWarning:
-                pass  # try next function
-            else:
-                break  # found a match
-        else:
-            raise EntityNotFound(f"Could not find an atom or a role with name {name}")
-        return role_or_atom
+        role_or_atom = cls.get_role_or_atom(name)
+        if role_or_atom:
+            return role_or_atom
+        raise EntityNotFound(f"Could not find an atom or a role with name {name}")
+
+    @classmethod
+    def get_role_or_atom_and_raise(cls, name: str) -> None:
+        """Get an Atom or Role by name and raise if found.
+
+        :param name: The name to search for.
+        :returns: The Atom or Role if found.
+        :raises EntityAlreadyExists: If the Atom or Role is found.
+        """
+        role_or_atom = cls.get_role_or_atom(name)
+        if role_or_atom:
+            raise EntityAlreadyExists(f"An atom or a role with name {name} already exists.")
+
+    def set_description(self, description: str) -> Self:
+        """Set a new description."""
+        return self.patch({"description": description})
 
     def output_timestamps(self, padding: int = 14) -> None:
         """Output the created and updated timestamps to the console."""
@@ -481,7 +521,7 @@ class HostPolicy(FrozenModel):
         output_manager.add_line(f"{'Description:':<{padding}}{self.description}")
 
 
-class Role(HostPolicy, WithName):
+class Role(HostPolicy):
     """Model for a role."""
 
     id: int  # noqa: A003
@@ -509,6 +549,32 @@ class Role(HostPolicy, WithName):
         for label in labels:
             output_manager.add_formatted_line("", label.name, padding)
 
+    def output_hosts(self, padding: int = 14) -> None:
+        """Output the hosts that use the role.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        manager = OutputManager()
+        if self.hosts:
+            manager.add_line("Name:")
+            for host in self.hosts:
+                manager.add_line(f" {host}")
+        else:
+            manager.add_line("No host uses this role")
+
+    def output_atoms(self, padding: int = 14) -> None:
+        """Output the atoms that are members of the role.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        manager = OutputManager()
+        if self.atoms:
+            manager.add_line("Name:")
+            for atom in self.atoms:
+                manager.add_line(f" {atom}")
+        else:
+            manager.add_line("No atom members")
+
     @classmethod
     def output_multiple(cls, roles: list[Role], padding: int = 14) -> None:
         """Output multiple roles to the console.
@@ -523,12 +589,38 @@ class Role(HostPolicy, WithName):
             "{1:<{0}}{2}".format(padding, "Roles:", ", ".join([role.name for role in roles]))
         )
 
-    def get_labels(self) -> list[Label]:
-        """Get the labels associated with the role.
+    @classmethod
+    def output_multiple_table(cls, roles: list[Role], padding: int = 14) -> None:
+        """Output multiple roles to the console in a table.
 
-        :returns: A list of Label objects.
+        :param roles: List of roles to output.
+        :param padding: Number of spaces for left-padding the output.
         """
-        return [Label.get_by_id_or_raise(id_) for id_ in self.labels]
+        if not roles:
+            return
+
+        class RoleTableRow(BaseModel):
+            name: str
+            description: str
+            labels: str
+
+        rows: list[RoleTableRow] = []
+        for role in roles:
+            labels = role.get_labels()
+            row = RoleTableRow(
+                name=role.name,
+                description=role.description,
+                labels=", ".join([label.name for label in labels]),
+            )
+            rows.append(row)
+
+        keys = list(RoleTableRow.model_fields.keys())
+        headers = [h.capitalize() for h in keys]
+        OutputManager().add_formatted_table(
+            headers=headers,
+            keys=keys,
+            data=rows,
+        )
 
     @classmethod
     def get_roles_with_atom(cls, name: str) -> list[Role]:
@@ -538,10 +630,102 @@ class Role(HostPolicy, WithName):
         :returns: A list of Role objects.
         """
         data = get_list(cls.endpoint(), params={"atoms__name__exact": name})
-        return [Role(**item) for item in data]
+        return [cls(**item) for item in data]
+
+    def add_atom(self, atom_name: str) -> bool:
+        """Add an atom to the role.
+
+        :param atom_name: The name of the atom to add.
+        """
+        # Ensure the atom exists
+        Atom.get_by_name_or_raise(atom_name)
+        for atom in self.atoms:
+            if atom_name == atom:
+                raise EntityAlreadyExists(f"Atom {atom!r} already a member of role {self.name!r}")
+
+        resp = post(Endpoint.HostPolicyRolesAddAtom.with_params(self.name), name=atom_name)
+        return resp.ok if resp else False
+
+    def remove_atom(self, atom_name: str) -> bool:
+        """Remove an atom from the role.
+
+        :param atom_name: The name of the atom to remove.
+        """
+        for atom in self.atoms:
+            if atom_name == atom:
+                break
+        else:
+            raise EntityOwnershipMismatch(f"Atom {atom_name!r} not a member of {self.name!r}")
+
+        resp = delete(Endpoint.HostPolicyRolesRemoveAtom.with_params(self.name, atom))
+        return resp.ok if resp else False
+
+    def get_labels(self) -> list[Label]:
+        """Get the labels associated with the role.
+
+        :returns: A list of Label objects.
+        """
+        return [Label.get_by_id_or_raise(id_) for id_ in self.labels]
+
+    def add_label(self, label_name: str) -> Self:
+        """Add a label to the role.
+
+        :param label_name: The name of the label to add.
+
+        :returns: The updated Role object.
+        """
+        label = Label.get_by_name_or_raise(label_name)
+        if label.id in self.labels:
+            raise EntityAlreadyExists(
+                f"The role {self.name!r} already has the label {label_name!r}"
+            )
+
+        label_ids = self.labels.copy()
+        label_ids.append(label.id)
+        return self.patch({"labels": label_ids})
+
+    def remove_label(self, label_name: str) -> Self:
+        """Add a label to the role.
+
+        :param label_name: The name of the label to add.
+
+        :returns: The updated Role object.
+        """
+        label = Label.get_by_name_or_raise(label_name)
+        if label.id not in self.labels:
+            raise EntityOwnershipMismatch(
+                f"The role {self.name!r} doesn't have the label {label_name!r}"
+            )
+
+        label_ids = self.labels.copy()
+        label_ids.remove(label.id)
+        return self.patch({"labels": label_ids}, use_json=True)
+
+    def add_host(self, name: str) -> bool:
+        """Add a host to the role by name.
+
+        :param name: The name of the host to add.
+        """
+        resp = post(Endpoint.HostPolicyRolesAddHost.with_params(self.name), name=name)
+        return resp.ok if resp else False
+
+    def remove_host(self, name: str) -> bool:
+        """Remove a host from the role by name.
+
+        :param name: The name of the host to remove.
+        """
+        resp = delete(Endpoint.HostPolicyRolesRemoveHost.with_params(self.name, name))
+        return resp.ok if resp else False
+
+    def delete(self) -> bool:
+        """Delete the role."""
+        if self.hosts:
+            hosts = ", ".join(self.hosts)
+            raise DeleteError(f"Role {self.name!r} used on hosts: {hosts}")
+        return super().delete()
 
 
-class Atom(HostPolicy, WithName):
+class Atom(HostPolicy):
     """Model for an atom."""
 
     id: int  # noqa: A003
@@ -563,8 +747,41 @@ class Atom(HostPolicy, WithName):
         for role in self.roles:
             output_manager.add_formatted_line("", role, padding)
 
+    @classmethod
+    def output_multiple(cls, atoms: list[Atom], padding: int = 14) -> None:
+        """Output multiple atoms to the console as a single formatted string.
 
-class Label(FrozenModelWithTimestamps, APIMixin):
+        :param atoms: List of atoms to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        if not atoms:
+            return
+
+        OutputManager().add_line(
+            "{1:<{0}}{2}".format(padding, "Atoms:", ", ".join([atom.name for atom in atoms]))
+        )
+
+    @classmethod
+    def output_multiple_lines(cls, atoms: list[Atom], padding: int = 20) -> None:
+        """Output multiple atoms to the console, one atom per line.
+
+        :param atoms: List of atoms to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        manager = OutputManager()
+        for atom in atoms:
+            manager.add_formatted_line(atom.name, f"{atom.description!r}", padding)
+
+    def delete(self) -> bool:
+        """Delete the atom."""
+        roles = Role.get_roles_with_atom(self.name)
+        if self.roles:
+            roles = ", ".join(self.roles)
+            raise DeleteError(f"Atom {self.name!r} used in roles: {roles}")
+        return super().delete()
+
+
+class Label(FrozenModelWithTimestamps, WithName):
     """Model for a label."""
 
     id: int  # noqa: A003
@@ -1487,7 +1704,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
     def delete(self) -> bool:
         """Delete the host.
 
-        :raises DeleteFailure: If the operation to delete the host fails.
+        :raises DeleteError: If the operation to delete the host fails.
 
         :returns: True if the host was deleted successfully, False otherwise.
         """
@@ -1756,9 +1973,9 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         """Return the zone for the host.
 
         :param accept_delegation: If True, accept delegation and return a Delegation object if the
-                                    zone of the host is delegated. Otherwise raise a cli_warning.
+                                    zone of the host is delegated. Otherwise raise EntityOwnershipMismatch.
         :param validate_zone_resolution: If True, validate that the resolved zone matches the
-                                          expected zone ID. Fail with a cli_warning if it does not.
+                                          expected zone ID. Fail with ValidationFailure if it does not.
         """
         if not self.zone:
             return None
@@ -1918,6 +2135,17 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
             return
 
         CNAME.output_multiple(self.cnames, padding=padding)
+
+    def output_roles(self, padding: int = 14) -> None:
+        """Output the roles for the host."""
+        roles = self.roles()
+        manager = OutputManager()
+        if not roles:
+            manager.add_line(f"Host {self.name!r} has no roles")
+        else:
+            manager.add_line(f"Roles for {self.name!r}:")
+            for role in roles:
+                manager.add_line(f"  {role.name}")
 
     def __str__(self) -> str:
         """Return the host name as a string."""
