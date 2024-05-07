@@ -80,6 +80,12 @@ class EntityAlreadyExists(CliWarning):
     pass
 
 
+class EntityOwnershipMismatch(CliWarning):
+    """Warning class for an entity that already exists but owned by someone else."""
+
+    pass
+
+
 class InputFailure(CliWarning):
     """Warning class for input failure."""
 

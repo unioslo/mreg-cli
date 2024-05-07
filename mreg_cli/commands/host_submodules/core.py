@@ -18,7 +18,17 @@ import argparse
 from mreg_cli.api.history import HistoryResource
 from mreg_cli.api.models import ForwardZone, Host, HostList, HostT, MACAddressField, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
-from mreg_cli.log import cli_info, cli_warning
+from mreg_cli.exceptions import (
+    CreateFailure,
+    DeleteFailure,
+    EntityAlreadyExists,
+    EntityNotFound,
+    EntityOwnershipMismatch,
+    ForceMissing,
+    InputFailure,
+    PatchFailure,
+)
+from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
 from mreg_cli.utilities.history import format_history_items, get_history_items
 from mreg_cli.utilities.shared import clean_hostname, convert_wildcard_to_regex
@@ -77,30 +87,30 @@ def add(args: argparse.Namespace) -> None:
     if macaddress is not None:
         try:
             macaddress = MACAddressField(address=macaddress).address
-        except ValueError:
-            cli_warning(f"invalid MAC address: {macaddress}")
+        except ValueError as e:
+            raise InputFailure(f"invalid MAC address: {macaddress}") from e
 
     host = Host.get_by_any_means(hname)
     if host:
         if host.name.hostname != hname.hostname:
-            cli_warning(f"{hname} is a CNAME pointing to {host.name}")
+            raise EntityOwnershipMismatch(f"{hname} is a CNAME pointing to {host.name}")
         else:
-            cli_warning(f"Host {hname} already exists.")
+            raise EntityAlreadyExists(f"Host {hname} already exists.")
 
     zone = ForwardZone.get_from_hostname(hname)
     if not zone and not args.force:
-        cli_warning(f"{hname} isn't in a zone controlled by MREG, must force")
+        raise ForceMissing(f"{hname} isn't in a zone controlled by MREG, must force")
     if zone and zone.is_delegated() and not args.force:
-        cli_warning(f"{hname} is in zone delegation {zone.name}, must force")
+        raise ForceMissing(f"{hname} is in zone delegation {zone.name}, must force")
 
     if "*" in hname.hostname and not args.force:
-        cli_warning("Wildcards must be forced.")
+        raise ForceMissing("Wildcards must be forced.")
 
     if macaddress is not None:
         try:
             macaddress = MACAddressField(address=macaddress)
-        except ValueError:
-            cli_warning(f"invalid MAC address: {macaddress}")
+        except ValueError as e:
+            raise InputFailure(f"invalid MAC address: {macaddress}") from e
 
     data: dict[str, str | None] = {
         "name": hname.hostname,
@@ -115,11 +125,11 @@ def add(args: argparse.Namespace) -> None:
         elif net_or_ip.is_network():
             data["network"] = str(net_or_ip)
         else:
-            cli_warning(f"Invalid ip or network: {args.ip}")
+            raise EntityNotFound(f"Invalid ip or network: {args.ip}")
 
     host = Host.create(data)
     if not host:
-        cli_warning("Failed to add host.")
+        raise CreateFailure("Failed to add host.")
 
     if macaddress is not None:
         if ip:
@@ -178,7 +188,9 @@ def remove(args: argparse.Namespace) -> None:
     accepted_overrides = ["cname", "ipaddress", "mx", "srv", "ptr", "naptr"]
     for override in overrides:
         if override not in accepted_overrides:
-            cli_warning(f"Invalid override: {override}. Accepted overrides: {accepted_overrides}")
+            raise InputFailure(
+                f"Invalid override: {override}. Accepted overrides: {accepted_overrides}"
+            )
 
     def forced(override_required: str | None = None) -> bool:
         # If we require an override, check if it's in the list of provided overrides.
@@ -274,12 +286,12 @@ def remove(args: argparse.Namespace) -> None:
     # Warn user and raise exception if any force requirements was found
     if warnings:
         warn_msg = "\n".join(warnings)
-        cli_warning(f"{host.name} requires force and override for deletion:\n{warn_msg}")
+        raise ForceMissing(f"{host.name} requires force and override for deletion:\n{warn_msg}")
 
     if host.delete():
         cli_info(f"removed {host.name}", print_msg=True)
     else:
-        cli_warning(f"failed to remove {host.name}")
+        raise DeleteFailure(f"failed to remove {host.name}")
 
 
 @command_registry.register_command(
@@ -352,7 +364,7 @@ def find(args: argparse.Namespace) -> None:
         params[param] = value
 
     if not any([args.name, args.comment, args.contact]):
-        cli_warning("Need at least one search critera")
+        raise InputFailure("Need at least one search critera")
 
     params: dict[str, str | int] = {
         "ordering": "name",
@@ -400,15 +412,15 @@ def rename(args: argparse.Namespace) -> None:
     new_name = HostT(hostname=args.new_name)
     new_host = Host.get_by_any_means(new_name, inform_as_cname=True)
     if new_host:
-        cli_warning(f"host {new_host} already exists")
+        raise EntityAlreadyExists(f"host {new_host} already exists")
 
     # Require force if FQDN not in MREG zone
     zone = ForwardZone.get_from_hostname(new_name)
     if not zone and not args.force:
-        cli_warning(f"{new_name} isn't in a zone controlled by MREG, must force")
+        raise ForceMissing(f"{new_name} isn't in a zone controlled by MREG, must force")
 
     if "*" in new_name.hostname and not args.force:
-        cli_warning("Wildcards must be forced.")
+        raise ForceMissing("Wildcards must be forced.")
 
     new_host = old_host.rename(new_name)
     cli_info(f"renamed {old_host} to {new_name}", print_msg=True)
@@ -439,7 +451,7 @@ def set_comment(args: argparse.Namespace) -> None:
     updated_host = host.set_comment(args.comment)
 
     if not updated_host:
-        cli_warning(f"Failed to update comment of {host.name}")
+        raise PatchFailure(f"Failed to update comment of {host.name}")
 
     cli_info(
         f"Updated comment of {host} to {args.comment}",
@@ -465,7 +477,7 @@ def set_contact(args: argparse.Namespace) -> None:
     updated_host = host.set_contact(args.contact)
 
     if not updated_host:
-        cli_warning(f"Failed to update contact of {host.name}")
+        raise PatchFailure(f"Failed to update contact of {host.name}")
 
     cli_info(f"Updated contact of {host} to {args.contact}", print_msg=True)
 
