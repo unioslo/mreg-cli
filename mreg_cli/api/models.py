@@ -259,6 +259,9 @@ class WithTTL(BaseModel):
 class WithName(APIMixin[Any]):
     """Mixin type for an object that has a name element."""
 
+    __name_field__: str = "name"
+    """Name of the field that holds the object's name."""
+
     @classmethod
     def ensure_name_not_exists(cls, name: str) -> None:
         """Ensure a name is not already used.
@@ -266,7 +269,7 @@ class WithName(APIMixin[Any]):
         :param name: The name to check for uniqueness.
         """
         # TODO: pass in exception type and message?
-        cls.get_by_field_and_raise("name", name)
+        cls.get_by_field_and_raise(cls.__name_field__, name)
 
     @classmethod
     def ensure_name_exists(cls, name: str) -> None:
@@ -274,7 +277,7 @@ class WithName(APIMixin[Any]):
 
         :param name: The name to check for existence.
         """
-        cls.get_by_field_or_raise("name", name)
+        cls.get_by_field_or_raise(cls.__name_field__, name)
 
     @classmethod
     def get_by_name(cls, name: str) -> Self:
@@ -284,7 +287,7 @@ class WithName(APIMixin[Any]):
         :returns: The resource if found.
         :raises CliWarning: If the role is not found.
         """
-        data = get_item_by_key_value(cls.endpoint(), "name", name)
+        data = get_item_by_key_value(cls.endpoint(), cls.__name_field__, name)
         if not data:
             cli_warning(f"{cls.__name__} with name {name} not found.")
         return cls(**data)
