@@ -476,6 +476,7 @@ def add_excluded_range(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
+    return
     info = get_network(args.network)
     if not info:
         cli_error(f"Network {args.network} not found")
