@@ -256,8 +256,8 @@ class WithTTL(BaseModel):
         return ttl
 
 
-class WithName(APIMixin[BaseModel]):
-    """Model for an object that has a name element."""
+class WithName(APIMixin[Any]):
+    """Mixin type for an object that has a name element."""
 
     @classmethod
     def ensure_name_not_exists(cls, name: str) -> None:
@@ -274,7 +274,7 @@ class WithName(APIMixin[BaseModel]):
 
         :param name: The name to check for existence.
         """
-        cls.get_by_field_or_raise("name", name)  # pyright: ignore[reportUnusedCallResult]
+        cls.get_by_field_or_raise("name", name)
 
     @classmethod
     def get_by_name(cls, name: str) -> Self:
