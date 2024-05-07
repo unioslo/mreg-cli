@@ -281,11 +281,10 @@ class WithName(APIMixin[Any]):
 
     @classmethod
     def get_by_name(cls, name: str) -> Self | None:
-        """Get a resource by name, raising a CliWarning if not found.
+        """Get a resource by name.
 
-        :param name: The role name to search for.
+        :param name: The resource name to search for.
         :returns: The resource if found.
-        :raises CliWarning: If the role is not found.
         """
         return cls.get_by_field(cls.__name_field__, name)
 
@@ -293,8 +292,8 @@ class WithName(APIMixin[Any]):
     def get_by_name_or_raise(cls, name: str) -> Self:
         """Get a resource by name, raising a CliWarning if not found.
 
-        :param name: The role name to search for.
-        :returns: The resource if found.
+        :param name: The resource name to search for.
+        :returns: The resource.
         :raises CliWarning: If the role is not found.
         """
         return cls.get_by_field_or_raise(cls.__name_field__, name)
