@@ -260,7 +260,7 @@ class WithName(APIMixin[Any]):
     """Mixin type for an object that has a name element."""
 
     __name_field__: str = "name"
-    """Name of the field that holds the object's name."""
+    """Name of the API field that holds the object's name."""
 
     @classmethod
     def ensure_name_not_exists(cls, name: str) -> None:
