@@ -38,7 +38,7 @@ def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
     hosts_using_ip = HostList.get_by_ip(ip)
     if hosts_using_ip:
         hostnames = ", ".join(hosts_using_ip.hostnames())
-        ForceMissing(f"IP {ip} in use by {hostnames}, must force.")
+        raise ForceMissing(f"IP {ip} in use by {hostnames}, must force.")
 
 
 def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
