@@ -268,7 +268,6 @@ class WithName(APIMixin[Any]):
 
         :param name: The name to check for uniqueness.
         """
-        # TODO: pass in exception type and message?
         cls.get_by_field_and_raise(cls.__name_field__, name)
 
     @classmethod
@@ -444,7 +443,7 @@ class HostPolicy(FrozenModel):
             else:
                 break  # found a match
         else:
-            cli_warning(f"Could not find an atom or a role with name: {name!r}")
+            cli_warning(f"Could not find an atom or a role with name {name}")
         return role_or_atom
 
     def output_timestamps(self, padding: int = 14) -> None:
@@ -513,6 +512,16 @@ class Role(HostPolicy, WithName, APIMixin["Role"]):
         :returns: A list of Label objects.
         """
         return [Label.get_by_id_or_raise(id_) for id_ in self.labels]
+
+    @classmethod
+    def get_roles_with_atom(cls, name: str) -> list[Role]:
+        """Get all roles with a specific atom.
+
+        :param atom: Name of the atom to search for.
+        :returns: A list of Role objects.
+        """
+        data = get_list(cls.endpoint(), params={"atoms__name__exact": name})
+        return [Role(**item) for item in data]
 
 
 class Atom(HostPolicy, WithName, APIMixin["Atom"]):
