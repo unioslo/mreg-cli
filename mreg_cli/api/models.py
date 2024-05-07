@@ -277,20 +277,27 @@ class WithName(APIMixin[Any]):
 
         :param name: The name to check for existence.
         """
-        cls.get_by_field_or_raise(cls.__name_field__, name)
+        cls.get_by_name_or_raise(name)  # pyright: ignore[reportUnusedCallResult]
 
     @classmethod
-    def get_by_name(cls, name: str) -> Self:
-        """Get a resource by name.
+    def get_by_name(cls, name: str) -> Self | None:
+        """Get a resource by name, raising a CliWarning if not found.
 
         :param name: The role name to search for.
         :returns: The resource if found.
         :raises CliWarning: If the role is not found.
         """
-        data = get_item_by_key_value(cls.endpoint(), cls.__name_field__, name)
-        if not data:
-            cli_warning(f"{cls.__name__} with name {name} not found.")
-        return cls(**data)
+        return cls.get_by_field(cls.__name_field__, name)
+
+    @classmethod
+    def get_by_name_or_raise(cls, name: str) -> Self:
+        """Get a resource by name, raising a CliWarning if not found.
+
+        :param name: The role name to search for.
+        :returns: The resource if found.
+        :raises CliWarning: If the role is not found.
+        """
+        return cls.get_by_field_or_raise(cls.__name_field__, name)
 
 
 class NameServer(FrozenModelWithTimestamps, WithTTL):
