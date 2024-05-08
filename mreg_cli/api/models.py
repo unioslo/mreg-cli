@@ -20,8 +20,22 @@ from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimesta
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import CliWarning
-from mreg_cli.log import cli_error, cli_warning
+from mreg_cli.exceptions import (
+    CliWarning,
+    DeleteFailure,
+    EntityAlreadyExists,
+    EntityNotFound,
+    EntityOwnershipMismatch,
+    InputFailure,
+    InternalError,
+    IsNotANetwork,
+    IsNotAnIPAddress,
+    IsNotAnIPv4Address,
+    IsNotAnIPv6Address,
+    MultipleEntititesFound,
+    UnexpectedAPIData,
+    ValidationFailure,
+)
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
 from mreg_cli.utilities.api import (
@@ -56,7 +70,7 @@ class NetworkOrIP(BaseModel):
         except ValueError:
             pass
 
-        cli_warning(f"Invalid input for IP address or network: {value}")
+        raise InputFailure(f"Invalid input for IP address or network: {value}")
 
     def __str__(self) -> str:
         """Return the value as a string."""
@@ -69,21 +83,25 @@ class NetworkOrIP(BaseModel):
     def as_ipv4(self) -> ipaddress.IPv4Address:
         """Return the value as an IPv4 address."""
         if not self.is_ipv4():
-            raise ValueError("Value is not an IPv4 address.")
+            raise IsNotAnIPv4Address("Value is not an IPv4 address.")
         return cast(ipaddress.IPv4Address, self.ip_or_network)
 
     def as_ipv6(self) -> ipaddress.IPv6Address:
         """Return the value as an IPv6 address."""
         if not self.is_ipv6():
-            raise ValueError("Value is not an IPv6 address.")
+            raise IsNotAnIPv6Address("Value is not an IPv6 address.")
         return cast(ipaddress.IPv6Address, self.ip_or_network)
 
     def as_ip(self) -> IP_AddressT:
         """Return the value as an IP address."""
+        if not self.is_ip():
+            raise IsNotAnIPAddress(f"{self.ip_or_network} is not an IP address.")
         return cast(IP_AddressT, self.ip_or_network)
 
     def as_network(self) -> IP_NetworkT:
         """Return the value as a network."""
+        if not self.is_network():
+            raise IsNotANetwork(f"{self.ip_or_network} is not a network.")
         return cast(IP_NetworkT, self.ip_or_network)
 
     def is_ipv6(self) -> bool:
@@ -119,7 +137,7 @@ class HostT(BaseModel):
         value = value.lower()
 
         if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", value) is None:
-            cli_warning(f"Invalid input for hostname: {value}")
+            raise InputFailure(f"Invalid input for hostname: {value}")
 
         # Assume user is happy with domain, but strip the dot.
         if value.endswith("."):
@@ -209,7 +227,7 @@ class WithTTL(BaseModel):
         :param field: The field to output (defaults to 'ttl')
         """
         if not hasattr(self, field):
-            cli_error(f"Outputting TTL field {field} failed, field not found in object.")
+            raise InternalError(f"Outputting TTL field {field} failed, field not found in object.")
 
         ttl_value = getattr(self, field)
         OutputManager().add_line("{1:<{0}}{2}".format(padding, "TTL:", ttl_value or "(Default)"))
@@ -228,7 +246,7 @@ class WithTTL(BaseModel):
         If a numeric TTL value is outside of the bounds, a cli_warning is raised.
 
         :param ttl: The TTL target to set.
-        :raises CliWarning: If the TTL value is outside the bounds.
+        :raises InputFailure: If the TTL value is outside the bounds.
         :returns: A valid TTL value that can be fed to the API.
         """
         if ttl == "default" or ttl is None:
@@ -236,8 +254,8 @@ class WithTTL(BaseModel):
 
         try:
             ttl = int(ttl)
-        except ValueError:
-            cli_warning(f"Invalid TTL value: {ttl}")
+        except ValueError as e:
+            raise InputFailure(f"Invalid TTL value: {ttl}") from e
 
         return self.valid_numeric_ttl(ttl)
 
@@ -247,11 +265,11 @@ class WithTTL(BaseModel):
         Valid TTL values are: 300 - 68400.
 
         :param ttl: The TTL target to set.
-        :raises CliWarning: If the TTL value is outside the bounds.
+        :raises InputFailure: If the TTL value is outside the bounds.
         :returns: A valid TTL vale
         """
         if ttl <= self.MIN_TTL or ttl >= self.MAX_TTL:
-            cli_warning(f"Invalid TTL value: {ttl} ({self.MIN_TTL}->{self.MAX_TTL})")
+            raise InputFailure(f"Invalid TTL value: {ttl} ({self.MIN_TTL}->{self.MAX_TTL})")
 
         return ttl
 
@@ -289,11 +307,11 @@ class WithName(BaseModel, APIMixin):
 
     @classmethod
     def get_by_name_or_raise(cls, name: str) -> Self:
-        """Get a resource by name, raising a CliWarning if not found.
+        """Get a resource by name, raising EntityNotFound if not found.
 
         :param name: The resource name to search for.
         :returns: The resource.
-        :raises CliWarning: If the role is not found.
+        :raises EntityNotFound: If the role is not found.
         """
         return cls.get_by_field_or_raise(cls.__name_field__, name)
 
@@ -356,7 +374,7 @@ class ForwardZone(Zone, APIMixin):
         if "zone" in zoneblob:
             return ForwardZone(**zoneblob["zone"])
 
-        cli_warning(f"Unexpected response from server: {zoneblob}")
+        raise UnexpectedAPIData(f"Unexpected response from server: {zoneblob}")
 
 
 class Delegation(FrozenModelWithTimestamps, WithZone):
@@ -432,7 +450,7 @@ class HostPolicy(FrozenModel):
 
         :param name: The name to search for.
         :returns: The Atom or Role if found.
-        :raises CliWarning: If the Atom or Role is not found.
+        :raises EntityNotFound: If the Atom or Role is not found.
         """
         role_or_atom: Role | Atom
         for func in [Atom.get_by_name, Role.get_by_name]:
@@ -443,7 +461,7 @@ class HostPolicy(FrozenModel):
             else:
                 break  # found a match
         else:
-            cli_warning(f"Could not find an atom or a role with name {name}")
+            raise EntityNotFound(f"Could not find an atom or a role with name {name}")
         return role_or_atom
 
     def output_timestamps(self, padding: int = 14) -> None:
@@ -565,11 +583,11 @@ class Label(FrozenModelWithTimestamps, APIMixin):
 
         :param name: The Label name to search for.
         :returns: The Label if found.
-        :raises CliWarning: If the Label is not found.
+        :raises EntityNotFound: If the Label is not found.
         """
         data = get_item_by_key_value(Endpoint.Labels, "name", name)
         if not data:
-            cli_warning(f"Label with name {name} not found.")
+            raise EntityNotFound(f"Label with name {name} not found.")
         return cls(**data)
 
     @classmethod
@@ -578,11 +596,11 @@ class Label(FrozenModelWithTimestamps, APIMixin):
 
         :param _id: The Label ID to search for.
         :returns: The Label if found.
-        :raises CliWarning: If the Label is not found.
+        :raises EntityNotFound: If the Label is not found.
         """
         label = cls.get_by_id(_id)
         if not label:
-            cli_warning(f"Label with ID {_id} not found.")
+            raise EntityNotFound(f"Label with ID {_id} not found.")
         return label
 
 
@@ -611,11 +629,11 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
         :param ip: The IP address to search for.
         :returns: The network if found, None otherwise.
-        :raises cli_warning: If the network is not found.
+        :raises EntityNotFound: If the network is not found.
         """
         data = get(Endpoint.NetworksByIP.with_id(str(ip)))
         if not data:
-            cli_warning(f"Network with IP address {ip} not found.")
+            raise EntityNotFound(f"Network with IP address {ip} not found.")
         return Network(**data.json())
 
     @classmethod
@@ -625,11 +643,11 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         :param netmask: The netmask to search for.
         :returns: The network if found, None otherwise.
         :raises ValueError: If the netmask is invalid.
-        :raises cli_warning: If the network is not found.
+        :raises EntityNotFound: If the network is not found.
         """
         data = get_item_by_key_value(Endpoint.Networks, "network", netmask)
         if not data:
-            cli_warning(f"Network with netmask {netmask} not found.")
+            raise EntityNotFound(f"Network with netmask {netmask} not found.")
         return Network(**data)
 
     def get_first_available_ip(self) -> IP_AddressT:
@@ -706,7 +724,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         return values
 
     @classmethod
-    def get_by_ip(cls, ip: IP_AddressT) -> list[IPAddress]:
+    def get_by_ip(cls, ip: IP_AddressT) -> list[Self]:
         """Get a list of IP address objects by IP address.
 
         Note that the IP addresses can be duplicated across hosts,
@@ -715,9 +733,22 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         :param ip: The IP address to search for.
         :returns: The IP address if found, None otherwise.
         """
-        params = {"ipaddress": str(ip)}
-        data = get_list(Endpoint.Ipaddresses, params=params)
-        return [IPAddress(**item) for item in data]
+        return cls.get_list_by_field("ipaddress", str(ip))
+
+    @classmethod
+    def get_by_mac(cls, mac: MACAddressField | str) -> IPAddress | None:
+        """Get the IP address objects by MAC address.
+
+        :param mac: The MAC address to search for.
+        :returns: The IP address if found, None otherwise.
+        """
+        if isinstance(mac, str):
+            try:
+                mac = MACAddressField(address=mac)
+            except ValueError as e:
+                raise InputFailure(f"Invalid MAC address: {mac}") from e
+
+        return cls.get_by_field("macaddress", mac.address)
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -759,12 +790,26 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         :returns: A new IPAddress object fetched from the API with the updated MAC address.
         """
         if isinstance(mac, str):
-            mac = MACAddressField(address=mac)
+            try:
+                mac = MACAddressField(address=mac)
+            except ValueError as e:
+                raise InputFailure(f"Invalid MAC address: {mac}") from e
 
         if self.macaddress and not force:
-            cli_warning(f"IP address {self.ipaddress} already has MAC address {self.macaddress}.")
+            raise EntityAlreadyExists(
+                f"IP address {self.ipaddress} already has MAC address {self.macaddress}."
+            )
 
         return self.patch(fields={"macaddress": mac.address})
+
+    def disassociate_mac(self) -> IPAddress:
+        """Disassociate the MAC address from the IP address.
+
+        Note that this does NOT validate the MAC address.
+
+        :returns: A new IPAddress object fetched from the API with the MAC address removed.
+        """
+        return self.patch(fields={"macaddress": ""})
 
     def output(self, len_ip: int, len_names: int, names: bool = False):
         """Output the IP address to the console."""
@@ -853,7 +898,7 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
         """
         data = get_item_by_key_value(Endpoint.Cnames, "name", name.hostname)
         if not data:
-            cli_warning(f"CNAME record for {name} not found.")
+            raise EntityNotFound(f"CNAME record for {name} not found.")
         return CNAME(**data)
 
     @classmethod
@@ -868,23 +913,23 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
         if isinstance(host, HostT):
             hostobj = Host.get_by_any_means(host, inform_as_cname=False)
             if not hostobj:
-                cli_warning(f"Host with name {host.hostname} not found.")
+                raise EntityNotFound(f"Host with name {host.hostname} not found.")
 
             host = hostobj.id
             target_hostname = hostobj.name.hostname
         else:
             hostobj = Host.get_by_id(host)
             if not hostobj:
-                cli_warning(f"Host with ID {host} not found.")
+                raise EntityNotFound(f"Host with ID {host} not found.")
             target_hostname = hostobj.name.hostname
 
         results = cls.get_by_query({"host": str(host), "name": name.hostname})
 
         if not results or len(results) == 0:
-            cli_warning(f"CNAME record for {name} not found for {target_hostname}.")
+            raise EntityNotFound(f"CNAME record for {name} not found for {target_hostname}.")
 
         if len(results) > 1:
-            cli_error(f"Multiple CNAME records found for {host} with {name}!")
+            raise MultipleEntititesFound(f"Multiple CNAME records found for {host} with {name}!")
 
         return results[0]
 
@@ -963,7 +1008,7 @@ class MX(FrozenModelWithTimestamps, WithHost, APIMixin):
             Endpoint.Mxs, params={"host": str(host), "mx": mx, "priority": str(priority)}
         )
         if not data:
-            cli_warning(f"MX record for {mx} not found.")
+            raise EntityNotFound(f"MX record for {mx} not found.")
         return MX(**data)
 
     def has_mx_with_priority(self, mx: str, priority: int) -> bool:
@@ -1325,7 +1370,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
     def get_by_any_means_or_raise(
         cls, identifier: str | HostT, inform_as_cname: bool = True, inform_as_ptr: bool = True
     ) -> Host:
-        """Get a host by the given identifier or raise a CliWarning.
+        """Get a host by the given identifier or raise EntityNotFound.
 
         See also `get_by_any_means`.
 
@@ -1333,7 +1378,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :param inform_as_cname: If True, inform the user if the host is a CNAME.
         :param inform_as_ptr: If True, inform the user if the host is a PTR override.
 
-        :raises CliWarning: If the host is not found.
+        :raises EntityNotFound: If the host is not found.
 
         :returns: A Host object if the host was found.
         """
@@ -1341,7 +1386,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
             identifier, inform_as_cname=inform_as_cname, inform_as_ptr=inform_as_ptr
         )
         if not host:
-            cli_warning(f"Host {identifier} not found.")
+            raise EntityNotFound(f"Host {identifier} not found.")
         return host
 
     @classmethod
@@ -1373,11 +1418,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         of the hostname, so the comparison above may fail.
 
         :param identifier: The identifier to search for.
-        :param ok404: If True, don't raise a CliWarning if the host is not found.
+        :param ok404: If True, don't raise a EntityNotFound if the host is not found.
         :param inform_as_cname: If True, inform the user if the host is a CNAME.
         :param inform_as_ptr: If True, inform the user if the host is a PTR override.
 
-        :raises CliWarning: If we don't find the host and `ok404` is False.
+        :raises EntityNotFound: If we don't find the host and `ok404` is False.
 
         :returns: A Host object if the host was found, otherwise None.
         """
@@ -1406,14 +1451,16 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
                     return hosts[0]
 
                 if len(hosts) > 1:
-                    cli_warning(f"Multiple hosts found with IP address or PTR {identifier}.")
+                    raise MultipleEntititesFound(
+                        f"Multiple hosts found with IP address or PTR {identifier}."
+                    )
 
             except ValueError:
                 pass
 
             try:
                 mac = MACAddressField(address=identifier)
-                return Host.get_by_field("macaddress", mac.address)
+                return Host.get_by_field("ipaddresses__macaddress", mac.address)
             except ValueError:
                 pass
 
@@ -1441,7 +1488,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
     def delete(self) -> bool:
         """Delete the host.
 
-        :raises CliWarning: If the operation to delete the host fails.
+        :raises DeleteFailure: If the operation to delete the host fails.
 
         :returns: True if the host was deleted successfully, False otherwise.
         """
@@ -1449,7 +1496,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         # in the endpoint URL...
         op = delete(Endpoint.Hosts.with_id(str(self.name)))
         if not op:
-            cli_warning(f"Failed to delete host {self.name}, operation failed.")
+            raise DeleteFailure(f"Failed to delete host {self.name}, operation failed.")
 
         return op.status_code >= 200 and op.status_code < 300
 
@@ -1492,8 +1539,6 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         if mac:
             params["macaddress"] = mac.address
 
-        print(params)
-
         IPAddress.create(params=params)
         return self.refetch()
 
@@ -1505,6 +1550,54 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :returns: True if the host has the IP address, False otherwise.
         """
         return any([ip.ipaddress.address == arg_ip for ip in self.ipaddresses])
+
+    def has_ip_with_mac(self, arg_mac: MACAddressField | str) -> IPAddress | None:
+        """Check if the host has the given MAC address.
+
+        :param mac: The MAC address to check for.
+
+        :returns: The IP address object if found, None otherwise.
+        """
+        if not isinstance(arg_mac, MACAddressField):
+            arg_mac = MACAddressField(address=arg_mac)
+        return next((ip for ip in self.ipaddresses if ip.macaddress == arg_mac), None)
+
+    def ips_with_macaddresses(self) -> list[IPAddress]:
+        """Return a list of IP addresses with a MAC address."""
+        return [ip for ip in self.ipaddresses if ip.macaddress]
+
+    def get_associatable_ip(self) -> IPAddress:
+        """Get the only IP address of the host that can have a MAC associated to it.
+
+        Constraints:
+          - If the host only has one IP, return that IP.
+          - If the host has two IPs of different versions and they are on the same VLAN,
+            return the IPv4 address.
+
+        :raises EntityNotFound: If the host has no IP addresses.
+        :raises EntityOwnershipMismatch: If the host multiple IPs and the constriants aren't met.
+
+        :returns: An IP address that can be associated with the host.
+        """
+        if len(self.ipaddresses) == 0:
+            raise EntityNotFound(f"Host {self.name.hostname} has no IP addresses.")
+
+        if len(self.ipaddresses) == 1:
+            return self.ipaddresses[0]
+
+        ipv4s = self.ipv4_addresses()
+        ipv6s = self.ipv6_addresses()
+
+        if len(ipv4s) == 1 and len(ipv6s) == 1:
+            vlan4 = ipv4s[0].network().vlan
+            vlan6 = ipv6s[0].network().vlan
+
+            if vlan4 == vlan6:
+                return ipv4s[0]
+
+        raise EntityOwnershipMismatch(
+            f"Host {self} has multiple IPs and cannot determine which one to use."
+        )
 
     def has_ptr_override(self, arg_ip: IP_AddressT) -> bool:
         """Check if the host has a PTR override for the given IP address.
@@ -1575,28 +1668,47 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         ipadresses = [IPAddress(**ip) for ip in data]
 
         if ip in [ip.ipaddress for ip in ipadresses]:
-            cli_warning(f"IP address {ip} already has MAC address {mac} associated.")
+            raise EntityAlreadyExists(f"IP address {ip} already has MAC address {mac} associated.")
 
         if len(ipadresses) and not force:
-            cli_warning(
+            raise EntityOwnershipMismatch(
                 "mac {} already in use by: {}. Use force to add {} -> {} as well.".format(
                     mac, ipadresses, ip.address, mac
                 )
             )
 
         ip_found_in_host = False
-        new_ips: list[IPAddress] = []
         for myip in self.ipaddresses:
-            current_ip = myip.model_copy()
-
             if myip.ipaddress.address == ip.address:
-                current_ip = myip.associate_mac(mac, force=force)
+                myip.associate_mac(mac, force=force)
                 ip_found_in_host = True
 
-            new_ips.append(current_ip)
+        if not ip_found_in_host:
+            raise EntityNotFound(f"IP address {ip} not found in host {self.name}.")
+
+        return self.refetch()
+
+    def disassociate_mac_from_ip(self, ip: IPAddressField | str) -> Host:
+        """Disassociate a MAC address from an IP address.
+
+        Note: This method blindly disassociates the current MAC address
+              from associated the given IP address.
+
+        :param ip: The IP address to disassociate.
+
+        :returns: A new Host object fetched from the API after updating the IP address.
+        """
+        if isinstance(ip, str):
+            ip = IPAddressField(address=ipaddress.ip_address(ip))
+
+        ip_found_in_host = False
+        for myip in self.ipaddresses:
+            if myip.ipaddress.address == ip.address:
+                myip.disassociate_mac()
+                ip_found_in_host = True
 
         if not ip_found_in_host:
-            cli_warning(f"IP address {ip} not found in host {self.name}.")
+            raise EntityNotFound(f"IP address {ip} not found in host {self.name}.")
 
         return self.refetch()
 
@@ -1658,17 +1770,17 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         if data_as_dict["zone"]:
             zone = Zone(**data_as_dict["zone"])
             if validate_zone_resolution and zone.id != self.zone:
-                cli_warning(f"Expected zone ID {self.zone} but resovled as {zone.id}.")
+                raise ValidationFailure(f"Expected zone ID {self.zone} but resovled as {zone.id}.")
             return zone
 
         if data_as_dict["delegation"]:
             if not accept_delegation:
-                cli_warning(
+                raise EntityOwnershipMismatch(
                     f"Host {self.name} is delegated to zone {data_as_dict['delegation']['name']}."
                 )
             return Delegation(**data_as_dict["delegation"])
 
-        cli_warning(f"Failed to resolve zone for host {self.name}.")
+        raise EntityNotFound(f"Failed to resolve zone for host {self.name}.")
 
     # This would be greatly improved by having a proper error returned to avoid the need for
     # manually calling networks() or vlans() to determine the issue. One option is to use
@@ -1890,7 +2002,7 @@ class HostList(FrozenModel):
     def output(self):
         """Output a list of hosts to the console."""
         if not self.results:
-            cli_warning("No hosts found.")
+            raise EntityNotFound("No hosts found.")
 
         max_name = max_contact = 20
         for i in self.results:

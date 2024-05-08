@@ -49,11 +49,7 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
     if args.old == args.new:
         raise EntityAlreadyExists("New and old IP are equal")
 
-    old_ip = NetworkOrIP(ip_or_network=args.old)
-    if old_ip.is_network():
-        raise InputFailure("From address cannot be a network")
-
-    old_ip = old_ip.as_ip()
+    old_ip = NetworkOrIP(ip_or_network=args.old).as_ip()
 
     new_ip = NetworkOrIP(ip_or_network=args.new)
     if new_ip.is_network():

@@ -10,7 +10,7 @@ from typing import Any
 from pydantic import BaseModel, Field, field_validator
 
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.log import cli_warning
+from mreg_cli.exceptions import EntityNotFound, InternalError
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import get_list
 
@@ -93,7 +93,7 @@ class HistoryItem(BaseModel):
             else:
                 msg = ", ".join(f"{k} = '{v}'" for k, v in self.data.items())
         else:
-            cli_warning(f"Unhandled history entry: {action}")
+            raise InternalError(f"Unhandled history entry: {action}")
 
         return msg
 
@@ -119,7 +119,7 @@ class HistoryItem(BaseModel):
         ret = get_list(Endpoint.History, params=params)
 
         if len(ret) == 0:
-            cli_warning(f"No history found for {name}")
+            raise EntityNotFound(f"No history found for {name}")
 
         model_ids = ",".join({str(i["model_id"]) for i in ret})
 

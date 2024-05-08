@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import ipaddress
 import re
-from datetime import datetime, date
 from typing import Annotated, Any
 
-from pydantic import AliasChoices, BeforeValidator, Field, field_validator
+from pydantic import BeforeValidator, field_validator
 
 from mreg_cli.api.abstracts import FrozenModel
 from mreg_cli.types import IP_AddressT

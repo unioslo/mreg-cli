@@ -11,8 +11,14 @@ from pydantic.fields import FieldInfo
 
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.history import HistoryItem, HistoryResource
-from mreg_cli.exceptions import CliError
-from mreg_cli.log import cli_error, cli_warning
+from mreg_cli.exceptions import (
+    CliError,
+    CreateFailure,
+    EntityNotFound,
+    GetFailure,
+    InternalError,
+    PatchFailure,
+)
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import (
     delete,
@@ -294,7 +300,7 @@ class APIMixin(ABC):
         """
         obj_dict = get_list_unique(cls.endpoint(), params=data)
         if not obj_dict:
-            cli_warning(f"{cls.__name__} record for {data} not found.")
+            raise EntityNotFound(f"{cls.__name__} record for {data} not found.")
         return cls(**obj_dict)
 
     def refetch(self) -> Self:
@@ -309,7 +315,9 @@ class APIMixin(ABC):
         identifier = getattr(self, id_field)
 
         if not identifier:
-            cli_error(f"Could not get identifier for {self.__class__.__name__} via {id_field}.")
+            raise InternalError(
+                f"Could not get identifier for {self.__class__.__name__} via {id_field}."
+            )
 
         lookup = None
         # If we have and ID field, a refetch based on that is cleaner as a rename
@@ -318,13 +326,13 @@ class APIMixin(ABC):
         if hasattr(self, "id"):
             lookup = getattr(self, "id", None)
             if not lookup:
-                cli_error(f"Could not get ID for {self.__class__.__name__} via 'id'.")
+                raise InternalError(f"Could not get ID for {self.__class__.__name__} via 'id'.")
         else:
             lookup = getattr(self, identifier)
 
         obj = self.__class__.get_by_id(lookup)
         if not obj:
-            cli_warning(f"Could not refresh {self.__class__.__name__} with ID {identifier}.")
+            raise GetFailure(f"Could not refresh {self.__class__.__name__} with ID {identifier}.")
 
         return obj
 
@@ -353,10 +361,12 @@ class APIMixin(ABC):
                 field_name = aliases[key]
             try:
                 nval = getattr(new_object, field_name)
-            except AttributeError:
-                cli_warning(f"Could not get value for {field_name} in patched object.")
+            except AttributeError as e:
+                raise PatchFailure(
+                    f"Could not get value for {field_name} in patched object."
+                ) from e
             if value and str(nval) != str(value):
-                cli_warning(
+                raise PatchFailure(
                     # Should this reference `field_name` instead of `key`?
                     f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
                 )
@@ -401,7 +411,7 @@ class APIMixin(ABC):
                 if obj:
                     return obj
 
-                cli_warning(f"Could not fetch object from location {location}.")
+                raise GetFailure(f"Could not fetch object from location {location}.")
 
             # else:
             # Lots of endpoints don't give locations on creation,
@@ -410,7 +420,7 @@ class APIMixin(ABC):
             # cli_warning("No location header in response.")
 
         else:
-            cli_warning(f"Failed to create {cls} with {params} @ {cls.endpoint()}.")
+            raise CreateFailure(f"Failed to create {cls} with {params} @ {cls.endpoint()}.")
 
         return None
 
