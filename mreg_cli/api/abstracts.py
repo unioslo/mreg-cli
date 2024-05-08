@@ -99,9 +99,10 @@ class APIMixin(ABC):
     def __init_subclass__(cls) -> None:
         """Ensure that the subclass inherits from BaseModel."""
         super().__init_subclass__()
-        if BaseModel not in cls.__bases__:
+        if BaseModel not in cls.__mro__ and not cls.__name__.startswith("With"):
             raise TypeError(
-                f"{cls.__name__} must be applied on classes inheriting from BaseModel."
+                f"{cls.__name__} must be applied on classes inheriting from BaseModel "
+                "or on a `With*` mixin class."
             )
 
     def id_for_endpoint(self) -> int | str:
