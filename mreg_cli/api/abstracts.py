@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Generic, TypeVar, cast
+from typing import Any, Self, cast
 
 from pydantic import AliasChoices, BaseModel
 from pydantic.fields import FieldInfo
@@ -23,8 +23,6 @@ from mreg_cli.utilities.api import (
     patch,
     post,
 )
-
-BMT = TypeVar("BMT", bound="BaseModel")
 
 
 def get_field_aliases(field_info: FieldInfo) -> set[str]:
@@ -95,8 +93,16 @@ class FrozenModelWithTimestamps(FrozenModel):
         output_manager.add_line(f"{'Updated:':<{padding}}{self.updated_at:%c}")
 
 
-class APIMixin(Generic[BMT], ABC):
+class APIMixin(ABC):
     """A mixin for API-related methods."""
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Ensure that the subclass inherits from BaseModel."""
+        super().__init_subclass__(**kwargs)
+        if BaseModel not in cls.__mro__:
+            raise TypeError(
+                f"{cls.__name__} must be applied on classes inheriting from BaseModel."
+            )
 
     def id_for_endpoint(self) -> int | str:
         """Return the appropriate id for the object for its endpoint.
@@ -122,7 +128,7 @@ class APIMixin(Generic[BMT], ABC):
         raise NotImplementedError("You must define an endpoint.")
 
     @classmethod
-    def get(cls, _id: int) -> BMT | None:
+    def get(cls, _id: int) -> Self | None:
         """Get an object.
 
         This function is at its base a wrapper around the get_by_id function,
@@ -134,7 +140,7 @@ class APIMixin(Generic[BMT], ABC):
         return cls.get_by_id(_id)
 
     @classmethod
-    def get_by_id(cls, _id: int) -> BMT | None:
+    def get_by_id(cls, _id: int) -> Self | None:
         """Get an object by its ID.
 
         Note that for Hosts, the ID is the name of the host.
@@ -157,10 +163,10 @@ class APIMixin(Generic[BMT], ABC):
         if not data:
             return None
 
-        return cast(BMT, cls(**data))
+        return cls(**data)
 
     @classmethod
-    def get_by_field(cls, field: str, value: str) -> BMT | None:
+    def get_by_field(cls, field: str, value: str) -> Self | None:
         """Get an object by a field.
 
         Note that some endpoints do not use the ID field for lookups. We do some
@@ -192,7 +198,7 @@ class APIMixin(Generic[BMT], ABC):
         if not data:
             return None
 
-        return cast(BMT, cls(**data))
+        return cls(**data)
 
     @classmethod
     def get_by_field_or_raise(
@@ -201,7 +207,7 @@ class APIMixin(Generic[BMT], ABC):
         value: str,
         exc_type: type[Exception] = CliError,
         exc_message: str | None = None,
-    ) -> BMT:
+    ) -> Self:
         """Get an object by a field and raise if not found.
 
         Used for cases where the object must exist for the operation to continue.
@@ -249,7 +255,7 @@ class APIMixin(Generic[BMT], ABC):
     @classmethod
     def get_list_by_field(
         cls, field: str, value: str | int, ordering: str | None = None
-    ) -> list[BMT]:
+    ) -> list[Self]:
         """Get a list of objects by a field.
 
         :param field: The field to search by.
@@ -263,10 +269,10 @@ class APIMixin(Generic[BMT], ABC):
             params["ordering"] = ordering
 
         data = get_list(cls.endpoint(), params=params)
-        return [cast(BMT, cls(**item)) for item in data]
+        return [cls(**item) for item in data]
 
     @classmethod
-    def get_by_query(cls, query: dict[str, str], ordering: str | None = None) -> list[BMT]:
+    def get_by_query(cls, query: dict[str, str], ordering: str | None = None) -> list[Self]:
         """Get a list of objects by a query.
 
         :param query: The query to search by.
@@ -277,10 +283,10 @@ class APIMixin(Generic[BMT], ABC):
             query["ordering"] = ordering
 
         data = get_list(cls.endpoint().with_query(query))
-        return [cast(BMT, cls(**item)) for item in data]
+        return [cls(**item) for item in data]
 
     @classmethod
-    def get_by_query_unique(cls, data: dict[str, str]) -> BMT:
+    def get_by_query_unique(cls, data: dict[str, str]) -> Self:
         """Get an object with the given data.
 
         :param data: The data to search for.
@@ -289,9 +295,9 @@ class APIMixin(Generic[BMT], ABC):
         obj_dict = get_list_unique(cls.endpoint(), params=data)
         if not obj_dict:
             cli_warning(f"{cls.__name__} record for {data} not found.")
-        return cast(BMT, cls(**obj_dict))
+        return cls(**obj_dict)
 
-    def refetch(self) -> BMT:
+    def refetch(self) -> Self:
         """Fetch an updated version of the object.
 
         Note that the caller (self) of this method will remain unchanged and can contain
@@ -322,7 +328,7 @@ class APIMixin(Generic[BMT], ABC):
 
         return obj
 
-    def patch(self, fields: dict[str, Any]) -> BMT:
+    def patch(self, fields: dict[str, Any]) -> Self:
         """Patch the object with the given values.
 
         Notes
@@ -338,7 +344,9 @@ class APIMixin(Generic[BMT], ABC):
 
         new_object = self.refetch()
 
-        aliases = get_model_aliases(new_object)
+        # __init_subclass__ guarantees we inherit from BaseModel
+        # but we can't signal this to the type checker, so we cast here.
+        aliases = get_model_aliases(cast(BaseModel, new_object))
         for key, value in fields.items():
             field_name = key
             if key in aliases:
@@ -368,7 +376,7 @@ class APIMixin(Generic[BMT], ABC):
         return False
 
     @classmethod
-    def create(cls, params: dict[str, str | None]) -> None | BMT:
+    def create(cls, params: dict[str, str | None]) -> Self | None:
         """Create the object.
 
         Note that several endpoints do not support location headers for created objects,

@@ -256,7 +256,7 @@ class WithTTL(BaseModel):
         return ttl
 
 
-class WithName(APIMixin[Any]):
+class WithName(BaseModel, APIMixin):
     """Mixin type for an object that has a name element."""
 
     __name_field__: str = "name"
@@ -327,7 +327,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL):
         return False
 
 
-class ForwardZone(Zone, APIMixin["ForwardZone"]):
+class ForwardZone(Zone, APIMixin):
     """A forward zone."""
 
     @classmethod
@@ -464,7 +464,7 @@ class HostPolicy(FrozenModel):
         output_manager.add_line(f"{'Description:':<{padding}}{self.description}")
 
 
-class Role(HostPolicy, WithName, APIMixin["Role"]):
+class Role(HostPolicy, WithName):
     """Model for a role."""
 
     id: int  # noqa: A003
@@ -524,7 +524,7 @@ class Role(HostPolicy, WithName, APIMixin["Role"]):
         return [Role(**item) for item in data]
 
 
-class Atom(HostPolicy, WithName, APIMixin["Atom"]):
+class Atom(HostPolicy, WithName):
     """Model for an atom."""
 
     id: int  # noqa: A003
@@ -547,7 +547,7 @@ class Atom(HostPolicy, WithName, APIMixin["Atom"]):
             output_manager.add_formatted_line("", role, padding)
 
 
-class Label(FrozenModelWithTimestamps, APIMixin["Label"]):
+class Label(FrozenModelWithTimestamps, APIMixin):
     """Model for a label."""
 
     id: int  # noqa: A003
@@ -586,7 +586,7 @@ class Label(FrozenModelWithTimestamps, APIMixin["Label"]):
         return label
 
 
-class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
+class Network(FrozenModelWithTimestamps, APIMixin):
     """Model for a network."""
 
     id: int  # noqa: A003
@@ -680,7 +680,7 @@ class Network(FrozenModelWithTimestamps, APIMixin["Network"]):
         return hash((self.id, self.network))
 
 
-class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
+class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents an IP address with associated details."""
 
     id: int  # noqa: A003
@@ -808,7 +808,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin["IPAddress"]):
         return hash((self.id, self.ipaddress.address, self.macaddress))
 
 
-class HInfo(FrozenModelWithTimestamps, WithHost, APIMixin["HInfo"]):
+class HInfo(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents a HINFO record."""
 
     cpu: str
@@ -826,7 +826,7 @@ class HInfo(FrozenModelWithTimestamps, WithHost, APIMixin["HInfo"]):
         )
 
 
-class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin["CNAME"]):
+class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
     """Represents a CNAME record."""
 
     id: int  # noqa: A003
@@ -909,7 +909,7 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin["CN
             cname.output(padding=padding)
 
 
-class TXT(FrozenModelWithTimestamps, WithHost, APIMixin["TXT"]):
+class TXT(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents a TXT record."""
 
     id: int  # noqa: A003
@@ -938,7 +938,7 @@ class TXT(FrozenModelWithTimestamps, WithHost, APIMixin["TXT"]):
             txt.output(padding=padding)
 
 
-class MX(FrozenModelWithTimestamps, WithHost, APIMixin["MX"]):
+class MX(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents a MX record."""
 
     id: int  # noqa: A003
@@ -996,7 +996,7 @@ class MX(FrozenModelWithTimestamps, WithHost, APIMixin["MX"]):
             mx.output(padding=padding)
 
 
-class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin["NAPTR"]):
+class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents a NAPTR record."""
 
     id: int  # noqa: A003
@@ -1055,7 +1055,7 @@ class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin["NAPTR"]):
                 naptr.output(padding=padding)
 
 
-class Srv(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin["Srv"]):
+class Srv(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
     """Represents a SRV record."""
 
     id: int  # noqa: A003
@@ -1137,7 +1137,7 @@ class Srv(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin["Srv"
         return self.name
 
 
-class PTR_override(FrozenModelWithTimestamps, WithHost, APIMixin["PTR_override"]):
+class PTR_override(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents a PTR override record."""
 
     id: int  # noqa: A003
@@ -1172,7 +1172,7 @@ class PTR_override(FrozenModelWithTimestamps, WithHost, APIMixin["PTR_override"]
         OutputManager().add_line(f"{'PTR override:':<{padding}}{self.ipaddress} -> {hostname}")
 
 
-class SSHFP(FrozenModelWithTimestamps, WithHost, WithTTL, APIMixin["SSHFP"]):
+class SSHFP(FrozenModelWithTimestamps, WithHost, WithTTL, APIMixin):
     """Represents a SSHFP record."""
 
     id: int  # noqa: A003
@@ -1217,7 +1217,7 @@ class SSHFP(FrozenModelWithTimestamps, WithHost, WithTTL, APIMixin["SSHFP"]):
         )
 
 
-class BacnetID(FrozenModel, WithHost, APIMixin["BacnetID"]):
+class BacnetID(FrozenModel, WithHost, APIMixin):
     """Represents a Bacnet ID record."""
 
     id: int  # noqa: A003
@@ -1257,7 +1257,7 @@ class BacnetID(FrozenModel, WithHost, APIMixin["BacnetID"]):
         OutputManager().add_formatted_table(("ID", "Hostname"), ("id", "hostname"), bacnetids)
 
 
-class Location(FrozenModelWithTimestamps, WithHost, APIMixin["Location"]):
+class Location(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents a LOC record."""
 
     loc: str
@@ -1275,7 +1275,7 @@ class Location(FrozenModelWithTimestamps, WithHost, APIMixin["Location"]):
         OutputManager().add_line(f"{'LOC:':<{padding}}{self.loc}")
 
 
-class Host(FrozenModelWithTimestamps, WithTTL, APIMixin["Host"]):
+class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
     """Model for an individual host."""
 
     id: int  # noqa: A003
@@ -1907,7 +1907,7 @@ class HostList(FrozenModel):
             _format(str(i.name), i.contact, i.comment or "")
 
 
-class HostGroup(FrozenModelWithTimestamps, APIMixin["HostGroup"]):
+class HostGroup(FrozenModelWithTimestamps, APIMixin):
     """Model for a hostgroup."""
 
     id: int  # noqa: A003
