@@ -13,7 +13,15 @@ import argparse
 
 from mreg_cli.api.models import BacnetID, Host
 from mreg_cli.commands.host import registry as command_registry
-from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.exceptions import (
+    CreateFailure,
+    DeleteFailure,
+    EntityAlreadyExists,
+    EntityNotFound,
+    EntityOwnershipMismatch,
+    InputFailure,
+)
+from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
 
 
@@ -34,11 +42,13 @@ def bacnetid_add(args: argparse.Namespace) -> None:
     host = Host.get_by_any_means_or_raise(args.name)
     host_bacnet = host.bacnet()
     if host_bacnet is not None:
-        cli_error(f"{host.name} already has BACnet ID {host_bacnet.id}.")
+        raise EntityAlreadyExists(f"{host.name} already has BACnet ID {host_bacnet.id}.")
 
     existing = BacnetID.get(args.id)
     if existing:
-        cli_error(f"BACnet ID {existing.id} is already in use by {existing.hostname}.")
+        raise EntityOwnershipMismatch(
+            f"BACnet ID {existing.id} is already in use by {existing.hostname}."
+        )
 
     BacnetID.create(params={"hostname": host.name.hostname, "id": args.id})
 
@@ -46,7 +56,7 @@ def bacnetid_add(args: argparse.Namespace) -> None:
     if validator and validator.hostname == host.name.hostname:
         cli_info(f"Assigned BACnet ID {validator.id} to {validator.hostname}.", print_msg=True)
     else:
-        cli_error(f"Failed to assign BACnet ID {args.id} to {host.name.hostname}.")
+        raise CreateFailure(f"Failed to assign BACnet ID {args.id} to {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -65,12 +75,12 @@ def bacnetid_remove(args: argparse.Namespace) -> None:
     host = Host.get_by_any_means_or_raise(args.name)
     host_bacnet = host.bacnet()
     if host_bacnet is None:
-        cli_error(f"{host.name} does not have a BACnet ID assigned.")
+        raise EntityNotFound(f"{host.name} does not have a BACnet ID assigned.")
 
     if host_bacnet.delete():
         cli_info(f"Unassigned BACnet ID {host_bacnet.id} from {host.name}.", print_msg=True)
     else:
-        cli_error(f"Failed to unassign BACnet ID {host_bacnet.id} from {host.name}.")
+        raise DeleteFailure(f"Failed to unassign BACnet ID {host_bacnet.id} from {host.name}.")
 
 
 @command_registry.register_command(
@@ -101,16 +111,16 @@ def bacnetid_list(args: argparse.Namespace) -> None:
     max_id = args.max if args.max is not None else BacnetID.MAX_ID()
 
     if min_id < 0:
-        cli_error("Minimum ID value cannot be less than 0.")
+        raise InputFailure("Minimum ID value cannot be less than 0.")
 
     if min_id is not None and max_id is not None and min_id > max_id:
-        cli_error("Minimum ID value cannot be greater than maximum ID value.")
+        raise InputFailure("Minimum ID value cannot be greater than maximum ID value.")
 
     if max_id is not None and max_id > BacnetID.MAX_ID():
-        cli_error(f"The maximum ID value is {BacnetID.MAX_ID()}.")
+        raise InputFailure(f"The maximum ID value is {BacnetID.MAX_ID()}.")
 
     bacnetids = BacnetID.get_in_range(min_id, max_id)
     if not bacnetids:
-        cli_warning("No BACnet IDs found in the specified range.")
+        raise EntityNotFound("No BACnet IDs found in the specified range.")
 
     BacnetID.output_multiple(bacnetids)

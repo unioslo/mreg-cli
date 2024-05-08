@@ -6,7 +6,16 @@ import argparse
 
 from mreg_cli.api.models import CNAME, ForwardZone, Host, HostT
 from mreg_cli.commands.host import registry as command_registry
-from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.exceptions import (
+    CreateFailure,
+    DeleteFailure,
+    EntityAlreadyExists,
+    EntityNotFound,
+    EntityOwnershipMismatch,
+    InputFailure,
+    PatchFailure,
+)
+from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
 
 
@@ -35,19 +44,21 @@ def cname_add(args: argparse.Namespace) -> None:
     alias_in_use = Host.get_by_any_means(alias, inform_as_cname=False)
     if alias_in_use:
         if alias_in_use.id == host.id:
-            cli_error(f"The alias {alias} is already active for {host}.")
+            raise EntityAlreadyExists(f"The alias {alias} is already active for {host}.")
 
         if alias_in_use.name.hostname != alias.hostname:
-            cli_error(
+            raise EntityOwnershipMismatch(
                 f"The alias {alias} is already in use as a CNAME for {alias_in_use.name.hostname}."
             )
 
         # Catchall for any other case, should not be possible.
-        cli_error("The alias name is in use by an existing host. Find a new alias.")
+        raise EntityOwnershipMismatch(
+            "The alias name is in use by an existing host. Find a new alias."
+        )
 
     zone = ForwardZone.get_from_hostname(alias)
     if not zone:
-        cli_error(f"Could not find a zone for the alias {alias}.")
+        raise EntityNotFound(f"Could not find a zone for the alias {alias}.")
 
     CNAME.create(params={"host": str(host.id), "name": alias.hostname})
     cname = CNAME.get_by_host_and_name(host.name, alias)
@@ -55,7 +66,7 @@ def cname_add(args: argparse.Namespace) -> None:
     if cname:
         cli_info(f"Added CNAME {cname.name} for {host.name.hostname}.", print_msg=True)
     else:
-        cli_error(f"Failed to add CNAME {alias} for {host.name.hostname}.")
+        raise CreateFailure(f"Failed to add CNAME {alias} for {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -77,25 +88,27 @@ def cname_remove(args: argparse.Namespace) -> None:
 
     alias_as_host = Host.get_by_field("name", alias.hostname)
     if alias_as_host:
-        cli_warning(f"The alias {alias} is a host, did you mix up the arguments?")
+        raise InputFailure(f"The alias {alias} is a host, did you mix up the arguments?")
 
     cname = CNAME.get_by_field("name", alias.hostname)
     if not cname:
-        cli_warning(f"No CNAME record found for {alias}.")
+        raise EntityNotFound(f"No CNAME record found for {alias}.")
 
     # Handle situation where the CNAME is not associated with the host we are removing it from.
     if cname.host != host.id:
         cname_host = Host.get_by_id(cname.host)
         if not cname_host:
-            cli_error(f"Could not find the host for the CNAME {alias}.")
+            raise EntityNotFound(f"Could not find the host for the CNAME {alias}.")
         actual = cname_host.name.hostname
         desired = host.name.hostname
-        cli_warning(f"The CNAME {cname.name} is associated with {actual}, NOT {desired}.")
+        raise EntityOwnershipMismatch(
+            f"The CNAME {cname.name} is associated with {actual}, NOT {desired}."
+        )
 
     if cname.delete():
         cli_info(f"Removed CNAME {cname.name} for {host.name}.", print_msg=True)
     else:
-        cli_error(f"Failed to remove CNAME {cname.name} for {host.name}.")
+        raise DeleteFailure(f"Failed to remove CNAME {cname.name} for {host.name}.")
 
 
 @command_registry.register_command(
@@ -118,11 +131,11 @@ def cname_replace(args: argparse.Namespace) -> None:
     cname_obj = CNAME.get_by_name(cname)
 
     if not cname_obj:
-        cli_error(f"No CNAME record found for {cname}.")
+        raise EntityNotFound(f"No CNAME record found for {cname}.")
 
     old_host = Host.get_by_id(cname_obj.host)
     if not old_host:
-        cli_error(f"Could not find the host for the CNAME {cname}.")
+        raise EntityNotFound(f"Could not find the host for the CNAME {cname}.")
 
     updated_cname = cname_obj.patch({"host": host.id})
     if updated_cname:
@@ -130,7 +143,7 @@ def cname_replace(args: argparse.Namespace) -> None:
             f"Moved CNAME alias {cname}: {old_host.name.hostname} -> {host.name}.", print_msg=True
         )
     else:
-        cli_error(f"Failed to move CNAME alias {cname}.")
+        raise PatchFailure(f"Failed to move CNAME alias {cname}.")
 
 
 @command_registry.register_command(
