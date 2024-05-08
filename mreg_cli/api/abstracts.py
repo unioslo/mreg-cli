@@ -96,9 +96,9 @@ class FrozenModelWithTimestamps(FrozenModel):
 class APIMixin(ABC):
     """A mixin for API-related methods."""
 
-    def __init_subclass__(cls) -> None:
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """Ensure that the subclass inherits from BaseModel."""
-        super().__init_subclass__()
+        super().__init_subclass__(**kwargs)
         if BaseModel not in cls.__mro__ and not cls.__name__.startswith("With"):
             raise TypeError(
                 f"{cls.__name__} must be applied on classes inheriting from BaseModel "
