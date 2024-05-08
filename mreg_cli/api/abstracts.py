@@ -12,8 +12,8 @@ from pydantic.fields import FieldInfo
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.exceptions import (
-    CliError,
     CreateFailure,
+    EntityAlreadyExists,
     EntityNotFound,
     GetFailure,
     InternalError,
@@ -211,7 +211,7 @@ class APIMixin(ABC):
         cls,
         field: str,
         value: str,
-        exc_type: type[Exception] = CliError,
+        exc_type: type[Exception] = EntityNotFound,
         exc_message: str | None = None,
     ) -> Self:
         """Get an object by a field and raise if not found.
@@ -237,7 +237,7 @@ class APIMixin(ABC):
         cls,
         field: str,
         value: str,
-        exc_type: type[Exception] = CliError,
+        exc_type: type[Exception] = EntityAlreadyExists,
         exc_message: str | None = None,
     ) -> None:
         """Get an object by a field and raise if found.
