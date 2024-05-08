@@ -256,7 +256,7 @@ class WithTTL(BaseModel):
         return ttl
 
 
-class WithName(APIMixin):
+class WithName(BaseModel, APIMixin):
     """Mixin type for an object that has a name element."""
 
     __name_field__: str = "name"
