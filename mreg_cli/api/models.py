@@ -1580,7 +1580,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :returns: An IP address that can be associated with the host.
         """
         if len(self.ipaddresses) == 0:
-            raise EntityNotFound(f"Host {self.name.hostname} has no IP addresses.")
+            raise EntityNotFound(f"Host {self} has no IP addresses.")
 
         if len(self.ipaddresses) == 1:
             return self.ipaddresses[0]
@@ -2025,24 +2025,15 @@ class HostGroup(FrozenModelWithTimestamps, APIMixin):
     id: int  # noqa: A003
     name: str
     description: str | None = None
-    parent: list[str]
-    groups: list[str]
-    hosts: list[str]
-    owners: list[str]
+    parent: NameList
+    groups: NameList
+    hosts: NameList
+    owners: NameList
 
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.HostGroups
-
-    @field_validator("parent", "groups", "hosts", "owners", mode="before")
-    @classmethod
-    def collapse_name(cls, v: list[dict[str, str]]) -> list[str]:
-        """Collapse the name field."""
-        if not v:
-            return []
-
-        return [i["name"] for i in v]
 
     @classmethod
     def output_multiple(cls, hostgroups: list[HostGroup], padding: int = 14) -> None:
