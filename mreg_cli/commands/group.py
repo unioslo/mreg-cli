@@ -3,18 +3,15 @@
 from __future__ import annotations
 
 import argparse
-from itertools import chain
 from typing import Any
 
-from mreg_cli.api.models import HostGroup
+from mreg_cli.api.history import HistoryResource
+from mreg_cli.api.models import Host, HostGroup
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.log import cli_error, cli_info, cli_warning
-from mreg_cli.outputmanager import OutputManager
+from mreg_cli.exceptions import CreateError, DeleteError, EntityNotFound, ForceMissing
+from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get_list, patch, post
-from mreg_cli.utilities.history import format_history_items, get_history_items
-from mreg_cli.utilities.host import host_info_by_name
 
 command_registry = CommandRegistry()
 
@@ -25,14 +22,6 @@ class GroupCommands(BaseCommand):
     def __init__(self, cli: Any) -> None:
         """Initialize the group commands."""
         super().__init__(cli, command_registry, "group", "Manage hostgroups.", "Manage hostgroups")
-
-
-def get_hostgroup(name: str) -> dict[str, Any]:
-    """Get hostgroup info by name."""
-    ret = get_list("/api/v1/hostgroups/", params={"name": name})
-    if not ret:
-        cli_warning(f'Group "{name}" does not exist')
-    return ret[0]
 
 
 @command_registry.register_command(
@@ -49,15 +38,12 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
-    ret = get_list("/api/v1/hostgroups/", params={"name": args.name})
-    if ret:
-        cli_error(f'Groupname "{args.name}" already in use')
+    HostGroup.get_by_field_and_raise("name", args.name)
+    newgroup = HostGroup.create(params={"name": args.name, "description": args.description})
+    if not newgroup:
+        raise CreateError("Failed to create new group '{args.name}'")
 
-    data = {"name": args.name, "description": args.description}
-
-    path = "/api/v1/hostgroups/"
-    post(path, **data)
-    cli_info(f"Created new group {args.name!r}", print_msg=True)
+    cli_info(f"Created new group {newgroup.name}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -73,43 +59,7 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    manager = OutputManager()
-
-    for name in args.name:
-        info = get_hostgroup(name)
-
-        manager.add_formatted_line("Name:", info["name"])
-        manager.add_formatted_line("Description:", info["description"])
-        members: list[str] = []
-        count = len(info["hosts"])
-        if count:
-            members.append("{} host{}".format(count, "s" if count > 1 else ""))
-        count = len(info["groups"])
-        if count:
-            members.append("{} group{}".format(count, "s" if count > 1 else ""))
-        manager.add_formatted_line("Members:", ", ".join(members))
-        if len(info["owners"]):
-            owners = ", ".join([i["name"] for i in info["owners"]])
-            manager.add_formatted_line("Owners:", owners)
-
-
-@command_registry.register_command(
-    prog="info_pydantic",
-    description="Shows group info with description, member count and owner(s)",
-    short_desc="Group info",
-    flags=[
-        Flag("name", description="Group name", nargs="+", metavar="NAME"),
-    ],
-)
-def info_pydantic(args: argparse.Namespace) -> None:
-    """Show host group info.
-
-    :param args: argparse.Namespace (name)
-    """
-    group = HostGroup.get_by_field("name", args.name)
-    if not group:
-        cli_warning(f'Group "{args.name}" not found.')
-    group.output()
+    HostGroup.get_by_name_or_raise(args.name).output()
 
 
 @command_registry.register_command(
@@ -126,8 +76,8 @@ def rename(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (oldname, newname)
     """
-    get_hostgroup(args.oldname)
-    patch(f"/api/v1/hostgroups/{args.oldname}", name=args.newname)
+    group = HostGroup.get_by_name_or_raise(args.oldname)
+    group.patch({"name": args.newname})
     cli_info(f"Renamed group {args.oldname!r} to {args.newname!r}", True)
 
 
@@ -145,33 +95,8 @@ def group_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, expand)
     """
-    manager = OutputManager()
-
-    def _format_hosts(hosts: list[dict[str, Any]], source: str = "") -> None:
-        """Format hosts and add to output manager."""
-        for host in hosts:
-            manager.add_formatted_line_with_source("host", host["name"], source)
-
-    def _expand_group(groupname: str) -> None:
-        """Expand group and add to output manager."""
-        info = get_hostgroup(groupname)
-        _format_hosts(info["hosts"], source=groupname)
-        for group in info["groups"]:
-            _expand_group(group["name"])
-
-    info = get_hostgroup(args.name)
-    if args.expand:
-        manager.add_formatted_line_with_source("Type", "Name", "Source")
-        _format_hosts(info["hosts"], source=args.name)
-    else:
-        manager.add_formatted_line("Type", "Name")
-        _format_hosts(info["hosts"])
-
-    for group in info["groups"]:
-        if args.expand:
-            _expand_group(group["name"])
-        else:
-            manager.add_formatted_line("group", group["name"])
+    group = HostGroup.get_by_name_or_raise(args.name)
+    group.output_members(expand=args.expand)
 
 
 @command_registry.register_command(
@@ -188,16 +113,13 @@ def group_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, force)
     """
-    info = get_hostgroup(args.name)
+    group = HostGroup.get_by_name_or_raise(args.name)
+    if (len(group.hosts) or len(group.groups)) and not args.force:
+        raise ForceMissing("Group contains hosts or groups, must force")
 
-    if (len(info["hosts"]) or len(info["groups"])) and not args.force:
-        cli_error(
-            "Group contains %d host(s) and %d group(s), must force"
-            % (len(info["hosts"]), len(info["groups"]))
-        )
+    if not group.delete():
+        raise DeleteError(f"Failed to delete group {args.name}")
 
-    path = f"/api/v1/hostgroups/{args.name}"
-    delete(path)
     cli_info(f"Deleted group {args.name!r}", print_msg=True)
 
 
@@ -215,17 +137,14 @@ def group_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (dstgroup, srcgroup)
     """
-    for name in chain([args.dstgroup], args.srcgroup):
-        get_hostgroup(name)
+    destgroups: list[HostGroup] = []
+    sourcegroup = HostGroup.get_by_name_or_raise(args.srcgroup)
+    for name in args.destgroup:
+        destgroups.append(HostGroup.get_by_name_or_raise(name))
 
-    for src in args.srcgroup:
-        data = {
-            "name": src,
-        }
-
-        path = f"/api/v1/hostgroups/{args.dstgroup}/groups/"
-        post(path, **data)
-        cli_info(f"Added group {src!r} to {args.dstgroup!r}", print_msg=True)
+    for dest in destgroups:
+        sourcegroup.add_group(dest.name)
+        cli_info(f"Added group {sourcegroup.name!r} to {dest.name!r}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -242,16 +161,15 @@ def group_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (dstgroup, srcgroup)
     """
-    info = get_hostgroup(args.dstgroup)
-    group_names = {i["name"] for i in info["groups"]}
-    for name in args.srcgroup:
-        if name not in group_names:
-            cli_warning(f"{name!r} not a group member in {args.dstgroup!r}")
+    ownergroup = HostGroup.get_by_name_or_raise(args.dstgroup)
 
-    for src in args.srcgroup:
-        path = f"/api/v1/hostgroups/{args.dstgroup}/groups/{src}"
-        delete(path)
-        cli_info(f"Removed group {src!r} from {args.dstgroup!r}", print_msg=True)
+    for name in args.srcgroup:
+        if not ownergroup.has_group(name):
+            raise EntityNotFound(f"Group {name!r} not a member in {ownergroup.name!r}")
+
+    for name in args.srcgroup:
+        ownergroup.remove_group(name)
+        cli_info(f"Removed group {name!r} from {ownergroup.name!r}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -268,18 +186,10 @@ def host_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, hosts)
     """
-    get_hostgroup(args.group)
-    info: list[dict[str, str]] = []
-    for name in args.hosts:
-        info.append(host_info_by_name(name, follow_cname=False))
+    hostgroup = HostGroup.get_by_name_or_raise(args.group)
 
-    for i in info:
-        name = i["name"]
-        data = {
-            "name": name,
-        }
-        path = f"/api/v1/hostgroups/{args.group}/hosts/"
-        post(path, **data)
+    for name in args.hosts:
+        hostgroup.add_host(name)
         cli_info(f"Added host {name!r} to {args.group!r}", print_msg=True)
 
 
@@ -297,15 +207,14 @@ def host_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, hosts)
     """
-    get_hostgroup(args.group)
-    info: list[dict[str, str]] = []
-    for name in args.hosts:
-        info.append(host_info_by_name(name, follow_cname=False))
+    hostgroup = HostGroup.get_by_name_or_raise(args.group)
 
-    for i in info:
-        name = i["name"]
-        path = f"/api/v1/hostgroups/{args.group}/hosts/{name}"
-        delete(path)
+    for name in args.hosts:
+        if not hostgroup.has_host(name):
+            raise EntityNotFound(f"Host {name!r} not a member in {args.group!r}")
+
+    for name in args.hosts:
+        hostgroup.remove_host(name)
         cli_info(f"Removed host {name!r} from {args.group!r}", print_msg=True)
 
 
@@ -315,24 +224,21 @@ def host_remove(args: argparse.Namespace) -> None:
     short_desc="List host's group memberships",
     flags=[
         Flag("host", description="hostname", metavar="HOST"),
+        Flag(
+            "-traverse-hostgroups",
+            action="store_true",
+            description="Show memberships of all parent groups as well as direct groups.",
+            short_desc="Traverse hostgroups.",
+        ),
     ],
 )
 def host_list(args: argparse.Namespace) -> None:
     """List group memberships for host.
 
-    :param args: argparse.Namespace (host)
+    :param args: argparse.Namespace (host, tarverse-hostgroups)
     """
-    hostname = host_info_by_name(args.host, follow_cname=False)["name"]
-    group_list = get_list("/api/v1/hostgroups/", params={"hosts__name": hostname})
-    if len(group_list) == 0:
-        cli_info(f"Host {hostname!r} is not a member in any hostgroup", True)
-        return
-
-    manager = OutputManager()
-
-    manager.add_line("Groups:")
-    for group in group_list:
-        manager.add_line(f"  {group['name']}")
+    host = Host.get_by_any_means_or_raise(args.host)
+    HostGroup.output_multiple(host.hostgroups(traverse=args.traverse_hostgroups), multiline=True)
 
 
 @command_registry.register_command(
@@ -349,15 +255,11 @@ def owner_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, owners)
     """
-    get_hostgroup(args.group)
+    hostgroup = HostGroup.get_by_name_or_raise(args.group)
 
     for name in args.owners:
-        data = {
-            "name": name,
-        }
-        path = f"/api/v1/hostgroups/{args.group}/owners/"
-        post(path, **data)
-        cli_info(f"Added {name!r} as owner of {args.group!r}", print_msg=True)
+        hostgroup.add_owner(name)
+        cli_info(f"Added owner {name!r} to {args.group!r}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -374,16 +276,15 @@ def owner_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, owners)
     """
-    info = get_hostgroup(args.group)
-    names = {i["name"] for i in info["owners"]}
-    for i in args.owners:
-        if i not in names:
-            cli_warning(f"{i!r} not a owner of {args.group}")
+    hostgroup = HostGroup.get_by_name_or_raise(args.group)
 
-    for i in args.owners:
-        path = f"/api/v1/hostgroups/{args.group}/owners/{i}"
-        delete(path)
-        cli_info(f"Removed {i!r} as owner of {args.group!r}", print_msg=True)
+    for name in args.owners:
+        if not hostgroup.has_owner(name):
+            raise EntityNotFound(f"Owner {name!r} not a member in {args.group!r}")
+
+    for name in args.owners:
+        hostgroup.remove_owner(name)
+        cli_info(f"Removed owner {name!r} from {args.group!r}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -400,9 +301,7 @@ def set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
-    get_hostgroup(args.name)
-    patch(f"/api/v1/hostgroups/{args.name}", description=args.description)
-    cli_info(f"updated description to {args.description!r} for {args.name!r}", True)
+    HostGroup.get_by_name_or_raise(args.name).set_description(args.description)
 
 
 @command_registry.register_command(
@@ -418,5 +317,4 @@ def history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    items = get_history_items(args.name, "group", data_relation="groups")
-    format_history_items(args.name, items)
+    HostGroup.get_by_name_or_raise(args.name).output_history(HistoryResource.Group)

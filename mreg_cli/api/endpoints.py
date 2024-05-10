@@ -44,7 +44,14 @@ class Endpoint(str, Enum):
     Locs = "/api/v1/locs/"
     Mxs = "/api/v1/mxs/"
     NAPTRs = "/api/v1/naptrs/"
+
     HostGroups = "/api/v1/hostgroups/"
+    HostGroupsAddHostGroups = "/api/v1/hostgroups/{}/groups/"
+    HostGroupsRemoveHostGroups = "/api/v1/hostgroups/{}/groups/{}"
+    HostGroupsAddHosts = "/api/v1/hostgroups/{}/hosts/"
+    HostGroupsRemoveHosts = "/api/v1/hostgroups/{}/hosts/{}"
+    HostGroupsAddOwner = "/api/v1/hostgroups/{}/owners/"
+    HostGroupsRemoveOwner = "/api/v1/hostgroups/{}/owners/{}"
 
     BacnetID = "/api/v1/bacnet/ids/"
 
