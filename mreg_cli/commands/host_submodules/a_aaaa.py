@@ -20,7 +20,7 @@ import argparse
 from mreg_cli.api.models import Host, HostList, IPAddress, MACAddressField, Network, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    DeleteFailure,
+    DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     ForceMissing,
@@ -143,7 +143,7 @@ def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
     if host_ip.delete():
         cli_info(f"Removed ipaddress {args.ip} from {host}", print_msg=True)
     else:
-        raise DeleteFailure(f"Failed to remove ipaddress {args.ip} from {host}")
+        raise DeleteError(f"Failed to remove ipaddress {args.ip} from {host}")
 
 
 def _add_ip(

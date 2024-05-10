@@ -12,12 +12,12 @@ from pydantic.fields import FieldInfo
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.exceptions import (
-    CreateFailure,
+    CreateError,
     EntityAlreadyExists,
     EntityNotFound,
-    GetFailure,
+    GetError,
     InternalError,
-    PatchFailure,
+    PatchError,
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import (
@@ -332,7 +332,7 @@ class APIMixin(ABC):
 
         obj = self.__class__.get_by_id(lookup)
         if not obj:
-            raise GetFailure(f"Could not refresh {self.__class__.__name__} with ID {identifier}.")
+            raise GetError(f"Could not refresh {self.__class__.__name__} with ID {identifier}.")
 
         return obj
 
@@ -362,11 +362,9 @@ class APIMixin(ABC):
             try:
                 nval = getattr(new_object, field_name)
             except AttributeError as e:
-                raise PatchFailure(
-                    f"Could not get value for {field_name} in patched object."
-                ) from e
+                raise PatchError(f"Could not get value for {field_name} in patched object.") from e
             if value and str(nval) != str(value):
-                raise PatchFailure(
+                raise PatchError(
                     # Should this reference `field_name` instead of `key`?
                     f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
                 )
@@ -411,7 +409,7 @@ class APIMixin(ABC):
                 if obj:
                     return obj
 
-                raise GetFailure(f"Could not fetch object from location {location}.")
+                raise GetError(f"Could not fetch object from location {location}.")
 
             # else:
             # Lots of endpoints don't give locations on creation,
@@ -420,7 +418,7 @@ class APIMixin(ABC):
             # cli_warning("No location header in response.")
 
         else:
-            raise CreateFailure(f"Failed to create {cls} with {params} @ {cls.endpoint()}.")
+            raise CreateError(f"Failed to create {cls} with {params} @ {cls.endpoint()}.")
 
         return None
 

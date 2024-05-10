@@ -19,14 +19,14 @@ from mreg_cli.api.history import HistoryResource
 from mreg_cli.api.models import ForwardZone, Host, HostList, HostT, MACAddressField, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    CreateFailure,
-    DeleteFailure,
+    CreateError,
+    DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,
     ForceMissing,
     InputFailure,
-    PatchFailure,
+    PatchError,
 )
 from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
@@ -129,7 +129,7 @@ def add(args: argparse.Namespace) -> None:
 
     host = Host.create(data)
     if not host:
-        raise CreateFailure("Failed to add host.")
+        raise CreateError("Failed to add host.")
 
     if macaddress is not None:
         if ip:
@@ -291,7 +291,7 @@ def remove(args: argparse.Namespace) -> None:
     if host.delete():
         cli_info(f"removed {host.name}", print_msg=True)
     else:
-        raise DeleteFailure(f"failed to remove {host.name}")
+        raise DeleteError(f"failed to remove {host.name}")
 
 
 @command_registry.register_command(
@@ -451,7 +451,7 @@ def set_comment(args: argparse.Namespace) -> None:
     updated_host = host.set_comment(args.comment)
 
     if not updated_host:
-        raise PatchFailure(f"Failed to update comment of {host.name}")
+        raise PatchError(f"Failed to update comment of {host.name}")
 
     cli_info(
         f"Updated comment of {host} to {args.comment}",
@@ -477,7 +477,7 @@ def set_contact(args: argparse.Namespace) -> None:
     updated_host = host.set_contact(args.contact)
 
     if not updated_host:
-        raise PatchFailure(f"Failed to update contact of {host.name}")
+        raise PatchError(f"Failed to update contact of {host.name}")
 
     cli_info(f"Updated contact of {host} to {args.contact}", print_msg=True)
 

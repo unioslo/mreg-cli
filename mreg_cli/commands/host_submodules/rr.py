@@ -58,13 +58,13 @@ from mreg_cli.api.models import (
 )
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    CreateFailure,
-    DeleteFailure,
+    CreateError,
+    DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     ForceMissing,
     InputFailure,
-    PatchFailure,
+    PatchError,
 )
 from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
@@ -97,7 +97,7 @@ def hinfo_add(args: argparse.Namespace) -> None:
     if host.hinfo and host.hinfo.cpu == args.cpu and host.hinfo.os == args.os:
         cli_info(f"Added HINFO record for {host.name.hostname}.", print_msg=True)
     else:
-        raise CreateFailure(f"Failed to add correct HINFO for {host}")
+        raise CreateError(f"Failed to add correct HINFO for {host}")
 
 
 @command_registry.register_command(
@@ -123,7 +123,7 @@ def hinfo_remove(args: argparse.Namespace) -> None:
     if hinfo and hinfo.delete():
         cli_info(f"Removed HINFO record for {host.name.hostname}.", print_msg=True)
     else:
-        raise DeleteFailure(f"Failed to remove HINFO for {host}")
+        raise DeleteError(f"Failed to remove HINFO for {host}")
 
 
 @command_registry.register_command(
@@ -174,7 +174,7 @@ def loc_remove(args: argparse.Namespace) -> None:
     if host.loc.delete():
         cli_info(f"Removed LOC for {host.name.hostname}.", print_msg=True)
     else:
-        raise DeleteFailure(f"Failed to remove LOC for {host}")
+        raise DeleteError(f"Failed to remove LOC for {host}")
 
 
 @command_registry.register_command(
@@ -204,7 +204,7 @@ def loc_add(args: argparse.Namespace) -> None:
     if host.loc and host.loc.loc == args.loc:
         cli_info(f"Added LOC record for {host.name.hostname}.", print_msg=True)
     else:
-        CreateFailure(f"Failed to set LOC for {host}")
+        CreateError(f"Failed to set LOC for {host}")
 
 
 @command_registry.register_command(
@@ -279,7 +279,7 @@ def mx_remove(args: argparse.Namespace) -> None:
     if mx.delete():
         cli_info(f"deleted MX from {host.name.hostname}.", print_msg=True)
     else:
-        raise DeleteFailure(f"Failed to remove MX for {host}")
+        raise DeleteError(f"Failed to remove MX for {host}")
 
 
 @command_registry.register_command(
@@ -428,7 +428,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
         if naptr.delete():
             cli_info(f"Deleted NAPTR record from {host.name.hostname}.", print_msg=True)
         else:
-            raise DeleteFailure(f"Failed to remove NAPTR for {host}")
+            raise DeleteError(f"Failed to remove NAPTR for {host}")
 
 
 @command_registry.register_command(
@@ -489,7 +489,7 @@ def ptr_change(args: argparse.Namespace) -> None:
 
     data = {"host": new_host.id}
     if not ptr_override.patch(data):
-        raise PatchFailure(f"Failed to move PTR record from {old_host} to {new_host}")
+        raise PatchError(f"Failed to move PTR record from {old_host} to {new_host}")
     else:
         cli_info(
             f"Moved PTR record {ip} from {old_host.name.hostname} to {new_host.name.hostname}.",
@@ -524,7 +524,7 @@ def ptr_remove(args: argparse.Namespace) -> None:
     if ptr_override.delete():
         cli_info(f"Removed PTR record {ip} from {host.name.hostname}.", print_msg=True)
     else:
-        raise DeleteFailure(f"Failed to remove PTR record from {host}")
+        raise DeleteError(f"Failed to remove PTR record from {host}")
 
 
 @command_registry.register_command(
@@ -696,7 +696,7 @@ def srv_remove(args: argparse.Namespace) -> None:
     if srv.delete():
         cli_info(f"Removed SRV record {sname} from {host.name.hostname}.", print_msg=True)
     else:
-        raise DeleteFailure(f"Failed to remove SRV for {sname}")
+        raise DeleteError(f"Failed to remove SRV for {sname}")
 
 
 @command_registry.register_command(
@@ -793,7 +793,7 @@ def sshfp_remove(args: argparse.Namespace) -> None:
     else:
         for sshfp in sshfps:
             if not sshfp.delete():
-                raise DeleteFailure(f"Failed to remove SSHFP for {host}")
+                raise DeleteError(f"Failed to remove SSHFP for {host}")
             else:
                 fp = sshfp.fingerprint
                 cli_info(
@@ -876,7 +876,7 @@ def ttl_set(args: argparse.Namespace) -> None:
     if result:
         cli_info(f"Set TTL for {target} to {args.ttl}.", print_msg=True)
     else:
-        raise PatchFailure(f"Failed to set TTL for {target}")
+        raise PatchError(f"Failed to set TTL for {target}")
 
 
 @command_registry.register_command(
@@ -956,7 +956,7 @@ def txt_remove(args: argparse.Namespace) -> None:
     if txt.delete():
         cli_info(f"Removed TXT record '{args.text}' from {host}.", print_msg=True)
     else:
-        raise DeleteFailure(f"Failed to remove TXT with '{args.text}' for {host}")
+        raise DeleteError(f"Failed to remove TXT with '{args.text}' for {host}")
 
 
 @command_registry.register_command(
