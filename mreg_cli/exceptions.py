@@ -29,7 +29,11 @@ class CliException(Exception):
 
 
 class CliError(CliException):
-    """Exception class for CLI errors."""
+    """Exception class for CLI errors.
+
+    Errors are not recoverable and stem from internal failures that
+    the user cannot be expected to resolve.
+    """
 
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML red tag for the error message.
@@ -40,7 +44,10 @@ class CliError(CliException):
 
 
 class CliWarning(CliException):
-    """Exception class for CLI warnings."""
+    """Exception class for CLI warnings.
+
+    Warnings should be recoverable by changing the user input.
+    """
 
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML italic tag for the warning message.
