@@ -68,6 +68,36 @@ class DeleteFailure(CliError):
     pass
 
 
+class GetFailure(CliError):
+    """Error class for failed retrieval."""
+
+    pass
+
+
+class InternalError(CliError):
+    """Error class for internal errors."""
+
+    pass
+
+
+class APIError(CliError):
+    """Error class for API errors."""
+
+    pass
+
+
+class UnexpectedAPIData(APIError):
+    """Error class for unexpected API data."""
+
+    pass
+
+
+class ValidationFailure(CliWarning):
+    """Warning class for validation failures."""
+
+    pass
+
+
 class EntityNotFound(CliWarning):
     """Warning class for an entity that was not found."""
 
@@ -76,6 +106,12 @@ class EntityNotFound(CliWarning):
 
 class EntityAlreadyExists(CliWarning):
     """Warning class for an entity that already exists."""
+
+    pass
+
+
+class MultipleEntititesFound(CliWarning):
+    """Warning class for multiple entities found."""
 
     pass
 
@@ -94,6 +130,30 @@ class InputFailure(CliWarning):
 
 class ForceMissing(CliWarning):
     """Warning class for missing force flag."""
+
+    pass
+
+
+class IsNotAnIPAddress(CliWarning):
+    """Warning class for an entity that is not an IP address."""
+
+    pass
+
+
+class IsNotAnIPv4Address(CliWarning):
+    """Warning class for an entity that is not an IPv4 address."""
+
+    pass
+
+
+class IsNotAnIPv6Address(CliWarning):
+    """Warning class for an entity that is not an IPv6 address."""
+
+    pass
+
+
+class IsNotANetwork(CliWarning):
+    """Warning class for an entity that is not a network."""
 
     pass
 
