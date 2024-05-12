@@ -7,13 +7,13 @@ import argparse
 from mreg_cli.api.models import CNAME, ForwardZone, Host, HostT
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    CreateFailure,
-    DeleteFailure,
+    CreateError,
+    DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,
     InputFailure,
-    PatchFailure,
+    PatchError,
 )
 from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
@@ -66,7 +66,7 @@ def cname_add(args: argparse.Namespace) -> None:
     if cname:
         cli_info(f"Added CNAME {cname.name} for {host.name.hostname}.", print_msg=True)
     else:
-        raise CreateFailure(f"Failed to add CNAME {alias} for {host.name.hostname}.")
+        raise CreateError(f"Failed to add CNAME {alias} for {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -108,7 +108,7 @@ def cname_remove(args: argparse.Namespace) -> None:
     if cname.delete():
         cli_info(f"Removed CNAME {cname.name} for {host.name}.", print_msg=True)
     else:
-        raise DeleteFailure(f"Failed to remove CNAME {cname.name} for {host.name}.")
+        raise DeleteError(f"Failed to remove CNAME {cname.name} for {host.name}.")
 
 
 @command_registry.register_command(
@@ -143,7 +143,7 @@ def cname_replace(args: argparse.Namespace) -> None:
             f"Moved CNAME alias {cname}: {old_host.name.hostname} -> {host.name}.", print_msg=True
         )
     else:
-        raise PatchFailure(f"Failed to move CNAME alias {cname}.")
+        raise PatchError(f"Failed to move CNAME alias {cname}.")
 
 
 @command_registry.register_command(

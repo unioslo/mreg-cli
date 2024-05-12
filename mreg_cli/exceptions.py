@@ -29,7 +29,11 @@ class CliException(Exception):
 
 
 class CliError(CliException):
-    """Exception class for CLI errors."""
+    """Exception class for CLI errors.
+
+    Errors are not recoverable and stem from internal failures that
+    the user cannot be expected to resolve.
+    """
 
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML red tag for the error message.
@@ -40,7 +44,10 @@ class CliError(CliException):
 
 
 class CliWarning(CliException):
-    """Exception class for CLI warnings."""
+    """Exception class for CLI warnings.
+
+    Warnings should be recoverable by changing the user input.
+    """
 
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML italic tag for the warning message.
@@ -50,25 +57,25 @@ class CliWarning(CliException):
         return f"<i>{super().__str__()}</i>"
 
 
-class CreateFailure(CliError):
+class CreateError(CliError):
     """Error class for failed creation."""
 
     pass
 
 
-class PatchFailure(CliError):
+class PatchError(CliError):
     """Error class for failed patching."""
 
     pass
 
 
-class DeleteFailure(CliError):
+class DeleteError(CliError):
     """Error class for failed deletion."""
 
     pass
 
 
-class GetFailure(CliError):
+class GetError(CliError):
     """Error class for failed retrieval."""
 
     pass
@@ -86,14 +93,14 @@ class APIError(CliError):
     pass
 
 
-class UnexpectedAPIData(APIError):
+class UnexpectedDataError(APIError):
     """Error class for unexpected API data."""
 
     pass
 
 
-class ValidationFailure(CliWarning):
-    """Warning class for validation failures."""
+class ValidationError(CliError):
+    """Error class for validation failures."""
 
     pass
 
@@ -134,25 +141,25 @@ class ForceMissing(CliWarning):
     pass
 
 
-class IsNotAnIPAddress(CliWarning):
+class InvalidIPAddress(CliWarning):
     """Warning class for an entity that is not an IP address."""
 
     pass
 
 
-class IsNotAnIPv4Address(CliWarning):
+class InvalidIPv4Address(CliWarning):
     """Warning class for an entity that is not an IPv4 address."""
 
     pass
 
 
-class IsNotAnIPv6Address(CliWarning):
+class InvalidIPv6Address(CliWarning):
     """Warning class for an entity that is not an IPv6 address."""
 
     pass
 
 
-class IsNotANetwork(CliWarning):
+class InvalidNetwork(CliWarning):
     """Warning class for an entity that is not a network."""
 
     pass

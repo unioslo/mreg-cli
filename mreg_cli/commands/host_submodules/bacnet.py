@@ -14,8 +14,8 @@ import argparse
 from mreg_cli.api.models import BacnetID, Host
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    CreateFailure,
-    DeleteFailure,
+    CreateError,
+    DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,
@@ -56,7 +56,7 @@ def bacnetid_add(args: argparse.Namespace) -> None:
     if validator and validator.hostname == host.name.hostname:
         cli_info(f"Assigned BACnet ID {validator.id} to {validator.hostname}.", print_msg=True)
     else:
-        raise CreateFailure(f"Failed to assign BACnet ID {args.id} to {host.name.hostname}.")
+        raise CreateError(f"Failed to assign BACnet ID {args.id} to {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -80,7 +80,7 @@ def bacnetid_remove(args: argparse.Namespace) -> None:
     if host_bacnet.delete():
         cli_info(f"Unassigned BACnet ID {host_bacnet.id} from {host.name}.", print_msg=True)
     else:
-        raise DeleteFailure(f"Failed to unassign BACnet ID {host_bacnet.id} from {host.name}.")
+        raise DeleteError(f"Failed to unassign BACnet ID {host_bacnet.id} from {host.name}.")
 
 
 @command_registry.register_command(

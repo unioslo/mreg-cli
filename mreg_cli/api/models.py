@@ -22,19 +22,18 @@ from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     CliWarning,
-    DeleteFailure,
+    DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,
     InputFailure,
     InternalError,
-    IsNotANetwork,
-    IsNotAnIPAddress,
-    IsNotAnIPv4Address,
-    IsNotAnIPv6Address,
+    InvalidIPAddress,
+    InvalidIPv4Address,
+    InvalidIPv6Address,
     MultipleEntititesFound,
-    UnexpectedAPIData,
-    ValidationFailure,
+    UnexpectedDataError,
+    ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
@@ -83,25 +82,25 @@ class NetworkOrIP(BaseModel):
     def as_ipv4(self) -> ipaddress.IPv4Address:
         """Return the value as an IPv4 address."""
         if not self.is_ipv4():
-            raise IsNotAnIPv4Address("Value is not an IPv4 address.")
+            raise InvalidIPv4Address("Value is not an IPv4 address.")
         return cast(ipaddress.IPv4Address, self.ip_or_network)
 
     def as_ipv6(self) -> ipaddress.IPv6Address:
         """Return the value as an IPv6 address."""
         if not self.is_ipv6():
-            raise IsNotAnIPv6Address("Value is not an IPv6 address.")
+            raise InvalidIPv6Address("Value is not an IPv6 address.")
         return cast(ipaddress.IPv6Address, self.ip_or_network)
 
     def as_ip(self) -> IP_AddressT:
         """Return the value as an IP address."""
         if not self.is_ip():
-            raise IsNotAnIPAddress(f"{self.ip_or_network} is not an IP address.")
+            raise InvalidIPAddress(f"{self.ip_or_network} is not an IP address.")
         return cast(IP_AddressT, self.ip_or_network)
 
     def as_network(self) -> IP_NetworkT:
         """Return the value as a network."""
         if not self.is_network():
-            raise IsNotANetwork(f"{self.ip_or_network} is not a network.")
+            raise InvalidNetworkError(f"{self.ip_or_network} is not a network.")
         return cast(IP_NetworkT, self.ip_or_network)
 
     def is_ipv6(self) -> bool:
@@ -374,7 +373,7 @@ class ForwardZone(Zone, APIMixin):
         if "zone" in zoneblob:
             return ForwardZone(**zoneblob["zone"])
 
-        raise UnexpectedAPIData(f"Unexpected response from server: {zoneblob}")
+        raise UnexpectedDataError(f"Unexpected response from server: {zoneblob}")
 
 
 class Delegation(FrozenModelWithTimestamps, WithZone):
@@ -1496,7 +1495,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         # in the endpoint URL...
         op = delete(Endpoint.Hosts.with_id(str(self.name)))
         if not op:
-            raise DeleteFailure(f"Failed to delete host {self.name}, operation failed.")
+            raise DeleteError(f"Failed to delete host {self.name}, operation failed.")
 
         return op.status_code >= 200 and op.status_code < 300
 
@@ -1770,7 +1769,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         if data_as_dict["zone"]:
             zone = Zone(**data_as_dict["zone"])
             if validate_zone_resolution and zone.id != self.zone:
-                raise ValidationFailure(f"Expected zone ID {self.zone} but resovled as {zone.id}.")
+                raise ValidationError(f"Expected zone ID {self.zone} but resovled as {zone.id}.")
             return zone
 
         if data_as_dict["delegation"]:
