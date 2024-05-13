@@ -103,7 +103,6 @@ class Endpoint(str, Enum):
         """Return the name of the field that holds the external ID."""
         if self in (
             Endpoint.Hosts,
-            Endpoint.HostGroups,
             Endpoint.Cnames,
             Endpoint.ForwardZones,
             Endpoint.ReverseZones,

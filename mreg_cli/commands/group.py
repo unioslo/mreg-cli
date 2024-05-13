@@ -6,7 +6,7 @@ import argparse
 from typing import Any
 
 from mreg_cli.api.history import HistoryResource
-from mreg_cli.api.models import Host, HostGroup
+from mreg_cli.api.models import Host, HostGroup, HostT
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CreateError, DeleteError, EntityNotFound, ForceMissing
@@ -189,7 +189,9 @@ def host_add(args: argparse.Namespace) -> None:
     hostgroup = HostGroup.get_by_name_or_raise(args.group)
 
     for name in args.hosts:
-        hostgroup.add_host(name)
+        # Using HostT both validates and FQDNs the hostname
+        hname = HostT(hostname=name)
+        hostgroup.add_host(hname.hostname)
         cli_info(f"Added host {name!r} to {args.group!r}", print_msg=True)
 
 
@@ -210,8 +212,12 @@ def host_remove(args: argparse.Namespace) -> None:
     hostgroup = HostGroup.get_by_name_or_raise(args.group)
 
     for name in args.hosts:
-        if not hostgroup.has_host(name):
-            raise EntityNotFound(f"Host {name!r} not a member in {args.group!r}")
+        # Using HostT both validates and FQDNs the hostname
+        hname = HostT(hostname=name)
+        if not hostgroup.has_host(hname.hostname):
+            raise EntityNotFound(
+                f"Host {name!r} ({hname.hostname}) not a member in {args.group!r}"
+            )
 
     for name in args.hosts:
         hostgroup.remove_host(name)
