@@ -59,7 +59,8 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    HostGroup.get_by_name_or_raise(args.name).output()
+    for name in args.name:
+        HostGroup.get_by_name_or_raise(name).output()
 
 
 @command_registry.register_command(
