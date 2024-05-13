@@ -86,23 +86,14 @@ class Endpoint(str, Enum):
 
     def requires_search_for_id(self) -> bool:
         """Return True if this endpoint requires a search for an ID."""
-        return self in (
-            Endpoint.Hosts,
-            Endpoint.Networks,
-            Endpoint.Cnames,
-            Endpoint.Hinfos,
-            Endpoint.Locs,
-            Endpoint.ForwardZones,
-            Endpoint.ReverseZones,
-            Endpoint.HostPolicyRoles,
-            Endpoint.HostPolicyAtoms,
-        )
+        return self.external_id_field() != "id"
 
     @hybridmethod
     def external_id_field(self) -> str:
         """Return the name of the field that holds the external ID."""
         if self in (
             Endpoint.Hosts,
+            Endpoint.HostGroups,
             Endpoint.Cnames,
             Endpoint.ForwardZones,
             Endpoint.ReverseZones,
