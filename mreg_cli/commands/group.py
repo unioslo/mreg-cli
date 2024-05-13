@@ -210,13 +210,15 @@ def host_remove(args: argparse.Namespace) -> None:
     """
     hostgroup = HostGroup.get_by_name_or_raise(args.group)
 
+    to_remove: set[str] = set()
     for name in args.hosts:
         host = Host.get_by_any_means_or_raise(name)
         fqname = host.name.hostname
         if not hostgroup.has_host(fqname):
             raise EntityNotFound(f"Host {name!r} ({fqname}) not a member in {args.group!r}")
+        to_remove.add(fqname)
 
-    for name in args.hosts:
+    for name in to_remove:
         hostgroup.remove_host(name)
         cli_info(f"Removed host {name!r} from {args.group!r}", print_msg=True)
 
