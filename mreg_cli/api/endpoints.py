@@ -61,6 +61,10 @@ class Endpoint(str, Enum):
     NetworksReservedList = "/api/v1/networks/{}/reserved_list"
 
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
+    HostPolicyRolesAddAtom = "/api/v1/hostpolicy/roles/{}/atoms/"
+    HostPolicyRolesRemoveAtom = "/api/v1/hostpolicy/roles/{}/atoms/{}"
+    HostPolicyRolesAddHost = "/api/v1/hostpolicy/roles/{}/hosts/"
+    HostPolicyRolesRemoveHost = "/api/v1/hostpolicy/roles/{}/hosts/{}"
     HostPolicyAtoms = "/api/v1/hostpolicy/atoms/"
 
     ForwardZones = f"{Zones}forward/"
@@ -96,6 +100,8 @@ class Endpoint(str, Enum):
             Endpoint.Cnames,
             Endpoint.ForwardZones,
             Endpoint.ReverseZones,
+            Endpoint.HostPolicyRoles,
+            Endpoint.HostPolicyAtoms,
         ):
             return "name"
         if self == Endpoint.Networks:
