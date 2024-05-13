@@ -114,7 +114,7 @@ def group_delete(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, force)
     """
     group = HostGroup.get_by_name_or_raise(args.name)
-    if (len(group.hosts) or len(group.groups)) and not args.force:
+    if (group.hosts or group.groups) and not args.force:
         raise ForceMissing("Group contains hosts or groups, must force")
 
     if not group.delete():
