@@ -44,7 +44,14 @@ class Endpoint(str, Enum):
     Locs = "/api/v1/locs/"
     Mxs = "/api/v1/mxs/"
     NAPTRs = "/api/v1/naptrs/"
+
     HostGroups = "/api/v1/hostgroups/"
+    HostGroupsAddHostGroups = "/api/v1/hostgroups/{}/groups/"
+    HostGroupsRemoveHostGroups = "/api/v1/hostgroups/{}/groups/{}"
+    HostGroupsAddHosts = "/api/v1/hostgroups/{}/hosts/"
+    HostGroupsRemoveHosts = "/api/v1/hostgroups/{}/hosts/{}"
+    HostGroupsAddOwner = "/api/v1/hostgroups/{}/owners/"
+    HostGroupsRemoveOwner = "/api/v1/hostgroups/{}/owners/{}"
 
     BacnetID = "/api/v1/bacnet/ids/"
 
@@ -79,17 +86,7 @@ class Endpoint(str, Enum):
 
     def requires_search_for_id(self) -> bool:
         """Return True if this endpoint requires a search for an ID."""
-        return self in (
-            Endpoint.Hosts,
-            Endpoint.Networks,
-            Endpoint.Cnames,
-            Endpoint.Hinfos,
-            Endpoint.Locs,
-            Endpoint.ForwardZones,
-            Endpoint.ReverseZones,
-            Endpoint.HostPolicyRoles,
-            Endpoint.HostPolicyAtoms,
-        )
+        return self.external_id_field() != "id"
 
     @hybridmethod
     def external_id_field(self) -> str:

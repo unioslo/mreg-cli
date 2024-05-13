@@ -21,6 +21,7 @@ from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
+    CreateError,
     DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
@@ -30,7 +31,7 @@ from mreg_cli.exceptions import (
     InvalidIPAddress,
     InvalidIPv4Address,
     InvalidIPv6Address,
-    InvalidNetworkError,
+    InvalidNetwork,
     MultipleEntititesFound,
     UnexpectedDataError,
     ValidationError,
@@ -102,7 +103,7 @@ class NetworkOrIP(BaseModel):
     def as_network(self) -> IP_NetworkT:
         """Return the value as a network."""
         if not self.is_network():
-            raise InvalidNetworkError(f"{self.ip_or_network} is not a network.")
+            raise InvalidNetwork(f"{self.ip_or_network} is not a network.")
         return cast(IP_NetworkT, self.ip_or_network)
 
     def is_ipv6(self) -> bool:
@@ -2060,11 +2061,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         return next((mx for mx in self.mxs if mx.has_mx_with_priority(mx_arg, priority)), None)
 
     def hostgroups(self, traverse: bool = False) -> list[HostGroup]:
-        """List all hostgroups for the host.
+        """Return all hostgroups for the host.
 
         :param traverse: If True, traverse the parent groups and include them in the list.
 
-        :returns: A list of HostGroup objects.
+        :returns: A list of HostGroup objects sorted by name.
         """
         groups: list[HostGroup] = []
         direct = HostGroup.get_list_by_field("hosts", self.id)
@@ -2074,7 +2075,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
             for group in direct:
                 groups.extend(group.get_all_parents())
 
-        return groups
+        return sorted(groups, key=lambda group: group.name)
 
     def output(self, names: bool = False, traverse_hostgroups: bool = False):
         """Output host information to the console with padding."""
@@ -2246,7 +2247,7 @@ class HostList(FrozenModel):
             _format(str(i.name), i.contact, i.comment or "")
 
 
-class HostGroup(FrozenModelWithTimestamps, APIMixin):
+class HostGroup(FrozenModelWithTimestamps, WithName, APIMixin):
     """Model for a hostgroup."""
 
     id: int  # noqa: A003
@@ -2263,18 +2264,151 @@ class HostGroup(FrozenModelWithTimestamps, APIMixin):
         return Endpoint.HostGroups
 
     @classmethod
-    def output_multiple(cls, hostgroups: list[HostGroup], padding: int = 14) -> None:
+    def output_multiple(
+        cls, hostgroups: list[HostGroup], padding: int = 14, multiline: bool = False
+    ) -> None:
         """Output multiple hostgroups to the console.
 
         :param hostgroups: List of HostGroup records to output.
+        :param multiline: If True, output each group on a new line.
         :param padding: Number of spaces for left-padding the output.
         """
+        manager = OutputManager()
         if not hostgroups:
             return
 
-        groups = ", ".join(sorted([group.name for group in hostgroups]))
+        if multiline:
+            manager.add_line("Groups:")
+            for group in hostgroups:
+                manager.add_line(f"  {group.name}")
+        else:
+            groups = ", ".join(sorted([group.name for group in hostgroups]))
+            manager.add_line("{1:<{0}}{2}".format(padding, "Groups:", groups))
 
-        OutputManager().add_line("{1:<{0}}{2}".format(padding, "Groups:", groups))
+    def set_description(self, description: str) -> Self:
+        """Set the description for the hostgroup.
+
+        :param description: The description to set.
+
+        :returns: A new HostGroup object fetched from the API with the updated description.
+        """
+        return self.patch(fields={"description": description})
+
+    def has_group(self, groupname: str) -> bool:
+        """Check if the hostgroup has the given group.
+
+        :param groupname: The group to check for.
+
+        :returns: True if the hostgroup has the group, False otherwise.
+        """
+        return groupname in self.groups
+
+    def add_group(self, groupname: str) -> Self:
+        """Add a group to the hostgroup.
+
+        :param group: The group to add.
+
+        :returns: A new HostGroup object fetched from the API with the updated groups.
+        """
+        resp = post(Endpoint.HostGroupsAddHostGroups.with_params(self.name), name=groupname)
+        if resp and resp.ok:
+            return self.refetch()
+        else:
+            raise CreateError(f"Failed to add group {groupname} to hostgroup {self.name}.")
+
+    def remove_group(self, groupname: str) -> Self:
+        """Remove a group from the hostgroup.
+
+        :param group: The group to remove.
+
+        :returns: A new HostGroup object fetched from the API with the updated groups.
+        """
+        resp = delete(Endpoint.HostGroupsRemoveHostGroups.with_params(self.name, groupname))
+        if resp and resp.ok:
+            return self.refetch()
+        else:
+            raise DeleteError(f"Failed to remove group {groupname} from hostgroup {self.name}.")
+
+    def has_host(self, hostname: str) -> bool:
+        """Check if the hostgroup has the given host.
+
+        :param hostname: The host to check for.
+
+        :returns: True if the hostgroup has the host, False otherwise.
+        """
+        return hostname in self.hosts
+
+    def add_host(self, hostname: str) -> Self:
+        """Add a host to the hostgroup.
+
+        :param hostname: The host to add.
+
+        :returns: A new HostGroup object fetched from the API with the updated hosts.
+        """
+        resp = post(Endpoint.HostGroupsAddHosts.with_params(self.name), name=hostname)
+        if resp and resp.ok:
+            return self.refetch()
+        else:
+            raise CreateError(f"Failed to add host {hostname} to hostgroup {self.name}.")
+
+    def remove_host(self, hostname: str) -> Self:
+        """Remove a host from the hostgroup.
+
+        :param hostname: The host to remove.
+
+        :returns: A new HostGroup object fetched from the API with the updated hosts.
+        """
+        resp = delete(Endpoint.HostGroupsRemoveHosts.with_params(self.name, hostname))
+        if resp and resp.ok:
+            return self.refetch()
+        else:
+            raise DeleteError(f"Failed to remove host {hostname} from hostgroup {self.name}.")
+
+    def has_owner(self, ownername: str) -> bool:
+        """Check if the hostgroup has the given owner.
+
+        :param ownername: The owner to check for.
+
+        :returns: True if the hostgroup has the owner, False otherwise.
+        """
+        return ownername in self.owners
+
+    def add_owner(self, ownername: str) -> Self:
+        """Add an owner to the hostgroup.
+
+        :param ownername: The owner to add.
+
+        :returns: A new HostGroup object fetched from the API with the updated owners.
+        """
+        resp = post(Endpoint.HostGroupsAddOwner.with_params(self.name), name=ownername)
+        if resp and resp.ok:
+            return self.refetch()
+        else:
+            raise CreateError(f"Failed to add owner {ownername} to hostgroup {self.name}.")
+
+    def remove_owner(self, ownername: str) -> Self:
+        """Remove an owner from the hostgroup.
+
+        :param ownername: The owner to remove.
+
+        :returns: A new HostGroup object fetched from the API with the updated owners.
+        """
+        resp = delete(Endpoint.HostGroupsRemoveOwner.with_params(self.name, ownername))
+        if resp and resp.ok:
+            return self.refetch()
+        else:
+            raise DeleteError(f"Failed to remove owner {ownername} from hostgroup {self.name}.")
+
+    def get_all_parents(self) -> list[HostGroup]:
+        """Return a list of all parent groups."""
+        parents: list[HostGroup] = []
+        for parent in self.parent:
+            pobj = HostGroup.get_by_field("name", parent)
+            if pobj:
+                parents.append(pobj)
+                parents.extend(pobj.get_all_parents())
+
+        return parents
 
     def output(self, padding: int = 14) -> None:
         """Output the hostgroup to the console.
@@ -2307,13 +2441,35 @@ class HostGroup(FrozenModelWithTimestamps, APIMixin):
 
         self.output_timestamps()
 
-    def get_all_parents(self) -> list[HostGroup]:
-        """Return a list of all parent groups."""
-        parents: list[HostGroup] = []
-        for parent in self.parent:
-            pobj = HostGroup.get_by_field("name", parent)
-            if pobj:
-                parents.append(pobj)
-                parents.extend(pobj.get_all_parents())
+    def output_members(self, expand: bool = False) -> None:
+        """Output the members of the hostgroup to the console.
 
-        return parents
+        :param expand: If True, expand the members to include all hosts in all parent groups.
+        """
+        if expand:
+            self._output_members_expanded()
+        else:
+            self._output_members()
+
+    def _output_members(self) -> None:
+        """Output the members of the hostgroup to the console, not expanded."""
+        manager = OutputManager()
+        manager.add_formatted_line("Type", "Name")
+
+        for group in self.groups:
+            manager.add_formatted_line("group", group)
+
+        for host in self.hosts:
+            manager.add_formatted_line("host", host)
+
+    def _output_members_expanded(self):
+        """Output the members of the hostgroup to the console, expanded."""
+        manager = OutputManager()
+        manager.add_formatted_line_with_source("Type", "Name", "Source")
+
+        for parent in self.get_all_parents():
+            for host in parent.hosts:
+                manager.add_formatted_line_with_source("host", host, parent.name)
+
+        for host in self.hosts:
+            manager.add_formatted_line_with_source("host", host, self.name)

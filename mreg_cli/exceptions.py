@@ -159,7 +159,7 @@ class InvalidIPv6Address(CliWarning):
     pass
 
 
-class InvalidNetworkError(CliWarning):
+class InvalidNetwork(CliWarning):
     """Warning class for an entity that is not a network."""
 
     pass

@@ -30,8 +30,7 @@ from mreg_cli.exceptions import (
 )
 from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
-from mreg_cli.utilities.history import format_history_items, get_history_items
-from mreg_cli.utilities.shared import clean_hostname, convert_wildcard_to_regex
+from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 
 @command_registry.register_command(
@@ -491,24 +490,6 @@ def set_contact(args: argparse.Namespace) -> None:
     ],
 )
 def history(args: argparse.Namespace) -> None:
-    """Show host history for name.
-
-    :param args: argparse.Namespace (name)
-    """
-    hostname = clean_hostname(args.name)
-    items = get_history_items(hostname, "host", data_relation="hosts")
-    format_history_items(hostname, items)
-
-
-@command_registry.register_command(
-    prog="history_pydantic",
-    description="Show history for host.",
-    short_desc="Show history.",
-    flags=[
-        Flag("name", description="Host name", metavar="NAME"),
-    ],
-)
-def history_pydantic(args: argparse.Namespace) -> None:
     """Show host history for name.
 
     :param args: argparse.Namespace (name)
