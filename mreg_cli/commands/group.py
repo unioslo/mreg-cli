@@ -235,7 +235,7 @@ def host_remove(args: argparse.Namespace) -> None:
 def host_list(args: argparse.Namespace) -> None:
     """List group memberships for host.
 
-    :param args: argparse.Namespace (host, tarverse-hostgroups)
+    :param args: argparse.Namespace (host, traverse-hostgroups)
     """
     host = Host.get_by_any_means_or_raise(args.host)
     HostGroup.output_multiple(host.hostgroups(traverse=args.traverse_hostgroups), multiline=True)
