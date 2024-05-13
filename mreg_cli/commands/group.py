@@ -307,6 +307,7 @@ def set_description(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, description)
     """
     HostGroup.get_by_name_or_raise(args.name).set_description(args.description)
+    cli_info(f"Updated description to {args.description!r} for {args.name!r}", print_msg=True)
 
 
 @command_registry.register_command(
