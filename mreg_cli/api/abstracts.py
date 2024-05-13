@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Self, cast
+from typing import Any, Mapping, Self, cast
 
 from pydantic import AliasChoices, BaseModel
 from pydantic.fields import FieldInfo
@@ -419,7 +419,7 @@ class APIMixin(ABC):
         return False
 
     @classmethod
-    def create(cls, params: dict[str, str | None]) -> Self | None:
+    def create(cls, params: Mapping[str, str | None]) -> Self | None:
         """Create the object.
 
         Note that several endpoints do not support location headers for created objects,
