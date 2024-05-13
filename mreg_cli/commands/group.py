@@ -138,14 +138,12 @@ def group_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (dstgroup, srcgroup)
     """
-    destgroups: list[HostGroup] = []
-    sourcegroup = HostGroup.get_by_name_or_raise(args.srcgroup)
-    for name in args.destgroup:
-        destgroups.append(HostGroup.get_by_name_or_raise(name))
+    sourcegroups = [HostGroup.get_by_name_or_raise(name) for name in args.srcgroup]
+    destgroup = HostGroup.get_by_name_or_raise(args.dstgroup)
 
-    for dest in destgroups:
-        sourcegroup.add_group(dest.name)
-        cli_info(f"Added group {sourcegroup.name!r} to {dest.name!r}", print_msg=True)
+    for src in sourcegroups:
+        destgroup.add_group(src.name)
+        cli_info(f"Added group {src.name!r} to {destgroup.name!r}", print_msg=True)
 
 
 @command_registry.register_command(
