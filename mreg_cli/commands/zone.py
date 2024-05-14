@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from mreg_cli.api.models import ForwardZone, Host, ReverseZone
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import EntityNotFound
@@ -25,21 +26,21 @@ class ZoneCommands(BaseCommand):
         super().__init__(cli, command_registry, "zone", "Manage zones.", "Manage zones")
 
 
-def _verify_nameservers(nameservers: str, force: bool) -> None:
+def _verify_nameservers(nameservers: list[str], force: bool) -> None:
     """Verify that nameservers are in mreg and have A-records."""
     if not nameservers:
         cli_warning("At least one nameserver is required")
 
-    errors = []
+    errors: list[str] = []
     for nameserver in nameservers:
         try:
-            info = host_info_by_name(nameserver)
+            host = Host.get_by_any_means_or_raise(nameserver)
         except EntityNotFound:
             if not force:
                 errors.append(f"{nameserver} is not in mreg, must force")
         else:
-            if info["zone"] is not None:
-                if not info["ipaddresses"] and not force:
+            if host.zone is None:
+                if not host.ipaddresses and not force:
                     errors.append(f"{nameserver} has no A-record/glue, must force")
     if errors:
         cli_warning("\n".join(errors))
@@ -54,10 +55,6 @@ def format_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
 
 def zone_basepath(name: str) -> str:
     """Return the basepath for a zone."""
-    basepath = "/api/v1/zones/"
-    if name.endswith(".arpa"):
-        return f"{basepath}reverse/"
-    return f"{basepath}forward/"
 
 
 def zone_path(name: str) -> str:
@@ -91,8 +88,12 @@ def create(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (ns, force, zone, email)
     """
     _verify_nameservers(args.ns, args.force)
-    path = zone_basepath(args.zone)
-    post(path, name=args.zone, email=args.email, primary_ns=args.ns)
+    if args.zone.endswith(".arpa"):
+        zone = ReverseZone
+    else:
+        zone = ForwardZone
+    zone.get_by_field_and_raise("name", args.zone)
+    zone.create({"name": args.zone, "email": args.email, "primary_ns": args.ns})
     cli_info(f"created zone {args.zone}", True)
 
 

@@ -419,6 +419,15 @@ class ForwardZone(Zone, APIMixin):
         raise UnexpectedDataError(f"Unexpected response from server: {zoneblob}")
 
 
+class ReverseZone(Zone, APIMixin):
+    """A reverse zone."""
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.ReverseZones
+
+
 class Delegation(FrozenModelWithTimestamps, WithZone):
     """A delegated zone."""
 
