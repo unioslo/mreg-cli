@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import ForwardZone, Host, ReverseZone
+from mreg_cli.api.models import Host, Zone
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import EntityNotFound
@@ -13,7 +13,6 @@ from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.api import delete, get, get_list, patch, post
-from mreg_cli.utilities.host import host_info_by_name
 
 command_registry = CommandRegistry()
 
@@ -87,14 +86,14 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ns, force, zone, email)
     """
-    _verify_nameservers(args.ns, args.force)
-    if args.zone.endswith(".arpa"):
-        zone = ReverseZone
-    else:
-        zone = ForwardZone
-    zone.get_by_field_and_raise("name", args.zone)
-    zone.create({"name": args.zone, "email": args.email, "primary_ns": args.ns})
-    cli_info(f"created zone {args.zone}", True)
+    zone: str = args.zone
+    email: str = args.email
+    ns: list[str] = args.ns
+    force: bool = args.force
+
+    _verify_nameservers(ns, force)
+    Zone.create_zone(zone, email, ns)
+    cli_info(f"created zone {zone}", print_msg=True)
 
 
 @command_registry.register_command(

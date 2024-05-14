@@ -386,6 +386,22 @@ class Zone(FrozenModelWithTimestamps, WithTTL):
         """Return True if the zone is delegated."""
         return False
 
+    @staticmethod
+    def create_zone(name: str, email: str, primary_ns: list[str]) -> Zone | ReverseZone | None:
+        """Create a forward or reverse zone based on zone name.
+
+        :param name: The name of the zone to create.
+        :param email: The email address for the zone.
+        :param primary_ns: The primary nameserver for the zone.
+        :returns: The created zone object.
+        """
+        if name.endswith(".arpa"):
+            cls = ReverseZone
+        else:
+            cls = ForwardZone
+        cls.get_by_field_and_raise("name", name)
+        return cls.create({"name": name, "email": email, "primary_ns": primary_ns})
+
 
 class ForwardZone(Zone, APIMixin):
     """A forward zone."""
