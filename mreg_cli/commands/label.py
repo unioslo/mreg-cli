@@ -5,12 +5,13 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from mreg_cli.api.models import Label
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.log import cli_info, cli_warning
+from mreg_cli.exceptions import EntityNotFound, InputFailure
+from mreg_cli.log import cli_info
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch, post
 
 command_registry = CommandRegistry()
 
@@ -38,12 +39,13 @@ def label_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, description)
     """
     if " " in args.name:
-        OutputManager().add_line("The label name can't contain spaces.")
-        return
-    data = {"name": args.name, "description": args.description}
-    path = "/api/v1/labels/"
-    post(path, **data)
-    cli_info(f'Added label "{args.name}"', True)
+        raise InputFailure("The label name can't contain spaces.")
+
+    # We can't do a fetch_after_create here because the API is... broken.
+    # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views_labels.py#L30
+    # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views.py#L187
+    Label.create({"name": args.name, "description": args.description}, fetch_after_create=False)
+    cli_info(f'Added label "{args.name}"', print_msg=True)
 
 
 @command_registry.register_command(
@@ -51,9 +53,9 @@ def label_add(args: argparse.Namespace) -> None:
 )
 def label_list(_: argparse.Namespace) -> None:
     """List labels."""
-    labels = get_list("/api/v1/labels/", params={"ordering": "name"})
+    labels = Label.get_all()
     if not labels:
-        cli_info("No labels", True)
+        cli_info("No labels", print_msg=True)
         return
     OutputManager().add_formatted_table(("Name", "Description"), ("name", "description"), labels)
 
@@ -75,9 +77,12 @@ def label_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    path = f"/api/v1/labels/name/{args.name}"
-    delete(path)
-    cli_info(f'Removed label "{args.name}"', True)
+    label = Label.get_by_name_or_raise(args.name)
+    if not label:
+        raise EntityNotFound(f'Label "{args.name}" does not exist.')
+
+    label.delete()
+    cli_info(f'Removed label "{args.name}"', print_msg=True)
 
 
 @command_registry.register_command(
@@ -91,31 +96,7 @@ def label_info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    path = f"/api/v1/labels/name/{args.name}"
-    label = get(path).json()
-    manager = OutputManager()
-    manager.add_line(f"Name:                  {label['name']}")
-    manager.add_line(f"Description:           {label['description']}")
-
-    rolelist = get_list("/api/v1/hostpolicy/roles/", params={"labels__name": args.name})
-    manager.add_line("Roles with this label: ")
-    if rolelist:
-        for r in rolelist:
-            manager.add_line("    " + r["name"])
-    else:
-        manager.add_line("    None")
-
-    permlist = get_list("/api/v1/permissions/netgroupregex/", params={"labels__name": args.name})
-    manager.add_line("Permissions with this label:")
-    if permlist:
-        OutputManager().add_formatted_table(
-            ("IP range", "Group", "Reg.exp."),
-            ("range", "group", "regex"),
-            permlist,
-            indent=4,
-        )
-    else:
-        manager.add_line("    None")
+    Label.get_by_name_or_raise(args.name).output()
 
 
 @command_registry.register_command(
@@ -129,25 +110,38 @@ def label_info(args: argparse.Namespace) -> None:
             description="The old (current) name of the label",
         ),
         Flag("newname", short_desc="New name", description="The new name of the label"),
-        Flag(
-            "-desc",
-            metavar="DESCRIPTION",
-            short_desc="New description",
-            description="The new description of the label",
-        ),
     ],
 )
 def label_rename(args: argparse.Namespace) -> None:
     """Rename a label.
 
-    :param args: argparse.Namespace (oldname, newname, desc)
+    :param args: argparse.Namespace (oldname, newname)
     """
-    path = f"/api/v1/labels/name/{args.oldname}"
-    res = get(path, ok404=True)
-    if not res:
-        cli_warning(f'Label "{args.oldname}" does not exist.')
-    data = {"name": args.newname}
-    if args.desc:
-        data["description"] = args.desc
-    patch(path, **data)
-    cli_info(f'Renamed label "{args.oldname}" to "{args.newname}"', True)
+    Label.get_by_name_or_raise(args.oldname).rename(args.newname)
+    cli_info(f'Renamed label "{args.oldname}" to "{args.newname}"', print_msg=True)
+
+
+@command_registry.register_command(
+    prog="set_description",
+    description="Set the description for the label",
+    short_desc="Describe a label",
+    flags=[
+        Flag(
+            "name",
+            short_desc="name",
+            description="The name of the label",
+        ),
+        Flag(
+            "desc",
+            short_desc="New description",
+            description="The new description of the label",
+        ),
+    ],
+)
+def label_redesc(args: argparse.Namespace) -> None:
+    """Change the description of a label.
+
+    :param args: argparse.Namespace (name, desc)
+    """
+    Label.get_by_name_or_raise(args.name).set_description(args.desc)
+    cli_info(f'Set description for label "{args.name}" to "{args.desc}"', print_msg=True)

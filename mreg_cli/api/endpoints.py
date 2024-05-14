@@ -74,6 +74,8 @@ class Endpoint(str, Enum):
     HostPolicyRolesRemoveHost = "/api/v1/hostpolicy/roles/{}/hosts/{}"
     HostPolicyAtoms = "/api/v1/hostpolicy/atoms/"
 
+    PermissionNetgroupRegex = "/api/v1/permissions/netgroupregex/"
+
     ForwardZones = f"{Zones}forward/"
     ReverseZones = f"{Zones}reverse/"
     ForwardZoneForHost = f"{ForwardZones}hostname/"
