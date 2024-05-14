@@ -419,7 +419,9 @@ class APIMixin(ABC):
         return False
 
     @classmethod
-    def create(cls, params: Mapping[str, str | None]) -> Self | None:
+    def create(
+        cls, params: Mapping[str, str | None], fetch_after_create: bool = True
+    ) -> Self | None:
         """Create the object.
 
         Note that several endpoints do not support location headers for created objects,
@@ -427,14 +429,15 @@ class APIMixin(ABC):
         if the object was created successfully...
 
         :param params: The parameters to create the object with.
-        :raises CliWarning: If the object could not be created.
+        :raises CreateError: If the object could not be created.
+        :raises GetError: If the object could not be fetched after creation.
         :returns: The object if created and its fetchable, None otherwise.
         """
         response = post(cls.endpoint(), params=None, **params)
 
         if response and response.ok:
             location = response.headers.get("Location")
-            if location:
+            if location and fetch_after_create:
                 obj = None
                 if cls.endpoint().external_id_field() == "name":
                     obj = cls.get_by_field("name", location.split("/")[-1])
