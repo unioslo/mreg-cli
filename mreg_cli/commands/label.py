@@ -45,7 +45,7 @@ def label_add(args: argparse.Namespace) -> None:
     # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views_labels.py#L30
     # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views.py#L187
     Label.create({"name": args.name, "description": args.description}, fetch_after_create=False)
-    cli_info(f'Added label "{args.name}"', True)
+    cli_info(f'Added label "{args.name}"', print_msg=True)
 
 
 @command_registry.register_command(
@@ -55,7 +55,7 @@ def label_list(_: argparse.Namespace) -> None:
     """List labels."""
     labels = Label.get_all()
     if not labels:
-        cli_info("No labels", True)
+        cli_info("No labels", print_msg=True)
         return
     OutputManager().add_formatted_table(("Name", "Description"), ("name", "description"), labels)
 
@@ -82,7 +82,7 @@ def label_delete(args: argparse.Namespace) -> None:
         raise EntityNotFound(f'Label "{args.name}" does not exist.')
 
     label.delete()
-    cli_info(f'Removed label "{args.name}"', True)
+    cli_info(f'Removed label "{args.name}"', print_msg=True)
 
 
 @command_registry.register_command(
@@ -118,6 +118,7 @@ def label_rename(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (oldname, newname)
     """
     Label.get_by_name_or_raise(args.oldname).rename(args.newname)
+    cli_info(f'Renamed label "{args.oldname}" to "{args.newname}"', print_msg=True)
 
 
 @command_registry.register_command(
@@ -143,3 +144,4 @@ def label_redesc(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, desc)
     """
     Label.get_by_name_or_raise(args.name).set_description(args.desc)
+    cli_info(f'Set description for label "{args.name}" to "{args.desc}"', print_msg=True)
