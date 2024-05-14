@@ -337,6 +337,34 @@ class NameServer(FrozenModelWithTimestamps, WithTTL):
     name: str
 
 
+class Permission(FrozenModelWithTimestamps, APIMixin):
+    """Model for a permission object."""
+
+    id: int  # noqa: A003
+    group: str
+    range: str  # noqa: A003
+    regex: str
+    labels: list[int]
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.PermissionNetgroupRegex
+
+    @classmethod
+    def output_multiple(cls, permissions: list[Permission], indent: int = 4) -> None:
+        """Print multiple permissions to the console."""
+        if not permissions:
+            return
+
+        OutputManager().add_formatted_table(
+            ("IP range", "Group", "Reg.exp."),
+            ("range", "group", "regex"),
+            permissions,
+            indent=indent,
+        )
+
+
 class Zone(FrozenModelWithTimestamps, WithTTL):
     """Model representing a DNS zone with various attributes and related nameservers."""
 
@@ -795,17 +823,13 @@ class Label(FrozenModelWithTimestamps, WithName):
         return Endpoint.Labels
 
     @classmethod
-    def get_by_name(cls, name: str) -> Label:
-        """Get a Label by name.
+    def get_all(cls) -> list[Label]:
+        """Get all labels.
 
-        :param name: The Label name to search for.
-        :returns: The Label if found.
-        :raises EntityNotFound: If the Label is not found.
+        :returns: A list of Label objects.
         """
-        data = get_item_by_key_value(Endpoint.Labels, "name", name)
-        if not data:
-            raise EntityNotFound(f"Label with name {name} not found.")
-        return cls(**data)
+        data = get_list(cls.endpoint(), params={"ordering": "name"})
+        return [cls(**item) for item in data]
 
     @classmethod
     def get_by_id_or_raise(cls, _id: int) -> Label:
@@ -819,6 +843,36 @@ class Label(FrozenModelWithTimestamps, WithName):
         if not label:
             raise EntityNotFound(f"Label with ID {_id} not found.")
         return label
+
+    def set_description(self, description: str) -> Self:
+        """Set a new description."""
+        return self.patch({"description": description})
+
+    def output(self, padding: int = 14) -> None:
+        """Output the label to the console.
+
+        :param padding: Number of spaces for left-padding the output.
+        """
+        short_padding = 4
+        output_manager = OutputManager()
+        output_manager.add_line(f"{'Name:':<{padding}}{self.name}")
+        output_manager.add_line(f"{'Description:':<{padding}}{self.description}")
+        output_manager.add_line("Roles with this label:")
+
+        roles = Role.get_list_by_field("labels", self.id)
+        if roles:
+            for role in roles:
+                output_manager.add_line(f"{'':<{short_padding}}{role.name}")
+        else:
+            output_manager.add_line(f"{'None':<{short_padding}}")
+
+        permission_list = Permission.get_list_by_field("labels", self.id)
+
+        output_manager.add_line("Permissions with this label:")
+        if permission_list:
+            Permission.output_multiple(permission_list, indent=4)
+        else:
+            output_manager.add_line(f"{'None':<{short_padding}}")
 
 
 class Network(FrozenModelWithTimestamps, APIMixin):
