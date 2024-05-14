@@ -386,6 +386,21 @@ class Zone(FrozenModelWithTimestamps, WithTTL):
         """Return True if the zone is delegated."""
         return False
 
+    def is_reverse(self) -> bool:
+        """Return True if the zone is a reverse zone."""
+        return False
+
+    @staticmethod
+    def zone_type_by_name(name: str) -> type[ForwardZone | ReverseZone]:
+        """Determine the zone type based on the name.
+
+        :param name: The name of the zone.
+        :returns: The zone type.
+        """
+        if name.endswith(".arpa"):
+            return ReverseZone
+        return ForwardZone
+
     @staticmethod
     def create_zone(name: str, email: str, primary_ns: list[str]) -> Zone | ReverseZone | None:
         """Create a forward or reverse zone based on zone name.
@@ -395,15 +410,44 @@ class Zone(FrozenModelWithTimestamps, WithTTL):
         :param primary_ns: The primary nameserver for the zone.
         :returns: The created zone object.
         """
-        if name.endswith(".arpa"):
-            cls = ReverseZone
-        else:
-            cls = ForwardZone
+        cls = Zone.zone_type_by_name(name)
         cls.get_by_field_and_raise("name", name)
         return cls.create({"name": name, "email": email, "primary_ns": primary_ns})
 
+    @staticmethod
+    def get_zone(name: str) -> ForwardZone | ReverseZone:
+        """Get a zone by name.
 
-class ForwardZone(Zone, APIMixin):
+        :param name: The name of the zone to get.
+        :returns: The zone object.
+        """
+        cls = Zone.zone_type_by_name(name)
+        return cls.get_by_field_or_raise("name", name)
+
+    def create_delegation(self, delegation: str, nameservers: list[str], comment: str) -> bool:
+        """Create a delegation for the zone.
+
+        :param delegation: The name of the delegation.
+        :param nameservers: The nameservers for the delegation.
+        :param comment: A comment for the delegation.
+        :returns: The created delegation object.
+        """
+        if not delegation.endswith(f".{self.name}"):
+            raise InputFailure(f"Delegation '{delegation}' is not in '{self.name}'")
+        if self.is_reverse():
+            cls = ReverseZoneDelegation
+        else:
+            cls = ForwardZoneDelegation
+        resp = post(
+            cls.endpoint().with_params(self.name),
+            name=delegation,
+            nameservers=nameservers,
+            comment=comment,
+        )
+        return resp.ok if resp else False
+
+
+class ForwardZone(Zone, WithName, APIMixin):
     """A forward zone."""
 
     @classmethod
@@ -435,7 +479,7 @@ class ForwardZone(Zone, APIMixin):
         raise UnexpectedDataError(f"Unexpected response from server: {zoneblob}")
 
 
-class ReverseZone(Zone, APIMixin):
+class ReverseZone(Zone, WithName, APIMixin):
     """A reverse zone."""
 
     @classmethod
@@ -454,6 +498,32 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
 
     def is_delegated(self) -> bool:
         """Return True if the zone is delegated."""
+        return True
+
+    def is_reverse(self) -> bool:
+        """Return True if the zone is a reverse zone."""
+        return False
+
+
+class ForwardZoneDelegation(Delegation, APIMixin):
+    """A forward zone delegation."""
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.ForwardZonesDelegations
+
+
+class ReverseZoneDelegation(Delegation, APIMixin):
+    """A reverse zone delegation."""
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.ReverseZonesDelegations
+
+    def is_reverse(self) -> bool:
+        """Return True if the zone is a reverse zone."""
         return True
 
 
