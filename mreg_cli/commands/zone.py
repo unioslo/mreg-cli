@@ -54,6 +54,10 @@ def format_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
 
 def zone_basepath(name: str) -> str:
     """Return the basepath for a zone."""
+    basepath = "/api/v1/zones/"
+    if name.endswith(".arpa"):
+        return f"{basepath}reverse/"
+    return f"{basepath}forward/"
 
 
 def zone_path(name: str) -> str:
@@ -113,17 +117,10 @@ def delegation_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ns, force, zone, delegation, comment)
     """
-    _, path = get_zone(args.zone)
-    if not args.delegation.endswith(f".{args.zone}"):
-        cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
     _verify_nameservers(args.ns, args.force)
-    post(
-        f"{path}/delegations/",
-        name=args.delegation,
-        nameservers=args.ns,
-        comment=args.comment,
-    )
-    cli_info(f"created zone delegation {args.delegation}", True)
+    zone = Zone.get_zone(args.zone)
+    zone.create_delegation(args.delegation, args.ns, args.comment)
+    cli_info(f"created zone delegation {args.delegation}", print_msg=True)
 
 
 @command_registry.register_command(
