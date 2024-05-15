@@ -8,7 +8,7 @@ from typing import Any
 from mreg_cli.api.models import Host, Zone
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import EntityNotFound
+from mreg_cli.exceptions import DeleteError, EntityNotFound
 from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
@@ -90,14 +90,8 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ns, force, zone, email)
     """
-    zone: str = args.zone
-    email: str = args.email
-    ns: list[str] = args.ns
-    force: bool = args.force
-
-    _verify_nameservers(ns, force)
-    Zone.create_zone(zone, email, ns)
-    cli_info(f"created zone {zone}", print_msg=True)
+    Zone.create_zone(args.zone, args.email, args.ns, args.force)
+    cli_info(f"created zone {args.zone}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -117,9 +111,8 @@ def delegation_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ns, force, zone, delegation, comment)
     """
-    _verify_nameservers(args.ns, args.force)
     zone = Zone.get_zone(args.zone)
-    zone.create_delegation(args.delegation, args.ns, args.comment)
+    zone.create_delegation(args.delegation, args.ns, args.comment, args.force)
     cli_info(f"created zone delegation {args.delegation}", print_msg=True)
 
 
@@ -137,20 +130,11 @@ def zone_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, force)
     """
-    zone, path = get_zone(args.zone)
-    hosts = get_list("/api/v1/hosts/", params={"zone": zone["id"]})
-    zones = get_list(zone_basepath(args.zone), params={"name__endswith": f".{args.zone}"})
-
-    # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
-    if hosts:
-        cli_warning(f"Zone has {len(hosts)} registered entries. Can not delete.")
-    other_zones = [z["name"] for z in zones if z["name"] != args.zone]
-    if other_zones:
-        zone_desc = ", ".join(sorted(other_zones))
-        cli_warning(f"Zone has registered subzones: '{zone_desc}'. Can not delete")
-
-    delete(path)
-    cli_info("deleted zone {}".format(zone["name"]), True)
+    zone = Zone.get_zone(args.zone)
+    if zone.delete_zone(args.force):
+        cli_info(f"Deleted zone {zone.name}", print_msg=True)
+    else:
+        raise DeleteError(f"Unable to delete zone {zone.name}")
 
 
 @command_registry.register_command(
@@ -167,11 +151,14 @@ def delegation_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, delegation)
     """
-    _, path = get_zone(args.zone)
-    if not args.delegation.endswith(f".{args.zone}"):
-        cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
-    delete(f"{path}/delegations/{args.delegation}")
-    cli_info(f"Removed zone delegation {args.delegation}", True)
+    # NOTE: how to handle delegation that has delegation?
+    # i.e. uio.no -> pederhan.uio.no -> sub.pederhan.uio.no
+    # and we try to delete pederhan.uio.no?
+    zone = Zone.get_zone(args.zone)
+    if zone.delete_delegation(args.delegation):
+        cli_info(f"Removed zone delegation {args.delegation}", True)
+    else:
+        raise DeleteError(f"Unable to delete delegation {args.delegation}")
 
 
 @command_registry.register_command(

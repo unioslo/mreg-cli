@@ -17,10 +17,11 @@ from pydantic import (
 )
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
-from mreg_cli.api.endpoints import Endpoint
+from mreg_cli.api.endpoints import Endpoint, with_id, with_params
 from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
+    CliWarning,
     CreateError,
     DeleteError,
     EntityAlreadyExists,
@@ -187,12 +188,12 @@ class WithHost(BaseModel):
         return Host(**data)
 
 
-class WithZone(BaseModel):
+class WithZone(BaseModel, APIMixin):
     """Model for an object that has a zone element."""
 
     zone: int
 
-    def resolve_zone(self) -> Zone | None:
+    def resolve_zone(self) -> ForwardZone | None:
         """Resolve the zone ID to a (Forward)Zone object.
 
         Notes
@@ -206,7 +207,7 @@ class WithZone(BaseModel):
         if not data:
             return None
 
-        return Zone(**data)
+        return ForwardZone(**data)
 
 
 class WithTTL(BaseModel):
@@ -365,7 +366,16 @@ class Permission(FrozenModelWithTimestamps, APIMixin):
         )
 
 
-class Zone(FrozenModelWithTimestamps, WithTTL):
+def is_reverse_zone_name(name: str) -> bool:
+    """Determine if a zone is a reverse zone by its name.
+
+    :param name: The name of the zone.
+    :returns: True if the zone is a reverse zone.
+    """
+    return name.endswith(".arpa")
+
+
+class Zone(FrozenModelWithTimestamps, WithName, WithTTL):
     """Model representing a DNS zone with various attributes and related nameservers."""
 
     id: int  # noqa: A003
@@ -390,19 +400,54 @@ class Zone(FrozenModelWithTimestamps, WithTTL):
         """Return True if the zone is a reverse zone."""
         return False
 
-    @staticmethod
-    def zone_type_by_name(name: str) -> type[ForwardZone | ReverseZone]:
+    def ensure_delegation_in_zone(self, name: str) -> None:
+        """Ensure a delegation is in the zone.
+
+        :param name: The name of the delegation to check.
+        :returns: True if the delegation is in the zone.
+        """
+        if not name.endswith(f".{self.name}"):
+            raise InputFailure(f"Delegation '{name}' is not in '{self.name}'")
+
+    @classmethod
+    def type_by_name(cls, name: str) -> type[ForwardZone | ReverseZone]:
         """Determine the zone type based on the name.
 
         :param name: The name of the zone.
         :returns: The zone type.
         """
-        if name.endswith(".arpa"):
+        if is_reverse_zone_name(name):
             return ReverseZone
         return ForwardZone
 
-    @staticmethod
-    def create_zone(name: str, email: str, primary_ns: list[str]) -> Zone | ReverseZone | None:
+    @classmethod
+    def verify_nameservers(cls, nameservers: list[str], force: bool = False) -> None:
+        """Verify that nameservers are in mreg and have A-records."""
+        if not nameservers:
+            raise InputFailure("At least one nameserver is required")
+
+        errors: list[str] = []
+        for nameserver in nameservers:
+            try:
+                host = Host.get_by_any_means_or_raise(nameserver)
+            except EntityNotFound:
+                if not force:
+                    errors.append(f"{nameserver} is not in mreg, must force")
+            else:
+                if host.zone is None:
+                    if not host.ipaddresses and not force:
+                        errors.append(f"{nameserver} has no A-record/glue, must force")
+        if errors:
+            raise CliWarning("\n".join(errors))
+
+    @classmethod
+    def create_zone(
+        cls,
+        name: str,
+        email: str,
+        primary_ns: list[str],
+        force: bool,
+    ) -> ForwardZone | ReverseZone | None:
         """Create a forward or reverse zone based on zone name.
 
         :param name: The name of the zone to create.
@@ -410,21 +455,57 @@ class Zone(FrozenModelWithTimestamps, WithTTL):
         :param primary_ns: The primary nameserver for the zone.
         :returns: The created zone object.
         """
-        cls = Zone.zone_type_by_name(name)
-        cls.get_by_field_and_raise("name", name)
-        return cls.create({"name": name, "email": email, "primary_ns": primary_ns})
+        cls.verify_nameservers(primary_ns, force=force)
+        zone_t = cls.type_by_name(name)
+        zone_t.get_by_field_and_raise("name", name)
+        return zone_t.create({"name": name, "email": email, "primary_ns": primary_ns})
 
-    @staticmethod
-    def get_zone(name: str) -> ForwardZone | ReverseZone:
+    @classmethod
+    def get_zone(cls, name: str) -> ForwardZone | ReverseZone:
         """Get a zone by name.
 
         :param name: The name of the zone to get.
         :returns: The zone object.
         """
-        cls = Zone.zone_type_by_name(name)
-        return cls.get_by_field_or_raise("name", name)
+        zone_t = cls.type_by_name(name)
+        return zone_t.get_by_field_or_raise("name", name)
 
-    def create_delegation(self, delegation: str, nameservers: list[str], comment: str) -> bool:
+    def get_subzones(self) -> list[Self]:
+        """Get subzones of the zone, excluding self.
+
+        :returns: A list of subzones.
+        """
+        zones = self.get_list_by_field("name__endswith", f"{self.name}")
+        return [zone for zone in zones if zone.name != self.name]
+
+    def validate_deletion(self) -> None:
+        """Ensure the zone can be deleted. Raises exception if not.
+
+        :raises DeleteError: If zone has entries or subzones.
+        """
+        # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
+        hosts = Host.get_list_by_field("zone", self.id)
+        if hosts:
+            raise DeleteError(f"Zone has {len(hosts)} registered entries. Can not delete.")
+
+        zones = self.get_subzones()
+        if zones:
+            names = ", ".join(zone.name for zone in zones)
+            raise DeleteError(f"Zone has registered subzones: '{names}'. Can not delete")
+
+    def delete_zone(self, force: bool) -> bool:
+        """Delete the zone.
+
+        :param force: Whether to force the deletion.
+        :returns: True if the deletion was successful.
+        """
+        if not force:
+            self.validate_deletion()
+        return self.delete()
+
+    def create_delegation(
+        self, delegation: str, nameservers: list[str], comment: str, force: bool = False
+    ) -> bool:
         """Create a delegation for the zone.
 
         :param delegation: The name of the delegation.
@@ -432,18 +513,62 @@ class Zone(FrozenModelWithTimestamps, WithTTL):
         :param comment: A comment for the delegation.
         :returns: The created delegation object.
         """
-        if not delegation.endswith(f".{self.name}"):
-            raise InputFailure(f"Delegation '{delegation}' is not in '{self.name}'")
-        if self.is_reverse():
-            cls = ReverseZoneDelegation
-        else:
-            cls = ForwardZoneDelegation
+        self.ensure_delegation_in_zone(delegation)
+        self.verify_nameservers(nameservers, force=force)
+
+        # Ensure delegated zone is same type as parent zone
+        delegated_zone = Zone.get_zone(delegation)
+        if delegated_zone.is_reverse() != self.is_reverse():
+            raise InputFailure(
+                f"Delegation '{delegation}' is not a {self.__class__.__name__} zone"
+            )
+
+        cls = Delegation.type_by_zone(self)
         resp = post(
             cls.endpoint().with_params(self.name),
             name=delegation,
             nameservers=nameservers,
             comment=comment,
         )
+        return resp.ok if resp else False
+
+    def get_delegation(self, name: str) -> ForwardZoneDelegation | ReverseZoneDelegation:
+        """Get a delegation by name.
+
+        :param zone: The zone to search in.
+        :param name: The name of the delegation to get.
+        :returns: The delegation object.
+        """
+        cls = Delegation.type_by_zone(self)
+
+        resp = get(cls.endpoint_with_id(self, name))
+        if not resp:
+            raise EntityNotFound(f"Could not find delegation {name!r} in zone {name!r}")
+        return cls.model_validate_json(resp.text)
+
+    def get_delegations(self) -> list[ForwardZoneDelegation | ReverseZoneDelegation]:
+        """Get a delegation by name.
+
+        :param zone: The zone to search in.
+        :param name: The name of the delegation to get.
+        :returns: The delegation object.
+        """
+        cls = Delegation.type_by_zone(self)
+        data = get_list(cls.endpoint().with_params(self.name))
+        return [cls.model_validate(d) for d in data]
+
+    def delete_delegation(self, delegation: str) -> bool:
+        """Delete a delegation from the zone.
+
+        :param delegation: The name of the delegation.
+        :returns: True if the deletion was successful.
+        """
+        # Check if delegation exists
+        self.ensure_delegation_in_zone(delegation)  # check name
+        self.get_delegation(delegation)  # try to fetch it
+
+        cls = Delegation.type_by_zone(self)
+        resp = delete(cls.endpoint_with_id(self, delegation))
         return resp.ok if resp else False
 
 
@@ -456,10 +581,10 @@ class ForwardZone(Zone, WithName, APIMixin):
         return Endpoint.ForwardZones
 
     @classmethod
-    def get_from_hostname(cls, hostname: HostT) -> Delegation | Zone | None:
+    def get_from_hostname(cls, hostname: HostT) -> ForwardZoneDelegation | ForwardZone | None:
         """Get the zone from a hostname.
 
-        Note: This method may return either a Delegation or a Zone object.
+        Note: This method may return either a ForwardZoneDelegation or a ForwardZone object.
 
         :param hostname: The hostname to search for.
         :returns: The zone if found, None otherwise.
@@ -471,7 +596,7 @@ class ForwardZone(Zone, WithName, APIMixin):
         zoneblob = data.json()
 
         if "delegate" in zoneblob:
-            return Delegation(**zoneblob)
+            return ForwardZoneDelegation(**zoneblob)
 
         if "zone" in zoneblob:
             return ForwardZone(**zoneblob["zone"])
@@ -488,13 +613,20 @@ class ReverseZone(Zone, WithName, APIMixin):
         return Endpoint.ReverseZones
 
 
-class Delegation(FrozenModelWithTimestamps, WithZone):
+class Delegation(FrozenModelWithTimestamps, WithZone, WithName):
     """A delegated zone."""
 
     id: int  # noqa: A003
     nameservers: list[NameServer]
     name: str
     comment: str | None = None
+
+    @classmethod
+    def endpoint_with_id(cls, zone: Zone, name: str) -> str:
+        """Return the path to a specific zone resource."""
+        # HACK: We cannot combine with_params and with_id on an Endpoint,
+        # so we have to do it manually here
+        return with_id(with_params(cls.endpoint(), zone.name), name)
 
     def is_delegated(self) -> bool:
         """Return True if the zone is delegated."""
@@ -503,6 +635,24 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
     def is_reverse(self) -> bool:
         """Return True if the zone is a reverse zone."""
         return False
+
+    @classmethod
+    def type_by_name(cls, name: str) -> type[ForwardZoneDelegation | ReverseZoneDelegation]:
+        """Determine the delegation type based on the name.
+
+        :param name: The name of the delegation.
+        :returns: The delegation type.
+        """
+        if is_reverse_zone_name(name):
+            return ReverseZoneDelegation
+        return ForwardZoneDelegation
+
+    @classmethod
+    def type_by_zone(cls, zone: Zone) -> type[ForwardZoneDelegation | ReverseZoneDelegation]:
+        """Get the delegation type for a zone."""
+        if zone.is_reverse():
+            return ReverseZoneDelegation
+        return ForwardZoneDelegation
 
 
 class ForwardZoneDelegation(Delegation, APIMixin):
@@ -2134,7 +2284,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
         data_as_dict = data.json()
 
         if data_as_dict["zone"]:
-            zone = Zone(**data_as_dict["zone"])
+            zone = ForwardZone(**data_as_dict["zone"])
             if validate_zone_resolution and zone.id != self.zone:
                 raise ValidationError(f"Expected zone ID {self.zone} but resovled as {zone.id}.")
             return zone
@@ -2144,7 +2294,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
                 raise EntityOwnershipMismatch(
                     f"Host {self.name} is delegated to zone {data_as_dict['delegation']['name']}."
                 )
-            return Delegation(**data_as_dict["delegation"])
+            return ForwardZoneDelegation(**data_as_dict["delegation"])
 
         raise EntityNotFound(f"Failed to resolve zone for host {self.name}.")
 
