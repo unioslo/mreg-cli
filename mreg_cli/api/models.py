@@ -776,7 +776,8 @@ class ReverseZoneDelegation(Delegation, APIMixin):
         """Return the endpoint for the class."""
         return Endpoint.ReverseZonesDelegations
 
-    def is_reverse(self) -> bool:
+    @classmethod
+    def is_reverse(cls) -> bool:
         """Return True if the zone is a reverse zone."""
         return True
 
