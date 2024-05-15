@@ -640,7 +640,7 @@ class ReverseZone(Zone, WithName, APIMixin):
         return Endpoint.ReverseZones
 
 
-class Delegation(FrozenModelWithTimestamps, WithZone, WithName):
+class Delegation(FrozenModelWithTimestamps, WithZone):
     """A delegated zone."""
 
     id: int  # noqa: A003
