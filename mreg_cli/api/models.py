@@ -741,17 +741,6 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         return False
 
     @classmethod
-    def type_by_name(cls, name: str) -> type[ForwardZoneDelegation | ReverseZoneDelegation]:
-        """Determine the delegation type based on the name.
-
-        :param name: The name of the delegation.
-        :returns: The delegation type.
-        """
-        if is_reverse_zone_name(name):
-            return ReverseZoneDelegation
-        return ForwardZoneDelegation
-
-    @classmethod
     def type_by_zone(cls, zone: Zone) -> type[ForwardZoneDelegation | ReverseZoneDelegation]:
         """Get the delegation type for a zone."""
         if zone.is_reverse():
