@@ -523,6 +523,8 @@ class Zone(FrozenModelWithTimestamps, WithName, WithTTL):
                 f"Delegation '{delegation}' is not a {self.__class__.__name__} zone"
             )
 
+        self.get_delegation_and_raise(delegation)
+
         cls = Delegation.type_by_zone(self)
         resp = post(
             cls.endpoint().with_params(self.name),
@@ -532,19 +534,44 @@ class Zone(FrozenModelWithTimestamps, WithName, WithTTL):
         )
         return resp.ok if resp else False
 
-    def get_delegation(self, name: str) -> ForwardZoneDelegation | ReverseZoneDelegation:
+    def get_delegation(self, name: str) -> ForwardZoneDelegation | ReverseZoneDelegation | None:
         """Get a delegation by name.
+
+        :param name: The name of the delegation to get.
+        :returns: The delegation object if found.
+        """
+        self.ensure_delegation_in_zone(name)
+        cls = Delegation.type_by_zone(self)
+        resp = get(cls.endpoint_with_id(self, name), ok404=True)
+        if not resp:
+            return None
+        return cls.model_validate_json(resp.text)
+
+    def get_delegation_or_raise(self, name: str) -> ForwardZoneDelegation | ReverseZoneDelegation:
+        """Get a delegation by name, raising EntityNotFound if not found.
 
         :param zone: The zone to search in.
         :param name: The name of the delegation to get.
         :returns: The delegation object.
+        :raises EntityNotFound: If the delegation is not found.
         """
-        cls = Delegation.type_by_zone(self)
-
-        resp = get(cls.endpoint_with_id(self, name))
-        if not resp:
+        delegation = self.get_delegation(name)
+        if not delegation:
             raise EntityNotFound(f"Could not find delegation {name!r} in zone {name!r}")
-        return cls.model_validate_json(resp.text)
+        return delegation
+
+    def get_delegation_and_raise(self, name: str) -> None:
+        """Get a delegation by name, raising EntityAlreadyExists if found.
+
+        :param zone: The zone to search in.
+        :param name: The name of the delegation to get.
+        :raises EntityAlreadyExists: If the delegation is found.
+        """
+        delegation = self.get_delegation(name)
+        if delegation:
+            raise EntityAlreadyExists(
+                f"Zone {self.name!r} already has a delegation named {name!r}"
+            )
 
     def get_delegations(self) -> list[ForwardZoneDelegation | ReverseZoneDelegation]:
         """Get a delegation by name.
@@ -565,7 +592,7 @@ class Zone(FrozenModelWithTimestamps, WithName, WithTTL):
         """
         # Check if delegation exists
         self.ensure_delegation_in_zone(delegation)  # check name
-        self.get_delegation(delegation)  # try to fetch it
+        self.get_delegation_or_raise(delegation)
 
         cls = Delegation.type_by_zone(self)
         resp = delete(cls.endpoint_with_id(self, delegation))
@@ -623,7 +650,7 @@ class Delegation(FrozenModelWithTimestamps, WithZone, WithName):
 
     @classmethod
     def endpoint_with_id(cls, zone: Zone, name: str) -> str:
-        """Return the path to a specific zone resource."""
+        """Return the path to a delegation in a specific zone."""
         # HACK: We cannot combine with_params and with_id on an Endpoint,
         # so we have to do it manually here
         return with_id(with_params(cls.endpoint(), zone.name), name)
