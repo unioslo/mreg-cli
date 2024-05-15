@@ -400,6 +400,38 @@ class Zone(FrozenModelWithTimestamps, WithName, WithTTL):
         """Return True if the zone is a reverse zone."""
         return False
 
+    @classmethod
+    def output_zones(cls, forward: bool, reverse: bool) -> None:
+        """Output all zones of the given type(s)."""
+        # Determine types of zones to list
+        zones_types: list[type[Zone]] = []
+        if forward:
+            zones_types.append(ForwardZone)
+        if reverse:
+            zones_types.append(ReverseZone)
+
+        # Fetch all zones of the given type(s)
+        zones: list[Zone] = []
+        for zone_type in zones_types:
+            zones.extend(zone_type.get_list())
+
+        manager = OutputManager()
+        if not zones:
+            manager.add_line("No zones found.")
+            return
+        manager.add_line("Zones:")
+        for zone in zones:
+            manager.add_line(f" {zone.name}")
+
+    @classmethod
+    def get_list(cls) -> list[Self]:
+        """Get all zones of the given zone type.
+
+        :returns: A list of all zones.
+        """
+        data = get_list(cls.endpoint())
+        return [cls(**item) for item in data]
+
     def ensure_delegation_in_zone(self, name: str) -> None:
         """Ensure a delegation is in the zone.
 

@@ -12,7 +12,7 @@ from mreg_cli.exceptions import DeleteError, EntityNotFound
 from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch, post
+from mreg_cli.utilities.api import get, get_list, patch
 
 command_registry = CommandRegistry()
 
@@ -221,28 +221,9 @@ def zone_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (forward, reverse)
     """
-    all_zones = []
-
-    def _get_zone_list(zonetype: str) -> None:
-        zones = get_list(f"/api/v1/zones/{zonetype}/")
-        all_zones.extend(zones)
-
     if not (args.forward or args.reverse):
         cli_warning("Add either -forward or -reverse as argument")
-
-    if args.forward:
-        _get_zone_list("forward")
-    if args.reverse:
-        _get_zone_list("reverse")
-
-    manager = OutputManager()
-
-    if all_zones:
-        manager.add_line("Zones:")
-        for zone in all_zones:
-            manager.add_line("   {}".format(zone["name"]))
-    else:
-        manager.add_line("No zones found.")
+    Zone.output_zones(args.forward, args.reverse)
 
 
 @command_registry.register_command(
