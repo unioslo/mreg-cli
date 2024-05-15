@@ -8,7 +8,7 @@ from typing import Any
 from mreg_cli.api.models import Host, Zone
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError, EntityNotFound
+from mreg_cli.exceptions import DeleteError, EntityNotFound, PatchError
 from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
@@ -321,12 +321,13 @@ def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
 def set_ns(args: argparse.Namespace) -> None:
     """Update nameservers for an existing zone.
 
+    If multiple nameservers are provided, the first one is set as the primary nameserver.
+
     :param args: argparse.Namespace (zone, ns, force)
     """
-    _verify_nameservers(args.ns, args.force)
-    _, path = get_zone(args.zone)
-    patch(f"{path}/nameservers", primary_ns=args.ns)
-    cli_info(f"updated nameservers for {args.zone}", True)
+    zone = Zone.get_zone(args.zone)
+    zone.update_nameservers(args.ns, args.force)
+    cli_info(f"Updated nameservers for {args.zone}", print_msg=True)
 
 
 @command_registry.register_command(
