@@ -25,26 +25,6 @@ class ZoneCommands(BaseCommand):
         super().__init__(cli, command_registry, "zone", "Manage zones.", "Manage zones")
 
 
-def _verify_nameservers(nameservers: list[str], force: bool) -> None:
-    """Verify that nameservers are in mreg and have A-records."""
-    if not nameservers:
-        cli_warning("At least one nameserver is required")
-
-    errors: list[str] = []
-    for nameserver in nameservers:
-        try:
-            host = Host.get_by_any_means_or_raise(nameserver)
-        except EntityNotFound:
-            if not force:
-                errors.append(f"{nameserver} is not in mreg, must force")
-        else:
-            if host.zone is None:
-                if not host.ipaddresses and not force:
-                    errors.append(f"{nameserver} has no A-record/glue, must force")
-    if errors:
-        cli_warning("\n".join(errors))
-
-
 def format_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
     """Format nameserver output."""
     OutputManager().add_line(
@@ -174,27 +154,8 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone)
     """
-
-    def print_soa(info: str, text: str, padding: int = 20) -> None:
-        OutputManager().add_line("{1:<{0}}{2}".format(padding, info, text))
-
-    if not args.zone:
-        cli_warning("Name is required")
-
-    zone, _ = get_zone(args.zone)
-    print_soa("Zone:", zone["name"])
-    format_ns("Nameservers:", "hostname", "TTL")
-    for ns in zone["nameservers"]:
-        ttl = ns["ttl"] if ns["ttl"] else "<not set>"
-        format_ns("", ns["name"], ttl)
-    print_soa("Primary ns:", zone["primary_ns"])
-    print_soa("Email:", zone["email"])
-    print_soa("Serialnumber:", zone["serialno"])
-    print_soa("Refresh:", zone["refresh"])
-    print_soa("Retry:", zone["retry"])
-    print_soa("Expire:", zone["expire"])
-    print_soa("SOA TTL:", zone["soa_ttl"])
-    print_soa("Default TTL:", zone["default_ttl"])
+    zone = Zone.get_zone(args.zone)
+    zone.output()
 
 
 @command_registry.register_command(

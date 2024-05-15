@@ -412,6 +412,24 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         """Return the endpoint for the class."""
         return Endpoint.ForwardZonesNameservers
 
+    def output(self, padding: int = 20) -> None:
+        """Output the zone to the console."""
+        manager = OutputManager()
+
+        def fmt(info: str, text: str) -> None:
+            manager.add_line("{1:<{0}}{2}".format(padding, info, text))
+
+        fmt("Name:", self.name)
+        self.output_nameservers(self.nameservers)
+        fmt("Primary NS:", self.primary_ns)
+        fmt("Email:", self.email)
+        fmt("Serial:", str(self.serialno))
+        fmt("Refresh:", str(self.refresh))
+        fmt("Retry:", str(self.retry))
+        fmt("Expire:", str(self.expire))
+        self.output_ttl(padding, "soa_ttl")
+        self.output_ttl(padding, "default_ttl")
+
     @classmethod
     def output_zones(cls, forward: bool, reverse: bool) -> None:
         """Output all zones of the given type(s)."""
@@ -434,6 +452,34 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         manager.add_line("Zones:")
         for zone in zones:
             manager.add_line(f" {zone.name}")
+
+    @classmethod
+    def output_nameservers(cls, nameservers: list[NameServer], padding: int = 20) -> None:
+        """Output the nameservers of the zone."""
+        manager = OutputManager()
+
+        def fmt_ns(info: str, hostname: str, ttl: str) -> None:
+            manager.add_line(
+                "        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl)
+            )
+
+        fmt_ns("Nameservers:", "hostname", "TTL")
+        for ns in nameservers:
+            # We don't have a TTL value for nameservers from the API
+            fmt_ns("", ns.name, "<not set>")
+
+    def output_delegations(self, padding: int = 20) -> None:
+        """Output the delegations of the zone."""
+        delegations = self.get_delegations()
+        manager = OutputManager()
+        if not delegations:
+            manager.add_line(f"No delegations for {self.name}.")
+            return
+        manager.add_line("Delegations:")
+        for delegation in sorted(delegations, key=lambda d: d.name):
+            manager.add_line(f"    {delegation.name}")
+            if delegation.comment:
+                manager.add_line(f"        Comment: {delegation.comment}")
 
     @classmethod
     def get_list(cls) -> list[Self]:
