@@ -34,6 +34,7 @@ from mreg_cli.exceptions import (
     InvalidIPv6Address,
     InvalidNetwork,
     MultipleEntititesFound,
+    PatchError,
     UnexpectedDataError,
     ValidationError,
 )
@@ -47,6 +48,7 @@ from mreg_cli.utilities.api import (
     get_list_in,
     get_list_unique,
     get_typed,
+    patch,
     post,
 )
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
@@ -401,6 +403,16 @@ class Zone(FrozenModelWithTimestamps, WithName, WithTTL):
         return False
 
     @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.ForwardZones
+
+    @classmethod
+    def endpoint_nameservers(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.ForwardZonesNameservers
+
+    @classmethod
     def output_zones(cls, forward: bool, reverse: bool) -> None:
         """Output all zones of the given type(s)."""
         # Determine types of zones to list
@@ -630,6 +642,21 @@ class Zone(FrozenModelWithTimestamps, WithName, WithTTL):
         resp = delete(cls.endpoint_with_id(self, delegation))
         return resp.ok if resp else False
 
+    def update_nameservers(self, nameservers: list[str], force: bool = False) -> None:
+        """Update the nameservers of the zone.
+
+        :param nameservers: The new nameservers for the zone.
+        :param force: Whether to force the update.
+        :returns: True if the update was successful.
+        """
+        self.verify_nameservers(nameservers, force=force)
+        path = self.endpoint_nameservers().with_params(self.name)
+        resp = patch(path, primary_ns=nameservers)
+        if not resp or not resp.ok:
+            raise PatchError(
+                f"Failed to update nameservers for {self.__class__.__name__} {self.name!r}"
+            )
+
 
 class ForwardZone(Zone, WithName, APIMixin):
     """A forward zone."""
@@ -638,6 +665,11 @@ class ForwardZone(Zone, WithName, APIMixin):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.ForwardZones
+
+    @classmethod
+    def endpoint_nameservers(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.ForwardZonesNameservers
 
     @classmethod
     def get_from_hostname(cls, hostname: HostT) -> ForwardZoneDelegation | ForwardZone | None:
@@ -671,6 +703,11 @@ class ReverseZone(Zone, WithName, APIMixin):
         """Return the endpoint for the class."""
         return Endpoint.ReverseZones
 
+    @classmethod
+    def endpoint_nameservers(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.ReverseZonesNameservers
+
 
 class Delegation(FrozenModelWithTimestamps, WithZone):
     """A delegated zone."""
@@ -681,17 +718,25 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
     comment: str | None = None
 
     @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.ForwardZonesDelegations
+
+    @classmethod
     def endpoint_with_id(cls, zone: Zone, name: str) -> str:
         """Return the path to a delegation in a specific zone."""
-        # HACK: We cannot combine with_params and with_id on an Endpoint,
-        # so we have to do it manually here
-        return with_id(with_params(cls.endpoint(), zone.name), name)
+        if cls.is_reverse():
+            endpoint = Endpoint.ReverseZonesDelegationsZone
+        else:
+            endpoint = Endpoint.ForwardZonesDelegationsZone
+        return endpoint.with_params(zone.name, name)
 
     def is_delegated(self) -> bool:
         """Return True if the zone is delegated."""
         return True
 
-    def is_reverse(self) -> bool:
+    @classmethod
+    def is_reverse(cls) -> bool:
         """Return True if the zone is a reverse zone."""
         return False
 

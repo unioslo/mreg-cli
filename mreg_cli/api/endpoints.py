@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any, Callable
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 
 
 class hybridmethod:
@@ -25,46 +25,6 @@ class hybridmethod:
     def __call__(self, *args: Any, **kwargs: Any):
         """Caller method."""
         return self.func(*args, **kwargs)
-
-
-def with_id(endpoint: str, identity: str | int) -> str:
-    """Return the endpoint with an ID."""
-    id_field = quote(str(identity))
-
-    return f"{endpoint}{id_field}"
-
-
-def with_params(endpoint: str, *params: str | int) -> str:
-    """Construct and return an endpoint URL by inserting parameters.
-
-    :param endpoint: The endpoint path.
-    :param params: A sequence of parameters to be inserted into the URL.
-    :raises ValueError: If the number of provided parameters does not match the
-                        number of placeholders.
-    :returns: A fully constructed endpoint URL with parameters.
-    """
-    placeholders_count = endpoint.count("{}")
-    if placeholders_count != len(params):
-        if isinstance(endpoint, Endpoint):
-            name = endpoint.name
-        else:
-            name = endpoint
-        raise ValueError(
-            f"Endpoint {name} expects {placeholders_count} parameters, got {len(params)}."
-        )
-    encoded_params = (quote(str(param)) for param in params)
-    return endpoint.format(*encoded_params)
-
-
-def with_query(endpoint: str, query: dict[str, str]) -> str:
-    """Construct and return an endpoint URL with a query string.
-
-    :param endpoint: The endpoint path.
-    :param query: A dictionary of query parameters.
-    :returns: A fully constructed endpoint URL with a query string.
-    """
-    query_string = "&".join(f"{quote(key)}={quote(value)}" for key, value in query.items())
-    return f"{endpoint}?{query_string}"
 
 
 class Endpoint(str, Enum):
@@ -117,10 +77,14 @@ class Endpoint(str, Enum):
     PermissionNetgroupRegex = "/api/v1/permissions/netgroupregex/"
 
     ForwardZones = f"{Zones}forward/"
-    ForwardZonesDelegations = f"{ForwardZones}{{}}/delegations/"
+    ForwardZonesDelegations = f"{ForwardZones}{{}}/delegations"
+    ForwardZonesDelegationsZone = f"{ForwardZones}{{}}/delegations/{{}}"
+    ForwardZonesNameservers = f"{ForwardZones}{{}}/nameservers"
     ForwardZoneForHost = f"{ForwardZones}hostname/"
     ReverseZones = f"{Zones}reverse/"
-    ReverseZonesDelegations = f"{ReverseZones}{{}}/delegations/"
+    ReverseZonesDelegations = f"{ReverseZones}{{}}/delegations"
+    ReverseZonesDelegationsZone = f"{ReverseZones}{{}}/delegations/{{}}"
+    ReverseZonesNameservers = f"{ReverseZones}{{}}/nameservers"
 
     def __str__(self):
         """Prevent direct usage without parameters where needed."""
@@ -141,6 +105,8 @@ class Endpoint(str, Enum):
             Endpoint.Cnames,
             Endpoint.ForwardZones,
             Endpoint.ReverseZones,
+            Endpoint.ForwardZonesDelegations,
+            Endpoint.ReverseZonesDelegations,
             Endpoint.HostPolicyRoles,
             Endpoint.HostPolicyAtoms,
         ):
@@ -152,6 +118,32 @@ class Endpoint(str, Enum):
         return "id"
 
     # Add methods via composition
-    with_id = with_id
-    with_params = with_params
-    with_query = with_query
+    def with_id(self, identity: str | int) -> str:
+        """Return the endpoint with an ID."""
+        id_field = quote(str(identity))
+        return urljoin(self.value, id_field)
+
+    def with_params(self, *params: str | int) -> str:
+        """Construct and return an endpoint URL by inserting parameters.
+
+        :param params: A sequence of parameters to be inserted into the URL.
+        :raises ValueError: If the number of provided parameters does not match the
+                            number of placeholders.
+        :returns: A fully constructed endpoint URL with parameters.
+        """
+        placeholders_count = self.value.count("{}")
+        if placeholders_count != len(params):
+            raise ValueError(
+                f"{self.name} endpoint expects {placeholders_count} parameters, got {len(params)}."
+            )
+        encoded_params = (quote(str(param)) for param in params)
+        return self.value.format(*encoded_params)
+
+    def with_query(self, query: dict[str, str]) -> str:
+        """Construct and return an endpoint URL with a query string.
+
+        :param query: A dictionary of query parameters.
+        :returns: A fully constructed endpoint URL with a query string.
+        """
+        query_string = "&".join(f"{quote(key)}={quote(value)}" for key, value in query.items())
+        return f"{self.value}?{query_string}"
