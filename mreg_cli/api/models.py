@@ -17,7 +17,7 @@ from pydantic import (
 )
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
-from mreg_cli.api.endpoints import Endpoint, with_id, with_params
+from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
