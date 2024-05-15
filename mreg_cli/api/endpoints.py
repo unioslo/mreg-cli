@@ -27,6 +27,46 @@ class hybridmethod:
         return self.func(*args, **kwargs)
 
 
+def with_id(endpoint: str, identity: str | int) -> str:
+    """Return the endpoint with an ID."""
+    id_field = quote(str(identity))
+
+    return f"{endpoint}{id_field}"
+
+
+def with_params(endpoint: str, *params: str | int) -> str:
+    """Construct and return an endpoint URL by inserting parameters.
+
+    :param endpoint: The endpoint path.
+    :param params: A sequence of parameters to be inserted into the URL.
+    :raises ValueError: If the number of provided parameters does not match the
+                        number of placeholders.
+    :returns: A fully constructed endpoint URL with parameters.
+    """
+    placeholders_count = endpoint.count("{}")
+    if placeholders_count != len(params):
+        if isinstance(endpoint, Endpoint):
+            name = endpoint.name
+        else:
+            name = endpoint
+        raise ValueError(
+            f"Endpoint {name} expects {placeholders_count} parameters, got {len(params)}."
+        )
+    encoded_params = (quote(str(param)) for param in params)
+    return endpoint.format(*encoded_params)
+
+
+def with_query(endpoint: str, query: dict[str, str]) -> str:
+    """Construct and return an endpoint URL with a query string.
+
+    :param endpoint: The endpoint path.
+    :param query: A dictionary of query parameters.
+    :returns: A fully constructed endpoint URL with a query string.
+    """
+    query_string = "&".join(f"{quote(key)}={quote(value)}" for key, value in query.items())
+    return f"{endpoint}?{query_string}"
+
+
 class Endpoint(str, Enum):
     """API endpoints."""
 
@@ -111,34 +151,7 @@ class Endpoint(str, Enum):
             return "host"
         return "id"
 
-    def with_id(self, identity: str | int) -> str:
-        """Return the endpoint with an ID."""
-        id_field = quote(str(identity))
-
-        return f"{self.value}{id_field}"
-
-    def with_params(self, *params: str | int) -> str:
-        """Construct and return an endpoint URL by inserting parameters.
-
-        :param params: A sequence of parameters to be inserted into the URL.
-        :raises ValueError: If the number of provided parameters does not match the
-                            number of placeholders.
-        :returns: A fully constructed endpoint URL with parameters.
-        """
-        placeholders_count = self.value.count("{}")
-        if placeholders_count != len(params):
-            raise ValueError(
-                f"{self.name} endpoint expects {placeholders_count} parameters, got {len(params)}."
-            )
-
-        encoded_params = (quote(str(param)) for param in params)
-        return self.value.format(*encoded_params)
-
-    def with_query(self, query: dict[str, str]) -> str:
-        """Construct and return an endpoint URL with a query string.
-
-        :param query: A dictionary of query parameters.
-        :returns: A fully constructed endpoint URL with a query string.
-        """
-        query_string = "&".join(f"{quote(key)}={quote(value)}" for key, value in query.items())
-        return f"{self.value}?{query_string}"
+    # Add methods via composition
+    with_id = with_id
+    with_params = with_params
+    with_query = with_query
