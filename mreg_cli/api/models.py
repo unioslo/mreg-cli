@@ -377,7 +377,7 @@ def is_reverse_zone_name(name: str) -> bool:
     return name.endswith(".arpa")
 
 
-class Zone(FrozenModelWithTimestamps, WithName, WithTTL):
+class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
     """Model representing a DNS zone with various attributes and related nameservers."""
 
     id: int  # noqa: A003
