@@ -76,7 +76,9 @@ def create(args: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="delegation_create",
-    description="Create new zone delegation.",
+    description=(
+        "Create new zone delegation. Requires force if ns or zone doesn't exist in MREG."
+    ),
     short_desc="Create new zone delegation.",
     flags=[
         Flag("zone", description="Zone name.", metavar="ZONE"),
@@ -93,7 +95,7 @@ def delegation_create(args: argparse.Namespace) -> None:
     """
     zone = Zone.get_zone(args.zone)
     zone.create_delegation(args.delegation, args.ns, args.comment, args.force)
-    cli_info(f"created zone delegation {args.delegation}", print_msg=True)
+    cli_info(f"Created zone delegation {args.delegation}", print_msg=True)
 
 
 @command_registry.register_command(

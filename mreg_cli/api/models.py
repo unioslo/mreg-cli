@@ -594,24 +594,34 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         return self.delete()
 
     def create_delegation(
-        self, delegation: str, nameservers: list[str], comment: str, force: bool = False
-    ) -> bool:
+        self,
+        delegation: str,
+        nameservers: list[str],
+        comment: str,
+        force: bool = False,
+        fetch_after_create: bool = True,
+    ) -> Delegation | None:
         """Create a delegation for the zone.
 
         :param delegation: The name of the delegation.
         :param nameservers: The nameservers for the delegation.
         :param comment: A comment for the delegation.
+        :param force: Force creation if ns/zone doesn't exist.
         :returns: The created delegation object.
         """
         self.ensure_delegation_in_zone(delegation)
         self.verify_nameservers(nameservers, force=force)
 
-        # Ensure delegated zone is same type as parent zone
-        delegated_zone = Zone.get_zone(delegation)
-        if delegated_zone.is_reverse() != self.is_reverse():
-            raise InputFailure(
-                f"Delegation '{delegation}' is not a {self.__class__.__name__} zone"
-            )
+        if not force:
+            # Ensure delegated zone exists and is same type as parent zone
+            try:
+                delegated_zone = Zone.get_zone(delegation)
+            except EntityNotFound as e:
+                raise InputFailure(f"Zone {delegation!r} does not exist. Must force.") from e
+            if delegated_zone.is_reverse() != self.is_reverse():
+                raise InputFailure(
+                    f"Delegation '{delegation}' is not a {self.__class__.__name__} zone"
+                )
 
         self.get_delegation_and_raise(delegation)
 
@@ -622,7 +632,12 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
             nameservers=nameservers,
             comment=comment,
         )
-        return resp.ok if resp else False
+        if not resp or not resp.ok:
+            raise CreateError(f"Failed to create delegation {delegation!r} in zone {self.name!r}")
+
+        if fetch_after_create:
+            return self.get_delegation_or_raise(delegation)
+        return None
 
     def get_delegation(self, name: str) -> ForwardZoneDelegation | ReverseZoneDelegation | None:
         """Get a delegation by name.
@@ -762,6 +777,12 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
     nameservers: list[NameServer]
     name: str
     comment: str | None = None
+
+    # NOTE: Delegations are created through zone objects!
+    # Call Zone.create_delegation() on an existing zone to create one.
+    # We do not implement APIMixin here, since we cannot determine
+    # the path and type of a delegation to create without information
+    # about the zone to create it in.
 
     @classmethod
     def endpoint(cls) -> Endpoint:
