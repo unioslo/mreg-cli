@@ -202,21 +202,8 @@ def zone_delegation_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone)
     """
-    _, path = get_zone(args.zone)
-    manager = OutputManager()
-    delegations = get_list(f"{path}/delegations/")
-    if delegations:
-        manager.add_line("Delegations:")
-        for i in sorted(delegations, key=lambda kv: kv["name"]):
-            manager.add_line("    {}".format(i["name"]))
-            if i["comment"]:
-                manager.add_line("        Comment: {}".format(i["comment"]))
-            format_ns("Nameservers:", "hostname", "TTL")
-            for ns in i["nameservers"]:
-                ttl = ns["ttl"] if ns["ttl"] else "<not set>"
-                format_ns("", ns["name"], ttl)
-    else:
-        cli_info(f"No delegations for {args.zone}", True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.output_delegations()
 
 
 def _get_delegation_path(zone: str, delegation: str) -> str:

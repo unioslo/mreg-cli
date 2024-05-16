@@ -480,6 +480,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
             manager.add_line(f"    {delegation.name}")
             if delegation.comment:
                 manager.add_line(f"        Comment: {delegation.comment}")
+            self.output_nameservers(delegation.nameservers, padding=padding)
 
     @classmethod
     def get_list(cls) -> list[Self]:
@@ -697,7 +698,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
             )
 
     def get_delegations(self) -> list[ForwardZoneDelegation | ReverseZoneDelegation]:
-        """Get a delegation by name.
+        """Get all delegations for a zone.
 
         :param zone: The zone to search in.
         :param name: The name of the delegation to get.
