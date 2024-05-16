@@ -560,7 +560,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :returns: The zone object.
         """
         zone_t = cls.type_by_name(name)
-        return zone_t.get_by_field("name", name)
+        return zone_t.get_by_name(name)
 
     @classmethod
     def get_zone_or_raise(cls, name: str) -> ForwardZone | ReverseZone:
@@ -570,7 +570,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :returns: The zone object.
         """
         zone_t = cls.type_by_name(name)
-        return zone_t.get_by_field_or_raise("name", name)
+        return zone_t.get_by_name_or_raise(name)
 
     @classmethod
     def get_zone_and_raise(cls, name: str) -> None:
@@ -579,7 +579,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :param name: The name of the zone to get.
         """
         zone_t = cls.type_by_name(name)
-        return zone_t.get_by_field_and_raise("name", name)
+        return zone_t.get_by_name_and_raise(name)
 
     def get_subzones(self) -> list[Self]:
         """Get subzones of the zone, excluding self.
