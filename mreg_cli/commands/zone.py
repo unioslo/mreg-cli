@@ -253,8 +253,8 @@ def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, delegation)
     """
-    path = _get_delegation_path(args.zone, args.delegation)
-    patch(path, comment="")
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.set_delegation_comment(args.delegation, "")
     cli_info(f"Removed comment for {args.delegation}", True)
 
 
