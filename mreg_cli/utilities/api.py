@@ -73,8 +73,6 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
     token = TokenFile.get_entry(user, url)
     if token:
         session.headers.update({"Authorization": f"Token {token.token}"})
-    else:
-        print("No token found, logging in")
 
     try:
         ret = session.get(
