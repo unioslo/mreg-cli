@@ -77,14 +77,20 @@ class Endpoint(str, Enum):
     PermissionNetgroupRegex = "/api/v1/permissions/netgroupregex/"
 
     ForwardZones = f"{Zones}forward/"
-    ForwardZonesDelegations = f"{ForwardZones}{{}}/delegations"
-    ForwardZonesDelegationsZone = f"{ForwardZones}{{}}/delegations/{{}}"
-    ForwardZonesNameservers = f"{ForwardZones}{{}}/nameservers"
-    ForwardZoneForHost = f"{ForwardZones}hostname/"
     ReverseZones = f"{Zones}reverse/"
-    ReverseZonesDelegations = f"{ReverseZones}{{}}/delegations"
+
+    # NOTE: Delegations endpoints MUST have trailing fwdslash
+    ForwardZonesDelegations = f"{ForwardZones}{{}}/delegations/"
+    ReverseZonesDelegations = f"{ReverseZones}{{}}/delegations/"
+
+    ForwardZonesDelegationsZone = f"{ForwardZones}{{}}/delegations/{{}}"
     ReverseZonesDelegationsZone = f"{ReverseZones}{{}}/delegations/{{}}"
+
+    # NOTE: Nameservers endpoints must NOT have trailing fwdslash
+    ForwardZonesNameservers = f"{ForwardZones}{{}}/nameservers"
     ReverseZonesNameservers = f"{ReverseZones}{{}}/nameservers"
+
+    ForwardZoneForHost = f"{ForwardZones}hostname/"
 
     def __str__(self):
         """Prevent direct usage without parameters where needed."""
