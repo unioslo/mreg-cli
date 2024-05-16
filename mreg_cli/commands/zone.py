@@ -234,8 +234,8 @@ def zone_delegation_comment_set(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, delegation, comment)
     """
-    path = _get_delegation_path(args.zone, args.delegation)
-    patch(path, comment=args.comment)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.set_delegation_comment(args.delegation, args.comment)
     cli_info(f"Updated comment for {args.delegation}", True)
 
 

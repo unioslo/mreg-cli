@@ -754,6 +754,17 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         resp = delete(delegation.endpoint_with_id(self, name))
         return resp.ok if resp else False
 
+    def set_delegation_comment(self, name: str, comment: str) -> None:
+        """Set the comment for a delegation.
+
+        :param name: The name of the delegation.
+        :param comment: The comment to set.
+        """
+        delegation = self.get_delegation_or_raise(name)
+        resp = patch(delegation.endpoint_with_id(self, delegation.name), comment=comment)
+        if not resp or not resp.ok:
+            raise PatchError(f"Failed to update comment for delegation {delegation.name!r}")
+
     def update_nameservers(self, nameservers: list[str], force: bool = False) -> None:
         """Update the nameservers of the zone.
 
