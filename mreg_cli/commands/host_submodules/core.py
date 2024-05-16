@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.history import HistoryResource
+from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.api.models import ForwardZone, Host, HostList, HostT, MACAddressField, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
@@ -494,4 +494,5 @@ def history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    Host.get_by_any_means_or_raise(args.name).output_history(HistoryResource.Host)
+    hostname = HostT(hostname=args.name).hostname
+    HistoryItem.output_multiple(hostname, HistoryItem.get(hostname, HistoryResource.Host))

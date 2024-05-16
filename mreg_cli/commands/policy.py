@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.history import HistoryResource
+from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.api.models import Atom, Host, HostPolicy, Role
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -464,10 +464,9 @@ def atom_history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    name: str = args.name
-
-    atom = Atom.get_by_name_or_raise(name)
-    atom.output_history(HistoryResource.HostPolicy_Atom)
+    HistoryItem.output_multiple(
+        args.name, HistoryItem.get(args.name, HistoryResource.HostPolicy_Atom)
+    )
 
 
 @command_registry.register_command(
@@ -483,7 +482,6 @@ def role_history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    name: str = args.name
-
-    role = Role.get_by_name_or_raise(name)
-    role.output_history(HistoryResource.HostPolicy_Role)
+    HistoryItem.output_multiple(
+        args.name, HistoryItem.get(args.name, HistoryResource.HostPolicy_Role)
+    )
