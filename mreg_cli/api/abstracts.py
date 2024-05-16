@@ -303,13 +303,14 @@ class APIMixin(ABC):
 
     @classmethod
     def get_list_by_field(
-        cls, field: str, value: str | int, ordering: str | None = None
+        cls, field: str, value: str | int, ordering: str | None = None, limit: int = 500
     ) -> list[Self]:
         """Get a list of objects by a field.
 
         :param field: The field to search by.
         :param value: The value to search for.
         :param ordering: The ordering to use when fetching the list.
+        :param limit: The maximum number of hits to allow (default 500)
 
         :returns: A list of objects if found, an empty list otherwise.
         """
@@ -317,22 +318,74 @@ class APIMixin(ABC):
         if ordering:
             params["ordering"] = ordering
 
-        data = get_list(cls.endpoint(), params=params)
+        data = get_list(cls.endpoint(), params=params, max_hits_to_allow=limit)
         return [cls(**item) for item in data]
 
     @classmethod
-    def get_by_query(cls, query: dict[str, str], ordering: str | None = None) -> list[Self]:
+    def get_by_query(
+        cls, query: dict[str, str], ordering: str | None = None, limit: int = 500
+    ) -> list[Self]:
         """Get a list of objects by a query.
 
         :param query: The query to search by.
+        :param ordering: The ordering to use when fetching the list.
+        :param limit: The maximum number of hits to allow (default 500)
 
         :returns: A list of objects if found, an empty list otherwise.
         """
         if ordering:
             query["ordering"] = ordering
 
-        data = get_list(cls.endpoint().with_query(query))
+        data = get_list(cls.endpoint().with_query(query), max_hits_to_allow=limit)
         return [cls(**item) for item in data]
+
+    @classmethod
+    def get_by_query_unique_or_raise(
+        cls,
+        query: dict[str, str],
+        exc_type: type[Exception] = EntityNotFound,
+        exc_message: str | None = None,
+    ) -> Self:
+        """Get an object by a query and raise if not found.
+
+        Used for cases where the object must exist for the operation to continue.
+
+        :param query: The query to search by.
+        :param exc_type: The exception type to raise.
+        :param exc_message: The exception message. Overrides the default message.
+
+        :returns: The object if found.
+        """
+        obj = cls.get_by_query_unique(query)
+        if not obj:
+            if not exc_message:
+                exc_message = f"{cls.__name__} with query {query} not found."
+            raise exc_type(exc_message)
+        return obj
+
+    @classmethod
+    def get_by_query_unique_and_raise(
+        cls,
+        query: dict[str, str],
+        exc_type: type[Exception] = EntityAlreadyExists,
+        exc_message: str | None = None,
+    ) -> None:
+        """Get an object by a query and raise if found.
+
+        Used for cases where the object must NOT exist for the operation to continue.
+
+        :param query: The query to search by.
+        :param exc_type: The exception type to raise.
+        :param exc_message: The exception message. Overrides the default message.
+
+        :raises Exception: If the object is found.
+        """
+        obj = cls.get_by_query_unique(query)
+        if obj:
+            if not exc_message:
+                exc_message = f"{cls.__name__} with query {query} already exists."
+            raise exc_type(exc_message)
+        return None
 
     @classmethod
     def get_by_query_unique(cls, data: dict[str, str]) -> Self:

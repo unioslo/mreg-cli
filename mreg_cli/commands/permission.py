@@ -3,18 +3,16 @@
 from __future__ import annotations
 
 import argparse
-import ipaddress
 from typing import Any
 
+from mreg_cli.api.models import Label, NetworkOrIP, Permission
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.log import cli_info, cli_warning
+from mreg_cli.exceptions import EntityNotFound
+from mreg_cli.log import cli_info
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch, post
-from mreg_cli.utilities.network import network_is_supernet
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
-from mreg_cli.utilities.validators import is_valid_network
 
 command_registry = CommandRegistry()
 
@@ -47,45 +45,52 @@ def network_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, range)
     """
-    params = {
-        "ordering": "range,group",
-    }
+    permission_list: list[Permission] = []
+
+    params: dict[str, str] = {}
     if args.group is not None:
         param, value = convert_wildcard_to_regex("group", args.group)
         params[param] = value
-    permissions = get_list("/api/v1/permissions/netgroupregex/", params=params)
 
-    data = []
+    # Well, this is effin' awful. We have to fetch all permissions, but the API wants to limit
+    # the number of results. We should probably fix this in the API.
+    permissions = Permission.get_by_query(query=params, ordering="range,group", limit=10000)
+
     if args.range is not None:
-        argnetwork = ipaddress.ip_network(args.range)
-        for i in permissions:
-            permnet = ipaddress.ip_network(i["range"])
+        argnetwork = NetworkOrIP(ip_or_network=args.range).as_network()
+
+        for permission in permissions:
+            permnet = permission.range
             if permnet.version != argnetwork.version:
                 continue  # no warning if the networks are not comparable
-            if network_is_supernet(argnetwork, permnet):  # type: ignore # guaranteed to be the same version
-                data.append(i)
+            if argnetwork.supernet_of(permnet):  # type: ignore # guaranteed to be the same version
+                permission_list.append(permission)
     else:
-        data = permissions
+        permission_list = permissions
 
-    if not data:
-        cli_info("No permissions found", True)
-        return
+    if not permission_list:
+        raise EntityNotFound("No permissions found")
 
-    # Add label names to the result
-    labelnames = {}
-    info = get_list("/api/v1/labels/")
-    if info:
-        for i in info:
-            labelnames[i["id"]] = i["name"]
-    for row in data:
-        labels = []
-        for j in row["labels"]:
-            labels.append(labelnames[j])
-        row["labels"] = ", ".join(labels)
+    output: list[dict[str, str]] = []
+    labelnames: dict[int, str] = {}
 
-    headers = ("Range", "Group", "Regex", "Labels")
-    keys = ("range", "group", "regex", "labels")
-    OutputManager().add_formatted_table(headers, keys, data)
+    for label in Label.get_all():
+        labelnames[label.id] = label.name
+
+    for permission in permission_list:
+        perm_data: dict[str, str] = {}
+        row_labels: list[str] = [labelnames[label] for label in permission.labels]
+        perm_data["labels"] = ", ".join(row_labels)
+        perm_data["range"] = str(permission.range)
+        perm_data["group"] = permission.group
+        perm_data["regex"] = permission.regex
+        output.append(perm_data)
+
+    OutputManager().add_formatted_table(
+        ("Range", "Group", "Regex", "Labels"),
+        ("range", "group", "regex", "labels"),
+        output,
+    )
 
 
 @command_registry.register_command(
@@ -103,16 +108,16 @@ def network_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (range, group, regex)
     """
-    if not is_valid_network(args.range):
-        cli_warning(f"Invalid range: {args.range}")
+    NetworkOrIP(ip_or_network=args.range).as_network()
 
     data = {
         "range": args.range,
         "group": args.group,
         "regex": args.regex,
     }
-    path = "/api/v1/permissions/netgroupregex/"
-    post(path, **data)
+
+    Permission.get_by_query_unique_and_raise(data)
+    Permission.create(params=data)
     cli_info(f"Added permission to {args.range}", True)
 
 
@@ -136,16 +141,8 @@ def network_remove(args: argparse.Namespace) -> None:
         "range": args.range,
         "regex": args.regex,
     }
-    permissions = get_list("/api/v1/permissions/netgroupregex/", params=params)
 
-    if not permissions:
-        cli_warning("No matching permission found", True)
-        return
-
-    assert len(permissions) == 1, "Should only match one permission"
-    identifier = permissions[0]["id"]
-    path = f"/api/v1/permissions/netgroupregex/{identifier}"
-    delete(path)
+    Permission.get_by_query_unique(params).delete()
     cli_info(f"Removed permission for {args.range}", True)
 
 
@@ -171,32 +168,8 @@ def add_label_to_permission(args: argparse.Namespace) -> None:
         "range": args.range,
         "regex": args.regex,
     }
-    permissions = get_list("/api/v1/permissions/netgroupregex/", params=query)
-
-    if not permissions:
-        cli_warning("No matching permission found", True)
-        return
-
-    assert len(permissions) == 1, "Should only match one permission"
-    identifier = permissions[0]["id"]
-    path = f"/api/v1/permissions/netgroupregex/{identifier}"
-
-    # find the label
-    labelpath = f"/api/v1/labels/name/{args.label}"
-    res = get(labelpath, ok404=True)
-    if not res:
-        cli_warning(f"Could not find a label with name {args.label!r}")
-    label = res.json()
-
-    # check if the permission object already has the label
-    perm = get(path).json()
-    if label["id"] in perm["labels"]:
-        cli_warning(f"The permission already has the label {args.label!r}")
-
-    # patch the permission
-    ar = perm["labels"]
-    ar.append(label["id"])
-    patch(path, labels=ar)
+    permission = Permission.get_by_query_unique(query)
+    permission.add_label(args.label)
     cli_info(f"Added the label {args.label!r} to the permission.", print_msg=True)
 
 
@@ -222,30 +195,6 @@ def remove_label_from_permission(args: argparse.Namespace) -> None:
         "range": args.range,
         "regex": args.regex,
     }
-    permissions = get_list("/api/v1/permissions/netgroupregex/", params=query)
-
-    if not permissions:
-        cli_warning("No matching permission found", True)
-        return
-
-    assert len(permissions) == 1, "Should only match one permission"
-    identifier = permissions[0]["id"]
-    path = f"/api/v1/permissions/netgroupregex/{identifier}"
-
-    # find the label
-    labelpath = f"/api/v1/labels/name/{args.label}"
-    res = get(labelpath, ok404=True)
-    if not res:
-        cli_warning(f"Could not find a label with name {args.label!r}")
-    label = res.json()
-
-    # check if the permission object has the label
-    perm = get(path).json()
-    if label["id"] not in perm["labels"]:
-        cli_warning(f"The permission doesn't have the label {args.label!r}")
-
-    # patch the permission
-    ar = perm["labels"]
-    ar.remove(label["id"])
-    patch(path, params={"labels": ar}, use_json=True)
+    permission = Permission.get_by_query_unique(query)
+    permission.remove_label(args.label)
     cli_info(f"Removed the label {args.label!r} from the permission.", print_msg=True)

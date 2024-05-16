@@ -428,7 +428,7 @@ class OutputManager:
         # Add headers and rows to the output
         self.add_line(raw_format.format(*headers))
         for d in output_data:
-            self.add_line(raw_format.format(*[d[key] for key in keys]))
+            self.add_line(raw_format.format(*[str(d[key]) for key in keys]))
 
     def filtered_output(self) -> list[str]:
         """Return the lines of output.
