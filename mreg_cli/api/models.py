@@ -225,7 +225,7 @@ class WithTTL(BaseModel):
         """Return the minimum TTL value."""
         return 300
 
-    def output_ttl(self, padding: int = 14, field: str = "ttl", label: str = "TTL") -> None:
+    def output_ttl(self, label: str = "TTL", field: str = "ttl", padding: int = 14) -> None:
         """Output a TTL value.
 
         :param padding: Number of spaces for left-padding the output.
@@ -428,8 +428,8 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         fmt("Refresh:", str(self.refresh))
         fmt("Retry:", str(self.retry))
         fmt("Expire:", str(self.expire))
-        self.output_ttl(padding, "soa_ttl", label="SOA TTL")
-        self.output_ttl(padding, "default_ttl", label="Default TTL")
+        self.output_ttl("SOA TTL", "soa_ttl", padding)
+        self.output_ttl("Default TTL", "default_ttl", padding)
 
     @classmethod
     def output_zones(cls, forward: bool, reverse: bool) -> None:
