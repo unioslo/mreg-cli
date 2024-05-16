@@ -23,12 +23,11 @@ from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError, LoginFailedError
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.tokenfile import TokenFile
 from mreg_cli.types import ResponseLike
 
 session = requests.Session()
 session.headers.update({"User-Agent": "mreg-cli"})
-
-mreg_auth_token_file = os.path.join(str(os.getenv("HOME")), ".mreg-cli_auth_token")
 
 logger = logging.getLogger(__name__)
 
@@ -59,16 +58,6 @@ def create_and_set_corrolation_id(suffix: str) -> str:
     return correlation_id
 
 
-def set_file_permissions(f: str, mode: int) -> None:
-    """Set file permissions on a file."""
-    try:
-        os.chmod(f, mode)
-    except PermissionError:
-        print("Failed to set permissions on " + f, file=sys.stderr)
-    except FileNotFoundError:
-        pass
-
-
 def try_token_or_login(user: str, url: str, fail_without_token: bool = False) -> None:
     """Check for a valid token or interactively log in to MREG.
 
@@ -81,22 +70,12 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
 
     :returns: Nothing.
     """
-    if os.path.isfile(mreg_auth_token_file):
-        try:
-            with open(mreg_auth_token_file, encoding="utf-8") as tokenfile:
-                tokenuser, token = tokenfile.readline().split("¤")
-                if tokenuser == user:
-                    session.headers.update({"Authorization": f"Token {token}"})
-        except PermissionError:
-            pass
+    token = TokenFile.get_entry(user, url)
+    if token:
+        session.headers.update({"Authorization": f"Token {token.token}"})
+    else:
+        print("No token found, logging in")
 
-    # Unconditionally set file permissions to 0600.  This is done here
-    # in order to migrate existing installations and can be removed when
-    # 0.9.11+ is reasonably widespread.  --Marius, 2021-04-22
-    # Consider inlining set_file_permissions afterwards!
-    set_file_permissions(mreg_auth_token_file, 0o600)
-
-    # Find a better URL.. but so far so good
     try:
         ret = session.get(
             urljoin(MregCliConfig().get_url(), "/api/v1/hosts/"),
@@ -148,12 +127,15 @@ def prompt_for_password_and_try_update_token() -> None:
     """Prompt for a password and try to update the token."""
     password = prompt("You need to re-autenticate\nEnter password: ", is_password=True)
     try:
-        auth_and_update_token(MregCliConfig().get("user"), password)
+        user = MregCliConfig().get("user")
+        if not user:
+            raise CliError("Unable to determine username.")
+        auth_and_update_token(user, password)
     except CliError as e:
         e.print_self()
 
 
-def auth_and_update_token(username: str | None, password: str) -> None:
+def auth_and_update_token(username: str, password: str) -> None:
     """Perform the actual token update."""
     tokenurl = urljoin(MregCliConfig().get_url(), "/api/token-auth/")
     try:
@@ -174,14 +156,7 @@ def auth_and_update_token(username: str | None, password: str) -> None:
             cli_error(res)
     token = result.json()["token"]
     session.headers.update({"Authorization": f"Token {token}"})
-    try:
-        with open(mreg_auth_token_file, "w", encoding="utf-8") as tokenfile:
-            tokenfile.write(f"{username}¤{token}")
-    except FileNotFoundError:
-        pass
-    except PermissionError:
-        pass
-    set_file_permissions(mreg_auth_token_file, 0o600)
+    TokenFile.set_entry(username, MregCliConfig().get_url(), token)
 
 
 def result_check(result: ResponseLike, operation_type: str, url: str) -> None:
@@ -232,19 +207,23 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> ResponseLike | None: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> ResponseLike | None:
+    ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> ResponseLike: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> ResponseLike:
+    ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> ResponseLike | None: ...
+def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> ResponseLike | None:
+    ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ...) -> ResponseLike: ...
+def get(path: str, params: dict[str, Any] | None = ...) -> ResponseLike:
+    ...
 
 
 def get(
