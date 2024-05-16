@@ -110,14 +110,14 @@ def network_add(args: argparse.Namespace) -> None:
     """
     NetworkOrIP(ip_or_network=args.range).as_network()
 
-    data = {
+    query = {
         "range": args.range,
         "group": args.group,
         "regex": args.regex,
     }
 
-    Permission.get_by_query_unique_and_raise(data)
-    Permission.create(params=data)
+    Permission.get_by_query_unique_and_raise(query)
+    Permission.create(params=query)
     cli_info(f"Added permission to {args.range}", True)
 
 
@@ -136,13 +136,13 @@ def network_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (range, group, regex)
     """
-    params = {
+    query = {
         "group": args.group,
         "range": args.range,
         "regex": args.regex,
     }
 
-    Permission.get_by_query_unique(params).delete()
+    Permission.get_by_query_unique(query).delete()
     cli_info(f"Removed permission for {args.range}", True)
 
 
@@ -195,6 +195,5 @@ def remove_label_from_permission(args: argparse.Namespace) -> None:
         "range": args.range,
         "regex": args.regex,
     }
-    permission = Permission.get_by_query_unique(query)
-    permission.remove_label(args.label)
+    Permission.get_by_query_unique(query).remove_label(args.label)
     cli_info(f"Removed the label {args.label!r} from the permission.", print_msg=True)
