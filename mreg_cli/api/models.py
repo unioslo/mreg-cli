@@ -225,7 +225,7 @@ class WithTTL(BaseModel):
         """Return the minimum TTL value."""
         return 300
 
-    def output_ttl(self, padding: int = 14, field: str = "ttl") -> None:
+    def output_ttl(self, padding: int = 14, field: str = "ttl", label: str = "TTL") -> None:
         """Output a TTL value.
 
         :param padding: Number of spaces for left-padding the output.
@@ -235,7 +235,8 @@ class WithTTL(BaseModel):
             raise InternalError(f"Outputting TTL field {field} failed, field not found in object.")
 
         ttl_value = getattr(self, field)
-        OutputManager().add_line("{1:<{0}}{2}".format(padding, "TTL:", ttl_value or "(Default)"))
+        label = f"{label.removesuffix(':')}:"
+        OutputManager().add_line("{1:<{0}}{2}".format(padding, label, ttl_value or "(Default)"))
 
     def valid_ttl_patch_value_with_default(
         self, ttl: int | Literal["default"] | None
@@ -416,8 +417,8 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         """Output the zone to the console."""
         manager = OutputManager()
 
-        def fmt(info: str, text: str) -> None:
-            manager.add_line("{1:<{0}}{2}".format(padding, info, text))
+        def fmt(label: str, text: str) -> None:
+            manager.add_line("{1:<{0}}{2}".format(padding, label, text))
 
         fmt("Name:", self.name)
         self.output_nameservers(self.nameservers)
@@ -427,8 +428,8 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         fmt("Refresh:", str(self.refresh))
         fmt("Retry:", str(self.retry))
         fmt("Expire:", str(self.expire))
-        self.output_ttl(padding, "soa_ttl")
-        self.output_ttl(padding, "default_ttl")
+        self.output_ttl(padding, "soa_ttl", label="SOA TTL")
+        self.output_ttl(padding, "default_ttl", label="Default TTL")
 
     @classmethod
     def output_zones(cls, forward: bool, reverse: bool) -> None:
@@ -458,9 +459,9 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         """Output the nameservers of the zone."""
         manager = OutputManager()
 
-        def fmt_ns(info: str, hostname: str, ttl: str) -> None:
+        def fmt_ns(label: str, hostname: str, ttl: str) -> None:
             manager.add_line(
-                "        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl)
+                "        {1:<{0}}{2:<{3}}{4}".format(padding, label, hostname, 20, ttl)
             )
 
         fmt_ns("Nameservers:", "hostname", "TTL")
