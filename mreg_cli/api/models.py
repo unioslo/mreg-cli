@@ -707,18 +707,16 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         data = get_list(cls.endpoint().with_params(self.name))
         return [cls.model_validate(d) for d in data]
 
-    def delete_delegation(self, delegation: str) -> bool:
+    def delete_delegation(self, name: str) -> bool:
         """Delete a delegation from the zone.
 
         :param delegation: The name of the delegation.
         :returns: True if the deletion was successful.
         """
         # Check if delegation exists
-        self.ensure_delegation_in_zone(delegation)  # check name
-        self.get_delegation_or_raise(delegation)
-
-        cls = Delegation.type_by_zone(self)
-        resp = delete(cls.endpoint_with_id(self, delegation))
+        self.ensure_delegation_in_zone(name)  # check name
+        delegation = self.get_delegation_or_raise(name)
+        resp = delete(delegation.endpoint_with_id(self, name))
         return resp.ok if resp else False
 
     def update_nameservers(self, nameservers: list[str], force: bool = False) -> None:
