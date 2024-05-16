@@ -765,6 +765,16 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         if not resp or not resp.ok:
             raise PatchError(f"Failed to update comment for delegation {delegation.name!r}")
 
+    def set_default_ttl(self, ttl: int) -> None:
+        """Set the default TTL for the zone.
+
+        :param ttl: The TTL to set.
+        """
+        ttl = self.valid_numeric_ttl(ttl)
+        resp = patch(self.endpoint().with_id(self.id), default_ttl=ttl)
+        if not resp or not resp.ok:
+            raise PatchError(f"Failed to update default TTL for zone {self.name!r}")
+
     def update_nameservers(self, nameservers: list[str], force: bool = False) -> None:
         """Update the nameservers of the zone.
 

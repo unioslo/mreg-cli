@@ -327,7 +327,6 @@ def set_default_ttl(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, ttl)
     """
-    _, path = get_zone(args.zone)
-    data = {"default_ttl": args.ttl}
-    patch(path, **data)
-    cli_info(f"set default TTL for {args.zone}", True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.set_default_ttl(args.ttl)
+    cli_info(f"Set default TTL for {args.zone}", print_msg=True)
