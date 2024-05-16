@@ -165,7 +165,7 @@ def main():
         print(e)
         raise SystemExit() from None
     if args.show_token:
-        print(api.session.headers["Authorization"])
+        print(str(api.session.headers["Authorization"]).split(" ")[1])
         raise SystemExit() from None
 
     # Define a function that returns the prompt message
