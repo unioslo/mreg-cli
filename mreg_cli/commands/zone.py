@@ -25,35 +25,6 @@ class ZoneCommands(BaseCommand):
         super().__init__(cli, command_registry, "zone", "Manage zones.", "Manage zones")
 
 
-def format_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
-    """Format nameserver output."""
-    OutputManager().add_line(
-        "        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl)
-    )
-
-
-def zone_basepath(name: str) -> str:
-    """Return the basepath for a zone."""
-    basepath = "/api/v1/zones/"
-    if name.endswith(".arpa"):
-        return f"{basepath}reverse/"
-    return f"{basepath}forward/"
-
-
-def zone_path(name: str) -> str:
-    """Return the path for a zone."""
-    return zone_basepath(name) + name
-
-
-def get_zone(name: str) -> tuple[dict[str, Any], str]:
-    """Return the zone and path for a zone."""
-    path = zone_path(name)
-    zone = get(path, ok404=True)
-    if zone is None:
-        cli_warning(f"Zone '{name}' does not exist")
-    return zone.json(), path
-
-
 @command_registry.register_command(
     prog="create",
     description="Create new zone.",
@@ -204,19 +175,6 @@ def zone_delegation_list(args: argparse.Namespace) -> None:
     """
     zone = Zone.get_zone_or_raise(args.zone)
     zone.output_delegations()
-
-
-def _get_delegation_path(zone: str, delegation: str) -> str:
-    """Return the path for a delegation."""
-    if not delegation.endswith(f".{zone}"):
-        cli_warning(f"Delegation '{delegation}' is not in '{zone}'")
-    _, path = get_zone(zone)
-    path = f"{path}/delegations/{delegation}"
-    response = get(path, ok404=True)
-    if response is not None:
-        return path
-    else:
-        cli_error("Delegation {delegation} not found")
 
 
 @command_registry.register_command(
