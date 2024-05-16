@@ -5,14 +5,12 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Host, Zone
+from mreg_cli.api.models import Zone
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError, EntityNotFound, PatchError
-from mreg_cli.log import cli_error, cli_info, cli_warning
-from mreg_cli.outputmanager import OutputManager
+from mreg_cli.exceptions import DeleteError
+from mreg_cli.log import cli_info, cli_warning
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import get, get_list, patch
 
 command_registry = CommandRegistry()
 
