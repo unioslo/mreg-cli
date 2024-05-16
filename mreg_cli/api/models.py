@@ -613,6 +613,40 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
             self.validate_deletion()
         return self.delete()
 
+    def update_soa(
+        self,
+        primary_ns: str | None = None,
+        email: str | None = None,
+        serialno: int | None = None,
+        refresh: int | None = None,
+        retry: int | None = None,
+        expire: int | None = None,
+        soa_ttl: int | None = None,
+    ) -> Self:
+        """Update SOA (Start of Authority) record for the zone.
+
+        :param primary_ns: The primary nameserver for the zone.
+        :param email: The email address for the zone.
+        :param serialno: The serial number for the zone.
+        :param refresh: The refresh interval for the zone.
+        :param retry: The retry interval for the zone.
+        :param expire: The expire interval for the zone.
+        :param soa_ttl: The TTL for the zone.
+        """
+        params: dict[str, str | int | None] = {
+            "primary_ns": primary_ns,
+            "email": email,
+            "serialno": serialno,
+            "refresh": refresh,
+            "retry": retry,
+            "expire": expire,
+            "soa_ttl": soa_ttl,
+        }
+        params = {k: v for k, v in params.items() if v is not None}
+        if not params:
+            raise InputFailure("No parameters to update")
+        return self.patch(params)
+
     def create_delegation(
         self,
         delegation: str,

@@ -300,27 +300,17 @@ def set_soa(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, ns, email, serialno, retry, expire, soa_ttl)
     """
-    _, path = get_zone(args.zone)
-    data = {}
-    for i in (
-        "email",
-        "expire",
-        "refresh",
-        "retry",
-        "serialno",
-        "soa_ttl",
-    ):
-        value = getattr(args, i, None)
-        if value is not None:
-            data[i] = value
-    if args.ns:
-        data["primary_ns"] = args.ns
-
-    if data:
-        patch(path, **data)
-        cli_info(f"set soa for {args.zone}", True)
-    else:
-        cli_info("No options set, so unchanged.", True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.update_soa(
+        primary_ns=args.ns,
+        email=args.email,
+        serialno=args.serialno,
+        refresh=args.refresh,
+        retry=args.retry,
+        expire=args.expire,
+        soa_ttl=args.soa_ttl,
+    )
+    cli_info(f"Updated SOA for {args.zone}", print_msg=True)
 
 
 @command_registry.register_command(
