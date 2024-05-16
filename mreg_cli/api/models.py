@@ -547,18 +547,37 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         """
         cls.verify_nameservers(primary_ns, force=force)
         zone_t = cls.type_by_name(name)
-        zone_t.get_by_field_and_raise("name", name)
+        zone_t.get_zone_and_raise(name)
         return zone_t.create({"name": name, "email": email, "primary_ns": primary_ns})
 
     @classmethod
-    def get_zone(cls, name: str) -> ForwardZone | ReverseZone:
+    def get_zone(cls, name: str) -> ForwardZone | ReverseZone | None:
         """Get a zone by name.
 
         :param name: The name of the zone to get.
         :returns: The zone object.
         """
         zone_t = cls.type_by_name(name)
+        return zone_t.get_by_field("name", name)
+
+    @classmethod
+    def get_zone_or_raise(cls, name: str) -> ForwardZone | ReverseZone:
+        """Get a zone by name, and raise if not found.
+
+        :param name: The name of the zone to get.
+        :returns: The zone object.
+        """
+        zone_t = cls.type_by_name(name)
         return zone_t.get_by_field_or_raise("name", name)
+
+    @classmethod
+    def get_zone_and_raise(cls, name: str) -> None:
+        """Get a zone by name, and raise if found.
+
+        :param name: The name of the zone to get.
+        """
+        zone_t = cls.type_by_name(name)
+        return zone_t.get_by_field_and_raise("name", name)
 
     def get_subzones(self) -> list[Self]:
         """Get subzones of the zone, excluding self.
@@ -614,10 +633,9 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
 
         if not force:
             # Ensure delegated zone exists and is same type as parent zone
-            try:
-                delegated_zone = Zone.get_zone(delegation)
-            except EntityNotFound as e:
-                raise InputFailure(f"Zone {delegation!r} does not exist. Must force.") from e
+            delegated_zone = Zone.get_zone(delegation)
+            if not delegated_zone:
+                raise InputFailure(f"Zone {delegation!r} does not exist. Must force.")
             if delegated_zone.is_reverse() != self.is_reverse():
                 raise InputFailure(
                     f"Delegation '{delegation}' is not a {self.__class__.__name__} zone"

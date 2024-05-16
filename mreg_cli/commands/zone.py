@@ -93,7 +93,7 @@ def delegation_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ns, force, zone, delegation, comment)
     """
-    zone = Zone.get_zone(args.zone)
+    zone = Zone.get_zone_or_raise(args.zone)
     zone.create_delegation(args.delegation, args.ns, args.comment, args.force)
     cli_info(f"Created zone delegation {args.delegation}", print_msg=True)
 
@@ -112,7 +112,7 @@ def zone_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, force)
     """
-    zone = Zone.get_zone(args.zone)
+    zone = Zone.get_zone_or_raise(args.zone)
     if zone.delete_zone(args.force):
         cli_info(f"Deleted zone {zone.name}", print_msg=True)
     else:
@@ -136,7 +136,7 @@ def delegation_delete(args: argparse.Namespace) -> None:
     # NOTE: how to handle delegation that has delegation?
     # i.e. uio.no -> pederhan.uio.no -> sub.pederhan.uio.no
     # and we try to delete pederhan.uio.no?
-    zone = Zone.get_zone(args.zone)
+    zone = Zone.get_zone_or_raise(args.zone)
     if zone.delete_delegation(args.delegation):
         cli_info(f"Removed zone delegation {args.delegation}", True)
     else:
@@ -156,7 +156,7 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone)
     """
-    zone = Zone.get_zone(args.zone)
+    zone = Zone.get_zone_or_raise(args.zone)
     zone.output()
 
 
@@ -288,7 +288,7 @@ def set_ns(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, ns, force)
     """
-    zone = Zone.get_zone(args.zone)
+    zone = Zone.get_zone_or_raise(args.zone)
     zone.update_nameservers(args.ns, args.force)
     cli_info(f"Updated nameservers for {args.zone}", print_msg=True)
 
