@@ -79,14 +79,14 @@ class Endpoint(str, Enum):
     ForwardZones = f"{Zones}forward/"
     ReverseZones = f"{Zones}reverse/"
 
-    # NOTE: Delegations endpoints MUST have trailing fwdslash
+    # NOTE: Delegations endpoints MUST have a trailing slash
     ForwardZonesDelegations = f"{ForwardZones}{{}}/delegations/"
     ReverseZonesDelegations = f"{ReverseZones}{{}}/delegations/"
 
     ForwardZonesDelegationsZone = f"{ForwardZones}{{}}/delegations/{{}}"
     ReverseZonesDelegationsZone = f"{ReverseZones}{{}}/delegations/{{}}"
 
-    # NOTE: Nameservers endpoints must NOT have trailing fwdslash
+    # NOTE: Nameservers endpoints must NOT have a trailing slash
     ForwardZonesNameservers = f"{ForwardZones}{{}}/nameservers"
     ReverseZonesNameservers = f"{ReverseZones}{{}}/nameservers"
 

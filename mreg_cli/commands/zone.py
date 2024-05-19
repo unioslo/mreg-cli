@@ -40,7 +40,7 @@ def create(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (ns, force, zone, email)
     """
     Zone.create_zone(args.zone, args.email, args.ns, args.force)
-    cli_info(f"created zone {args.zone}", print_msg=True)
+    cli_info(f"Created zone {args.zone}", print_msg=True)
 
 
 @command_registry.register_command(

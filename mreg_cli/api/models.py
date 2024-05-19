@@ -403,6 +403,8 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         """Return True if the zone is a reverse zone."""
         return False
 
+    # Default to forward zone endpoints for the base class
+    # This can be overridden in the subclasses
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
@@ -589,7 +591,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         zones = self.get_list_by_field("name__endswith", f"{self.name}")
         return [zone for zone in zones if zone.name != self.name]
 
-    def validate_deletion(self) -> None:
+    def ensure_deletable(self) -> None:
         """Ensure the zone can be deleted. Raises exception if not.
 
         :raises DeleteError: If zone has entries or subzones.
@@ -611,7 +613,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :returns: True if the deletion was successful.
         """
         if not force:
-            self.validate_deletion()
+            self.ensure_deletable()
         return self.delete()
 
     def update_soa(
@@ -694,7 +696,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         return None
 
     def get_delegation(self, name: str) -> ForwardZoneDelegation | ReverseZoneDelegation | None:
-        """Get a delegation by name.
+        """Get a delegation for the zone by name.
 
         :param name: The name of the delegation to get.
         :returns: The delegation object if found.
@@ -707,7 +709,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         return cls.model_validate_json(resp.text)
 
     def get_delegation_or_raise(self, name: str) -> ForwardZoneDelegation | ReverseZoneDelegation:
-        """Get a delegation by name, raising EntityNotFound if not found.
+        """Get a delegation for the zone by name, raising EntityNotFound if not found.
 
         :param zone: The zone to search in.
         :param name: The name of the delegation to get.
@@ -720,7 +722,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         return delegation
 
     def get_delegation_and_raise(self, name: str) -> None:
-        """Get a delegation by name, raising EntityAlreadyExists if found.
+        """Get a delegation for the zone by name, raising EntityAlreadyExists if found.
 
         :param zone: The zone to search in.
         :param name: The name of the delegation to get.
@@ -855,7 +857,7 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
     # Call Zone.create_delegation() on an existing zone to create one.
     # We do not implement APIMixin here, since we cannot determine
     # the path and type of a delegation to create without information
-    # about the zone to create it in.
+    # about the zone in which to create it.
 
     @classmethod
     def endpoint(cls) -> Endpoint:
