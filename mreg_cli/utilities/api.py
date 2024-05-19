@@ -58,6 +58,27 @@ def create_and_set_corrolation_id(suffix: str) -> str:
     return correlation_id
 
 
+def set_session_token(token: str) -> None:
+    """Update session headers with an authorization token.
+
+    :param username: The username to use.
+    :param url: The URL to use.
+    """
+    session.headers.update({"Authorization": f"Token {token}"})
+
+
+def get_session_token() -> str | None:
+    """Get the authorization token from an active session if it exists.
+
+    :param username: The username to use.
+    :param url: The URL to use.
+
+    :returns: The token if it exists, otherwise None.
+    """
+    auth = str(session.headers.get("Authorization"))
+    return auth.partition(" ")[2] or None
+
+
 def try_token_or_login(user: str, url: str, fail_without_token: bool = False) -> None:
     """Check for a valid token or interactively log in to MREG.
 
@@ -72,7 +93,7 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
     """
     token = TokenFile.get_entry(user, url)
     if token:
-        session.headers.update({"Authorization": f"Token {token.token}"})
+        set_session_token(token.token)
 
     try:
         ret = session.get(
@@ -153,7 +174,7 @@ def auth_and_update_token(username: str, password: str) -> None:
         else:
             cli_error(res)
     token = result.json()["token"]
-    session.headers.update({"Authorization": f"Token {token}"})
+    set_session_token(token)
     TokenFile.set_entry(username, MregCliConfig().get_url(), token)
 
 
