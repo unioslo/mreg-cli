@@ -226,23 +226,19 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> ResponseLike | None:
-    ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> ResponseLike | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> ResponseLike:
-    ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> ResponseLike: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> ResponseLike | None:
-    ...
+def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> ResponseLike | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ...) -> ResponseLike:
-    ...
+def get(path: str, params: dict[str, Any] | None = ...) -> ResponseLike: ...
 
 
 def get(
