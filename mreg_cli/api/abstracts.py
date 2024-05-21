@@ -432,7 +432,7 @@ class APIMixin(ABC):
 
         return obj
 
-    def patch(self, fields: dict[str, Any], use_json: bool = False, validate: bool = True) -> Self:
+    def patch(self, fields: dict[str, Any], validate: bool = True) -> Self:
         """Patch the object with the given values.
 
         Notes
@@ -445,11 +445,7 @@ class APIMixin(ABC):
         :param validate: Whether to validate the patched object.
         :returns: The object refetched from the server.
         """
-        if use_json:
-            patch(self.endpoint().with_id(self.id_for_endpoint()), fields, use_json=True)
-        else:
-            patch(self.endpoint().with_id(self.id_for_endpoint()), use_json=False, **fields)
-
+        patch(self.endpoint().with_id(self.id_for_endpoint()), **fields)
         new_object = self.refetch()
 
         if validate:
