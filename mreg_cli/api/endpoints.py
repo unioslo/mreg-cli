@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any, Callable
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 
 
 class hybridmethod:
@@ -78,6 +78,18 @@ class Endpoint(str, Enum):
 
     ForwardZones = f"{Zones}forward/"
     ReverseZones = f"{Zones}reverse/"
+
+    # NOTE: Delegations endpoints MUST have a trailing slash
+    ForwardZonesDelegations = f"{ForwardZones}{{}}/delegations/"
+    ReverseZonesDelegations = f"{ReverseZones}{{}}/delegations/"
+
+    ForwardZonesDelegationsZone = f"{ForwardZones}{{}}/delegations/{{}}"
+    ReverseZonesDelegationsZone = f"{ReverseZones}{{}}/delegations/{{}}"
+
+    # NOTE: Nameservers endpoints must NOT have a trailing slash
+    ForwardZonesNameservers = f"{ForwardZones}{{}}/nameservers"
+    ReverseZonesNameservers = f"{ReverseZones}{{}}/nameservers"
+
     ForwardZoneForHost = f"{ForwardZones}hostname/"
 
     def __str__(self):
@@ -99,6 +111,8 @@ class Endpoint(str, Enum):
             Endpoint.Cnames,
             Endpoint.ForwardZones,
             Endpoint.ReverseZones,
+            Endpoint.ForwardZonesDelegations,
+            Endpoint.ReverseZonesDelegations,
             Endpoint.HostPolicyRoles,
             Endpoint.HostPolicyAtoms,
         ):
@@ -109,11 +123,11 @@ class Endpoint(str, Enum):
             return "host"
         return "id"
 
+    # Add methods via composition
     def with_id(self, identity: str | int) -> str:
         """Return the endpoint with an ID."""
         id_field = quote(str(identity))
-
-        return f"{self.value}{id_field}"
+        return urljoin(self.value, id_field)
 
     def with_params(self, *params: str | int) -> str:
         """Construct and return an endpoint URL by inserting parameters.
@@ -128,7 +142,6 @@ class Endpoint(str, Enum):
             raise ValueError(
                 f"{self.name} endpoint expects {placeholders_count} parameters, got {len(params)}."
             )
-
         encoded_params = (quote(str(param)) for param in params)
         return self.value.format(*encoded_params)
 
