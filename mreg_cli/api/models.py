@@ -399,7 +399,7 @@ class Permission(FrozenModelWithTimestamps, APIMixin):
 
         label_ids = self.labels.copy()
         label_ids.remove(label.id)
-        return self.patch({"labels": label_ids})
+        return self.patch({"labels": label_ids}, use_json=True)
 
 
 class Zone(FrozenModelWithTimestamps, WithTTL):
