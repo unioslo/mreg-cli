@@ -18,23 +18,28 @@ from mreg_cli.utilities.api import get_list
 class HistoryResource(str, Enum):
     """History resources."""
 
-    Host = "host"
-    Group = "group"
-    HostPolicy_Role = "hostpolicy_role"
-    HostPolicy_Atom = "hostpolicy_atom"
+    Host = "hosts"
+    Group = "groups"
+    HostPolicy_Role = "roles"
+    HostPolicy_Atom = "atoms"
+
+    @classmethod
+    def _missing_(cls, value: Any) -> HistoryResource:
+        v = str(value).lower()
+        for resource in cls:
+            if resource.value == v:
+                return resource
+            elif resource.name.lower() == v:
+                return resource
+        raise ValueError(f"Unknown resource {value}")
 
     def relation(self) -> str:
-        """Provide the relation of the resource."""
-        if self == HistoryResource.Host:
-            return "hosts"
-        if self == HistoryResource.Group:
-            return "groups"
-        if self == HistoryResource.HostPolicy_Role:
-            return "roles"
-        if self == HistoryResource.HostPolicy_Atom:
-            return "atoms"
+        """Get the resource relation."""
+        return self.value
 
-        raise ValueError(f"Unknown resource {self}")
+    def resource(self) -> str:
+        """Get the resource name."""
+        return self.name.lower()
 
 
 class HistoryItem(BaseModel):
@@ -112,7 +117,7 @@ class HistoryItem(BaseModel):
     @classmethod
     def get(cls, name: str, resource: HistoryResource) -> list[HistoryItem]:
         """Get history items for a resource."""
-        resource_value = resource.value
+        resource_value = resource.resource()
 
         params: dict[str, str | int] = {"resource": resource_value, "name": name}
 
@@ -131,7 +136,6 @@ class HistoryItem(BaseModel):
         ret = get_list(Endpoint.History, params=params)
 
         data_relation = resource.relation()
-
         params = {
             "data__relation": data_relation,
             "data__id__in": model_ids,
