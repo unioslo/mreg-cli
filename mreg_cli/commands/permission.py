@@ -8,7 +8,7 @@ from typing import Any
 from mreg_cli.api.models import Label, NetworkOrIP, Permission
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import EntityNotFound
+from mreg_cli.exceptions import DeleteError, EntityNotFound
 from mreg_cli.log import cli_info
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
@@ -142,8 +142,11 @@ def network_remove(args: argparse.Namespace) -> None:
         "regex": args.regex,
     }
 
-    Permission.get_by_query_unique(query).delete()
-    cli_info(f"Removed permission for {args.range}", True)
+    permission = Permission.get_by_query_unique_or_raise(query)
+    if permission.delete():
+        cli_info(f"Removed permission for {args.range}", True)
+    else:
+        raise DeleteError(f"Failed to remove permission for {args.range}")
 
 
 @command_registry.register_command(
@@ -168,7 +171,7 @@ def add_label_to_permission(args: argparse.Namespace) -> None:
         "range": args.range,
         "regex": args.regex,
     }
-    permission = Permission.get_by_query_unique(query)
+    permission = Permission.get_by_query_unique_or_raise(query)
     permission.add_label(args.label)
     cli_info(f"Added the label {args.label!r} to the permission.", print_msg=True)
 
@@ -195,5 +198,6 @@ def remove_label_from_permission(args: argparse.Namespace) -> None:
         "range": args.range,
         "regex": args.regex,
     }
-    Permission.get_by_query_unique(query).remove_label(args.label)
+    permission = Permission.get_by_query_unique_or_raise(query)
+    permission.remove_label(args.label)
     cli_info(f"Removed the label {args.label!r} from the permission.", print_msg=True)

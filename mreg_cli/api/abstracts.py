@@ -388,7 +388,7 @@ class APIMixin(ABC):
         return None
 
     @classmethod
-    def get_by_query_unique(cls, data: dict[str, str]) -> Self:
+    def get_by_query_unique(cls, data: dict[str, str]) -> Self | None:
         """Get an object with the given data.
 
         :param data: The data to search for.
@@ -396,7 +396,7 @@ class APIMixin(ABC):
         """
         obj_dict = get_list_unique(cls.endpoint(), params=data)
         if not obj_dict:
-            raise EntityNotFound(f"{cls.__name__} record for {data} not found.")
+            return None
         return cls(**obj_dict)
 
     def refetch(self) -> Self:
