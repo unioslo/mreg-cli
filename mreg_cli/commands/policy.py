@@ -466,8 +466,7 @@ def atom_history(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
-    atom = Atom.get_by_name_or_raise(name)
-    atom.output_history(HistoryResource.HostPolicy_Atom)
+    Atom.output_history(name)
 
 
 @command_registry.register_command(
@@ -485,5 +484,4 @@ def role_history(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
-    role = Role.get_by_name_or_raise(name)
-    role.output_history(HistoryResource.HostPolicy_Role)
+    Role.output_history(name)

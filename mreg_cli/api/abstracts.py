@@ -10,7 +10,6 @@ from pydantic import AliasChoices, BaseModel
 from pydantic.fields import FieldInfo
 
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.exceptions import (
     CreateError,
     EntityAlreadyExists,
@@ -508,21 +507,3 @@ class APIMixin(ABC):
             raise CreateError(f"Failed to create {cls} with {params} @ {cls.endpoint()}.")
 
         return None
-
-    def history(self, resource: HistoryResource) -> list[HistoryItem]:
-        """Get the history of the object.
-
-        :param resource: The resource type to get the history for.
-
-        :returns: The history of the object.
-        """
-        name = self.id_for_endpoint()
-        return HistoryItem.get(str(name), resource)
-
-    def output_history(self, resource: HistoryResource) -> None:
-        """Output the history of the object.
-
-        :param resource: The resource type to get the history for.
-        """
-        items = self.history(resource)
-        HistoryItem.output_multiple(str(self.id_for_endpoint()), items)

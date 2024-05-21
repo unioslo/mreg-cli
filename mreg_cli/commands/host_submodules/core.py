@@ -494,4 +494,5 @@ def history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    Host.get_by_any_means_or_raise(args.name).output_history(HistoryResource.Host)
+    hostname = HostT(hostname=args.name)
+    Host.output_history(hostname.hostname)
