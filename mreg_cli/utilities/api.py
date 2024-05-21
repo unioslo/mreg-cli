@@ -197,7 +197,6 @@ def _request_wrapper(
     params: dict[str, Any] | None = None,
     ok404: bool = False,
     first: bool = True,
-    use_json: bool = False,
     **data: Any,
 ) -> ResponseLike | None:
     """Wrap request calls to MREG for logging and token management."""
@@ -205,12 +204,12 @@ def _request_wrapper(
         params = {}
     url = urljoin(MregCliConfig().get_url(), path)
 
-    if use_json:
-        result = getattr(session, operation_type)(url, json=params, timeout=HTTP_TIMEOUT)
-    else:
-        result = getattr(session, operation_type)(
-            url, params=params, data=data, timeout=HTTP_TIMEOUT
-        )
+    result = getattr(session, operation_type)(
+        url,
+        params=params,
+        json=data or None,
+        timeout=HTTP_TIMEOUT,
+    )
     result = cast(requests.Response, result)  # convince mypy that result is a Response
 
     OutputManager().recording_request(operation_type, url, params, data, result)
@@ -443,13 +442,11 @@ def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> Resp
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
-def patch(
-    path: str, params: dict[str, Any] | None = None, use_json: bool = False, **kwargs: Any
-) -> ResponseLike | None:
+def patch(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> ResponseLike | None:
     """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
-    return _request_wrapper("patch", path, params=params, use_json=use_json, **kwargs)
+    return _request_wrapper("patch", path, params=params, **kwargs)
 
 
 def delete(path: str, params: dict[str, Any] | None = None) -> ResponseLike | None:
