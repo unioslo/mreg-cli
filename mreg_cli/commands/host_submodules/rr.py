@@ -783,7 +783,9 @@ def sshfp_remove(args: argparse.Namespace) -> None:
 
     if args.fingerprint:
         sshfps = [
-            SSHFP.get_by_query_unique({"fingerprint": args.fingerprint, "host": str(host.id)})
+            SSHFP.get_by_query_unique_or_raise(
+                {"fingerprint": args.fingerprint, "host": str(host.id)}
+            )
         ]
     else:
         sshfps = host.sshfps()
