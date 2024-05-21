@@ -78,6 +78,7 @@ def rename(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (oldname, newname)
     """
     group = HostGroup.get_by_name_or_raise(args.oldname)
+    HostGroup.get_by_name_and_raise(args.newname)
     group.rename(args.newname)
     cli_info(f"Renamed group {args.oldname!r} to {args.newname!r}", True)
 

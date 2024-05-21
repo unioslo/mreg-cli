@@ -1598,7 +1598,11 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
         :returns: A new IPAddress object fetched from the API with the MAC address removed.
         """
-        return self.patch(fields={"macaddress": ""})
+        # Model converts empty string to None so we must validate this ourselves.
+        patched = self.patch(fields={"macaddress": ""}, validate=False)
+        if patched.macaddress:
+            raise PatchError(f"Failed to disassociate MAC address from {self.ipaddress}")
+        return patched
 
     def output(self, len_ip: int, len_names: int, names: bool = False):
         """Output the IP address to the console."""
