@@ -76,8 +76,7 @@ def main():
     mreg_args.add_argument(
         "-p",
         "--prompt",
-        default="mreg",
-        help="default %(metavar)s (default: %(default)s)",
+        help="default %(metavar)s), defaults to the server name if not set.",
         metavar="PROMPT",
     )
 
@@ -172,10 +171,13 @@ def main():
     def get_prompt_message():
         """Return the prompt message."""
         manager = OutputManager()
+        prompt = args.prompt or config.get("prompt") or str(config.get("url"))
+        prompt = prompt.replace("https://", "").replace("http://", "")
+
         if manager.recording_active():
-            return HTML(f"<i>[>'{manager.recording_filename()}']</i> <b>{args.prompt}</b>> ")
+            return HTML(f"<i>[>'{manager.recording_filename()}']</i> <b>{prompt}</b>> ")
         else:
-            return HTML(f"<b>{args.prompt}</b>> ")
+            return HTML(f"<b>{prompt}</b>> ")
 
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the
