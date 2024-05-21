@@ -118,7 +118,7 @@ def network_add(args: argparse.Namespace) -> None:
 
     Permission.get_by_query_unique_and_raise(query)
     Permission.create(params=query)
-    cli_info(f"Added permission to {args.range}", True)
+    cli_info(f"Added permission to {args.range}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -144,7 +144,7 @@ def network_remove(args: argparse.Namespace) -> None:
 
     permission = Permission.get_by_query_unique_or_raise(query)
     if permission.delete():
-        cli_info(f"Removed permission for {args.range}", True)
+        cli_info(f"Removed permission for {args.range}", print_msg=True)
     else:
         raise DeleteError(f"Failed to remove permission for {args.range}")
 
