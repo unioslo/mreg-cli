@@ -76,7 +76,7 @@ def main():
     mreg_args.add_argument(
         "-p",
         "--prompt",
-        help="default %(metavar)s)",
+        help="default %(metavar)s), defaults to the server name if not set.",
         metavar="PROMPT",
     )
 
