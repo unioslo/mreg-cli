@@ -473,7 +473,7 @@ class APIMixin(ABC):
 
     @classmethod
     def create(
-        cls, params: Mapping[str, str | None], fetch_after_create: bool = True
+        cls, params: Mapping[str, str | list[str] | None], fetch_after_create: bool = True
     ) -> Self | None:
         """Create the object.
 
