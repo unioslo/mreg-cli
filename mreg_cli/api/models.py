@@ -342,9 +342,18 @@ class Permission(FrozenModelWithTimestamps, APIMixin):
 
     id: int  # noqa: A003
     group: str
-    range: str  # noqa: A003
+    range: IP_NetworkT  # noqa: A003
     regex: str
     labels: list[int]
+
+    @field_validator("range", mode="before")
+    @classmethod
+    def validate_ip_or_network(cls, value: str) -> IP_NetworkT:
+        """Validate and convert the input to a network."""
+        try:
+            return ipaddress.ip_network(value)
+        except ValueError as e:
+            raise InputFailure(f"Invalid input for network: {value}") from e
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -363,6 +372,34 @@ class Permission(FrozenModelWithTimestamps, APIMixin):
             permissions,
             indent=indent,
         )
+
+    def add_label(self, label_name: str) -> Self:
+        """Add a label to the permission.
+
+        :param label_name: The name of the label to add.
+        :returns: The updated Permission object.
+        """
+        label = Label.get_by_name_or_raise(label_name)
+        if label.id in self.labels:
+            raise EntityAlreadyExists(f"The permission already has the label {label_name!r}")
+
+        label_ids = self.labels.copy()
+        label_ids.append(label.id)
+        return self.patch({"labels": label_ids})
+
+    def remove_label(self, label_name: str) -> Self:
+        """Remove a label from the permission.
+
+        :param label_name: The name of the label to remove.
+        :returns: The updated Permission object.
+        """
+        label = Label.get_by_name_or_raise(label_name)
+        if label.id not in self.labels:
+            raise EntityNotFound(f"The permission does not have the label {label_name!r}")
+
+        label_ids = self.labels.copy()
+        label_ids.remove(label.id)
+        return self.patch({"labels": label_ids}, use_json=True)
 
 
 class Zone(FrozenModelWithTimestamps, WithTTL):
