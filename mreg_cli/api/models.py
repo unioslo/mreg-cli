@@ -403,7 +403,7 @@ class Permission(FrozenModelWithTimestamps, APIMixin):
 
         label_ids = self.labels.copy()
         label_ids.remove(label.id)
-        return self.patch({"labels": label_ids}, use_json=True)
+        return self.patch({"labels": label_ids})
 
 
 def is_reverse_zone_name(name: str) -> bool:
@@ -1246,7 +1246,7 @@ class Role(HostPolicy):
 
         label_ids = self.labels.copy()
         label_ids.remove(label.id)
-        return self.patch({"labels": label_ids}, use_json=True)
+        return self.patch({"labels": label_ids})
 
     def add_host(self, name: str) -> bool:
         """Add a host to the role by name.
