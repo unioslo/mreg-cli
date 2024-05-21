@@ -157,7 +157,7 @@ def network_remove(args: argparse.Namespace) -> None:
         Flag("range", description="Network range", metavar="RANGE"),
         Flag("group", description="Group with access", metavar="GROUP"),
         Flag("regex", description="Regular expression", metavar="REGEX"),
-        Flag("label", description="The label you want to add"),
+        Flag("label", description="The label you want to add", metavar="LABEL"),
     ],
 )
 def add_label_to_permission(args: argparse.Namespace) -> None:
@@ -184,7 +184,7 @@ def add_label_to_permission(args: argparse.Namespace) -> None:
         Flag("range", description="Network range", metavar="RANGE"),
         Flag("group", description="Group with access", metavar="GROUP"),
         Flag("regex", description="Regular expression", metavar="REGEX"),
-        Flag("label", description="The label you want to remove"),
+        Flag("label", description="The label you want to remove", metavar="LABEL"),
     ],
 )
 def remove_label_from_permission(args: argparse.Namespace) -> None:
