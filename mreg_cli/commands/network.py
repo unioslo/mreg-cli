@@ -14,13 +14,11 @@ from mreg_cli.exceptions import InputFailure
 from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch, post
+from mreg_cli.utilities.api import delete, get, patch, post
 from mreg_cli.utilities.network import (
     get_network,
     get_network_reserved_ips,
-    get_network_unused_count,
     get_network_unused_list,
-    get_network_used_count,
     get_network_used_list,
     ipsort,
 )
@@ -271,7 +269,6 @@ def find(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (limit, silent, addr_only, ip, network, description, vlan,
                                      dns_delegated, category, location, frozen, reserved)
     """
-    return
     args_dict = vars(args)
 
     ip_arg = args_dict.get("ip")
@@ -283,7 +280,7 @@ def find(args: argparse.Namespace) -> None:
             cli_warning(f"No network found for ip {ip_arg}")
         networks = [network_info]
     else:
-        params = {}
+        params: dict[str, str] = {}
         param_names = [
             "network",
             "description",
@@ -304,31 +301,17 @@ def find(args: argparse.Namespace) -> None:
         if not params:
             cli_warning("Need at least one search criteria")
 
-        path = "/api/v1/networks/"
-        networks = Network.get_list(path, params)
+        networks = Network.get_by_query(params)
 
     if not networks:
         cli_warning("No networks matching the query were found.")
 
-    manager = OutputManager()
-
-    n_networks = len(networks)
-    for i, nwork in enumerate(networks):
-        if args.limit and i >= args.limit:
-            omitted = n_networks - i
-            if not args.silent:
-                s = "s" if omitted > 1 else ""
-                manager.add_line(f"Reached limit ({args.limit}). Omitted {omitted} network{s}.")
-            break
-        if args.addr_only:
-            manager.add_line(nwork)
-        else:
-            print_network_info(nwork)
-            manager.add_line("")  # Blank line between networks
-
+    Network.output_multiple(networks)
     if not args.silent:
-        s = "s" if n_networks > 1 else ""
-        manager.add_line(f"Found {n_networks} network{s} matching the search criteria.")
+        s = "s" if len(networks) > 1 else ""
+        OutputManager().add_line(
+            f"\nFound {len(networks)} network{s} matching the search criteria."
+        )
 
 
 @command_registry.register_command(
