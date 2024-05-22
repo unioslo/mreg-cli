@@ -1513,6 +1513,46 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         except ValueError as e:
             raise InputFailure(f"Invalid network: {network}") from e
 
+    def output(self, padding: int = 25) -> None:
+        """Output the network to the console."""
+        manager = OutputManager()
+
+        def fmt(label: str, value: Any) -> None:
+            manager.add_line(f"{label:<{padding}}{value}")
+
+        ipnet = self.str_to_network(self.network)
+        reserved_ips = self.get_reserved_ips()
+        # Remove network address and broadcast address from reserved IPs
+        reserved_ips_filtered = [
+            ip for ip in reserved_ips if ip not in (ipnet.network_address, ipnet.broadcast_address)
+        ]
+
+        fmt("Network:", self.network)
+        fmt("Netmask:", ipnet.netmask)
+        fmt("Description:", self.description)
+        fmt("Category:", self.category)
+        fmt("Location:", self.location)
+        fmt("VLAN:", self.vlan)
+        fmt("DNS delegated:", str(self.dns_delegated))
+        fmt("Frozen:", self.frozen)
+        fmt("IP-range:", f"{ipnet.network_address} - {ipnet.broadcast_address}")
+        fmt("Reserved host addresses:", self.reserved)
+        fmt("", f"{ipnet.network_address} (net)")
+        for ip in reserved_ips_filtered:
+            fmt("", ip)
+        if ipnet.broadcast_address in reserved_ips:
+            fmt("", f"{ipnet.broadcast_address} (broadcast)")
+        fmt("Used addresses:", self.get_used_count())
+        fmt("Unused addresses:", f"{self.get_unused_count()} (excluding reserved adr.)")
+
+    @classmethod
+    def output_multiple(cls, networks: list[Network], padding: int = 25) -> None:
+        """Print multiple networks to the console."""
+        for i, network in enumerate(networks, start=1):
+            network.output(padding=padding)
+            if i != len(networks):  # add newline between networks (except last one)
+                OutputManager().add_line("")
+
     def overlaps(self, other: Network | str | IP_NetworkT) -> bool:
         """Check if the network overlaps with another network."""
         # Network -> str -> ipaddress.IPv{4,6}Network
@@ -1532,10 +1572,9 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
     def get_reserved_ips(self) -> list[IP_AddressT]:
         """Return the reserved IP addresses of the network."""
-        return [
-            ipaddress.ip_address(ip)
-            for ip in get_typed(Endpoint.NetworksReservedList.with_params(self.network), list[str])
-        ]
+        return get_typed(
+            Endpoint.NetworksReservedList.with_params(self.network), list[IP_AddressT]
+        )
 
     def get_used_count(self) -> int:
         """Return the number of used IP addresses in the network."""
@@ -1543,10 +1582,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
     def get_used_list(self) -> list[IP_AddressT]:
         """Return the list of used IP addresses in the network."""
-        return [
-            ipaddress.ip_address(ip)
-            for ip in get_typed(Endpoint.NetworksUsedList.with_params(self.network), list[str])
-        ]
+        return get_typed(Endpoint.NetworksUsedList.with_params(self.network), list[IP_AddressT])
 
     def get_unused_count(self) -> int:
         """Return the number of unused IP addresses in the network."""
@@ -1554,10 +1590,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
     def get_unused_list(self) -> list[IP_AddressT]:
         """Return the list of unused IP addresses in the network."""
-        return [
-            ipaddress.ip_address(ip)
-            for ip in get_typed(Endpoint.NetworksUnusedList.with_params(self.network), list[str])
-        ]
+        return get_typed(Endpoint.NetworksUnusedList.with_params(self.network), list[IP_AddressT])
 
     def is_reserved_ip(self, ip: IP_AddressT) -> bool:
         """Return True if the IP address is in the reserved list.

@@ -193,53 +193,8 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (networks)
     """
-    for net in args.networks:
-        print_network_info(net)
-
-
-def print_network_info(network_info: str | dict[str, Any]) -> None:
-    """Print info about a network.
-
-    - Either a network address string (CIDR notation)
-    - Or a network info dict fetched by `get_network()`
-
-    :param network_info: str | dict[str, Any]]
-    :param padding: int
-    """
-    return
-    if isinstance(network_info, str):
-        addr = network_info
-        ip_range = get_network_range_from_input(addr)
-        network = Network.get_by_ip(ipaddress.ip_address(addr))
-    elif isinstance(network_info, dict):
-        ip_range = network_info["network"]
-    else:
-        # TODO:improve error message. Possibly raise a built-in exception to signal
-        # that this is not a user error?
-        t = urllib.parse.quote(str(type(network_info)))  # quote to safely HTML print
-        cli_warning(f"Unable to display network information about a {t} object")
-
-    used = get_network_used_count(ip_range)
-    unused = get_network_unused_count(ip_range)
-    ip_network = ipaddress.ip_network(ip_range)
-
-    # Pretty print all network info
-    print_network(network_info["network"], "Network:")
-    print_network(ip_network.netmask.exploded, "Netmask:")
-    print_network(network_info["description"], "Description:")
-    print_network(network_info["category"], "Category:")
-    print_network(network_info["location"], "Location:")
-    print_network(network_info["vlan"], "VLAN")
-    print_network(
-        network_info["dns_delegated"] if network_info["dns_delegated"] else False,
-        "DNS delegated:",
-    )
-    print_network(network_info["frozen"] if network_info["frozen"] else False, "Frozen")
-    format_network_reserved(network_info["network"], network_info["reserved"])
-    format_network_excluded_ranges(network_info["excluded_ranges"])
-    print_network(used, "Used addresses:")
-    print_network_unused(unused)
-    cli_info(f"printed network info for {ip_range}")
+    networks = [Network.get_by_field_or_raise("network", net) for net in args.networks]
+    Network.output_multiple(networks)
 
 
 @command_registry.register_command(
