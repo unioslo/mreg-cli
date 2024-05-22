@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.history import HistoryResource
 from mreg_cli.api.models import Host, HostGroup
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -324,4 +323,4 @@ def history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    HostGroup.get_by_name_or_raise(args.name).output_history(HistoryResource.Group)
+    HostGroup.output_history(args.name)

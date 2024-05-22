@@ -5,20 +5,23 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from typing import Any, Literal, Self, cast
+from typing import Any, ClassVar, Literal, Self, cast
 
 from pydantic import (
     AliasChoices,
     BaseModel,
+    ConfigDict,
     Field,
     computed_field,
     field_validator,
     model_validator,
 )
+from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
+from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     CliWarning,
@@ -332,6 +335,44 @@ class WithName(BaseModel, APIMixin):
         :returns: True if the rename was successful.
         """
         return self.patch({self.__name_field__: new_name})
+
+
+ClassVarNotSet = object()
+
+
+def AbstractClassVar() -> Any:
+    """Hack to implement an abstract class variable on a Pydantic model."""
+    return ClassVarNotSet
+
+
+class WithHistory(BaseModel, APIMixin):
+    """Resource that supports history lookups.
+
+    Subclasses must implement the `history_resource` class variable.
+    """
+
+    history_resource: ClassVar[HistoryResource] = AbstractClassVar()
+
+    def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]):
+        """Ensure that subclasses implement the history_resource class var."""
+        # NOTE: Only works for Pydantic model subclasses!
+        for attr in cls.__class_vars__:
+            if getattr(cls, attr) == ClassVarNotSet:
+                raise NotImplementedError(
+                    f"Subclass {cls.__name__} must implement abstract class var `{attr}`."
+                )
+        return super().__init_subclass__(**kwargs)
+
+    @classmethod
+    def get_history(cls, name: str) -> list[HistoryItem]:
+        """Get the history for the object."""
+        return HistoryItem.get(name, cls.history_resource)
+
+    @classmethod
+    def output_history(cls, name: str) -> None:
+        """Output the history for the object."""
+        history = cls.get_history(name)
+        HistoryItem.output_multiple(name, history)
 
 
 class NameServer(FrozenModelWithTimestamps, WithTTL):
@@ -1068,13 +1109,15 @@ class HostPolicy(FrozenModel, WithName):
         output_manager.add_line(f"{'Description:':<{padding}}{self.description}")
 
 
-class Role(HostPolicy):
+class Role(HostPolicy, WithHistory):
     """Model for a role."""
 
     id: int  # noqa: A003
     hosts: NameList
     atoms: NameList
     labels: list[int]
+
+    history_resource: ClassVar[HistoryResource] = HistoryResource.HostPolicy_Role
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -1272,11 +1315,13 @@ class Role(HostPolicy):
         return super().delete()
 
 
-class Atom(HostPolicy):
+class Atom(HostPolicy, WithHistory):
     """Model for an atom."""
 
     id: int  # noqa: A003
     roles: NameList
+
+    history_resource: ClassVar[HistoryResource] = HistoryResource.HostPolicy_Atom
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -2113,7 +2158,7 @@ class Location(FrozenModelWithTimestamps, WithHost, APIMixin):
         OutputManager().add_line(f"{'LOC:':<{padding}}{self.loc}")
 
 
-class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
+class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     """Model for an individual host."""
 
     id: int  # noqa: A003
@@ -2132,6 +2177,8 @@ class Host(FrozenModelWithTimestamps, WithTTL, APIMixin):
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None
+
+    history_resource: ClassVar[HistoryResource] = HistoryResource.Host
 
     @field_validator("name", mode="before")
     @classmethod
@@ -2823,7 +2870,7 @@ class HostList(FrozenModel):
             _format(str(i.name), i.contact, i.comment or "")
 
 
-class HostGroup(FrozenModelWithTimestamps, WithName, APIMixin):
+class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
     """Model for a hostgroup."""
 
     id: int  # noqa: A003
@@ -2833,6 +2880,8 @@ class HostGroup(FrozenModelWithTimestamps, WithName, APIMixin):
     groups: NameList
     hosts: NameList
     owners: NameList
+
+    history_resource: ClassVar[HistoryResource] = HistoryResource.Group
 
     @classmethod
     def endpoint(cls) -> Endpoint:
