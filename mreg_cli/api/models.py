@@ -1438,11 +1438,19 @@ class Label(FrozenModelWithTimestamps, WithName):
             output_manager.add_line(f"{'None':<{short_padding}}")
 
 
+class ExcludedRange(BaseModel):
+    """Model for an excluded IP range for a network."""
+
+    network: int
+    start_ip: str
+    end_ip: str
+
+
 class Network(FrozenModelWithTimestamps, APIMixin):
     """Model for a network."""
 
     id: int  # noqa: A003
-    excluded_ranges: list[str]
+    excluded_ranges: list[ExcludedRange]
     network: str  # for now
     description: str
     vlan: int | None = None
