@@ -58,9 +58,9 @@ NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
 NargsType = int | NargsStr
 
 
-JSONPrimitiveType = Union[str, int, float, bool, None]
-JSONType = Union[JSONPrimitiveType, Mapping[str, "JSONType"], Sequence["JSONType"]]
-JSONMappingType = Mapping[str, JSONType]
+JSONPrimitive = Union[str, int, float, bool, None]
+JSONValue = Union[JSONPrimitive, Mapping[str, "JSONValue"], Sequence["JSONValue"]]
+JSONMapping = Mapping[str, JSONValue]
 
 
 class Flag:

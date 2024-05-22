@@ -19,7 +19,7 @@ from mreg_cli.exceptions import (
     PatchError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import JSONMappingType
+from mreg_cli.types import JSONMapping
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -468,7 +468,7 @@ class APIMixin(ABC):
         return False
 
     @classmethod
-    def create(cls, params: JSONMappingType, fetch_after_create: bool = True) -> Self | None:
+    def create(cls, params: JSONMapping, fetch_after_create: bool = True) -> Self | None:
         """Create the object.
 
         Note that several endpoints do not support location headers for created objects,
