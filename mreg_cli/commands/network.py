@@ -10,6 +10,7 @@ from typing import Any
 from mreg_cli.api.models import Network
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
+from mreg_cli.exceptions import InputFailure
 from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
@@ -143,34 +144,35 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, desc, vlan, category, location, frozen)
     """
-    frozen = True if args.frozen else False
     if args.vlan:
         string_to_int(args.vlan, "VLAN")
     if args.category and not is_valid_category_tag(args.category):
-        cli_warning("Not a valid category tag")
+        raise InputFailure("Not a valid category tag")
     if args.location and not is_valid_location_tag(args.location):
-        cli_warning("Not a valid location tag")
+        raise InputFailure("Not a valid location tag")
 
-    networks_existing = get_list("/api/v1/networks/")
-    for network in networks_existing:
-        network_object = ipaddress.ip_network(network["network"])
-        if network_object.overlaps(ipaddress.ip_network(args.network)):
+    arg_network = Network.str_to_network(args.network)
+    networks = Network.get_list()
+    for network in networks:
+        if network.overlaps(arg_network):
             cli_warning(
                 "Overlap found between new network {} and existing network {}".format(
-                    ipaddress.ip_network(args.network), network["network"]
+                    arg_network, network.network
                 )
             )
 
-    post(
-        "/api/v1/networks/",
-        network=args.network,
-        description=args.desc,
-        vlan=args.vlan,
-        category=args.category,
-        location=args.location,
-        frozen=frozen,
+    Network.create(
+        {
+            "network": args.network,
+            "description": args.desc,
+            "vlan": args.vlan,
+            "category": args.category,
+            "location": args.location,
+            "frozen": args.frozen,
+        }
     )
-    cli_info(f"created network {args.network}", True)
+
+    cli_info(f"created network {args.network}", print_msg=True)
 
 
 @command_registry.register_command(

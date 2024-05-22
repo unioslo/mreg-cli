@@ -1492,6 +1492,38 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             raise EntityNotFound(f"Network with netmask {netmask} not found.")
         return Network(**data)
 
+    @classmethod
+    def get_list(cls) -> list[Self]:
+        """Get all networks.
+
+        :returns: A list of all networks.
+        """
+        data = get_list(cls.endpoint(), max_hits_to_allow=None)
+        return [cls(**item) for item in data]
+
+    @staticmethod
+    def str_to_network(network: str) -> ipaddress.IPv4Network | ipaddress.IPv6Network:
+        """Convert a network string to an ipaddress network object.
+
+        :param network: The network string to convert.
+        :returns: The network object.
+        """
+        try:
+            return ipaddress.ip_network(network)
+        except ValueError as e:
+            raise InputFailure(f"Invalid network: {network}") from e
+
+    def overlaps(self, other: Network | str | IP_NetworkT) -> bool:
+        """Check if the network overlaps with another network."""
+        # Network -> str -> ipaddress.IPv{4,6}Network
+        if isinstance(other, Network):
+            other = other.network
+        if isinstance(other, str):
+            other = self.str_to_network(other)
+
+        self_net = self.str_to_network(self.network)
+        return self_net.overlaps(other)
+
     def get_first_available_ip(self) -> IP_AddressT:
         """Return the first available IPv4 address of the network."""
         return ipaddress.ip_address(
