@@ -263,9 +263,9 @@ def get_list(
     :param path: The path to the API endpoint.
     :param params: The parameters to pass to the API endpoint.
     :param ok404: Whether to allow 404 responses.
-    :param max_hits_to_allow: The maximum number of hits to allow. If the number of hits is
-                                greater than this, the function will raise an exception.
-
+    :param max_hits_to_allow: The maximum number of hits to allow.
+        If the number of hits is greater than this, the function will raise an exception.
+        Set to None to disable this check.
     :raises CliError: If the result from get_list_generic is not a list.
 
     :returns: A list of dictionaries.
@@ -361,8 +361,9 @@ def get_list_generic(
     :param path: The path to the API endpoint.
     :param params: The parameters to pass to the API endpoint.
     :param ok404: Whether to allow 404 responses.
-    :param max_hits_to_allow: The maximum number of hits to allow. If the number of hits is
-                                greater than this, the function will raise an exception.
+    :param max_hits_to_allow: The maximum number of hits to allow.
+        If the number of hits is greater than this, the function will raise an exception.
+        Set to None to disable this check.
     :param expect_one_result: If True, expect exactly one result and return it as a list.
 
     :raises CliError: If expect_one_result is True and the number of results is not zero or one.
@@ -394,7 +395,7 @@ def get_list_generic(
     get_params = params.copy()
     # get_params["page_size"] = 1
     resp = get(path, get_params).json()
-    if "count" in resp and resp["count"] > max_hits_to_allow:
+    if max_hits_to_allow and resp.get("count", 0) > abs(max_hits_to_allow):
         cli_warning(f"Too many hits ({resp['count']}), please refine your search criteria.")
 
     # Short circuit if there are no more pages. This means that there are no more results to
