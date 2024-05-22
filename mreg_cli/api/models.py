@@ -356,7 +356,7 @@ class WithHistory(BaseModel, APIMixin):
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]):
         """Ensure that subclasses implement the history_resource class var."""
         # NOTE: Only works for Pydantic model subclasses!
-        for attr in getattr(cls, "__class_vars__", []):
+        for attr in cls.__class_vars__:
             if getattr(cls, attr) == ClassVarNotSet:
                 raise NotImplementedError(
                     f"Subclass {cls.__name__} must implement abstract class var `{attr}`."
