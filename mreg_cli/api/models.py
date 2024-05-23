@@ -66,8 +66,13 @@ class NetworkOrIP(BaseModel):
 
     @field_validator("ip_or_network", mode="before")
     @classmethod
-    def validate_ip_or_network(cls, value: str) -> IP_AddressT | IP_NetworkT:
+    def validate_ip_or_network(cls, value: Any) -> IP_AddressT | IP_NetworkT:
         """Validate and convert the input to an IP address or network."""
+        if not isinstance(value, str):
+            return value
+
+        value = value.removesuffix("/")
+
         try:
             return ipaddress.ip_address(value)
         except ValueError:
