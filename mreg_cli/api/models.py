@@ -1471,31 +1471,94 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         return Endpoint.Networks
 
     @classmethod
-    def get_by_ip(cls, ip: IP_AddressT) -> Network:
+    def get_by_any_means(cls, identifier: str) -> Self | None:
+        """Get a network by the given identifier.
+
+        - If the identifier is numeric, it is treated as an ID.
+        - If the identifier is a valid IP address, it is treated as an IP.
+        - If the identifier is a valid network, it is treated as a network.
+
+        :param identifier: The identifier to search for.
+        :returns: The network if found.
+        :raises EntityNotFound: If the network is not found.
+        """
+        # Check if identifier is IP or network
+        try:
+            net_or_ip = NetworkOrIP(ip_or_network=identifier)
+        except InputFailure:
+            pass
+        else:
+            # We (should) have a valid ip or network
+            if net_or_ip.is_network():
+                return cls.get_by_network(str(net_or_ip))
+            elif net_or_ip.is_ip():
+                return cls.get_by_ip(net_or_ip.as_ip())
+        # Check if identifier is an ID
+        if identifier.isdigit():
+            try:
+                return cls.get_by_id(int(identifier))
+            except ValueError:
+                pass
+        return None
+
+    @classmethod
+    def get_by_any_means_or_raise(cls, identifier: str) -> Self:
+        """Get a network by the given identifier, and raise if not found.
+
+        See `get_by_any_means` for details.
+        """
+        net = cls.get_by_any_means(identifier)
+        if not net:
+            raise EntityNotFound(f"Network {identifier!r} not found.")
+        return net
+
+    @classmethod
+    def get_by_ip(cls, ip: IP_AddressT) -> Self | None:
         """Get a network by IP address.
 
         :param ip: The IP address to search for.
         :returns: The network if found, None otherwise.
         :raises EntityNotFound: If the network is not found.
         """
-        data = get(Endpoint.NetworksByIP.with_id(str(ip)))
-        if not data:
-            raise EntityNotFound(f"Network with IP address {ip} not found.")
-        return Network(**data.json())
+        resp = get(Endpoint.NetworksByIP.with_id(str(ip)))
+        if not resp:
+            return None
+        return cls.model_validate_json(resp.text)
 
     @classmethod
-    def get_by_netmask(cls, netmask: str) -> Network:
-        """Get a network by netmask.
+    def get_by_ip_or_raise(cls, ip: IP_AddressT) -> Network:
+        """Get a network by IP address, and raise if not found.
 
-        :param netmask: The netmask to search for.
+        :param ip: The IP address to search for.
         :returns: The network if found, None otherwise.
-        :raises ValueError: If the netmask is invalid.
         :raises EntityNotFound: If the network is not found.
         """
-        data = get_item_by_key_value(Endpoint.Networks, "network", netmask)
-        if not data:
-            raise EntityNotFound(f"Network with netmask {netmask} not found.")
-        return Network(**data)
+        network = cls.get_by_ip(ip)
+        if not network:
+            raise EntityNotFound(f"Network with IP address {ip} not found.")
+        return network
+
+    @classmethod
+    def get_by_network(cls, network: str) -> Self | None:
+        """Get a network by network address.
+
+        :param network: The network string to search for.
+        :returns: The network if found.
+        """
+        return cls.get_by_field("network", network)
+
+    @classmethod
+    def get_by_network_or_raise(cls, network: str) -> Self:
+        """Get a network by its network address, and raise if not found.
+
+        :param network: The network string to search for.
+        :returns: The network if found.
+        :raises EntityNotFound: If the network is not found.
+        """
+        net = cls.get_by_network(network)
+        if not net:
+            raise EntityNotFound(f"Network {network} not found.")
+        return net
 
     @classmethod
     def get_list(cls) -> list[Self]:

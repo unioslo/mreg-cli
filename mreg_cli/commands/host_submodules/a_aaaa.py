@@ -53,7 +53,7 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
 
     new_ip = NetworkOrIP(ip_or_network=args.new)
     if new_ip.is_network():
-        network = Network.get_by_netmask(str(new_ip.ip_or_network))
+        network = Network.get_by_network_or_raise(str(new_ip.ip_or_network))
         new_ip = network.get_first_available_ip()
     else:
         new_ip = new_ip.as_ip()
@@ -169,7 +169,7 @@ def _add_ip(
 
     ipaddr = None
     if ip_or_net.is_network():
-        network = Network.get_by_netmask(str(ip_or_net.ip_or_network))
+        network = Network.get_by_network_or_raise(str(ip_or_net.ip_or_network))
         ip = network.get_first_available_ip()
         ipaddr = ip
     else:

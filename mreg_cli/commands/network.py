@@ -191,7 +191,7 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (networks)
     """
-    networks = [Network.get_by_field_or_raise("network", net) for net in args.networks]
+    networks = [Network.get_by_network_or_raise(net) for net in args.networks]
     Network.output_multiple(networks)
 
 
