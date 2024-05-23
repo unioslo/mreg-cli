@@ -271,14 +271,10 @@ def find(args: argparse.Namespace) -> None:
     """
     args_dict = vars(args)
 
-    ip_arg = args_dict.get("ip")
-
-    if ip_arg:
-        ip_range = get_network_range_from_input(ip_arg)
-        network_info = get_network(ip_range)
-        if not network_info:
-            cli_warning(f"No network found for ip {ip_arg}")
-        networks = [network_info]
+    if ip_arg := args_dict.get("ip"):
+        # We technically support ID args when calling this, but that's fine.
+        net = Network.get_by_any_means_or_raise(ip_arg)
+        networks = [net]
     else:
         params: dict[str, str] = {}
         param_names = [
