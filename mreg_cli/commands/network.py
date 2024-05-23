@@ -413,6 +413,23 @@ def remove_excluded_range(args: argparse.Namespace) -> None:
 
 
 @command_registry.register_command(
+    prog="list_excluded_ranges",
+    description="List excluded ranges for a network",
+    short_desc="List excluded ranges for a network",
+    flags=[
+        Flag("network", description="Network.", metavar="NETWORK"),
+    ],
+)
+def list_excluded_ranges(args: argparse.Namespace) -> None:
+    """List excluded ranges for a network.
+
+    :param args: argparse.Namespace (network, start_ip, end_ip)
+    """
+    net = Network.get_by_network_or_raise(args.network)
+    net.output_excluded_ranges()
+
+
+@command_registry.register_command(
     prog="set_category",
     description="Set category tag for network",
     short_desc="Set category tag for network",

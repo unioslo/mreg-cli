@@ -1662,6 +1662,17 @@ class Network(FrozenModelWithTimestamps, APIMixin):
                     msg += " (NO ptr override!!)"
                 manager.add_line(msg)
 
+    def output_excluded_ranges(self, padding: int = 32) -> None:
+        """Output the excluded ranges of the network."""
+        manager = OutputManager()
+        if not self.excluded_ranges:
+            manager.add_line(f"No excluded ranges for network {self.network}")
+            return
+
+        manager.add_line(f"{'Start IP':<{padding}}End IP")
+        for exrange in self.excluded_ranges:
+            manager.add_line(f"{exrange.start_ip:<{padding}}{exrange.end_ip}")
+
     def overlaps(self, other: Network | str | IP_NetworkT) -> bool:
         """Check if the network overlaps with another network."""
         # Network -> str -> ipaddress.IPv{4,6}Network
