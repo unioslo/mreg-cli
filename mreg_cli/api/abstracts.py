@@ -323,7 +323,7 @@ class APIMixin(ABC):
 
     @classmethod
     def get_by_query(
-        cls, query: dict[str, str], ordering: str | None = None, limit: int = 500
+        cls, query: dict[str, str], ordering: str | None = None, limit: int | None = 500
     ) -> list[Self]:
         """Get a list of objects by a query.
 
