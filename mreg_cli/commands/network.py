@@ -11,7 +11,7 @@ from mreg_cli.api.fields import IPAddressField
 from mreg_cli.api.models import Network
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import InputFailure
+from mreg_cli.exceptions import DeleteError, InputFailure
 from mreg_cli.log import cli_error, cli_info, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
@@ -358,16 +358,16 @@ def remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, force)
     """
-    ipaddress.ip_network(args.network)
-    host_list = get_network_used_list(args.network)
-    if host_list:
+    net = Network.get_by_any_means_or_raise(args.network)
+    if net.get_used_count():
         cli_warning("Network contains addresses that are in use. Remove hosts before deletion")
 
     if not args.force:
         cli_warning("Must force.")
-
-    delete(f"/api/v1/networks/{urllib.parse.quote(args.network)}")
-    cli_info(f"removed network {args.network}", True)
+    if net.delete():
+        cli_info(f"Removed network {args.network}", print_msg=True)
+    else:
+        raise DeleteError(f"Unable to delete network {args.network}")
 
 
 @command_registry.register_command(
