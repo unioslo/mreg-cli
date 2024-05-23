@@ -7,6 +7,7 @@ import ipaddress
 import urllib.parse
 from typing import Any
 
+from mreg_cli.api.fields import IPAddressField
 from mreg_cli.api.models import Network
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -272,9 +273,8 @@ def find(args: argparse.Namespace) -> None:
     args_dict = vars(args)
 
     if ip_arg := args_dict.get("ip"):
-        # We technically support ID args when calling this, but that's fine.
-        net = Network.get_by_any_means_or_raise(ip_arg)
-        networks = [net]
+        addr = IPAddressField(address=ip_arg)
+        networks = [Network.get_by_ip_or_raise(addr.address)]
     else:
         params: dict[str, str] = {}
         param_names = [
