@@ -407,28 +407,9 @@ def remove_excluded_range(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
-    return
-    info = get_network(args.network)
-    if not info:
-        cli_warning(f"Network {args.network} not found")
-    network = info.network
-
-    if not is_valid_ip(args.start_ip):
-        cli_error(f"Start ipaddress {args.start_ip} not valid")
-    if not is_valid_ip(args.end_ip):
-        cli_error(f"End ipaddress {args.end_ip} not valid")
-
-    if not info.excluded_ranges:
-        cli_error(f"Network {network} has no excluded ranges")
-
-    for i in info.excluded_ranges:
-        if i["start_ip"] == args.start_ip and i["end_ip"] == args.end_ip:
-            path = f"/api/v1/networks/{urllib.parse.quote(network)}/excluded_ranges/{i['id']}"
-            break
-    else:
-        cli_error("Found no matching exclude range.")
-    delete(path)
-    cli_info(f"Removed exclude range from {network}", True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.remove_excluded_range(args.start_ip, args.end_ip)
+    cli_info(f"Removed exclude range from {net.network}", print_msg=True)
 
 
 @command_registry.register_command(

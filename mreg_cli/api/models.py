@@ -1743,6 +1743,23 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         if not resp or not resp.ok:
             raise CreateError(f"Failed to create excluded range for network {self.network}")
 
+    def remove_excluded_range(self, start: str, end: str) -> None:
+        """Remove an excluded range from the network.
+
+        :param start: The start of the excluded range.
+        :param end: The end of the excluded range.
+        """
+        # No need to validate IPs - if we find a match it's valid
+        exrange: ExcludedRange | None = None
+        for excluded_range in self.excluded_ranges:
+            if excluded_range.start_ip == start and excluded_range.end_ip == end:
+                exrange = excluded_range
+                break
+        else:
+            raise EntityNotFound(f"Excluded range {start} - {end} not found")
+        resp = delete(Endpoint.NetworksRemoveExcludedRanges.with_params(self.network, exrange.id))
+        if not resp or not resp.ok:
+            raise DeleteError(f"Failed to delete excluded range {start} - {end}")
 
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
