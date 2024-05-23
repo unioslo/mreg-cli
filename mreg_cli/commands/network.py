@@ -387,20 +387,9 @@ def add_excluded_range(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
-    return
-    info = get_network(args.network)
-    if not info:
-        cli_error(f"Network {args.network} not found")
-    network = info.network
-    if not is_valid_ip(args.start_ip):
-        cli_error(f"Start ipaddress {args.start_ip} not valid")
-    if not is_valid_ip(args.end_ip):
-        cli_error(f"End ipaddress {args.end_ip} not valid")
-
-    path = f"/api/v1/networks/{urllib.parse.quote(network)}/excluded_ranges/"
-    data = {"network": info.id, "start_ip": args.start_ip, "end_ip": args.end_ip}
-    post(path, **data)
-    cli_info(f"Added exclude range to {network}", True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.add_excluded_range(args.start_ip, args.end_ip)
+    cli_info(f"Added exclude range to {net.network}", True)
 
 
 @command_registry.register_command(

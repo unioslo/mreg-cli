@@ -1443,11 +1443,12 @@ class Label(FrozenModelWithTimestamps, WithName):
             output_manager.add_line(f"{'None':<{short_padding}}")
 
 
-class ExcludedRange(BaseModel):
+class ExcludedRange(FrozenModelWithTimestamps):
     """Model for an excluded IP range for a network."""
 
+    id: int
     network: int
-    start_ip: str
+    start_ip: str  # TODO: use IPAddressField types
     end_ip: str
 
 
@@ -1464,6 +1465,10 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     location: str
     frozen: bool
     reserved: int
+
+    def __hash__(self):
+        """Return a hash of the network."""
+        return hash((self.id, self.network))
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -1716,9 +1721,28 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         return ip in self.get_reserved_ips()
 
-    def __hash__(self):
-        """Return a hash of the network."""
-        return hash((self.id, self.network))
+    def add_excluded_range(self, start: str, end: str) -> None:
+        """Add an excluded range to the network.
+
+        :param start: The start of the excluded range.
+        :param end: The end of the excluded range.
+
+        :returns: The new ExcludedRange object.
+        """
+        start_ip = IPAddressField(address=start)  # type: ignore # validator converts this
+        end_ip = IPAddressField(address=end)  # type: ignore # validator converts this
+        if start_ip.address.version != end_ip.address.version:
+            raise InputFailure("Start and end IP addresses must be of the same version")
+
+        resp = post(
+            Endpoint.NetworksAddExcludedRanges.with_params(self.network),
+            network=self.id,
+            start_ip=str(start_ip.address),
+            end_ip=str(end_ip.address),
+        )
+        if not resp or not resp.ok:
+            raise CreateError(f"Failed to create excluded range for network {self.network}")
+
 
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
