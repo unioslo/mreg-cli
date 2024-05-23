@@ -1621,6 +1621,18 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             if i != len(networks):  # add newline between networks (except last one)
                 OutputManager().add_line("")
 
+    def output_unused_addresses(self, padding: int = 25) -> None:
+        """Output the unused addresses of the network."""
+        unused = self.get_unused_list()
+
+        manager = OutputManager()
+        if not unused:
+            manager.add_line(f"No free addresses remaining on network {self.network}")
+            return
+
+        for ip in unused:
+            manager.add_line("{1:<{0}}".format(padding, str(ip)))
+
     def overlaps(self, other: Network | str | IP_NetworkT) -> bool:
         """Check if the network overlaps with another network."""
         # Network -> str -> ipaddress.IPv{4,6}Network

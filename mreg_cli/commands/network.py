@@ -323,13 +323,8 @@ def list_unused_addresses(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    unused = get_network_unused_list(ip_range)
-    if not unused:
-        cli_warning(f"No free addresses remaining on network {ip_range}")
-
-    for address in unused:
-        OutputManager().add_line("{1:<{0}}".format(25, address))
+    net = Network.get_by_network_or_raise(args.network)
+    net.output_unused_addresses()
 
 
 @command_registry.register_command(
