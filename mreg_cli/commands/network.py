@@ -340,30 +340,8 @@ def list_used_addresses(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    urlencoded_ip_range = urllib.parse.quote(ip_range)
-
-    path = f"/api/v1/networks/{urlencoded_ip_range}/used_host_list"
-    ip2host = get(path).json()
-    path = f"/api/v1/networks/{urlencoded_ip_range}/ptroverride_host_list"
-    ptr2host = get(path).json()
-
-    ips = ipsort(set(list(ip2host.keys()) + list(ptr2host.keys())))
-    manager = OutputManager()
-    if not ips:
-        manager.add_line(f"No used addresses on {ip_range}")
-        return
-
-    for ip in ips:
-        if ip in ptr2host:
-            manager.add_line("{1:<{0}}{2} (ptr override)".format(25, ip, ptr2host[ip]))
-        elif ip in ip2host:
-            if len(ip2host[ip]) > 1:
-                hosts = ",".join(ip2host[ip])
-                host = f"{hosts} (NO ptr override!!)"
-            else:
-                host = ip2host[ip][0]
-            manager.add_line("{1:<{0}}{2}".format(25, ip, host))
+    net = Network.get_by_network_or_raise(args.network)
+    net.output_used_addresses()
 
 
 @command_registry.register_command(

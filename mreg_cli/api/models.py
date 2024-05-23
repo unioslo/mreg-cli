@@ -1633,6 +1633,30 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         for ip in unused:
             manager.add_line("{1:<{0}}".format(padding, str(ip)))
 
+    def output_used_addresses(self, padding: int = 46) -> None:
+        """Output the used addresses and their corresponding hosts."""
+        # Reason for 46 padding:
+        # https://stackoverflow.com/questions/166132/maximum-length-of-the-textual-representation-of-an-ipv6-address/166157#comment2055398_166157
+        used = self.get_used_host_list()
+        ptr_overrides = self.get_ptroverride_host_list()
+        ips = set(list(used.keys()) + list(ptr_overrides.keys()))
+        ips = sorted(ips, key=ipaddress.ip_address)
+
+        manager = OutputManager()
+        if not ips:
+            manager.add_line(f"No used addresses on network {self.network}")
+            return
+
+        for ip in ips:
+            if ip in ptr_overrides:
+                manager.add_line(f"{ip:<{padding}}{ptr_overrides[ip]} (PTR override)")
+            elif ip in used:
+                hosts = used[ip]
+                msg = f"{ip:<{padding}}{', '.join(hosts)}"
+                if len(hosts) > 1:
+                    msg += " (NO ptr override!!)"
+                manager.add_line(msg)
+
     def overlaps(self, other: Network | str | IP_NetworkT) -> bool:
         """Check if the network overlaps with another network."""
         # Network -> str -> ipaddress.IPv{4,6}Network
@@ -1671,6 +1695,18 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     def get_unused_list(self) -> list[IP_AddressT]:
         """Return the list of unused IP addresses in the network."""
         return get_typed(Endpoint.NetworksUnusedList.with_params(self.network), list[IP_AddressT])
+
+    def get_used_host_list(self) -> dict[str, list[str]]:
+        """Return a dict of used IP addresses and their associated hosts."""
+        return get_typed(
+            Endpoint.NetworksUsedHostList.with_params(self.network), dict[str, list[str]]
+        )
+
+    def get_ptroverride_host_list(self) -> dict[str, str]:
+        """Return a dict of PTR override IP addresses and their associated hosts."""
+        return get_typed(
+            Endpoint.NetworksPTROverrideHostList.with_params(self.network), dict[str, str]
+        )
 
     def is_reserved_ip(self, ip: IP_AddressT) -> bool:
         """Return True if the IP address is in the reserved list.
