@@ -163,6 +163,14 @@ class MregCliConfig:
         """Get the default domain from the application."""
         return self.get("domain")
 
+    def get_location_tags(self) -> list[str]:
+        """Get the location tags from the application."""
+        return self.get("location_tags", "").split(",")
+
+    def get_category_tags(self) -> list[str]:
+        """Get the category tags from the application."""
+        return self.get("category_tags", "").split(",")
+
     # We handle url by itself because it's a required config option,
     # it cannot be none once options, env, and config file are parsed.
     def get_url(self) -> str:
