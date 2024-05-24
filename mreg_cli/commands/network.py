@@ -537,7 +537,7 @@ def set_location(args: argparse.Namespace) -> None:
     ],
 )
 def set_reserved(args: argparse.Namespace) -> None:
-    """Set number of reserved hosts.
+    """Set number of reserved hosts for a network.
 
     :param args: argparse.Namespace (network, number)
     """
