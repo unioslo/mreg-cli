@@ -1,6 +1,46 @@
 [build-system]
 requires = ["setuptools >= 68.0"]
 
+
+[project]
+name = "mreg-cli"
+description = "MREG interactive command line client"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+keywords = ["mreg", "cli", "interactive"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    'python-dateutil>=2.9.0',
+    'prompt_toolkit>=3.0.0',
+    'requests>=2.31.0',
+    'typing_extensions>=4.12.0',
+    "pydantic[email]>=2.7.1",
+]
+dynamic = ["version"]
+
+[project.urls]
+Repository = 'https://github.com/unioslo/mreg-cli/'
+
+
+[project.scripts]
+mreg-cli = "mreg_cli.main:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "mreg_cli.__about__.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["mreg_cli*"]
+
 [tool.black]
 max-line-length = 99
 
