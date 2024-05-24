@@ -1,7 +1,6 @@
 [build-system]
 requires = ["setuptools >= 68.0"]
 
-
 [project]
 name = "mreg-cli"
 description = "MREG interactive command line client"
@@ -33,7 +32,6 @@ dev = ["ruff", "tox"]
 
 [project.urls]
 Repository = 'https://github.com/unioslo/mreg-cli/'
-
 
 [project.scripts]
 mreg-cli = "mreg_cli.main:main"
