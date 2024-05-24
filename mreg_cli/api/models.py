@@ -55,6 +55,7 @@ from mreg_cli.utilities.api import (
     post,
 )
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
+from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
 
@@ -1771,6 +1772,66 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         resp = delete(Endpoint.NetworksRemoveExcludedRanges.with_params(self.network, exrange.id))
         if not resp or not resp.ok:
             raise DeleteError(f"Failed to delete excluded range {start} - {end}")
+
+    def set_category(self, category: str) -> Self:
+        """Set the category tag of the network.
+
+        :param category: The new category tag.
+        :returns: The updated Network object.
+        """
+        if not is_valid_category_tag(category):
+            raise InputFailure(f"Invalid category tag: {category}")
+        return self.patch({"category": category})
+
+    def set_location(self, location: str) -> Self:
+        """Set the location tag of the network.
+
+        :param category: The new category.
+        :returns: The updated Network object.
+        """
+        if not is_valid_location_tag(location):
+            raise InputFailure(f"Invalid location tag: {location}")
+        return self.patch({"location": location})
+
+    def set_description(self, description: str) -> Self:
+        """Set the description of the network.
+
+        :param description: The new description.
+        :returns: The updated Network object.
+        """
+        return self.patch({"description": description})
+
+    def set_dns_delegation(self, delegated: bool) -> Self:
+        """Set the DNS delegation status of the network.
+
+        :param dns_delegated: The new DNS delegation status.
+        :returns: The updated Network object.
+        """
+        return self.patch({"dns_delegated": delegated})
+
+    def set_frozen(self, frozen: bool) -> Self:
+        """Set the frozen status of the network.
+
+        :param frozen: The new frozen status.
+        :returns: The updated Network object.
+        """
+        return self.patch({"frozen": frozen})
+
+    def set_reserved(self, reserved: int) -> Self:
+        """Set the number of reserved IP addresses.
+
+        :param reserved: The new number of reserved IP addresses.
+        :returns: The updated Network object.
+        """
+        return self.patch({"reserved": reserved})
+
+    def set_vlan(self, vlan: int) -> Self:
+        """Set the VLAN of the network.
+
+        :param vlan: The new VLAN.
+        :returns: The updated Network object.
+        """
+        return self.patch({"vlan": vlan})
 
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):

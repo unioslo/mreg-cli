@@ -443,21 +443,13 @@ def set_category(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, category)
     """
-    return
-    network = get_network(args.network)
-    if not is_valid_category_tag(args.category):
-        cli_warning("Not a valid category tag")
-
-    path = f"/api/v1/networks/{urllib.parse.quote(network['network'])}"
-    patch(path, category=args.category)
-    cli_info(
-        "updated category tag to '{}' for {}".format(args.category, network["network"]),
-        True,
-    )
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_category(args.category)
+    cli_info(f"Updated category tag to {args.category!r} for {net.network}", True)
 
 
 @command_registry.register_command(
-    prog="set_description",  # <network> <description>
+    prog="set_description",
     description="Set description for network",
     short_desc="Set description for network",
     flags=[
@@ -470,14 +462,9 @@ def set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, description)
     """
-    return
-    network = get_network(args.network)
-    path = f"/api/v1/networks/{urllib.parse.quote(network['network'])}"
-    patch(path, description=args.description)
-    cli_info(
-        "updated description to '{}' for {}".format(args.description, network["network"]),
-        True,
-    )
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_description(args.description)
+    cli_info(f"Updated description to {args.description!r} for {net.network}", True)
 
 
 @command_registry.register_command(
@@ -493,11 +480,9 @@ def set_dns_delegated(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, dns_delegated=True)
-    cli_info(f"updated dns_delegated to 'True' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_dns_delegation(True)
+    cli_info(f"Set DNS delegation to 'True' for {net.network!r}", True)
 
 
 @command_registry.register_command(
@@ -513,11 +498,9 @@ def set_frozen(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, frozen=True)
-    cli_info(f"updated frozen to 'True' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_frozen(True)
+    cli_info(f"Updated frozen to 'True' for {net.network}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -534,14 +517,9 @@ def set_location(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, location)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    if not is_valid_location_tag(args.location):
-        cli_warning("Not a valid location tag")
-
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, location=args.location)
-    cli_info(f"updated location tag to '{args.location}' for {ip_range}", True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_location(args.location)
+    cli_info(f"Updated location tag to '{args.location}' for {args.network}", True)
 
 
 @command_registry.register_command(
@@ -563,12 +541,9 @@ def set_reserved(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, number)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    reserved = args.number
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, reserved=reserved)
-    cli_info(f"updated reserved to '{reserved}' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_reserved(args.number)
+    cli_info(f"Updated reserved to '{args.number}' for {net.network}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -585,11 +560,9 @@ def set_vlan(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, vlan)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, vlan=args.vlan)
-    cli_info(f"updated vlan to {args.vlan} for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_vlan(args.vlan)
+    cli_info(f"Updated vlan to {args.vlan} for {net.network}", print_msg=True)
 
 
 @command_registry.register_command(
@@ -605,11 +578,9 @@ def unset_dns_delegated(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, dns_delegated=False)
-    cli_info(f"updated dns_delegated to 'False' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_dns_delegation(False)
+    cli_info(f"Set DNS delegation to 'False' for {net.network!r}", True)
 
 
 @command_registry.register_command(
@@ -625,8 +596,6 @@ def unset_frozen(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, frozen=False)
-    cli_info(f"updated frozen to 'False' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_frozen(False)
+    cli_info(f"Updated frozen to 'False' for {net.network}", print_msg=True)
