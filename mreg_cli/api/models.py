@@ -1572,7 +1572,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
         :returns: A list of all networks.
         """
-        data = get_list(cls.endpoint(), max_hits_to_allow=None)
+        data = get_list(cls.endpoint(), limit=None)
         return [cls(**item) for item in data]
 
     @staticmethod
@@ -2806,8 +2806,9 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             "ordering": "ipaddress",
         }
 
-        data = get_list(Endpoint.Ipaddresses, params=params)
-        ipadresses = [IPAddress(**ip) for ip in data]
+        ipadresses = get_typed(
+            Endpoint.Ipaddresses, list[IPAddress], params=params, paginated=True
+        )
 
         if ip in [ip.ipaddress for ip in ipadresses]:
             raise EntityAlreadyExists(f"IP address {ip} already has MAC address {mac} associated.")

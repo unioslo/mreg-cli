@@ -318,7 +318,7 @@ class APIMixin(ABC):
         if ordering:
             params["ordering"] = ordering
 
-        data = get_list(cls.endpoint(), params=params, max_hits_to_allow=limit)
+        data = get_list(cls.endpoint(), params=params, limit=limit)
         return [cls(**item) for item in data]
 
     @classmethod
@@ -336,7 +336,7 @@ class APIMixin(ABC):
         if ordering:
             query["ordering"] = ordering
 
-        data = get_list(cls.endpoint().with_query(query), max_hits_to_allow=limit)
+        data = get_list(cls.endpoint().with_query(query), limit=limit)
         return [cls(**item) for item in data]
 
     @classmethod

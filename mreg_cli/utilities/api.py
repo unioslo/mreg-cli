@@ -253,24 +253,24 @@ def get_list(
     path: str,
     params: dict[str, Any] | None = None,
     ok404: bool = False,
-    max_hits_to_allow: int | None = 500,
+    limit: int | None = 500,
 ) -> list[dict[str, Any]]:
     """Make a get request that produces a list.
 
     Will iterate over paginated results and return result as list. If the number of hits is
-    greater than max_hits_to_allow, the function will raise an exception.
+    greater than limit, the function will raise an exception.
 
     :param path: The path to the API endpoint.
     :param params: The parameters to pass to the API endpoint.
     :param ok404: Whether to allow 404 responses.
-    :param max_hits_to_allow: The maximum number of hits to allow.
+    :param limit: The maximum number of hits to allow.
         If the number of hits is greater than this, the function will raise an exception.
         Set to None to disable this check.
     :raises CliError: If the result from get_list_generic is not a list.
 
     :returns: A list of dictionaries.
     """
-    ret = get_list_generic(path, params, ok404, max_hits_to_allow, expect_one_result=False)
+    ret = get_list_generic(path, params, ok404, limit, expect_one_result=False)
 
     if not isinstance(ret, list):
         raise CliError(f"Expected a list of results, got {type(ret)}.")
@@ -350,25 +350,25 @@ def get_list_generic(
     path: str,
     params: dict[str, Any] | None = None,
     ok404: bool = False,
-    max_hits_to_allow: int | None = 500,
+    limit: int | None = 500,
     expect_one_result: bool | None = False,
 ) -> dict[str, Any] | list[dict[str, Any]]:
     """Make a get request that produces a list.
 
     Will iterate over paginated results and return result as list. If the number of hits is
-    greater than max_hits_to_allow, the function will raise an exception.
+    greater than limit, the function will raise an exception.
 
     :param path: The path to the API endpoint.
     :param params: The parameters to pass to the API endpoint.
     :param ok404: Whether to allow 404 responses.
-    :param max_hits_to_allow: The maximum number of hits to allow.
+    :param limit: The maximum number of hits to allow.
         If the number of hits is greater than this, the function will raise an exception.
         Set to None to disable this check.
     :param expect_one_result: If True, expect exactly one result and return it as a list.
 
     :raises CliError: If expect_one_result is True and the number of results is not zero or one.
     :raises CliError: If expect_one_result is True and there is a response without a 'results' key.
-    :raises CliError: If the number of hits is greater than max_hits_to_allow.
+    :raises CliError: If the number of hits is greater than limit.
 
     :returns: A list of dictionaries or a dictionary if expect_one_result is True.
     """
@@ -395,7 +395,7 @@ def get_list_generic(
     get_params = params.copy()
     # get_params["page_size"] = 1
     resp = get(path, get_params).json()
-    if max_hits_to_allow and resp.get("count", 0) > abs(max_hits_to_allow):
+    if limit and resp.get("count", 0) > abs(limit):
         cli_warning(f"Too many hits ({resp['count']}), please refine your search criteria.")
 
     # Short circuit if there are no more pages. This means that there are no more results to
@@ -417,7 +417,13 @@ def get_list_generic(
             return _check_expect_one_result(ret)
 
 
-def get_typed(path: str, type_: type[T], params: dict[str, Any] | None = None) -> T:
+def get_typed(
+    path: str,
+    type_: type[T],
+    params: dict[str, Any] | None = None,
+    paginated: bool = False,
+    limit: int | None = 500,
+) -> T:
     """Fetch and deserialize JSON from an endpoint into a specific type.
 
     This function is a wrapper over the `get()` function, adding the additional
@@ -426,14 +432,19 @@ def get_typed(path: str, type_: type[T], params: dict[str, Any] | None = None) -
     :param path: The path to the API endpoint.
     :param type_: The type to which the response data should be deserialized.
     :param params: The parameters to pass to the API endpoint.
+    :param paginated: Whether the response is paginated.
 
     :raises ValidationError: If the response cannot be deserialized into the given type.
 
     :returns: An instance of `type_` populated with data from the response.
     """
-    resp = get(path, params=params)
     adapter = TypeAdapter(type_)
-    return adapter.validate_json(resp.text)
+    if paginated:
+        resp = get_list(path, params=params, limit=limit)
+        return adapter.validate_python(resp)
+    else:
+        resp = get(path, params=params)
+        return adapter.validate_json(resp.text)
 
 
 def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> ResponseLike | None:
