@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.exceptions import EntityNotFound, InternalError
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.utilities.api import get_list
+from mreg_cli.utilities.api import get_list, get_typed
 
 
 class HistoryResource(str, Enum):
@@ -116,7 +116,7 @@ class HistoryItem(BaseModel):
 
         params: dict[str, str | int] = {"resource": resource_value, "name": name}
 
-        ret = get_list(Endpoint.History, params=params)
+        ret = get_typed(Endpoint.History, list[dict[str, Any]], params=params)
 
         if len(ret) == 0:
             raise EntityNotFound(f"No history found for {name}")
@@ -128,7 +128,7 @@ class HistoryItem(BaseModel):
             "model_id__in": model_ids,
         }
 
-        ret = get_list(Endpoint.History, params=params)
+        ret = get_typed(Endpoint.History, list[dict[str, Any]], params=params)
 
         data_relation = resource.relation()
 
@@ -136,6 +136,6 @@ class HistoryItem(BaseModel):
             "data__relation": data_relation,
             "data__id__in": model_ids,
         }
-        ret.extend(get_list(Endpoint.History, params=params))
+        ret.extend(get_typed(Endpoint.History, list[dict[str, Any]], params=params))
 
-        return [cls(**i) for i in ret]
+        return [cls.model_validate(i) for i in ret]

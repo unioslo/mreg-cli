@@ -6,6 +6,7 @@ import argparse
 import ipaddress
 from collections.abc import Callable
 from typing import (
+    Annotated,
     Any,
     Literal,
     Mapping,
@@ -18,6 +19,8 @@ from typing import (
     Union,
 )
 
+from pydantic import ValidationError, ValidationInfo, ValidatorFunctionWrapHandler, WrapValidator
+from pydantic_core import PydanticCustomError
 from requests.structures import CaseInsensitiveDict
 
 CommandFunc = Callable[[argparse.Namespace], None]
@@ -58,9 +61,26 @@ NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
 NargsType = int | NargsStr
 
 
-JSONPrimitive = Union[str, int, float, bool, None]
-JSONValue = Union[JSONPrimitive, Mapping[str, "JSONValue"], Sequence["JSONValue"]]
-JSONMapping = Mapping[str, JSONValue]
+def json_custom_error_validator(
+    value: Any, handler: ValidatorFunctionWrapHandler, _info: ValidationInfo
+) -> Any:
+    """Simplify the error message to avoid a gross error stemming from
+    exhaustive checking of all union options.
+    """  # noqa: D205
+    try:
+        return handler(value)
+    except ValidationError:
+        raise PydanticCustomError(
+            "invalid_json",
+            "Input is not valid json",
+        ) from None
+
+
+type Json = Annotated[
+    Union[Mapping[str, "Json"], Sequence["Json"], str, int, float, bool, None],
+    WrapValidator(json_custom_error_validator),
+]
+JsonMapping = Mapping[str, Json]
 
 
 class Flag:

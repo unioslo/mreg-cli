@@ -196,7 +196,7 @@ class WithHost(BaseModel):
         if not data:
             return None
 
-        return Host(**data)
+        return Host.model_validate(data)
 
 
 class WithZone(BaseModel, APIMixin):
@@ -218,7 +218,7 @@ class WithZone(BaseModel, APIMixin):
         if not data:
             return None
 
-        return ForwardZone(**data)
+        return ForwardZone.model_validate(data)
 
 
 class WithTTL(BaseModel):
@@ -332,7 +332,7 @@ class WithName(BaseModel, APIMixin):
         """
         param, value = convert_wildcard_to_regex(cls.__name_field__, name, True)
         data = get_list(cls.endpoint(), params={param: value})
-        return [cls(**item) for item in data]
+        return [cls.model_validate(item) for item in data]
 
     def rename(self, new_name: str) -> Self:
         """Rename the resource.
@@ -576,7 +576,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :returns: A list of all zones.
         """
         data = get_list(cls.endpoint())
-        return [cls(**item) for item in data]
+        return [cls.model_validate(item) for item in data]
 
     def ensure_delegation_in_zone(self, name: str) -> None:
         """Ensure a delegation is in the zone.
@@ -907,10 +907,10 @@ class ForwardZone(Zone, WithName, APIMixin):
         zoneblob = data.json()
 
         if "delegate" in zoneblob:
-            return ForwardZoneDelegation(**zoneblob)
+            return ForwardZoneDelegation.model_validate(zoneblob)
 
         if "zone" in zoneblob:
-            return ForwardZone(**zoneblob["zone"])
+            return ForwardZone.model_validate(zoneblob["zone"])
 
         raise UnexpectedDataError(f"Unexpected response from server: {zoneblob}")
 
@@ -1226,7 +1226,7 @@ class Role(HostPolicy, WithHistory):
         :returns: A list of Role objects.
         """
         data = get_list(cls.endpoint(), params={"atoms__name__exact": name})
-        return [cls(**item) for item in data]
+        return [cls.model_validate(item) for item in data]
 
     def add_atom(self, atom_name: str) -> bool:
         """Add an atom to the role.
@@ -1398,7 +1398,7 @@ class Label(FrozenModelWithTimestamps, WithName):
         :returns: A list of Label objects.
         """
         data = get_list(cls.endpoint(), params={"ordering": "name"})
-        return [cls(**item) for item in data]
+        return [cls.model_validate(item) for item in data]
 
     @classmethod
     def get_by_id_or_raise(cls, _id: int) -> Label:
@@ -1573,7 +1573,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         :returns: A list of all networks.
         """
         data = get_list(cls.endpoint(), limit=None)
-        return [cls(**item) for item in data]
+        return [cls.model_validate(item) for item in data]
 
     @staticmethod
     def str_to_network(network: str) -> ipaddress.IPv4Network | ipaddress.IPv6Network:
@@ -1906,7 +1906,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
     def network(self) -> Network:
         """Return the network of the IP address."""
         data = get(Endpoint.NetworksByIP.with_id(str(self.ip())))
-        return Network(**data.json())
+        return Network.model_validate(data.json())
 
     def vlan(self) -> int | None:
         """Return the VLAN of the IP address."""
@@ -2039,7 +2039,7 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
         data = get_item_by_key_value(Endpoint.Cnames, "name", name.hostname)
         if not data:
             raise EntityNotFound(f"CNAME record for {name} not found.")
-        return CNAME(**data)
+        return CNAME.model_validate(data)
 
     @classmethod
     def get_by_host_and_name(cls, host: HostT | int, name: HostT) -> CNAME:
@@ -2149,7 +2149,7 @@ class MX(FrozenModelWithTimestamps, WithHost, APIMixin):
         )
         if not data:
             raise EntityNotFound(f"MX record for {mx} not found.")
-        return MX(**data)
+        return MX.model_validate(data)
 
     def has_mx_with_priority(self, mx: str, priority: int) -> bool:
         """Return True if the MX record has the given MX and priority.
@@ -2303,7 +2303,7 @@ class Srv(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
         host_ids = {srv.host for srv in srvs}
 
         host_data = get_list_in(Endpoint.Hosts, "id", list(host_ids))
-        hosts = [Host(**host) for host in host_data]
+        hosts = [Host.model_validate(host) for host in host_data]
 
         host_id_name_map = {host.id: str(host.name) for host in hosts}
 
@@ -2428,7 +2428,7 @@ class BacnetID(FrozenModel, WithHost, APIMixin):
         """
         params = {"id__range": f"{start},{end}"}
         data = get_list(Endpoint.BacnetID, params=params)
-        return [BacnetID(**item) for item in data]
+        return [BacnetID.model_validate(item) for item in data]
 
     @classmethod
     def output_multiple(cls, bacnetids: list[BacnetID]):
@@ -2909,7 +2909,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         data_as_dict = data.json()
 
         if data_as_dict["zone"]:
-            zone = ForwardZone(**data_as_dict["zone"])
+            zone = ForwardZone.model_validate(data_as_dict["zone"])
             if validate_zone_resolution and zone.id != self.zone:
                 raise ValidationError(f"Expected zone ID {self.zone} but resovled as {zone.id}.")
             return zone
@@ -2919,7 +2919,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 raise EntityOwnershipMismatch(
                     f"Host {self.name} is delegated to zone {data_as_dict['delegation']['name']}."
                 )
-            return ForwardZoneDelegation(**data_as_dict["delegation"])
+            return ForwardZoneDelegation.model_validate(data_as_dict["delegation"])
 
         raise EntityNotFound(f"Failed to resolve zone for host {self.name}.")
 
@@ -3109,7 +3109,7 @@ class HostList(FrozenModel):
             params["ordering"] = "name"
 
         data = get_list(cls.endpoint(), params=params)
-        return cls(results=[Host(**host) for host in data])
+        return cls(results=[Host.model_validate(host) for host in data])
 
     @classmethod
     def get_by_ip(cls, ip: IP_AddressT) -> HostList:

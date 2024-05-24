@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Mapping, Self, cast
+from typing import Any, Callable, Self, cast
 
 from pydantic import AliasChoices, BaseModel
 from pydantic.fields import FieldInfo
@@ -19,7 +19,7 @@ from mreg_cli.exceptions import (
     PatchError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import JSONMapping
+from mreg_cli.types import JsonMapping
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -68,7 +68,7 @@ def validate_patched_model(model: BaseModel, fields: dict[str, Any]) -> None:
     """Validate that model fields were patched correctly."""
     aliases = get_model_aliases(model)
 
-    validators = {
+    validators: dict[type, Callable[[Any, Any], bool]] = {
         list: _validate_lists,
         dict: _validate_dicts,
     }
@@ -83,7 +83,7 @@ def validate_patched_model(model: BaseModel, fields: dict[str, Any]) -> None:
             raise PatchError(f"Could not get value for {field_name} in patched object.") from e
 
         # Ensure patched value is the one we tried to set
-        validator = validators.get(type(nval), _validate_default)
+        validator = validators.get(type(nval), _validate_default)  # type: ignore # dict.get type checking is whatever
         if not validator(nval, value):
             raise PatchError(
                 f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
@@ -468,7 +468,7 @@ class APIMixin(ABC):
         return False
 
     @classmethod
-    def create(cls, params: JSONMapping, fetch_after_create: bool = True) -> Self | None:
+    def create(cls, params: JsonMapping, fetch_after_create: bool = True) -> Self | None:
         """Create the object.
 
         Note that several endpoints do not support location headers for created objects,
