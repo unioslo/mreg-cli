@@ -28,6 +28,9 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+dev = ["ruff", "tox"]
+
 [project.urls]
 Repository = 'https://github.com/unioslo/mreg-cli/'
 
