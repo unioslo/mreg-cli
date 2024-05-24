@@ -55,6 +55,7 @@ from mreg_cli.utilities.api import (
     post,
 )
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
+from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
 
@@ -66,8 +67,13 @@ class NetworkOrIP(BaseModel):
 
     @field_validator("ip_or_network", mode="before")
     @classmethod
-    def validate_ip_or_network(cls, value: str) -> IP_AddressT | IP_NetworkT:
+    def validate_ip_or_network(cls, value: Any) -> IP_AddressT | IP_NetworkT:
         """Validate and convert the input to an IP address or network."""
+        if not isinstance(value, str):
+            return value
+
+        value = value.removesuffix("/")
+
         try:
             return ipaddress.ip_address(value)
         except ValueError:
@@ -1438,11 +1444,20 @@ class Label(FrozenModelWithTimestamps, WithName):
             output_manager.add_line(f"{'None':<{short_padding}}")
 
 
+class ExcludedRange(FrozenModelWithTimestamps):
+    """Model for an excluded IP range for a network."""
+
+    id: int
+    network: int
+    start_ip: str  # TODO: use IPAddressField types
+    end_ip: str
+
+
 class Network(FrozenModelWithTimestamps, APIMixin):
     """Model for a network."""
 
     id: int  # noqa: A003
-    excluded_ranges: list[str]
+    excluded_ranges: list[ExcludedRange]
     network: str  # for now
     description: str
     vlan: int | None = None
@@ -1452,37 +1467,223 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     frozen: bool
     reserved: int
 
+    def __hash__(self):
+        """Return a hash of the network."""
+        return hash((self.id, self.network))
+
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.Networks
 
     @classmethod
-    def get_by_ip(cls, ip: IP_AddressT) -> Network:
+    def get_by_any_means(cls, identifier: str) -> Self | None:
+        """Get a network by the given identifier.
+
+        - If the identifier is numeric, it is treated as an ID.
+        - If the identifier is a valid IP address, it is treated as an IP.
+        - If the identifier is a valid network, it is treated as a network.
+
+        :param identifier: The identifier to search for.
+        :returns: The network if found.
+        :raises EntityNotFound: If the network is not found.
+        """
+        # Check if identifier is IP or network
+        try:
+            net_or_ip = NetworkOrIP(ip_or_network=identifier)
+        except InputFailure:
+            pass
+        else:
+            # We (should) have a valid ip or network
+            if net_or_ip.is_network():
+                return cls.get_by_network(str(net_or_ip))
+            elif net_or_ip.is_ip():
+                return cls.get_by_ip(net_or_ip.as_ip())
+        # Check if identifier is an ID
+        if identifier.isdigit():
+            try:
+                return cls.get_by_id(int(identifier))
+            except ValueError:
+                pass
+        return None
+
+    @classmethod
+    def get_by_any_means_or_raise(cls, identifier: str) -> Self:
+        """Get a network by the given identifier, and raise if not found.
+
+        See `get_by_any_means` for details.
+        """
+        net = cls.get_by_any_means(identifier)
+        if not net:
+            raise EntityNotFound(f"Network {identifier!r} not found.")
+        return net
+
+    @classmethod
+    def get_by_ip(cls, ip: IP_AddressT) -> Self | None:
         """Get a network by IP address.
 
         :param ip: The IP address to search for.
         :returns: The network if found, None otherwise.
         :raises EntityNotFound: If the network is not found.
         """
-        data = get(Endpoint.NetworksByIP.with_id(str(ip)))
-        if not data:
-            raise EntityNotFound(f"Network with IP address {ip} not found.")
-        return Network(**data.json())
+        resp = get(Endpoint.NetworksByIP.with_id(str(ip)))
+        if not resp:
+            return None
+        return cls.model_validate_json(resp.text)
 
     @classmethod
-    def get_by_netmask(cls, netmask: str) -> Network:
-        """Get a network by netmask.
+    def get_by_ip_or_raise(cls, ip: IP_AddressT) -> Network:
+        """Get a network by IP address, and raise if not found.
 
-        :param netmask: The netmask to search for.
+        :param ip: The IP address to search for.
         :returns: The network if found, None otherwise.
-        :raises ValueError: If the netmask is invalid.
         :raises EntityNotFound: If the network is not found.
         """
-        data = get_item_by_key_value(Endpoint.Networks, "network", netmask)
-        if not data:
-            raise EntityNotFound(f"Network with netmask {netmask} not found.")
-        return Network(**data)
+        network = cls.get_by_ip(ip)
+        if not network:
+            raise EntityNotFound(f"Network with IP address {ip} not found.")
+        return network
+
+    @classmethod
+    def get_by_network(cls, network: str) -> Self | None:
+        """Get a network by network address.
+
+        :param network: The network string to search for.
+        :returns: The network if found.
+        """
+        return cls.get_by_field("network", network)
+
+    @classmethod
+    def get_by_network_or_raise(cls, network: str) -> Self:
+        """Get a network by its network address, and raise if not found.
+
+        :param network: The network string to search for.
+        :returns: The network if found.
+        :raises EntityNotFound: If the network is not found.
+        """
+        net = cls.get_by_network(network)
+        if not net:
+            raise EntityNotFound(f"Network {network} not found.")
+        return net
+
+    @classmethod
+    def get_list(cls) -> list[Self]:
+        """Get all networks.
+
+        :returns: A list of all networks.
+        """
+        data = get_list(cls.endpoint(), max_hits_to_allow=None)
+        return [cls(**item) for item in data]
+
+    @staticmethod
+    def str_to_network(network: str) -> ipaddress.IPv4Network | ipaddress.IPv6Network:
+        """Convert a network string to an ipaddress network object.
+
+        :param network: The network string to convert.
+        :returns: The network object.
+        """
+        try:
+            return ipaddress.ip_network(network)
+        except ValueError as e:
+            raise InputFailure(f"Invalid network: {network}") from e
+
+    def output(self, padding: int = 25) -> None:
+        """Output the network to the console."""
+        manager = OutputManager()
+
+        def fmt(label: str, value: Any) -> None:
+            manager.add_line(f"{label:<{padding}}{value}")
+
+        ipnet = self.str_to_network(self.network)
+        reserved_ips = self.get_reserved_ips()
+        # Remove network address and broadcast address from reserved IPs
+        reserved_ips_filtered = [
+            ip for ip in reserved_ips if ip not in (ipnet.network_address, ipnet.broadcast_address)
+        ]
+
+        fmt("Network:", self.network)
+        fmt("Netmask:", ipnet.netmask)
+        fmt("Description:", self.description)
+        fmt("Category:", self.category)
+        fmt("Location:", self.location)
+        fmt("VLAN:", self.vlan)
+        fmt("DNS delegated:", str(self.dns_delegated))
+        fmt("Frozen:", self.frozen)
+        fmt("IP-range:", f"{ipnet.network_address} - {ipnet.broadcast_address}")
+        fmt("Reserved host addresses:", self.reserved)
+        fmt("", f"{ipnet.network_address} (net)")
+        for ip in reserved_ips_filtered:
+            fmt("", ip)
+        if ipnet.broadcast_address in reserved_ips:
+            fmt("", f"{ipnet.broadcast_address} (broadcast)")
+        fmt("Used addresses:", self.get_used_count())
+        fmt("Unused addresses:", f"{self.get_unused_count()} (excluding reserved adr.)")
+
+    @classmethod
+    def output_multiple(cls, networks: list[Network], padding: int = 25) -> None:
+        """Print multiple networks to the console."""
+        for i, network in enumerate(networks, start=1):
+            network.output(padding=padding)
+            if i != len(networks):  # add newline between networks (except last one)
+                OutputManager().add_line("")
+
+    def output_unused_addresses(self, padding: int = 25) -> None:
+        """Output the unused addresses of the network."""
+        unused = self.get_unused_list()
+
+        manager = OutputManager()
+        if not unused:
+            manager.add_line(f"No free addresses remaining on network {self.network}")
+            return
+
+        for ip in unused:
+            manager.add_line("{1:<{0}}".format(padding, str(ip)))
+
+    def output_used_addresses(self, padding: int = 46) -> None:
+        """Output the used addresses and their corresponding hosts."""
+        # Reason for 46 padding:
+        # https://stackoverflow.com/questions/166132/maximum-length-of-the-textual-representation-of-an-ipv6-address/166157#comment2055398_166157
+        used = self.get_used_host_list()
+        ptr_overrides = self.get_ptroverride_host_list()
+        ips = set(list(used.keys()) + list(ptr_overrides.keys()))
+        ips = sorted(ips, key=ipaddress.ip_address)
+
+        manager = OutputManager()
+        if not ips:
+            manager.add_line(f"No used addresses on network {self.network}")
+            return
+
+        for ip in ips:
+            if ip in ptr_overrides:
+                manager.add_line(f"{ip:<{padding}}{ptr_overrides[ip]} (PTR override)")
+            elif ip in used:
+                hosts = used[ip]
+                msg = f"{ip:<{padding}}{', '.join(hosts)}"
+                if len(hosts) > 1:
+                    msg += " (NO ptr override!!)"
+                manager.add_line(msg)
+
+    def output_excluded_ranges(self, padding: int = 32) -> None:
+        """Output the excluded ranges of the network."""
+        manager = OutputManager()
+        if not self.excluded_ranges:
+            manager.add_line(f"No excluded ranges for network {self.network}")
+            return
+
+        manager.add_line(f"{'Start IP':<{padding}}End IP")
+        for exrange in self.excluded_ranges:
+            manager.add_line(f"{exrange.start_ip:<{padding}}{exrange.end_ip}")
+
+    def overlaps(self, other: Network | str | IP_NetworkT) -> bool:
+        """Check if the network overlaps with another network."""
+        # Network -> str -> ipaddress.IPv{4,6}Network
+        if isinstance(other, Network):
+            other = other.network
+        if isinstance(other, str):
+            other = self.str_to_network(other)
+
+        self_net = self.str_to_network(self.network)
+        return self_net.overlaps(other)
 
     def get_first_available_ip(self) -> IP_AddressT:
         """Return the first available IPv4 address of the network."""
@@ -1492,10 +1693,9 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
     def get_reserved_ips(self) -> list[IP_AddressT]:
         """Return the reserved IP addresses of the network."""
-        return [
-            ipaddress.ip_address(ip)
-            for ip in get_typed(Endpoint.NetworksReservedList.with_params(self.network), list[str])
-        ]
+        return get_typed(
+            Endpoint.NetworksReservedList.with_params(self.network), list[IP_AddressT]
+        )
 
     def get_used_count(self) -> int:
         """Return the number of used IP addresses in the network."""
@@ -1503,10 +1703,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
     def get_used_list(self) -> list[IP_AddressT]:
         """Return the list of used IP addresses in the network."""
-        return [
-            ipaddress.ip_address(ip)
-            for ip in get_typed(Endpoint.NetworksUsedList.with_params(self.network), list[str])
-        ]
+        return get_typed(Endpoint.NetworksUsedList.with_params(self.network), list[IP_AddressT])
 
     def get_unused_count(self) -> int:
         """Return the number of unused IP addresses in the network."""
@@ -1514,10 +1711,19 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
     def get_unused_list(self) -> list[IP_AddressT]:
         """Return the list of unused IP addresses in the network."""
-        return [
-            ipaddress.ip_address(ip)
-            for ip in get_typed(Endpoint.NetworksUnusedList.with_params(self.network), list[str])
-        ]
+        return get_typed(Endpoint.NetworksUnusedList.with_params(self.network), list[IP_AddressT])
+
+    def get_used_host_list(self) -> dict[str, list[str]]:
+        """Return a dict of used IP addresses and their associated hosts."""
+        return get_typed(
+            Endpoint.NetworksUsedHostList.with_params(self.network), dict[str, list[str]]
+        )
+
+    def get_ptroverride_host_list(self) -> dict[str, str]:
+        """Return a dict of PTR override IP addresses and their associated hosts."""
+        return get_typed(
+            Endpoint.NetworksPTROverrideHostList.with_params(self.network), dict[str, str]
+        )
 
     def is_reserved_ip(self, ip: IP_AddressT) -> bool:
         """Return True if the IP address is in the reserved list.
@@ -1527,9 +1733,105 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         return ip in self.get_reserved_ips()
 
-    def __hash__(self):
-        """Return a hash of the network."""
-        return hash((self.id, self.network))
+    def add_excluded_range(self, start: str, end: str) -> None:
+        """Add an excluded range to the network.
+
+        :param start: The start of the excluded range.
+        :param end: The end of the excluded range.
+
+        :returns: The new ExcludedRange object.
+        """
+        start_ip = IPAddressField(address=start)  # type: ignore # validator converts this
+        end_ip = IPAddressField(address=end)  # type: ignore # validator converts this
+        if start_ip.address.version != end_ip.address.version:
+            raise InputFailure("Start and end IP addresses must be of the same version")
+
+        resp = post(
+            Endpoint.NetworksAddExcludedRanges.with_params(self.network),
+            network=self.id,
+            start_ip=str(start_ip.address),
+            end_ip=str(end_ip.address),
+        )
+        if not resp or not resp.ok:
+            raise CreateError(f"Failed to create excluded range for network {self.network}")
+
+    def remove_excluded_range(self, start: str, end: str) -> None:
+        """Remove an excluded range from the network.
+
+        :param start: The start of the excluded range.
+        :param end: The end of the excluded range.
+        """
+        # No need to validate IPs - if we find a match it's valid
+        exrange: ExcludedRange | None = None
+        for excluded_range in self.excluded_ranges:
+            if excluded_range.start_ip == start and excluded_range.end_ip == end:
+                exrange = excluded_range
+                break
+        else:
+            raise EntityNotFound(f"Excluded range {start} - {end} not found")
+        resp = delete(Endpoint.NetworksRemoveExcludedRanges.with_params(self.network, exrange.id))
+        if not resp or not resp.ok:
+            raise DeleteError(f"Failed to delete excluded range {start} - {end}")
+
+    def set_category(self, category: str) -> Self:
+        """Set the category tag of the network.
+
+        :param category: The new category tag.
+        :returns: The updated Network object.
+        """
+        if not is_valid_category_tag(category):
+            raise InputFailure(f"Invalid category tag: {category}")
+        return self.patch({"category": category})
+
+    def set_location(self, location: str) -> Self:
+        """Set the location tag of the network.
+
+        :param category: The new category.
+        :returns: The updated Network object.
+        """
+        if not is_valid_location_tag(location):
+            raise InputFailure(f"Invalid location tag: {location}")
+        return self.patch({"location": location})
+
+    def set_description(self, description: str) -> Self:
+        """Set the description of the network.
+
+        :param description: The new description.
+        :returns: The updated Network object.
+        """
+        return self.patch({"description": description})
+
+    def set_dns_delegation(self, delegated: bool) -> Self:
+        """Set the DNS delegation status of the network.
+
+        :param dns_delegated: The new DNS delegation status.
+        :returns: The updated Network object.
+        """
+        return self.patch({"dns_delegated": delegated})
+
+    def set_frozen(self, frozen: bool) -> Self:
+        """Set the frozen status of the network.
+
+        :param frozen: The new frozen status.
+        :returns: The updated Network object.
+        """
+        return self.patch({"frozen": frozen})
+
+    def set_reserved(self, reserved: int) -> Self:
+        """Set the number of reserved IP addresses.
+
+        :param reserved: The new number of reserved IP addresses.
+        :returns: The updated Network object.
+        """
+        return self.patch({"reserved": reserved})
+
+    def set_vlan(self, vlan: int) -> Self:
+        """Set the VLAN of the network.
+
+        :param vlan: The new VLAN.
+        :returns: The updated Network object.
+        """
+        return self.patch({"vlan": vlan})
 
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):

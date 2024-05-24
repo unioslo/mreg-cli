@@ -19,6 +19,7 @@ from mreg_cli.exceptions import (
     PatchError,
 )
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import JSONMapping
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -322,7 +323,7 @@ class APIMixin(ABC):
 
     @classmethod
     def get_by_query(
-        cls, query: dict[str, str], ordering: str | None = None, limit: int = 500
+        cls, query: dict[str, str], ordering: str | None = None, limit: int | None = 500
     ) -> list[Self]:
         """Get a list of objects by a query.
 
@@ -467,9 +468,7 @@ class APIMixin(ABC):
         return False
 
     @classmethod
-    def create(
-        cls, params: Mapping[str, str | list[str] | None], fetch_after_create: bool = True
-    ) -> Self | None:
+    def create(cls, params: JSONMapping, fetch_after_create: bool = True) -> Self | None:
         """Create the object.
 
         Note that several endpoints do not support location headers for created objects,

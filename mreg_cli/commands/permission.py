@@ -54,7 +54,7 @@ def network_list(args: argparse.Namespace) -> None:
 
     # Well, this is effin' awful. We have to fetch all permissions, but the API wants to limit
     # the number of results. We should probably fix this in the API.
-    permissions = Permission.get_by_query(query=params, ordering="range,group", limit=10000)
+    permissions = Permission.get_by_query(query=params, ordering="range,group", limit=None)
 
     if args.range is not None:
         argnetwork = NetworkOrIP(ip_or_network=args.range).as_network()

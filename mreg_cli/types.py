@@ -5,7 +5,18 @@ from __future__ import annotations
 import argparse
 import ipaddress
 from collections.abc import Callable
-from typing import Any, Literal, NamedTuple, Protocol, TypeAlias, TypedDict, TypeVar
+from typing import (
+    Any,
+    Literal,
+    Mapping,
+    NamedTuple,
+    Protocol,
+    Sequence,
+    TypeAlias,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
 from requests.structures import CaseInsensitiveDict
 
@@ -45,6 +56,11 @@ IP_networkTV = TypeVar("IP_networkTV", ipaddress.IPv4Network, ipaddress.IPv6Netw
 # https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
 NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
 NargsType = int | NargsStr
+
+
+JSONPrimitive = Union[str, int, float, bool, None]
+JSONValue = Union[JSONPrimitive, Mapping[str, "JSONValue"], Sequence["JSONValue"]]
+JSONMapping = Mapping[str, JSONValue]
 
 
 class Flag:

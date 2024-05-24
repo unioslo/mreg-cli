@@ -66,6 +66,10 @@ class Endpoint(str, Enum):
     NetworksUnusedList = "/api/v1/networks/{}/unused_list"
     NetworksFirstUnused = "/api/v1/networks/{}/first_unused"
     NetworksReservedList = "/api/v1/networks/{}/reserved_list"
+    NetworksUsedHostList = "/api/v1/networks/{}/used_host_list"
+    NetworksPTROverrideHostList = "/api/v1/networks/{}/ptroverride_host_list"
+    NetworksAddExcludedRanges = "/api/v1/networks/{}/excluded_ranges/"
+    NetworksRemoveExcludedRanges = "/api/v1/networks/{}/excluded_ranges/{}"
 
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
     HostPolicyRolesAddAtom = "/api/v1/hostpolicy/roles/{}/atoms/"
@@ -117,7 +121,7 @@ class Endpoint(str, Enum):
             Endpoint.HostPolicyAtoms,
         ):
             return "name"
-        if self == Endpoint.Networks:
+        if self in (Endpoint.Networks,):
             return "network"
         if self in (Endpoint.Hinfos, Endpoint.Locs):
             return "host"

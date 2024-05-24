@@ -79,12 +79,12 @@ def is_valid_email(email: str | bytes) -> bool:
 
 def is_valid_location_tag(loc: str) -> bool:
     """Check if valid location tag."""
-    return loc in MregCliConfig().get("location_tags", [])
+    return loc in MregCliConfig().get_location_tags()
 
 
 def is_valid_category_tag(cat: str) -> bool:
     """Check if valid location tag."""
-    return cat in MregCliConfig().get("category_tags", [])
+    return cat in MregCliConfig().get_category_tags()
 
 
 def is_ipversion(ip: str, ipversion: IP_Version) -> None:

@@ -9,6 +9,7 @@ from typing import Annotated, Any
 from pydantic import BeforeValidator, field_validator
 
 from mreg_cli.api.abstracts import FrozenModel
+from mreg_cli.exceptions import InputFailure
 from mreg_cli.types import IP_AddressT
 
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
@@ -48,12 +49,12 @@ class IPAddressField(FrozenModel):
 
     @field_validator("address", mode="before")
     @classmethod
-    def parse_ip_address(cls, value: str) -> IP_AddressT:
+    def parse_ip_address(cls, value: Any) -> IP_AddressT:
         """Parse and validate the IP address."""
         try:
             return ipaddress.ip_address(value)
         except ValueError as e:
-            raise ValueError(f"Invalid IP address '{value}'.") from e
+            raise InputFailure(f"Invalid IP address '{value}'.") from e
 
     def is_ipv4(self) -> bool:
         """Check if the IP address is IPv4."""
