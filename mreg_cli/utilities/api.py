@@ -433,6 +433,7 @@ def get_typed(
     :param type_: The type to which the response data should be deserialized.
     :param params: The parameters to pass to the API endpoint.
     :param paginated: Whether the response is paginated.
+    :param limit: The maximum number of hits to allow for paginated responses.
 
     :raises ValidationError: If the response cannot be deserialized into the given type.
 
