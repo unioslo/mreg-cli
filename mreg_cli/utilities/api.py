@@ -11,7 +11,7 @@ import logging
 import os
 import re
 import sys
-from typing import Any, Literal, NoReturn, TypeVar, cast, overload
+from typing import Any, Literal, NoReturn, TypeVar, cast, get_origin, overload
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -346,6 +346,26 @@ def get_list_unique(
     return ret
 
 
+@overload
+def get_list_generic(
+    path: str,
+    params: dict[str, Any] | None = None,
+    ok404: bool = False,
+    limit: int | None = 500,
+    expect_one_result: Literal[True] = True,
+) -> dict[str, Any]: ...
+
+
+@overload
+def get_list_generic(
+    path: str,
+    params: dict[str, Any] | None = None,
+    ok404: bool = False,
+    limit: int | None = 500,
+    expect_one_result: Literal[False] = False,
+) -> list[dict[str, Any]]: ...
+
+
 def get_list_generic(
     path: str,
     params: dict[str, Any] | None = None,
@@ -395,6 +415,15 @@ def get_list_generic(
     get_params = params.copy()
     # get_params["page_size"] = 1
     resp = get(path, get_params).json()
+
+    if isinstance(resp, list):
+        # If list, assume it contains dicts
+        return cast(list[dict[str, Any]], resp)
+    elif not isinstance(resp, dict):
+        raise CliError(f"Expected a dict or list from {path!r}, got {type(resp)!r}.")
+    else:
+        resp = cast(dict[str, Any], resp)
+
     if limit and resp.get("count", 0) > abs(limit):
         cli_warning(f"Too many hits ({resp['count']}), please refine your search criteria.")
 
@@ -421,7 +450,6 @@ def get_typed(
     path: str,
     type_: type[T],
     params: dict[str, Any] | None = None,
-    paginated: bool = False,
     limit: int | None = 500,
 ) -> T:
     """Fetch and deserialize JSON from an endpoint into a specific type.
@@ -432,7 +460,6 @@ def get_typed(
     :param path: The path to the API endpoint.
     :param type_: The type to which the response data should be deserialized.
     :param params: The parameters to pass to the API endpoint.
-    :param paginated: Whether the response is paginated.
     :param limit: The maximum number of hits to allow for paginated responses.
 
     :raises ValidationError: If the response cannot be deserialized into the given type.
@@ -440,7 +467,7 @@ def get_typed(
     :returns: An instance of `type_` populated with data from the response.
     """
     adapter = TypeAdapter(type_)
-    if paginated:
+    if type_ is list or get_origin(type_) is list:
         resp = get_list(path, params=params, limit=limit)
         return adapter.validate_python(resp)
     else:

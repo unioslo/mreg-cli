@@ -2806,9 +2806,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             "ordering": "ipaddress",
         }
 
-        ipadresses = get_typed(
-            Endpoint.Ipaddresses, list[IPAddress], params=params, paginated=True
-        )
+        ipadresses = get_typed(Endpoint.Ipaddresses, list[IPAddress], params=params)
 
         if ip in [ip.ipaddress for ip in ipadresses]:
             raise EntityAlreadyExists(f"IP address {ip} already has MAC address {mac} associated.")
