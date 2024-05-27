@@ -35,7 +35,7 @@ class TokenFile:
 
     def __init__(self, tokens: Optional[list[dict[str, str]]] = None):
         """Initialize the TokenFile instance."""
-        self.tokens = [Token.model_validate(token) for token in tokens] if tokens else []
+        self.tokens = [Token(**token) for token in tokens] if tokens else []
 
     @classmethod
     def _load_tokens(cls) -> "TokenFile":
