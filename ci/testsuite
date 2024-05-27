@@ -350,7 +350,8 @@ network remove 2001:db8::/64 -f
 label add postit 'This is a label'
 label list
 label info postit
-label rename postit mylabel -desc 'This is the new description'
+label rename postit mylabel
+label set_description mylabel 'This is the new description'
 label remove mylabel
 # Roles
 label add postit 'A label again'
