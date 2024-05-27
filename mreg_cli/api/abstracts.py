@@ -83,7 +83,10 @@ def validate_patched_model(model: BaseModel, fields: dict[str, Any]) -> None:
             raise PatchError(f"Could not get value for {field_name} in patched object.") from e
 
         # Ensure patched value is the one we tried to set
-        validator = validators.get(type(nval), _validate_default)  # type: ignore # dict.get type checking is whatever
+        validator = validators.get(
+            type(nval),  # type: ignore # dict.get call with unknown type (Any) is fine
+            _validate_default,
+        )
         if not validator(nval, value):
             raise PatchError(
                 f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
