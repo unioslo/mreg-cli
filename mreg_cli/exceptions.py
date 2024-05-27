@@ -35,6 +35,11 @@ class CliError(CliException):
     the user cannot be expected to resolve.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from mreg_cli.outputmanager import OutputManager
+        OutputManager().add_error(super().__str__())
+
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML red tag for the error message.
 
@@ -48,6 +53,11 @@ class CliWarning(CliException):
 
     Warnings should be recoverable by changing the user input.
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from mreg_cli.outputmanager import OutputManager
+        OutputManager().add_warning(super().__str__())
 
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML italic tag for the warning message.
