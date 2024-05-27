@@ -22,6 +22,7 @@ from typing import (
 from pydantic import ValidationError, ValidationInfo, ValidatorFunctionWrapHandler, WrapValidator
 from pydantic_core import PydanticCustomError
 from requests.structures import CaseInsensitiveDict
+from typing_extensions import TypeAliasType
 
 CommandFunc = Callable[[argparse.Namespace], None]
 
@@ -76,10 +77,13 @@ def json_custom_error_validator(
         ) from None
 
 
-type Json = Annotated[
-    Union[Mapping[str, "Json"], Sequence["Json"], str, int, float, bool, None],
-    WrapValidator(json_custom_error_validator),
-]
+Json = TypeAliasType(
+    "Json",
+    Annotated[
+        Union[Mapping[str, "Json"], Sequence["Json"], str, int, float, bool, None],
+        WrapValidator(json_custom_error_validator),
+    ],
+)
 JsonMapping = Mapping[str, Json]
 
 
