@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.exceptions import EntityNotFound, InternalError
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.utilities.api import get_list, get_typed
+from mreg_cli.utilities.api import get_typed
 
 
 class HistoryResource(str, Enum):
@@ -112,30 +112,28 @@ class HistoryItem(BaseModel):
     @classmethod
     def get(cls, name: str, resource: HistoryResource) -> list[HistoryItem]:
         """Get history items for a resource."""
+
+        def _get_history(params: dict[str, str]) -> list[dict[str, Any]]:
+            return get_typed(Endpoint.History, list[dict[str, Any]], params=params)
+
         resource_value = resource.value
-
-        params: dict[str, str | int] = {"resource": resource_value, "name": name}
-
-        ret = get_typed(Endpoint.History, list[dict[str, Any]], params=params)
-
+        params: dict[str, str] = {"resource": resource_value, "name": name}
+        ret = _get_history(params)
         if len(ret) == 0:
             raise EntityNotFound(f"No history found for {name}")
 
         model_ids = ",".join({str(i["model_id"]) for i in ret})
-
         params = {
             "resource": resource_value,
             "model_id__in": model_ids,
         }
-
-        ret = get_typed(Endpoint.History, list[dict[str, Any]], params=params)
+        ret = _get_history(params)
 
         data_relation = resource.relation()
-
         params = {
             "data__relation": data_relation,
             "data__id__in": model_ids,
         }
-        ret.extend(get_typed(Endpoint.History, list[dict[str, Any]], params=params))
+        ret.extend(_get_history(params))
 
         return [cls.model_validate(i) for i in ret]

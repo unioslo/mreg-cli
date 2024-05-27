@@ -24,8 +24,8 @@ from mreg_cli.utilities.api import (
     delete,
     get,
     get_item_by_key_value,
-    get_list,
     get_list_unique,
+    get_typed,
     patch,
     post,
 )
@@ -321,8 +321,7 @@ class APIMixin(ABC):
         if ordering:
             params["ordering"] = ordering
 
-        data = get_list(cls.endpoint(), params=params, limit=limit)
-        return [cls(**item) for item in data]
+        return get_typed(cls.endpoint(), list[cls], params=params, limit=limit)
 
     @classmethod
     def get_by_query(
@@ -339,8 +338,7 @@ class APIMixin(ABC):
         if ordering:
             query["ordering"] = ordering
 
-        data = get_list(cls.endpoint().with_query(query), limit=limit)
-        return [cls(**item) for item in data]
+        return get_typed(cls.endpoint().with_query(query), list[cls], limit=limit)
 
     @classmethod
     def get_by_query_unique_or_raise(
