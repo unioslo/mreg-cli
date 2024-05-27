@@ -444,7 +444,7 @@ def naptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    NAPTR.output_multiple(Host.get_by_any_means_or_raise(args.host).naptrs())
+    NAPTR.output_multiple(Host.get_by_any_means_or_raise(args.name).naptrs())
 
 
 @command_registry.register_command(
