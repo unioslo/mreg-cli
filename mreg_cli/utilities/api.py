@@ -350,7 +350,9 @@ def get_list_unique(
     if not ret:
         return None
 
-    return ret
+    # HACK: convince type checker we have a dict[str, Json] here
+    # TODO: add validation
+    return cast(JsonMapping, ret)
 
 
 class PaginatedResponse(BaseModel):
