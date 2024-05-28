@@ -344,16 +344,14 @@ def get_list_unique(
     :returns: A single dictionary, or None if no result was found and ok404 is True.
     """
     ret = get_list_generic(path, params, ok404, expect_one_result=True)
-
-    if not isinstance(ret, dict):
-        raise CliError(f"Expected a single result, got {type(ret)}.")
-
     if not ret:
         return None
 
-    # HACK: convince type checker we have a dict[str, Json] here
-    # TODO: add validation
-    return cast(JsonMapping, ret)
+    try:
+        validator = TypeAdapter(JsonMapping)
+        return validator.validate_python(ret)
+    except ValidationError as e:
+        raise MregValidationError(f"Failed to validate response from {path}: {e}") from e
 
 
 class PaginatedResponse(BaseModel):
