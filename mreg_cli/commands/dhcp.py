@@ -9,7 +9,7 @@ from mreg_cli.api.fields import IPAddressField
 from mreg_cli.api.models import Host, IPAddress
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import InputFailure
+from mreg_cli.exceptions import EntityOwnershipMismatch, InputFailure
 from mreg_cli.log import cli_info
 from mreg_cli.types import Flag
 
@@ -30,6 +30,9 @@ def ipaddress_from_ip_arg(arg: str) -> IPAddress | None:
     :param arg: IP address argument.
 
     :returns: IPAddress object if found, None otherwise.
+
+    :raises InputFailure: If the IP address does not exist.
+    :raises EntityOwnershipMismatch: If the IP address is in use by multiple hosts.
     """
     try:
         addr = IPAddressField.from_string(arg)
@@ -39,7 +42,7 @@ def ipaddress_from_ip_arg(arg: str) -> IPAddress | None:
     if not ipobjs:
         raise InputFailure(f"IP address {arg} does not exist.")
     elif len(ipobjs) > 1:
-        raise InputFailure(f"IP {arg} is in use by {len(ipobjs)} hosts.")
+        raise EntityOwnershipMismatch(f"IP {arg} is in use by {len(ipobjs)} hosts.")
     return ipobjs[0]
 
 
