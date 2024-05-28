@@ -127,8 +127,7 @@ def disassoc(args: argparse.Namespace) -> None:
             ipaddress = ips_with_mac[0]
 
     ipaddress.disassociate_mac()
-    mac = ipaddress.macaddress
     cli_info(
-        f"Disassociated mac address {mac} from ip {ipaddress.ip()}",
+        f"Disassociated mac address {ipaddress.macaddress} from ip {ipaddress.ip()}",
         print_msg=True,
     )
