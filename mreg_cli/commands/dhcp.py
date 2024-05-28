@@ -90,19 +90,10 @@ def disassoc(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     ipaddress_to_use = None
-    ipobjs = IPAddress.get_by_ip(args.name)
-    if ipobjs:
-        if len(ipobjs) > 1:
-            raise InputFailure(f"IP {args.name} is in use by {len(ipobjs)} hosts.")
-
-        ipaddress_to_use = ipobjs[0]
-
-        if not ipaddress_to_use.macaddress:
-            raise InputFailure(f"IP {args.name} does not have a MAC address associated.")
-
-    if not ipaddress_to_use:
+    try:
+        addr = IPAddressField(address=args.name)
+    except InputFailure:
         host = Host.get_by_any_means_or_raise(args.name)
-
         try:
             ipaddress_to_use = host.has_ip_with_mac(args.name)
         except ValueError:
@@ -114,15 +105,24 @@ def disassoc(args: argparse.Namespace) -> None:
             if not ips_with_mac:
                 raise InputFailure(
                     f"Host {host} does not have any IP addresses with MAC addresses."
-                )
+                ) from None
 
             if len(ips_with_mac) > 1:
-                raise InputFailure(f"Host {host} has multiple IP addresses with MAC addresses.")
+                raise InputFailure(
+                    f"Host {host} has multiple IP addresses with MAC addresses."
+                ) from None
 
             ipaddress_to_use = ips_with_mac[0]
+    else:
+        ipobjs = IPAddress.get_by_ip(addr.address)
+        if not ipobjs:
+            raise InputFailure(f"IP address {args.name} does not exist.")
+        elif len(ipobjs) > 1:
+            raise InputFailure(f"IP {args.name} is in use by {len(ipobjs)} hosts.")
+        ipaddress_to_use = ipobjs[0]
 
-    mac = ipaddress_to_use.macaddress
     ipaddress_to_use.disassociate_mac()
+    mac = ipaddress_to_use.macaddress
     cli_info(
         f"Disassociated mac address {mac} from ip {ipaddress_to_use.ip()}",
         print_msg=True,
