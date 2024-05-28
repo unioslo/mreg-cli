@@ -24,6 +24,25 @@ class DHCPCommands(BaseCommand):
         super().__init__(cli, command_registry, "dhcp", "Manage DHCP associations.", "Manage DHCP")
 
 
+def ipaddress_from_ip_arg(arg: str) -> IPAddress | None:
+    """Get an IPAddress object from an IP address argument.
+
+    :param arg: IP address argument.
+
+    :returns: IPAddress object if found, None otherwise.
+    """
+    try:
+        addr = IPAddressField.from_string(arg)
+    except InputFailure:
+        return None
+    ipobjs = IPAddress.get_by_ip(addr.address)
+    if not ipobjs:
+        raise InputFailure(f"IP address {arg} does not exist.")
+    elif len(ipobjs) > 1:
+        raise InputFailure(f"IP {arg} is in use by {len(ipobjs)} hosts.")
+    return ipobjs[0]
+
+
 @command_registry.register_command(
     prog="assoc",
     description=(
@@ -44,29 +63,22 @@ def assoc(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, mac, force)
     """
-    in_use = IPAddress.get_by_mac(args.mac)
+    name: str = args.name
+    mac: str = args.mac
+    force: bool = args.force
+
+    in_use = IPAddress.get_by_mac(mac)
     if in_use:
-        raise InputFailure(f"MAC {args.mac} is already in use by {in_use.ip()}.")
+        raise InputFailure(f"MAC {mac} is already in use by {in_use.ip()}.")
 
-    # Try to parse the name as an IP address
-    try:
-        addr = IPAddressField(address=args.name)
-    except InputFailure:
-        # Fall back on host lookup
-        host = Host.get_by_any_means_or_raise(args.name)
-        ipaddress_to_use = host.get_associatable_ip()
-    else:
-        ipobjs = IPAddress.get_by_ip(addr.address)
-        if ipobjs:
-            if len(ipobjs) > 1:
-                raise InputFailure(f"IP {args.name} is in use by {len(ipobjs)} hosts.")
-            ipaddress_to_use = ipobjs[0]
-        else:
-            raise InputFailure(f"IP address {args.name} does not exist.")
+    ipaddress = ipaddress_from_ip_arg(name)
+    if not ipaddress:
+        host = Host.get_by_any_means_or_raise(name)
+        ipaddress = host.get_associatable_ip()
 
-    ipaddress_to_use.associate_mac(args.mac, force=args.force)
+    ipaddress.associate_mac(mac, force=force)
     cli_info(
-        f"Associated mac address {args.mac} with ip {ipaddress_to_use.ip()}",
+        f"Associated mac address {mac} with ip {ipaddress.ip()}",
         print_msg=True,
     )
 
@@ -89,17 +101,17 @@ def disassoc(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    ipaddress_to_use = None
-    try:
-        addr = IPAddressField(address=args.name)
-    except InputFailure:
-        host = Host.get_by_any_means_or_raise(args.name)
+    name: str = args.name
+
+    ipaddress = ipaddress_from_ip_arg(name)
+    if not ipaddress:
+        host = Host.get_by_any_means_or_raise(name)
         try:
-            ipaddress_to_use = host.has_ip_with_mac(args.name)
+            ipaddress = host.has_ip_with_mac(name)
         except ValueError:
             pass
 
-        if not ipaddress_to_use:
+        if not ipaddress:
             ips_with_mac = host.ips_with_macaddresses()
 
             if not ips_with_mac:
@@ -112,18 +124,11 @@ def disassoc(args: argparse.Namespace) -> None:
                     f"Host {host} has multiple IP addresses with MAC addresses."
                 ) from None
 
-            ipaddress_to_use = ips_with_mac[0]
-    else:
-        ipobjs = IPAddress.get_by_ip(addr.address)
-        if not ipobjs:
-            raise InputFailure(f"IP address {args.name} does not exist.")
-        elif len(ipobjs) > 1:
-            raise InputFailure(f"IP {args.name} is in use by {len(ipobjs)} hosts.")
-        ipaddress_to_use = ipobjs[0]
+            ipaddress = ips_with_mac[0]
 
-    ipaddress_to_use.disassociate_mac()
-    mac = ipaddress_to_use.macaddress
+    ipaddress.disassociate_mac()
+    mac = ipaddress.macaddress
     cli_info(
-        f"Disassociated mac address {mac} from ip {ipaddress_to_use.ip()}",
+        f"Disassociated mac address {mac} from ip {ipaddress.ip()}",
         print_msg=True,
     )

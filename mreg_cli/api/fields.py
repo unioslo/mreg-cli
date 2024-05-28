@@ -47,6 +47,11 @@ class IPAddressField(FrozenModel):
 
     address: IP_AddressT
 
+    @classmethod
+    def from_string(cls, address: str) -> IPAddressField:
+        """Create an IPAddressField from a string."""
+        return cls(address=address)  # type: ignore # validator handles this
+
     @field_validator("address", mode="before")
     @classmethod
     def parse_ip_address(cls, value: Any) -> IP_AddressT:
