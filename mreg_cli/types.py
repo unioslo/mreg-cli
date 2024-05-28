@@ -11,7 +11,6 @@ from typing import (
     Literal,
     Mapping,
     NamedTuple,
-    Protocol,
     Sequence,
     TypeAlias,
     TypedDict,
@@ -21,7 +20,6 @@ from typing import (
 
 from pydantic import ValidationError, ValidationInfo, ValidatorFunctionWrapHandler, WrapValidator
 from pydantic_core import PydanticCustomError
-from requests.structures import CaseInsensitiveDict
 from typing_extensions import TypeAliasType
 
 CommandFunc = Callable[[argparse.Namespace], None]
@@ -129,36 +127,3 @@ class Command(NamedTuple):
 
 # Config
 DefaultType = TypeVar("DefaultType")
-
-
-class ResponseLike(Protocol):
-    """Interface for objects that resemble a requests.Response object."""
-
-    @property
-    def ok(self) -> bool:
-        """Return True if the response was successful."""
-        ...
-
-    @property
-    def status_code(self) -> int:
-        """Return the HTTP status code."""
-        ...
-
-    @property
-    def reason(self) -> str:
-        """Return the HTTP status reason."""
-        ...
-
-    @property
-    def headers(self) -> CaseInsensitiveDict[str]:
-        """Return the dictionary of response headers."""
-        ...
-
-    @property
-    def text(self) -> str:
-        """Return the response body as text."""
-        ...
-
-    def json(self, **kwargs: Any) -> Any:
-        """Return the response body as JSON."""
-        ...

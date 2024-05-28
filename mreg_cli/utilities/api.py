@@ -31,13 +31,14 @@ from pydantic import (
     ValidationError,
     field_validator,
 )
+from requests import Response
 
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError, LoginFailedError
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
-from mreg_cli.types import Json, JsonMapping, ResponseLike
+from mreg_cli.types import Json, JsonMapping
 
 session = requests.Session()
 session.headers.update({"User-Agent": "mreg-cli"})
@@ -191,7 +192,7 @@ def auth_and_update_token(username: str, password: str) -> None:
     TokenFile.set_entry(username, MregCliConfig().get_url(), token)
 
 
-def result_check(result: ResponseLike, operation_type: str, url: str) -> None:
+def result_check(result: Response, operation_type: str, url: str) -> None:
     """Check the result of a request."""
     if not result.ok:
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
@@ -211,7 +212,7 @@ def _request_wrapper(
     ok404: bool = False,
     first: bool = True,
     **data: Any,
-) -> ResponseLike | None:
+) -> Response | None:
     """Wrap request calls to MREG for logging and token management."""
     if params is None:
         params = {}
@@ -238,24 +239,22 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> ResponseLike | None: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> ResponseLike: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> Response: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> ResponseLike | None: ...
+def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ...) -> ResponseLike: ...
+def get(path: str, params: dict[str, Any] | None = ...) -> Response: ...
 
 
-def get(
-    path: str, params: dict[str, Any] | None = None, ok404: bool = False
-) -> ResponseLike | None:
+def get(path: str, params: dict[str, Any] | None = None, ok404: bool = False) -> Response | None:
     """Make a standard get request."""
     if params is None:
         params = {}
@@ -374,15 +373,15 @@ class PaginatedResponse(BaseModel):
         return v or 0
 
     @classmethod
-    def from_response(cls, response: ResponseLike) -> PaginatedResponse:
-        """Create a PaginatedResponse from a ResponseLike."""
+    def from_response(cls, response: Response) -> PaginatedResponse:
+        """Create a PaginatedResponse from a Response."""
         return cls.model_validate_json(response.text)
 
 
 ListResponse = TypeAdapter(list[Json])
 
 
-def validate_list_response(response: ResponseLike) -> list[Json]:
+def validate_list_response(response: Response) -> list[Json]:
     """Validate a list response."""
     try:
         return ListResponse.validate_json(response.text)
@@ -390,7 +389,7 @@ def validate_list_response(response: ResponseLike) -> list[Json]:
         raise CliError(f"Failed to validate response: {e}") from e
 
 
-def validate_paginated_response(response: ResponseLike) -> PaginatedResponse:
+def validate_paginated_response(response: Response) -> PaginatedResponse:
     """Validate a paginated response."""
     try:
         return PaginatedResponse.from_response(response)
@@ -522,21 +521,21 @@ def get_typed(
         return adapter.validate_json(resp.text)
 
 
-def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> ResponseLike | None:
+def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
-def patch(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> ResponseLike | None:
+def patch(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("patch", path, params=params, **kwargs)
 
 
-def delete(path: str, params: dict[str, Any] | None = None) -> ResponseLike | None:
+def delete(path: str, params: dict[str, Any] | None = None) -> Response | None:
     """Use requests to make a delete request."""
     if params is None:
         params = {}
