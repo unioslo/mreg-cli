@@ -28,6 +28,7 @@ from prompt_toolkit import prompt
 from pydantic import (
     BaseModel,
     TypeAdapter,
+    ValidationError,
     field_validator,
 )
 
@@ -381,6 +382,22 @@ class PaginatedResponse(BaseModel):
 ListResponse = TypeAdapter(list[Json])
 
 
+def validate_list_response(response: ResponseLike) -> list[Json]:
+    """Validate a list response."""
+    try:
+        return ListResponse.validate_json(response.text)
+    except (ValidationError, ValueError) as e:
+        raise CliError(f"Failed to validate response: {e}") from e
+
+
+def validate_paginated_response(response: ResponseLike) -> PaginatedResponse:
+    """Validate a paginated response."""
+    try:
+        return PaginatedResponse.from_response(response)
+    except (ValidationError, ValueError) as e:
+        raise CliError(f"Failed to validate paginated response: {e}") from e
+
+
 @overload
 def get_list_generic(
     path: str,
@@ -448,9 +465,9 @@ def get_list_generic(
 
     # Non-paginated results, return them directly
     if "count" not in response.text:
-        return ListResponse.validate_json(response.text)
+        return validate_list_response(response)
 
-    resp = PaginatedResponse.from_response(response)
+    resp = validate_paginated_response(response)
 
     if limit and resp.count > abs(limit):
         cli_warning(f"Too many hits ({resp.count}), please refine your search criteria.")
@@ -466,7 +483,7 @@ def get_list_generic(
         resp = get(path, params=params, ok404=ok404)
         if resp is None:
             return _check_expect_one_result(ret)
-        result = PaginatedResponse.from_response(resp)
+        result = validate_paginated_response(resp)
 
         ret.extend(result.results)
 
