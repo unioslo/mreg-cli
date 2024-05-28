@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from mreg_cli.api.fields import IPAddressField
 from mreg_cli.api.models import Host, IPAddress
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -43,22 +44,25 @@ def assoc(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, mac, force)
     """
-    ipaddress_to_use = None
-
     in_use = IPAddress.get_by_mac(args.mac)
     if in_use:
         raise InputFailure(f"MAC {args.mac} is already in use by {in_use.ip()}.")
 
-    ipobjs = IPAddress.get_by_ip(args.name)
-    if ipobjs:
-        if len(ipobjs) > 1:
-            raise InputFailure(f"IP {args.name} is in use by {len(ipobjs)} hosts.")
-
-        ipaddress_to_use = ipobjs[0]
-
-    if not ipaddress_to_use:
+    # Try to parse the name as an IP address
+    try:
+        addr = IPAddressField(address=args.name)
+    except InputFailure:
+        # Fall back on host lookup
         host = Host.get_by_any_means_or_raise(args.name)
         ipaddress_to_use = host.get_associatable_ip()
+    else:
+        ipobjs = IPAddress.get_by_ip(addr.address)
+        if ipobjs:
+            if len(ipobjs) > 1:
+                raise InputFailure(f"IP {args.name} is in use by {len(ipobjs)} hosts.")
+            ipaddress_to_use = ipobjs[0]
+        else:
+            raise InputFailure(f"IP address {args.name} does not exist.")
 
     ipaddress_to_use.associate_mac(args.mac, force=args.force)
     cli_info(
