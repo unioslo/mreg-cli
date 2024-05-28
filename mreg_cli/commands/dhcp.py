@@ -29,9 +29,9 @@ def ipaddress_from_ip_arg(arg: str) -> IPAddress | None:
 
     :param arg: IP address argument.
 
-    :returns: IPAddress object if found, None otherwise.
+    :returns: IPAddress object if IP is valid and exists, None if IP is invalid.
 
-    :raises InputFailure: If the IP address does not exist.
+    :raises InputFailure: If the IP address is valid but does not exist.
     :raises EntityOwnershipMismatch: If the IP address is in use by multiple hosts.
     """
     try:
