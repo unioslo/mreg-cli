@@ -28,7 +28,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["ruff", "tox"]
+dev = ["ruff", "tox", "pyinstaller"]
 
 [project.urls]
 Repository = 'https://github.com/unioslo/mreg-cli/'
