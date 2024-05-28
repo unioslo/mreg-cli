@@ -35,6 +35,7 @@ from requests import Response
 
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError, LoginFailedError
+from mreg_cli.exceptions import ValidationError as MregValidationError
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
@@ -386,7 +387,7 @@ def validate_list_response(response: Response) -> list[Json]:
     try:
         return ListResponse.validate_json(response.text)
     except (ValidationError, ValueError) as e:
-        raise CliError(f"Failed to validate response: {e}") from e
+        raise MregValidationError(f"Failed to validate response: {e}") from e
 
 
 def validate_paginated_response(response: Response) -> PaginatedResponse:
@@ -394,7 +395,7 @@ def validate_paginated_response(response: Response) -> PaginatedResponse:
     try:
         return PaginatedResponse.from_response(response)
     except (ValidationError, ValueError) as e:
-        raise CliError(f"Failed to validate paginated response: {e}") from e
+        raise MregValidationError(f"Failed to validate paginated response: {e}") from e
 
 
 @overload
