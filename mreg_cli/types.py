@@ -62,6 +62,7 @@ NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
 NargsType = int | NargsStr
 
 
+# Source: https://docs.pydantic.dev/2.7/concepts/types/#named-recursive-types
 def json_custom_error_validator(
     value: Any, handler: ValidatorFunctionWrapHandler, _info: ValidationInfo
 ) -> Any:
