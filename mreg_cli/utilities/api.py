@@ -204,6 +204,20 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
         cli_warning(message)
 
 
+def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
+    """Recursively strip None values from a dictionary."""
+    new: dict[str, Any] = {}
+    for key, value in data.items():
+        if value is not None:
+            if isinstance(value, dict):
+                v = _strip_none(value)  # pyright: ignore[reportUnknownArgumentType]
+                if v:
+                    new[key] = v
+            else:
+                new[key] = value
+    return new
+
+
 def _request_wrapper(
     operation_type: str,
     path: str,
@@ -216,6 +230,10 @@ def _request_wrapper(
     if params is None:
         params = {}
     url = urljoin(MregCliConfig().get_url(), path)
+
+    # Strip None values from data
+    if data:
+        data = _strip_none(data)
 
     result = getattr(session, operation_type)(
         url,
