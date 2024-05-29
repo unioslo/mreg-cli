@@ -26796,27 +26796,34 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name:                  postit",
-      "Description:           This is a label",
-      "Roles with this label: ",
-      "    None",
+      "Name:         postit",
+      "Description:  This is a label",
+      "Roles with this label:",
+      "None",
       "Permissions with this label:",
-      "    None"
+      "None"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/?name=postit",
         "data": {},
         "status": 200,
         "response": {
-          "name": "postit",
-          "description": "This is a label"
+            "count": 1,
+            "next": null,
+            "previous": null,
+            "results": [
+                {
+                    "name": "postit",
+                    "description": "This is a label"
+                }
+            ]
         }
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?labels__name=postit",
+        "url": "/api/v1/hostpolicy/roles/?labels=1",
         "data": {},
         "status": 200,
         "response": {
@@ -26828,7 +26835,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?labels__name=postit",
+        "url": "/api/v1/permissions/netgroupregex/?labels=1",
         "data": {},
         "status": 200,
         "response": {
@@ -26842,10 +26849,10 @@
     "time": null
   },
   {
-    "command": "label rename postit mylabel -desc 'This is the new description'",
+    "command": "label rename postit mylabel",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "label rename postit mylabel -desc 'This is the new description'",
+    "command_issued": "label rename postit mylabel",
     "ok": [
       "OK: : Renamed label \"postit\" to \"mylabel\""
     ],
@@ -26855,19 +26862,68 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/?name=postit",
         "data": {},
         "status": 200,
         "response": {
-          "name": "postit",
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "postit",
+              "description": "This is a label"
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/labels/1",
+        "data": {
+          "name": "mylabel"
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/labels/1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "mylabel",
+          "description": "This is a label"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "label set_description mylabel 'This is the new description'",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "label set_description mylabel 'This is the new description'",
+    "ok": [
+      "OK: : Set description for label \"mylabel\" to \"This is the new description\""
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/labels/name/mylabel",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "mylabel",
           "description": "This is a label"
         }
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/name/mylabel",
         "data": {
-          "name": "mylabel",
           "description": "This is the new description"
         },
         "status": 204
