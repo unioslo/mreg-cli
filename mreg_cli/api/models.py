@@ -2903,7 +2903,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if data_as_dict["zone"]:
             zone = ForwardZone.model_validate(data_as_dict["zone"])
             if validate_zone_resolution and zone.id != self.zone:
-                raise ValidationError(f"Expected zone ID {self.zone} but resovled as {zone.id}.")
+                raise ValidationError(f"Expected zone ID {self.zone} but resolved as {zone.id}.")
             return zone
 
         if data_as_dict["delegation"]:
