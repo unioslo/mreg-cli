@@ -11,20 +11,33 @@ import logging
 import os
 import re
 import sys
-from typing import Any, Literal, NoReturn, TypeVar, cast, get_origin, overload
+from typing import (
+    Any,
+    Literal,
+    NoReturn,
+    TypeVar,
+    cast,
+    get_origin,
+    overload,
+)
 from urllib.parse import urljoin
 from uuid import uuid4
 
 import requests
 from prompt_toolkit import prompt
-from pydantic import TypeAdapter
+from pydantic import (
+    BaseModel,
+    TypeAdapter,
+    field_validator,
+)
+from requests import Response
 
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import CliError, LoginFailedError
+from mreg_cli.exceptions import CliError, LoginFailedError, ValidationError
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
-from mreg_cli.types import ResponseLike
+from mreg_cli.types import Json, JsonMapping
 
 session = requests.Session()
 session.headers.update({"User-Agent": "mreg-cli"})
@@ -178,7 +191,7 @@ def auth_and_update_token(username: str, password: str) -> None:
     TokenFile.set_entry(username, MregCliConfig().get_url(), token)
 
 
-def result_check(result: ResponseLike, operation_type: str, url: str) -> None:
+def result_check(result: Response, operation_type: str, url: str) -> None:
     """Check the result of a request."""
     if not result.ok:
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
@@ -198,7 +211,7 @@ def _request_wrapper(
     ok404: bool = False,
     first: bool = True,
     **data: Any,
-) -> ResponseLike | None:
+) -> Response | None:
     """Wrap request calls to MREG for logging and token management."""
     if params is None:
         params = {}
@@ -225,24 +238,22 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> ResponseLike | None: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> ResponseLike: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> Response: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> ResponseLike | None: ...
+def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ...) -> ResponseLike: ...
+def get(path: str, params: dict[str, Any] | None = ...) -> Response: ...
 
 
-def get(
-    path: str, params: dict[str, Any] | None = None, ok404: bool = False
-) -> ResponseLike | None:
+def get(path: str, params: dict[str, Any] | None = None, ok404: bool = False) -> Response | None:
     """Make a standard get request."""
     if params is None:
         params = {}
@@ -254,7 +265,7 @@ def get_list(
     params: dict[str, Any] | None = None,
     ok404: bool = False,
     limit: int | None = 500,
-) -> list[dict[str, Any]]:
+) -> list[Json]:
     """Make a get request that produces a list.
 
     Will iterate over paginated results and return result as list. If the number of hits is
@@ -270,12 +281,7 @@ def get_list(
 
     :returns: A list of dictionaries.
     """
-    ret = get_list_generic(path, params, ok404, limit, expect_one_result=False)
-
-    if not isinstance(ret, list):
-        raise CliError(f"Expected a list of results, got {type(ret)}.")
-
-    return ret
+    return get_list_generic(path, params, ok404, limit, expect_one_result=False)
 
 
 def get_list_in(
@@ -283,7 +289,7 @@ def get_list_in(
     search_field: str,
     search_values: list[int],
     ok404: bool = False,
-) -> list[dict[str, Any]]:
+) -> list[Json]:
     """Get a list of items by a key value pair.
 
     :param path: The path to the API endpoint.
@@ -305,7 +311,7 @@ def get_item_by_key_value(
     search_field: str,
     search_value: str,
     ok404: bool = False,
-) -> None | dict[str, Any]:
+) -> None | JsonMapping:
     """Get an item by a key value pair.
 
     :param path: The path to the API endpoint.
@@ -324,7 +330,7 @@ def get_list_unique(
     path: str,
     params: dict[str, str],
     ok404: bool = False,
-) -> None | dict[str, Any]:
+) -> None | JsonMapping:
     """Do a get request that returns a single result from a search.
 
     :param path: The path to the API endpoint.
@@ -336,14 +342,69 @@ def get_list_unique(
     :returns: A single dictionary, or None if no result was found and ok404 is True.
     """
     ret = get_list_generic(path, params, ok404, expect_one_result=True)
-
-    if not isinstance(ret, dict):
-        raise CliError(f"Expected a single result, got {type(ret)}.")
-
     if not ret:
         return None
 
-    return ret
+    try:
+        validator = TypeAdapter(JsonMapping)
+        return validator.validate_python(ret)
+    except ValueError as e:
+        raise ValidationError(f"Failed to validate response from {path}: {e}") from e
+
+
+class PaginatedResponse(BaseModel):
+    """Paginated response data from the API."""
+
+    count: int
+    next: str | None
+    previous: str | None
+    results: list[Json]
+
+    @field_validator("count", mode="before")
+    @classmethod
+    def _none_count_is_0(cls, v: Any) -> Any:
+        """Ensure `count` is never `None`."""
+        # Django count doesn't seem to be guaranteed to be an integer.
+        # Ensures here that None is treated as 0.
+        # https://github.com/django/django/blob/bcbc4b9b8a4a47c8e045b060a9860a5c038192de/django/core/paginator.py#L105-L111
+        return v or 0
+
+    @classmethod
+    def from_response(cls, response: Response) -> PaginatedResponse:
+        """Create a PaginatedResponse from a Response."""
+        return cls.model_validate_json(response.text)
+
+
+ListResponse = TypeAdapter(list[Json])
+"""JSON list (array) response adapter."""
+
+
+# TODO: Provide better validation error introspection
+def validate_list_response(response: Response) -> list[Json]:
+    """Parse and validate that a response contains a JSON array.
+
+    :param response: The response to validate.
+    :raises ValidationError: If the response does not contain a valid JSON array.
+    :returns: Parsed response data as a list of Python objects.
+    """
+    try:
+        return ListResponse.validate_json(response.text)
+    # NOTE: ValueError catches custom Pydantic errors too
+    except ValueError as e:
+        raise ValidationError(f"{response.url} did not return a valid JSON array") from e
+
+
+def validate_paginated_response(response: Response) -> PaginatedResponse:
+    """Validate and parse that a response contains paginated JSON data.
+
+    :param response: The response to validate.
+    :raises ValidationError: If the response does not contain valid paginated JSON.
+    :returns: Parsed response data as a PaginatedResponse object.
+    """
+    try:
+        return PaginatedResponse.from_response(response)
+    except ValueError as e:
+        raise ValidationError(f"{response.url} did not return valid paginated JSON") from e
 
 
 @overload
@@ -353,7 +414,7 @@ def get_list_generic(
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[True] = True,
-) -> dict[str, Any]: ...
+) -> Json: ...
 
 
 @overload
@@ -363,7 +424,7 @@ def get_list_generic(
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[False] = False,
-) -> list[dict[str, Any]]: ...
+) -> list[Json]: ...
 
 
 def get_list_generic(
@@ -372,7 +433,7 @@ def get_list_generic(
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: bool | None = False,
-) -> dict[str, Any] | list[dict[str, Any]]:
+) -> Json | list[Json]:
     """Make a get request that produces a list.
 
     Will iterate over paginated results and return result as list. If the number of hits is
@@ -394,8 +455,8 @@ def get_list_generic(
     """
 
     def _check_expect_one_result(
-        ret: list[dict[str, Any]],
-    ) -> dict[str, Any] | list[dict[str, Any]]:
+        ret: list[Json],
+    ) -> Json | list[Json]:
         if expect_one_result:
             if len(ret) == 0:
                 return {}
@@ -409,39 +470,34 @@ def get_list_generic(
     if params is None:
         params = {}
 
-    ret: list[dict[str, Any]] = []
+    response = get(path, params)
 
-    # Get the first page to check the number of hits, and raise an exception if it is too high.
-    get_params = params.copy()
-    # get_params["page_size"] = 1
-    resp = get(path, get_params).json()
+    # Non-paginated results, return them directly
+    if "count" not in response.text:
+        return validate_list_response(response)
 
-    if isinstance(resp, list):
-        # If list, assume it contains dicts
-        return cast(list[dict[str, Any]], resp)
-    elif not isinstance(resp, dict):
-        raise CliError(f"Expected a dict or list from {path!r}, got {type(resp)!r}.")
-    else:
-        resp = cast(dict[str, Any], resp)
+    resp = validate_paginated_response(response)
 
-    if limit and resp.get("count", 0) > abs(limit):
-        cli_warning(f"Too many hits ({resp['count']}), please refine your search criteria.")
+    if limit and resp.count > abs(limit):
+        cli_warning(f"Too many hits ({resp.count}), please refine your search criteria.")
 
     # Short circuit if there are no more pages. This means that there are no more results to
     # be had so we can return the results we already have.
-    if "next" in resp and not resp["next"]:
-        return _check_expect_one_result(resp["results"])
+    if not resp.next:
+        return _check_expect_one_result(resp.results)
 
+    # Iterate over all pages and collect the results
+    ret: list[Json] = []
     while True:
         resp = get(path, params=params, ok404=ok404)
         if resp is None:
             return _check_expect_one_result(ret)
-        result = resp.json()
+        result = validate_paginated_response(resp)
 
-        ret.extend(result["results"])
+        ret.extend(result.results)
 
-        if "next" in result and result["next"]:
-            path = result["next"]
+        if result.next:
+            path = result.next
         else:
             return _check_expect_one_result(ret)
 
@@ -462,7 +518,7 @@ def get_typed(
     :param params: The parameters to pass to the API endpoint.
     :param limit: The maximum number of hits to allow for paginated responses.
 
-    :raises ValidationError: If the response cannot be deserialized into the given type.
+    :raises pydantic.ValidationError: If the response cannot be deserialized into the given type.
 
     :returns: An instance of `type_` populated with data from the response.
     """
@@ -475,21 +531,21 @@ def get_typed(
         return adapter.validate_json(resp.text)
 
 
-def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> ResponseLike | None:
+def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
-def patch(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> ResponseLike | None:
+def patch(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("patch", path, params=params, **kwargs)
 
 
-def delete(path: str, params: dict[str, Any] | None = None) -> ResponseLike | None:
+def delete(path: str, params: dict[str, Any] | None = None) -> Response | None:
     """Use requests to make a delete request."""
     if params is None:
         params = {}

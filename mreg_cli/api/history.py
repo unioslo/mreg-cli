@@ -5,36 +5,47 @@ from __future__ import annotations
 import datetime
 import json
 from enum import Enum
-from typing import Any
+from typing import Any, Self
 
 from pydantic import BaseModel, Field, field_validator
 
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.exceptions import EntityNotFound, InternalError
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.utilities.api import get_list
+from mreg_cli.utilities.api import get_typed
 
 
 class HistoryResource(str, Enum):
-    """History resources."""
+    """History resources for the API.
 
-    Host = "host"
-    Group = "group"
-    HostPolicy_Role = "hostpolicy_role"
-    HostPolicy_Atom = "hostpolicy_atom"
+    Names represent resource names.
+    Values represent resource relations.
+
+    Access resource names and relation with the `resource()` and `relation()` methods.
+    """
+
+    Host = "hosts"
+    Group = "groups"
+    HostPolicy_Role = "roles"
+    HostPolicy_Atom = "atoms"
+
+    @classmethod
+    def _missing_(cls, value: Any) -> HistoryResource:
+        v = str(value).lower()
+        for resource in cls:
+            if resource.value == v:
+                return resource
+            elif resource.name.lower() == v:
+                return resource
+        raise ValueError(f"Unknown resource {value}")
 
     def relation(self) -> str:
-        """Provide the relation of the resource."""
-        if self == HistoryResource.Host:
-            return "hosts"
-        if self == HistoryResource.Group:
-            return "groups"
-        if self == HistoryResource.HostPolicy_Role:
-            return "roles"
-        if self == HistoryResource.HostPolicy_Atom:
-            return "atoms"
+        """Get the resource relation."""
+        return self.value
 
-        raise ValueError(f"Unknown resource {self}")
+    def resource(self) -> str:
+        """Get the resource name."""
+        return self.name.lower()
 
 
 class HistoryItem(BaseModel):
@@ -110,32 +121,24 @@ class HistoryItem(BaseModel):
             item.output(basename)
 
     @classmethod
-    def get(cls, name: str, resource: HistoryResource) -> list[HistoryItem]:
+    def get(cls, name: str, resource: HistoryResource) -> list[Self]:
         """Get history items for a resource."""
-        resource_value = resource.value
-
-        params: dict[str, str | int] = {"resource": resource_value, "name": name}
-
-        ret = get_list(Endpoint.History, params=params)
-
+        params: dict[str, str] = {"resource": resource.resource(), "name": name}
+        ret = get_typed(Endpoint.History, list[cls], params=params)
         if len(ret) == 0:
             raise EntityNotFound(f"No history found for {name}")
 
-        model_ids = ",".join({str(i["model_id"]) for i in ret})
-
+        model_ids = ",".join({str(i.mid) for i in ret})
         params = {
-            "resource": resource_value,
+            "resource": resource.resource(),
             "model_id__in": model_ids,
         }
-
-        ret = get_list(Endpoint.History, params=params)
-
-        data_relation = resource.relation()
+        ret = get_typed(Endpoint.History, list[cls], params=params)
 
         params = {
-            "data__relation": data_relation,
+            "data__relation": resource.relation(),
             "data__id__in": model_ids,
         }
-        ret.extend(get_list(Endpoint.History, params=params))
+        ret.extend(get_typed(Endpoint.History, list[cls], params=params))
 
-        return [cls(**i) for i in ret]
+        return ret
