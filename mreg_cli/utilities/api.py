@@ -20,7 +20,7 @@ from typing import (
     get_origin,
     overload,
 )
-from urllib.parse import urljoin
+from urllib.parse import urljoin,urlencode
 from uuid import uuid4
 
 import requests
@@ -242,6 +242,16 @@ def _request_wrapper(
         timeout=HTTP_TIMEOUT,
     )
     result = cast(requests.Response, result)  # convince mypy that result is a Response
+
+    # This is a workaround for old server versions that can't handle JSON data in requests
+    if result.status_code == 500 and operation_type == 'post' and first and params == {} and not data is None:
+        result = getattr(session, operation_type)(
+            url,
+            params={},
+            timeout=HTTP_TIMEOUT,
+            data=data
+        )
+        result = cast(requests.Response, result)
 
     OutputManager().recording_request(operation_type, url, params, data, result)
 
