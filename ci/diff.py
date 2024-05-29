@@ -1,8 +1,20 @@
+from __future__ import annotations
+
 import difflib
 import json
 import re
 import sys
 from typing import Any, Dict, List
+
+timestamp_pattern = re.compile(
+    r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2})?|\d{4}-\d{2}-\d{2}"
+)
+datetime_str_pattern = re.compile(
+    r"\b[A-Za-z]{3}\s[A-Za-z]{3}\s([0-2]?[0-9]|3[0-1])\s([0-1]?[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])\s[0-9]{4}\b"
+)
+# datetime_str_pattern = re.compile(
+#     r"\b(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s([0-2]?[0-9]|3[0-1])\s([0-1]?[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])\s[0-9]{4}\b"
+# )
 
 
 def replace_timestamps(obj: Any) -> Any:
@@ -11,15 +23,14 @@ def replace_timestamps(obj: Any) -> Any:
     :param obj: A JSON object (dict, list, or primitive type).
     :returns: A new object with timestamps replaced.
     """
-    timestamp_pattern = re.compile(
-        r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2})?|\d{4}-\d{2}-\d{2}"
-    )
     if isinstance(obj, dict):
         return {k: replace_timestamps(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [replace_timestamps(elem) for elem in obj]
     elif isinstance(obj, str):
-        return timestamp_pattern.sub("<TIME>", obj)
+        obj = timestamp_pattern.sub("<TIME>", obj)
+        obj = datetime_str_pattern.sub("<TIME>", obj)
+        return obj
     return obj
 
 
