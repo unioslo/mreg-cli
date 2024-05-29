@@ -28,14 +28,12 @@ from prompt_toolkit import prompt
 from pydantic import (
     BaseModel,
     TypeAdapter,
-    ValidationError,
     field_validator,
 )
 from requests import Response
 
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import CliError, LoginFailedError
-from mreg_cli.exceptions import ValidationError as MregValidationError
+from mreg_cli.exceptions import CliError, LoginFailedError, ValidationError
 from mreg_cli.log import cli_error, cli_warning
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
@@ -350,12 +348,12 @@ def get_list_unique(
     try:
         validator = TypeAdapter(JsonMapping)
         return validator.validate_python(ret)
-    except ValidationError as e:
-        raise MregValidationError(f"Failed to validate response from {path}: {e}") from e
+    except ValueError as e:
+        raise ValidationError(f"Failed to validate response from {path}: {e}") from e
 
 
 class PaginatedResponse(BaseModel):
-    """A paginated result from the API."""
+    """Paginated response data from the API."""
 
     count: int
     next: str | None
@@ -378,22 +376,35 @@ class PaginatedResponse(BaseModel):
 
 
 ListResponse = TypeAdapter(list[Json])
+"""JSON list (array) response adapter."""
 
 
+# TODO: Provide better validation error introspection
 def validate_list_response(response: Response) -> list[Json]:
-    """Validate a list response."""
+    """Parse and validate that a response contains a JSON array.
+
+    :param response: The response to validate.
+    :raises ValidationError: If the response does not contain a valid JSON array.
+    :returns: Parsed response data as a list of Python objects.
+    """
     try:
         return ListResponse.validate_json(response.text)
-    except (ValidationError, ValueError) as e:
-        raise MregValidationError(f"Failed to validate response: {e}") from e
+    # NOTE: ValueError catches custom Pydantic errors too
+    except ValueError as e:
+        raise ValidationError(f"{response.url} did not return a valid JSON array") from e
 
 
 def validate_paginated_response(response: Response) -> PaginatedResponse:
-    """Validate a paginated response."""
+    """Validate and parse that a response contains paginated JSON data.
+
+    :param response: The response to validate.
+    :raises ValidationError: If the response does not contain valid paginated JSON.
+    :returns: Parsed response data as a PaginatedResponse object.
+    """
     try:
         return PaginatedResponse.from_response(response)
-    except (ValidationError, ValueError) as e:
-        raise MregValidationError(f"Failed to validate paginated response: {e}") from e
+    except ValueError as e:
+        raise ValidationError(f"{response.url} did not return valid paginated JSON") from e
 
 
 @overload
@@ -507,7 +518,7 @@ def get_typed(
     :param params: The parameters to pass to the API endpoint.
     :param limit: The maximum number of hits to allow for paginated responses.
 
-    :raises ValidationError: If the response cannot be deserialized into the given type.
+    :raises pydantic.ValidationError: If the response cannot be deserialized into the given type.
 
     :returns: An instance of `type_` populated with data from the response.
     """
