@@ -672,7 +672,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
 
         :returns: A list of subzones.
         """
-        zones = self.get_list_by_field("name__endswith", f"{self.name}")
+        zones = self.get_list_by_field("name__endswith", f".{self.name}")
         return [zone for zone in zones if zone.name != self.name]
 
     def ensure_deletable(self) -> None:
