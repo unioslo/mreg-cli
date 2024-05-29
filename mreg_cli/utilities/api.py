@@ -204,6 +204,10 @@ def _request_wrapper(
         params = {}
     url = urljoin(MregCliConfig().get_url(), path)
 
+    # Strip None values from data
+    if data:
+        data = {k: v for k, v in data.items() if v is not None}
+
     result = getattr(session, operation_type)(
         url,
         params=params,
