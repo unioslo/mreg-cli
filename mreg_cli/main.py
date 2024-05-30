@@ -10,6 +10,7 @@ from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
 import mreg_cli.utilities.api as api
+from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, source
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import LoginFailedError
@@ -47,6 +48,12 @@ def main():
         default_url = config.get_url()
     except ValueError:
         pass
+
+    parser.add_argument(
+        "--version",
+        help="Show version and exit.",
+        action="store_true",
+    )
 
     connect_args = parser.add_argument_group("connection settings")
     connect_args.add_argument(
@@ -134,6 +141,11 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.version:
+        print(f"mreg-cli version {__version__}")
+        raise SystemExit() from None
+
     setup_logging(args.verbosity)
     logger.debug(f"args: {args}")
     conf = {k: v for k, v in vars(args).items() if v}
