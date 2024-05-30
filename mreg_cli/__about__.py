@@ -2,49 +2,57 @@
 
 from __future__ import annotations
 
-import subprocess
-from pathlib import Path
+import logging
+from typing import Annotated, Any
+
+from pydantic import BaseModel, BeforeValidator, Field
+
+from mreg_cli._version import get_versions
 
 __version__ = "1.0.0"
 
-
-def _git_rev_parse(*args: str) -> subprocess.CompletedProcess[str]:
-    """Run `git rev-parse` with the given arguments in the mreg-cli directory."""
-    p = Path(__file__).parent
-    return subprocess.run(
-        ["git", "-C", str(p), "rev-parse", *args],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+logger = logging.getLogger(__name__)
 
 
-def is_from_git() -> bool:
-    """Check if the current mreg-cli installation comes from git."""
-    try:
-        proc = _git_rev_parse("--is-inside-work-tree")
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        return False
-    else:
-        # If working tree is empty, git returns "false" (with code 0[?])
-        # https://stackoverflow.com/questions/2180270/check-if-current-directory-is-a-git-repository#comment77714402_16925062
-        if "true" in proc.stdout:
-            return True
-        return False
+def _convert_to_str(value: Any) -> str:
+    """Convert a value to a string."""
+    if value is None:
+        return ""
+    return str(value)
 
 
-def get_git_commit() -> str:
+ForcedStrField = Annotated[str, BeforeValidator(_convert_to_str)]
+"""Field that converts everything to a string. None is converted to an empty string."""
+
+
+class VersionInfo(BaseModel):
+    """Model for versioneer.get_versions()."""
+
+    date: ForcedStrField
+    dirty: bool | None  # yes, this can be None if we have an error!
+    error: str | None
+    full_revisionid: ForcedStrField = Field(validation_alias="full-revisionid")
+    version: ForcedStrField
+
+    @classmethod
+    def from_versioneer(cls) -> VersionInfo:
+        """Get the version information from versioneer."""
+        return cls.model_validate(get_versions())
+
+
+def get_git_revision() -> str:
     """Get the git commit hash of the current mreg-cli installation."""
     try:
-        proc = _git_rev_parse("HEAD")
-    except (FileNotFoundError, subprocess.CalledProcessError):
+        v = VersionInfo.from_versioneer()
+    except Exception as e:
+        logger.exception(f"Failed to get version info: {e}")
         return ""
-    else:
-        return proc.stdout.strip()
+    if v.error:
+        logger.error(f"Error when getting version info with versioneer: {v.error}")
+        return ""
+    return v.full_revisionid
 
 
 def get_version_extended() -> str:
     """Get the mreg-cli version with git commit hash if available."""
-    if is_from_git():
-        return f"{__version__} (git: {get_git_commit()})"
-    return __version__
+    return f"{__version__} ({get_git_revision()})"
