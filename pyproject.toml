@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 68.0", "versioneer[toml]"]
+requires = ["setuptools >= 68.0", "setuptools_scm>=8"]
 
 [project]
 name = "mreg-cli"
@@ -191,11 +191,5 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
 
-# Versioneer is used to determine git revision
-[tool.versioneer]
-VCS = "git"
-style = "pep440"
-versionfile_source = "mreg_cli/_version.py"
-versionfile_build = "mreg_cli/_version.py"
-tag_prefix = "v"
-parentdir_prefix = "mreg_cli-"
+[tool.setuptools_scm]
+version_file = "mreg_cli/_version.py"
