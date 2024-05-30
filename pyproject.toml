@@ -1,5 +1,6 @@
 [build-system]
 requires = ["setuptools >= 68.0", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "mreg-cli"
@@ -35,9 +36,6 @@ Repository = 'https://github.com/unioslo/mreg-cli/'
 
 [project.scripts]
 mreg-cli = "mreg_cli.main:main"
-
-[tool.setuptools.dynamic]
-version = { attr = "mreg_cli.__about__.__version__" }
 
 [tool.setuptools.packages.find]
 include = ["mreg_cli*"]

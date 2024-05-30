@@ -10,7 +10,7 @@ from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
 import mreg_cli.utilities.api as api
-from mreg_cli.__about__ import get_version_extended
+from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, source
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import LoginFailedError
@@ -143,7 +143,7 @@ def main():
     args = parser.parse_args()
 
     if args.version:
-        print(f"mreg-cli version {get_version_extended()}")
+        print(f"mreg-cli {__version__}")
         raise SystemExit() from None
 
     setup_logging(args.verbosity)
