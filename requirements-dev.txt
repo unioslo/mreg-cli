@@ -53,6 +53,8 @@ pyinstaller-hooks-contrib==2024.6
     # via pyinstaller
 pyproject-api==1.6.1
     # via tox
+pysocks==1.7.1
+    # via requests
 python-dateutil==2.9.0.post0
 requests==2.32.2
 ruff==0.4.5
