@@ -4,24 +4,16 @@ from __future__ import annotations
 
 import argparse
 import ipaddress
-import urllib.parse
 from typing import Any
 
 from mreg_cli.api.fields import IPAddressField
 from mreg_cli.api.models import Network
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError, ForceMissing, InputFailure, CliWarning, CliError
+from mreg_cli.exceptions import DeleteError, EntityNotFound, ForceMissing, InputFailure
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, patch, post
-from mreg_cli.utilities.network import (
-    get_network,
-    get_network_reserved_ips,
-    get_network_unused_list,
-    get_network_used_list,
-    ipsort,
-)
+from mreg_cli.utilities.network import get_network, get_network_reserved_ips
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
 from mreg_cli.utilities.validators import (
     is_valid_category_tag,
@@ -53,12 +45,12 @@ def get_network_range_from_input(net: str) -> str:
     if is_valid_ip(net):
         network = get_network(net)
         if not network:
-            raise CliError(f"Network not found for ip {net}")
+            raise EntityNotFound(f"Network not found for ip {net}")
         return network.network
     elif is_valid_network(net):
         return net
     else:
-        raise CliWarning("Not a valid ip or network")
+        raise InputFailure("Not a valid ip or network")
 
 
 # helper methods
@@ -294,12 +286,12 @@ def find(args: argparse.Namespace) -> None:
             params[param] = val
 
         if not params:
-            raise CliWarning("Need at least one search criteria")
+            raise InputFailure("Need at least one search criteria")
 
         networks = Network.get_by_query(params)
 
     if not networks:
-        raise CliWarning("No networks matching the query were found.")
+        raise EntityNotFound("No networks matching the query were found.")
 
     Network.output_multiple(networks)
     if not args.silent:

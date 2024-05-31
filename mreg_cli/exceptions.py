@@ -8,6 +8,7 @@ context of a CLI command.
 from __future__ import annotations
 
 import sys
+from typing import Any
 
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
@@ -35,9 +36,11 @@ class CliError(CliException):
     the user cannot be expected to resolve.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
+        """Initialize the error."""
         super().__init__(*args, **kwargs)
         from mreg_cli.outputmanager import OutputManager
+
         OutputManager().add_error(super().__str__())
 
     def formatted_exception(self) -> str:
@@ -45,7 +48,7 @@ class CliError(CliException):
 
         :returns: Formatted error message.
         """
-        return f"<ansired>{super().__str__()}</ansired>"
+        return f"<ansired>ERROR: {super().__str__()}</ansired>"
 
 
 class CliWarning(CliException):
@@ -54,9 +57,11 @@ class CliWarning(CliException):
     Warnings should be recoverable by changing the user input.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
+        """Initialize the warning."""
         super().__init__(*args, **kwargs)
         from mreg_cli.outputmanager import OutputManager
+
         OutputManager().add_warning(super().__str__())
 
     def formatted_exception(self) -> str:
@@ -111,6 +116,30 @@ class UnexpectedDataError(APIError):
 
 class ValidationError(CliError):
     """Error class for validation failures."""
+
+    pass
+
+
+class FileError(CliError):
+    """Error class for file errors."""
+
+    pass
+
+
+class APINotOk(CliWarning):
+    """Warning class for API not returning OK."""
+
+    pass
+
+
+class TooManyResults(CliWarning):
+    """Warning class for too many results."""
+
+    pass
+
+
+class NoHistoryFound(CliWarning):
+    """Warning class for no history found."""
 
     pass
 

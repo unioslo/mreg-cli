@@ -19,7 +19,7 @@ from urllib.parse import urlencode, urlparse
 import requests
 from pydantic import BaseModel
 
-from mreg_cli.exceptions import CliError
+from mreg_cli.exceptions import FileError, InputFailure
 from mreg_cli.types import RecordingEntry, TimeInfo
 
 
@@ -175,7 +175,7 @@ class OutputManager:
             with open(filename, "w") as _:
                 pass
         except OSError as exc:
-            raise CliError(f"Unable open file for writing: {filename}") from exc
+            raise FileError(f"Unable open recording file for writing: {filename}") from exc
 
         self._recording = True
         self._filename = filename
@@ -388,12 +388,12 @@ class OutputManager:
                     filter_re = re.compile(filter_str)
                 except re.error as exc:
                     if "|" in filter_str:
-                        raise CliError(
-                            "ERROR: Command parts that contain a pipe ('|') must be quoted.",
+                        raise InputFailure(
+                            "Command parts that contain a pipe ('|') must be quoted.",
                         ) from exc
                     else:
-                        raise CliError(
-                            "ERROR: Unable to compile regex '{}': {}", filter_str, exc
+                        raise InputFailure(
+                            f"Unable to compile regex '{filter_str}': {exc}"
                         ) from exc
 
         return (command, filter_re, negate)

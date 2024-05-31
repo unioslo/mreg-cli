@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-
+from mreg_cli.exceptions import EntityOwnershipMismatch, ForceMissing
 from mreg_cli.utilities.api import get
 
 
@@ -24,9 +24,9 @@ def zone_check_for_hostname(name: str, force: bool, require_zone: bool = False) 
     zoneinfo = zoneinfo_for_hostname(name)
     if zoneinfo is None:
         if require_zone:
-            raise CliWarning(f"{name} isn't in a zone controlled by MREG.")
+            raise EntityOwnershipMismatch(f"{name} isn't in a zone controlled by MREG.")
         if not force:
-            raise CliWarning(f"{name} isn't in a zone controlled by MREG, must force")
+            raise ForceMissing(f"{name} isn't in a zone controlled by MREG, must force")
     elif "delegation" in zoneinfo and not force:
         delegation = zoneinfo["delegation"]["name"]
-        raise CliWarning(f"{name} is in zone delegation {delegation}, must force")
+        raise ForceMissing(f"{name} is in zone delegation {delegation}, must force")

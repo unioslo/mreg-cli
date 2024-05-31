@@ -8,7 +8,7 @@ from typing import Any
 from mreg_cli.api.models import Zone
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError
+from mreg_cli.exceptions import DeleteError, InputFailure
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -154,7 +154,7 @@ def zone_list(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (forward, reverse)
     """
     if not (args.forward or args.reverse):
-        raise CliWarning("Add either -forward or -reverse as argument")
+        raise InputFailure("Add either -forward or -reverse as argument")
     Zone.output_zones(args.forward, args.reverse)
 
 

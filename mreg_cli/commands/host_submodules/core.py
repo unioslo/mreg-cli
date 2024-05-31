@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.history import HistoryResource
 from mreg_cli.api.models import ForwardZone, Host, HostList, HostT, MACAddressField, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
@@ -451,9 +450,7 @@ def set_comment(args: argparse.Namespace) -> None:
     if not updated_host:
         raise PatchError(f"Failed to update comment of {host.name}")
 
-    OutputManager().add_ok(
-        f"Updated comment of {host} to {args.comment}"
-    )
+    OutputManager().add_ok(f"Updated comment of {host} to {args.comment}")
 
 
 @command_registry.register_command(

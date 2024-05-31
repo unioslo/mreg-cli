@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-
+from mreg_cli.exceptions import EntityNotFound, MultipleEntititesFound
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import get_list
 from mreg_cli.utilities.validators import is_valid_ipv4, is_valid_ipv6
@@ -323,7 +323,9 @@ def output_ip_info(ip: str) -> None:
 
     output_ipaddresses(ipaddresses, names=True)
     if len(ipaddresses) > 1 and ptrhost is None:
-        raise CliWarning(f"IP {ip} used by {len(ipaddresses)} hosts, but no PTR override")
+        raise MultipleEntititesFound(
+            f"IP {ip} used by {len(ipaddresses)} hosts, but no PTR override"
+        )
     if ptrhost is None:
         path = "/api/v1/hosts/"
         params = {
@@ -335,5 +337,5 @@ def output_ip_info(ip: str) -> None:
         elif ipaddresses:
             ptrhost = "default"
     if not ipaddresses and ptrhost is None:
-        raise CliWarning(f"Found no hosts or ptr override matching IP {ip}")
+        raise EntityNotFound(f"Found no hosts or ptr override matching IP {ip}")
     output_ptr(ip, str(ptrhost))

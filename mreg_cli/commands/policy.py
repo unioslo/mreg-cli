@@ -5,11 +5,10 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.history import HistoryResource
 from mreg_cli.api.models import Atom, Host, HostPolicy, Role
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-
+from mreg_cli.exceptions import CreateError, DeleteError, EntityAlreadyExists
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -75,7 +74,7 @@ def atom_delete(args: argparse.Namespace) -> None:
     if atom.delete():
         OutputManager().add_ok(f"Deleted atom {name}")
     else:
-        raise CliError(f"Failed to delete atom {name}")
+        raise DeleteError(f"Failed to delete atom {name}")
 
 
 @command_registry.register_command(
@@ -127,7 +126,7 @@ def role_delete(args: argparse.Namespace) -> None:
     if role.delete():
         OutputManager().add_ok(f"Deleted role {name!r}")
     else:
-        raise CliError(f"Failed to delete role {name!r}")
+        raise DeleteError(f"Failed to delete role {name!r}")
 
 
 @command_registry.register_command(
@@ -151,7 +150,7 @@ def add_atom(args: argparse.Namespace) -> None:
     if role.add_atom(atom_name):
         OutputManager().add_ok(f"Added atom {atom_name!r} to role {role_name!r}")
     else:
-        raise CliError(f"Failed to add atom {atom_name!r} to role {role_name!r}")
+        raise CreateError(f"Failed to add atom {atom_name!r} to role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -175,7 +174,7 @@ def remove_atom(args: argparse.Namespace) -> None:
     if role.remove_atom(atom_name):
         OutputManager().add_ok(f"Removed atom {atom_name!r} from role {role_name!r}")
     else:
-        raise CliError(f"Failed to remove atom {atom_name!r} from role {role_name!r}")
+        raise DeleteError(f"Failed to remove atom {atom_name!r} from role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -375,7 +374,7 @@ def rename(args: argparse.Namespace) -> None:
     newname: str = args.newname
 
     if oldname == newname:
-        raise CliWarning("Old and new names are the same")
+        raise EntityAlreadyExists("Old and new names are the same")
 
     # Check if role or atom with the new name already exists
     HostPolicy.get_role_or_atom_and_raise(newname)

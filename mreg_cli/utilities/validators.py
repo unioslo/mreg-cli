@@ -10,7 +10,7 @@ import ipaddress
 import re
 
 from mreg_cli.config import MregCliConfig
-
+from mreg_cli.exceptions import InputFailure, InvalidIPv4Address, InvalidIPv6Address
 from mreg_cli.types import IP_Version
 
 
@@ -92,9 +92,9 @@ def is_ipversion(ip: str, ipversion: IP_Version) -> None:
     # Ip sanity check
     if ipversion == 4:
         if not is_valid_ipv4(ip):
-            raise CliWarning(f"not a valid ipv4: {ip}")
+            raise InvalidIPv4Address(f"not a valid ipv4: {ip}")
     elif ipversion == 6:
         if not is_valid_ipv6(ip):
-            raise CliWarning(f"not a valid ipv6: {ip}")
+            raise InvalidIPv6Address(f"not a valid ipv6: {ip}")
     else:
-        raise CliWarning(f"Unknown ipversion: {ipversion}")
+        raise InputFailure(f"Unknown ipversion: {ipversion}")

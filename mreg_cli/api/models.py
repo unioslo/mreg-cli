@@ -5,7 +5,6 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from mreg_cli.outputmanager import OutputManager
 from typing import Any, ClassVar, Literal, Self, cast
 
 from pydantic import (
@@ -25,12 +24,12 @@ from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
-    CliWarning,
     CreateError,
     DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,
+    ForceMissing,
     InputFailure,
     InternalError,
     InvalidIPAddress,
@@ -614,7 +613,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
                     if not host.ipaddresses and not force:
                         errors.append(f"{nameserver} has no A-record/glue, must force")
         if errors:
-            raise CliWarning("\n".join(errors))
+            raise ForceMissing("\n".join(errors))
 
     @classmethod
     def create_zone(
