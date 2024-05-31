@@ -143,7 +143,7 @@ def main():
     args = parser.parse_args()
 
     if args.version:
-        print(f"mreg-cli version {__version__}")
+        print(f"mreg-cli {__version__}")
         raise SystemExit() from None
 
     setup_logging(args.verbosity)
