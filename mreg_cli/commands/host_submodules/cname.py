@@ -15,7 +15,7 @@ from mreg_cli.exceptions import (
     InputFailure,
     PatchError,
 )
-from mreg_cli.log import cli_info
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
 
@@ -64,7 +64,7 @@ def cname_add(args: argparse.Namespace) -> None:
     cname = CNAME.get_by_host_and_name(host.name, alias)
 
     if cname:
-        cli_info(f"Added CNAME {cname.name} for {host.name.hostname}.", print_msg=True)
+        OutputManager().add_ok(f"Added CNAME {cname.name} for {host.name.hostname}.")
     else:
         raise CreateError(f"Failed to add CNAME {alias} for {host.name.hostname}.")
 
@@ -106,7 +106,7 @@ def cname_remove(args: argparse.Namespace) -> None:
         )
 
     if cname.delete():
-        cli_info(f"Removed CNAME {cname.name} for {host.name}.", print_msg=True)
+        OutputManager().add_line(f"Removed CNAME {cname.name} for {host.name}.")
     else:
         raise DeleteError(f"Failed to remove CNAME {cname.name} for {host.name}.")
 
@@ -139,8 +139,8 @@ def cname_replace(args: argparse.Namespace) -> None:
 
     updated_cname = cname_obj.patch({"host": host.id})
     if updated_cname:
-        cli_info(
-            f"Moved CNAME alias {cname}: {old_host.name.hostname} -> {host.name}.", print_msg=True
+        OutputManager().add_ok(
+            f"Moved CNAME alias {cname}: {old_host.name.hostname} -> {host.name}."
         )
     else:
         raise PatchError(f"Failed to move CNAME alias {cname}.")

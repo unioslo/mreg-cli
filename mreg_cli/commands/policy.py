@@ -9,7 +9,7 @@ from mreg_cli.api.history import HistoryResource
 from mreg_cli.api.models import Atom, Host, HostPolicy, Role
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.log import cli_error, cli_info, cli_warning
+
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -53,7 +53,7 @@ def atom_create(args: argparse.Namespace) -> None:
         params["create_date"] = created
 
     Atom.create(params)
-    cli_info(f"Created new atom {name}", print_msg=True)
+    OutputManager().add_ok(f"Created new atom {name}")
 
 
 @command_registry.register_command(
@@ -73,9 +73,9 @@ def atom_delete(args: argparse.Namespace) -> None:
 
     atom = Atom.get_by_name_or_raise(name)
     if atom.delete():
-        cli_info(f"Deleted atom {name}", print_msg=True)
+        OutputManager().add_ok(f"Deleted atom {name}")
     else:
-        cli_error(f"Failed to delete atom {name}")
+        raise CliError(f"Failed to delete atom {name}")
 
 
 @command_registry.register_command(
@@ -105,7 +105,7 @@ def role_create(args: argparse.Namespace) -> None:
         params["create_date"] = created
 
     Role.create(params)
-    cli_info(f"Created new role {name!r}", print_msg=True)
+    OutputManager().add_ok(f"Created new role {name!r}")
 
 
 @command_registry.register_command(
@@ -125,9 +125,9 @@ def role_delete(args: argparse.Namespace) -> None:
 
     role = Role.get_by_name_or_raise(name)
     if role.delete():
-        cli_info(f"Deleted role {name!r}", print_msg=True)
+        OutputManager().add_ok(f"Deleted role {name!r}")
     else:
-        cli_error(f"Failed to delete role {name!r}")
+        raise CliError(f"Failed to delete role {name!r}")
 
 
 @command_registry.register_command(
@@ -149,9 +149,9 @@ def add_atom(args: argparse.Namespace) -> None:
 
     role = Role.get_by_name_or_raise(role_name)
     if role.add_atom(atom_name):
-        cli_info(f"Added atom {atom_name!r} to role {role_name!r}", print_msg=True)
+        OutputManager().add_ok(f"Added atom {atom_name!r} to role {role_name!r}")
     else:
-        cli_error(f"Failed to add atom {atom_name!r} to role {role_name!r}")
+        raise CliError(f"Failed to add atom {atom_name!r} to role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -173,9 +173,9 @@ def remove_atom(args: argparse.Namespace) -> None:
 
     role = Role.get_by_name_or_raise(role_name)
     if role.remove_atom(atom_name):
-        cli_info(f"Removed atom {atom_name!r} from role {role_name!r}", print_msg=True)
+        OutputManager().add_ok(f"Removed atom {atom_name!r} from role {role_name!r}")
     else:
-        cli_error(f"Failed to remove atom {atom_name!r} from role {role_name!r}")
+        raise CliError(f"Failed to remove atom {atom_name!r} from role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -309,7 +309,7 @@ def host_add(args: argparse.Namespace) -> None:
 
     for host in hosts:
         role.add_host(host.name.hostname)
-        cli_info(f"Added host {host.name!r} to role {role_name!r}", print_msg=True)
+        OutputManager().add_ok(f"Added host {host.name!r} to role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -354,7 +354,7 @@ def host_remove(args: argparse.Namespace) -> None:
 
     for host in hosts:
         role.remove_host(host.name.hostname)
-        cli_info(f"Removed host {host.name!r} from role {role_name!r}", print_msg=True)
+        OutputManager().add_ok(f"Removed host {host.name!r} from role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -375,14 +375,14 @@ def rename(args: argparse.Namespace) -> None:
     newname: str = args.newname
 
     if oldname == newname:
-        cli_warning("Old and new names are the same")
+        raise CliWarning("Old and new names are the same")
 
     # Check if role or atom with the new name already exists
     HostPolicy.get_role_or_atom_and_raise(newname)
 
     role_or_atom = HostPolicy.get_role_or_atom_or_raise(oldname)
     role_or_atom.rename(newname)
-    cli_info(f"Renamed {oldname!r} to {newname!r}", True)
+    OutputManager().add_ok(f"Renamed {oldname!r} to {newname!r}")
 
 
 @command_registry.register_command(
@@ -404,7 +404,7 @@ def set_description(args: argparse.Namespace) -> None:
 
     role_or_atom = HostPolicy.get_role_or_atom_or_raise(name)
     role_or_atom.set_description(description)
-    cli_info(f"updated description to {description!r} for {name!r}", print_msg=True)
+    OutputManager().add_ok(f"updated description to {description!r} for {name!r}")
 
 
 @command_registry.register_command(
@@ -426,7 +426,7 @@ def add_label_to_role(args: argparse.Namespace) -> None:
 
     role = Role.get_by_name_or_raise(role_name)
     role.add_label(label_name)
-    cli_info(f"Added the label {label_name!r} to the role {role_name!r}.", print_msg=True)
+    OutputManager().add_ok(f"Added the label {label_name!r} to the role {role_name!r}.")
 
 
 @command_registry.register_command(
@@ -448,7 +448,7 @@ def remove_label_from_role(args: argparse.Namespace) -> None:
 
     role = Role.get_by_name_or_raise(role_name)
     role.remove_label(label_name)
-    cli_info(f"Removed the label {label_name!r} from the role {role_name!r}.", print_msg=True)
+    OutputManager().add_ok(f"Removed the label {label_name!r} from the role {role_name!r}.")
 
 
 @command_registry.register_command(

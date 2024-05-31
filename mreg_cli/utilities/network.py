@@ -12,7 +12,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from mreg_cli.api.models import Network
-from mreg_cli.log import cli_warning
+
 from mreg_cli.types import IP_networkTV
 from mreg_cli.utilities.api import get, get_typed
 from mreg_cli.utilities.validators import is_valid_ip, is_valid_network
@@ -27,7 +27,7 @@ def get_network_first_unused_ip(network: dict[str, Any]) -> str:
     """
     unused = get_network_first_unused(network["network"])
     if not unused:
-        cli_warning("No free addresses remaining on network {}".format(network["network"]))
+        raise CliWarning("No free addresses remaining on network {}".format(network["network"]))
     return unused
 
 
@@ -72,9 +72,9 @@ def get_network(ip: str) -> Network | None:
         net = Network.get_by_ip(ipaddress.ip_address(ip))
         if net:
             return net
-        cli_warning("ip address exists but is not an address in any existing network")
+        raise CliWarning("ip address exists but is not an address in any existing network")
     else:
-        cli_warning("Not a valid ip range or ip address")
+        raise CliWarning("Not a valid ip range or ip address")
 
 
 def get_network_used_count(ip_range: str) -> int:

@@ -17,8 +17,6 @@ from mreg_cli.exceptions import LoginFailedError
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import try_token_or_login
 
-from . import log
-
 logger = logging.getLogger(__name__)
 
 

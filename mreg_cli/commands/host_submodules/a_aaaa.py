@@ -26,7 +26,7 @@ from mreg_cli.exceptions import (
     ForceMissing,
     InputFailure,
 )
-from mreg_cli.log import cli_info
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
 
 
@@ -79,9 +79,8 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
 
     ip_obj.patch(fields={"ipaddress": str(new_ip)})
 
-    cli_info(
-        f"changed ip {args.old} to {new_ip} for {host}",
-        print_msg=True,
+    OutputManager().add_ok(
+        f"changed ip {args.old} to {new_ip} for {host}"
     )
 
 
@@ -119,7 +118,7 @@ def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
         ptr.patch(fields={"host": to_host.id})
         msg += "Moved PTR override."
 
-    cli_info(msg, print_msg=True)
+    OutputManager().add_line(msg)
 
 
 def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
@@ -141,7 +140,7 @@ def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
         raise EntityNotFound(f"Host {host} does not have IP {ip}")
 
     if host_ip.delete():
-        cli_info(f"Removed ipaddress {args.ip} from {host}", print_msg=True)
+        OutputManager().add_ok(f"Removed ipaddress {args.ip} from {host}")
     else:
         raise DeleteError(f"Failed to remove ipaddress {args.ip} from {host}")
 

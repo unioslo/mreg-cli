@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from mreg_cli.log import cli_info, cli_warning
+
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import get_list
 from mreg_cli.utilities.validators import is_valid_ipv4, is_valid_ipv6
@@ -295,7 +295,7 @@ def output_host_info(info: dict[str, Any]) -> None:
     policies = get_list("/api/v1/hostpolicy/roles/", params={"hosts__name": info["name"]})
     output_policies([p["name"] for p in policies])
 
-    cli_info("printed host info for {}".format(info["name"]))
+    OutputManager().add_line("printed host info for {}".format(info["name"]))
 
 
 def output_ip_info(ip: str) -> None:
@@ -323,7 +323,7 @@ def output_ip_info(ip: str) -> None:
 
     output_ipaddresses(ipaddresses, names=True)
     if len(ipaddresses) > 1 and ptrhost is None:
-        cli_warning(f"IP {ip} used by {len(ipaddresses)} hosts, but no PTR override")
+        raise CliWarning(f"IP {ip} used by {len(ipaddresses)} hosts, but no PTR override")
     if ptrhost is None:
         path = "/api/v1/hosts/"
         params = {
@@ -335,5 +335,5 @@ def output_ip_info(ip: str) -> None:
         elif ipaddresses:
             ptrhost = "default"
     if not ipaddresses and ptrhost is None:
-        cli_warning(f"Found no hosts or ptr override matching IP {ip}")
+        raise CliWarning(f"Found no hosts or ptr override matching IP {ip}")
     output_ptr(ip, str(ptrhost))

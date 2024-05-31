@@ -7,7 +7,7 @@ from typing import Any
 
 from dateutil.parser import parse
 
-from mreg_cli.log import cli_warning
+
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.utilities.api import get_list
 
@@ -24,7 +24,7 @@ def get_history_items(
     }
     ret = get_list(path, params=params)
     if len(ret) == 0:
-        cli_warning(f"No history found for {name}")
+        raise CliWarning(f"No history found for {name}")
     # Get all model ids, a group gets a new one when deleted and created again
     model_ids = ",".join({str(i["model_id"]) for i in ret})
     params = {
@@ -92,6 +92,6 @@ def format_history_items(ownname: str, items: list[dict[str, Any]]) -> None:
             else:
                 msg = ", ".join(f"{k} = '{v}'" for k, v in data.items())
         else:
-            cli_warning(f"Unhandled history entry: {i}")
+            raise CliWarning(f"Unhandled history entry: {i}")
 
         OutputManager().add_line(f"{timestamp} [{i['user']}]: {model} {action}: {msg}")

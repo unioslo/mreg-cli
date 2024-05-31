@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from mreg_cli.log import cli_warning
+
 from mreg_cli.utilities.api import get
 
 
@@ -24,9 +24,9 @@ def zone_check_for_hostname(name: str, force: bool, require_zone: bool = False) 
     zoneinfo = zoneinfo_for_hostname(name)
     if zoneinfo is None:
         if require_zone:
-            cli_warning(f"{name} isn't in a zone controlled by MREG.")
+            raise CliWarning(f"{name} isn't in a zone controlled by MREG.")
         if not force:
-            cli_warning(f"{name} isn't in a zone controlled by MREG, must force")
+            raise CliWarning(f"{name} isn't in a zone controlled by MREG, must force")
     elif "delegation" in zoneinfo and not force:
         delegation = zoneinfo["delegation"]["name"]
-        cli_warning(f"{name} is in zone delegation {delegation}, must force")
+        raise CliWarning(f"{name} is in zone delegation {delegation}, must force")

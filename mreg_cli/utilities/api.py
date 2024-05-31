@@ -33,8 +33,8 @@ from pydantic import (
 from requests import Response
 
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import CliError, LoginFailedError, ValidationError
-from mreg_cli.log import cli_error, cli_warning
+from mreg_cli.exceptions import CliError, CliWarning, LoginFailedError, ValidationError
+
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
 from mreg_cli.types import Json, JsonMapping
@@ -183,9 +183,9 @@ def auth_and_update_token(username: str, password: str) -> None:
             res = result.text
         if result.status_code == 400:
             if "non_field_errors" in res:
-                cli_error("Invalid username/password")
+                raise CliError("Invalid username/password")
         else:
-            cli_error(res)
+            raise CliError(res)
     token = result.json()["token"]
     set_session_token(token)
     TokenFile.set_entry(username, MregCliConfig().get_url(), token)
@@ -201,7 +201,7 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
             pass
         else:
             message += f"\n{json.dumps(body, indent=2)}"
-        cli_warning(message)
+        raise CliWarning(message)
 
 
 def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
@@ -507,7 +507,7 @@ def get_list_generic(
     resp = validate_paginated_response(response)
 
     if limit and resp.count > abs(limit):
-        cli_warning(f"Too many hits ({resp.count}), please refine your search criteria.")
+        raise CliWarning(f"Too many hits ({resp.count}), please refine your search criteria.")
 
     # Short circuit if there are no more pages. This means that there are no more results to
     # be had so we can return the results we already have.

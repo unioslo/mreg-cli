@@ -6,12 +6,13 @@ import urllib.parse
 from typing import Any
 
 from mreg_cli.exceptions import CliWarning, EntityNotFound
-from mreg_cli.log import cli_error, cli_info, cli_warning
+
 from mreg_cli.utilities.api import get, get_list, patch
 from mreg_cli.utilities.network import ips_are_in_same_vlan
 from mreg_cli.utilities.shared import clean_hostname, format_mac
 from mreg_cli.utilities.validators import is_valid_ip, is_valid_ipv4, is_valid_ipv6, is_valid_mac
 
+from mreg_cli.outputmanager import OutputManager
 
 def get_unique_ip_by_name_or_ip(arg: str) -> dict[str, Any]:
     """Get A/AAAA record by either ip address or host name.
@@ -35,9 +36,9 @@ def get_unique_ip_by_name_or_ip(arg: str) -> dict[str, Any]:
         }
         ips = get_list(path, params=params)
         if not len(ips):
-            cli_warning(f"ip {arg} doesn't exist.")
+            raise CliWarning(f"ip {arg} doesn't exist.")
         elif len(ips) > 1:
-            cli_warning(f"ip {arg} is in use by {len(ips)} hosts")
+            raise CliWarning(f"ip {arg} is in use by {len(ips)} hosts")
         return ips[0]
 
     # We were not given an IP, so resolve as a host.
@@ -105,11 +106,11 @@ def assoc_mac_to_ip(mac: str, ip: dict[str, Any], force: bool = False) -> str | 
                 )
             )
     else:
-        cli_warning(f"invalid MAC address: {mac}")
+        raise CliWarning(f"invalid MAC address: {mac}")
 
     old_mac = ip.get("macaddress")
     if old_mac == new_mac:
-        cli_info("new and old mac are identical. Ignoring.", print_msg=True)
+        OutputManager().add_line("new and old mac are identical. Ignoring.")
         return None
     elif old_mac and not force:
         cli_warning(
@@ -170,7 +171,7 @@ def host_info_by_name(name: str, follow_cname: bool = True) -> dict[str, Any]:
     name = clean_hostname(name)
     hostinfo = _host_info_by_name(name, follow_cname=follow_cname)
     if hostinfo is None:
-        cli_warning(f"host not found: {name!r}", exception=EntityNotFound)
+        raise CliWarning(f"host not found: {name!r}", exception=EntityNotFound)
 
     return hostinfo
 
@@ -193,10 +194,10 @@ def resolve_ip(ip: str) -> str:
 
     # Response data sanity check
     if len(hosts) > 1:
-        cli_error(f'resolve ip got multiple matches for ip "{ip}"')
+        raise CliError(f'resolve ip got multiple matches for ip "{ip}"')
 
     if len(hosts) == 0:
-        cli_warning(f"{ip} doesnt belong to any host", exception=EntityNotFound)
+        raise CliWarning(f"{ip} doesnt belong to any host", exception=EntityNotFound)
     return hosts[0]["name"]
 
 
@@ -213,7 +214,7 @@ def get_host_by_name(name: str) -> str:
     if len(hosts) == 1:
         assert hosts[0]["name"] == hostname
         return hostname
-    cli_warning(f"host not found: {name}", exception=EntityNotFound)
+    raise CliWarning(f"host not found: {name}", exception=EntityNotFound)
 
 
 def _cname_info_by_name(name: str) -> dict[str, Any] | None:
@@ -252,4 +253,4 @@ def get_info_by_name(name: str) -> tuple[str, dict[str, Any]]:
     info = _srv_info_by_name(name)
     if info is not None:
         return "srv", info
-    cli_warning(f"not found: {name!r}", exception=EntityNotFound)
+    raise CliWarning(f"not found: {name!r}", exception=EntityNotFound)

@@ -11,8 +11,7 @@ from mreg_cli.api.fields import IPAddressField
 from mreg_cli.api.models import Network
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError, ForceMissing, InputFailure
-from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.exceptions import DeleteError, ForceMissing, InputFailure, CliWarning, CliError
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.api import delete, get, patch, post
@@ -54,12 +53,12 @@ def get_network_range_from_input(net: str) -> str:
     if is_valid_ip(net):
         network = get_network(net)
         if not network:
-            cli_error(f"Network not found for ip {net}")
+            raise CliError(f"Network not found for ip {net}")
         return network.network
     elif is_valid_network(net):
         return net
     else:
-        cli_warning("Not a valid ip or network")
+        raise CliWarning("Not a valid ip or network")
 
 
 # helper methods
@@ -171,7 +170,7 @@ def create(args: argparse.Namespace) -> None:
         }
     )
 
-    cli_info(f"created network {args.network}", print_msg=True)
+    OutputManager().add_ok(f"created network {args.network}")
 
 
 @command_registry.register_command(
@@ -295,12 +294,12 @@ def find(args: argparse.Namespace) -> None:
             params[param] = val
 
         if not params:
-            cli_warning("Need at least one search criteria")
+            raise CliWarning("Need at least one search criteria")
 
         networks = Network.get_by_query(params)
 
     if not networks:
-        cli_warning("No networks matching the query were found.")
+        raise CliWarning("No networks matching the query were found.")
 
     Network.output_multiple(networks)
     if not args.silent:
@@ -367,7 +366,7 @@ def remove(args: argparse.Namespace) -> None:
     if not args.force:
         raise ForceMissing("Must force.")
     if net.delete():
-        cli_info(f"Removed network {args.network}", print_msg=True)
+        OutputManager().add_ok(f"Removed network {args.network}")
     else:
         raise DeleteError(f"Unable to delete network {args.network}")
 
@@ -389,7 +388,7 @@ def add_excluded_range(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.add_excluded_range(args.start_ip, args.end_ip)
-    cli_info(f"Added exclude range to {net.network}", True)
+    OutputManager().add_ok(f"Added exclude range to {net.network}")
 
 
 @command_registry.register_command(
@@ -409,7 +408,7 @@ def remove_excluded_range(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.remove_excluded_range(args.start_ip, args.end_ip)
-    cli_info(f"Removed exclude range from {net.network}", print_msg=True)
+    OutputManager().add_ok(f"Removed exclude range from {net.network}")
 
 
 @command_registry.register_command(
@@ -445,7 +444,7 @@ def set_category(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.set_category(args.category)
-    cli_info(f"Updated category tag to {args.category!r} for {net.network}", True)
+    OutputManager().add_ok(f"Updated category tag to {args.category!r} for {net.network}")
 
 
 @command_registry.register_command(
@@ -464,7 +463,7 @@ def set_description(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.set_description(args.description)
-    cli_info(f"Updated description to {args.description!r} for {net.network}", True)
+    OutputManager().add_ok(f"Updated description to {args.description!r} for {net.network}")
 
 
 @command_registry.register_command(
@@ -482,7 +481,7 @@ def set_dns_delegated(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.set_dns_delegation(True)
-    cli_info(f"Set DNS delegation to 'True' for {net.network!r}", True)
+    OutputManager().add_ok(f"Set DNS delegation to 'True' for {net.network!r}")
 
 
 @command_registry.register_command(
@@ -500,7 +499,7 @@ def set_frozen(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.set_frozen(True)
-    cli_info(f"Updated frozen to 'True' for {net.network}", print_msg=True)
+    OutputManager().add_ok(f"Updated frozen to 'True' for {net.network}")
 
 
 @command_registry.register_command(
@@ -519,7 +518,7 @@ def set_location(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.set_location(args.location)
-    cli_info(f"Updated location tag to '{args.location}' for {args.network}", True)
+    OutputManager().add_ok(f"Updated location tag to '{args.location}' for {args.network}")
 
 
 @command_registry.register_command(
@@ -543,7 +542,7 @@ def set_reserved(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.set_reserved(args.number)
-    cli_info(f"Updated reserved to '{args.number}' for {net.network}", print_msg=True)
+    OutputManager().add_ok(f"Updated reserved to '{args.number}' for {net.network}")
 
 
 @command_registry.register_command(
@@ -562,7 +561,7 @@ def set_vlan(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.set_vlan(args.vlan)
-    cli_info(f"Updated vlan to {args.vlan} for {net.network}", print_msg=True)
+    OutputManager().add_ok(f"Updated vlan to {args.vlan} for {net.network}")
 
 
 @command_registry.register_command(
@@ -580,7 +579,7 @@ def unset_dns_delegated(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.set_dns_delegation(False)
-    cli_info(f"Set DNS delegation to 'False' for {net.network!r}", True)
+    OutputManager().add_ok(f"Set DNS delegation to 'False' for {net.network!r}")
 
 
 @command_registry.register_command(
@@ -598,4 +597,4 @@ def unset_frozen(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_network_or_raise(args.network)
     net.set_frozen(False)
-    cli_info(f"Updated frozen to 'False' for {net.network}", print_msg=True)
+    OutputManager().add_ok(f"Updated frozen to 'False' for {net.network}")

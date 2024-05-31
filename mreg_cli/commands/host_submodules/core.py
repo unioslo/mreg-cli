@@ -28,7 +28,7 @@ from mreg_cli.exceptions import (
     InputFailure,
     PatchError,
 )
-from mreg_cli.log import cli_info
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
@@ -142,9 +142,8 @@ def add(args: argparse.Namespace) -> None:
             if len(host.ipaddresses) == 1:
                 host = host.associate_mac_to_ip(macaddress, host.ipaddresses[0].ipaddress)
             else:
-                cli_info(
-                    "Failed to associate MAC address to IP, multiple IP addresses after creation.",
-                    print_msg=True,
+                OutputManager().add_ok(
+                    "Failed to associate MAC address to IP, multiple IP addresses after creation."
                 )
 
     host.output()
@@ -244,7 +243,7 @@ def remove(args: argparse.Namespace) -> None:
                 warnings.append(f"    - {naptr.replacement}")
         else:
             for naptr in naptrs:
-                cli_info(
+                OutputManager().add_ok(
                     "deleted NAPTR record {} when removing {}".format(
                         naptr.replacement,
                         host.name,
@@ -260,7 +259,7 @@ def remove(args: argparse.Namespace) -> None:
                 warnings.append(f"    - {srv.name}")
         else:
             for srv in srvs:
-                cli_info(
+                OutputManager().add_ok(
                     "deleted SRV record {} when removing {}".format(
                         srv.name,
                         host.name,
@@ -275,7 +274,7 @@ def remove(args: argparse.Namespace) -> None:
                 warnings.append(f"    - {ptr.ipaddress}")
         else:
             for ptr in host.ptr_overrides:
-                cli_info(
+                OutputManager().add_ok(
                     "deleted PTR record {} when removing {}".format(
                         ptr.ipaddress,
                         host.name,
@@ -288,7 +287,7 @@ def remove(args: argparse.Namespace) -> None:
         raise ForceMissing(f"{host.name} requires force and override for deletion:\n{warn_msg}")
 
     if host.delete():
-        cli_info(f"removed {host.name}", print_msg=True)
+        OutputManager().add_ok(f"removed {host.name}")
     else:
         raise DeleteError(f"failed to remove {host.name}")
 
@@ -422,7 +421,7 @@ def rename(args: argparse.Namespace) -> None:
         raise ForceMissing("Wildcards must be forced.")
 
     new_host = old_host.rename(new_name)
-    cli_info(f"renamed {old_host} to {new_name}", print_msg=True)
+    OutputManager().add_ok(f"renamed {old_host} to {new_name}")
 
 
 # Add 'set_comment' as a sub command to the 'host' command
@@ -452,9 +451,8 @@ def set_comment(args: argparse.Namespace) -> None:
     if not updated_host:
         raise PatchError(f"Failed to update comment of {host.name}")
 
-    cli_info(
-        f"Updated comment of {host} to {args.comment}",
-        print_msg=True,
+    OutputManager().add_ok(
+        f"Updated comment of {host} to {args.comment}"
     )
 
 
@@ -478,7 +476,7 @@ def set_contact(args: argparse.Namespace) -> None:
     if not updated_host:
         raise PatchError(f"Failed to update contact of {host.name}")
 
-    cli_info(f"Updated contact of {host} to {args.contact}", print_msg=True)
+    OutputManager().add_ok(f"Updated contact of {host} to {args.contact}")
 
 
 @command_registry.register_command(

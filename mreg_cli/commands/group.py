@@ -9,7 +9,7 @@ from mreg_cli.api.models import Host, HostGroup
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CreateError, DeleteError, EntityNotFound, ForceMissing
-from mreg_cli.log import cli_info
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
 command_registry = CommandRegistry()
@@ -42,7 +42,7 @@ def create(args: argparse.Namespace) -> None:
     if not newgroup:
         raise CreateError("Failed to create new group '{args.name}'")
 
-    cli_info(f"Created new group {newgroup.name}", print_msg=True)
+    OutputManager().add_ok(f"Created new group {newgroup.name}")
 
 
 @command_registry.register_command(
@@ -79,7 +79,7 @@ def rename(args: argparse.Namespace) -> None:
     group = HostGroup.get_by_name_or_raise(args.oldname)
     HostGroup.get_by_name_and_raise(args.newname)
     group.rename(args.newname)
-    cli_info(f"Renamed group {args.oldname!r} to {args.newname!r}", True)
+    OutputManager().add_ok(f"Renamed group {args.oldname!r} to {args.newname!r}")
 
 
 @command_registry.register_command(
@@ -121,7 +121,7 @@ def group_delete(args: argparse.Namespace) -> None:
     if not group.delete():
         raise DeleteError(f"Failed to delete group {args.name}")
 
-    cli_info(f"Deleted group {args.name!r}", print_msg=True)
+    OutputManager().add_ok(f"Deleted group {args.name!r}")
 
 
 @command_registry.register_command(
@@ -143,7 +143,7 @@ def group_add(args: argparse.Namespace) -> None:
 
     for src in sourcegroups:
         destgroup.add_group(src.name)
-        cli_info(f"Added group {src.name!r} to {destgroup.name!r}", print_msg=True)
+        OutputManager().add_ok(f"Added group {src.name!r} to {destgroup.name!r}")
 
 
 @command_registry.register_command(
@@ -168,7 +168,7 @@ def group_remove(args: argparse.Namespace) -> None:
 
     for name in args.srcgroup:
         ownergroup.remove_group(name)
-        cli_info(f"Removed group {name!r} from {ownergroup.name!r}", print_msg=True)
+        OutputManager().add_ok(f"Removed group {name!r} from {ownergroup.name!r}")
 
 
 @command_registry.register_command(
@@ -191,7 +191,7 @@ def host_add(args: argparse.Namespace) -> None:
         host = Host.get_by_any_means_or_raise(name)
         fqname = host.name.hostname
         hostgroup.add_host(fqname)
-        cli_info(f"Added host {fqname!r} to {args.group!r}", print_msg=True)
+        OutputManager().add_ok(f"Added host {fqname!r} to {args.group!r}")
 
 
 @command_registry.register_command(
@@ -220,7 +220,7 @@ def host_remove(args: argparse.Namespace) -> None:
 
     for name in to_remove:
         hostgroup.remove_host(name)
-        cli_info(f"Removed host {name!r} from {args.group!r}", print_msg=True)
+        OutputManager().add_ok(f"Removed host {name!r} from {args.group!r}")
 
 
 @command_registry.register_command(
@@ -264,7 +264,7 @@ def owner_add(args: argparse.Namespace) -> None:
 
     for name in args.owners:
         hostgroup.add_owner(name)
-        cli_info(f"Added owner {name!r} to {args.group!r}", print_msg=True)
+        OutputManager().add_ok(f"Added owner {name!r} to {args.group!r}")
 
 
 @command_registry.register_command(
@@ -289,7 +289,7 @@ def owner_remove(args: argparse.Namespace) -> None:
 
     for name in args.owners:
         hostgroup.remove_owner(name)
-        cli_info(f"Removed owner {name!r} from {args.group!r}", print_msg=True)
+        OutputManager().add_ok(f"Removed owner {name!r} from {args.group!r}")
 
 
 @command_registry.register_command(
@@ -307,7 +307,7 @@ def set_description(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, description)
     """
     HostGroup.get_by_name_or_raise(args.name).set_description(args.description)
-    cli_info(f"Updated description to {args.description!r} for {args.name!r}", print_msg=True)
+    OutputManager().add_ok(f"Updated description to {args.description!r} for {args.name!r}")
 
 
 @command_registry.register_command(

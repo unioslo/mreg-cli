@@ -14,7 +14,7 @@ from typing import Any
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.log import cli_error
+
 
 registry = CommandRegistry()
 
@@ -45,7 +45,7 @@ class HostCommands(BaseCommand):
 
         # Get the directory path of the package
         if package.__file__ is None:
-            cli_error(f"Unable to initalize host submodules from {package_name}")
+            raise CliError(f"Unable to initalize host submodules from {package_name}")
 
         package_dir = os.path.dirname(package.__file__)
 

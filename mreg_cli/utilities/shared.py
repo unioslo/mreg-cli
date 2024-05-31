@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from mreg_cli.log import cli_warning
+
 
 
 # Temporary, to avoid circular imports and to allow old code to remain without
@@ -25,7 +25,7 @@ def clean_hostname(name: str | bytes) -> str:
 
     # bytes?
     if not isinstance(name, (str, bytes)):
-        cli_warning(f"Invalid input for hostname: {name}")
+        raise CliWarning(f"Invalid input for hostname: {name}")
 
     if isinstance(name, bytes):
         name = name.decode()
@@ -34,7 +34,7 @@ def clean_hostname(name: str | bytes) -> str:
 
     # invalid characters?
     if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", name) is None:
-        cli_warning(f"Invalid input for hostname: {name}")
+        raise CliWarning(f"Invalid input for hostname: {name}")
 
     # Assume user is happy with domain, but strip the dot.
     if name.endswith("."):
@@ -57,7 +57,7 @@ def string_to_int(value: Any, error_tag: str) -> int:
     try:
         return int(value)
     except ValueError:
-        cli_warning("%s: Not a valid integer" % error_tag)
+        raise CliWarning("%s: Not a valid integer" % error_tag)
 
 
 def format_mac(mac: str) -> str:

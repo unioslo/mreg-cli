@@ -5,6 +5,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
+from mreg_cli.outputmanager import OutputManager
 from typing import Any, ClassVar, Literal, Self, cast
 
 from pydantic import (

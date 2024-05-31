@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any, Callable
+from mreg_cli.outputmanager import OutputManager
 from urllib.parse import quote, urljoin
 
 

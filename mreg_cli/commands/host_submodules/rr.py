@@ -66,7 +66,7 @@ from mreg_cli.exceptions import (
     InputFailure,
     PatchError,
 )
-from mreg_cli.log import cli_info
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
 
@@ -95,7 +95,7 @@ def hinfo_add(args: argparse.Namespace) -> None:
     host = host.refetch()
 
     if host.hinfo and host.hinfo.cpu == args.cpu and host.hinfo.os == args.os:
-        cli_info(f"Added HINFO record for {host.name.hostname}.", print_msg=True)
+        OutputManager().add_ok(f"Added HINFO record for {host.name.hostname}.")
     else:
         raise CreateError(f"Failed to add correct HINFO for {host}")
 
@@ -121,7 +121,7 @@ def hinfo_remove(args: argparse.Namespace) -> None:
 
     hinfo = HInfo.get_by_field("host", str(host.id))
     if hinfo and hinfo.delete():
-        cli_info(f"Removed HINFO record for {host.name.hostname}.", print_msg=True)
+        OutputManager().add_ok(f"Removed HINFO record for {host.name.hostname}.")
     else:
         raise DeleteError(f"Failed to remove HINFO for {host}")
 
@@ -143,13 +143,13 @@ def hinfo_show(args: argparse.Namespace) -> None:
     """
     host = Host.get_by_any_means_or_raise(args.name)
     if not host.hinfo:
-        cli_info(f"No hinfo for {host.name.hostname}", print_msg=True)
+        OutputManager().add_line(f"No hinfo for {host.name.hostname}")
 
     hinfo = HInfo.get_by_field("host", str(host.id))
     if hinfo:
         hinfo.output()
     else:
-        cli_info(f"No hinfo for {host.name.hostname}", print_msg=True)
+        OutputManager().add_line(f"No hinfo for {host.name.hostname}")
 
 
 @command_registry.register_command(
@@ -172,7 +172,7 @@ def loc_remove(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"{host} already has no loc set.")
 
     if host.loc.delete():
-        cli_info(f"Removed LOC for {host.name.hostname}.", print_msg=True)
+        OutputManager().add_ok(f"Removed LOC for {host.name.hostname}.")
     else:
         raise DeleteError(f"Failed to remove LOC for {host}")
 
@@ -202,7 +202,7 @@ def loc_add(args: argparse.Namespace) -> None:
     host = host.refetch()
 
     if host.loc and host.loc.loc == args.loc:
-        cli_info(f"Added LOC record for {host.name.hostname}.", print_msg=True)
+        OutputManager().add_ok(f"Added LOC record for {host.name.hostname}.")
     else:
         CreateError(f"Failed to set LOC for {host}")
 
@@ -251,7 +251,7 @@ def mx_add(args: argparse.Namespace) -> None:
         raise EntityAlreadyExists(f"{host} already has that MX defined.")
 
     MX.create({"host": str(host.id), "priority": args.priority, "mx": args.mx})
-    cli_info(f"Added MX record to {host.name.hostname}.", print_msg=True)
+    OutputManager().add_ok(f"Added MX record to {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -277,7 +277,7 @@ def mx_remove(args: argparse.Namespace) -> None:
         )
 
     if mx.delete():
-        cli_info(f"deleted MX from {host.name.hostname}.", print_msg=True)
+        OutputManager().add_ok(f"deleted MX from {host.name.hostname}.")
     else:
         raise DeleteError(f"Failed to remove MX for {host}")
 
@@ -357,7 +357,7 @@ def naptr_add(args: argparse.Namespace) -> None:
     arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
 
     NAPTR.create(arg_data)
-    cli_info(f"Added NAPTR record to {host.name.hostname}.", print_msg=True)
+    OutputManager().add_ok(f"Added NAPTR record to {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -418,7 +418,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"No matching NAPTR record found for {host}")
 
     if len(to_delete) > 1 and not args.force:
-        cli_info("Found multiple matching NAPTR records:", print_msg=True)
+        OutputManager().add_line("Found multiple matching NAPTR records:")
         NAPTR.output_multiple(to_delete)
         raise ForceMissing("Use --force to delete all matching records.")
 
@@ -426,7 +426,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
     # Right now we may end up in a situation where some records are deleted and some are not.
     for naptr in to_delete:
         if naptr.delete():
-            cli_info(f"Deleted NAPTR record from {host.name.hostname}.", print_msg=True)
+            OutputManager().add_ok(f"Deleted NAPTR record from {host.name.hostname}.")
         else:
             raise DeleteError(f"Failed to remove NAPTR for {host}")
 
@@ -491,9 +491,8 @@ def ptr_change(args: argparse.Namespace) -> None:
     if not ptr_override.patch(data):
         raise PatchError(f"Failed to move PTR record from {old_host} to {new_host}")
     else:
-        cli_info(
-            f"Moved PTR record {ip} from {old_host.name.hostname} to {new_host.name.hostname}.",
-            print_msg=True,
+        OutputManager().add_ok(
+            f"Moved PTR record {ip} from {old_host.name.hostname} to {new_host.name.hostname}."
         )
 
 
@@ -522,7 +521,7 @@ def ptr_remove(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"No PTR record for {host} with IP {ip}")
 
     if ptr_override.delete():
-        cli_info(f"Removed PTR record {ip} from {host.name.hostname}.", print_msg=True)
+        OutputManager().add_ok(f"Removed PTR record {ip} from {host.name.hostname}.")
     else:
         raise DeleteError(f"Failed to remove PTR record from {host}")
 
@@ -563,7 +562,7 @@ def ptr_add(args: argparse.Namespace) -> None:
         raise ForceMissing("Address is reserved. Requires force")
 
     PTR_override.create({"host": str(host.id), "ipaddress": str(ip)})
-    cli_info(f"Added PTR record {ip} to {host.name.hostname}.", print_msg=True)
+    OutputManager().add_ok(f"Added PTR record {ip} to {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -585,7 +584,7 @@ def ptr_show(args: argparse.Namespace) -> None:
 
     host = Host.get_by_any_means_or_raise(str(ip), inform_as_ptr=False)
     if not host.ptr_overrides:
-        cli_info(f"No PTR records for {host.name.hostname}", print_msg=True)
+        OutputManager().add_line(f"No PTR records for {host.name.hostname}")
 
     for ptr in host.ptr_overrides:
         if ip.as_ip() == ptr.ipaddress:
@@ -638,7 +637,7 @@ def srv_add(args: argparse.Namespace) -> None:
     arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
 
     Srv.create(arg_data)
-    cli_info(f"Added SRV record {sname} with target {host}.", print_msg=True)
+    OutputManager().add_ok(f"Added SRV record {sname} with target {host}.")
 
 
 @command_registry.register_command(
@@ -694,7 +693,7 @@ def srv_remove(args: argparse.Namespace) -> None:
         )
 
     if srv.delete():
-        cli_info(f"Removed SRV record {sname} from {host.name.hostname}.", print_msg=True)
+        OutputManager().add_ok(f"Removed SRV record {sname} from {host.name.hostname}.")
     else:
         raise DeleteError(f"Failed to remove SRV for {sname}")
 
@@ -752,7 +751,7 @@ def sshfp_add(args: argparse.Namespace) -> None:
 
     arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
     SSHFP.create(arg_data)
-    cli_info(f"Added SSHFP record for {host.name.hostname}.", print_msg=True)
+    OutputManager().add_ok(f"Added SSHFP record for {host.name.hostname}.")
 
 
 @command_registry.register_command(
@@ -798,9 +797,8 @@ def sshfp_remove(args: argparse.Namespace) -> None:
                 raise DeleteError(f"Failed to remove SSHFP for {host}")
             else:
                 fp = sshfp.fingerprint
-                cli_info(
-                    f"Removed SSHFP record with fingerprint {fp} for {host}.",
-                    print_msg=True,
+                OutputManager().add_ok(
+                    f"Removed SSHFP record with fingerprint {fp} for {host}."
                 )
 
 
@@ -876,7 +874,7 @@ def ttl_set(args: argparse.Namespace) -> None:
 
     result = target.patch({"ttl": valid_ttl})
     if result:
-        cli_info(f"Set TTL for {target} to {args.ttl}.", print_msg=True)
+        OutputManager().add_ok(f"Set TTL for {target} to {args.ttl}.")
     else:
         raise PatchError(f"Failed to set TTL for {target}")
 
@@ -927,7 +925,7 @@ def txt_add(args: argparse.Namespace) -> None:
         raise EntityAlreadyExists(f"{host} already has that TXT defined.")
 
     TXT.create({"host": str(host.id), "txt": args.text})
-    cli_info(f"Added TXT record to {host}.", print_msg=True)
+    OutputManager().add_ok(f"Added TXT record to {host}.")
 
 
 @command_registry.register_command(
@@ -956,7 +954,7 @@ def txt_remove(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"{host} has no TXT record matching '{args.text}'")
 
     if txt.delete():
-        cli_info(f"Removed TXT record '{args.text}' from {host}.", print_msg=True)
+        OutputManager().add_ok(f"Removed TXT record '{args.text}' from {host}.")
     else:
         raise DeleteError(f"Failed to remove TXT with '{args.text}' for {host}")
 
