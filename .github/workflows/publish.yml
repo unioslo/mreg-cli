@@ -1,0 +1,74 @@
+# Ripped off from https://github.com/pypa/hatch/blob/6322daba750f8db73361fa1aaa965bc99605303b/.github/workflows/build-hatch.yml
+name: build mreg-cli
+
+on:
+  push:
+    tags:
+      - v*
+
+concurrency:
+  group: build-mreg-cli-${{ github.head_ref }}
+
+jobs:
+  build_pypi:
+    name: Build wheels and source distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install build dependencies
+        run: python -m pip install --upgrade build
+
+      - name: Build source distribution
+        run: python -m build
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pypi_artifacts
+          path: dist/*
+          if-no-files-found: error
+
+  build_pyinstaller:
+    name: Build pyinstaller
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-latest]
+        python-version:
+          - '3.12'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run PyInstaller with Tox
+        run: |
+          python -m ensurepip --upgrade
+          python -m pip install tox tox-gh-actions
+          tox -e build 
+      - uses: actions/upload-artifact@v3
+        with:
+          name: mreg-cli-${{ matrix.os }}
+          path: dist/mreg_cli
+          if-no-files-found: error
+  publish:
+    name: Publish release
+    needs:
+      - build_pypi
+      - build_pyinstaller
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: pypi_artifacts
+          path: dist
+
+      - name: Push build artifacts to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.5.2
+        with:
+          skip_existing: true
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN_MREG_CLI }}
