@@ -30,7 +30,6 @@ jobs:
       - name: Install mreg-cli
         run: |
           python -m ensurepip --upgrade
-          pip install -r requirements.txt
           pip install -e .
       - name: Test and compare api calls
         run: ci/run_testsuite_and_record.sh
@@ -55,8 +54,6 @@ jobs:
         run: |
           python -m ensurepip --upgrade
           python -m pip install tox tox-gh-actions
-          python -m pip install -r requirements.txt
-          python -m pip install -r requirements-dev.txt
       - name: Test with tox
         run: tox r
         
