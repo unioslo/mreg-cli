@@ -244,7 +244,7 @@ def _request_wrapper(
     result = cast(requests.Response, result)  # convince mypy that result is a Response
 
     # This is a workaround for old server versions that can't handle JSON data in requests
-    if result.status_code == 500 and operation_type == 'post' and first and params == {} and not data is None:
+    if result.status_code == 500 and (operation_type == 'post' or operation_type == 'patch') and params == {} and not data is None:
         result = getattr(session, operation_type)(
             url,
             params={},
