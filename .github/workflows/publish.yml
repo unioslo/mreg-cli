@@ -49,9 +49,8 @@ jobs:
       - name: Run PyInstaller with Tox
         run: |
           python -m ensurepip --upgrade
-          python -m pip install tox tox-gh-actions
-          tox -e build 
-      - uses: actions/upload-artifact@v3
+          python -m pip install tox tox-uv tox-gh-actions
+          tox -e python3.12 
         with:
           name: mreg-cli-${{ matrix.os }}
           path: dist/mreg_cli

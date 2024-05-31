@@ -53,7 +53,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m ensurepip --upgrade
-          python -m pip install tox tox-gh-actions
+          python -m pip install tox tox-uv tox-gh-actions 
       - name: Test with tox
         run: tox r
         
