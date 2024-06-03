@@ -50,33 +50,6 @@ def is_valid_network(net: str) -> bool:
         return False
 
 
-def is_valid_mac(mac: str) -> bool:
-    """Check if mac is a valid MAC address."""
-    return bool(re.match(r"^([a-fA-F0-9]{2}[\.:-]?){5}[a-fA-F0-9]{2}$", mac))
-
-
-def is_valid_ttl(ttl: int | str | bytes) -> bool:  # int?
-    """Check application specific ttl restrictions."""
-    if ttl in ("", "default"):
-        return True
-    if not isinstance(ttl, int):
-        try:
-            ttl = int(ttl)
-        except ValueError:
-            return False
-    return 300 <= ttl <= 68400
-
-
-def is_valid_email(email: str | bytes) -> bool:
-    """Check if email looks like a valid email."""
-    if not isinstance(email, str):
-        try:
-            email = email.decode()
-        except ValueError:
-            return False
-    return True if re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email) else False
-
-
 def is_valid_location_tag(loc: str) -> bool:
     """Check if valid location tag."""
     return loc in MregCliConfig().get_location_tags()
@@ -85,16 +58,3 @@ def is_valid_location_tag(loc: str) -> bool:
 def is_valid_category_tag(cat: str) -> bool:
     """Check if valid location tag."""
     return cat in MregCliConfig().get_category_tags()
-
-
-def is_ipversion(ip: str, ipversion: IP_Version) -> None:
-    """Check that the given ip is of the given ipversion."""
-    # Ip sanity check
-    if ipversion == 4:
-        if not is_valid_ipv4(ip):
-            raise InvalidIPv4Address(f"not a valid ipv4: {ip}")
-    elif ipversion == 6:
-        if not is_valid_ipv6(ip):
-            raise InvalidIPv6Address(f"not a valid ipv6: {ip}")
-    else:
-        raise InputFailure(f"Unknown ipversion: {ipversion}")
