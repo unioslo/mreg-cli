@@ -204,6 +204,12 @@ class InvalidNetwork(CliWarning):
     pass
 
 
+class NetworkOverlap(CliWarning):
+    """Warning class for a networkthat overlaps with another network."""
+
+    pass
+
+
 class LoginFailedError(CliException):
     """Error class for login failure."""
 

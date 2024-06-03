@@ -2,71 +2,17 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from mreg_cli.exceptions import InputFailure
-
-
-# Temporary, to avoid circular imports and to allow old code to remain without
-# breaking. This should be removed once the all the old code is refactored.
-def clean_hostname(name: str | bytes) -> str:
-    """Ensure hostname is fully qualified, lowercase, and has valid characters.
-
-    :param name: The hostname to clean.
-
-    :raises CliWarning: If the hostname is invalid.
-
-    :returns: The cleaned hostname.
-    """
-    import re
-
-    from mreg_cli.config import MregCliConfig
-
-    # bytes?
-    if not isinstance(name, (str, bytes)):
-        raise InputFailure(f"Invalid input for hostname: {name}")
-
-    if isinstance(name, bytes):
-        name = name.decode()
-
-    name = name.lower()
-
-    # invalid characters?
-    if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", name) is None:
-        raise InputFailure(f"Invalid input for hostname: {name}")
-
-    # Assume user is happy with domain, but strip the dot.
-    if name.endswith("."):
-        return name[:-1]
-
-    # If a dot in name, assume long name.
-    if "." in name:
-        return name
-
-    config = MregCliConfig()
-    default_domain = config.get("domain")
-    # Append domain name if in config and it does not end with it
-    if default_domain and not name.endswith(default_domain):
-        return f"{name}.{default_domain}"
-    return name
 
 
 def string_to_int(value: Any, error_tag: str) -> int:
     """Convert a string to an integer."""
     try:
         return int(value)
-    except ValueError:
-        raise InputFailure("%s: Not a valid integer" % error_tag)
-
-
-def format_mac(mac: str) -> str:
-    """Create a strict 'aa:bb:cc:11:22:33' MAC address.
-
-    Replaces any other delimiters with a colon and turns it into all lower case.
-    """
-    mac = re.sub("[.:-]", "", mac).lower()
-    return ":".join(["%s" % (mac[i : i + 2]) for i in range(0, 12, 2)])
+    except ValueError as e:
+        raise InputFailure("%s: Not a valid integer" % error_tag) from e
 
 
 def convert_wildcard_to_regex(

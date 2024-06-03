@@ -3,24 +3,23 @@
 from __future__ import annotations
 
 import argparse
-import ipaddress
 from typing import Any
 
 from mreg_cli.api.fields import IPAddressField
 from mreg_cli.api.models import Network
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError, EntityNotFound, ForceMissing, InputFailure
+from mreg_cli.exceptions import (
+    DeleteError,
+    EntityNotFound,
+    ForceMissing,
+    InputFailure,
+    NetworkOverlap,
+)
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.network import get_network, get_network_reserved_ips
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
-from mreg_cli.utilities.validators import (
-    is_valid_category_tag,
-    is_valid_ip,
-    is_valid_location_tag,
-    is_valid_network,
-)
+from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
 command_registry = CommandRegistry()
 
@@ -31,79 +30,6 @@ class NetworkCommands(BaseCommand):
     def __init__(self, cli: Any) -> None:
         """Initialize the network commands."""
         super().__init__(cli, command_registry, "network", "Manage networks.", "Manage networks")
-
-
-def get_network_range_from_input(net: str) -> str:
-    """Return network range from input.
-
-    - If input is a valid ip address, return the network range of the ip address.
-    - If input is a valid network range, return the input.
-    - Otherwise, print a warning and abort.
-    """
-    if net.endswith("/"):
-        net = net[:-1]
-    if is_valid_ip(net):
-        network = get_network(net)
-        if not network:
-            raise EntityNotFound(f"Network not found for ip {net}")
-        return network.network
-    elif is_valid_network(net):
-        return net
-    else:
-        raise InputFailure("Not a valid ip or network")
-
-
-# helper methods
-def print_network_unused(count: int, padding: int = 25) -> None:
-    """Pretty print amount of unused addresses."""
-    OutputManager().add_line(
-        "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)")
-    )
-
-
-def format_network_excluded_ranges(info: list[dict[str, Any]], padding: int = 25) -> None:
-    """Pretty print excluded ranges."""
-    if not info:
-        return
-    count = 0
-    for i in info:
-        start_ip = ipaddress.ip_address(i["start_ip"])
-        end_ip = ipaddress.ip_address(i["end_ip"])
-        count += int(end_ip) - int(start_ip) + 1
-    manager = OutputManager()
-    manager.add_line("{1:<{0}}{2} ipaddresses".format(padding, "Excluded ranges:", count))
-    for i in info:
-        manager.add_line("{1:<{0}}{2} -> {3}".format(padding, "", i["start_ip"], i["end_ip"]))
-
-
-def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
-    """Pretty print ip range and reserved addresses list."""
-    network = ipaddress.ip_network(ip_range)
-    manager = OutputManager()
-    manager.add_line(
-        "{1:<{0}}{2} - {3}".format(
-            padding, "IP-range:", network.network_address, network.broadcast_address
-        )
-    )
-    manager.add_line("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
-    manager.add_line("{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)"))
-    res = get_network_reserved_ips(ip_range)
-    res.remove(str(network.network_address))
-    broadcast = False
-    if str(network.broadcast_address) in res:
-        res.remove(str(network.broadcast_address))
-        broadcast = True
-    for host in res:
-        manager.add_line("{1:<{0}}{2}".format(padding, "", host))
-    if broadcast:
-        manager.add_line(
-            "{1:<{0}}{2}{3}".format(padding, "", network.broadcast_address, " (broadcast)")
-        )
-
-
-def print_network(info: int | str, text: str, padding: int = 25) -> None:
-    """Pretty print network info."""
-    OutputManager().add_line("{1:<{0}}{2}".format(padding, text, info))
 
 
 ##########################################
@@ -145,10 +71,8 @@ def create(args: argparse.Namespace) -> None:
     networks = Network.get_list()
     for network in networks:
         if network.overlaps(arg_network):
-            cli_warning(
-                "Overlap found between new network {} and existing network {}".format(
-                    arg_network, network.network
-                )
+            raise NetworkOverlap(
+                f"New network {arg_network} overlaps existing network {network.network}"
             )
 
     Network.create(
@@ -183,7 +107,7 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (networks)
     """
-    networks = [Network.get_by_network_or_raise(net) for net in args.networks]
+    networks = [Network.get_by_any_means_or_raise(net) for net in args.networks]
     Network.output_multiple(networks)
 
 
