@@ -11,30 +11,24 @@ import logging
 import os
 import re
 import sys
-from typing import (
-    Any,
-    Literal,
-    NoReturn,
-    TypeVar,
-    cast,
-    get_origin,
-    overload,
-)
-from urllib.parse import urljoin,urlencode
+from typing import Any, Literal, NoReturn, TypeVar, cast, get_origin, overload
+from urllib.parse import urljoin
 from uuid import uuid4
 
 import requests
 from prompt_toolkit import prompt
-from pydantic import (
-    BaseModel,
-    TypeAdapter,
-    field_validator,
-)
+from pydantic import BaseModel, TypeAdapter, field_validator
 from requests import Response
 
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import CliError, CliWarning, LoginFailedError, ValidationError
-
+from mreg_cli.exceptions import (
+    APINotOk,
+    CliError,
+    LoginFailedError,
+    MultipleEntititesFound,
+    TooManyResults,
+    ValidationError,
+)
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
 from mreg_cli.types import Json, JsonMapping
@@ -161,7 +155,7 @@ def prompt_for_password_and_try_update_token() -> None:
     try:
         user = MregCliConfig().get("user")
         if not user:
-            raise CliError("Unable to determine username.")
+            raise LoginFailedError("Unable to determine username.")
         auth_and_update_token(user, password)
     except CliError as e:
         e.print_self()
@@ -183,9 +177,9 @@ def auth_and_update_token(username: str, password: str) -> None:
             res = result.text
         if result.status_code == 400:
             if "non_field_errors" in res:
-                raise CliError("Invalid username/password")
+                raise LoginFailedError("Invalid username/password")
         else:
-            raise CliError(res)
+            raise LoginFailedError(res)
     token = result.json()["token"]
     set_session_token(token)
     TokenFile.set_entry(username, MregCliConfig().get_url(), token)
@@ -201,7 +195,7 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
             pass
         else:
             message += f"\n{json.dumps(body, indent=2)}"
-        raise CliWarning(message)
+        raise APINotOk(message)
 
 
 def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
@@ -244,13 +238,13 @@ def _request_wrapper(
     result = cast(requests.Response, result)  # convince mypy that result is a Response
 
     # This is a workaround for old server versions that can't handle JSON data in requests
-    if result.status_code == 500 and (operation_type == 'post' or operation_type == 'patch') and params == {} and not data is None:
-        result = getattr(session, operation_type)(
-            url,
-            params={},
-            timeout=HTTP_TIMEOUT,
-            data=data
-        )
+    if (
+        result.status_code == 500
+        and (operation_type == "post" or operation_type == "patch")
+        and params == {}
+        and data is not None
+    ):
+        result = getattr(session, operation_type)(url, params={}, timeout=HTTP_TIMEOUT, data=data)
         result = cast(requests.Response, result)
 
     OutputManager().recording_request(operation_type, url, params, data, result)
@@ -384,7 +378,7 @@ class PaginatedResponse(BaseModel):
     """Paginated response data from the API."""
 
     count: int
-    next: str | None
+    next: str | None  # noqa: A003
     previous: str | None
     results: list[Json]
 
@@ -489,7 +483,7 @@ def get_list_generic(
             if len(ret) == 0:
                 return {}
             if len(ret) != 1:
-                raise CliError(f"Expected exactly one result, got {len(ret)}.")
+                raise MultipleEntititesFound(f"Expected exactly one result, got {len(ret)}.")
 
             return ret[0]
 
@@ -507,7 +501,7 @@ def get_list_generic(
     resp = validate_paginated_response(response)
 
     if limit and resp.count > abs(limit):
-        raise CliWarning(f"Too many hits ({resp.count}), please refine your search criteria.")
+        raise TooManyResults(f"Too many hits ({resp.count}), please refine your search criteria.")
 
     # Short circuit if there are no more pages. This means that there are no more results to
     # be had so we can return the results we already have.

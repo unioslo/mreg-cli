@@ -28,7 +28,7 @@ from mreg_cli.commands.policy import PolicyCommands
 from mreg_cli.commands.zone import ZoneCommands
 
 # Import other mreg_cli modules
-from mreg_cli.exceptions import CliError, CliWarning
+from mreg_cli.exceptions import CliError, CliWarning, InputFailure
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
@@ -250,7 +250,11 @@ class Command(Completer):
         output.clear()
         # Set the command that generated the output
         # Also remove filters and other noise.
-        cmd = output.from_command(line)
+        try:
+            cmd = output.from_command(line)
+        except (CliWarning, CliError) as exc:
+            exc.print_self()
+            return
         # Create and set the corrolation id, using the cleaned command
         # as the suffix. This is used to track the command in the logs
         # on the server side.
@@ -273,7 +277,7 @@ def _quit(_: argparse.Namespace) -> NoReturn:
 def _start_recording(args: argparse.Namespace) -> None:
     """Start recording commands and output to the given file."""
     if not args.filename:
-        raise CliError("No filename given.")
+        raise InputFailure("No filename given.")
 
     OutputManager().recording_start(args.filename)
 

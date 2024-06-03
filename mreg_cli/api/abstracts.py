@@ -501,7 +501,7 @@ class APIMixin(ABC):
             # Lots of endpoints don't give locations on creation,
             # so we can't fetch the object, but it's not an error...
             # Per se.
-            # raise CliWarning("No location header in response.")
+            # raise APIError("No location header in response.")
 
         else:
             raise CreateError(f"Failed to create {cls} with {params} @ {cls.endpoint()}.")
