@@ -282,7 +282,7 @@ class WithTTL(BaseModel):
         :raises InputFailure: If the TTL value is outside the bounds.
         :returns: A valid TTL vale
         """
-        if ttl <= self.MIN_TTL or ttl >= self.MAX_TTL:
+        if ttl < self.MIN_TTL or ttl > self.MAX_TTL:
             raise InputFailure(f"Invalid TTL value: {ttl} ({self.MIN_TTL}->{self.MAX_TTL})")
 
         return ttl
