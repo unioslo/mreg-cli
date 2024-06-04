@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.history import HistoryResource
 from mreg_cli.api.models import Atom, Host, HostPolicy, Role
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -310,6 +309,33 @@ def host_add(args: argparse.Namespace) -> None:
     for host in hosts:
         role.add_host(host.name.hostname)
         cli_info(f"Added host {host.name!r} to role {role_name!r}", print_msg=True)
+
+
+@command_registry.register_command(
+    prog="host_copy",
+    description="Copy roles from one host to another",
+    short_desc="Copy roles between hosts",
+    flags=[
+        Flag("source", description="Source host", metavar="SOURCE"),
+        Flag("destination", description="Destination host", metavar="DESTINATION"),
+    ],
+)
+def host_copy(args: argparse.Namespace) -> None:
+    """Copy roles from one host to another.
+
+    :param args: argparse.Namespace (source, destination)
+    """
+    source_name: str = args.source
+    destination_name: str = args.destination
+
+    source = Host.get_by_any_means_or_raise(source_name)
+    destination = Host.get_by_any_means_or_raise(destination_name)
+
+    for role in source.roles():
+        role.add_host(destination.name.hostname)
+        OutputManager().add_line(
+            f"Copied role {role.name} from {source_name} to {destination_name}"
+        )
 
 
 @command_registry.register_command(
