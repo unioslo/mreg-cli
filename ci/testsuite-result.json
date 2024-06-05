@@ -11863,7 +11863,7 @@
     "command_filter_negate": false,
     "command_issued": "group create mygroup \"This describes the group\"",
     "ok": [
-      "OK: : Created new group 'mygroup'"
+      "Created new group mygroup"
     ],
     "warning": [],
     "error": [],
@@ -11871,14 +11871,11 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/mygroup",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       },
       {
@@ -11889,6 +11886,20 @@
           "description": "This describes the group"
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/mygroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [],
+          "owners": [],
+          "name": "mygroup",
+          "description": "This describes the group"
+        }
       }
     ],
     "time": null
@@ -11899,24 +11910,35 @@
     "command_filter_negate": false,
     "command_issued": "host add testhost1",
     "ok": [
-      "OK: : created host testhost1.example.org"
+      "Created host testhost1.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: testhost1.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name:         testhost1.example.org",
+      "Contact:      ",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Wed Jun  5 11:30:33 2024",
+      "Updated:      Wed Jun  5 11:30:33 2024"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=testhost1.example.org",
+        "url": "/api/v1/hosts/testhost1.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/testhost1.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -11945,8 +11967,42 @@
         }
       },
       {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "testhost1.example.org"
+        },
+        "status": 201
+      },
+      {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=testhost1.example.org",
+        "url": "/api/v1/hosts/testhost1.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 7
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "testhost1.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=7",
         "data": {},
         "status": 200,
         "response": {
@@ -11957,14 +12013,52 @@
         }
       },
       {
-        "method": "POST",
-        "url": "/api/v1/hosts/",
-        "data": {
-          "name": "testhost1.example.org",
-          "contact": null,
-          "comment": null
-        },
-        "status": 201
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=7",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=7",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=7",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=7",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -11975,24 +12069,35 @@
     "command_filter_negate": false,
     "command_issued": "host add testhost2",
     "ok": [
-      "OK: : created host testhost2.example.org"
+      "Created host testhost2.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: testhost2.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name:         testhost2.example.org",
+      "Contact:      ",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Wed Jun  5 11:30:33 2024",
+      "Updated:      Wed Jun  5 11:30:33 2024"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=testhost2.example.org",
+        "url": "/api/v1/hosts/testhost2.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/testhost2.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -12021,8 +12126,42 @@
         }
       },
       {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "testhost2.example.org"
+        },
+        "status": 201
+      },
+      {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=testhost2.example.org",
+        "url": "/api/v1/hosts/testhost2.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 8
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "testhost2.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=8",
         "data": {},
         "status": 200,
         "response": {
@@ -12033,14 +12172,52 @@
         }
       },
       {
-        "method": "POST",
-        "url": "/api/v1/hosts/",
-        "data": {
-          "name": "testhost2.example.org",
-          "contact": null,
-          "comment": null
-        },
-        "status": 201
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=8",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=8",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=8",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=8",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -12051,7 +12228,7 @@
     "command_filter_negate": false,
     "command_issued": "group host_add mygroup testhost1",
     "ok": [
-      "OK: : Added host 'testhost1.example.org' to 'mygroup'"
+      "Added host 'testhost1.example.org' to 'mygroup'"
     ],
     "warning": [],
     "error": [],
@@ -12059,23 +12236,16 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/mygroup",
         "data": {},
         "status": 200,
         "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "parent": [],
-              "groups": [],
-              "hosts": [],
-              "owners": [],
-              "name": "mygroup",
-              "description": "This describes the group"
-            }
-          ]
+          "parent": [],
+          "groups": [],
+          "hosts": [],
+          "owners": [],
+          "name": "mygroup",
+          "description": "This describes the group"
         }
       },
       {
@@ -12090,7 +12260,7 @@
           "txts": [
             {
               "txt": "v=spf1 -all",
-              "host": 9
+              "host": 7
             }
           ],
           "ptr_overrides": [],
@@ -12111,25 +12281,10 @@
           "name": "testhost1.example.org"
         },
         "status": 201
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "group host_add mygroup testhost2",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "group host_add mygroup testhost2",
-    "ok": [
-      "OK: : Added host 'testhost2.example.org' to 'mygroup'"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
+      },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/?id=1",
         "data": {},
         "status": 200,
         "response": {
@@ -12151,6 +12306,39 @@
             }
           ]
         }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "group host_add mygroup testhost2",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "group host_add mygroup testhost2",
+    "ok": [
+      "Added host 'testhost2.example.org' to 'mygroup'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/mygroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [
+            {
+              "name": "testhost1.example.org"
+            }
+          ],
+          "owners": [],
+          "name": "mygroup",
+          "description": "This describes the group"
+        }
       },
       {
         "method": "GET",
@@ -12164,7 +12352,7 @@
           "txts": [
             {
               "txt": "v=spf1 -all",
-              "host": 10
+              "host": 8
             }
           ],
           "ptr_overrides": [],
@@ -12185,25 +12373,10 @@
           "name": "testhost2.example.org"
         },
         "status": 201
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "group owner_add mygroup myself",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "group owner_add mygroup myself",
-    "ok": [
-      "OK: : Added 'myself' as owner of 'mygroup'"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
+      },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/?id=1",
         "data": {},
         "status": 200,
         "response": {
@@ -12228,6 +12401,42 @@
             }
           ]
         }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "group owner_add mygroup myself",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "group owner_add mygroup myself",
+    "ok": [
+      "Added owner 'myself' to 'mygroup'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/mygroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [
+            {
+              "name": "testhost1.example.org"
+            },
+            {
+              "name": "testhost2.example.org"
+            }
+          ],
+          "owners": [],
+          "name": "mygroup",
+          "description": "This describes the group"
+        }
       },
       {
         "method": "POST",
@@ -12236,25 +12445,10 @@
           "name": "myself"
         },
         "status": 201
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "group host_remove mygroup testhost2",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "group host_remove mygroup testhost2",
-    "ok": [
-      "OK: : Removed host 'testhost2.example.org' from 'mygroup'"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
+      },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/?id=1",
         "data": {},
         "status": 200,
         "response": {
@@ -12283,6 +12477,46 @@
             }
           ]
         }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "group host_remove mygroup testhost2",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "group host_remove mygroup testhost2",
+    "ok": [
+      "Removed host 'testhost2.example.org' from 'mygroup'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/mygroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [
+            {
+              "name": "testhost1.example.org"
+            },
+            {
+              "name": "testhost2.example.org"
+            }
+          ],
+          "owners": [
+            {
+              "name": "myself"
+            }
+          ],
+          "name": "mygroup",
+          "description": "This describes the group"
+        }
       },
       {
         "method": "GET",
@@ -12296,7 +12530,7 @@
           "txts": [
             {
               "txt": "v=spf1 -all",
-              "host": 10
+              "host": 8
             }
           ],
           "ptr_overrides": [],
@@ -12315,28 +12549,10 @@
         "url": "/api/v1/hostgroups/mygroup/hosts/testhost2.example.org",
         "data": {},
         "status": 204
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "group info mygroup",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "group info mygroup",
-    "ok": [],
-    "warning": [],
-    "error": [],
-    "output": [
-      "Name:          mygroup",
-      "Description:   This describes the group",
-      "Members:       1 host",
-      "Owners:        myself"
-    ],
-    "api_requests": [
+      },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/?id=1",
         "data": {},
         "status": 200,
         "response": {
@@ -12361,6 +12577,50 @@
               "description": "This describes the group"
             }
           ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "group info mygroup",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "group info mygroup",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         mygroup",
+      "Description:  This describes the group",
+      "Owners:       myself",
+      "Parents:      ",
+      "Groups:       ",
+      "Hosts:        1",
+      "Created:      Wed Jun  5 11:30:32 2024",
+      "Updated:      Wed Jun  5 11:30:34 2024"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/mygroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [
+            {
+              "name": "testhost1.example.org"
+            }
+          ],
+          "owners": [
+            {
+              "name": "myself"
+            }
+          ],
+          "name": "mygroup",
+          "description": "This describes the group"
         }
       }
     ],
@@ -12553,7 +12813,7 @@
     "command_filter_negate": false,
     "command_issued": "group create yourgroup \"meh\"",
     "ok": [
-      "OK: : Created new group 'yourgroup'"
+      "Created new group yourgroup"
     ],
     "warning": [],
     "error": [],
@@ -12561,14 +12821,11 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=yourgroup",
+        "url": "/api/v1/hostgroups/yourgroup",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       },
       {
@@ -12579,7 +12836,21 @@
           "description": "meh"
         },
         "status": 201
-      }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/yourgroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [],
+          "owners": [],
+          "name": "yourgroup",
+          "description": "meh"
+        }
+      }      
     ],
     "time": null
   },
@@ -12589,7 +12860,7 @@
     "command_filter_negate": false,
     "command_issued": "group group_add mygroup yourgroup",
     "ok": [
-      "OK: : Added group 'yourgroup' to 'mygroup'"
+      "Added group 'yourgroup' to 'mygroup'"
     ],
     "warning": [],
     "error": [],
@@ -12597,7 +12868,51 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/yourgroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [],
+          "owners": [],
+          "name": "yourgroup",
+          "description": "meh"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/mygroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [
+            {
+              "name": "testhost1.example.org"
+            }
+          ],
+          "owners": [
+            {
+              "name": "myself"
+            }
+          ],
+          "name": "mygroup",
+          "description": "This describes the group"
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hostgroups/mygroup/groups/",
+        "data": {
+          "name": "yourgroup"
+        },
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?id=1",
         "data": {},
         "status": 200,
         "response": {
@@ -12607,7 +12922,11 @@
           "results": [
             {
               "parent": [],
-              "groups": [],
+              "groups": [
+                {
+                  "name": "yourgroup"
+                }
+              ],
               "hosts": [
                 {
                   "name": "testhost1.example.org"
@@ -12623,35 +12942,6 @@
             }
           ]
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hostgroups/?name=yourgroup",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "parent": [],
-              "groups": [],
-              "hosts": [],
-              "owners": [],
-              "name": "yourgroup",
-              "description": "meh"
-            }
-          ]
-        }
-      },
-      {
-        "method": "POST",
-        "url": "/api/v1/hostgroups/mygroup/groups/",
-        "data": {
-          "name": "yourgroup"
-        },
-        "status": 201
       }
     ],
     "time": null
@@ -12665,43 +12955,40 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name:          mygroup",
-      "Description:   This describes the group",
-      "Members:       1 host, 1 group",
-      "Owners:        myself"
+      "Name:         mygroup",
+      "Description:  This describes the group",
+      "Owners:       myself",
+      "Parents:      ",
+      "Groups:       yourgroup",
+      "Hosts:        1",
+      "Created:      Wed Jun  5 15:40:45 2024",
+      "Updated:      Wed Jun  5 15:40:47 2024"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/mygroup",
         "data": {},
         "status": 200,
         "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
+          "parent": [],
+          "groups": [
             {
-              "parent": [],
-              "groups": [
-                {
-                  "name": "yourgroup"
-                }
-              ],
-              "hosts": [
-                {
-                  "name": "testhost1.example.org"
-                }
-              ],
-              "owners": [
-                {
-                  "name": "myself"
-                }
-              ],
-              "name": "mygroup",
-              "description": "This describes the group"
+              "name": "yourgroup"
             }
-          ]
+          ],
+          "hosts": [
+            {
+              "name": "testhost1.example.org"
+            }
+          ],
+          "owners": [
+            {
+              "name": "myself"
+            }
+          ],
+          "name": "mygroup",
+          "description": "This describes the group"
         }
       }
     ],
@@ -12713,7 +13000,7 @@
     "command_filter_negate": false,
     "command_issued": "group group_remove mygroup yourgroup",
     "ok": [
-      "OK: : Removed group 'yourgroup' from 'mygroup'"
+      "Removed group 'yourgroup' from 'mygroup'"
     ],
     "warning": [],
     "error": [],
@@ -12721,35 +13008,28 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/mygroup",
         "data": {},
         "status": 200,
         "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
+          "parent": [],
+          "groups": [
             {
-              "parent": [],
-              "groups": [
-                {
-                  "name": "yourgroup"
-                }
-              ],
-              "hosts": [
-                {
-                  "name": "testhost1.example.org"
-                }
-              ],
-              "owners": [
-                {
-                  "name": "myself"
-                }
-              ],
-              "name": "mygroup",
-              "description": "This describes the group"
+              "name": "yourgroup"
             }
-          ]
+          ],
+          "hosts": [
+            {
+              "name": "testhost1.example.org"
+            }
+          ],
+          "owners": [
+            {
+              "name": "myself"
+            }
+          ],
+          "name": "mygroup",
+          "description": "This describes the group"
         }
       },
       {
@@ -12757,25 +13037,10 @@
         "url": "/api/v1/hostgroups/mygroup/groups/yourgroup",
         "data": {},
         "status": 204
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "group owner_add mygroup anotherowner",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "group owner_add mygroup anotherowner",
-    "ok": [
-      "OK: : Added 'anotherowner' as owner of 'mygroup'"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
+      },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/?id=1",
         "data": {},
         "status": 200,
         "response": {
@@ -12801,6 +13066,43 @@
             }
           ]
         }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "group owner_add mygroup anotherowner",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "group owner_add mygroup anotherowner",
+    "ok": [
+      "Added owner 'anotherowner' to 'mygroup'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/mygroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [
+            {
+              "name": "testhost1.example.org"
+            }
+          ],
+          "owners": [
+            {
+              "name": "myself"
+            }
+          ],
+          "name": "mygroup",
+          "description": "This describes the group"
+        }
       },
       {
         "method": "POST",
@@ -12809,25 +13111,10 @@
           "name": "anotherowner"
         },
         "status": 201
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "group owner_remove mygroup myself",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "group owner_remove mygroup myself",
-    "ok": [
-      "OK: : Removed 'myself' as owner of 'mygroup'"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
+      },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/?id=1",
         "data": {},
         "status": 200,
         "response": {
@@ -12856,12 +13143,81 @@
             }
           ]
         }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "group owner_remove mygroup myself",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "group owner_remove mygroup myself",
+    "ok": [
+      "Removed owner 'myself' from 'mygroup'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/mygroup",
+        "data": {},
+        "status": 200,
+        "response": {
+          "parent": [],
+          "groups": [],
+          "hosts": [
+            {
+              "name": "testhost1.example.org"
+            }
+          ],
+          "owners": [
+            {
+              "name": "anotherowner"
+            },
+            {
+              "name": "myself"
+            }
+          ],
+          "name": "mygroup",
+          "description": "This describes the group"
+        }
       },
       {
         "method": "DELETE",
         "url": "/api/v1/hostgroups/mygroup/owners/myself",
         "data": {},
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?id=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "parent": [],
+              "groups": [],
+              "hosts": [
+                {
+                  "name": "testhost1.example.org"
+                }
+              ],
+              "owners": [
+                {
+                  "name": "anotherowner"
+                }
+              ],
+              "name": "mygroup",
+              "description": "This describes the group"
+            }
+          ]
+        }
       }
     ],
     "time": null
@@ -13161,39 +13517,32 @@
     "command_filter_negate": false,
     "command_issued": "group delete mygroup     # fails because the group contains testhost1, must force",
     "ok": [],
-    "warning": [],
-    "error": [
-      "ERROR: : Group contains 1 host(s) and 0 group(s), must force"
+    "warning": [
+      "Group contains hosts or groups, must force"
     ],
+    "error": [],
     "output": [],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/mygroup",
         "data": {},
         "status": 200,
         "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
+          "parent": [],
+          "groups": [],
+          "hosts": [
             {
-              "parent": [],
-              "groups": [],
-              "hosts": [
-                {
-                  "name": "testhost1.example.org"
-                }
-              ],
-              "owners": [
-                {
-                  "name": "anotherowner"
-                }
-              ],
-              "name": "mygroup",
-              "description": "This describes the group"
+              "name": "testhost1.example.org"
             }
-          ]
+          ],
+          "owners": [
+            {
+              "name": "anotherowner"
+            }
+          ],
+          "name": "mygroup",
+          "description": "This describes the group"
         }
       }
     ],
@@ -13205,7 +13554,7 @@
     "command_filter_negate": false,
     "command_issued": "group delete mygroup -force",
     "ok": [
-      "OK: : Deleted group 'mygroup'"
+      "Deleted group 'mygroup'"
     ],
     "warning": [],
     "error": [],
@@ -13213,31 +13562,24 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=mygroup",
+        "url": "/api/v1/hostgroups/mygroup",
         "data": {},
         "status": 200,
         "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
+          "parent": [],
+          "groups": [],
+          "hosts": [
             {
-              "parent": [],
-              "groups": [],
-              "hosts": [
-                {
-                  "name": "testhost1.example.org"
-                }
-              ],
-              "owners": [
-                {
-                  "name": "anotherowner"
-                }
-              ],
-              "name": "mygroup",
-              "description": "This describes the group"
+              "name": "testhost1.example.org"
             }
-          ]
+          ],
+          "owners": [
+            {
+              "name": "anotherowner"
+            }
+          ],
+          "name": "mygroup",
+          "description": "This describes the group"
         }
       },
       {
@@ -13255,7 +13597,7 @@
     "command_filter_negate": false,
     "command_issued": "group delete yourgroup",
     "ok": [
-      "OK: : Deleted group 'yourgroup'"
+      "Deleted group 'yourgroup'"
     ],
     "warning": [],
     "error": [],
@@ -13263,23 +13605,16 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?name=yourgroup",
+        "url": "/api/v1/hostgroups/yourgroup",
         "data": {},
         "status": 200,
         "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "parent": [],
-              "groups": [],
-              "hosts": [],
-              "owners": [],
-              "name": "yourgroup",
-              "description": "meh"
-            }
-          ]
+          "parent": [],
+          "groups": [],
+          "hosts": [],
+          "owners": [],
+          "name": "yourgroup",
+          "description": "meh"
         }
       },
       {
@@ -13297,7 +13632,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove testhost1",
     "ok": [
-      "OK: : removed testhost1.example.org"
+      "removed testhost1.example.org"
     ],
     "warning": [],
     "error": [],
@@ -13315,7 +13650,7 @@
           "txts": [
             {
               "txt": "v=spf1 -all",
-              "host": 9
+              "host": 7
             }
           ],
           "ptr_overrides": [],
@@ -13331,7 +13666,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=9",
+        "url": "/api/v1/naptrs/?host=7",
         "data": {},
         "status": 200,
         "response": {
@@ -13343,7 +13678,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=testhost1.example.org",
+        "url": "/api/v1/srvs/?host=7",
         "data": {},
         "status": 200,
         "response": {
@@ -13368,7 +13703,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove testhost2",
     "ok": [
-      "OK: : removed testhost2.example.org"
+      "removed testhost2.example.org"
     ],
     "warning": [],
     "error": [],
@@ -13386,7 +13721,7 @@
           "txts": [
             {
               "txt": "v=spf1 -all",
-              "host": 10
+              "host": 8
             }
           ],
           "ptr_overrides": [],
@@ -13402,7 +13737,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=10",
+        "url": "/api/v1/naptrs/?host=8",
         "data": {},
         "status": 200,
         "response": {
@@ -13414,7 +13749,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=testhost2.example.org",
+        "url": "/api/v1/srvs/?host=8",
         "data": {},
         "status": 200,
         "response": {

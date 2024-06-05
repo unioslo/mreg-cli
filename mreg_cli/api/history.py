@@ -79,7 +79,9 @@ class HistoryItem(BaseModel):
         action = self.action
         model = self.model
         if action in ("add", "remove"):
-            if self.name == basename:
+            if self.resource == "groups" and model in ("Host", "Group", "HostGroup"):
+                msg = self.data["name"]
+            elif self.name == basename:
                 msg = self.name
             else:
                 msg = self.resource + " " + self.name
