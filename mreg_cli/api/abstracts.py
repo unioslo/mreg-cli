@@ -400,6 +400,27 @@ class APIMixin(ABC):
             return None
         return cls(**obj_dict)
 
+    @classmethod
+    def get_by_location(cls, location: str) -> Self | None:
+        """Fetch an object by its location as returned by a `POST` request."""
+        external_id_field = cls.endpoint().external_id_field()
+        if external_id_field == "id":
+            id_ = location.rpartition("/")[-1]
+            if not id_:
+                raise GetError(f"Could not extract ID from location {location}.")
+            try:
+                return cls.get_by_id(int(id_))
+            except TypeError:
+                raise GetError(f"Could not extract numeric ID from location {location}") from None
+        elif external_id_field == "network":
+            parts = location.split("/")
+            if len(parts) <= 2:
+                raise GetError(f"Could not extract network from location {location}.")
+            network = "/".join(parts[-2:])
+            return cls.get_by_field(external_id_field, network)
+        else:
+            return cls.get_by_field(external_id_field, location.rpartition("/")[-1])
+
     def refetch(self) -> Self:
         """Fetch an updated version of the object.
 
@@ -486,15 +507,9 @@ class APIMixin(ABC):
         if response and response.ok:
             location = response.headers.get("Location")
             if location and fetch_after_create:
-                obj = None
-                if cls.endpoint().external_id_field() == "name":
-                    obj = cls.get_by_field("name", location.split("/")[-1])
-                else:
-                    obj = cls.get_by_id(int(location.split("/")[-1]))
-
+                obj = cls.get_by_location(location)
                 if obj:
                     return obj
-
                 raise GetError(f"Could not fetch object from location {location}.")
 
             # else:
