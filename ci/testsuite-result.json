@@ -6,8 +6,8 @@
     "command_issued": "zone create example.org hostmaster@example.org ns1.example.org  # should require force because ns1 is unknown",
     "ok": [],
     "warning": [
-      "WARNING: : host not found: 'ns1.example.org'",
-      "WARNING: : ns1.example.org is not in mreg, must force"
+      "Host ns1.example.org not found.",
+      "ns1.example.org is not in mreg, must force"
     ],
     "error": [],
     "output": [],
@@ -23,14 +23,11 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?cnames__name=ns1.example.org",
+        "url": "/api/v1/cnames/ns1.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       }
     ],
@@ -42,10 +39,10 @@
     "command_filter_negate": false,
     "command_issued": "zone create example.org hostmaster@example.org ns1.example.org -force",
     "ok": [
-      "OK: : created zone example.org"
+      "Created zone example.org"
     ],
     "warning": [
-      "WARNING: : host not found: 'ns1.example.org'"
+      "Host ns1.example.org not found."
     ],
     "error": [],
     "output": [],
@@ -61,14 +58,20 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?cnames__name=ns1.example.org",
+        "url": "/api/v1/cnames/ns1.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -82,6 +85,29 @@
           ]
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "nameservers": [
+            {
+              "name": "ns1.example.org",
+              "ttl": null
+            }
+          ],
+          "updated": false,
+          "primary_ns": "ns1.example.org",
+          "email": "hostmaster@example.org",
+          "refresh": 10800,
+          "retry": 3600,
+          "expire": 1814400,
+          "soa_ttl": 43200,
+          "default_ttl": 43200,
+          "name": "example.org"
+        }
       }
     ],
     "time": null
@@ -95,11 +121,12 @@
     "warning": [],
     "error": [],
     "output": [
-      "Zone:               example.org",
+      "Name:               example.org",
       "        Nameservers:        hostname            TTL",
       "                            ns1.example.org     <not set>",
-      "Primary ns:         ns1.example.org",
+      "Primary NS:         ns1.example.org",
       "Email:              hostmaster@example.org",
+      "Serial:             3240605000",
       "Refresh:            10800",
       "Retry:              3600",
       "Expire:             1814400",
@@ -143,7 +170,7 @@
     "error": [],
     "output": [
       "Zones:",
-      "   example.org"
+      " example.org"
     ],
     "api_requests": [
       {
@@ -186,71 +213,12 @@
     "command_issued": "zone set_ns example.org ns2.example.org  #  requires force because ns2 is unknown",
     "ok": [],
     "warning": [
-      "WARNING: : host not found: 'ns2.example.org'",
-      "WARNING: : ns2.example.org is not in mreg, must force"
+      "Host ns2.example.org not found.",
+      "ns2.example.org is not in mreg, must force"
     ],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/ns2.example.org",
-        "data": {},
-        "status": 404,
-        "response": {
-          "detail": "Not found."
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?cnames__name=ns2.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "zone set_ns example.org ns2.example.org -force",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "zone set_ns example.org ns2.example.org -force",
-    "ok": [
-      "OK: : updated nameservers for example.org"
-    ],
-    "warning": [
-      "WARNING: : host not found: 'ns2.example.org'"
-    ],
-    "error": [],
-    "output": [],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/ns2.example.org",
-        "data": {},
-        "status": 404,
-        "response": {
-          "detail": "Not found."
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?cnames__name=ns2.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
       {
         "method": "GET",
         "url": "/api/v1/zones/forward/example.org",
@@ -275,6 +243,82 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/hosts/ns2.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/ns2.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "zone set_ns example.org ns2.example.org -force",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "zone set_ns example.org ns2.example.org -force",
+    "ok": [
+      "Updated nameservers for example.org"
+    ],
+    "warning": [
+      "Host ns2.example.org not found."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "nameservers": [
+            {
+              "name": "ns1.example.org",
+              "ttl": null
+            }
+          ],
+          "updated": false,
+          "primary_ns": "ns1.example.org",
+          "email": "hostmaster@example.org",
+          "refresh": 10800,
+          "retry": 3600,
+          "expire": 1814400,
+          "soa_ttl": 43200,
+          "default_ttl": 43200,
+          "name": "example.org"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/ns2.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/ns2.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
         "method": "PATCH",
         "url": "/api/v1/zones/forward/example.org/nameservers",
         "data": {
@@ -293,7 +337,7 @@
     "command_filter_negate": false,
     "command_issued": "zone set_soa example.org -email hostperson@example.org -serialno 12345 -refresh 360 -retry 1800 -expire 2400 -soa-ttl 1800",
     "ok": [
-      "OK: : set soa for example.org"
+      "Updated SOA for example.org"
     ],
     "warning": [],
     "error": [],
@@ -327,13 +371,43 @@
         "url": "/api/v1/zones/forward/example.org",
         "data": {
           "email": "hostperson@example.org",
-          "expire": 2400,
+          "serialno": 12345,
           "refresh": 360,
           "retry": 1800,
-          "serialno": 12345,
+          "expire": 2400,
           "soa_ttl": 1800
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/?id=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "nameservers": [
+                {
+                  "name": "ns2.example.org",
+                  "ttl": null
+                }
+              ],
+              "updated": true,
+              "primary_ns": "ns2.example.org",
+              "email": "hostperson@example.org",
+              "refresh": 360,
+              "retry": 1800,
+              "expire": 2400,
+              "soa_ttl": 1800,
+              "default_ttl": 43200,
+              "name": "example.org"
+            }
+          ]
+        }
       }
     ],
     "time": null
@@ -345,7 +419,7 @@
     "command_issued": "zone set_default_ttl example.org 60    # should fail, must be >= 300",
     "ok": [],
     "warning": [
-      "WARNING: : PATCH \"http://127.0.0.1:8000/api/v1/zones/forward/example.org\": 400: Bad Request\n{\n  \"default_ttl\": [\n    \"Ensure this value is greater than or equal to 300.\"\n  ]\n}"
+      "Invalid TTL value: 60 (300->68400)"
     ],
     "error": [],
     "output": [],
@@ -372,19 +446,6 @@
           "default_ttl": 43200,
           "name": "example.org"
         }
-      },
-      {
-        "method": "PATCH",
-        "url": "/api/v1/zones/forward/example.org",
-        "data": {
-          "default_ttl": 60
-        },
-        "status": 400,
-        "response": {
-          "default_ttl": [
-            "Ensure this value is greater than or equal to 300."
-          ]
-        }
       }
     ],
     "time": null
@@ -395,7 +456,7 @@
     "command_filter_negate": false,
     "command_issued": "zone set_default_ttl example.org 300",
     "ok": [
-      "OK: : set default TTL for example.org"
+      "Set default TTL for example.org"
     ],
     "warning": [],
     "error": [],
@@ -431,6 +492,36 @@
           "default_ttl": 300
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/?id=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "nameservers": [
+                {
+                  "name": "ns2.example.org",
+                  "ttl": null
+                }
+              ],
+              "updated": true,
+              "primary_ns": "ns2.example.org",
+              "email": "hostperson@example.org",
+              "refresh": 360,
+              "retry": 1800,
+              "expire": 2400,
+              "soa_ttl": 1800,
+              "default_ttl": 300,
+              "name": "example.org"
+            }
+          ]
+        }
       }
     ],
     "time": null
