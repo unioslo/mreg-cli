@@ -403,8 +403,8 @@ class APIMixin(ABC):
     @classmethod
     def get_by_location(cls, location: str) -> Self | None:
         """Fetch an object by its location as returned by a `POST` request."""
-        external_id_field = cls.endpoint().external_id_field()
-        if external_id_field == "id":
+        id_field = cls.field_for_endpoint()
+        if id_field == "id":
             id_ = location.rpartition("/")[-1]
             if not id_:
                 raise GetError(f"Could not extract ID from location {location}.")
@@ -412,14 +412,14 @@ class APIMixin(ABC):
                 return cls.get_by_id(int(id_))
             except TypeError:
                 raise GetError(f"Could not extract numeric ID from location {location}") from None
-        elif external_id_field == "network":
+        elif id_field == "network":
             parts = location.split("/")
             if len(parts) <= 2:
                 raise GetError(f"Could not extract network from location {location}.")
             network = "/".join(parts[-2:])
-            return cls.get_by_field(external_id_field, network)
+            return cls.get_by_field(id_field, network)
         else:
-            return cls.get_by_field(external_id_field, location.rpartition("/")[-1])
+            return cls.get_by_field(id_field, location.rpartition("/")[-1])
 
     def refetch(self) -> Self:
         """Fetch an updated version of the object.
