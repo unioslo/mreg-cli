@@ -128,10 +128,7 @@ def add(args: argparse.Namespace) -> None:
     host = Host.create(data)
     if not host:
         raise CreateError("Failed to add host.")
-    msg = f"Created host {host.name}"
-    if args.ip:
-        msg += f" with IP {args.ip}"
-    OutputManager().add_ok(msg)
+    OutputManager().add_ok(f"Created host {host.name}")
 
     if macaddress is not None:
         if ip:
