@@ -40,11 +40,7 @@ def label_add(args: argparse.Namespace) -> None:
     """
     if " " in args.name:
         raise InputFailure("The label name can't contain spaces.")
-
-    # We can't do a fetch_after_create here because the API is... broken.
-    # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views_labels.py#L30
-    # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views.py#L187
-    Label.create({"name": args.name, "description": args.description}, fetch_after_create=False)
+    Label.create({"name": args.name, "description": args.description})
     OutputManager().add_ok(f'Added label "{args.name}"')
 
 
