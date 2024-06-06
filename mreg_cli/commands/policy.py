@@ -317,7 +317,7 @@ def host_add(args: argparse.Namespace) -> None:
     short_desc="Copy roles between hosts",
     flags=[
         Flag("source", description="Source host", metavar="SOURCE"),
-        Flag("destination", description="Destination host", metavar="DESTINATION"),
+        Flag("destination", description="Destination host", nargs="+", metavar="DESTINATION"),
     ],
 )
 def host_copy(args: argparse.Namespace) -> None:
@@ -326,16 +326,17 @@ def host_copy(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (source, destination)
     """
     source_name: str = args.source
-    destination_name: str = args.destination
-
     source = Host.get_by_any_means_or_raise(source_name)
-    destination = Host.get_by_any_means_or_raise(destination_name)
 
-    for role in source.roles():
-        role.add_host(destination.name.hostname)
-        OutputManager().add_line(
-            f"Copied role {role.name} from {source_name} to {destination_name}"
-        )
+    for destination_name in args.destination:
+        destination = Host.get_by_any_means_or_raise(destination_name)
+        OutputManager().add_line(f"Copying roles from from {source_name} to {destination_name}")
+        for role in source.roles():
+            if role in destination.roles():
+                OutputManager().add_line(f"    + {role.name} (existing membership)")
+            else:
+                role.add_host(destination.name.hostname)
+                OutputManager().add_line(f"    + {role.name}")
 
 
 @command_registry.register_command(
