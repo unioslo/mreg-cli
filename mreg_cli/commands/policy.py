@@ -327,16 +327,21 @@ def host_copy(args: argparse.Namespace) -> None:
     """
     source_name: str = args.source
     source = Host.get_by_any_means_or_raise(source_name)
+    source_roles = set(source.roles())
 
     for destination_name in args.destination:
         destination = Host.get_by_any_means_or_raise(destination_name)
+        destination_roles = set(destination.roles())
         OutputManager().add_line(f"Copying roles from from {source_name} to {destination_name}")
-        for role in source.roles():
-            if role in destination.roles():
-                OutputManager().add_line(f"    + {role.name} (existing membership)")
-            else:
-                role.add_host(destination.name.hostname)
-                OutputManager().add_line(f"    + {role.name}")
+
+        # Check if role already exists in destination
+        for role in source_roles & destination_roles:
+            OutputManager().add_line(f"    + {role.name} (existing membership)")
+
+        # Check what roles need to be added
+        for role in source_roles - destination_roles:
+            role.add_host(destination.name.hostname)
+            OutputManager().add_line(f"    + {role.name}")
 
 
 @command_registry.register_command(
