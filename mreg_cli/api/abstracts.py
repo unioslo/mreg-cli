@@ -391,21 +391,6 @@ class APIMixin(ABC):
             return None
         return cls(**obj_dict)
 
-    @classmethod
-    def _get_by_location_path(cls, location: str) -> Self | None:
-        """Fetch an object by its location as returned by a `POST` request.
-
-        :param location: The location of the object.
-        :returns: The object if found, None otherwise.
-        """
-        # Some endpoints return invalid location headers,
-        # so we need to look up the object by other means.
-        if location.startswith(Endpoint.Labels):
-            # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views_labels.py#L30
-            # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views.py#L187
-            return cls.get_by_field("name", location.rpartition("/")[-1])
-        return get_typed(location, cls)
-
     def refetch(self) -> Self:
         """Fetch an updated version of the object.
 
@@ -492,11 +477,7 @@ class APIMixin(ABC):
         if response and response.ok:
             location = response.headers.get("Location")
             if location and fetch_after_create:
-                obj = cls._get_by_location_path(location)
-                if obj:
-                    return obj
-                raise GetError(f"Could not fetch object from location {location}.")
-
+                return get_typed(location, cls)
             # else:
             # Lots of endpoints don't give locations on creation,
             # so we can't fetch the object, but it's not an error...
