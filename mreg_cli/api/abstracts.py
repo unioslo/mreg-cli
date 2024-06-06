@@ -400,10 +400,9 @@ class APIMixin(ABC):
         """
         # Some endpoints return invalid location headers,
         # so we need to look up the object by other means.
-        # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views_labels.py#L30
-        # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views.py#L187
         if location.startswith(Endpoint.Labels):
-            # special processing here
+            # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views_labels.py#L30
+            # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views.py#L187
             return cls.get_by_field("name", location.rpartition("/")[-1])
         return get_typed(location, cls)
 
