@@ -3,29 +3,8 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Callable
-from mreg_cli.outputmanager import OutputManager
+from typing import Literal
 from urllib.parse import quote, urljoin
-
-
-class hybridmethod:
-    """Decorator to allow a method to be called both as a class method and an instance method."""
-
-    def __init__(self, func: Callable[..., Any]):
-        """Initialize the hybrid method."""
-        self.func = func
-
-    def __get__(self, obj: object | None, cls: type | None = None):
-        """Return a method that can be called both as a class method and an instance method."""
-        if obj is None:
-            return classmethod(self.func).__get__(None, cls)
-        else:
-            # Called on an instance, act like an instance method
-            return self.func.__get__(obj)
-
-    def __call__(self, *args: Any, **kwargs: Any):
-        """Caller method."""
-        return self.func(*args, **kwargs)
 
 
 class Endpoint(str, Enum):
@@ -107,8 +86,7 @@ class Endpoint(str, Enum):
         """Return True if this endpoint requires a search for an ID."""
         return self.external_id_field() != "id"
 
-    @hybridmethod
-    def external_id_field(self) -> str:
+    def external_id_field(self) -> Literal["id", "name", "network", "host"]:
         """Return the name of the field that holds the external ID."""
         if self in (
             Endpoint.Hosts,
@@ -128,7 +106,6 @@ class Endpoint(str, Enum):
             return "host"
         return "id"
 
-    # Add methods via composition
     def with_id(self, identity: str | int) -> str:
         """Return the endpoint with an ID."""
         id_field = quote(str(identity))

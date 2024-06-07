@@ -165,15 +165,6 @@ class APIMixin(ABC):
         return getattr(self, field)
 
     @classmethod
-    def field_for_endpoint(cls) -> str:
-        """Return the appropriate field for the object for its endpoint.
-
-        :param field: The field to return.
-        :returns: The correct field for the endpoint.
-        """
-        return cls.endpoint().external_id_field()
-
-    @classmethod
     @abstractmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the method."""
@@ -408,7 +399,7 @@ class APIMixin(ABC):
 
         :returns: The fetched object.
         """
-        id_field = self.field_for_endpoint()
+        id_field = self.endpoint().external_id_field()
         identifier = getattr(self, id_field)
 
         if not identifier:
@@ -486,17 +477,7 @@ class APIMixin(ABC):
         if response and response.ok:
             location = response.headers.get("Location")
             if location and fetch_after_create:
-                obj = None
-                if cls.endpoint().external_id_field() == "name":
-                    obj = cls.get_by_field("name", location.split("/")[-1])
-                else:
-                    obj = cls.get_by_id(int(location.split("/")[-1]))
-
-                if obj:
-                    return obj
-
-                raise GetError(f"Could not fetch object from location {location}.")
-
+                return get_typed(location, cls)
             # else:
             # Lots of endpoints don't give locations on creation,
             # so we can't fetch the object, but it's not an error...
