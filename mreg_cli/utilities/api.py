@@ -508,7 +508,7 @@ def get_list_generic(
     while resp.next:
         response = get(resp.next, params=params, ok404=ok404)
         if response is None:
-            return _check_expect_one_result(ret)
+            break
         resp = validate_paginated_response(response)
         ret.extend(resp.results)
     return _check_expect_one_result(ret)
