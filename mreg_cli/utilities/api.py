@@ -503,25 +503,15 @@ def get_list_generic(
     if limit and resp.count > abs(limit):
         raise TooManyResults(f"Too many hits ({resp.count}), please refine your search criteria.")
 
-    # Short circuit if there are no more pages. This means that there are no more results to
-    # be had so we can return the results we already have.
-    if not resp.next:
-        return _check_expect_one_result(resp.results)
-
     # Iterate over all pages and collect the results
-    ret: list[Json] = []
-    while True:
-        resp = get(path, params=params, ok404=ok404)
-        if resp is None:
+    ret: list[Json] = resp.results
+    while resp.next:
+        response = get(resp.next, params=params, ok404=ok404)
+        if response is None:
             return _check_expect_one_result(ret)
-        result = validate_paginated_response(resp)
-
-        ret.extend(result.results)
-
-        if result.next:
-            path = result.next
-        else:
-            return _check_expect_one_result(ret)
+        resp = validate_paginated_response(response)
+        ret.extend(resp.results)
+    return _check_expect_one_result(ret)
 
 
 def get_typed(
