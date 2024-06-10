@@ -5,8 +5,8 @@ on:
   push:
     tags:
       - mreg-cli-v*
-    branches:
-      - publishing
+    # branches:
+    #   - publishing
 
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
