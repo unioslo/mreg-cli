@@ -5,8 +5,6 @@ on:
   push:
     tags:
       - mreg-cli-v*
-    # branches:
-    #   - publishing
 
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
@@ -56,11 +54,15 @@ jobs:
           python -m ensurepip --upgrade
           python -m pip install tox tox-uv tox-gh-actions
           tox
-
+          
+      - name: Make binary executable
+        if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
+        run: |
+          chmod +x dist/mreg-cli
+      
       - name: Rename binary
         run: |
           mv dist/mreg-cli${{ contains(matrix.os, 'windows') && '.exe' || '' }} dist/mreg-cli-${{ matrix.os }}-${{ matrix.python-version }}${{ contains(matrix.os, 'windows') && '.exe' || '' }}
-    
       - uses: actions/upload-artifact@v4
         with:
           name: mreg-cli-${{ matrix.os }}-${{ matrix.python-version }}${{ contains(matrix.os, 'windows') && '.exe' || '' }}
