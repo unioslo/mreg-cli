@@ -78,6 +78,7 @@ jobs:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN_TEST }}
           verbose: true
+          repository-url: https://test.pypi.org/legacy/
   
   # publish_github:
   #   name: Publish GitHub release
