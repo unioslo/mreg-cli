@@ -1,4 +1,4 @@
-# Ripped off from https://github.com/pypa/hatch/blob/6322daba750f8db73361fa1aaa965bc99605303b/.github/workflows/build-hatch.yml
+# Inspired by: https://github.com/pypa/hatch/blob/6322daba750f8db73361fa1aaa965bc99605303b/.github/workflows/build-hatch.yml
 name: build mreg-cli
 
 on:
@@ -8,6 +8,7 @@ on:
     branches:
       - master
       - main
+      - publishing
 
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
@@ -75,45 +76,45 @@ jobs:
         with:
           skip-existing: true
           user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN_MREG_CLI }}
+          password: ${{ secrets.PYPI_API_TOKEN_TEST }}
   
-  publish_github:
-    name: Publish GitHub release
-    needs:
-      - build_pypi
-    runs-on: ubuntu-latest
+  # publish_github:
+  #   name: Publish GitHub release
+  #   needs:
+  #     - build_pypi
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Download staged binaries
-        uses: actions/download-artifact@v4
-        with:
-          pattern: mreg-cli-*
-          path: archives
-          merge-multiple: true
-      - name: Download wheel and source distributions
-        uses: actions/download-artifact@v4
-        with:
-          pattern: pypi_artifacts/*
-          path: dist
-          merge-multiple: true
+  #   steps:
+  #     - name: Download staged binaries
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         pattern: mreg-cli-*
+  #         path: archives
+  #         merge-multiple: true
+  #     - name: Download wheel and source distributions
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         pattern: pypi_artifacts/*
+  #         path: dist
+  #         merge-multiple: true
 
-      - name: Create GitHub release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            Release notes for ${{ github.ref }}
-          draft: false
-          prerelease: false
+  #     - name: Create GitHub release
+  #       id: create_release
+  #       uses: actions/create-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         tag_name: ${{ github.ref }}
+  #         release_name: Release ${{ github.ref }}
+  #         body: |
+  #           Release notes for ${{ github.ref }}
+  #         draft: false
+  #         prerelease: false
 
-      - name: Upload release asset
-        id: upload-release-asset
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: dist/*
+  #     - name: Upload release asset
+  #       id: upload-release-asset
+  #       uses: softprops/action-gh-release@v2
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         files: dist/*
