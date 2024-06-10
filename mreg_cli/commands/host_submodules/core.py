@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.models import ForwardZone, Host, HostList, HostT, MACAddressField, NetworkOrIP
+from mreg_cli.api.models import ForwardZone, Host, HostList, HostT, MACAddressField, NetworkOrIP, Network
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
@@ -117,13 +117,18 @@ def add(args: argparse.Namespace) -> None:
     }
 
     if args.ip:
+        network = None
         net_or_ip = NetworkOrIP(ip_or_network=args.ip)
         if net_or_ip.is_ip():
             data["ipaddress"] = str(net_or_ip)
+            network = Network.get_by_ip(net_or_ip.as_ip())
         elif net_or_ip.is_network():
             data["network"] = str(net_or_ip)
+            network = Network.get_by_network(str(net_or_ip))
         else:
             raise EntityNotFound(f"Invalid ip or network: {args.ip}")
+        if network.frozen and not args.force:
+            raise ForceMissing(f"Network {network.network} is frozen, must force")
 
     host = Host.create(data)
     if not host:

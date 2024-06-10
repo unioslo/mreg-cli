@@ -532,7 +532,7 @@
     "command_filter_negate": false,
     "command_issued": "network create -network 10.0.2.0/28 -desc \"TinyNet\"",
     "ok": [
-      "OK: : created network 10.0.2.0/28"
+      "created network 10.0.2.0/28"
     ],
     "warning": [],
     "error": [],
@@ -556,12 +556,26 @@
         "data": {
           "network": "10.0.2.0/28",
           "description": "TinyNet",
-          "vlan": null,
-          "category": null,
-          "location": null,
           "frozen": false
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
       }
     ],
     "time": null
@@ -575,9 +589,26 @@
     "warning": [],
     "error": [],
     "output": [
-      "No used addresses on 10.0.2.0/28"
+      "No used addresses on network 10.0.2.0/28"
     ],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/networks/10.0.2.0/28/used_host_list",
@@ -619,6 +650,23 @@
     "api_requests": [
       {
         "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },      
+      {
+        "method": "GET",
         "url": "/api/v1/networks/10.0.2.0/28/unused_list",
         "data": {},
         "status": 200,
@@ -645,7 +693,7 @@
     "command_filter_negate": false,
     "command_issued": "network set_reserved 10.0.2.0/28 8",
     "ok": [
-      "OK: : updated reserved to '8' for 10.0.2.0/28"
+      "Updated reserved to '8' for 10.0.2.0/28"
     ],
     "warning": [],
     "error": [],
@@ -675,6 +723,30 @@
           "reserved": 8
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 8
+            }
+          ]
+        }
       }
     ],
     "time": null
@@ -685,24 +757,37 @@
     "command_filter_negate": false,
     "command_issued": "host add tinyhost -ip 10.0.2.0/28 -contact tinyhost@example.org",
     "ok": [
-      "OK: : created host tinyhost.example.org with IP 10.0.2.9"
+      "Created host tinyhost.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: tinyhost.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name:         tinyhost.example.org",
+      "Contact:      tinyhost@example.org",
+      "A_Records     IP            MAC",
+      "              10.0.2.14     <not set>",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Fri Jun  7 10:43:30 2024",
+      "Updated:      Fri Jun  7 10:43:30 2024"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=tinyhost.example.org",
+        "url": "/api/v1/hosts/tinyhost.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/tinyhost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -732,7 +817,66 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=tinyhost.example.org",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 8
+        }
+      },      
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "network": "10.0.2.0/28"
+        },
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.2.14",
+              "host": 1
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 1
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=1",
         "data": {},
         "status": 200,
         "response": {
@@ -742,6 +886,69 @@
           "results": []
         }
       },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network list_used_addresses 10.0.2.0/28",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network list_used_addresses 10.0.2.0/28",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "10.0.2.14                                     tinyhost.example.org"
+    ],
+    "api_requests": [
       {
         "method": "GET",
         "url": "/api/v1/networks/10.0.2.0/28",
@@ -758,65 +965,14 @@
           "frozen": false,
           "reserved": 8
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28/first_unused",
-        "data": {},
-        "status": 200,
-        "response": "10.0.2.9"
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "10.0.2.0",
-          "10.0.2.1",
-          "10.0.2.2",
-          "10.0.2.3",
-          "10.0.2.4",
-          "10.0.2.5",
-          "10.0.2.6",
-          "10.0.2.7",
-          "10.0.2.8",
-          "10.0.2.15"
-        ]
-      },
-      {
-        "method": "POST",
-        "url": "/api/v1/hosts/",
-        "data": {
-          "name": "tinyhost.example.org",
-          "contact": "tinyhost@example.org",
-          "comment": null,
-          "ipaddress": "10.0.2.9"
-        },
-        "status": 201
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "network list_used_addresses 10.0.2.0/28",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "network list_used_addresses 10.0.2.0/28",
-    "ok": [],
-    "warning": [],
-    "error": [],
-    "output": [
-      "10.0.2.9                 tinyhost.example.org"
-    ],
-    "api_requests": [
+      },      
       {
         "method": "GET",
         "url": "/api/v1/networks/10.0.2.0/28/used_host_list",
         "data": {},
         "status": 200,
         "response": {
-          "10.0.2.9": [
+          "10.0.2.14": [
             "tinyhost.example.org"
           ]
         }
@@ -840,24 +996,41 @@
     "warning": [],
     "error": [],
     "output": [
+      "10.0.2.9                 ",
       "10.0.2.10                ",
       "10.0.2.11                ",
       "10.0.2.12                ",
-      "10.0.2.13                ",
-      "10.0.2.14                "
+      "10.0.2.13                "
     ],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 8
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/networks/10.0.2.0/28/unused_list",
         "data": {},
         "status": 200,
         "response": [
+          "10.0.2.9",
           "10.0.2.10",
           "10.0.2.11",
           "10.0.2.12",
-          "10.0.2.13",
-          "10.0.2.14"
+          "10.0.2.13"
         ]
       }
     ],
@@ -869,7 +1042,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove tinyhost",
     "ok": [
-      "OK: : removed tinyhost.example.org"
+      "removed tinyhost.example.org"
     ],
     "warning": [],
     "error": [],
@@ -884,7 +1057,7 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "ipaddress": "10.0.2.9",
+              "ipaddress": "10.0.2.14",
               "host": 1
             }
           ],
@@ -921,7 +1094,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=tinyhost.example.org",
+        "url": "/api/v1/srvs/?host=1",
         "data": {},
         "status": 200,
         "response": {
@@ -946,7 +1119,7 @@
     "command_filter_negate": false,
     "command_issued": "network remove 10.0.2.0/28 -force",
     "ok": [
-      "OK: : removed network 10.0.2.0/28"
+        "Removed network 10.0.2.0/28"
     ],
     "warning": [],
     "error": [],
@@ -954,10 +1127,27 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28/used_list",
+        "url": "/api/v1/networks/10.0.2.0/28",
         "data": {},
         "status": 200,
-        "response": []
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 8
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
       },
       {
         "method": "DELETE",
@@ -974,7 +1164,7 @@
     "command_filter_negate": false,
     "command_issued": "network create -network 2001:db8::/64 -desc \"Lorem ipsum dolor sit amet\"",
     "ok": [
-      "OK: : created network 2001:db8::/64"
+      "created network 2001:db8::/64"
     ],
     "warning": [],
     "error": [],
@@ -998,12 +1188,26 @@
         "data": {
           "network": "2001:db8::/64",
           "description": "Lorem ipsum dolor sit amet",
-          "vlan": null,
-          "category": null,
-          "location": null,
           "frozen": false
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/2001:db8::/64",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "2001:db8::/64",
+          "description": "Lorem ipsum dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
       }
     ],
     "time": null
@@ -1017,9 +1221,26 @@
     "warning": [],
     "error": [],
     "output": [
-      "No used addresses on 2001:db8::/64"
+      "No used addresses on network 2001:db8::/64"
     ],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "2001:db8::/64",
+          "description": "Lorem ipsum dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_host_list",
@@ -5146,6 +5367,23 @@
     "api_requests": [
       {
         "method": "GET",
+        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "2001:db8::/64",
+          "description": "Lorem ipsum dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
         "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/unused_list",
         "data": {},
         "status": 200,
@@ -9257,7 +9495,7 @@
     "command_filter_negate": false,
     "command_issued": "network set_reserved 2001:db8::/64 50",
     "ok": [
-      "OK: : updated reserved to '50' for 2001:db8::/64"
+      "Updated reserved to '50' for 2001:db8::/64"
     ],
     "warning": [],
     "error": [],
@@ -9287,6 +9525,30 @@
           "reserved": 50
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "network": "2001:db8::/64",
+              "description": "Lorem ipsum dolor sit amet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 50
+            }
+          ]
+        }
       }
     ],
     "time": null
@@ -9297,24 +9559,37 @@
     "command_filter_negate": false,
     "command_issued": "host add tinyhost -ip 2001:db8::/64 -contact me@example.org",
     "ok": [
-      "OK: : created host tinyhost.example.org with IP 2001:db8::33"
+      "Created host tinyhost.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: tinyhost.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name:         tinyhost.example.org",
+      "Contact:      me@example.org",
+      "AAAA_Records  IP                            MAC",
+      "              2001:db8::f49e:aab:d943:f50b  <not set>",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Fri Jun  7 10:43:31 2024",
+      "Updated:      Fri Jun  7 10:43:31 2024"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=tinyhost.example.org",
+        "url": "/api/v1/hosts/tinyhost.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/tinyhost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -9344,18 +9619,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=tinyhost.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
         "data": {},
         "status": 200,
@@ -9370,83 +9633,108 @@
           "frozen": false,
           "reserved": 50
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/first_unused",
-        "data": {},
-        "status": 200,
-        "response": "2001:db8::33"
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "2001:db8::",
-          "2001:db8::1",
-          "2001:db8::2",
-          "2001:db8::3",
-          "2001:db8::4",
-          "2001:db8::5",
-          "2001:db8::6",
-          "2001:db8::7",
-          "2001:db8::8",
-          "2001:db8::9",
-          "2001:db8::a",
-          "2001:db8::b",
-          "2001:db8::c",
-          "2001:db8::d",
-          "2001:db8::e",
-          "2001:db8::f",
-          "2001:db8::10",
-          "2001:db8::11",
-          "2001:db8::12",
-          "2001:db8::13",
-          "2001:db8::14",
-          "2001:db8::15",
-          "2001:db8::16",
-          "2001:db8::17",
-          "2001:db8::18",
-          "2001:db8::19",
-          "2001:db8::1a",
-          "2001:db8::1b",
-          "2001:db8::1c",
-          "2001:db8::1d",
-          "2001:db8::1e",
-          "2001:db8::1f",
-          "2001:db8::20",
-          "2001:db8::21",
-          "2001:db8::22",
-          "2001:db8::23",
-          "2001:db8::24",
-          "2001:db8::25",
-          "2001:db8::26",
-          "2001:db8::27",
-          "2001:db8::28",
-          "2001:db8::29",
-          "2001:db8::2a",
-          "2001:db8::2b",
-          "2001:db8::2c",
-          "2001:db8::2d",
-          "2001:db8::2e",
-          "2001:db8::2f",
-          "2001:db8::30",
-          "2001:db8::31",
-          "2001:db8::32"
-        ]
-      },
+      },      
       {
         "method": "POST",
         "url": "/api/v1/hosts/",
         "data": {
           "name": "tinyhost.example.org",
           "contact": "me@example.org",
-          "comment": null,
-          "ipaddress": "2001:db8::33"
+          "network": "2001:db8::/64"
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "2001:db8::f49e:aab:d943:f50b",
+              "host": 2
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 2
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "tinyhost.example.org",
+          "contact": "me@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -9456,13 +9744,11 @@
     "command_filter": "2001",
     "command_filter_negate": false,
     "command_issued": "host info tinyhost | 2001",
-    "ok": [
-      "OK: : printed host info for tinyhost.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
-      "              2001:db8::33    <not set>"
+      "              2001:db8::f49e:aab:d943:f50b  <not set>"
     ],
     "api_requests": [
       {
@@ -9474,7 +9760,7 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "ipaddress": "2001:db8::33",
+              "ipaddress": "2001:db8::f49e:aab:d943:f50b",
               "host": 2
             }
           ],
@@ -9535,7 +9821,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts__name=tinyhost.example.org",
+        "url": "/api/v1/hostpolicy/roles/?hosts=2",
         "data": {},
         "status": 200,
         "response": {
@@ -9544,7 +9830,19 @@
           "previous": null,
           "results": []
         }
-      }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }      
     ],
     "time": null
   },
@@ -9553,16 +9851,16 @@
     "command_filter": "example.org",
     "command_filter_negate": true,
     "command_issued": "host info tinyhost |! example.org",
-    "ok": [
-      "OK: : printed host info for tinyhost.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
       "AAAA_Records  IP              MAC",
       "              2001:db8::33    <not set>",
       "TTL:          (Default)",
-      "TXT:          v=spf1 -all"
+      "TXT:          v=spf1 -all",
+      "Created:      Fri Jun  7 16:28:33 2024",
+      "Updated:      Fri Jun  7 16:28:33 2024"
     ],
     "api_requests": [
       {
@@ -9574,7 +9872,7 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "ipaddress": "2001:db8::33",
+              "ipaddress": "2001:db8::f49e:aab:d943:f50b",
               "host": 2
             }
           ],
@@ -9635,7 +9933,19 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts__name=tinyhost.example.org",
+        "url": "/api/v1/hostpolicy/roles/?hosts=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=2",
         "data": {},
         "status": 200,
         "response": {
@@ -9654,7 +9964,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove tinyhost",
     "ok": [
-      "OK: : removed tinyhost.example.org"
+      "removed tinyhost.example.org"
     ],
     "warning": [],
     "error": [],
@@ -9706,7 +10016,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=tinyhost.example.org",
+        "url": "/api/v1/srvs/?host=2",
         "data": {},
         "status": 200,
         "response": {
@@ -9731,7 +10041,7 @@
     "command_filter_negate": false,
     "command_issued": "network remove 2001:db8::/64 -f",
     "ok": [
-      "OK: : removed network 2001:db8::/64"
+      "Removed network 2001:db8::/64"
     ],
     "warning": [],
     "error": [],
@@ -9739,10 +10049,27 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_list",
+        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
         "data": {},
         "status": 200,
-        "response": []
+        "response": {
+          "excluded_ranges": [],
+          "network": "2001:db8::/64",
+          "description": "Lorem ipsum dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 50
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
       },
       {
         "method": "DELETE",
@@ -9759,7 +10086,7 @@
     "command_filter_negate": false,
     "command_issued": "network create -network 10.0.1.0/24 -desc \"Frozzzen\"        # frozen network",
     "ok": [
-      "OK: : created network 10.0.1.0/24"
+      "created network 10.0.1.0/24"
     ],
     "warning": [],
     "error": [],
@@ -9783,12 +10110,26 @@
         "data": {
           "network": "10.0.1.0/24",
           "description": "Frozzzen",
-          "vlan": null,
-          "category": null,
-          "location": null,
           "frozen": false
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.1.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "10.0.1.0/24",
+          "description": "Frozzzen",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
       }
     ],
     "time": null
@@ -9799,7 +10140,7 @@
     "command_filter_negate": false,
     "command_issued": "network set_frozen 10.0.1.0/24",
     "ok": [
-      "OK: : updated frozen to 'True' for 10.0.1.0/24"
+      "Updated frozen to 'True' for 10.0.1.0/24"
     ],
     "warning": [],
     "error": [],
@@ -9829,7 +10170,31 @@
           "frozen": true
         },
         "status": 204
-      }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=3",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "network": "10.0.1.0/24",
+              "description": "Frozzzen",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": true,
+              "reserved": 3
+            }
+          ]
+        }
+      }      
     ],
     "time": null
   },
@@ -9840,22 +10205,27 @@
     "command_issued": "host add somehost -ip 10.0.1.0/24 -contact support@example.org  # should require force, because net's frozen",
     "ok": [],
     "warning": [
-      "WARNING: : host not found: somehost.example.org",
-      "WARNING: : network 10.0.1.0/24 is frozen, must force"
+      "Network 10.0.1.0/24 is frozen, must force"
     ],
     "error": [],
     "output": [],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=somehost.example.org",
+        "url": "/api/v1/hosts/somehost.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/somehost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -9885,18 +10255,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=somehost.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/networks/10.0.1.0/24",
         "data": {},
         "status": 200,
@@ -9911,13 +10269,6 @@
           "frozen": true,
           "reserved": 3
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/10.0.1.0/24/first_unused",
-        "data": {},
-        "status": 200,
-        "response": "10.0.1.4"
       }
     ],
     "time": null
@@ -9928,7 +10279,7 @@
     "command_filter_negate": false,
     "command_issued": "network add_excluded_range 10.0.1.0/24 10.0.1.20 10.0.1.30",
     "ok": [
-      "OK: : Added exclude range to 10.0.1.0/24"
+      "Added exclude range to 10.0.1.0/24"
     ],
     "warning": [],
     "error": [],
@@ -9971,22 +10322,27 @@
     "command_issued": "host add somehost -ip 10.0.1.20 -contact support@example.org -force # should fail because ip is in excluded range",
     "ok": [],
     "warning": [
-      "WARNING: : host not found: somehost.example.org",
-      "WARNING: : POST \"http://127.0.0.1:8000/api/v1/hosts/\": 400: Bad Request\n{\n  \"non_field_errors\": [\n    \"IP 10.0.1.20 in an excluded range: 10.0.1.0/24 -> [10.0.1.20 -> [10.0.1.30]\"\n  ]\n}"
+      "POST \"http://127.0.0.1:8000/api/v1/hosts/\": 400: Bad Request\n{\n  \"non_field_errors\": [\n    \"IP 10.0.1.20 in an excluded range: 10.0.1.0/24 -> [10.0.1.20 -> [10.0.1.30]\"\n  ]\n}"
     ],
     "error": [],
     "output": [],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=somehost.example.org",
+        "url": "/api/v1/hosts/somehost.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/somehost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -10012,30 +10368,6 @@
             "default_ttl": 300,
             "name": "example.org"
           }
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/cnames/?name=somehost.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=10.0.1.20",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
         }
       },
       {
@@ -10062,25 +10394,11 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/10.0.1.0/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "10.0.1.0",
-          "10.0.1.1",
-          "10.0.1.2",
-          "10.0.1.3",
-          "10.0.1.255"
-        ]
-      },
-      {
         "method": "POST",
         "url": "/api/v1/hosts/",
         "data": {
           "name": "somehost.example.org",
           "contact": "support@example.org",
-          "comment": null,
           "ipaddress": "10.0.1.20"
         },
         "status": 400,
@@ -10099,24 +10417,37 @@
     "command_filter_negate": false,
     "command_issued": "host add somehost -ip 10.0.1.0/24 -contact support@example.org -force",
     "ok": [
-      "OK: : created host somehost.example.org with IP 10.0.1.4"
+      "Created host somehost.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: somehost.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name:         somehost.example.org",
+      "Contact:      support@example.org",
+      "A_Records     IP            MAC",
+      "              10.0.1.79     <not set>",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Mon Jun 10 16:15:46 2024",
+      "Updated:      Mon Jun 10 16:15:46 2024"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=somehost.example.org",
+        "url": "/api/v1/hosts/somehost.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/somehost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -10146,7 +10477,72 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=somehost.example.org",
+        "url": "/api/v1/networks/10.0.1.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [
+            {
+              "start_ip": "10.0.1.20",
+              "end_ip": "10.0.1.30",
+              "network": 3
+            }
+          ],
+          "network": "10.0.1.0/24",
+          "description": "Frozzzen",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": true,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "somehost.example.org",
+          "contact": "support@example.org",
+          "network": "10.0.1.0/24"
+        },
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/somehost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "10.0.1.79",
+              "host": 4
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 4
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "somehost.example.org",
+          "contact": "support@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=4",
         "data": {},
         "status": 200,
         "response": {
@@ -10156,6 +10552,69 @@
           "results": []
         }
       },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network list_used_addresses 10.0.1.0/24",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network list_used_addresses 10.0.1.0/24",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "10.0.1.4                 somehost.example.org"
+    ],
+    "api_requests": [
       {
         "method": "GET",
         "url": "/api/v1/networks/10.0.1.0/24",
@@ -10181,57 +10640,11 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.1.0/24/first_unused",
-        "data": {},
-        "status": 200,
-        "response": "10.0.1.4"
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/10.0.1.0/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "10.0.1.0",
-          "10.0.1.1",
-          "10.0.1.2",
-          "10.0.1.3",
-          "10.0.1.255"
-        ]
-      },
-      {
-        "method": "POST",
-        "url": "/api/v1/hosts/",
-        "data": {
-          "name": "somehost.example.org",
-          "contact": "support@example.org",
-          "comment": null,
-          "ipaddress": "10.0.1.4"
-        },
-        "status": 201
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "network list_used_addresses 10.0.1.0/24",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "network list_used_addresses 10.0.1.0/24",
-    "ok": [],
-    "warning": [],
-    "error": [],
-    "output": [
-      "10.0.1.4                 somehost.example.org"
-    ],
-    "api_requests": [
-      {
-        "method": "GET",
         "url": "/api/v1/networks/10.0.1.0/24/used_host_list",
         "data": {},
         "status": 200,
         "response": {
-          "10.0.1.4": [
+          "10.0.1.79": [
             "somehost.example.org"
           ]
         }

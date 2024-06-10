@@ -15,23 +15,38 @@ datetime_str_pattern = re.compile(
 # datetime_str_pattern = re.compile(
 #     r"\b(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s([0-2]?[0-9]|3[0-1])\s([0-1]?[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])\s[0-9]{4}\b"
 # )
+serial_pattern = re.compile(r"\b[sS]erial:\s+\d+")
+ipv4_pattern = re.compile(r"((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}")
+ipv6_pattern = re.compile(r"\b([0-9a-fA-F]{1,4}::?){1,7}[0-9a-fA-F]{1,4}\b")
 
-
-def replace_timestamps(obj: Any) -> Any:
-    """Recursively replace timestamp values in a JSON object.
-
-    :param obj: A JSON object (dict, list, or primitive type).
-    :returns: A new object with timestamps replaced.
-    """
-    if isinstance(obj, dict):
-        return {k: replace_timestamps(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [replace_timestamps(elem) for elem in obj]
-    elif isinstance(obj, str):
-        obj = timestamp_pattern.sub("<TIME>", obj)
-        obj = datetime_str_pattern.sub("<TIME>", obj)
-        return obj
-    return obj
+# Keeping this code in case we need to revert back to it:
+#
+# def replace_timestamps_and_more(obj: Any) -> Any:
+#     """Recursively replace timestamp values in a JSON object.
+#
+#     :param obj: A JSON object (dict, list, or primitive type).
+#     :returns: A new object with timestamps replaced.
+#     """
+#     if isinstance(obj, dict):
+#         #return {ipv4_pattern.sub("<IPv4>",k): replace_timestamps_and_more(v) for k, v in obj.items()}
+#         newdict = {}
+#         for k, v in obj.items():
+#             # some places, ip addresses are used as keys
+#             k = ipv4_pattern.sub("<IPv4>",k)
+#             k = ipv6_pattern.sub("<IPv6>",k)
+#             v = replace_timestamps_and_more(v)
+#             newdict[k] = v
+#         return newdict
+#     elif isinstance(obj, list):
+#         return [replace_timestamps_and_more(elem) for elem in obj]
+#     elif isinstance(obj, str):
+#         obj = timestamp_pattern.sub("<TIME>", obj)
+#         obj = datetime_str_pattern.sub("<TIME>", obj)
+#         obj = serial_pattern.sub("Serial: <NUMBER>", obj)
+#         obj = ipv4_pattern.sub("<IPv4>", obj)
+#         obj = ipv6_pattern.sub("<IPv6>", obj)
+#         return obj
+#     return obj
 
 
 def group_objects(json_file_path: str) -> List[List[Dict[str, Any]]]:
@@ -41,9 +56,16 @@ def group_objects(json_file_path: str) -> List[List[Dict[str, Any]]]:
     :returns: A list of grouped objects.
     """
     with open(json_file_path, "r") as f:
-        data = json.load(f)
+        s = f.read()
+        s = timestamp_pattern.sub("<TIME>", s)
+        s = datetime_str_pattern.sub("<TIME>", s)
+        s = serial_pattern.sub("Serial: <NUMBER>", s)
+        s = ipv4_pattern.sub("<IPv4>", s)
+        s = ipv6_pattern.sub("<IPv6>", s)
+        s = re.sub(r"\s+", " ", s) # replace all whitespace with one space, so the diff doesn't complain about different lengths
+        data = json.loads(s)
 
-    data = [replace_timestamps(obj) for obj in data]
+    #data = [replace_timestamps_and_more(obj) for obj in data]
 
     grouped_objects = []
     temp = []
