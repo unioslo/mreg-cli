@@ -475,23 +475,6 @@ def get_list_generic(
 
     :returns: A list of dictionaries or a dictionary if expect_one_result is True.
     """
-
-    def _check_expect_one_result(
-        ret: list[Json],
-    ) -> Json | list[Json]:
-        if expect_one_result:
-            if len(ret) == 0:
-                return {}
-            if len(ret) != 1:
-                raise MultipleEntititesFound(f"Expected exactly one result, got {len(ret)}.")
-
-            return ret[0]
-
-        return ret
-
-    if params is None:
-        params = {}
-
     response = get(path, params)
 
     # Non-paginated results, return them directly
@@ -511,7 +494,13 @@ def get_list_generic(
             break
         resp = validate_paginated_response(response)
         ret.extend(resp.results)
-    return _check_expect_one_result(ret)
+    if expect_one_result:
+        if len(ret) == 0:
+            return {}
+        if len(ret) != 1:
+            raise MultipleEntititesFound(f"Expected exactly one result, got {len(ret)}.")
+        return ret[0]
+    return ret
 
 
 def get_typed(
