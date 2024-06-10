@@ -1,4 +1,3 @@
-# Inspired by: https://github.com/pypa/hatch/blob/6322daba750f8db73361fa1aaa965bc99605303b/.github/workflows/build-hatch.yml
 name: build mreg-cli
 
 on:
@@ -45,24 +44,22 @@ jobs:
           - '3.12'
     steps:
       - uses: actions/checkout@v4
+      
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      
       - name: Run PyInstaller with Tox
         run: |
           python -m ensurepip --upgrade
           python -m pip install tox tox-uv tox-gh-actions
           tox
-          
-      - name: Make binary executable
-        if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
-        run: |
-          chmod +x dist/mreg-cli
       
       - name: Rename binary
         run: |
           mv dist/mreg-cli${{ contains(matrix.os, 'windows') && '.exe' || '' }} dist/mreg-cli-${{ matrix.os }}-${{ matrix.python-version }}${{ contains(matrix.os, 'windows') && '.exe' || '' }}
+      
       - uses: actions/upload-artifact@v4
         with:
           name: mreg-cli-${{ matrix.os }}-${{ matrix.python-version }}${{ contains(matrix.os, 'windows') && '.exe' || '' }}
