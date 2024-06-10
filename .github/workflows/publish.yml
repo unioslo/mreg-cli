@@ -68,9 +68,6 @@ jobs:
     needs:
       - build_pypi
     runs-on: ubuntu-latest
-    # environment:
-    #   name: pypi
-    #   url: https://pypi.org/p/mreg-cli
     permissions:
       id-token: write
 
@@ -83,10 +80,6 @@ jobs:
       - name: Push build artifacts to PyPI
         uses: pypa/gh-action-pypi-publish@v1.8.14
         with:
-          # skip-existing: true
-          # user: __token__
-          # password: ${{ secrets.PYPI_API_TOKEN_TEST }}
-          # verbose: true
           repository-url: https://test.pypi.org/legacy/
   
   # publish_github:
