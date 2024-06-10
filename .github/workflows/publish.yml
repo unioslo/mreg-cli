@@ -5,6 +5,8 @@ on:
   push:
     tags:
       - mreg-cli-v*
+    branches:
+      - publishing
 
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
@@ -16,6 +18,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Dump job github var
+        env:
+          GITHUB_VAR: ${{ toJson(github) }}
+        run: echo "$GITHUB_VAR"
 
       - name: Install build dependencies
         run: python -m pip install --upgrade build
