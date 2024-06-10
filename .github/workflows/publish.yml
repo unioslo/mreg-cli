@@ -59,7 +59,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: mreg-cli-${{ matrix.os }}-${{ matrix.python-version }}${{ contains(matrix.os, 'windows') && '.exe' || '' }}
-          path: dist/mreg-cli-${{ matrix.os }}-${{ matrix.python-version }}${{ contains(matrix.os, 'windows') && '.exe' || '' }}
+          path: dist/mreg-cli${{ contains(matrix.os, 'windows') && '.exe' || '' }}
           if-no-files-found: error
           
 
