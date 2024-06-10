@@ -77,6 +77,7 @@ jobs:
           skip-existing: true
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN_TEST }}
+          verbose: true
   
   # publish_github:
   #   name: Publish GitHub release
