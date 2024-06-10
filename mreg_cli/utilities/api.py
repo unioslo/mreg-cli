@@ -48,6 +48,8 @@ HTTP_TIMEOUT = 20
 
 T = TypeVar("T")
 
+JsonMappingValidator = TypeAdapter(JsonMapping)
+
 
 def error(msg: str | Exception, code: int = os.EX_UNAVAILABLE) -> NoReturn:
     """Print an error message and exits with the given code."""
@@ -362,10 +364,8 @@ def get_list_unique(
     ret = get_list_generic(path, params, ok404, expect_one_result=True)
     if not ret:
         return None
-
     try:
-        validator = TypeAdapter(JsonMapping)
-        return validator.validate_python(ret)
+        return JsonMappingValidator.validate_python(ret)
     except ValueError as e:
         raise ValidationError(f"Failed to validate response from {path}: {e}") from e
 
