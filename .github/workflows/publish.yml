@@ -51,6 +51,7 @@ jobs:
         run: |
           python -m ensurepip --upgrade
           python -m pip install tox tox-uv tox-gh-actions
+          tox
       - uses: actions/upload-artifact@v4
         name: Upload created binary
         with:
