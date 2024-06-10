@@ -19,11 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Only release from master branch
-      # https://stackoverflow.com/a/74690436
-      - name: Exit if not on master branch
-        if: endsWith(github.event.base_ref, 'master') == false
-        run: exit -1
+      # # Only release from master branch
+      # # https://stackoverflow.com/a/74690436
+      # - name: Exit if not on master branch
+      #   if: endsWith(github.event.base_ref, 'master') == false
+      #   run: exit -1
 
       - name: Install build dependencies
         run: python -m pip install --upgrade build
@@ -48,7 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run PyInstaller with Tox
@@ -84,43 +84,45 @@ jobs:
           verbose: true
           repository-url: https://test.pypi.org/legacy/
   
-  # publish_github:
-  #   name: Publish GitHub release
-  #   needs:
-  #     - build_pypi
-  #   runs-on: ubuntu-latest
+  publish_github:
+    name: Publish GitHub release
+    needs:
+      - build_pypi
+      - build_pyinstaller
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Download staged binaries
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         pattern: mreg-cli-*
-  #         path: archives
-  #         merge-multiple: true
-  #     - name: Download wheel and source distributions
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         pattern: pypi_artifacts/*
-  #         path: dist
-  #         merge-multiple: true
+    steps:
+      - name: Download staged binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: mreg-cli-*
+          path: dist
+          merge-multiple: true
+      
+      - name: Download wheel and source distributions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pypi_artifacts/*
+          path: dist
+          merge-multiple: true
 
-  #     - name: Create GitHub release
-  #       id: create_release
-  #       uses: actions/create-release@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         tag_name: ${{ github.ref }}
-  #         release_name: Release ${{ github.ref }}
-  #         body: |
-  #           Release notes for ${{ github.ref }}
-  #         draft: false
-  #         prerelease: false
+      - name: Create GitHub release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Release notes for ${{ github.ref }}
+          draft: false
+          prerelease: true
 
-  #     - name: Upload release asset
-  #       id: upload-release-asset
-  #       uses: softprops/action-gh-release@v2
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         files: dist/*
+      - name: Upload release asset
+        id: upload-release-asset
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: dist/*
