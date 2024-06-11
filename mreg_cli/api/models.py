@@ -906,6 +906,9 @@ class ForwardZone(Zone, WithName, APIMixin):
         if "zone" in zoneblob:
             return ForwardZone.model_validate(zoneblob["zone"])
 
+        if "delegation" in zoneblob:
+            return ForwardZoneDelegation.model_validate(zoneblob["delegation"])
+
         raise UnexpectedDataError(f"Unexpected response from server: {zoneblob}")
 
 
