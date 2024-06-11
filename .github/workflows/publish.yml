@@ -113,7 +113,7 @@ jobs:
           body: |
             Release notes for ${{ github.ref }}
           draft: false
-          prerelease: true
+          prerelease: false
 
       - name: Upload release asset
         id: upload-release-asset
