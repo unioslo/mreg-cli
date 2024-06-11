@@ -6,6 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "mreg-cli"
 description = "MREG interactive command line client"
 readme = "README.md"
+authors = [
+    { name = "Terje Kvernes", email = "terjekv@uio.no" },
+    { name = "Øyvind Hagberg", email = "oyvihag@uio.no" },
+    { name = "Peder Hovdan Andresen", email = "pederhan@uio.no" },
+]
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 keywords = ["mreg", "cli", "interactive"]
