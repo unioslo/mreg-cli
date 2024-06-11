@@ -1439,10 +1439,25 @@ class Label(FrozenModelWithTimestamps, WithName):
 class ExcludedRange(FrozenModelWithTimestamps):
     """Model for an excluded IP range for a network."""
 
-    id: int
+    id: int  # noqa: A003
     network: int
-    start_ip: str  # TODO: use IPAddressField types
-    end_ip: str
+    start_ip: IPAddressField
+    end_ip: IPAddressField
+
+    @field_validator("start_ip", "end_ip", mode="before")
+    @classmethod
+    def convert_ip_address(cls, value: Any):
+        """Convert ipaddress string to IPAddressField if necessary."""
+        if isinstance(value, str):
+            try:
+                return IPAddressField(address=ipaddress.ip_address(value))
+            except ValueError as e:
+                raise InputFailure(f"Invalid IP address: {value}") from e
+        return value
+
+    def excluded_ips(self) -> int:
+        """Return the number of IP addresses in the excluded range."""
+        return int(self.end_ip.address) - int(self.start_ip.address) + 1
 
 
 class Network(FrozenModelWithTimestamps, APIMixin):
@@ -1607,6 +1622,12 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             fmt("", ip)
         if ipnet.broadcast_address in reserved_ips:
             fmt("", f"{ipnet.broadcast_address} (broadcast)")
+        if self.excluded_ranges:
+            excluded_ips = 0
+            for ex_range in self.excluded_ranges:
+                excluded_ips += ex_range.excluded_ips()
+            fmt("Excluded ranges:", f"{excluded_ips} ipaddresses")
+            self.output_excluded_ranges(padding=padding)
         fmt("Used addresses:", self.get_used_count())
         fmt("Unused addresses:", f"{self.get_unused_count()} (excluding reserved adr.)")
 
@@ -1661,9 +1682,9 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             manager.add_line(f"No excluded ranges for network {self.network}")
             return
 
-        manager.add_line(f"{'Start IP':<{padding}}End IP")
+        # manager.add_line(f"{'Start IP':<{padding}}End IP")
         for exrange in self.excluded_ranges:
-            manager.add_line(f"{exrange.start_ip:<{padding}}{exrange.end_ip}")
+            manager.add_line(f" {str(exrange.start_ip):<{padding}} -> {exrange.end_ip}")
 
     def overlaps(self, other: Network | str | IP_NetworkT) -> bool:
         """Check if the network overlaps with another network."""
