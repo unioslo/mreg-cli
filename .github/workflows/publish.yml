@@ -15,11 +15,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      # Only release from master branch
-      # https://stackoverflow.com/a/74690436
+      
       - name: Exit if not on master branch
-        if: endsWith(github.event.base_ref, 'master') == false
+        if: github.ref_name != 'master'
         run: exit -1
 
       - name: Install build dependencies
