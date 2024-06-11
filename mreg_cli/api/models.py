@@ -1043,7 +1043,7 @@ class HostPolicy(FrozenModel, WithName):
             return datetime.combine(value, datetime.min.time())
         return value  # let pydantic throw the ValidationError
 
-    @computed_field
+    @computed_field  # noqa: A003
     def created_at(self) -> datetime:
         """Creation time."""
         return self.created_at_tz_naive.replace(tzinfo=self.updated_at.tzinfo)
@@ -1142,7 +1142,7 @@ class Role(HostPolicy, WithHistory):
         for label in labels:
             output_manager.add_formatted_line("", label.name, padding)
 
-    def output_hosts(self, padding: int = 14) -> None:
+    def output_hosts(self, _padding: int = 14) -> None:
         """Output the hosts that use the role.
 
         :param padding: Number of spaces for left-padding the output.
@@ -1155,7 +1155,7 @@ class Role(HostPolicy, WithHistory):
         else:
             manager.add_line("No host uses this role")
 
-    def output_atoms(self, padding: int = 14) -> None:
+    def output_atoms(self, _padding: int = 14) -> None:
         """Output the atoms that are members of the role.
 
         :param padding: Number of spaces for left-padding the output.
@@ -1183,7 +1183,7 @@ class Role(HostPolicy, WithHistory):
         )
 
     @classmethod
-    def output_multiple_table(cls, roles: list[Role], padding: int = 14) -> None:
+    def output_multiple_table(cls, roles: list[Role], _padding: int = 14) -> None:
         """Output multiple roles to the console in a table.
 
         :param roles: List of roles to output.
@@ -2912,9 +2912,9 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """Return the zone for the host.
 
         :param accept_delegation: If True, accept delegation and return a Delegation object if the
-                                    zone of the host is delegated. Otherwise raise EntityOwnershipMismatch.
+                zone of the host is delegated. Otherwise raise EntityOwnershipMismatch.
         :param validate_zone_resolution: If True, validate that the resolved zone matches the
-                                          expected zone ID. Fail with ValidationFailure if it does not.
+                expected zone ID. Fail with ValidationFailure if it does not.
         """
         if not self.zone:
             return None
@@ -3075,7 +3075,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         CNAME.output_multiple(self.cnames, padding=padding)
 
-    def output_roles(self, padding: int = 14) -> None:
+    def output_roles(self, _padding: int = 14) -> None:
         """Output the roles for the host."""
         roles = self.roles()
         manager = OutputManager()

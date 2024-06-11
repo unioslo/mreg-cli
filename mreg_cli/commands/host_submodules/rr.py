@@ -340,23 +340,24 @@ def naptr_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    data: dict[str, str] = {
+    arg_data: dict[str, str | int] = {
         "preference": args.preference,
         "order": args.order,
         "flag": args.flag,
         "service": args.service,
         "regex": args.regex,
         "replacement": args.replacement,
-        "host": str(host.id),
+        "host": host.id,
     }
 
-    existing_naptr = NAPTR.get_by_query_unique(data)
+    # Query parameters must be strings...
+    search_data: dict[str, str] = {k: str(v) for k, v in arg_data.items()}
+
+    existing_naptr = NAPTR.get_by_query_unique(search_data)
     if existing_naptr:
         raise EntityAlreadyExists(f"{host} already has that NAPTR defined.")
 
-    arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
-
-    NAPTR.create(arg_data)
+    NAPTR.create(params=arg_data)
     OutputManager().add_ok(f"Added NAPTR record to {host.name.hostname}.")
 
 
@@ -797,9 +798,7 @@ def sshfp_remove(args: argparse.Namespace) -> None:
                 raise DeleteError(f"Failed to remove SSHFP for {host}")
             else:
                 fp = sshfp.fingerprint
-                OutputManager().add_ok(
-                    f"Removed SSHFP record with fingerprint {fp} for {host}."
-                )
+                OutputManager().add_ok(f"Removed SSHFP record with fingerprint {fp} for {host}.")
 
 
 @command_registry.register_command(
