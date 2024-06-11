@@ -475,23 +475,6 @@ def get_list_generic(
 
     :returns: A list of dictionaries or a dictionary if expect_one_result is True.
     """
-
-    def _check_expect_one_result(
-        ret: list[Json],
-    ) -> Json | list[Json]:
-        if expect_one_result:
-            if len(ret) == 0:
-                return {}
-            if len(ret) != 1:
-                raise MultipleEntititesFound(f"Expected exactly one result, got {len(ret)}.")
-
-            return ret[0]
-
-        return ret
-
-    if params is None:
-        params = {}
-
     response = get(path, params)
 
     # Non-paginated results, return them directly
@@ -503,25 +486,21 @@ def get_list_generic(
     if limit and resp.count > abs(limit):
         raise TooManyResults(f"Too many hits ({resp.count}), please refine your search criteria.")
 
-    # Short circuit if there are no more pages. This means that there are no more results to
-    # be had so we can return the results we already have.
-    if not resp.next:
-        return _check_expect_one_result(resp.results)
-
     # Iterate over all pages and collect the results
-    ret: list[Json] = []
-    while True:
-        resp = get(path, params=params, ok404=ok404)
-        if resp is None:
-            return _check_expect_one_result(ret)
-        result = validate_paginated_response(resp)
-
-        ret.extend(result.results)
-
-        if result.next:
-            path = result.next
-        else:
-            return _check_expect_one_result(ret)
+    ret: list[Json] = resp.results
+    while resp.next:
+        response = get(resp.next, params=params, ok404=ok404)
+        if response is None:
+            break
+        resp = validate_paginated_response(response)
+        ret.extend(resp.results)
+    if expect_one_result:
+        if len(ret) == 0:
+            return {}
+        if len(ret) != 1:
+            raise MultipleEntititesFound(f"Expected exactly one result, got {len(ret)}.")
+        return ret[0]
+    return ret
 
 
 def get_typed(
