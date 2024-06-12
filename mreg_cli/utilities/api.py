@@ -432,7 +432,7 @@ def validate_paginated_response(response: Response) -> PaginatedResponse:
 @overload
 def get_list_generic(
     path: str,
-    params: dict[str, str] | None = None,
+    params: JsonMapping | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[True] = True,
@@ -442,7 +442,7 @@ def get_list_generic(
 @overload
 def get_list_generic(
     path: str,
-    params: dict[str, str] | None = None,
+    params: JsonMapping | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[False] = False,
