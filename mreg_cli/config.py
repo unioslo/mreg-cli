@@ -22,7 +22,7 @@ import os
 import sys
 from typing import Any, overload
 
-from mreg_cli.types import DefaultType
+from mreg_cli.types import DefaultType, LogLevel
 
 logger = logging.getLogger(__name__)
 
@@ -38,17 +38,10 @@ DEFAULT_CONFIG_PATH = tuple(
     )
 )
 
-# Default logging format
-# TODO: Support logging config
-LOGGING_FORMAT = "%(levelname)s - %(name)s - %(message)s"
+DEFAULT_LOG_FILE = os.path.expanduser("~/.mreg-cli.log")
 
-# Verbosity count to logging level
-LOGGING_VERBOSITY: tuple[int, int, int, int] = (
-    logging.ERROR,
-    logging.WARNING,
-    logging.INFO,
-    logging.DEBUG,
-)
+# Default logging format
+LOGGING_FORMAT = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
 
 
 class MregCliConfig:
@@ -62,6 +55,8 @@ class MregCliConfig:
     """
 
     _instance = None
+    _is_logging = False
+    _logfile = None
     _config_cmd: dict[str, str]
     _config_file: dict[str, str]
     _config_env: dict[str, str]
@@ -91,10 +86,12 @@ class MregCliConfig:
         }
 
     @overload
-    def get(self, key: str) -> str | None: ...
+    def get(self, key: str) -> str | None:
+        ...
 
     @overload
-    def get(self, key: str, default: DefaultType = ...) -> str | DefaultType: ...
+    def get(self, key: str, default: DefaultType = ...) -> str | DefaultType:
+        ...
 
     def get(self, key: str, default: DefaultType | None = None) -> str | DefaultType | None:
         """Get a configuration value with priority: cmdline, env, file.
@@ -127,24 +124,60 @@ class MregCliConfig:
                 cfgparser.read(configpath)
                 self._config_file = dict(cfgparser["mreg"].items())
 
-    def get_verbosity(self, verbosity: int) -> int:
-        """Translate verbosity to logging level.
+    def get_logging_level(self) -> str:
+        """Get the current logging level by name.
 
-        Levels are traslated according to :py:const:`LOGGING_VERBOSITY`.
-
-        :param int verbosity: verbosity level
-
-        :rtype: int
+        :returns: The logging level by name.
         """
-        level = LOGGING_VERBOSITY[min(len(LOGGING_VERBOSITY) - 1, verbosity)]
-        return level
+        return logging.getLevelName(logging.getLogger().getEffectiveLevel())
 
-    def configure_logging(self, level: int = logging.INFO) -> None:
+    def set_logging_level(self, level: LogLevel) -> None:
+        """Set the logging level.
+
+        :param str level: The logging level to set (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        """
+        logging.getLogger().setLevel(level.upper())
+
+    def start_logging(self, logfile: str = DEFAULT_LOG_FILE, level: str = "INFO") -> None:
         """Enable and configure logging.
 
-        :param int level: logging level, defaults to :py:const:`logging.INFO`
+        :param str logfile: Path to the logfile, defaults to DEFAULT_LOG_FILE.
+        :param str level: Logging level, defaults to 'INFO'.
         """
-        logging.basicConfig(level=level, format=LOGGING_FORMAT)
+        if self._is_logging:
+            logging.shutdown()
+            self._is_logging = False
+        else:
+            logging.basicConfig(
+                filename=logfile,
+                level=logging.getLevelName(level.upper()),
+                format=LOGGING_FORMAT,
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+
+        logging.getLogger().setLevel(level.upper())
+        self._is_logging = True
+        self._logfile = logfile
+
+    def get_logging_status(self) -> bool:
+        """Get the logging status.
+
+        :returns: True if logging is enabled, False otherwise.
+        """
+        return self._is_logging
+
+    def print_logging_status(self) -> None:
+        """Print the logging status."""
+        if self._is_logging:
+            print(f"Logging enabled to {self._logfile}")
+        else:
+            print("Logging is not enabled")
+
+    def stop_logging(self) -> None:
+        """Stop logging."""
+        logging.shutdown()
+        self._is_logging = False
+        self._logfile = None
 
     def get_config_file(self) -> str | None:
         """Get the first config file found in DEFAULT_CONFIG_PATH.
@@ -162,6 +195,10 @@ class MregCliConfig:
     def get_default_domain(self):
         """Get the default domain from the application."""
         return self.get("domain")
+
+    def get_default_logfile(self):
+        """Get the default logfile from the application."""
+        return self.get("logfile", DEFAULT_LOG_FILE)
 
     def get_location_tags(self) -> list[str]:
         """Get the location tags from the application."""

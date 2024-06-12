@@ -164,6 +164,7 @@ def prompt_for_password_and_try_update_token() -> None:
 def auth_and_update_token(username: str, password: str) -> None:
     """Perform the actual token update."""
     tokenurl = urljoin(MregCliConfig().get_url(), "/api/token-auth/")
+    logger.info("Updating token for %s @ %s", username, tokenurl)
     try:
         result = requests.post(tokenurl, {"username": username, "password": password})
     except requests.exceptions.SSLError as e:
@@ -181,6 +182,7 @@ def auth_and_update_token(username: str, password: str) -> None:
         else:
             raise LoginFailedError(res)
     token = result.json()["token"]
+    logger.info("Token updated for %s @ %s", username, tokenurl)
     set_session_token(token)
     TokenFile.set_entry(username, MregCliConfig().get_url(), token)
 
@@ -189,6 +191,7 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
     """Check the result of a request."""
     if not result.ok:
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
+        logger.warning(message)
         try:
             body = result.json()
         except ValueError:
@@ -196,6 +199,8 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
         else:
             message += f"\n{json.dumps(body, indent=2)}"
         raise APINotOk(message)
+
+    logger.debug(f"{operation_type} {url} OK")
 
 
 def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
@@ -224,6 +229,9 @@ def _request_wrapper(
     if params is None:
         params = {}
     url = urljoin(MregCliConfig().get_url(), path)
+
+    logger.info("Requesting %s %s", operation_type.upper(), url)
+    logger.debug("Params: %s", params)
 
     # Strip None values from data
     if data:
@@ -260,19 +268,23 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> Response | None: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> Response | None:
+    ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> Response: ...
+def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> Response:
+    ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> Response | None: ...
+def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> Response | None:
+    ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ...) -> Response: ...
+def get(path: str, params: dict[str, Any] | None = ...) -> Response:
+    ...
 
 
 def get(path: str, params: dict[str, Any] | None = None, ok404: bool = False) -> Response | None:
@@ -436,7 +448,8 @@ def get_list_generic(
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[True] = True,
-) -> Json: ...
+) -> Json:
+    ...
 
 
 @overload
@@ -446,7 +459,8 @@ def get_list_generic(
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[False] = False,
-) -> list[Json]: ...
+) -> list[Json]:
+    ...
 
 
 def get_list_generic(

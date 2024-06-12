@@ -127,3 +127,4 @@ class Command(NamedTuple):
 
 # Config
 DefaultType = TypeVar("DefaultType")
+LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]

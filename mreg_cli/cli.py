@@ -22,13 +22,15 @@ from mreg_cli.commands.group import GroupCommands
 from mreg_cli.commands.help import HelpCommands
 from mreg_cli.commands.host import HostCommands
 from mreg_cli.commands.label import LabelCommands
+from mreg_cli.commands.logging import LoggingCommmands
 from mreg_cli.commands.network import NetworkCommands
 from mreg_cli.commands.permission import PermissionCommands
 from mreg_cli.commands.policy import PolicyCommands
+from mreg_cli.commands.recording import RecordingCommmands
 from mreg_cli.commands.zone import ZoneCommands
 
 # Import other mreg_cli modules
-from mreg_cli.exceptions import CliError, CliWarning, InputFailure
+from mreg_cli.exceptions import CliError, CliWarning
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
@@ -274,19 +276,6 @@ def _quit(_: argparse.Namespace) -> NoReturn:
     raise CliExit
 
 
-def _start_recording(args: argparse.Namespace) -> None:
-    """Start recording commands and output to the given file."""
-    if not args.filename:
-        raise InputFailure("No filename given.")
-
-    OutputManager().recording_start(args.filename)
-
-
-def _stop_recording(_: argparse.Namespace):
-    """Stop recording commands and output to the given file."""
-    OutputManager().recording_stop()
-
-
 # Always need a quit command
 cli.add_command(
     prog="quit",
@@ -313,6 +302,8 @@ for command in [
     PolicyCommands,
     ZoneCommands,
     LabelCommands,
+    RecordingCommmands,
+    LoggingCommmands,
 ]:
     command(cli).register_all_commands()
 
@@ -328,34 +319,6 @@ cli.add_command(
     description="Log out from mreg and exit. Will delete the token.",
     short_desc="Log out from mreg",
     callback=logout,
-)
-
-recordings = cli.add_command(
-    prog="recording",
-    description="Recording related commands.",
-    short_desc="Recording related commands",
-)
-
-recordings.add_command(
-    prog="start",
-    description="Start recording commands to a file.",
-    short_desc="Start recording",
-    callback=_start_recording,
-    flags=[
-        Flag(
-            "filename",
-            description="The filename to record to.",
-            short_desc="Filename",
-            metavar="filename",
-        )
-    ],
-)
-
-recordings.add_command(
-    prog="stop",
-    description="Stop recording commands and output to the given file.",
-    short_desc="Stop recording",
-    callback=_stop_recording,
 )
 
 
