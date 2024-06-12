@@ -227,6 +227,7 @@ def main():
         raise SystemExit() from None
 
     # The app runs in an infinite loop and is expected to exit using sys.exit()
+    logger.debug("Entering main loop")
     while True:
         try:
             lines = session.prompt()

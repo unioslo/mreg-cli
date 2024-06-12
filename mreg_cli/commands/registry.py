@@ -19,9 +19,13 @@ class CommandRegistry:
     command with the CLI.
     """
 
-    def __init__(self) -> None:
-        """Initialize the command registry."""
+    def __init__(self, root: bool = False) -> None:
+        """Initialize the command registry.
+
+        :param root: Whether the command is a root command.
+        """
         self._commands: list[Command] = []
+        self.root = root
 
     def register_command(
         self,
@@ -35,14 +39,13 @@ class CommandRegistry:
         :param prog: The name of the command.
         :param description: A description of the command.
         :param short_desc: A short description of the command.
+        :param flags: A list of flags for the command.
 
         Returns a decorator that registers a command with the CLI within the
         current scope.
         """
 
-        def decorator(
-            func: CommandFunc,
-        ) -> CommandFunc:
+        def decorator(func: CommandFunc) -> CommandFunc:
             self._commands.append(Command(prog, description, short_desc, func, flags))
             return func
 

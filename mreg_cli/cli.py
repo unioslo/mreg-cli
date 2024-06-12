@@ -7,11 +7,12 @@ from __future__ import annotations
 
 import argparse
 import html
+import logging
 import os
 import shlex
 import sys
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, NoReturn
+from typing import TYPE_CHECKING, Any
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
@@ -27,25 +28,21 @@ from mreg_cli.commands.network import NetworkCommands
 from mreg_cli.commands.permission import PermissionCommands
 from mreg_cli.commands.policy import PolicyCommands
 from mreg_cli.commands.recording import RecordingCommmands
+from mreg_cli.commands.root import RootCommmands
 from mreg_cli.commands.zone import ZoneCommands
 
 # Import other mreg_cli modules
-from mreg_cli.exceptions import CliError, CliWarning
+from mreg_cli.exceptions import CliError, CliExit, CliWarning
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
 from mreg_cli.utilities.api import create_and_set_corrolation_id
-from mreg_cli.utilities.api import logout as _force_logout
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     # Can't use _SubParsersAction as generic in Python <3.9
     SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # type: ignore # private attribute
-
-
-class CliExit(Exception):
-    """Exception used to exit the CLI."""
-
-    pass
 
 
 def _create_command_group(parent: argparse.ArgumentParser) -> SubparserType:
@@ -144,6 +141,7 @@ class Command(Completer):
 
     def parse(self, command: str) -> None:
         """Parse and execute a command."""
+        logger.debug(f"Parsing command: {command}")
         args = shlex.split(command, comments=True)
 
         try:
@@ -271,27 +269,6 @@ class Command(Completer):
 _top_parser = argparse.ArgumentParser(formatter_class=CustomHelpFormatter)
 cli = Command(_top_parser, list(), "")
 
-
-def _quit(_: argparse.Namespace) -> NoReturn:
-    raise CliExit
-
-
-# Always need a quit command
-cli.add_command(
-    prog="quit",
-    description="Exit application.",
-    short_desc="Quit",
-    callback=_quit,
-)
-
-cli.add_command(
-    prog="exit",
-    description="Exit application.",
-    short_desc="Quit",
-    callback=_quit,
-)
-
-
 for command in [
     DHCPCommands,
     GroupCommands,
@@ -304,22 +281,9 @@ for command in [
     LabelCommands,
     RecordingCommmands,
     LoggingCommmands,
+    RootCommmands,
 ]:
     command(cli).register_all_commands()
-
-
-def logout(_: argparse.Namespace):
-    """Log out from mreg and exit. Will delete token."""
-    _force_logout()
-    raise CliExit
-
-
-cli.add_command(
-    prog="logout",
-    description="Log out from mreg and exit. Will delete the token.",
-    short_desc="Log out from mreg",
-    callback=logout,
-)
 
 
 def source(files: list[str], ignore_errors: bool, verbose: bool) -> Generator[str, None, None]:
@@ -336,6 +300,7 @@ def source(files: list[str], ignore_errors: bool, verbose: bool) -> Generator[st
             filename = os.path.expanduser(filename)
         try:
             with open(filename) as f:
+                logger.info("Reading commands from %s", filename)
                 for i, line in enumerate(f):
                     # Shell commands can be called from scripts. They start with '!'
                     if line.startswith("!"):
@@ -357,10 +322,15 @@ def source(files: list[str], ignore_errors: bool, verbose: bool) -> Generator[st
                             return
         except FileNotFoundError:
             print_formatted_text(f"No such file: '{filename}'")
+            logger.error(f"File not found during source: '{filename}'")
         except PermissionError:
             print_formatted_text(f"Permission denied: '{filename}'")
+            logger.error(f"Permission denied during source: '{filename}'")
 
 
+# Always need the source command. This is located here due to the deep interaction with
+# the cli variable itself and the command processing. Moving this out to another file
+# would lead to circular imports in all its joy.
 def _source(args: argparse.Namespace):
     """Source command for the CLI.
 
@@ -372,7 +342,6 @@ def _source(args: argparse.Namespace):
         cli.process_command_line(command)
 
 
-# Always need the source command.
 cli.add_command(
     prog="source",
     description="Read and run commands from the given source files.",

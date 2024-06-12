@@ -65,6 +65,14 @@ def create_and_set_corrolation_id(suffix: str) -> str:
     return correlation_id
 
 
+def get_correlation_id() -> str:
+    """Get the currently active corrolation id.
+
+    :returns: The currently active corrolation id.
+    """
+    return str(session.headers.get("X-Correlation-ID"))
+
+
 def set_session_token(token: str) -> None:
     """Update session headers with an authorization token.
 
@@ -191,7 +199,6 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
     """Check the result of a request."""
     if not result.ok:
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
-        logger.warning(message)
         try:
             body = result.json()
         except ValueError:
@@ -199,8 +206,6 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
         else:
             message += f"\n{json.dumps(body, indent=2)}"
         raise APINotOk(message)
-
-    logger.debug(f"{operation_type} {url} OK")
 
 
 def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
@@ -230,7 +235,7 @@ def _request_wrapper(
         params = {}
     url = urljoin(MregCliConfig().get_url(), path)
 
-    logger.info("Requesting %s %s", operation_type.upper(), url)
+    logger.info("Request: %s %s [%s]", operation_type.upper(), url, get_correlation_id())
     logger.debug("Params: %s", params)
 
     # Strip None values from data
@@ -244,6 +249,16 @@ def _request_wrapper(
         timeout=HTTP_TIMEOUT,
     )
     result = cast(requests.Response, result)  # convince mypy that result is a Response
+
+    request_id = result.headers.get("X-Request-Id", "?")
+    correlation_id = result.headers.get("X-Correlation-ID", "?")
+    id_str = f"(R:{request_id} C:{correlation_id})"
+    log_message = f"Response: {operation_type.upper()} {url} {result.status_code} {id_str}"
+
+    if result.status_code >= 300:
+        logger.warning(log_message)
+    else:
+        logger.info(log_message)
 
     # This is a workaround for old server versions that can't handle JSON data in requests
     if (

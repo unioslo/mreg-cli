@@ -15,6 +15,12 @@ from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 
 
+class CliExit(Exception):
+    """Exception used to exit the CLI."""
+
+    pass
+
+
 class CliException(Exception):
     """Base exception class for the CLI."""
 
