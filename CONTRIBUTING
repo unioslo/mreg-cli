@@ -1,0 +1,32 @@
+# Contributing
+
+If you would like to contribute to this project, please follow these steps:
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/branch-name`)
+3. Make changes
+4. Commit your changes (`git commit -am 'Add some feature'`)
+5. Push to the branch (`git push origin feature/branch-name`)
+6. Create a Pull Request
+
+## Publishing
+
+Publishing new versions is automatically handled by GitHub actions for versions tagged with `mreg-cli-v*` (e.g. `mreg-cli-v1.0.0`). If you are a maintainer, you can create a new release by following these steps:
+
+1. Switch to the `master` branch:
+
+```bash
+git checkout master
+```
+
+2. Create a new tag:
+
+```bash
+git tag mreg-cli-v1.2.3
+```
+
+3. Push the tag to the upstream repository:
+
+```bash
+git push upstream mreg-cli-v1.2.3
+```
