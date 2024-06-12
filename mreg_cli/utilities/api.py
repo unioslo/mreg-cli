@@ -235,8 +235,17 @@ def _request_wrapper(
         params = {}
     url = urljoin(MregCliConfig().get_url(), path)
 
-    logger.info("Request: %s %s [%s]", operation_type.upper(), url, get_correlation_id())
-    logger.debug("Params: %s", params)
+    logurl = url
+    if operation_type.upper() == "GET" and params:
+        logurl = logurl + "?" + "&".join(f"{k}={v}" for k, v in params.items())
+
+    logger.info("Request: %s %s [%s]", operation_type.upper(), logurl, get_correlation_id())
+
+    if operation_type.upper() != "GET" and params:
+        logger.debug("Params: %s", params)
+
+    if data:
+        logger.debug("Data: %s", data)
 
     # Strip None values from data
     if data:
@@ -252,8 +261,8 @@ def _request_wrapper(
 
     request_id = result.headers.get("X-Request-Id", "?")
     correlation_id = result.headers.get("X-Correlation-ID", "?")
-    id_str = f"(R:{request_id} C:{correlation_id})"
-    log_message = f"Response: {operation_type.upper()} {url} {result.status_code} {id_str}"
+    id_str = f"[R:{request_id} C:{correlation_id}]"
+    log_message = f"Response: {operation_type.upper()} {logurl} {result.status_code} {id_str}"
 
     if result.status_code >= 300:
         logger.warning(log_message)
