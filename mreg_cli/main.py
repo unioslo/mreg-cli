@@ -15,6 +15,7 @@ from mreg_cli.cli import cli, source
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import LoginFailedError
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import LogLevelChoices
 from mreg_cli.utilities.api import try_token_or_login
 
 logger = logging.getLogger(__name__)
@@ -80,8 +81,8 @@ def main():
         "--log-level",
         dest="loglevel",
         default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Log level for logging. One of: DEBUG, INFO, WARNING, ERROR, CRITICAL",
+        choices=LogLevelChoices,
+        help="Log level for logging.",
     )
     output_args.add_argument(
         "-l",

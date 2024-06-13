@@ -22,7 +22,7 @@ import os
 import sys
 from typing import Any, overload
 
-from mreg_cli.types import DefaultType, LogLevel
+from mreg_cli.types import DefaultType, LogLevel, LogLevelValidator
 
 logger = logging.getLogger(__name__)
 
@@ -138,12 +138,15 @@ class MregCliConfig:
         """
         logging.getLogger().setLevel(level.upper())
 
-    def start_logging(self, logfile: str = DEFAULT_LOG_FILE, level: str = "INFO") -> None:
+    def start_logging(
+        self, logfile: str = DEFAULT_LOG_FILE, level: str | LogLevel = "INFO"
+    ) -> None:
         """Enable and configure logging.
 
         :param str logfile: Path to the logfile, defaults to DEFAULT_LOG_FILE.
         :param str level: Logging level, defaults to 'INFO'.
         """
+        level = LogLevelValidator.validate_python(level)
         if self._is_logging:
             logging.shutdown()
             self._is_logging = False

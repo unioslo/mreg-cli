@@ -18,7 +18,14 @@ from typing import (
     Union,
 )
 
-from pydantic import ValidationError, ValidationInfo, ValidatorFunctionWrapHandler, WrapValidator
+from pydantic import (
+    BeforeValidator,
+    TypeAdapter,
+    ValidationError,
+    ValidationInfo,
+    ValidatorFunctionWrapHandler,
+    WrapValidator,
+)
 from pydantic_core import PydanticCustomError
 from typing_extensions import TypeAliasType
 
@@ -60,6 +67,16 @@ NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
 NargsType = int | NargsStr
 
 
+def to_uppercase(v: Any) -> Any:
+    """Uppercases any string arguments before validation."""
+    if isinstance(v, str):
+        return v.upper()
+    return v
+
+
+UpperCaser = BeforeValidator(to_uppercase)
+
+
 # Source: https://docs.pydantic.dev/2.7/concepts/types/#named-recursive-types
 def json_custom_error_validator(
     value: Any, handler: ValidatorFunctionWrapHandler, _info: ValidationInfo
@@ -86,6 +103,24 @@ Json = TypeAliasType(
 JsonMapping = Mapping[str, Json]
 
 
+def get_typealiastype_literals(alias: TypeAliasType) -> tuple[str, ...]:
+    """Get a tuple of an annotated Literal type alias type."""
+    return alias.__value__.__args__[0].__args__
+
+
+LogLevel = TypeAliasType(
+    "LogLevel",
+    Annotated[
+        Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        UpperCaser,
+    ],
+)
+
+
+LogLevelValidator = TypeAdapter(LogLevel)
+LogLevelChoices = get_typealiastype_literals(LogLevel)
+
+
 class Flag:
     """Class for flag information available to commands in the CLI."""
 
@@ -97,7 +132,7 @@ class Flag:
         nargs: NargsType | None = None,
         default: Any = None,
         flag_type: Any = None,
-        choices: list[str] | None = None,
+        choices: Sequence[str] | None = None,
         required: bool = False,
         metavar: str | None = None,
         action: str | None = None,
@@ -127,4 +162,3 @@ class Command(NamedTuple):
 
 # Config
 DefaultType = TypeVar("DefaultType")
-LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
