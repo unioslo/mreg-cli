@@ -256,7 +256,7 @@ def mx_add(args: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="mx_remove",
-    description=" Remove MX record for host.",
+    description="Remove MX record for host.",
     short_desc="Remove MX record.",
     flags=[
         Flag("name", description="Host target name.", metavar="NAME"),
@@ -797,9 +797,7 @@ def sshfp_remove(args: argparse.Namespace) -> None:
                 raise DeleteError(f"Failed to remove SSHFP for {host}")
             else:
                 fp = sshfp.fingerprint
-                OutputManager().add_ok(
-                    f"Removed SSHFP record with fingerprint {fp} for {host}."
-                )
+                OutputManager().add_ok(f"Removed SSHFP record with fingerprint {fp} for {host}.")
 
 
 @command_registry.register_command(

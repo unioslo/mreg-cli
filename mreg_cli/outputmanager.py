@@ -10,6 +10,7 @@ from __future__ import annotations
 import atexit
 import datetime
 import json
+import logging
 import os
 import re
 from collections.abc import Sequence
@@ -21,6 +22,8 @@ from pydantic import BaseModel
 
 from mreg_cli.exceptions import FileError, InputFailure
 from mreg_cli.types import RecordingEntry, TimeInfo
+
+logger = logging.getLogger(__name__)
 
 
 @overload
@@ -313,10 +316,12 @@ class OutputManager:
         :raises CliError: If the command is invalid.
         :return: The cleaned command, devoid of filters and other noise.
         """
+        logger.debug(f"From command: {command}")
         self._command_issued = command.rstrip()
         self._command_executed, self._filter_re, self._filter_negate = self.get_filter(
             remove_comments(self._command_issued)
         )
+        logger.info(f"From command (filtered): {self._command_executed}")
         return self._command_executed
 
     def add_line(self, line: str) -> None:
@@ -324,6 +329,7 @@ class OutputManager:
 
         :param line: The line to add.
         """
+        logger.debug(f"Adding line: {line}")
         self._output.append(line)
 
     def add_formatted_line(self, key: str, value: str, padding: int = 14) -> None:
