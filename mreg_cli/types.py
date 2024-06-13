@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 from collections.abc import Callable
+from enum import StrEnum
 from typing import (
     Annotated,
     Any,
@@ -18,7 +19,12 @@ from typing import (
     Union,
 )
 
-from pydantic import ValidationError, ValidationInfo, ValidatorFunctionWrapHandler, WrapValidator
+from pydantic import (
+    ValidationError,
+    ValidationInfo,
+    ValidatorFunctionWrapHandler,
+    WrapValidator,
+)
 from pydantic_core import PydanticCustomError
 from typing_extensions import TypeAliasType
 
@@ -97,7 +103,7 @@ class Flag:
         nargs: NargsType | None = None,
         default: Any = None,
         flag_type: Any = None,
-        choices: list[str] | None = None,
+        choices: Sequence[str] | None = None,
         required: bool = False,
         metavar: str | None = None,
         action: str | None = None,
@@ -127,4 +133,26 @@ class Command(NamedTuple):
 
 # Config
 DefaultType = TypeVar("DefaultType")
-LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+
+class LogLevel(StrEnum):
+    """Enum for log levels."""
+
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
+
+    @classmethod
+    def _missing_(cls, value: Any) -> LogLevel:
+        """Case-insensitive lookup when normal lookup fails."""
+        try:
+            return LogLevel(value.upper())
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid log level: {value}") from None
+
+    @classmethod
+    def choices(cls) -> list[str]:
+        """Return a list of all log levels as strings."""
+        return [str(c) for c in list(cls)]

@@ -11,7 +11,7 @@ from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import InputFailure
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
+from mreg_cli.types import Flag, LogLevel
 from mreg_cli.utilities.shared import sizeof_fmt
 
 command_registry = CommandRegistry()
@@ -47,7 +47,7 @@ class LoggingCommmands(BaseCommand):
             description="The logging level to use.",
             short_desc="Level",
             metavar="level",
-            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            choices=LogLevel.choices(),
             default="INFO",
         ),
     ],
