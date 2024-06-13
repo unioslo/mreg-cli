@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 from collections.abc import Callable
+from enum import StrEnum
 from typing import (
     Annotated,
     Any,
@@ -20,7 +21,6 @@ from typing import (
 
 from pydantic import (
     BeforeValidator,
-    TypeAdapter,
     ValidationError,
     ValidationInfo,
     ValidatorFunctionWrapHandler,
@@ -103,22 +103,27 @@ Json = TypeAliasType(
 JsonMapping = Mapping[str, Json]
 
 
-def get_typealiastype_literals(alias: TypeAliasType) -> tuple[str, ...]:
-    """Get a tuple of an annotated Literal type alias type."""
-    return alias.__value__.__args__[0].__args__
+class LogLevel(StrEnum):
+    """Enum for log levels."""
 
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
-LogLevel = TypeAliasType(
-    "LogLevel",
-    Annotated[
-        Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        UpperCaser,
-    ],
-)
+    @classmethod
+    def _missing_(cls, value: Any) -> LogLevel:
+        """Case-insensitive lookup when normal lookup fails."""
+        try:
+            return LogLevel(value.upper())
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid log level: {value}") from None
 
-
-LogLevelValidator = TypeAdapter(LogLevel)
-LogLevelChoices = get_typealiastype_literals(LogLevel)
+    @classmethod
+    def choices(cls) -> list[str]:
+        """Return a list of all log levels as strings."""
+        return [str(c) for c in list(cls)]
 
 
 class Flag:

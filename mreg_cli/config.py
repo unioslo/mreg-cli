@@ -22,7 +22,7 @@ import os
 import sys
 from typing import Any, overload
 
-from mreg_cli.types import DefaultType, LogLevel, LogLevelValidator
+from mreg_cli.types import DefaultType, LogLevel
 
 logger = logging.getLogger(__name__)
 
@@ -86,12 +86,10 @@ class MregCliConfig:
         }
 
     @overload
-    def get(self, key: str) -> str | None:
-        ...
+    def get(self, key: str) -> str | None: ...
 
     @overload
-    def get(self, key: str, default: DefaultType = ...) -> str | DefaultType:
-        ...
+    def get(self, key: str, default: DefaultType = ...) -> str | DefaultType: ...
 
     def get(self, key: str, default: DefaultType | None = None) -> str | DefaultType | None:
         """Get a configuration value with priority: cmdline, env, file.
@@ -136,7 +134,7 @@ class MregCliConfig:
 
         :param str level: The logging level to set (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         """
-        logging.getLogger().setLevel(level.upper())
+        logging.getLogger().setLevel(level)
 
     def start_logging(
         self, logfile: str = DEFAULT_LOG_FILE, level: str | LogLevel = "INFO"
@@ -146,19 +144,19 @@ class MregCliConfig:
         :param str logfile: Path to the logfile, defaults to DEFAULT_LOG_FILE.
         :param str level: Logging level, defaults to 'INFO'.
         """
-        level = LogLevelValidator.validate_python(level)
+        level = LogLevel(level)
         if self._is_logging:
             logging.shutdown()
             self._is_logging = False
         else:
             logging.basicConfig(
                 filename=logfile,
-                level=logging.getLevelName(level.upper()),
+                level=logging.getLevelName(level),
                 format=LOGGING_FORMAT,
                 datefmt="%Y-%m-%d %H:%M:%S",
             )
 
-        logging.getLogger().setLevel(level.upper())
+        logging.getLogger().setLevel(level)
         self._is_logging = True
         self._logfile = logfile
 
