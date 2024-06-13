@@ -20,7 +20,6 @@ from typing import (
 )
 
 from pydantic import (
-    BeforeValidator,
     ValidationError,
     ValidationInfo,
     ValidatorFunctionWrapHandler,
@@ -67,16 +66,6 @@ NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
 NargsType = int | NargsStr
 
 
-def to_uppercase(v: Any) -> Any:
-    """Uppercases any string arguments before validation."""
-    if isinstance(v, str):
-        return v.upper()
-    return v
-
-
-UpperCaser = BeforeValidator(to_uppercase)
-
-
 # Source: https://docs.pydantic.dev/2.7/concepts/types/#named-recursive-types
 def json_custom_error_validator(
     value: Any, handler: ValidatorFunctionWrapHandler, _info: ValidationInfo
@@ -101,29 +90,6 @@ Json = TypeAliasType(
     ],
 )
 JsonMapping = Mapping[str, Json]
-
-
-class LogLevel(StrEnum):
-    """Enum for log levels."""
-
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
-
-    @classmethod
-    def _missing_(cls, value: Any) -> LogLevel:
-        """Case-insensitive lookup when normal lookup fails."""
-        try:
-            return LogLevel(value.upper())
-        except (ValueError, TypeError):
-            raise ValueError(f"Invalid log level: {value}") from None
-
-    @classmethod
-    def choices(cls) -> list[str]:
-        """Return a list of all log levels as strings."""
-        return [str(c) for c in list(cls)]
 
 
 class Flag:
@@ -167,3 +133,26 @@ class Command(NamedTuple):
 
 # Config
 DefaultType = TypeVar("DefaultType")
+
+
+class LogLevel(StrEnum):
+    """Enum for log levels."""
+
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
+
+    @classmethod
+    def _missing_(cls, value: Any) -> LogLevel:
+        """Case-insensitive lookup when normal lookup fails."""
+        try:
+            return LogLevel(value.upper())
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid log level: {value}") from None
+
+    @classmethod
+    def choices(cls) -> list[str]:
+        """Return a list of all log levels as strings."""
+        return [str(c) for c in list(cls)]
