@@ -13,6 +13,7 @@ from typing import Any
 
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit.formatted_text.html import html_escape
 
 
 class CliExit(Exception):
@@ -33,7 +34,12 @@ class CliException(Exception):
 
     def print_self(self):
         """Print the exception with appropriate formatting."""
-        print_formatted_text(HTML(self.formatted_exception()), file=sys.stdout)
+        print_formatted_text(
+            HTML(
+                html_escape(self.formatted_exception()),
+            ),
+            file=sys.stdout,
+        )
 
 
 class CliError(CliException):
