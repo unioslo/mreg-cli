@@ -9,7 +9,6 @@ from mreg_cli.api.models import Label
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import EntityNotFound, InputFailure
-
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 

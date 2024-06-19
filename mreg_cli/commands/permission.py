@@ -9,7 +9,6 @@ from mreg_cli.api.models import Label, NetworkOrIP, Permission
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import DeleteError, EntityNotFound
-
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 from mreg_cli.utilities.shared import convert_wildcard_to_regex

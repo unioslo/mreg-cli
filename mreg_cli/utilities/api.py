@@ -225,7 +225,7 @@ def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
 def _request_wrapper(
     operation_type: str,
     path: str,
-    params: dict[str, Any] | None = None,
+    params: JsonMapping | None = None,
     ok404: bool = False,
     first: bool = True,
     **data: Any,
@@ -292,26 +292,22 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> Response | None:
-    ...
+def get(path: str, params: JsonMapping | None, ok404: Literal[True]) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> Response:
-    ...
+def get(path: str, params: JsonMapping | None, ok404: Literal[False]) -> Response: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> Response | None:
-    ...
+def get(path: str, params: JsonMapping | None = ..., *, ok404: bool) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ...) -> Response:
-    ...
+def get(path: str, params: JsonMapping | None = ...) -> Response: ...
 
 
-def get(path: str, params: dict[str, Any] | None = None, ok404: bool = False) -> Response | None:
+def get(path: str, params: JsonMapping | None = None, ok404: bool = False) -> Response | None:
     """Make a standard get request."""
     if params is None:
         params = {}
@@ -386,7 +382,7 @@ def get_item_by_key_value(
 
 def get_list_unique(
     path: str,
-    params: dict[str, str],
+    params: dict[str, str] | None = None,
     ok404: bool = False,
 ) -> None | JsonMapping:
     """Do a get request that returns a single result from a search.
@@ -468,7 +464,7 @@ def validate_paginated_response(response: Response) -> PaginatedResponse:
 @overload
 def get_list_generic(
     path: str,
-    params: dict[str, Any] | None = None,
+    params: JsonMapping | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[True] = True,
@@ -479,7 +475,7 @@ def get_list_generic(
 @overload
 def get_list_generic(
     path: str,
-    params: dict[str, Any] | None = None,
+    params: JsonMapping | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[False] = False,
@@ -489,7 +485,7 @@ def get_list_generic(
 
 def get_list_generic(
     path: str,
-    params: dict[str, Any] | None = None,
+    params: JsonMapping | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: bool | None = False,

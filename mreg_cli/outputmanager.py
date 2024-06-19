@@ -21,7 +21,7 @@ import requests
 from pydantic import BaseModel
 
 from mreg_cli.exceptions import FileError, InputFailure
-from mreg_cli.types import RecordingEntry, TimeInfo
+from mreg_cli.types import JsonMapping, RecordingEntry, TimeInfo
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ def remove_dict_key_recursive(obj: object, key: str) -> None:
             remove_dict_key_recursive(other_value, key)
 
 
-def urlpath(url: str, params: dict[str, Any]) -> str:
+def urlpath(url: str, params: JsonMapping) -> str:
     """Return the path and query string of a URL."""
     if params:
         url = f"{url}?{urlencode(params)}"
@@ -277,7 +277,7 @@ class OutputManager:
         self,
         method: str,
         url: str,
-        params: dict[str, Any],
+        params: JsonMapping,
         data: dict[str, Any],
         result: requests.Response,
     ) -> None:
