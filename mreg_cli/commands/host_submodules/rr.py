@@ -256,7 +256,7 @@ def mx_add(args: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="mx_remove",
-    description=" Remove MX record for host.",
+    description="Remove MX record for host.",
     short_desc="Remove MX record.",
     flags=[
         Flag("name", description="Host target name.", metavar="NAME"),

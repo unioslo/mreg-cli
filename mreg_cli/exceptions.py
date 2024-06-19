@@ -7,11 +7,18 @@ context of a CLI command.
 
 from __future__ import annotations
 
+import logging
 import sys
 from typing import Any
 
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
+
+
+class CliExit(Exception):
+    """Exception used to exit the CLI."""
+
+    pass
 
 
 class CliException(Exception):
@@ -39,6 +46,7 @@ class CliError(CliException):
     def __init__(self, *args: Any, **kwargs: Any):
         """Initialize the error."""
         super().__init__(*args, **kwargs)
+        logging.getLogger(__name__).error(super().__str__())
         from mreg_cli.outputmanager import OutputManager
 
         OutputManager().add_error(super().__str__())
@@ -60,6 +68,7 @@ class CliWarning(CliException):
     def __init__(self, *args: Any, **kwargs: Any):
         """Initialize the warning."""
         super().__init__(*args, **kwargs)
+        logging.getLogger(__name__).warning(super().__str__())
         from mreg_cli.outputmanager import OutputManager
 
         OutputManager().add_warning(super().__str__())

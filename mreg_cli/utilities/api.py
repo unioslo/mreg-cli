@@ -65,6 +65,14 @@ def create_and_set_corrolation_id(suffix: str) -> str:
     return correlation_id
 
 
+def get_correlation_id() -> str:
+    """Get the currently active corrolation id.
+
+    :returns: The currently active corrolation id.
+    """
+    return str(session.headers.get("X-Correlation-ID"))
+
+
 def set_session_token(token: str) -> None:
     """Update session headers with an authorization token.
 
@@ -164,6 +172,7 @@ def prompt_for_password_and_try_update_token() -> None:
 def auth_and_update_token(username: str, password: str) -> None:
     """Perform the actual token update."""
     tokenurl = urljoin(MregCliConfig().get_url(), "/api/token-auth/")
+    logger.info("Updating token for %s @ %s", username, tokenurl)
     try:
         result = requests.post(tokenurl, {"username": username, "password": password})
     except requests.exceptions.SSLError as e:
@@ -181,6 +190,7 @@ def auth_and_update_token(username: str, password: str) -> None:
         else:
             raise LoginFailedError(res)
     token = result.json()["token"]
+    logger.info("Token updated for %s @ %s", username, tokenurl)
     set_session_token(token)
     TokenFile.set_entry(username, MregCliConfig().get_url(), token)
 
@@ -225,6 +235,18 @@ def _request_wrapper(
         params = {}
     url = urljoin(MregCliConfig().get_url(), path)
 
+    logurl = url
+    if operation_type.upper() == "GET" and params:
+        logurl = logurl + "?" + "&".join(f"{k}={v}" for k, v in params.items())
+
+    logger.info("Request: %s %s [%s]", operation_type.upper(), logurl, get_correlation_id())
+
+    if operation_type.upper() != "GET" and params:
+        logger.debug("Params: %s", params)
+
+    if data:
+        logger.debug("Data: %s", data)
+
     # Strip None values from data
     if data:
         data = _strip_none(data)
@@ -236,6 +258,16 @@ def _request_wrapper(
         timeout=HTTP_TIMEOUT,
     )
     result = cast(requests.Response, result)  # convince mypy that result is a Response
+
+    request_id = result.headers.get("X-Request-Id", "?")
+    correlation_id = result.headers.get("X-Correlation-ID", "?")
+    id_str = f"[R:{request_id} C:{correlation_id}]"
+    log_message = f"Response: {operation_type.upper()} {logurl} {result.status_code} {id_str}"
+
+    if result.status_code >= 300:
+        logger.warning(log_message)
+    else:
+        logger.info(log_message)
 
     # This is a workaround for old server versions that can't handle JSON data in requests
     if (
@@ -436,7 +468,8 @@ def get_list_generic(
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[True] = True,
-) -> Json: ...
+) -> Json:
+    ...
 
 
 @overload
@@ -446,7 +479,8 @@ def get_list_generic(
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[False] = False,
-) -> list[Json]: ...
+) -> list[Json]:
+    ...
 
 
 def get_list_generic(
