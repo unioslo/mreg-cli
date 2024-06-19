@@ -25,6 +25,10 @@ class CliExit(Exception):
 class CliException(Exception):
     """Base exception class for the CLI."""
 
+    def __str__(self) -> str:
+        """Return a HTML-escaped string representation of the exception."""
+        return html_escape(super().__str__())
+
     def formatted_exception(self) -> str:
         """Return a formatted string representation of the exception.
 
@@ -34,12 +38,7 @@ class CliException(Exception):
 
     def print_self(self):
         """Print the exception with appropriate formatting."""
-        print_formatted_text(
-            HTML(
-                html_escape(self.formatted_exception()),
-            ),
-            file=sys.stdout,
-        )
+        print_formatted_text(HTML(self.formatted_exception()), file=sys.stdout)
 
 
 class CliError(CliException):
@@ -52,17 +51,17 @@ class CliError(CliException):
     def __init__(self, *args: Any, **kwargs: Any):
         """Initialize the error."""
         super().__init__(*args, **kwargs)
-        logging.getLogger(__name__).error(super().__str__())
+        logging.getLogger(__name__).error(str(self))
         from mreg_cli.outputmanager import OutputManager
 
-        OutputManager().add_error(super().__str__())
+        OutputManager().add_error(str(self))
 
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML red tag for the error message.
 
         :returns: Formatted error message.
         """
-        return f"<ansired>ERROR: {super().__str__()}</ansired>"
+        return f"<ansired>ERROR: {self}</ansired>"
 
 
 class CliWarning(CliException):
@@ -74,17 +73,17 @@ class CliWarning(CliException):
     def __init__(self, *args: Any, **kwargs: Any):
         """Initialize the warning."""
         super().__init__(*args, **kwargs)
-        logging.getLogger(__name__).warning(super().__str__())
+        logging.getLogger(__name__).warning(str(self))
         from mreg_cli.outputmanager import OutputManager
 
-        OutputManager().add_warning(super().__str__())
+        OutputManager().add_warning(str(self))
 
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML italic tag for the warning message.
 
         :returns: Formatted warning message.
         """
-        return f"<i>{super().__str__()}</i>"
+        return f"<i>{self}</i>"
 
 
 class CreateError(CliError):
