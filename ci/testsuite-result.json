@@ -10736,6 +10736,158 @@
     "time": null
   },
   {
+    "command": "network set_category 10.0.1.0/24 cat1",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network set_category 10.0.1.0/24 cat1",
+    "ok": [
+      "Updated category tag to 'cat1' for 10.0.1.0/24"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.1.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [
+            {
+              "start_ip": "10.0.1.20",
+              "end_ip": "10.0.1.30",
+              "network": 3
+            }
+          ],
+          "network": "10.0.1.0/24",
+          "description": "Frozen but has one host",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": true,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networks/10.0.1.0/24",
+        "data": {
+          "category": "cat1"
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=3",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [
+                {
+                  "start_ip": "10.0.1.20",
+                  "end_ip": "10.0.1.30",
+                  "network": 3
+                }
+              ],
+              "network": "10.0.1.0/24",
+              "description": "Frozen but has one host",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "cat1",
+              "location": "",
+              "frozen": true,
+              "reserved": 3
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network set_location 10.0.1.0/24 loc1",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network set_location 10.0.1.0/24 loc1",
+    "ok": [
+      "Updated location tag to 'loc1' for 10.0.1.0/24"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.1.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [
+            {
+              "start_ip": "10.0.1.20",
+              "end_ip": "10.0.1.30",
+              "network": 3
+            }
+          ],
+          "network": "10.0.1.0/24",
+          "description": "Frozen but has one host",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "cat1",
+          "location": "",
+          "frozen": true,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networks/10.0.1.0/24",
+        "data": {
+          "location": "loc1"
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=3",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [
+                {
+                  "start_ip": "10.0.1.20",
+                  "end_ip": "10.0.1.30",
+                  "network": 3
+                }
+              ],
+              "network": "10.0.1.0/24",
+              "description": "Frozen but has one host",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "cat1",
+              "location": "loc1",
+              "frozen": true,
+              "reserved": 3
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "network set_vlan 10.0.1.0/24 1234",
     "command_filter": null,
     "command_filter_negate": false,
@@ -10764,8 +10916,8 @@
           "description": "Frozen but has one host",
           "vlan": null,
           "dns_delegated": false,
-          "category": "",
-          "location": "",
+          "category": "cat1",
+          "location": "loc1",
           "frozen": true,
           "reserved": 3
         }
@@ -10800,8 +10952,8 @@
               "description": "Frozen but has one host",
               "vlan": 1234,
               "dns_delegated": false,
-              "category": "",
-              "location": "",
+              "category": "cat1",
+              "location": "loc1",
               "frozen": true,
               "reserved": 3
             }
@@ -10823,8 +10975,8 @@
       "Network:                 10.0.1.0/24",
       "Netmask:                 255.255.255.0",
       "Description:             Frozen but has one host",
-      "Category:                ",
-      "Location:                ",
+      "Category:                cat1",
+      "Location:                loc1",
       "VLAN:                    1234",
       "DNS delegated:           False",
       "Frozen:                  True",
@@ -10858,8 +11010,8 @@
           "description": "Frozen but has one host",
           "vlan": 1234,
           "dns_delegated": false,
-          "category": "",
-          "location": "",
+          "category": "cat1",
+          "location": "loc1",
           "frozen": true,
           "reserved": 3
         }
@@ -11261,8 +11413,8 @@
           "description": "Frozen but has one host",
           "vlan": 1234,
           "dns_delegated": false,
-          "category": "",
-          "location": "",
+          "category": "cat1",
+          "location": "loc1",
           "frozen": true,
           "reserved": 3
         }
@@ -11297,8 +11449,8 @@
               "description": "Frozen but has one host",
               "vlan": 1234,
               "dns_delegated": false,
-              "category": "",
-              "location": "",
+              "category": "cat1",
+              "location": "loc1",
               "frozen": false,
               "reserved": 3
             }
@@ -11380,8 +11532,8 @@
           "description": "Frozen but has one host",
           "vlan": 1234,
           "dns_delegated": false,
-          "category": "",
-          "location": "",
+          "category": "cat1",
+          "location": "loc1",
           "frozen": false,
           "reserved": 3
         }
@@ -11433,8 +11585,8 @@
           "description": "Frozen but has one host",
           "vlan": 1234,
           "dns_delegated": false,
-          "category": "",
-          "location": "",
+          "category": "cat1",
+          "location": "loc1",
           "frozen": false,
           "reserved": 3
         }
@@ -11523,8 +11675,8 @@
           "description": "Frozen but has one host",
           "vlan": 1234,
           "dns_delegated": false,
-          "category": "",
-          "location": "",
+          "category": "cat1",
+          "location": "loc1",
           "frozen": false,
           "reserved": 3
         }
@@ -11734,8 +11886,8 @@
           "description": "Frozen but has one host",
           "vlan": 1234,
           "dns_delegated": false,
-          "category": "",
-          "location": "",
+          "category": "cat1",
+          "location": "loc1",
           "frozen": false,
           "reserved": 3
         }
