@@ -1779,7 +1779,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         # No need to validate IPs - if we find a match it's valid
         exrange: ExcludedRange | None = None
         for excluded_range in self.excluded_ranges:
-            if excluded_range.start_ip == start and excluded_range.end_ip == end:
+            if str(excluded_range.start_ip) == start and str(excluded_range.end_ip) == end:
                 exrange = excluded_range
                 break
         else:
