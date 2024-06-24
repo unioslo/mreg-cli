@@ -167,13 +167,18 @@ def _add_ip(
         raise InputFailure("Use a_add for IPv4 addresses")
 
     ipaddr = None
+    network = None
     if ip_or_net.is_network():
         network = Network.get_by_network_or_raise(str(ip_or_net.ip_or_network))
         ip = network.get_first_available_ip()
         ipaddr = ip
     else:
+        network = Network.get_by_ip(ip_or_net.as_ip())
         ip = ip_or_net
         ipaddr = ip.as_ip()
+
+    if not args.force and network.frozen:
+        raise ForceMissing(f"Network {network.network} is frozen, must force")
 
     if not args.force and host.has_ip(ipaddr):
         raise EntityAlreadyExists(f"Host {host} already has IP {ipaddr}")

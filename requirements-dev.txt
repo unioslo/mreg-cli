@@ -57,6 +57,7 @@ pysocks==1.7.1
     # via requests
 python-dateutil==2.9.0.post0
 requests==2.32.2
+rich==13.7.1
 ruff==0.4.5
 setuptools==70.0.0
     # via
