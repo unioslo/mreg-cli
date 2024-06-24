@@ -742,8 +742,7 @@ def sshfp_add(args: argparse.Namespace) -> None:
     if existing_sshfp:
         raise EntityAlreadyExists(f"{host} already has that SSHFP defined.")
 
-    arg_data = {k: v for k, v in data.items()}
-    SSHFP.create(arg_data)
+    SSHFP.create(data)
     OutputManager().add_ok(f"Added SSHFP record for {host.name.hostname}.")
 
 
