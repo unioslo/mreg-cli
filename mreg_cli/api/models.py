@@ -1122,6 +1122,10 @@ class Role(HostPolicy, WithHistory):
 
     history_resource: ClassVar[HistoryResource] = HistoryResource.HostPolicy_Role
 
+    def __hash__(self) -> int:
+        """Hash the role by ID and name."""
+        return hash(str(self.id) + self.name)
+
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""

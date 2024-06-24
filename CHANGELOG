@@ -1,0 +1,36 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+The big Pydantic update. The entire codebase has been rewritten to use Pydantic for request and response validation. This brings with it a huge improvement to the development experience and the robustness of the code.
+
+### Added
+
+- `--version` option to display current application version and exit. 
+    Version number is in the form of `major.minor.patch` if installed from a published version.
+    Shows a version number including the commit hash if installed from a git repository in the form of `major.minor.patch.dev123+gabc1234`.
+    See [Default versioning scheme](https://setuptools-scm.readthedocs.io/en/latest/usage/#default-versioning-scheme) in the [setuptools_scm](https://github.com/pypa/setuptools_scm/) documentation for more information.
+  - The version can be accessed programmatically with `mreg_cli.__version__`.
+- `label set_description` command to set the description of a label.
+- `network list_excluded_ranges` command to list the excluded ranges of a network.
+- Application can now store tokens for multiple servers and will pick the correct one based on the server URL.
+- Building binaries for Windows, Linux and MacOS, and publishing the package to PyPI on each GitHub release.
+
+### Changed
+
+- The application now uses Pydantic internally to validate request and response data. This should make the code more robust and easier to maintain.
+- Application now attempts to send JSON for every request. This should improve the consistency of the API responses.
+- Version now follows Semantic Versioning 2.0.0 and is automatically determined based on the most recent git tag (`mreg-cli-v*`). As part of this change, the verison has been bumped from 0.9.10 to 1.0.0. See the Added section for more information on how version numbers are accessed.
+
+### Removed
+
+- `label rename -desc` option. Description modification is now done through the new `label set_description` command.
+
+### Fixed
+
+- Hopefully more than we broke.

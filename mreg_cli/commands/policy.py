@@ -312,6 +312,39 @@ def host_add(args: argparse.Namespace) -> None:
 
 
 @command_registry.register_command(
+    prog="host_copy",
+    description="Copy roles from one host to another",
+    short_desc="Copy roles between hosts",
+    flags=[
+        Flag("source", description="Source host", metavar="SOURCE"),
+        Flag("destination", description="Destination host", nargs="+", metavar="DESTINATION"),
+    ],
+)
+def host_copy(args: argparse.Namespace) -> None:
+    """Copy roles from one host to another.
+
+    :param args: argparse.Namespace (source, destination)
+    """
+    source_name: str = args.source
+    source = Host.get_by_any_means_or_raise(source_name)
+    source_roles = set(source.roles())
+
+    for destination_name in args.destination:
+        destination = Host.get_by_any_means_or_raise(destination_name)
+        destination_roles = set(destination.roles())
+        OutputManager().add_line(f"Copying roles from from {source_name} to {destination_name}")
+
+        # Check if role already exists in destination
+        for role in source_roles & destination_roles:
+            OutputManager().add_line(f"    + {role.name} (existing membership)")
+
+        # Check what roles need to be added
+        for role in source_roles - destination_roles:
+            role.add_host(destination.name.hostname)
+            OutputManager().add_line(f"    + {role.name}")
+
+
+@command_registry.register_command(
     prog="host_list",
     description="List roles for host(s)",
     short_desc="List roles for host(s)",
