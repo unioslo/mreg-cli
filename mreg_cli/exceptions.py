@@ -25,8 +25,8 @@ class CliExit(Exception):
 class CliException(Exception):
     """Base exception class for the CLI."""
 
-    def escaped(self) -> str:
-        """Return a HTML-escaped string representation of the exception."""
+    def escape(self) -> str:
+        """Get an HTML-escaped string representation of the exception."""
         return html_escape(str(self))
 
     def formatted_exception(self) -> str:
@@ -61,7 +61,7 @@ class CliError(CliException):
 
         :returns: Formatted error message.
         """
-        return f"<ansired>ERROR: {self.escaped()}</ansired>"
+        return f"<ansired>ERROR: {self.escape()}</ansired>"
 
 
 class CliWarning(CliException):
@@ -83,7 +83,7 @@ class CliWarning(CliException):
 
         :returns: Formatted warning message.
         """
-        return f"<i>{self.escaped()}</i>"
+        return f"<i>{self.escape()}</i>"
 
 
 class CreateError(CliError):
@@ -232,7 +232,7 @@ class LoginFailedError(CliException):
 
         :returns: Formatted error message.
         """
-        return f"Login failed: {self.escaped()}"
+        return f"Login failed: {self.escape()}"
 
     def __str__(self) -> str:
         """Return the error message."""
