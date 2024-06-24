@@ -31,7 +31,7 @@ from mreg_cli.exceptions import (
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
-from mreg_cli.types import Json, JsonMapping
+from mreg_cli.types import Json, JsonMapping, QueryParams
 
 session = requests.Session()
 session.headers.update({"User-Agent": "mreg-cli"})
@@ -225,7 +225,7 @@ def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
 def _request_wrapper(
     operation_type: str,
     path: str,
-    params: JsonMapping | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     first: bool = True,
     **data: Any,
@@ -292,22 +292,22 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: JsonMapping | None, ok404: Literal[True]) -> Response | None: ...
+def get(path: str, params: QueryParams | None, ok404: Literal[True]) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: JsonMapping | None, ok404: Literal[False]) -> Response: ...
+def get(path: str, params: QueryParams | None, ok404: Literal[False]) -> Response: ...
 
 
 @overload
-def get(path: str, params: JsonMapping | None = ..., *, ok404: bool) -> Response | None: ...
+def get(path: str, params: QueryParams | None = ..., *, ok404: bool) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: JsonMapping | None = ...) -> Response: ...
+def get(path: str, params: QueryParams | None = ...) -> Response: ...
 
 
-def get(path: str, params: JsonMapping | None = None, ok404: bool = False) -> Response | None:
+def get(path: str, params: QueryParams | None = None, ok404: bool = False) -> Response | None:
     """Make a standard get request."""
     if params is None:
         params = {}
@@ -316,7 +316,7 @@ def get(path: str, params: JsonMapping | None = None, ok404: bool = False) -> Re
 
 def get_list(
     path: str,
-    params: dict[str, Any] | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     limit: int | None = 500,
 ) -> list[Json]:
@@ -382,7 +382,7 @@ def get_item_by_key_value(
 
 def get_list_unique(
     path: str,
-    params: dict[str, str] | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
 ) -> None | JsonMapping:
     """Do a get request that returns a single result from a search.
@@ -464,28 +464,26 @@ def validate_paginated_response(response: Response) -> PaginatedResponse:
 @overload
 def get_list_generic(
     path: str,
-    params: JsonMapping | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[True] = True,
-) -> Json:
-    ...
+) -> Json: ...
 
 
 @overload
 def get_list_generic(
     path: str,
-    params: JsonMapping | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[False] = False,
-) -> list[Json]:
-    ...
+) -> list[Json]: ...
 
 
 def get_list_generic(
     path: str,
-    params: JsonMapping | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: bool | None = False,
@@ -540,7 +538,7 @@ def get_list_generic(
 def get_typed(
     path: str,
     type_: type[T],
-    params: dict[str, Any] | None = None,
+    params: QueryParams | None = None,
     limit: int | None = 500,
 ) -> T:
     """Fetch and deserialize JSON from an endpoint into a specific type.
@@ -566,21 +564,21 @@ def get_typed(
         return adapter.validate_json(resp.text)
 
 
-def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> Response | None:
+def post(path: str, params: QueryParams | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
-def patch(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> Response | None:
+def patch(path: str, params: QueryParams | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("patch", path, params=params, **kwargs)
 
 
-def delete(path: str, params: dict[str, Any] | None = None) -> Response | None:
+def delete(path: str, params: QueryParams | None = None) -> Response | None:
     """Use requests to make a delete request."""
     if params is None:
         params = {}

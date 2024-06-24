@@ -36,7 +36,7 @@ from mreg_cli.exceptions import (
     PatchError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
+from mreg_cli.types import Flag, JsonMapping, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 
@@ -118,7 +118,7 @@ def add(args: argparse.Namespace) -> None:
         except ValueError as e:
             raise InputFailure(f"invalid MAC address: {macaddress}") from e
 
-    data: dict[str, str | None] = {
+    data: JsonMapping = {
         "name": hname.hostname,
         "contact": args.contact or None,
         "comment": args.comment or None,
@@ -377,7 +377,7 @@ def find(args: argparse.Namespace) -> None:
     if not any([args.name, args.comment, args.contact]):
         raise InputFailure("Need at least one search critera")
 
-    params: dict[str, str | int] = {
+    params: QueryParams = {
         "ordering": "name",
     }
 

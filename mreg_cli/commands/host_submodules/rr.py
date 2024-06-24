@@ -67,7 +67,7 @@ from mreg_cli.exceptions import (
     PatchError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
+from mreg_cli.types import Flag, QueryParams
 
 
 @command_registry.register_command(
@@ -340,7 +340,7 @@ def naptr_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    arg_data: dict[str, str | int] = {
+    params: QueryParams = {
         "preference": args.preference,
         "order": args.order,
         "flag": args.flag,
@@ -349,15 +349,10 @@ def naptr_add(args: argparse.Namespace) -> None:
         "replacement": args.replacement,
         "host": host.id,
     }
-
-    # Query parameters must be strings...
-    search_data: dict[str, str] = {k: str(v) for k, v in arg_data.items()}
-
-    existing_naptr = NAPTR.get_by_query_unique(search_data)
+    existing_naptr = NAPTR.get_by_query_unique(params)
     if existing_naptr:
         raise EntityAlreadyExists(f"{host} already has that NAPTR defined.")
-
-    NAPTR.create(params=arg_data)
+    NAPTR.create(params=params)
     OutputManager().add_ok(f"Added NAPTR record to {host.name.hostname}.")
 
 
@@ -622,7 +617,7 @@ def srv_add(args: argparse.Namespace) -> None:
     if not hzone:
         raise EntityNotFound(f"{host} isn't in a zone controlled by MREG")
 
-    data: dict[str, str] = {
+    data: QueryParams = {
         "name": sname.hostname,
         "priority": args.priority,
         "weight": args.weight,
@@ -634,10 +629,7 @@ def srv_add(args: argparse.Namespace) -> None:
     existing_srv = Srv.get_by_query_unique(data)
     if existing_srv:
         raise EntityAlreadyExists(f"{sname} already has that SRV defined.")
-
-    arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
-
-    Srv.create(arg_data)
+    Srv.create(data)
     OutputManager().add_ok(f"Added SRV record {sname} with target {host}.")
 
 
@@ -679,7 +671,7 @@ def srv_remove(args: argparse.Namespace) -> None:
     host = Host.get_by_any_means_or_raise(args.host)
     sname = HostT(hostname=args.name)
 
-    data: dict[str, str] = {
+    data: QueryParams = {
         "name": sname.hostname,
         "host": str(host.id),
         "priority": args.priority,
@@ -739,18 +731,18 @@ def sshfp_add(args: argparse.Namespace) -> None:
     """
     host = Host.get_by_any_means_or_raise(args.name)
 
-    data: dict[str, str] = {
+    data: QueryParams = {
         "algorithm": args.algorithm,
         "hash_type": args.hash_type,
         "fingerprint": args.fingerprint,
-        "host": str(host.id),
+        "host": host.id,
     }
 
     existing_sshfp = SSHFP.get_by_query_unique(data)
     if existing_sshfp:
         raise EntityAlreadyExists(f"{host} already has that SSHFP defined.")
 
-    arg_data: dict[str, str | None] = {k: v for k, v in data.items()}
+    arg_data = {k: v for k, v in data.items()}
     SSHFP.create(arg_data)
     OutputManager().add_ok(f"Added SSHFP record for {host.name.hostname}.")
 

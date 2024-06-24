@@ -19,7 +19,7 @@ from mreg_cli.exceptions import (
     PatchError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import JsonMapping
+from mreg_cli.types import JsonMapping, QueryParams
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -308,7 +308,7 @@ class APIMixin(ABC):
 
         :returns: A list of objects if found, an empty list otherwise.
         """
-        params = {field: value}
+        params: QueryParams = {field: value}
         if ordering:
             params["ordering"] = ordering
 
@@ -316,7 +316,7 @@ class APIMixin(ABC):
 
     @classmethod
     def get_by_query(
-        cls, query: dict[str, str], ordering: str | None = None, limit: int | None = 500
+        cls, query: QueryParams, ordering: str | None = None, limit: int | None = 500
     ) -> list[Self]:
         """Get a list of objects by a query.
 
@@ -329,12 +329,12 @@ class APIMixin(ABC):
         if ordering:
             query["ordering"] = ordering
 
-        return get_typed(cls.endpoint().with_query(query), list[cls], limit=limit)
+        return get_typed(cls.endpoint(), list[cls], query, limit=limit)
 
     @classmethod
     def get_by_query_unique_or_raise(
         cls,
-        query: dict[str, str],
+        query: QueryParams,
         exc_type: type[Exception] = EntityNotFound,
         exc_message: str | None = None,
     ) -> Self:
@@ -358,7 +358,7 @@ class APIMixin(ABC):
     @classmethod
     def get_by_query_unique_and_raise(
         cls,
-        query: dict[str, str],
+        query: QueryParams,
         exc_type: type[Exception] = EntityAlreadyExists,
         exc_message: str | None = None,
     ) -> None:
@@ -380,7 +380,7 @@ class APIMixin(ABC):
         return None
 
     @classmethod
-    def get_by_query_unique(cls, data: dict[str, str]) -> Self | None:
+    def get_by_query_unique(cls, data: QueryParams) -> Self | None:
         """Get an object with the given data.
 
         :param data: The data to search for.
