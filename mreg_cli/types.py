@@ -11,6 +11,7 @@ from typing import (
     Any,
     Literal,
     Mapping,
+    MutableMapping,
     NamedTuple,
     Sequence,
     TypeAlias,
@@ -90,6 +91,7 @@ Json = TypeAliasType(
     ],
 )
 JsonMapping = Mapping[str, Json]
+QueryParams = MutableMapping[str, str | int | None]
 
 
 class Flag:

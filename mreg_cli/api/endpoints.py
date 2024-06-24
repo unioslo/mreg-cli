@@ -126,12 +126,3 @@ class Endpoint(str, Enum):
             )
         encoded_params = (quote(str(param)) for param in params)
         return self.value.format(*encoded_params)
-
-    def with_query(self, query: dict[str, str]) -> str:
-        """Construct and return an endpoint URL with a query string.
-
-        :param query: A dictionary of query parameters.
-        :returns: A fully constructed endpoint URL with a query string.
-        """
-        query_string = "&".join(f"{quote(key)}={quote(value)}" for key, value in query.items())
-        return f"{self.value}?{query_string}"

@@ -42,7 +42,7 @@ from mreg_cli.exceptions import (
     ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
+from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -717,7 +717,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :param expire: The expire interval for the zone.
         :param soa_ttl: The TTL for the zone.
         """
-        params: dict[str, str | int | None] = {
+        params: QueryParams = {
             "primary_ns": primary_ns,
             "email": email,
             "serialno": serialno,
@@ -2691,7 +2691,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: A new Host object fetched from the API with the updated IP address.
         """
-        params: dict[str, str | None] = {"ipaddress": str(ip), "host": str(self.id)}
+        params: QueryParams = {"ipaddress": str(ip), "host": str(self.id)}
         if mac:
             params["macaddress"] = mac.address
 
@@ -3109,7 +3109,7 @@ class HostList(FrozenModel):
         return Endpoint.Hosts
 
     @classmethod
-    def get(cls, params: dict[str, Any] | None = None) -> HostList:
+    def get(cls, params: QueryParams | None = None) -> HostList:
         """Get a list of hosts.
 
         :param params: Optional parameters to pass to the API.

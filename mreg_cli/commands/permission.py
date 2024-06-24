@@ -10,7 +10,7 @@ from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import DeleteError, EntityNotFound
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
+from mreg_cli.types import Flag, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 command_registry = CommandRegistry()
@@ -46,7 +46,7 @@ def network_list(args: argparse.Namespace) -> None:
     """
     permission_list: list[Permission] = []
 
-    params: dict[str, str] = {}
+    params: QueryParams = {}
     if args.group is not None:
         param, value = convert_wildcard_to_regex("group", args.group)
         params[param] = value

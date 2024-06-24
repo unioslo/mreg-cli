@@ -17,7 +17,7 @@ from mreg_cli.exceptions import (
     NetworkOverlap,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
+from mreg_cli.types import Flag, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
@@ -191,7 +191,7 @@ def find(args: argparse.Namespace) -> None:
         addr = IPAddressField(address=ip_arg)
         networks = [Network.get_by_ip_or_raise(addr.address)]
     else:
-        params: dict[str, str] = {}
+        params: QueryParams = {}
         param_names = [
             "network",
             "description",

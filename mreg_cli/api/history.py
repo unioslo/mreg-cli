@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.exceptions import EntityNotFound, InternalError
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import QueryParams
 from mreg_cli.utilities.api import get_typed
 
 
@@ -125,7 +126,7 @@ class HistoryItem(BaseModel):
     @classmethod
     def get(cls, name: str, resource: HistoryResource) -> list[Self]:
         """Get history items for a resource."""
-        params: dict[str, str] = {"resource": resource.resource(), "name": name}
+        params: QueryParams = {"resource": resource.resource(), "name": name}
         ret = get_typed(Endpoint.History, list[cls], params=params)
         if len(ret) == 0:
             raise EntityNotFound(f"No history found for {name}")
