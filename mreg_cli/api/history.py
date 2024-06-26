@@ -80,16 +80,17 @@ class HistoryItem(BaseModel):
         action = self.action
         model = self.model
         if action in ("add", "remove"):
-            if self.resource == "groups" and model in ("Host", "Group", "HostGroup"):
-                msg = self.data["name"]
-            elif self.name == basename:
-                msg = self.name
-            else:
-                msg = self.resource + " " + self.name
-                if action == "add":
-                    action = "add to"
-                elif action == "remove":
-                    action = "remove from"
+            if action == "add":
+                direction = "to"
+            elif action == "remove":
+                direction = "from"
+            rel = self.data["relation"][:-1]
+            cls = str(self.resource)
+            if "." in cls:
+                cls = cls[cls.rindex(".")+1:]
+            cls = cls.replace("HostPolicy_","")
+            cls = cls.lower()
+            msg = f"{rel} {self.data["name"]} {direction} {cls} {self.name}"
         elif action == "create":
             msg = ", ".join(f"{k} = '{v}'" for k, v in self.data.items())
         elif action == "update":
