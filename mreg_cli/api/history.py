@@ -84,13 +84,15 @@ class HistoryItem(BaseModel):
                 direction = "to"
             elif action == "remove":
                 direction = "from"
+            else:
+                raise InternalError(f"Unhandled history entry: {action}")
             rel = self.data["relation"][:-1]
             cls = str(self.resource)
             if "." in cls:
                 cls = cls[cls.rindex(".")+1:]
             cls = cls.replace("HostPolicy_","")
             cls = cls.lower()
-            msg = f"{rel} {self.data["name"]} {direction} {cls} {self.name}"
+            msg = f"{rel} {self.data['name']} {direction} {cls} {self.name}"
         elif action == "create":
             msg = ", ".join(f"{k} = '{v}'" for k, v in self.data.items())
         elif action == "update":
