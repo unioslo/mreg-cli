@@ -146,7 +146,7 @@ def prompt_for_password_and_login(user: str, url: str, catch_exception: bool = T
         if catch_exception:
             e.print_self()
         else:
-            raise LoginFailedError() from e
+            raise LoginFailedError("Updating token failed.") from e
 
 
 def logout() -> None:

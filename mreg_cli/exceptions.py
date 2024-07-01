@@ -234,8 +234,4 @@ class LoginFailedError(CliException):
         """
         return f"Login failed: {self.escape()}"
 
-    def __str__(self) -> str:
-        """Return the error message."""
-        return "Login failed"
-
     pass
