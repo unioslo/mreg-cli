@@ -294,23 +294,19 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: QueryParams | None, ok404: Literal[True]) -> Response | None:
-    ...
+def get(path: str, params: QueryParams | None, ok404: Literal[True]) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: QueryParams | None, ok404: Literal[False]) -> Response:
-    ...
+def get(path: str, params: QueryParams | None, ok404: Literal[False]) -> Response: ...
 
 
 @overload
-def get(path: str, params: QueryParams | None = ..., *, ok404: bool) -> Response | None:
-    ...
+def get(path: str, params: QueryParams | None = ..., *, ok404: bool) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: QueryParams | None = ...) -> Response:
-    ...
+def get(path: str, params: QueryParams | None = ...) -> Response: ...
 
 
 def get(path: str, params: QueryParams | None = None, ok404: bool = False) -> Response | None:
@@ -472,8 +468,7 @@ def get_list_generic(
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[True] = True,
-) -> Json:
-    ...
+) -> Json: ...
 
 
 @overload
@@ -483,8 +478,7 @@ def get_list_generic(
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[False] = False,
-) -> list[Json]:
-    ...
+) -> list[Json]: ...
 
 
 def get_list_generic(
