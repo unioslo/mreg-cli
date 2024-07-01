@@ -11,7 +11,7 @@ import logging
 import os
 import re
 import sys
-from typing import Any, Literal, NoReturn, TypeVar, cast, get_origin, overload
+from typing import Any, Literal, NoReturn, TypeVar, get_origin, overload
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -225,7 +225,7 @@ def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def _request_wrapper(
-    operation_type: str,
+    operation_type: Literal["get", "post", "patch", "delete"],
     path: str,
     params: QueryParams | None = None,
     ok404: bool = False,
@@ -253,13 +253,23 @@ def _request_wrapper(
     if data:
         data = _strip_none(data)
 
-    result = getattr(session, operation_type)(
+    if operation_type == "get":
+        func = session.get
+    elif operation_type == "post":
+        func = session.post
+    elif operation_type == "patch":
+        func = session.patch
+    elif operation_type == "delete":
+        func = session.delete
+    else:
+        raise ValueError(f"Unknown operation type: {operation_type}")
+
+    result = func(
         url,
         params=params,
         json=data or None,
         timeout=HTTP_TIMEOUT,
     )
-    result = cast(requests.Response, result)  # convince mypy that result is a Response
 
     request_id = result.headers.get("X-Request-Id", "?")
     correlation_id = result.headers.get("X-Correlation-ID", "?")
@@ -278,8 +288,7 @@ def _request_wrapper(
         and params == {}
         and data is not None
     ):
-        result = getattr(session, operation_type)(url, params={}, timeout=HTTP_TIMEOUT, data=data)
-        result = cast(requests.Response, result)
+        result = func(url, params={}, timeout=HTTP_TIMEOUT, data=data)
 
     OutputManager().recording_request(operation_type, url, params, data, result)
 
