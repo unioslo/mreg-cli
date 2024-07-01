@@ -191,7 +191,9 @@ class CommandDiffer:
                 else:
                     console.print(d)
                     choice = Prompt.ask(
-                        f"Accept change? ({Choice.as_string()})", choices=list(Choice)
+                        f"Accept change? ({Choice.as_string()})",
+                        choices=list(Choice),
+                        default=Choice.YES,
                     )
                     if choice == Choice.YES_TO_ALL:
                         yes_all = True
@@ -212,7 +214,7 @@ class CommandDiffer:
                 new_testsuite_results.append(result)
 
         # Only write back changes if we are in review mode
-        if self.review:
+        if self.review and (self.result != new_testsuite_results):
             # Write accepted changes back to file1
             with open(self.file1, "w") as f:
                 json.dump(new_testsuite_results, f, indent=2)
@@ -243,7 +245,7 @@ def main() -> None:
         err_console.print(f"[red]ERROR: {e}[/]")
         sys.exit(1)
     else:
-        err_console.print("No differences found.")
+        err_console.print(f"No differences found between {file1} and {file2}")
 
 
 if __name__ == "__main__":
