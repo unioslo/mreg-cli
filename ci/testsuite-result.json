@@ -18459,24 +18459,24 @@
                   "host": 13
                 }
               ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 13
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 13
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "foo.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
             }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "foo.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
           ]
         }
       }
@@ -18490,11 +18490,23 @@
     "command_issued": "dhcp assoc <IPv4> <macaddress> # doesn't work, because ip addr doesn't exist",
     "ok": [],
     "warning": [
-      "WARNING: : ip <IPv4> doesn't exist."
+      "IP address <IPv4> does not exist."
     ],
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/ipaddresses/?ipaddress=<IPv4>",
@@ -18524,6 +18536,18 @@
     "api_requests": [
       {
         "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
         "url": "/api/v1/ipaddresses/?ipaddress=<IPv4>",
         "data": {},
         "status": 200,
@@ -18541,24 +18565,23 @@
         }
       },
       {
+        "method": "PATCH",
+        "url": "/api/v1/ipaddresses/8",
+        "data": {
+          "macaddress": "<macaddress>"
+        },
+        "status": 204
+      },
+      {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff&ordering=ipaddress",
+        "url": "/api/v1/ipaddresses/8",
         "data": {},
         "status": 200,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv4>",
+          "host": 13
         }
-      },
-      {
-        "method": "PATCH",
-        "url": "/api/v1/ipaddresses/6",
-        "data": {
-          "macaddress": "<IPv6>"
-        },
-        "status": 204
       }
     ],
     "time": null
@@ -18570,7 +18593,7 @@
     "command_issued": "dhcp disassoc <IPv4> # ip addr dosnt exst",
     "ok": [],
     "warning": [
-      "WARNING: : ip <IPv4> doesn't exist."
+      "IP address <IPv4> does not exist."
     ],
     "error": [],
     "output": [],
@@ -18622,11 +18645,22 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/6",
+        "url": "/api/v1/ipaddresses/8",
         "data": {
           "macaddress": ""
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/8",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "",
+          "ipaddress": "<IPv4>",
+          "host": 13
+        }
       }
     ],
     "time": null
@@ -18638,11 +18672,23 @@
     "command_issued": "dhcp assoc meh <macaddress> # host not found",
     "ok": [],
     "warning": [
-      "WARNING: : host not found: 'meh.example.org'"
+      "Host meh not found."
     ],
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=11%3A22%3A33%3A44%3A55%3A66",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/meh.example.org",
@@ -18654,14 +18700,11 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?cnames__name=meh.example.org",
+        "url": "/api/v1/cnames/meh.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       }
     ],
@@ -18673,12 +18716,24 @@
     "command_filter_negate": false,
     "command_issued": "dhcp assoc foo <macaddress>",
     "ok": [
-      "OK: : associated mac address <IPv6> with ip <IPv4>"
+      "Associated mac address <macaddress> with ip <IPv4>"
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/foo.example.org",
@@ -18712,24 +18767,23 @@
         }
       },
       {
+        "method": "PATCH",
+        "url": "/api/v1/ipaddresses/8",
+        "data": {
+          "macaddress": "<macaddress>"
+        },
+        "status": 204
+      },
+      {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff&ordering=ipaddress",
+        "url": "/api/v1/ipaddresses/8",
         "data": {},
         "status": 200,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv4>",
+          "host": 13
         }
-      },
-      {
-        "method": "PATCH",
-        "url": "/api/v1/ipaddresses/6",
-        "data": {
-          "macaddress": "<IPv6>"
-        },
-        "status": 204
       }
     ],
     "time": null
@@ -18740,7 +18794,7 @@
     "command_filter_negate": false,
     "command_issued": "dhcp disassoc foo",
     "ok": [
-      "OK: : disassociated mac address <IPv6> from ip <IPv4>"
+      "Disassociated mac address <macaddress> from ip <IPv4>"
     ],
     "warning": [],
     "error": [],
@@ -18780,11 +18834,22 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/6",
+        "url": "/api/v1/ipaddresses/8",
         "data": {
           "macaddress": ""
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/8",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "",
+          "ipaddress": "<IPv4>",
+          "host": 13
+        }
       }
     ],
     "time": null
@@ -18796,7 +18861,7 @@
     "command_issued": "dhcp disassoc meh # host not found",
     "ok": [],
     "warning": [
-      "WARNING: : host not found: 'meh.example.org'"
+      "Host meh not found."
     ],
     "error": [],
     "output": [],
@@ -18812,14 +18877,11 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?cnames__name=meh.example.org",
+        "url": "/api/v1/cnames/meh.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       }
     ],
@@ -18831,7 +18893,7 @@
     "command_filter_negate": false,
     "command_issued": "host a_remove foo <IPv4>",
     "ok": [
-      "OK: : removed ip <IPv4> from foo.example.org"
+      "Removed ipaddress <IPv4> from foo.example.org"
     ],
     "warning": [],
     "error": [],
@@ -18844,357 +18906,6 @@
         "status": 200,
         "response": {
           "ipaddresses": [
-            {
-              "macaddress": "",
-              "ipaddress": "<IPv4>",
-              "host": 13
-            }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 13
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "foo.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
-      },
-      {
-        "method": "DELETE",
-        "url": "/api/v1/ipaddresses/6",
-        "data": {},
-        "status": 204
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "dhcp assoc foo <macaddress>",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "dhcp assoc foo <macaddress> # doesn't work, because the host doesn't have any ip addresses",
-    "ok": [],
-    "warning": [
-      "WARNING: : foo doesn't have any ip addresses."
-    ],
-    "error": [],
-    "output": [],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 13
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "foo.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "host a_add foo <IPv4>",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "host a_add foo <IPv4>",
-    "ok": [
-      "OK: : added ip <IPv4> to foo.example.org"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "foo",
-          "vlan": 1234,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 13
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "foo.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
-      },
-      {
-        "method": "POST",
-        "url": "/api/v1/ipaddresses/",
-        "data": {
-          "host": 13,
-          "ipaddress": "<IPv4>"
-        },
-        "status": 201,
-        "response": {
-          "macaddress": "",
-          "ipaddress": "<IPv4>",
-          "host": 13
-        }
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "host a_add foo <IPv4> -f",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "host a_add foo <IPv4> -f",
-    "ok": [
-      "OK: : added ip <IPv4> to foo.example.org"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "foo",
-          "vlan": 1234,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "",
-              "ipaddress": "<IPv4>",
-              "host": 13
-            }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 13
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "foo.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
-      },
-      {
-        "method": "POST",
-        "url": "/api/v1/ipaddresses/",
-        "data": {
-          "host": 13,
-          "ipaddress": "<IPv4>"
-        },
-        "status": 201,
-        "response": {
-          "macaddress": "",
-          "ipaddress": "<IPv4>",
-          "host": 13
-        }
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "dhcp assoc foo <macaddress>",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "dhcp assoc foo <macaddress> # should fail, two IPs of same type",
-    "ok": [],
-    "warning": [
-      "WARNING: : foo has multiple addresses in the same address family. Please specify a specific address to use instead."
-    ],
-    "error": [],
-    "output": [],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "",
-              "ipaddress": "<IPv4>",
-              "host": 13
-            },
-            {
-              "macaddress": "",
-              "ipaddress": "<IPv4>",
-              "host": 13
-            }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 13
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "foo.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "host a_remove foo <IPv4>",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "host a_remove foo <IPv4>",
-    "ok": [
-      "OK: : removed ip <IPv4> from foo.example.org"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "",
-              "ipaddress": "<IPv4>",
-              "host": 13
-            },
             {
               "macaddress": "",
               "ipaddress": "<IPv4>",
@@ -19230,12 +18941,432 @@
     "time": null
   },
   {
+    "command": "dhcp assoc foo <macaddress>",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "dhcp assoc foo <macaddress> # doesn't work, because the host doesn't have any ip addresses",
+    "ok": [],
+    "warning": [
+      "Host foo.example.org has no IP addresses."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 13
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host a_add foo <IPv4>",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host a_add foo <IPv4>",
+    "ok": [
+      "Added ipaddress <IPv4> to foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 13
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/<IPv4>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv4>/24",
+          "description": "foo",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>&ordering=name",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/ipaddresses/",
+        "data": {
+          "ipaddress": "<IPv4>",
+          "host": "13"
+        },
+        "status": 201,
+        "response": {
+          "macaddress": "",
+          "ipaddress": "<IPv4>",
+          "host": 13
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=13",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 13
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 13
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "foo.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host a_add foo <IPv4> -f",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host a_add foo <IPv4> -f",
+    "ok": [
+      "Added ipaddress <IPv4> to foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 13
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 13
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/<IPv4>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv4>/24",
+          "description": "foo",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/ipaddresses/",
+        "data": {
+          "ipaddress": "<IPv4>",
+          "host": "13"
+        },
+        "status": 201,
+        "response": {
+          "macaddress": "",
+          "ipaddress": "<IPv4>",
+          "host": 13
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=13",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 13
+                },
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 13
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 13
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "foo.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "dhcp assoc foo <macaddress>",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "dhcp assoc foo <macaddress> # should fail, two IPs of same type",
+    "ok": [],
+    "warning": [
+      "Host foo.example.org has multiple IPs, cannot determine which one to use."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 13
+            },
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 13
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 13
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host a_remove foo <IPv4>",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host a_remove foo <IPv4>",
+    "ok": [
+      "Removed ipaddress <IPv4> from foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 13
+            },
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 13
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 13
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/ipaddresses/10",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "network create -network <IPv6>::/64 -desc \"foo_ipv6\" -vlan 1234",
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "network create -network <IPv6>::/64 -desc \"foo_ipv6\" -vlan 1234",
     "ok": [
-      "OK: : created network <IPv6>::/64"
+      "created network <IPv6>::/64"
     ],
     "warning": [],
     "error": [],
@@ -19272,11 +19403,26 @@
           "network": "<IPv6>::/64",
           "description": "foo_ipv6",
           "vlan": "1234",
-          "category": null,
-          "location": null,
           "frozen": false
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/<IPv6>::/64",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "foo_ipv6",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
       }
     ],
     "time": null
@@ -19287,7 +19433,7 @@
     "command_filter_negate": false,
     "command_issued": "network create -network <IPv6>::/64 -desc \"notfoo_ipv6\" -vlan 1235",
     "ok": [
-      "OK: : created network <IPv6>::/64"
+      "created network <IPv6>::/64"
     ],
     "warning": [],
     "error": [],
@@ -19335,42 +19481,13 @@
           "network": "<IPv6>::/64",
           "description": "notfoo_ipv6",
           "vlan": "1235",
-          "category": null,
-          "location": null,
           "frozen": false
         },
         "status": 201
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "host aaaa_add foo <IPv6> -f",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "host aaaa_add foo <IPv6> -f",
-    "ok": [
-      "OK: : added ip <IPv6> to foo.example.org"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=2001%3Adb9%3A%3A5",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb9%3A%3A5",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -19384,19 +19501,22 @@
           "frozen": false,
           "reserved": 3
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb9%3A%3A/64/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv6>::",
-          "<IPv6>",
-          "<IPv6>",
-          "<IPv6>"
-        ]
-      },
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host aaaa_add foo <IPv6> -f",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host aaaa_add foo <IPv6> -f",
+    "ok": [
+      "Added ipaddress <IPv6> to foo.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
       {
         "method": "GET",
         "url": "/api/v1/hosts/foo.example.org",
@@ -19430,17 +19550,78 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/2001%3Adb9%3A%3A5",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "notfoo_ipv6",
+          "vlan": 1235,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/ipaddresses/",
         "data": {
-          "host": 13,
-          "ipaddress": "<IPv6>"
+          "ipaddress": "<IPv6>",
+          "host": "13"
         },
         "status": 201,
         "response": {
           "macaddress": "",
           "ipaddress": "<IPv6>",
           "host": 13
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=13",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 13
+                },
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv6>",
+                  "host": 13
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 13
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "foo.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
         }
       }
     ],
@@ -19453,11 +19634,23 @@
     "command_issued": "dhcp assoc foo <macaddress> # should fail, the host has two IPs of different types on different VLANs.",
     "ok": [],
     "warning": [
-      "WARNING: : foo.example.org has one IPv4 and one IPv6 address, but they are on different VLANs. Please specify a specific address to use instead."
+      "Host foo.example.org has multiple IPs, cannot determine which one to use."
     ],
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/foo.example.org",
@@ -19538,7 +19731,7 @@
     "command_filter_negate": false,
     "command_issued": "host aaaa_remove foo <IPv6>",
     "ok": [
-      "OK: : removed ip <IPv6> from foo.example.org"
+      "Removed ipaddress <IPv6> from foo.example.org"
     ],
     "warning": [],
     "error": [],
@@ -19583,7 +19776,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/ipaddresses/9",
+        "url": "/api/v1/ipaddresses/11",
         "data": {},
         "status": 204
       }
@@ -19596,53 +19789,12 @@
     "command_filter_negate": false,
     "command_issued": "host aaaa_add foo <IPv6> -f",
     "ok": [
-      "OK: : added ip <IPv6> to foo.example.org"
+      "Added ipaddress <IPv6> to foo.example.org"
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=2001%3Adb8%3A%3A5",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A5",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv6>::/64",
-          "description": "foo_ipv6",
-          "vlan": 1234,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv6>::",
-          "<IPv6>",
-          "<IPv6>",
-          "<IPv6>"
-        ]
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/foo.example.org",
@@ -19676,17 +19828,78 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A5",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "foo_ipv6",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/ipaddresses/",
         "data": {
-          "host": 13,
-          "ipaddress": "<IPv6>"
+          "ipaddress": "<IPv6>",
+          "host": "13"
         },
         "status": 201,
         "response": {
           "macaddress": "",
           "ipaddress": "<IPv6>",
           "host": 13
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=13",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 13
+                },
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv6>",
+                  "host": 13
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 13
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "foo.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
         }
       }
     ],
@@ -19698,12 +19911,24 @@
     "command_filter_negate": false,
     "command_issued": "dhcp assoc foo <macaddress> # should work, the host now has two IPs of different types on the same VLAN.",
     "ok": [
-      "OK: : associated mac address <IPv6> with ip <IPv4>"
+      "Associated mac address <macaddress> with ip <IPv4>"
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/foo.example.org",
@@ -19776,24 +20001,23 @@
         }
       },
       {
+        "method": "PATCH",
+        "url": "/api/v1/ipaddresses/9",
+        "data": {
+          "macaddress": "<macaddress>"
+        },
+        "status": 204
+      },
+      {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff&ordering=ipaddress",
+        "url": "/api/v1/ipaddresses/9",
         "data": {},
         "status": 200,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv4>",
+          "host": 13
         }
-      },
-      {
-        "method": "PATCH",
-        "url": "/api/v1/ipaddresses/7",
-        "data": {
-          "macaddress": "<IPv6>"
-        },
-        "status": 204
       }
     ],
     "time": null
@@ -19804,7 +20028,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -f",
     "ok": [
-      "OK: : removed foo.example.org"
+      "removed foo.example.org"
     ],
     "warning": [],
     "error": [],
@@ -19818,7 +20042,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 13
             },
@@ -19895,7 +20119,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=13",
         "data": {},
         "status": 200,
         "response": {
@@ -19920,7 +20144,7 @@
     "command_filter_negate": false,
     "command_issued": "network remove <IPv4>/24 -f",
     "ok": [
-      "OK: : removed network <IPv4>/24"
+      "Removed network <IPv4>/24"
     ],
     "warning": [],
     "error": [],
@@ -19928,10 +20152,27 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/used_list",
+        "url": "/api/v1/networks/<IPv4>/24",
         "data": {},
         "status": 200,
-        "response": []
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv4>/24",
+          "description": "foo",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/<IPv4>/24/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
       },
       {
         "method": "DELETE",
@@ -19948,7 +20189,7 @@
     "command_filter_negate": false,
     "command_issued": "network remove <IPv6>::/64 -f",
     "ok": [
-      "OK: : removed network <IPv6>::/64"
+      "Removed network <IPv6>::/64"
     ],
     "warning": [],
     "error": [],
@@ -19956,10 +20197,27 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_list",
+        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
         "data": {},
         "status": 200,
-        "response": []
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "foo_ipv6",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
       },
       {
         "method": "DELETE",
@@ -19976,7 +20234,7 @@
     "command_filter_negate": false,
     "command_issued": "network remove <IPv6>::/64 -f",
     "ok": [
-      "OK: : removed network <IPv6>::/64"
+      "Removed network <IPv6>::/64"
     ],
     "warning": [],
     "error": [],
@@ -19984,10 +20242,27 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb9%3A%3A/64/used_list",
+        "url": "/api/v1/networks/2001%3Adb9%3A%3A/64",
         "data": {},
         "status": 200,
-        "response": []
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "notfoo_ipv6",
+          "vlan": 1235,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/2001%3Adb9%3A%3A/64/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
       },
       {
         "method": "DELETE",

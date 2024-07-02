@@ -69,6 +69,13 @@ class IPAddressField(FrozenModel):
         """Check if the IP address is IPv6."""
         return isinstance(self.address, ipaddress.IPv6Address)
 
+    def is_valid(value: str) -> bool:
+        try:
+            ipaddress.ip_address(value)
+            return True
+        except:
+            return False
+
     def __str__(self) -> str:
         """Return the IP address as a string."""
         return str(self.address)

@@ -34,6 +34,8 @@ def ipaddress_from_ip_arg(arg: str) -> IPAddress | None:
     :raises InputFailure: If the IP address is valid but does not exist.
     :raises EntityOwnershipMismatch: If the IP address is in use by multiple hosts.
     """
+    if not IPAddressField.is_valid(arg):
+        return None
     try:
         addr = IPAddressField.from_string(arg)
     except InputFailure:

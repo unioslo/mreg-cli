@@ -2756,7 +2756,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 return ipv4s[0]
 
         raise EntityOwnershipMismatch(
-            f"Host {self} has multiple IPs and cannot determine which one to use."
+            f"Host {self} has multiple IPs, cannot determine which one to use."
         )
 
     def has_ptr_override(self, arg_ip: IP_AddressT) -> bool:
