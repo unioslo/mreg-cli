@@ -11389,7 +11389,9 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host a_add somehost <IPv4>/24 -force",
-    "ok": [],
+    "ok": [
+      "Added ipaddress <IPv4> to somehost.example.org"
+    ],
     "warning": [],
     "error": [],
     "output": [],
@@ -11468,50 +11470,6 @@
           "macaddress": "",
           "ipaddress": "<IPv4>",
           "host": 4
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?id=4",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "ipaddresses": [
-                {
-                  "macaddress": "",
-                  "ipaddress": "<IPv4>",
-                  "host": 4
-                },
-                {
-                  "macaddress": "",
-                  "ipaddress": "<IPv4>",
-                  "host": 4
-                }
-              ],
-              "cnames": [],
-              "mxs": [],
-              "txts": [
-                {
-                  "txt": "v=spf1 -all",
-                  "host": 4
-                }
-              ],
-              "ptr_overrides": [],
-              "hinfo": null,
-              "loc": null,
-              "bacnetid": null,
-              "name": "somehost.example.org",
-              "contact": "new-support@example.org",
-              "ttl": null,
-              "comment": "",
-              "zone": 1
-            }
-          ]
         }
       },
       {
@@ -13097,7 +13055,9 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host aaaa_add somehost <IPv6>::/64 -force",
-    "ok": [],
+    "ok": [
+      "Added ipaddress <IPv6> to somehost.example.org"
+    ],
     "warning": [],
     "error": [],
     "output": [],
@@ -13176,50 +13136,6 @@
           "macaddress": "",
           "ipaddress": "<IPv6>",
           "host": 8
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?id=8",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "ipaddresses": [
-                {
-                  "macaddress": "",
-                  "ipaddress": "<IPv6>",
-                  "host": 8
-                },
-                {
-                  "macaddress": "",
-                  "ipaddress": "<IPv6>",
-                  "host": 8
-                }
-              ],
-              "cnames": [],
-              "mxs": [],
-              "txts": [
-                {
-                  "txt": "v=spf1 -all",
-                  "host": 8
-                }
-              ],
-              "ptr_overrides": [],
-              "hinfo": null,
-              "loc": null,
-              "bacnetid": null,
-              "name": "somehost.example.org",
-              "contact": "support@example.org",
-              "ttl": null,
-              "comment": "",
-              "zone": 1
-            }
-          ]
         }
       },
       {
@@ -18450,54 +18366,12 @@
     "command_filter_negate": false,
     "command_issued": "host a_add foo <IPv4>",
     "ok": [
-      "OK: : added ip <IPv4> to foo.example.org"
+      "Added ipaddress <IPv4> to foo.example.org"
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "foo",
-          "vlan": 1234,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/foo.example.org",
@@ -18525,17 +18399,85 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/<IPv4>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv4>/24",
+          "description": "foo",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>&ordering=name",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/ipaddresses/",
         "data": {
-          "host": 13,
-          "ipaddress": "<IPv4>"
+          "ipaddress": "<IPv4>",
+          "host": "13"
         },
         "status": 201,
         "response": {
           "macaddress": "",
           "ipaddress": "<IPv4>",
           "host": 13
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=13",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 13
+                }
+              ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 13
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+          ]
         }
       }
     ],

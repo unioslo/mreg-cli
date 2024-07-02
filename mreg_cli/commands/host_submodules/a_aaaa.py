@@ -193,8 +193,9 @@ def _add_ip(
     if not args.force:
         _bail_if_ip_in_use_and_not_force(ipaddr)
 
-    host.add_ip(ipaddr, mac)
-    return host.refetch()
+    host = host.add_ip(ipaddr, mac)  # returns the refetched host
+    OutputManager().add_ok(f"Added ipaddress {ipaddr} to {host}")
+    return host
 
 
 @command_registry.register_command(
