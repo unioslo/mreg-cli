@@ -18542,10 +18542,10 @@
     "time": null
   },
   {
-    "command": "dhcp assoc <IPv4> <IPv6>",
+    "command": "dhcp assoc <IPv4> <macaddress>",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "dhcp assoc <IPv4> <IPv6> # doesn't work, because ip addr doesn't exist",
+    "command_issued": "dhcp assoc <IPv4> <macaddress> # doesn't work, because ip addr doesn't exist",
     "ok": [],
     "warning": [
       "WARNING: : ip <IPv4> doesn't exist."
@@ -18569,12 +18569,12 @@
     "time": null
   },
   {
-    "command": "dhcp assoc <IPv4> <IPv6>",
+    "command": "dhcp assoc <IPv4> <macaddress>",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "dhcp assoc <IPv4> <IPv6>",
+    "command_issued": "dhcp assoc <IPv4> <macaddress>",
     "ok": [
-      "OK: : associated mac address <IPv6> with ip <IPv4>"
+      "Associated mac address <macaddress> with ip <IPv4>"
     ],
     "warning": [],
     "error": [],
@@ -18654,7 +18654,7 @@
     "command_filter_negate": false,
     "command_issued": "dhcp disassoc <IPv4>",
     "ok": [
-      "OK: : disassociated mac address <IPv6> from ip <IPv4>"
+      "Disassociated mac address <macaddress> from ip <IPv4>"
     ],
     "warning": [],
     "error": [],
@@ -18671,7 +18671,7 @@
           "previous": null,
           "results": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 13
             }
@@ -18690,10 +18690,10 @@
     "time": null
   },
   {
-    "command": "dhcp assoc meh <IPv6>",
+    "command": "dhcp assoc meh <macaddress>",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "dhcp assoc meh <IPv6> # host not found",
+    "command_issued": "dhcp assoc meh <macaddress> # host not found",
     "ok": [],
     "warning": [
       "WARNING: : host not found: 'meh.example.org'"
@@ -18726,10 +18726,10 @@
     "time": null
   },
   {
-    "command": "dhcp assoc foo <IPv6>",
+    "command": "dhcp assoc foo <macaddress>",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "dhcp assoc foo <IPv6>",
+    "command_issued": "dhcp assoc foo <macaddress>",
     "ok": [
       "OK: : associated mac address <IPv6> with ip <IPv4>"
     ],
@@ -18812,7 +18812,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 13
             }
@@ -18937,10 +18937,10 @@
     "time": null
   },
   {
-    "command": "dhcp assoc foo <IPv6>",
+    "command": "dhcp assoc foo <macaddress>",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "dhcp assoc foo <IPv6> # doesn't work, because the host doesn't have any ip addresses",
+    "command_issued": "dhcp assoc foo <macaddress> # doesn't work, because the host doesn't have any ip addresses",
     "ok": [],
     "warning": [
       "WARNING: : foo doesn't have any ip addresses."
@@ -19178,10 +19178,10 @@
     "time": null
   },
   {
-    "command": "dhcp assoc foo <IPv6>",
+    "command": "dhcp assoc foo <macaddress>",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "dhcp assoc foo <IPv6> # should fail, two IPs of same type",
+    "command_issued": "dhcp assoc foo <macaddress> # should fail, two IPs of same type",
     "ok": [],
     "warning": [
       "WARNING: : foo has multiple addresses in the same address family. Please specify a specific address to use instead."
@@ -19505,10 +19505,10 @@
     "time": null
   },
   {
-    "command": "dhcp assoc foo <IPv6>",
+    "command": "dhcp assoc foo <macaddress>",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "dhcp assoc foo <IPv6> # should fail, the host has two IPs of different types on different VLANs.",
+    "command_issued": "dhcp assoc foo <macaddress> # should fail, the host has two IPs of different types on different VLANs.",
     "ok": [],
     "warning": [
       "WARNING: : foo.example.org has one IPv4 and one IPv6 address, but they are on different VLANs. Please specify a specific address to use instead."
@@ -19751,10 +19751,10 @@
     "time": null
   },
   {
-    "command": "dhcp assoc foo <IPv6>",
+    "command": "dhcp assoc foo <macaddress>",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "dhcp assoc foo <IPv6> # should work, the host now has two IPs of different types on the same VLAN.",
+    "command_issued": "dhcp assoc foo <macaddress> # should work, the host now has two IPs of different types on the same VLAN.",
     "ok": [
       "OK: : associated mac address <IPv6> with ip <IPv4>"
     ],
@@ -20149,10 +20149,10 @@
     "time": null
   },
   {
-    "command": "host add foo -ip <IPv4> -contact hi@ho.com -comment \"meh\" -macaddress <IPv6>",
+    "command": "host add foo -ip <IPv4> -contact hi@ho.com -comment \"meh\" -macaddress <macaddress>",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host add foo -ip <IPv4> -contact hi@ho.com -comment \"meh\" -macaddress <IPv6>",
+    "command_issued": "host add foo -ip <IPv4> -contact hi@ho.com -comment \"meh\" -macaddress <macaddress>",
     "ok": [
       "OK: : created host foo.example.org with IP <IPv4>"
     ],
@@ -21228,10 +21228,10 @@
     "time": null
   },
   {
-    "command": "host a_add bar <IPv4> -macaddress <IPv6> -force",
+    "command": "host a_add bar <IPv4> -macaddress <macaddress> -force",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host a_add bar <IPv4> -macaddress <IPv6> -force",
+    "command_issued": "host a_add bar <IPv4> -macaddress <macaddress> -force",
     "ok": [
       "OK: : added ip <IPv4> to bar.example.org"
     ],
@@ -22020,10 +22020,10 @@
     "time": null
   },
   {
-    "command": "host aaaa_add bar <IPv6> -macaddress <IPv6> -f",
+    "command": "host aaaa_add bar <IPv6> -macaddress <macaddress> -f",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host aaaa_add bar <IPv6> -macaddress <IPv6> -f",
+    "command_issued": "host aaaa_add bar <IPv6> -macaddress <macaddress> -f",
     "ok": [
       "OK: : added ip <IPv6> to bar.example.org"
     ],

@@ -27,6 +27,7 @@ datetime_str_pattern = re.compile(
 serial_pattern = re.compile(r"\b[sS]erial:\s+\d+")
 ipv4_pattern = re.compile(r"((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}")
 ipv6_pattern = re.compile(r"\b([0-9a-fA-F]{1,4}::?){1,7}[0-9a-fA-F]{1,4}\b")
+mac_pattern = re.compile(r"\b([0-9a-f]{2}:){5}[0-9a-f]{2}\b")
 
 
 class DiffError(Exception):
@@ -62,6 +63,7 @@ def group_objects(json_file_path: str) -> list[dict[str, Any]]:
         s = timestamp_pattern.sub("<TIME>", s)
         s = datetime_str_pattern.sub("<TIME>", s)
         s = serial_pattern.sub("Serial: <NUMBER>", s)
+        s = mac_pattern.sub("<macaddress>", s)
         s = ipv4_pattern.sub("<IPv4>", s)
         s = ipv6_pattern.sub("<IPv6>", s)
         s = re.sub(
