@@ -863,8 +863,9 @@ def ttl_set(args: argparse.Namespace) -> None:
     valid_ttl = target.valid_ttl_patch_value_with_default(args.ttl)
 
     result = target.patch({"ttl": valid_ttl})
+    new_ttl = result.ttl or args.ttl  # prefer the actual value if it exists
     if result:
-        OutputManager().add_ok(f"Set TTL for {target} to {args.ttl}.")
+        OutputManager().add_ok(f"Set TTL for {target} to {new_ttl}.")
     else:
         raise PatchError(f"Failed to set TTL for {target}")
 

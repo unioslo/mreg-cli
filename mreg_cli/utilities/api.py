@@ -250,7 +250,7 @@ def _request_wrapper(
         logger.debug("Data: %s", data)
 
     # Strip None values from data
-    if data:
+    if data and operation_type != "patch":
         data = _strip_none(data)
 
     if operation_type == "get":
