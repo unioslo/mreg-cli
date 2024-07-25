@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Callable, Self, cast
 
-from pydantic import AliasChoices, BaseModel
+from pydantic import AliasChoices, BaseModel, ConfigDict
 from pydantic.fields import FieldInfo
 
 from mreg_cli.api.endpoints import Endpoint
@@ -123,13 +123,10 @@ class FrozenModel(BaseModel):
         """Raise an exception when trying to delete an attribute."""
         raise AttributeError("Cannot delete attribute on a frozen object")
 
-    class Config:
-        """Pydantic configuration.
-
-        Set the class to frozen to make it immutable and thus hashable.
-        """
-
-        frozen = True
+    model_config = ConfigDict(
+        # Freeze model to make it immutable and thus hashable.
+        frozen=True,
+    )
 
 
 class FrozenModelWithTimestamps(FrozenModel):
