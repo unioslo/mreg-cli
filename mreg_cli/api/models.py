@@ -248,7 +248,7 @@ class WithTTL(BaseModel):
 
     def valid_ttl_patch_value_with_default(
         self, ttl: int | Literal["default"] | None
-    ) -> int | Literal[""]:
+    ) -> int | None:
         """Return a valid TTL value for patching with a possible default value.
 
         Note: The ttl fields are not nullable, so we need to convert None to an empty string.
@@ -264,7 +264,7 @@ class WithTTL(BaseModel):
         :returns: A valid TTL value that can be fed to the API.
         """
         if ttl == "default" or ttl is None:
-            return ""
+            return None
 
         try:
             ttl = int(ttl)
@@ -724,7 +724,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
             "refresh": refresh,
             "retry": retry,
             "expire": expire,
-            "soa_ttl": soa_ttl,
+            "soa_ttl": self.valid_numeric_ttl(soa_ttl) if soa_ttl is not None else None,
         }
         params = {k: v for k, v in params.items() if v is not None}
         if not params:
