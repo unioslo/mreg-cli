@@ -239,7 +239,7 @@ def main() -> None:
     try:
         differ.diff()
     except DiffError as e:
-        err_console.print(f"[red]{e}[/]")
+        err_console.print(f"[red]ERROR: {e}[/]")
         sys.exit(2)
 
     # We can print a combination of messages here.
@@ -249,9 +249,7 @@ def main() -> None:
     if resolved:
         console.print(f"[green]Resolved {resolved} diffs between {file1} and {file2}[/]")
     if unresolved:  # non-zero exit code if unresolved diffs
-        err_console.print(
-            f"[red]ERROR: {unresolved} unresolved diff(s) between {file1} and {file2}.[/]"
-        )
+        err_console.print(f"[red]{unresolved} unresolved diff(s) between {file1} and {file2}.[/]")
         sys.exit(1)
     if not resolved and not unresolved:  # no diffs found
         err_console.print(f"No differences found between {file1} and {file2}")
