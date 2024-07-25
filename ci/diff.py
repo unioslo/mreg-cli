@@ -16,7 +16,10 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 
 console = Console(soft_wrap=True, highlight=False)
-err_console = Console(stderr=True)
+"""Stdout console used to print diffs."""
+
+err_console = Console(stderr=True, highlight=False)
+"""Stderr console used to print messages and errors."""
 
 timestamp_pattern = re.compile(
     r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2})?|\d{4}-\d{2}-\d{2}"
@@ -146,11 +149,11 @@ class CommandDiffer:
         diff = differ.compare(expected_commands, result_commands)
         differences = [line for line in diff if line.startswith("-") or line.startswith("+")]
         if differences:
-            console.print(
+            err_console.print(
                 "Diff between what commands were run in the recorded result and the current testsuite:"
             )
             for line in differences:
-                console.print(fmt_line(line))
+                err_console.print(fmt_line(line))
             raise CommandCountError(len(expected_commands), len(result_commands))
 
     def diff_command_results(self) -> None:
@@ -247,7 +250,7 @@ def main() -> None:
     resolved = differ.diff_resolved
     unresolved = differ.diff_unresolved
     if resolved:
-        console.print(f"[green]Resolved {resolved} diffs between {file1} and {file2}[/]")
+        err_console.print(f"[green]Resolved {resolved} diffs between {file1} and {file2}[/]")
     if unresolved:  # non-zero exit code if unresolved diffs
         err_console.print(f"[red]{unresolved} unresolved diff(s) between {file1} and {file2}.[/]")
         sys.exit(1)
