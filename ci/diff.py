@@ -41,15 +41,8 @@ class CommandCountError(DiffError):
         self.expected = expected
         self.result = result
         super().__init__(
-            f"Expected {expected} commands, got {result} commands. Resolve the diff manually."
+            f"Expected {expected} commands, got {result} commands. Diff must be resolved manually."
         )
-
-
-class UnresolvedDiffError(DiffError):
-    """Exception raised when the commands in the two files are different."""
-
-    def __init__(self, file1: str, file2: str, n_diffs: int) -> None:  # noqa: D107
-        super().__init__(f"{n_diffs} unresolved diff(s) between {file1} and {file2}.")
 
 
 def group_objects(json_file_path: str) -> list[dict[str, Any]]:
@@ -242,7 +235,12 @@ def main() -> None:
     review: bool = args.review
 
     differ = CommandDiffer(file1, file2, review=review)
-    differ.diff()
+
+    try:
+        differ.diff()
+    except DiffError as e:
+        err_console.print(f"[red]{e}[/]")
+        sys.exit(2)
 
     # We can print a combination of messages here.
     # I.e. resolved msg followed by unresolved msg with non-zero exit code
