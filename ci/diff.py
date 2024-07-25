@@ -97,11 +97,12 @@ def fmt_lines(lines: Iterable[str]) -> str:
 DIFF_HEADER = f"{fmt_line('-expected')}, {fmt_line('+tested')}"
 
 
-def get_diff(expected: list[str], result: list[str]) -> Group:
+def get_diff(count: int, expected: list[str], result: list[str]) -> Group:
     """Print a diff between two lists of strings."""
     gen = difflib.ndiff(expected, result)
     lines = fmt_lines(gen)
-    return Group(DIFF_HEADER, Panel(lines, box=box.HORIZONTALS))
+    diff_title = f"\n[bold]#{count}[/]"
+    return Group(diff_title, DIFF_HEADER, Panel(lines, box=box.HORIZONTALS))
 
 
 class Choice(StrEnum):
@@ -169,7 +170,8 @@ class CommandDiffer:
         #       The difficulty comes from determining WHERE to insert placeholders
         #       For added difficulty, if we repeat the same command, how
         #       do we know which one to add the placeholder for, etc.
-        n_diffs = 0
+        diff_remaining = 0  # Number of unresolved diffs
+        n_diff = 0  # Number of current diff being resolved
         yes_all = False
         no_all = False
 
@@ -180,9 +182,10 @@ class CommandDiffer:
             expected_lines = json.dumps(expected, indent=2).splitlines(keepends=True)
             result_lines = json.dumps(result, indent=2).splitlines(keepends=True)
             if expected_lines != result_lines:
-                d = get_diff(expected_lines, result_lines)
+                n_diff += 1
+                d = get_diff(n_diff, expected_lines, result_lines)
                 if not self.review:
-                    n_diffs += 1
+                    diff_remaining += 1
                     console.print(d)
                     continue  # Nothing more to do for this command
 
@@ -193,7 +196,7 @@ class CommandDiffer:
                 else:
                     console.print(d)
                     choice = Prompt.ask(
-                        f"Accept change? ({Choice.as_string()})",
+                        f"Accept change #{n_diff}? ({Choice.as_string()})",
                         choices=list(Choice),
                         default=Choice.YES,
                     )
@@ -210,20 +213,20 @@ class CommandDiffer:
                 else:
                     # Keep old line
                     new_testsuite_results.append(expected)
-                    n_diffs += 1
+                    diff_remaining += 1
             else:
                 # No diff, keep new line
                 new_testsuite_results.append(result)
 
-        # Only write back changes if we are in review mode
-        if self.review and (self.result != new_testsuite_results):
+        # Only write back changes if we are in review mode and there are changes
+        if self.review and n_diff:
             # Write accepted changes back to file1
             with open(self.file1, "w") as f:
                 json.dump(new_testsuite_results, f, indent=2)
             err_console.print(f"Wrote accepted changes back to {self.file1}")
 
-        if n_diffs:
-            raise UnresolvedDiffError(self.file1, self.file2, n_diffs)
+        if diff_remaining:
+            raise UnresolvedDiffError(self.file1, self.file2, diff_remaining)
 
 
 def main() -> None:
