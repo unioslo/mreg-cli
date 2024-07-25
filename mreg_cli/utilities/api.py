@@ -428,8 +428,9 @@ class PaginatedResponse(BaseModel):
     def _none_count_is_0(cls, v: Any) -> Any:
         """Ensure `count` is never `None`."""
         # Django count doesn't seem to be guaranteed to be an integer.
-        # Ensures here that None is treated as 0.
         # https://github.com/django/django/blob/bcbc4b9b8a4a47c8e045b060a9860a5c038192de/django/core/paginator.py#L105-L111
+        # Theoretically any callable can be passed to the "count" attribute of the paginator.
+        # Ensures here that None (and any falsey value) is treated as 0.
         return v or 0
 
     @classmethod

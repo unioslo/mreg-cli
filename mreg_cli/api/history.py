@@ -63,12 +63,14 @@ class HistoryItem(BaseModel):
     data: dict[str, Any]
 
     @field_validator("data", mode="before")
-    def parse_json_data(cls, v: Any) -> dict[str, Any]:
-        """Ensure that data is always treated as a dictionary."""
+    def parse_json_data(cls, v: Any) -> Any:
+        """Ensure that non-dict values are treated as JSON."""
         if isinstance(v, dict):
-            return v  # type: ignore
-        else:
+            return v  # pyright: ignore[reportUnknownVariableType]
+        try:
             return json.loads(v)
+        except json.JSONDecodeError as e:
+            raise ValueError("Failed to parse history data as JSON") from e
 
     def clean_timestamp(self) -> str:
         """Clean up the timestamp for output."""
@@ -89,8 +91,8 @@ class HistoryItem(BaseModel):
             rel = self.data["relation"][:-1]
             cls = str(self.resource)
             if "." in cls:
-                cls = cls[cls.rindex(".")+1:]
-            cls = cls.replace("HostPolicy_","")
+                cls = cls[cls.rindex(".") + 1 :]
+            cls = cls.replace("HostPolicy_", "")
             cls = cls.lower()
             msg = f"{rel} {self.data['name']} {direction} {cls} {self.name}"
         elif action == "create":
