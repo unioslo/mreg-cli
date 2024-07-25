@@ -89,7 +89,7 @@ def validate_patched_model(model: BaseModel, fields: dict[str, Any]) -> None:
         )
         if not validator(nval, value):
             raise PatchError(
-                f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
+                f"Patch failure! Tried to set {key} to {value!r}, but server returned {nval!r}."
             )
 
 
