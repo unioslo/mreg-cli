@@ -2493,7 +2493,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     bacnetid: int | None = None
     contact: str
     ttl: int | None = None
-    comment: str | None = None
+    comment: str
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None
@@ -2505,12 +2505,6 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     def validate_name(cls, value: str) -> HostT:
         """Validate the hostname."""
         return HostT(hostname=value)
-
-    @field_validator("comment", mode="before")
-    @classmethod
-    def empty_string_to_none(cls, v: str) -> str | None:
-        """Convert empty strings to None."""
-        return v or None
 
     @field_validator("bacnetid", mode="before")
     @classmethod
@@ -3027,7 +3021,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         output_manager.add_line(f"{'Name:':<{padding}}{self.name}")
         output_manager.add_line(f"{'Contact:':<{padding}}{self.contact}")
 
-        if self.comment is not None and self.comment != "":
+        if self.comment:
             output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
 
         self.output_ipaddresses(padding=padding, names=names)
@@ -3186,7 +3180,7 @@ class HostList(FrozenModel):
 
         _format("Name", "Contact", "Comment")
         for i in self.results:
-            _format(str(i.name), i.contact, i.comment or "")
+            _format(str(i.name), i.contact, i.comment)
 
 
 class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
