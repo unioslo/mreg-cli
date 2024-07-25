@@ -16,7 +16,10 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 
 console = Console(soft_wrap=True, highlight=False)
-err_console = Console(stderr=True)
+"""Stdout console used to print diffs."""
+
+err_console = Console(stderr=True, highlight=False)
+"""Stderr console used to print messages and errors."""
 
 timestamp_pattern = re.compile(
     r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[+-]\d{2}:\d{2})?|\d{4}-\d{2}-\d{2}"
@@ -41,15 +44,8 @@ class CommandCountError(DiffError):
         self.expected = expected
         self.result = result
         super().__init__(
-            f"Expected {expected} commands, got {result} commands. Resolve the diff manually."
+            f"Expected {expected} commands, got {result} commands. Diff must be resolved manually."
         )
-
-
-class UnresolvedDiffError(DiffError):
-    """Exception raised when the commands in the two files are different."""
-
-    def __init__(self, file1: str, file2: str, n_diffs: int) -> None:  # noqa: D107
-        super().__init__(f"{n_diffs} unresolved diff(s) between {file1} and {file2}.")
 
 
 def group_objects(json_file_path: str) -> list[dict[str, Any]]:
@@ -97,11 +93,12 @@ def fmt_lines(lines: Iterable[str]) -> str:
 DIFF_HEADER = f"{fmt_line('-expected')}, {fmt_line('+tested')}"
 
 
-def get_diff(expected: list[str], result: list[str]) -> Group:
+def get_diff(count: int, expected: list[str], result: list[str]) -> Group:
     """Print a diff between two lists of strings."""
     gen = difflib.ndiff(expected, result)
     lines = fmt_lines(gen)
-    return Group(DIFF_HEADER, Panel(lines, box=box.HORIZONTALS))
+    diff_title = f"\n[bold]#{count}[/]"
+    return Group(diff_title, DIFF_HEADER, Panel(lines, box=box.HORIZONTALS))
 
 
 class Choice(StrEnum):
@@ -134,7 +131,8 @@ class CommandDiffer:
         # Load files
         self.expected = group_objects(self.file1)
         self.result = group_objects(self.file2)
-        self.n_diffs = 0
+        self.diff_resolved = 0
+        self.diff_unresolved = 0
 
     def diff(self) -> None:
         """Diff the two files."""
@@ -151,11 +149,11 @@ class CommandDiffer:
         diff = differ.compare(expected_commands, result_commands)
         differences = [line for line in diff if line.startswith("-") or line.startswith("+")]
         if differences:
-            console.print(
+            err_console.print(
                 "Diff between what commands were run in the recorded result and the current testsuite:"
             )
             for line in differences:
-                console.print(fmt_line(line))
+                err_console.print(fmt_line(line))
             raise CommandCountError(len(expected_commands), len(result_commands))
 
     def diff_command_results(self) -> None:
@@ -169,7 +167,7 @@ class CommandDiffer:
         #       The difficulty comes from determining WHERE to insert placeholders
         #       For added difficulty, if we repeat the same command, how
         #       do we know which one to add the placeholder for, etc.
-        n_diffs = 0
+        diff_n = 0  # Number of current diff being resolved
         yes_all = False
         no_all = False
 
@@ -180,9 +178,10 @@ class CommandDiffer:
             expected_lines = json.dumps(expected, indent=2).splitlines(keepends=True)
             result_lines = json.dumps(result, indent=2).splitlines(keepends=True)
             if expected_lines != result_lines:
-                d = get_diff(expected_lines, result_lines)
+                diff_n += 1
+                d = get_diff(diff_n, expected_lines, result_lines)
                 if not self.review:
-                    n_diffs += 1
+                    self.diff_unresolved += 1
                     console.print(d)
                     continue  # Nothing more to do for this command
 
@@ -193,7 +192,7 @@ class CommandDiffer:
                 else:
                     console.print(d)
                     choice = Prompt.ask(
-                        f"Accept change? ({Choice.as_string()})",
+                        f"Accept change #{diff_n}? ({Choice.as_string()})",
                         choices=list(Choice),
                         default=Choice.YES,
                     )
@@ -207,23 +206,21 @@ class CommandDiffer:
                 if choice == Choice.YES:
                     # Accept new line
                     new_testsuite_results.append(result)
+                    self.diff_resolved += 1
                 else:
                     # Keep old line
                     new_testsuite_results.append(expected)
-                    n_diffs += 1
+                    self.diff_unresolved += 1
             else:
                 # No diff, keep new line
                 new_testsuite_results.append(result)
 
-        # Only write back changes if we are in review mode
-        if self.review and (self.result != new_testsuite_results):
+        # Only write back changes if we are in review mode and there are changes
+        if self.review and self.diff_resolved > 0:
             # Write accepted changes back to file1
             with open(self.file1, "w") as f:
                 json.dump(new_testsuite_results, f, indent=2)
             err_console.print(f"Wrote accepted changes back to {self.file1}")
-
-        if n_diffs:
-            raise UnresolvedDiffError(self.file1, self.file2, n_diffs)
 
 
 def main() -> None:
@@ -241,12 +238,23 @@ def main() -> None:
     review: bool = args.review
 
     differ = CommandDiffer(file1, file2, review=review)
+
     try:
         differ.diff()
     except DiffError as e:
         err_console.print(f"[red]ERROR: {e}[/]")
+        sys.exit(2)
+
+    # We can print a combination of messages here.
+    # I.e. resolved msg followed by unresolved msg with non-zero exit code
+    resolved = differ.diff_resolved
+    unresolved = differ.diff_unresolved
+    if resolved:
+        err_console.print(f"[green]Resolved {resolved} diffs between {file1} and {file2}[/]")
+    if unresolved:  # non-zero exit code if unresolved diffs
+        err_console.print(f"[red]{unresolved} unresolved diffs between {file1} and {file2}.[/]")
         sys.exit(1)
-    else:
+    if not resolved and not unresolved:  # no diffs found
         err_console.print(f"No differences found between {file1} and {file2}")
 
 
