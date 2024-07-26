@@ -14,7 +14,6 @@ from pydantic import (
     Field,
     computed_field,
     field_validator,
-    model_validator,
 )
 from typing_extensions import Unpack
 
@@ -397,7 +396,7 @@ class Permission(FrozenModelWithTimestamps, APIMixin):
 
     @field_validator("range", mode="before")
     @classmethod
-    def validate_ip_or_network(cls, value: str) -> IP_NetworkT:
+    def validate_ip_or_network(cls, value: Any) -> IP_NetworkT:
         """Validate and convert the input to a network."""
         try:
             return ipaddress.ip_network(value)
@@ -1862,21 +1861,19 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
     @field_validator("macaddress", mode="before")
     @classmethod
-    def create_valid_macadress_or_none(cls, v: str) -> MACAddressField | None:
+    def create_valid_macadress_or_none(cls, v: Any) -> MACAddressField | None:
         """Create macaddress or convert empty strings to None."""
         if v:
             return MACAddressField(address=v)
-
         return None
 
-    @model_validator(mode="before")
+    @field_validator("ipaddress", mode="before")
     @classmethod
-    def convert_ip_address(cls, values: Any):
-        """Convert ipaddress string to IPAddressField if necessary."""
-        ip_address = values.get("ipaddress")
-        if isinstance(ip_address, str):
-            values["ipaddress"] = {"address": ip_address}
-        return values
+    def create_valid_ipaddress(cls, v: Any) -> IPAddressField:
+        """Create macaddress or convert empty strings to None."""
+        if isinstance(v, str):
+            return IPAddressField.from_string(v)
+        return v  # let Pydantic handle it
 
     @classmethod
     def get_by_ip(cls, ip: IP_AddressT) -> list[Self]:
@@ -2039,7 +2036,7 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
 
     @field_validator("name", mode="before")
     @classmethod
-    def validate_name(cls, value: str) -> HostT:
+    def validate_name(cls, value: Any) -> HostT:
         """Validate the hostname."""
         return HostT(hostname=value)
 
@@ -2502,17 +2499,16 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
     @field_validator("name", mode="before")
     @classmethod
-    def validate_name(cls, value: str) -> HostT:
+    def validate_name(cls, value: Any) -> HostT:
         """Validate the hostname."""
         return HostT(hostname=value)
 
     @field_validator("bacnetid", mode="before")
     @classmethod
-    def convert_bacnetid(cls, v: dict[str, int] | None) -> int | None:
-        """Convert json id field to int or None."""
-        if v and "id" in v:
-            return v["id"]
-
+    def convert_bacnetid(cls, v: Any) -> Any:
+        """Use nested ID value in bacnetid value."""
+        if isinstance(v, dict):
+            return v.get("id")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
         return None
 
     @classmethod
@@ -3132,12 +3128,6 @@ class HostList(FrozenModel):
         :returns: A HostList object.
         """
         return cls.get(params={"ipaddresses__ipaddress": str(ip), "ordering": "name"})
-
-    @field_validator("results", mode="before")
-    @classmethod
-    def check_results(cls, v: list[dict[str, str]]) -> list[dict[str, str]]:
-        """Check that the results are valid."""
-        return v
 
     def __len__(self):
         """Return the number of results."""
