@@ -24,6 +24,7 @@ class Endpoint(str, Enum):
     Locs = "/api/v1/locs/"
     Mxs = "/api/v1/mxs/"
     NAPTRs = "/api/v1/naptrs/"
+    Nameservers = "/api/v1/nameservers/"
 
     HostGroups = "/api/v1/hostgroups/"
     HostGroupsAddHostGroups = "/api/v1/hostgroups/{}/groups/"
@@ -98,6 +99,7 @@ class Endpoint(str, Enum):
             Endpoint.ReverseZonesDelegations,
             Endpoint.HostPolicyRoles,
             Endpoint.HostPolicyAtoms,
+            Endpoint.Nameservers,
         ):
             return "name"
         if self in (Endpoint.Networks,):
