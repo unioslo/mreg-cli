@@ -99,6 +99,7 @@ class Endpoint(str, Enum):
             Endpoint.ReverseZonesDelegations,
             Endpoint.HostPolicyRoles,
             Endpoint.HostPolicyAtoms,
+            Endpoint.Nameservers,
         ):
             return "name"
         if self in (Endpoint.Networks,):
