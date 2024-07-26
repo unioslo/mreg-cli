@@ -14,7 +14,6 @@ from pydantic import (
     Field,
     computed_field,
     field_validator,
-    model_validator,
 )
 from typing_extensions import Unpack
 
