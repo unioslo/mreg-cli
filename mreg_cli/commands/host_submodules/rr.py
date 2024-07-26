@@ -853,17 +853,18 @@ def ttl_set(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ttl)
     """
-    target = Host.get_by_any_means(args.name)
+    name: str = args.name
+    ttl: str = args.ttl
+
+    target = Host.get_by_any_means(name)
     if not target:
-        target = Srv.get_by_field("name", args.name)
+        target = Srv.get_by_field("name", name)
 
     if not target:
-        raise EntityNotFound(f"No host or SRV record found for {args.name}")
+        raise EntityNotFound(f"No host or SRV record found for {name}")
 
-    valid_ttl = target.valid_ttl_patch_value_with_default(args.ttl)
-
-    result = target.patch({"ttl": valid_ttl})
-    new_ttl = result.ttl or args.ttl  # prefer the actual value if it exists
+    result = target.set_ttl(ttl)
+    new_ttl = result.ttl or ttl  # prefer the actual value if it exists
     if result:
         OutputManager().add_ok(f"Set TTL for {target} to {new_ttl}.")
     else:

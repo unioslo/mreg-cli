@@ -5,7 +5,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from typing import Any, ClassVar, Literal, Self, cast
+from typing import Any, ClassVar, Self, cast
 
 from pydantic import (
     AliasChoices,
@@ -219,8 +219,11 @@ class WithZone(BaseModel, APIMixin):
         return ForwardZone.model_validate(data)
 
 
-class WithTTL(BaseModel):
+class WithTTL(BaseModel, APIMixin):
     """Model for an object that needs to work with TTL values."""
+
+    _ttl_nullable: ClassVar[bool] = True
+    """TTL field(s) of model are nullable."""
 
     @property
     def MAX_TTL(self) -> int:
@@ -245,32 +248,35 @@ class WithTTL(BaseModel):
         label = f"{label.removesuffix(':')}:"
         OutputManager().add_line("{1:<{0}}{2}".format(padding, label, ttl_value or "(Default)"))
 
-    def valid_ttl_patch_value_with_default(
-        self, ttl: int | Literal["default"] | None
-    ) -> int | None:
-        """Return a valid TTL value for patching with a possible default value.
+    def set_ttl(self, ttl: str | int | None, field: str | None = None) -> Self:
+        """Set a new TTL for the object and returns the updated object.
 
-        Note: The ttl fields are not nullable, so we need to convert None to an empty string.
+        Updates the `ttl` field of the object unless a different field name
+        is specified.
 
-        Valid "proper" TTL values are: 300 - 68400.
-
-        The value of "default" sets the value to None, which is then converted to the empty string.
-
-        If a numeric TTL value is outside of the bounds, InputFail is raised.
-
-        :param ttl: The TTL target to set.
+        :param ttl: The TTL value to set. Can be an integer, "default", or None.
+        :param field: The field to set the TTL value in.
         :raises InputFailure: If the TTL value is outside the bounds.
-        :returns: A valid TTL value that can be fed to the API.
+        :returns: The updated object.
         """
-        if ttl == "default" or ttl is None:
-            return None
+        # NOTE: could add some sort of validation that model has `field`
+        ttl_field = field or "ttl"
 
-        try:
-            ttl = int(ttl)
-        except ValueError as e:
-            raise InputFailure(f"Invalid TTL value: {ttl}") from e
+        # str args can either be numeric or "default"
+        # Turn it into an int or None
+        if isinstance(ttl, str):
+            if self._ttl_nullable and ttl == "default":
+                ttl = None
+            else:
+                try:
+                    ttl = int(ttl)
+                except ValueError as e:
+                    raise InputFailure(f"Invalid TTL value: {ttl}") from e
 
-        return self.valid_numeric_ttl(ttl)
+        if isinstance(ttl, int):
+            ttl = self.valid_numeric_ttl(ttl)
+
+        return self.patch({ttl_field: ttl})
 
     def valid_numeric_ttl(self, ttl: int) -> int:
         """Return a valid TTL value.
@@ -384,6 +390,11 @@ class NameServer(FrozenModelWithTimestamps, WithTTL):
     id: int  # noqa: A003
     name: str
 
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Nameservers
+
 
 class Permission(FrozenModelWithTimestamps, APIMixin):
     """Model for a permission object."""
@@ -475,6 +486,9 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
     soa_ttl: int
     default_ttl: int
     name: str
+
+    # Specify that TTL fields are NOT nullable for Zone objects
+    _ttl_nullable: ClassVar[bool] = False
 
     def is_delegated(self) -> bool:
         """Return True if the zone is delegated."""
@@ -852,8 +866,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
 
         :param ttl: The TTL to set.
         """
-        ttl = self.valid_numeric_ttl(ttl)
-        return self.patch({"default_ttl": ttl})
+        return self.set_ttl(ttl, "default_ttl")
 
     def update_nameservers(self, nameservers: list[str], force: bool = False) -> None:
         """Update the nameservers of the zone.
