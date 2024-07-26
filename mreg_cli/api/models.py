@@ -2455,7 +2455,7 @@ class BacnetID(FrozenModel, WithHost, APIMixin):
         :param end: The end of the range.
         :returns: List of BacnetID objects in the range.
         """
-        params = {"id__range": f"{start},{end}"}
+        params: QueryParams = {"id__range": f"{start},{end}"}
         return get_typed(Endpoint.BacnetID, list[cls], params=params)
 
     @classmethod
@@ -2822,7 +2822,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if isinstance(ip, str):
             ip = IPAddressField(address=ipaddress.ip_address(ip))
 
-        params = {
+        params: QueryParams = {
             "macaddress": mac.address,
             "ordering": "ipaddress",
         }
