@@ -36,7 +36,7 @@ mac_pattern = re.compile(r"\b([0-9a-f]{2}:){5}[0-9a-f]{2}\b")
 # Pattern matching strings starting with `"url": "/api/v1/` and ending with `"`
 api_v1_pattern = re.compile(r'"url":\s*"/api/v1/.*?"')
 # Pattern matching URLs where the final component is a number
-# Defines 3 capture groups to be able to replace the number with a placeholder.
+# Defines 4 capture groups to be able to replace the number with a placeholder.
 # Only matches the number if it is preceded by a `/` or `=`
 # Does not match patterns containing `<IPv4>` and `<IPv6>` after `/api/v1/`.
 api_v1_pattern_with_number = re.compile(
