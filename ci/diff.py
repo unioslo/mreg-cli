@@ -61,9 +61,7 @@ class CommandCountError(DiffError):
 
 def unquote_url(match: re.Match[str]) -> str:
     """Unquote URL encoded text in a /api/v1/ URL."""
-    url_encoded_text = match.group(0)[1:-1]
-    url_decoded_text = urllib.parse.unquote(url_encoded_text)
-    return f'"{url_decoded_text}"'  # ensure double quotes
+    return urllib.parse.unquote(match.group(0))
 
 
 def replace_url_id(match: re.Match[str]) -> str:
