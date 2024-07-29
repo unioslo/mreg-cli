@@ -5,6 +5,7 @@ import difflib
 import json
 import re
 import sys
+import urllib.parse
 from enum import StrEnum
 from itertools import zip_longest
 from typing import Any, Iterable
@@ -32,6 +33,16 @@ ipv4_pattern = re.compile(r"((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}")
 ipv6_pattern = re.compile(r"\b([0-9a-fA-F]{1,4}::?){1,7}[0-9a-fA-F]{1,4}\b")
 mac_pattern = re.compile(r"\b([0-9a-f]{2}:){5}[0-9a-f]{2}\b")
 
+# Pattern matching strings starting with `"url": "/api/v1/` and ending with `"`
+api_v1_pattern = re.compile(r'"url":\s*"/api/v1/.*?"')
+# Pattern matching URLs where the final component is a number
+# Defines 3 capture groups to be able to replace the number with a placeholder.
+# Only matches the number if it is preceded by a `/` or `=`
+# Does not match patterns containing `<IPv4>` and `<IPv6>` after `/api/v1/`.
+api_v1_pattern_with_number = re.compile(
+    r'("url":\s*"/api/v1/(?!.*?<(?:IPv6|IPv4)>).*?)([/=])(\d+)(")'
+)
+
 
 class DiffError(Exception):
     """Base class for diff errors."""
@@ -48,6 +59,22 @@ class CommandCountError(DiffError):
         )
 
 
+def unquote_url(match: re.Match[str]) -> str:
+    """Unquote URL encoded text in a /api/v1/ URL."""
+    url_encoded_text = match.group(0)[1:-1]
+    url_decoded_text = urllib.parse.unquote(url_encoded_text)
+    return f'"{url_decoded_text}"'  # ensure double quotes
+
+
+def replace_url_id(match: re.Match[str]) -> str:
+    """Replace the final number (ID) in a URL with a placeholder."""
+    # match.group(1) contains the part before the separator
+    # match.group(2) contains the separator
+    # match.group(3) contains the number we want to replace
+    # match.group(4) contains the closing double quote
+    return f"{match.group(1)}{match.group(2)}<ID>{match.group(4)}"
+
+
 def group_objects(json_file_path: str) -> list[dict[str, Any]]:
     """Group objects in a JSON file by a specific criterion.
 
@@ -56,12 +83,23 @@ def group_objects(json_file_path: str) -> list[dict[str, Any]]:
     """
     with open(json_file_path, "r") as f:
         s = f.read()
+        # Replace all URL encoded text in /api/v1/ URLs with unquoted text
+        # This lets us replace it down the line with our normal IPv{4,6} and MAC placeholders
+        # Must be done _before_ all other replacements
+        s = api_v1_pattern.sub(unquote_url, s)
+
+        # Replace all non-deterministic values with placeholders
         s = timestamp_pattern.sub("<TIME>", s)
         s = datetime_str_pattern.sub("<TIME>", s)
         s = serial_pattern.sub("Serial: <NUMBER>", s)
         s = mac_pattern.sub("<macaddress>", s)
         s = ipv4_pattern.sub("<IPv4>", s)
         s = ipv6_pattern.sub("<IPv6>", s)
+
+        # Replace all IDs in URLs with a placeholder
+        # Must be done _after_ all other replacements
+        s = api_v1_pattern_with_number.sub(replace_url_id, s)
+
         s = re.sub(
             r"\s+", " ", s
         )  # replace all whitespace with one space, so the diff doesn't complain about different lengths
