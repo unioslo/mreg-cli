@@ -66,8 +66,8 @@ def unquote_url(match: re.Match[str]) -> str:
 
 def replace_url_id(match: re.Match[str]) -> str:
     """Replace the final number (ID) in a URL with a placeholder."""
-    # match.group(1) contains the part before the separator
-    # match.group(2) contains the separator
+    # match.group(1) contains the part before the separator (`"url": "/api/...`)
+    # match.group(2) contains the separator (/ or =)
     # match.group(3) contains the number we want to replace
     # match.group(4) contains the closing double quote
     return f"{match.group(1)}{match.group(2)}<ID>{match.group(4)}"
