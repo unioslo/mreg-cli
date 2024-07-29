@@ -381,7 +381,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/zones/forward/?id=1",
+        "url": "/api/v1/zones/forward/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -495,7 +495,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/zones/forward/?id=1",
+        "url": "/api/v1/zones/forward/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -726,7 +726,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=1",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -876,7 +876,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=1",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -888,7 +888,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=1",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -900,7 +900,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=1",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -912,7 +912,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=1",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -924,7 +924,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=1",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -1082,7 +1082,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=1",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -1094,7 +1094,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=1",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -1226,7 +1226,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -1243,14 +1243,14 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_host_list",
+        "url": "/api/v1/networks/<IPv6>::/64/used_host_list",
         "data": {},
         "status": 200,
         "response": {}
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/ptroverride_host_list",
+        "url": "/api/v1/networks/<IPv6>::/64/ptroverride_host_list",
         "data": {},
         "status": 200,
         "response": {}
@@ -5367,7 +5367,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -5384,7 +5384,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/unused_list",
+        "url": "/api/v1/networks/<IPv6>::/64/unused_list",
         "data": {},
         "status": 200,
         "response": [
@@ -9503,7 +9503,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -9520,7 +9520,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {
           "reserved": 50
         },
@@ -9528,7 +9528,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=2",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9619,7 +9619,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -9678,7 +9678,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=2",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9690,7 +9690,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=2",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9702,7 +9702,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=2",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9714,7 +9714,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=2",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9726,7 +9726,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=2",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9785,7 +9785,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=2",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9797,7 +9797,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=2",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9809,7 +9809,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=2",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9821,7 +9821,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=2",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9833,7 +9833,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=2",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9897,7 +9897,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=2",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9909,7 +9909,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=2",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9921,7 +9921,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=2",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9933,7 +9933,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=2",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -9945,7 +9945,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=2",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10004,7 +10004,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=2",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10016,7 +10016,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=2",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10049,7 +10049,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -10066,14 +10066,14 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_count",
+        "url": "/api/v1/networks/<IPv6>::/64/used_count",
         "data": {},
         "status": 200,
         "response": 0
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 204
       }
@@ -10173,7 +10173,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=3",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10542,7 +10542,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=4",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10554,7 +10554,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=4",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10566,7 +10566,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=4",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10578,7 +10578,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=4",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10590,7 +10590,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=4",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10704,7 +10704,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=3",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10780,7 +10780,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=3",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10856,7 +10856,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=3",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -10932,7 +10932,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=3",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -11060,7 +11060,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/?network=<IPv4>%2F24&description__regex=.%2Aone+host.%2A&vlan=1234&dns_delegated=0&category=Yellow&location=Somewhere&frozen=1&reserved=6",
+        "url": "/api/v1/networks/?network=<IPv4>/24&description__regex=.*one+host.*&vlan=1234&dns_delegated=0&category=Yellow&location=Somewhere&frozen=1&reserved=6",
         "data": {},
         "status": 200,
         "response": {
@@ -11127,7 +11127,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?id=4",
+        "url": "/api/v1/hosts/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -11239,7 +11239,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?resource=host&model_id__in=4",
+        "url": "/api/v1/history/?resource=host&model_id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -11294,7 +11294,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?data__relation=hosts&data__id__in=4",
+        "url": "/api/v1/history/?data__relation=hosts&data__id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -11474,7 +11474,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?id=4",
+        "url": "/api/v1/hosts/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -11616,7 +11616,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=4",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -11628,7 +11628,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=4",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -11738,7 +11738,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=4",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -11750,7 +11750,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=4",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -11814,7 +11814,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=3",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12110,7 +12110,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=6",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12122,7 +12122,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=6",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12134,7 +12134,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=6",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12146,7 +12146,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=6",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12158,7 +12158,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=6",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12217,7 +12217,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=6",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12229,7 +12229,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=6",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12361,7 +12361,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -12378,7 +12378,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {
           "frozen": true
         },
@@ -12386,7 +12386,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=4",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12468,7 +12468,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -12500,7 +12500,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -12517,7 +12517,7 @@
       },
       {
         "method": "POST",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/excluded_ranges/",
+        "url": "/api/v1/networks/<IPv6>::/64/excluded_ranges/",
         "data": {
           "network": 4,
           "start_ip": "<IPv6>",
@@ -12585,7 +12585,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A20",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -12690,7 +12690,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -12755,7 +12755,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=8",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12767,7 +12767,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=8",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12779,7 +12779,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=8",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12791,7 +12791,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=8",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12803,7 +12803,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=8",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12830,7 +12830,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -12853,7 +12853,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {
           "description": "Frozen but has one host"
         },
@@ -12861,7 +12861,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/?id=4",
+        "url": "/api/v1/networks/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -12923,7 +12923,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -12946,7 +12946,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/reserved_list",
+        "url": "/api/v1/networks/<IPv6>::/64/reserved_list",
         "data": {},
         "status": 200,
         "response": [
@@ -12958,14 +12958,14 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_count",
+        "url": "/api/v1/networks/<IPv6>::/64/used_count",
         "data": {},
         "status": 200,
         "response": 1
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/unused_count",
+        "url": "/api/v1/networks/<IPv6>::/64/unused_count",
         "data": {},
         "status": 200,
         "response": 18446744073709551594
@@ -13019,7 +13019,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -13042,7 +13042,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/first_unused",
+        "url": "/api/v1/networks/<IPv6>::/64/first_unused",
         "data": {},
         "status": 200,
         "response": "<IPv6>"
@@ -13096,7 +13096,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -13119,7 +13119,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/first_unused",
+        "url": "/api/v1/networks/<IPv6>::/64/first_unused",
         "data": {},
         "status": 200,
         "response": "<IPv6>"
@@ -13140,7 +13140,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?id=8",
+        "url": "/api/v1/hosts/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13236,7 +13236,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A4",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -13259,7 +13259,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A2b28%3Aa469%3Aa3e9%3Aaded",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -13282,7 +13282,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=8",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13294,7 +13294,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=8",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13327,7 +13327,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -13350,14 +13350,14 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_count",
+        "url": "/api/v1/networks/<IPv6>::/64/used_count",
         "data": {},
         "status": 200,
         "response": 0
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 204
       }
@@ -13509,7 +13509,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=9",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13521,7 +13521,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=9",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13533,7 +13533,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=9",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13545,7 +13545,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=9",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13557,7 +13557,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=9",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13668,7 +13668,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=10",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13680,7 +13680,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=10",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13692,7 +13692,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=10",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13704,7 +13704,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=10",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13716,7 +13716,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=10",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13791,7 +13791,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?id=1",
+        "url": "/api/v1/hostgroups/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13883,7 +13883,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?id=1",
+        "url": "/api/v1/hostgroups/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -13955,7 +13955,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?id=1",
+        "url": "/api/v1/hostgroups/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -14059,7 +14059,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?id=1",
+        "url": "/api/v1/hostgroups/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -14226,7 +14226,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?resource=group&model_id__in=1",
+        "url": "/api/v1/history/?resource=group&model_id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -14301,7 +14301,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?data__relation=groups&data__id__in=1",
+        "url": "/api/v1/history/?data__relation=groups&data__id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -14419,7 +14419,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?id=1",
+        "url": "/api/v1/hostgroups/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -14547,7 +14547,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?id=1",
+        "url": "/api/v1/hostgroups/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -14621,7 +14621,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?id=1",
+        "url": "/api/v1/hostgroups/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -14699,7 +14699,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?id=1",
+        "url": "/api/v1/hostgroups/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -14878,7 +14878,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?resource=group&model_id__in=1",
+        "url": "/api/v1/history/?resource=group&model_id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15005,7 +15005,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?data__relation=groups&data__id__in=1",
+        "url": "/api/v1/history/?data__relation=groups&data__id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15173,7 +15173,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=9",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15185,7 +15185,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=9",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15244,7 +15244,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=10",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15256,7 +15256,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=10",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15637,7 +15637,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=11",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15649,7 +15649,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=11",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15661,7 +15661,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=11",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15673,7 +15673,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=11",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15685,7 +15685,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=11",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15733,7 +15733,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=11",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -15745,7 +15745,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=11",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16030,7 +16030,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/atoms/?name__regex=.%2Appl.%2A",
+        "url": "/api/v1/hostpolicy/atoms/?name__regex=.*ppl.*",
         "data": {},
         "status": 200,
         "response": {
@@ -16146,7 +16146,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?name__regex=.%2Afru.%2A",
+        "url": "/api/v1/hostpolicy/roles/?name__regex=.*fru.*",
         "data": {},
         "status": 200,
         "response": {
@@ -16426,7 +16426,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?resource=hostpolicy_atom&model_id__in=1",
+        "url": "/api/v1/history/?resource=hostpolicy_atom&model_id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16449,7 +16449,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?data__relation=atoms&data__id__in=1",
+        "url": "/api/v1/history/?data__relation=atoms&data__id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16613,7 +16613,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?resource=hostpolicy_atom&model_id__in=1",
+        "url": "/api/v1/history/?resource=hostpolicy_atom&model_id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16636,7 +16636,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?data__relation=atoms&data__id__in=1",
+        "url": "/api/v1/history/?data__relation=atoms&data__id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16757,7 +16757,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/atoms/?id=2",
+        "url": "/api/v1/hostpolicy/atoms/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16835,7 +16835,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/atoms/?id=2",
+        "url": "/api/v1/hostpolicy/atoms/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16956,7 +16956,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=12",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16968,7 +16968,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=12",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16980,7 +16980,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=12",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -16992,7 +16992,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=12",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17004,7 +17004,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=12",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17062,7 +17062,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=12",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17074,7 +17074,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=12",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17086,7 +17086,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=12",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17098,7 +17098,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=12",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17110,7 +17110,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=12",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17291,7 +17291,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=12",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17366,7 +17366,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=12",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17378,7 +17378,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=12",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17390,7 +17390,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=12",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17402,7 +17402,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=12",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17430,7 +17430,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=12",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17726,7 +17726,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?resource=hostpolicy_role&model_id__in=1",
+        "url": "/api/v1/history/?resource=hostpolicy_role&model_id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17827,7 +17827,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/history/?data__relation=roles&data__id__in=1",
+        "url": "/api/v1/history/?data__relation=roles&data__id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17958,7 +17958,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=12",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -17970,7 +17970,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=12",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18003,7 +18003,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?range=<IPv4>%2F24&group=somegroup&regex=%5Babc%5D%2B.uio.no",
+        "url": "/api/v1/permissions/netgroupregex/?range=<IPv4>/24&group=somegroup&regex=[abc]+.uio.no",
         "data": {},
         "status": 200,
         "response": {
@@ -18047,7 +18047,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?ordering=range%2Cgroup",
+        "url": "/api/v1/permissions/netgroupregex/?ordering=range,group",
         "data": {},
         "status": 200,
         "response": {
@@ -18093,7 +18093,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?group=othergroup&range=<IPv4>%2F24&regex=%5Babc%5D%2A.uio.no",
+        "url": "/api/v1/permissions/netgroupregex/?group=othergroup&range=<IPv4>/24&regex=[abc]*.uio.no",
         "data": {},
         "status": 200,
         "response": {
@@ -18120,7 +18120,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?group=somegroup&range=<IPv4>%2F24&regex=%5Babc%5D%2B.uio.no",
+        "url": "/api/v1/permissions/netgroupregex/?group=somegroup&range=<IPv4>/24&regex=[abc]+.uio.no",
         "data": {},
         "status": 200,
         "response": {
@@ -18139,7 +18139,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/permissions/netgroupregex/1",
+        "url": "/api/v1/permissions/netgroupregex/<ID>",
         "data": {},
         "status": 204
       }
@@ -18299,7 +18299,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=13",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18311,7 +18311,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=13",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18323,7 +18323,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=13",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18335,7 +18335,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts=13",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18347,7 +18347,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostgroups/?hosts=13",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18443,7 +18443,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?id=13",
+        "url": "/api/v1/hosts/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18497,7 +18497,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "url": "/api/v1/ipaddresses/?macaddress=<macaddress>",
         "data": {},
         "status": 200,
         "response": {
@@ -18536,7 +18536,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "url": "/api/v1/ipaddresses/?macaddress=<macaddress>",
         "data": {},
         "status": 200,
         "response": {
@@ -18566,7 +18566,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/8",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "macaddress": "<macaddress>"
         },
@@ -18574,7 +18574,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/8",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18645,7 +18645,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/8",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "macaddress": ""
         },
@@ -18653,7 +18653,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/8",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18679,7 +18679,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=11%3A22%3A33%3A44%3A55%3A66",
+        "url": "/api/v1/ipaddresses/?macaddress=<macaddress>",
         "data": {},
         "status": 200,
         "response": {
@@ -18724,7 +18724,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "url": "/api/v1/ipaddresses/?macaddress=<macaddress>",
         "data": {},
         "status": 200,
         "response": {
@@ -18768,7 +18768,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/8",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "macaddress": "<macaddress>"
         },
@@ -18776,7 +18776,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/8",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18834,7 +18834,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/8",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "macaddress": ""
         },
@@ -18842,7 +18842,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/8",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -18933,7 +18933,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/ipaddresses/8",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 204
       }
@@ -18954,7 +18954,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "url": "/api/v1/ipaddresses/?macaddress=<macaddress>",
         "data": {},
         "status": 200,
         "response": {
@@ -19076,7 +19076,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?id=13",
+        "url": "/api/v1/hosts/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -19193,7 +19193,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?id=13",
+        "url": "/api/v1/hosts/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -19252,7 +19252,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "url": "/api/v1/ipaddresses/?macaddress=<macaddress>",
         "data": {},
         "status": 200,
         "response": {
@@ -19353,7 +19353,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/ipaddresses/10",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 204
       }
@@ -19551,7 +19551,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb9%3A%3A5",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -19582,7 +19582,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?id=13",
+        "url": "/api/v1/hosts/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -19641,7 +19641,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "url": "/api/v1/ipaddresses/?macaddress=<macaddress>",
         "data": {},
         "status": 200,
         "response": {
@@ -19707,7 +19707,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb9%3A%3A5",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -19776,7 +19776,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/ipaddresses/11",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 204
       }
@@ -19829,7 +19829,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A5",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -19860,7 +19860,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?id=13",
+        "url": "/api/v1/hosts/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -19919,7 +19919,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=aa%3Abb%3Acc%3Add%3Aee%3Aff",
+        "url": "/api/v1/ipaddresses/?macaddress=<macaddress>",
         "data": {},
         "status": 200,
         "response": {
@@ -19985,7 +19985,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A5",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -20002,7 +20002,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/9",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "macaddress": "<macaddress>"
         },
@@ -20010,7 +20010,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/9",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -20090,7 +20090,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A5",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -20107,7 +20107,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=13",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -20119,7 +20119,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=13",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -20197,7 +20197,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -20214,14 +20214,14 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_count",
+        "url": "/api/v1/networks/<IPv6>::/64/used_count",
         "data": {},
         "status": 200,
         "response": 0
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 204
       }
@@ -20242,7 +20242,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb9%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
         "response": {
@@ -20259,14 +20259,14 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb9%3A%3A/64/used_count",
+        "url": "/api/v1/networks/<IPv6>::/64/used_count",
         "data": {},
         "status": 200,
         "response": 0
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/networks/2001%3Adb9%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 204
       }
@@ -20279,7 +20279,7 @@
     "command_filter_negate": false,
     "command_issued": "network create -network <IPv4>/24 -desc \"lorem ipsum\"",
     "ok": [
-      "OK: : created network <IPv4>/24"
+      "created network <IPv4>/24"
     ],
     "warning": [],
     "error": [],
@@ -20303,12 +20303,26 @@
         "data": {
           "network": "<IPv4>/24",
           "description": "lorem ipsum",
-          "vlan": null,
-          "category": null,
-          "location": null,
           "frozen": false
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/<IPv4>/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv4>/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
       }
     ],
     "time": null
@@ -20319,7 +20333,7 @@
     "command_filter_negate": false,
     "command_issued": "network create -network <IPv6>::/64 -desc \"dolor sit amet\"",
     "ok": [
-      "OK: : created network <IPv6>::/64"
+      "created network <IPv6>::/64"
     ],
     "warning": [],
     "error": [],
@@ -20355,12 +20369,26 @@
         "data": {
           "network": "<IPv6>::/64",
           "description": "dolor sit amet",
-          "vlan": null,
-          "category": null,
-          "location": null,
           "frozen": false
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/<IPv6>::/64",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
       }
     ],
     "time": null
@@ -20371,24 +20399,38 @@
     "command_filter_negate": false,
     "command_issued": "host add foo -ip <IPv4> -contact hi@ho.com -comment \"meh\" -macaddress <macaddress>",
     "ok": [
-      "OK: : created host foo.example.org with IP <IPv4>"
+      "Created host foo.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: foo.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: foo.example.org",
+      "Contact: hi@ho.com",
+      "Comment: meh",
+      "A_Records IP MAC",
+      " <IPv4> <macaddress>",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=foo.example.org",
+        "url": "/api/v1/hosts/foo.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/foo.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -20418,30 +20460,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/networks/ip/<IPv4>",
         "data": {},
         "status": 200,
@@ -20456,19 +20474,6 @@
           "frozen": false,
           "reserved": 3
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
       },
       {
         "method": "POST",
@@ -20515,7 +20520,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/ipaddresses/?macaddress=11%3A22%3A33%3Aaa%3Abb%3Acc&ordering=ipaddress",
+        "url": "/api/v1/ipaddresses/?macaddress=<macaddress>&ordering=ipaddress",
         "data": {},
         "status": 200,
         "response": {
@@ -20527,134 +20532,26 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/11",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
-          "macaddress": "<IPv6>"
+          "macaddress": "<macaddress>"
         },
         "status": 204
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "host info foo",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "host info foo",
-    "ok": [
-      "OK: : printed host info for foo.example.org"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [
-      "Name: foo.example.org",
-      "Contact: hi@ho.com",
-      "Comment: meh",
-      "A_Records IP MAC",
-      " <IPv4> <IPv6>",
-      "TTL: (Default)",
-      "TXT: v=spf1 -all"
-    ],
-    "api_requests": [
+      },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 200,
         "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "<IPv6>",
-              "ipaddress": "<IPv4>",
-              "host": 14
-            }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 14
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "foo.example.org",
-          "contact": "hi@ho.com",
-          "ttl": null,
-          "comment": "meh",
-          "zone": 1
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv4>",
+          "host": 14
         }
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host=14",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/naptrs/?host=14",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/sshfps/?host=14",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?hosts__name=foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "host find -name *oo*",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "host find -name *oo*",
-    "ok": [],
-    "warning": [],
-    "error": [],
-    "output": [
-      "Name Contact Comment",
-      "foo.example.org hi@ho.com meh"
-    ],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ordering=name&page_size=1&name__regex=.%2Aoo.%2A",
+        "url": "/api/v1/hosts/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -20665,7 +20562,7 @@
             {
               "ipaddresses": [
                 {
-                  "macaddress": "<IPv6>",
+                  "macaddress": "<macaddress>",
                   "ipaddress": "<IPv4>",
                   "host": 14
                 }
@@ -20693,7 +20590,198 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?ordering=name&name__regex=.%2Aoo.%2A",
+        "url": "/api/v1/srvs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host info foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host info foo",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name: foo.example.org",
+      "Contact: hi@ho.com",
+      "Comment: meh",
+      "A_Records IP MAC",
+      " <IPv4> <macaddress>",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv4>",
+              "host": 14
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 14
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "hi@ho.com",
+          "ttl": null,
+          "comment": "meh",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host find -name *oo*",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host find -name *oo*",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name Contact Comment",
+      "foo.example.org hi@ho.com meh"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ordering=name&name__regex=.*oo.*",
         "data": {},
         "status": 200,
         "response": {
@@ -20704,7 +20792,7 @@
             {
               "ipaddresses": [
                 {
-                  "macaddress": "<IPv6>",
+                  "macaddress": "<macaddress>",
                   "ipaddress": "<IPv4>",
                   "host": 14
                 }
@@ -20748,7 +20836,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?ordering=name&page_size=1&contact__regex=%5Ehi",
+        "url": "/api/v1/hosts/?ordering=name&contact__regex=^hi",
         "data": {},
         "status": 200,
         "response": {
@@ -20759,46 +20847,7 @@
             {
               "ipaddresses": [
                 {
-                  "macaddress": "<IPv6>",
-                  "ipaddress": "<IPv4>",
-                  "host": 14
-                }
-              ],
-              "cnames": [],
-              "mxs": [],
-              "txts": [
-                {
-                  "txt": "v=spf1 -all",
-                  "host": 14
-                }
-              ],
-              "ptr_overrides": [],
-              "hinfo": null,
-              "loc": null,
-              "bacnetid": null,
-              "name": "foo.example.org",
-              "contact": "hi@ho.com",
-              "ttl": null,
-              "comment": "meh",
-              "zone": 1
-            }
-          ]
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ordering=name&contact__regex=%5Ehi",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "ipaddresses": [
-                {
-                  "macaddress": "<IPv6>",
+                  "macaddress": "<macaddress>",
                   "ipaddress": "<IPv4>",
                   "host": 14
                 }
@@ -20842,7 +20891,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?ordering=name&page_size=1&comment__regex=.%2Ameh.%2A",
+        "url": "/api/v1/hosts/?ordering=name&comment__regex=.*meh.*",
         "data": {},
         "status": 200,
         "response": {
@@ -20853,46 +20902,7 @@
             {
               "ipaddresses": [
                 {
-                  "macaddress": "<IPv6>",
-                  "ipaddress": "<IPv4>",
-                  "host": 14
-                }
-              ],
-              "cnames": [],
-              "mxs": [],
-              "txts": [
-                {
-                  "txt": "v=spf1 -all",
-                  "host": 14
-                }
-              ],
-              "ptr_overrides": [],
-              "hinfo": null,
-              "loc": null,
-              "bacnetid": null,
-              "name": "foo.example.org",
-              "contact": "hi@ho.com",
-              "ttl": null,
-              "comment": "meh",
-              "zone": 1
-            }
-          ]
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ordering=name&comment__regex=.%2Ameh.%2A",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "ipaddresses": [
-                {
-                  "macaddress": "<IPv6>",
+                  "macaddress": "<macaddress>",
                   "ipaddress": "<IPv4>",
                   "host": 14
                 }
@@ -20936,7 +20946,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?ordering=name&page_size=1&contact__regex=%5Eh&comment__regex=%5Em&name__regex=%5Ef",
+        "url": "/api/v1/hosts/?ordering=name&contact__regex=^h&comment__regex=^m&name__regex=^f",
         "data": {},
         "status": 200,
         "response": {
@@ -20947,46 +20957,7 @@
             {
               "ipaddresses": [
                 {
-                  "macaddress": "<IPv6>",
-                  "ipaddress": "<IPv4>",
-                  "host": 14
-                }
-              ],
-              "cnames": [],
-              "mxs": [],
-              "txts": [
-                {
-                  "txt": "v=spf1 -all",
-                  "host": 14
-                }
-              ],
-              "ptr_overrides": [],
-              "hinfo": null,
-              "loc": null,
-              "bacnetid": null,
-              "name": "foo.example.org",
-              "contact": "hi@ho.com",
-              "ttl": null,
-              "comment": "meh",
-              "zone": 1
-            }
-          ]
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ordering=name&contact__regex=%5Eh&comment__regex=%5Em&name__regex=%5Ef",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "ipaddresses": [
-                {
-                  "macaddress": "<IPv6>",
+                  "macaddress": "<macaddress>",
                   "ipaddress": "<IPv4>",
                   "host": 14
                 }
@@ -21021,75 +20992,60 @@
     "command_filter_negate": false,
     "command_issued": "host rename foo bar",
     "ok": [
-      "OK: : renamed foo.example.org to bar.example.org"
+      "renamed foo.example.org to bar.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: bar.example.org"
-    ],
+    "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=foo.example.org",
+        "url": "/api/v1/hosts/foo.example.org",
         "data": {},
         "status": 200,
         "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
+          "ipaddresses": [
             {
-              "ipaddresses": [
-                {
-                  "macaddress": "<IPv6>",
-                  "ipaddress": "<IPv4>",
-                  "host": 14
-                }
-              ],
-              "cnames": [],
-              "mxs": [],
-              "txts": [
-                {
-                  "txt": "v=spf1 -all",
-                  "host": 14
-                }
-              ],
-              "ptr_overrides": [],
-              "hinfo": null,
-              "loc": null,
-              "bacnetid": null,
-              "name": "foo.example.org",
-              "contact": "hi@ho.com",
-              "ttl": null,
-              "comment": "meh",
-              "zone": 1
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv4>",
+              "host": 14
             }
-          ]
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 14
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "hi@ho.com",
+          "ttl": null,
+          "comment": "meh",
+          "zone": 1
         }
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=bar.example.org",
+        "url": "/api/v1/hosts/bar.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=bar.example.org",
+        "url": "/api/v1/cnames/bar.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       },
       {
@@ -21124,6 +21080,45 @@
           "name": "bar.example.org"
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "hi@ho.com",
+              "ttl": null,
+              "comment": "meh",
+              "zone": 1
+            }
+          ]
+        }
       }
     ],
     "time": null
@@ -21134,7 +21129,7 @@
     "command_filter_negate": false,
     "command_issued": "host set_comment bar 'This is the comment'",
     "ok": [
-      "OK: : Updated comment of bar.example.org to \"This is the comment\""
+      "Updated comment of bar.example.org to This is the comment"
     ],
     "warning": [],
     "error": [],
@@ -21148,7 +21143,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -21179,6 +21174,45 @@
           "comment": "This is the comment"
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "hi@ho.com",
+              "ttl": null,
+              "comment": "This is the comment",
+              "zone": 1
+            }
+          ]
+        }
       }
     ],
     "time": null
@@ -21190,11 +21224,57 @@
     "command_issued": "host set_contact bar \"I'm the contact\" # fails because invalid email address",
     "ok": [],
     "warning": [
-      "WARNING: : invalid mail address I'm the contact (target host: bar)"
+      "PATCH \"http://<IPv4>:8000/api/v1/hosts/bar.example.org\": 400: Bad Request\n{\n \"contact\": [\n \"Enter a valid email address.\"\n ]\n}"
     ],
     "error": [],
     "output": [],
-    "api_requests": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/bar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv4>",
+              "host": 14
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 14
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "bar.example.org",
+          "contact": "hi@ho.com",
+          "ttl": null,
+          "comment": "This is the comment",
+          "zone": 1
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/hosts/bar.example.org",
+        "data": {
+          "contact": "I'm the contact"
+        },
+        "status": 400,
+        "response": {
+          "contact": [
+            "Enter a valid email address."
+          ]
+        }
+      }
+    ],
     "time": null
   },
   {
@@ -21203,7 +21283,7 @@
     "command_filter_negate": false,
     "command_issued": "host set_contact bar me@example.org",
     "ok": [
-      "OK: : Updated contact of bar.example.org to me@example.org"
+      "Updated contact of bar.example.org to me@example.org"
     ],
     "warning": [],
     "error": [],
@@ -21217,7 +21297,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -21248,6 +21328,45 @@
           "contact": "me@example.org"
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "me@example.org",
+              "ttl": null,
+              "comment": "This is the comment",
+              "zone": 1
+            }
+          ]
+        }
       }
     ],
     "time": null
@@ -21259,53 +21378,11 @@
     "command_issued": "host a_add bar <IPv4> # must force",
     "ok": [],
     "warning": [
-      "WARNING: : bar.example.org already has A/AAAA record(s), must force"
+      "Host bar.example.org already has one or more ip addresses, must force"
     ],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "lorem ipsum",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/bar.example.org",
@@ -21314,7 +21391,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -21336,6 +21413,23 @@
           "ttl": null,
           "comment": "This is the comment",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/<IPv4>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv4>/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       }
     ],
@@ -21347,54 +21441,12 @@
     "command_filter_negate": false,
     "command_issued": "host a_add bar <IPv4> -f",
     "ok": [
-      "OK: : added ip <IPv4> to bar.example.org"
+      "Added ipaddress <IPv4> to bar.example.org"
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "lorem ipsum",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/bar.example.org",
@@ -21403,7 +21455,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -21428,17 +21480,78 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/<IPv4>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv4>/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/ipaddresses/",
         "data": {
-          "host": 14,
-          "ipaddress": "<IPv4>"
+          "ipaddress": "<IPv4>",
+          "host": "14"
         },
         "status": 201,
         "response": {
           "macaddress": "",
           "ipaddress": "<IPv4>",
           "host": 14
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "me@example.org",
+              "ttl": null,
+              "comment": "This is the comment",
+              "zone": 1
+            }
+          ]
         }
       }
     ],
@@ -21450,54 +21563,12 @@
     "command_filter_negate": false,
     "command_issued": "host a_add bar <IPv4> -macaddress <macaddress> -force",
     "ok": [
-      "OK: : added ip <IPv4> to bar.example.org"
+      "Added ipaddress <IPv4> to bar.example.org"
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "lorem ipsum",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/bar.example.org",
@@ -21506,7 +21577,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -21536,18 +21607,84 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/<IPv4>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv4>/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/ipaddresses/",
         "data": {
-          "host": 14,
           "ipaddress": "<IPv4>",
-          "macaddress": "<IPv6>"
+          "host": "14",
+          "macaddress": "<macaddress>"
         },
         "status": 201,
         "response": {
-          "macaddress": "<IPv6>",
+          "macaddress": "<macaddress>",
           "ipaddress": "<IPv4>",
           "host": 14
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "me@example.org",
+              "ttl": null,
+              "comment": "This is the comment",
+              "zone": 1
+            }
+          ]
         }
       }
     ],
@@ -21559,7 +21696,7 @@
     "command_filter_negate": false,
     "command_issued": "host a_change -old <IPv4> -new <IPv4> bar",
     "ok": [
-      "OK: : changed ip <IPv4> to <IPv4> for bar.example.org"
+      "changed ip <IPv4> to <IPv4> for bar.example.org"
     ],
     "warning": [],
     "error": [],
@@ -21573,7 +21710,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -21583,7 +21720,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -21609,7 +21746,18 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "",
+          "ipaddress": "<IPv4>",
+          "host": 14
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>&ordering=name",
         "data": {},
         "status": 200,
         "response": {
@@ -21620,42 +21768,23 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "lorem ipsum",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/12",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "ipaddress": "<IPv4>"
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "",
+          "ipaddress": "<IPv4>",
+          "host": 14
+        }
       }
     ],
     "time": null
@@ -21666,7 +21795,7 @@
     "command_filter_negate": false,
     "command_issued": "host a_change -old <IPv4> -new <IPv4> bar # has mac addr, should keep it assigned to the new ip",
     "ok": [
-      "OK: : changed ip <IPv4> to <IPv4> for bar.example.org"
+      "changed ip <IPv4> to <IPv4> for bar.example.org"
     ],
     "warning": [],
     "error": [],
@@ -21680,12 +21809,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -21716,7 +21845,18 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv4>",
+          "host": 14
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>&ordering=name",
         "data": {},
         "status": 200,
         "response": {
@@ -21727,42 +21867,23 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "lorem ipsum",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/13",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "ipaddress": "<IPv4>"
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv4>",
+          "host": 14
+        }
       }
     ],
     "time": null
@@ -21774,7 +21895,7 @@
     "command_issued": "host a_remove bar <IPv4>",
     "ok": [],
     "warning": [
-      "WARNING: : <IPv4> is not owned by bar.example.org"
+      "Host bar.example.org does not have IP <IPv4>"
     ],
     "error": [],
     "output": [],
@@ -21787,7 +21908,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -21797,7 +21918,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -21830,24 +21951,35 @@
     "command_filter_negate": false,
     "command_issued": "host add baz",
     "ok": [
-      "OK: : created host baz.example.org"
+      "Created host baz.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: baz.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: baz.example.org",
+      "Contact: ",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=baz.example.org",
+        "url": "/api/v1/hosts/baz.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/baz.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -21876,8 +22008,42 @@
         }
       },
       {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "baz.example.org"
+        },
+        "status": 201
+      },
+      {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=baz.example.org",
+        "url": "/api/v1/hosts/baz.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 15
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "baz.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -21888,14 +22054,52 @@
         }
       },
       {
-        "method": "POST",
-        "url": "/api/v1/hosts/",
-        "data": {
-          "name": "baz.example.org",
-          "contact": null,
-          "comment": null
-        },
-        "status": 201
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -21905,12 +22109,12 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host a_move -ip <IPv4> -fromhost bar -tohost baz",
-    "ok": [
-      "OK: : Moved ipaddress <IPv4>"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Moved ipaddress <IPv4>"
+    ],
     "api_requests": [
       {
         "method": "GET",
@@ -21920,7 +22124,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -21930,7 +22134,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -21982,11 +22186,22 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/11",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "host": 15
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv4>",
+          "host": 15
+        }
       }
     ],
     "time": null
@@ -21996,14 +22211,12 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host a_show baz",
-    "ok": [
-      "OK: : showed ip addresses for baz.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
       "A_Records IP MAC",
-      " <IPv4> <IPv6>"
+      " <IPv4> <macaddress>"
     ],
     "api_requests": [
       {
@@ -22014,7 +22227,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             }
@@ -22048,47 +22261,11 @@
     "command_issued": "host aaaa_add bar <IPv6>::/64 # must force",
     "ok": [],
     "warning": [
-      "WARNING: : bar.example.org already has A/AAAA record(s), must force"
+      "Host bar.example.org already has one or more ip addresses, must force"
     ],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv6>::/64",
-          "description": "dolor sit amet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/first_unused",
-        "data": {},
-        "status": 200,
-        "response": "<IPv6>"
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv6>::",
-          "<IPv6>",
-          "<IPv6>",
-          "<IPv6>"
-        ]
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/bar.example.org",
@@ -22102,7 +22279,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -22125,6 +22302,30 @@
           "comment": "This is the comment",
           "zone": 1
         }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/<IPv6>::/64",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/<IPv6>::/64/first_unused",
+        "data": {},
+        "status": 200,
+        "response": "<IPv6>"
       }
     ],
     "time": null
@@ -22135,53 +22336,12 @@
     "command_filter_negate": false,
     "command_issued": "host aaaa_add bar <IPv6> -f",
     "ok": [
-      "OK: : added ip <IPv6> to bar.example.org"
+      "Added ipaddress <IPv6> to bar.example.org"
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=2001%3Adb8%3A%3A11",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A11",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv6>::/64",
-          "description": "dolor sit amet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv6>::",
-          "<IPv6>",
-          "<IPv6>",
-          "<IPv6>"
-        ]
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/bar.example.org",
@@ -22195,7 +22355,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -22220,17 +22380,83 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/<IPv6>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/ipaddresses/",
         "data": {
-          "host": 14,
-          "ipaddress": "<IPv6>"
+          "ipaddress": "<IPv6>",
+          "host": "14"
         },
         "status": 201,
         "response": {
           "macaddress": "",
           "ipaddress": "<IPv6>",
           "host": 14
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv6>",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "me@example.org",
+              "ttl": null,
+              "comment": "This is the comment",
+              "zone": 1
+            }
+          ]
         }
       }
     ],
@@ -22242,53 +22468,12 @@
     "command_filter_negate": false,
     "command_issued": "host aaaa_add bar <IPv6> -macaddress <macaddress> -f",
     "ok": [
-      "OK: : added ip <IPv6> to bar.example.org"
+      "Added ipaddress <IPv6> to bar.example.org"
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=2001%3Adb8%3A%3A12",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A12",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv6>::/64",
-          "description": "dolor sit amet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv6>::",
-          "<IPv6>",
-          "<IPv6>",
-          "<IPv6>"
-        ]
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/bar.example.org",
@@ -22302,7 +22487,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -22332,18 +22517,89 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/<IPv6>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/ipaddresses/",
         "data": {
-          "host": 14,
           "ipaddress": "<IPv6>",
-          "macaddress": "<IPv6>"
+          "host": "14",
+          "macaddress": "<macaddress>"
         },
         "status": 201,
         "response": {
-          "macaddress": "<IPv6>",
+          "macaddress": "<macaddress>",
           "ipaddress": "<IPv6>",
           "host": 14
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv6>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv6>",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "me@example.org",
+              "ttl": null,
+              "comment": "This is the comment",
+              "zone": 1
+            }
+          ]
         }
       }
     ],
@@ -22356,7 +22612,7 @@
     "command_issued": "host remove bar # should fail, because it has multiple addresses, must force",
     "ok": [],
     "warning": [
-      "WARNING: : bar.example.org requires force and override for deletion:\n multiple ipaddresses on the same VLAN. Must use 'force'."
+      "bar.example.org requires force and override for deletion:\n multiple ipaddresses on the same VLAN. Must use 'force'."
     ],
     "error": [],
     "output": [],
@@ -22374,7 +22630,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -22384,7 +22640,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 14
             }
@@ -22444,7 +22700,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A11",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -22461,7 +22717,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A12",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -22478,7 +22734,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=14",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -22490,7 +22746,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=bar.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -22508,18 +22764,13 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host aaaa_show bar",
-    "ok": [
-      "OK: : showed aaaa records for bar.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
-      "A_Records IP MAC",
-      " <IPv4> <not set>",
-      " <IPv4> <IPv6>",
       "AAAA_Records IP MAC",
       " <IPv6> <not set>",
-      " <IPv6> <IPv6>"
+      " <IPv6> <macaddress>"
     ],
     "api_requests": [
       {
@@ -22535,7 +22786,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -22545,7 +22796,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 14
             }
@@ -22578,7 +22829,7 @@
     "command_filter_negate": false,
     "command_issued": "host aaaa_change -old <IPv6> -new <IPv6> bar",
     "ok": [
-      "OK: : changed ip <IPv6> to <IPv6> for bar.example.org"
+      "changed ip <IPv6> to <IPv6> for bar.example.org"
     ],
     "warning": [],
     "error": [],
@@ -22597,7 +22848,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -22607,7 +22858,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 14
             }
@@ -22633,7 +22884,18 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=2001%3Adb8%3A%3A13",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "",
+          "ipaddress": "<IPv6>",
+          "host": 14
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv6>&ordering=name",
         "data": {},
         "status": 200,
         "response": {
@@ -22644,41 +22906,23 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A13",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv6>::/64",
-          "description": "dolor sit amet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv6>::",
-          "<IPv6>",
-          "<IPv6>",
-          "<IPv6>"
-        ]
-      },
-      {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/14",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "ipaddress": "<IPv6>"
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "",
+          "ipaddress": "<IPv6>",
+          "host": 14
+        }
       }
     ],
     "time": null
@@ -22689,7 +22933,7 @@
     "command_filter_negate": false,
     "command_issued": "host aaaa_change -old <IPv6> -new <IPv6> bar # has mac addr, should keep it assigned to the new ip",
     "ok": [
-      "OK: : changed ip <IPv6> to <IPv6> for bar.example.org"
+      "changed ip <IPv6> to <IPv6> for bar.example.org"
     ],
     "warning": [],
     "error": [],
@@ -22708,12 +22952,12 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 14
             },
@@ -22744,7 +22988,18 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=2001%3Adb8%3A%3A14",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv6>",
+          "host": 14
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv6>&ordering=name",
         "data": {},
         "status": 200,
         "response": {
@@ -22755,41 +23010,23 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A14",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv6>::/64",
-          "description": "dolor sit amet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv6>::",
-          "<IPv6>",
-          "<IPv6>",
-          "<IPv6>"
-        ]
-      },
-      {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/15",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "ipaddress": "<IPv6>"
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv6>",
+          "host": 14
+        }
       }
     ],
     "time": null
@@ -22800,7 +23037,7 @@
     "command_filter_negate": false,
     "command_issued": "host aaaa_remove bar <IPv6>",
     "ok": [
-      "OK: : removed ip <IPv6> from bar.example.org"
+      "Removed ipaddress <IPv6> from bar.example.org"
     ],
     "warning": [],
     "error": [],
@@ -22819,7 +23056,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
@@ -22829,7 +23066,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 14
             }
@@ -22855,7 +23092,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/ipaddresses/14",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {},
         "status": 204
       }
@@ -22867,12 +23104,12 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host aaaa_move -ip <IPv6> -fromhost bar -tohost baz",
-    "ok": [
-      "OK: : Moved ipaddress <IPv6>"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Moved ipaddress <IPv6>"
+    ],
     "api_requests": [
       {
         "method": "GET",
@@ -22887,12 +23124,12 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 14
             }
@@ -22924,7 +23161,7 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             }
@@ -22950,11 +23187,22 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ipaddresses/15",
+        "url": "/api/v1/ipaddresses/<ID>",
         "data": {
           "host": 15
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "<macaddress>",
+          "ipaddress": "<IPv6>",
+          "host": 15
+        }
       }
     ],
     "time": null
@@ -22964,16 +23212,12 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host a_show baz",
-    "ok": [
-      "OK: : showed ip addresses for baz.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
       "A_Records IP MAC",
-      " <IPv4> <IPv6>",
-      "AAAA_Records IP MAC",
-      " <IPv6> <IPv6>"
+      " <IPv4> <macaddress>"
     ],
     "api_requests": [
       {
@@ -22984,12 +23228,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -23022,11 +23266,9 @@
     "command_filter_negate": false,
     "command_issued": "host cname_add bar fubar",
     "ok": [
-      "OK: : Added cname alias fubar.example.org for bar.example.org"
+      "Added CNAME fubar.example.org for bar.example.org."
     ],
-    "warning": [
-      "WARNING: : host not found: 'fubar.example.org'"
-    ],
+    "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
@@ -23043,7 +23285,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -23078,26 +23320,11 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?cnames__name=fubar.example.org",
+        "url": "/api/v1/cnames/fubar.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/cnames/?name=fubar.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       },
       {
@@ -23129,7 +23356,7 @@
         "method": "POST",
         "url": "/api/v1/cnames/",
         "data": {
-          "host": 14,
+          "host": "14",
           "name": "fubar.example.org"
         },
         "status": 201,
@@ -23138,6 +23365,69 @@
           "ttl": null,
           "zone": 1,
           "host": 14
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/bar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 14
+            },
+            {
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv4>",
+              "host": 14
+            }
+          ],
+          "cnames": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 14
+            }
+          ],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 14
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "bar.example.org",
+          "contact": "me@example.org",
+          "ttl": null,
+          "comment": "This is the comment",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?host=14&name=fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 14
+            }
+          ]
         }
       }
     ],
@@ -23150,7 +23440,7 @@
     "command_issued": "host remove bar # should fail, because it has a cname record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "WARNING: : bar.example.org requires force and override for deletion:\n 1 cnames, override with 'cname'\n - fubar.example.org\n multiple ipaddresses on the same VLAN. Must use 'force'."
+      "bar.example.org requires force and override for deletion:\n 1 cnames, override with 'cname'\n - fubar.example.org\n multiple ipaddresses on the same VLAN. Must use 'force'."
     ],
     "error": [],
     "output": [],
@@ -23168,7 +23458,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -23235,7 +23525,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=14",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -23247,7 +23537,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=bar.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -23265,9 +23555,7 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host cname_show bar",
-    "ok": [
-      "OK: : showed cname aliases for bar.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
@@ -23287,66 +23575,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
-              "ipaddress": "<IPv4>",
-              "host": 14
-            }
-          ],
-          "cnames": [
-            {
-              "name": "fubar.example.org",
-              "ttl": null,
-              "zone": 1,
-              "host": 14
-            }
-          ],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 14
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "bar.example.org",
-          "contact": "me@example.org",
-          "ttl": null,
-          "comment": "This is the comment",
-          "zone": 1
-        }
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "host cname_remove bar fubar",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "host cname_remove bar fubar",
-    "ok": [
-      "OK: : Removed cname alias fubar.example.org for bar.example.org"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/bar.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "",
-              "ipaddress": "<IPv4>",
-              "host": 14
-            },
-            {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -23378,6 +23607,137 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                }
+              ],
+              "cnames": [
+                {
+                  "name": "fubar.example.org",
+                  "ttl": null,
+                  "zone": 1,
+                  "host": 14
+                }
+              ],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "me@example.org",
+              "ttl": null,
+              "comment": "This is the comment",
+              "zone": 1
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host cname_remove bar fubar",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host cname_remove bar fubar",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Removed CNAME fubar.example.org for bar.example.org."
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/bar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 14
+            },
+            {
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv4>",
+              "host": 14
+            }
+          ],
+          "cnames": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 14
+            }
+          ],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 14
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "bar.example.org",
+          "contact": "me@example.org",
+          "ttl": null,
+          "comment": "This is the comment",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/fubar.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "fubar.example.org",
+          "ttl": null,
+          "zone": 1,
+          "host": 14
+        }
+      },
+      {
         "method": "DELETE",
         "url": "/api/v1/cnames/fubar.example.org",
         "data": {},
@@ -23392,7 +23752,7 @@
     "command_filter_negate": false,
     "command_issued": "host hinfo_add baz x86 Win",
     "ok": [
-      "OK: : Added HINFO record to baz.example.org"
+      "Added HINFO record for baz.example.org."
     ],
     "warning": [],
     "error": [],
@@ -23406,12 +23766,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -23439,7 +23799,7 @@
         "method": "POST",
         "url": "/api/v1/hinfos/",
         "data": {
-          "host": 15,
+          "host": "15",
           "cpu": "x86",
           "os": "Win"
         },
@@ -23448,6 +23808,54 @@
           "host": 15,
           "cpu": "x86",
           "os": "Win"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 15
+                },
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv6>",
+                  "host": 15
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 15
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": {
+                "host": 15,
+                "cpu": "x86",
+                "os": "Win"
+              },
+              "loc": null,
+              "bacnetid": null,
+              "name": "baz.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
         }
       }
     ],
@@ -23458,9 +23866,7 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host hinfo_show baz",
-    "ok": [
-      "OK: : showed hinfo for baz.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
@@ -23475,68 +23881,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
-              "ipaddress": "<IPv6>",
-              "host": 15
-            }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 15
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": {
-            "host": 15,
-            "cpu": "x86",
-            "os": "Win"
-          },
-          "loc": null,
-          "bacnetid": null,
-          "name": "baz.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "host hinfo_remove baz",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "host hinfo_remove baz",
-    "ok": [
-      "OK: : deleted HINFO from baz.example.org"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/baz.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "<IPv6>",
-              "ipaddress": "<IPv4>",
-              "host": 15
-            },
-            {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -23565,21 +23915,26 @@
         }
       },
       {
-        "method": "DELETE",
-        "url": "/api/v1/hinfos/15",
+        "method": "GET",
+        "url": "/api/v1/hinfos/<ID>",
         "data": {},
-        "status": 204
+        "status": 200,
+        "response": {
+          "host": 15,
+          "cpu": "x86",
+          "os": "Win"
+        }
       }
     ],
     "time": null
   },
   {
-    "command": "host loc_add baz \"52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m\"",
+    "command": "host hinfo_remove baz",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host loc_add baz \"52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m\"",
+    "command_issued": "host hinfo_remove baz",
     "ok": [
-      "OK: : added LOC '52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m' for baz.example.org"
+      "Removed HINFO record for baz.example.org."
     ],
     "warning": [],
     "error": [],
@@ -23593,12 +23948,85 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv6>",
+              "host": 15
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 15
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": {
+            "host": 15,
+            "cpu": "x86",
+            "os": "Win"
+          },
+          "loc": null,
+          "bacnetid": null,
+          "name": "baz.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hinfos/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "host": 15,
+          "cpu": "x86",
+          "os": "Win"
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hinfos/<ID>",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host loc_add baz \"52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host loc_add baz \"52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m\"",
+    "ok": [
+      "Added LOC record for baz.example.org."
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/baz.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv4>",
+              "host": 15
+            },
+            {
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -23626,13 +24054,60 @@
         "method": "POST",
         "url": "/api/v1/locs/",
         "data": {
-          "host": 15,
+          "host": "15",
           "loc": "52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m"
         },
         "status": 201,
         "response": {
           "host": 15,
           "loc": "52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 15
+                },
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv6>",
+                  "host": 15
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 15
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": {
+                "host": 15,
+                "loc": "52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m"
+              },
+              "bacnetid": null,
+              "name": "baz.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
         }
       }
     ],
@@ -23643,13 +24118,11 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host loc_show baz",
-    "ok": [
-      "OK: : showed LOC for baz.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
-      "Loc: 52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m"
+      "LOC: 52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m"
     ],
     "api_requests": [
       {
@@ -23660,12 +24133,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -23701,7 +24174,7 @@
     "command_filter_negate": false,
     "command_issued": "host loc_remove baz",
     "ok": [
-      "OK: : removed LOC for baz.example.org"
+      "Removed LOC for baz.example.org."
     ],
     "warning": [],
     "error": [],
@@ -23715,12 +24188,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -23749,7 +24222,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/locs/15",
+        "url": "/api/v1/locs/<ID>",
         "data": {},
         "status": 204
       }
@@ -23762,7 +24235,7 @@
     "command_filter_negate": false,
     "command_issued": "host mx_add baz 10 mail.example.org",
     "ok": [
-      "OK: : Added MX record to baz.example.org"
+      "Added MX record to baz.example.org."
     ],
     "warning": [],
     "error": [],
@@ -23776,12 +24249,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -23828,9 +24301,7 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host mx_show baz",
-    "ok": [
-      "OK: : showed MX records for baz.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
@@ -23846,12 +24317,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -23880,24 +24351,6 @@
           "comment": "",
           "zone": 1
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/mxs/?host=15",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "priority": 10,
-              "mx": "mail.example.org",
-              "host": 15
-            }
-          ]
-        }
       }
     ],
     "time": null
@@ -23909,7 +24362,7 @@
     "command_issued": "host remove baz # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
-      "WARNING: : baz.example.org requires force and override for deletion:\n multiple ipaddresses on the same VLAN. Must use 'force'.\n 1 MX records, override with 'mx'\n - mail.example.org (priority: 10)"
+      "baz.example.org requires force and override for deletion:\n multiple ipaddresses on the same VLAN. Must use 'force'.\n 1 MX records, override with 'mx'\n - mail.example.org (priority: 10)"
     ],
     "error": [],
     "output": [],
@@ -23922,12 +24375,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -23976,7 +24429,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A14",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -23993,7 +24446,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=15",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -24005,7 +24458,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=baz.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -24024,7 +24477,7 @@
     "command_filter_negate": false,
     "command_issued": "host mx_remove baz 10 mail.example.org",
     "ok": [
-      "OK: : deleted MX from baz.example.org"
+      "deleted MX from baz.example.org."
     ],
     "warning": [],
     "error": [],
@@ -24038,12 +24491,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -24074,8 +24527,26 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/mxs/?host=15&mx=mail.example.org&priority=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 15
+            }
+          ]
+        }
+      },
+      {
         "method": "DELETE",
-        "url": "/api/v1/mxs/1",
+        "url": "/api/v1/mxs/<ID>",
         "data": {},
         "status": 204
       }
@@ -24088,7 +24559,7 @@
     "command_filter_negate": false,
     "command_issued": "host naptr_add -name baz -preference 16384 -order 3 -flag u -service \"SIP\" -regex \"[abc]+\" -replacement \"wonk\"",
     "ok": [
-      "OK: : created NAPTR record for baz.example.org"
+      "Added NAPTR record to baz.example.org."
     ],
     "warning": [],
     "error": [],
@@ -24102,12 +24573,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -24129,6 +24600,18 @@
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?preference=16384&order=3&flag=u&service=SIP&regex=[abc]+&replacement=wonk&host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
         }
       },
       {
@@ -24162,9 +24645,7 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host naptr_show baz",
-    "ok": [
-      "OK: : showed 1 NAPTR records for baz.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
@@ -24180,12 +24661,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -24211,7 +24692,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=15",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -24240,7 +24721,7 @@
     "command_filter_negate": false,
     "command_issued": "host naptr_remove -name baz -preference 16384 -order 3 -flag u -service \"sip\" -regex \"[abc]+\" -replacement \"wonk\"",
     "ok": [
-      "OK: : deleted NAPTR record for baz.example.org"
+      "Deleted NAPTR record from baz.example.org."
     ],
     "warning": [],
     "error": [],
@@ -24254,12 +24735,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -24285,7 +24766,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?replacement__contains=wonk&host=15",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -24307,7 +24788,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/naptrs/1",
+        "url": "/api/v1/naptrs/<ID>",
         "data": {},
         "status": 204
       }
@@ -24320,29 +24801,12 @@
     "command_filter_negate": false,
     "command_issued": "host ptr_add <IPv4> baz.example.org",
     "ok": [
-      "OK: : Added PTR record <IPv4> to baz.example.org"
+      "Added PTR record <IPv4> to baz.example.org."
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "lorem ipsum",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/baz.example.org",
@@ -24351,12 +24815,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -24426,7 +24890,7 @@
         "method": "POST",
         "url": "/api/v1/ptroverrides/",
         "data": {
-          "host": 15,
+          "host": "15",
           "ipaddress": "<IPv4>"
         },
         "status": 201,
@@ -24447,9 +24911,21 @@
     "warning": [],
     "error": [],
     "output": [
-      "PTR override:<IPv4> -> baz.example.org"
+      "PTR override: <IPv4> -> baz.example.org"
     ],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>&ordering=name",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/?ptr_overrides__ipaddress=<IPv4>",
@@ -24463,12 +24939,61 @@
             {
               "ipaddresses": [
                 {
-                  "macaddress": "<IPv6>",
+                  "macaddress": "<macaddress>",
                   "ipaddress": "<IPv4>",
                   "host": 15
                 },
                 {
-                  "macaddress": "<IPv6>",
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv6>",
+                  "host": 15
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 15
+                }
+              ],
+              "ptr_overrides": [
+                {
+                  "ipaddress": "<IPv4>",
+                  "host": 15
+                }
+              ],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "baz.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 15
+                },
+                {
+                  "macaddress": "<macaddress>",
                   "ipaddress": "<IPv6>",
                   "host": 15
                 }
@@ -24508,24 +25033,35 @@
     "command_filter_negate": false,
     "command_issued": "host add clover",
     "ok": [
-      "OK: : created host clover.example.org"
+      "Created host clover.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: clover.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: clover.example.org",
+      "Contact: ",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=clover.example.org",
+        "url": "/api/v1/hosts/clover.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/clover.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -24554,8 +25090,42 @@
         }
       },
       {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "clover.example.org"
+        },
+        "status": 201
+      },
+      {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=clover.example.org",
+        "url": "/api/v1/hosts/clover.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 16
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "clover.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -24566,14 +25136,52 @@
         }
       },
       {
-        "method": "POST",
-        "url": "/api/v1/hosts/",
-        "data": {
-          "name": "clover.example.org",
-          "contact": null,
-          "comment": null
-        },
-        "status": 201
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -24584,7 +25192,7 @@
     "command_filter_negate": false,
     "command_issued": "host ptr_change -ip <IPv4> -old baz -new clover",
     "ok": [
-      "OK: : changed owner of PTR record <IPv4> from baz.example.org to clover.example.org"
+      "Moved PTR record <IPv4> from baz.example.org to clover.example.org."
     ],
     "warning": [],
     "error": [],
@@ -24598,12 +25206,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -24660,11 +25268,21 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/ptroverrides/1",
+        "url": "/api/v1/ptroverrides/<ID>",
         "data": {
           "host": 16
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ptroverrides/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddress": "<IPv4>",
+          "host": 16
+        }
       }
     ],
     "time": null
@@ -24675,7 +25293,7 @@
     "command_filter_negate": false,
     "command_issued": "host ptr_remove <IPv4> clover",
     "ok": [
-      "OK: : deleted PTR record <IPv4> for clover.example.org"
+      "Removed PTR record <IPv4> from clover.example.org."
     ],
     "warning": [],
     "error": [],
@@ -24714,7 +25332,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/ptroverrides/1",
+        "url": "/api/v1/ptroverrides/<ID>",
         "data": {},
         "status": 204
       }
@@ -24740,11 +25358,48 @@
     "command_issued": "host srv_add -name \"whatever\" -priority 1 -weight 1 -port 80 -host baz # doesn't work",
     "ok": [],
     "warning": [
-      "WARNING: : POST \"http://<IPv4>:8000/api/v1/srvs/\": 400: Bad Request\n{\n \"name\": [\n \"Must match: ^_[a-z0-9]+(([a-z0-9][_-]?)+[a-z0-9]+)?._(tcp|tls|udp)\\\\.\"\n ]\n}"
+      "POST \"http://<IPv4>:8000/api/v1/srvs/\": 400: Bad Request\n{\n \"name\": [\n \"Must match: ^_[a-z0-9]+(([a-z0-9][_-]?)+[a-z0-9]+)?._(tcp|tls|udp)\\\\.\"\n ]\n}"
     ],
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/baz.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv4>",
+              "host": 15
+            },
+            {
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv6>",
+              "host": 15
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 15
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "baz.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/zones/forward/hostname/whatever.example.org",
@@ -24772,43 +25427,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/baz.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "<IPv6>",
-              "ipaddress": "<IPv4>",
-              "host": 15
-            },
-            {
-              "macaddress": "<IPv6>",
-              "ipaddress": "<IPv6>",
-              "host": 15
-            }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 15
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "baz.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/zones/forward/hostname/baz.example.org",
         "data": {},
         "status": 200,
@@ -24833,6 +25451,18 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/srvs/?name=whatever.example.org&priority=1&weight=1&port=80&host=15&ttl=None",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/srvs/",
         "data": {
@@ -24840,8 +25470,7 @@
           "priority": "1",
           "weight": "1",
           "port": "80",
-          "host": 15,
-          "ttl": null
+          "host": "15"
         },
         "status": 400,
         "response": {
@@ -24859,12 +25488,49 @@
     "command_filter_negate": false,
     "command_issued": "host srv_add -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host baz.example.org",
     "ok": [
-      "OK: : Added SRV record _sip._tcp.example.org with target baz.example.org"
+      "Added SRV record _sip._tcp.example.org with target baz.example.org."
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/baz.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv4>",
+              "host": 15
+            },
+            {
+              "macaddress": "<macaddress>",
+              "ipaddress": "<IPv6>",
+              "host": 15
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 15
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "baz.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/zones/forward/hostname/_sip._tcp.example.org",
@@ -24892,43 +25558,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/baz.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "<IPv6>",
-              "ipaddress": "<IPv4>",
-              "host": 15
-            },
-            {
-              "macaddress": "<IPv6>",
-              "ipaddress": "<IPv6>",
-              "host": 15
-            }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 15
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "baz.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/zones/forward/hostname/baz.example.org",
         "data": {},
         "status": 200,
@@ -24953,6 +25582,18 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&host=15&ttl=None",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/srvs/",
         "data": {
@@ -24960,8 +25601,7 @@
           "priority": "10",
           "weight": "5",
           "port": "3456",
-          "host": 15,
-          "ttl": null
+          "host": "15"
         },
         "status": 201,
         "response": {
@@ -24982,9 +25622,7 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host srv_show \"_sip._tcp.example.org\"",
-    "ok": [
-      "OK: : showed entries for SRV _sip._tcp.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
@@ -25015,7 +25653,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?id__in=15",
+        "url": "/api/v1/hosts/?id__in=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -25026,12 +25664,12 @@
             {
               "ipaddresses": [
                 {
-                  "macaddress": "<IPv6>",
+                  "macaddress": "<macaddress>",
                   "ipaddress": "<IPv4>",
                   "host": 15
                 },
                 {
-                  "macaddress": "<IPv6>",
+                  "macaddress": "<macaddress>",
                   "ipaddress": "<IPv6>",
                   "host": 15
                 }
@@ -25066,7 +25704,7 @@
     "command_filter_negate": false,
     "command_issued": "host srv_remove -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host baz.example.org",
     "ok": [
-      "OK: : deleted SRV record for baz.example.org"
+      "Removed SRV record _sip._tcp.example.org from baz.example.org."
     ],
     "warning": [],
     "error": [],
@@ -25080,12 +25718,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -25111,7 +25749,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&host=15",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&host=15&priority=10&port=3456&weight=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -25133,7 +25771,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/srvs/1",
+        "url": "/api/v1/srvs/<ID>",
         "data": {},
         "status": 204
       }
@@ -25146,7 +25784,7 @@
     "command_filter_negate": false,
     "command_issued": "host sshfp_add bar 1 1 12345678abcde",
     "ok": [
-      "OK: : Added SSHFP record 12345678abcde for host bar.example.org"
+      "Added SSHFP record for bar.example.org."
     ],
     "warning": [],
     "error": [],
@@ -25165,7 +25803,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25187,6 +25825,18 @@
           "ttl": null,
           "comment": "This is the comment",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?algorithm=1&hash_type=1&fingerprint=12345678abcde&host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
         }
       },
       {
@@ -25219,7 +25869,7 @@
     "warning": [],
     "error": [],
     "output": [
-      "SSHFPs: Algorithm Type Fingerprint ",
+      "SSHFPs: Algorithm Hash Type Fingerprint ",
       " 1 1 12345678abcde "
     ],
     "api_requests": [
@@ -25236,7 +25886,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25262,7 +25912,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=14",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -25288,10 +25938,10 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host sshfp_remove -fingerprint 394875985 bar # not found",
-    "ok": [
-      "OK: : found no SSHFP record with fingerprint 394875985 for bar.example.org"
+    "ok": [],
+    "warning": [
+      "SSHFP with query {'fingerprint': '394875985', 'host': '14'} not found."
     ],
-    "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
@@ -25308,7 +25958,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25334,22 +25984,14 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=14",
+        "url": "/api/v1/sshfps/?fingerprint=394875985&host=<ID>",
         "data": {},
         "status": 200,
         "response": {
-          "count": 1,
+          "count": 0,
           "next": null,
           "previous": null,
-          "results": [
-            {
-              "ttl": null,
-              "algorithm": 1,
-              "hash_type": 1,
-              "fingerprint": "12345678abcde",
-              "host": 14
-            }
-          ]
+          "results": []
         }
       }
     ],
@@ -25361,7 +26003,7 @@
     "command_filter_negate": false,
     "command_issued": "host sshfp_remove bar",
     "ok": [
-      "OK: : removed SSHFP record with fingerprint 12345678abcde for bar.example.org"
+      "Removed SSHFP record with fingerprint 12345678abcde for bar.example.org."
     ],
     "warning": [],
     "error": [],
@@ -25380,7 +26022,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25406,7 +26048,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/sshfps/?host=14",
+        "url": "/api/v1/sshfps/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -25426,7 +26068,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/sshfps/1",
+        "url": "/api/v1/sshfps/<ID>",
         "data": {},
         "status": 204
       }
@@ -25439,7 +26081,7 @@
     "command_filter_negate": false,
     "command_issued": "host ttl_set bar 3600",
     "ok": [
-      "OK: : updated TTL to 3600 for bar.example.org"
+      "Set TTL for bar.example.org to 3600."
     ],
     "warning": [],
     "error": [],
@@ -25458,7 +26100,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25486,9 +26128,53 @@
         "method": "PATCH",
         "url": "/api/v1/hosts/bar.example.org",
         "data": {
-          "ttl": "3600"
+          "ttl": 3600
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "me@example.org",
+              "ttl": 3600,
+              "comment": "This is the comment",
+              "zone": 1
+            }
+          ]
+        }
       }
     ],
     "time": null
@@ -25498,9 +26184,7 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host ttl_show bar",
-    "ok": [
-      "OK: : showed TTL for bar.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
@@ -25520,44 +26204,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
-              "ipaddress": "<IPv4>",
-              "host": 14
-            }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 14
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "bar.example.org",
-          "contact": "me@example.org",
-          "ttl": 3600,
-          "comment": "This is the comment",
-          "zone": 1
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/bar.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "",
-              "ipaddress": "<IPv4>",
-              "host": 14
-            },
-            {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25590,7 +26237,7 @@
     "command_filter_negate": false,
     "command_issued": "host ttl_remove bar",
     "ok": [
-      "OK: : removed TTL for bar.example.org"
+      "Set TTL for bar.example.org to default."
     ],
     "warning": [],
     "error": [],
@@ -25609,7 +26256,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25637,9 +26284,53 @@
         "method": "PATCH",
         "url": "/api/v1/hosts/bar.example.org",
         "data": {
-          "ttl": ""
+          "ttl": null
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                },
+                {
+                  "macaddress": "<macaddress>",
+                  "ipaddress": "<IPv4>",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "name": "bar.example.org",
+              "contact": "me@example.org",
+              "ttl": null,
+              "comment": "This is the comment",
+              "zone": 1
+            }
+          ]
+        }
       }
     ],
     "time": null
@@ -25650,7 +26341,7 @@
     "command_filter_negate": false,
     "command_issued": "host txt_add bar \"Lorem ipsum dolor sit amet\"",
     "ok": [
-      "OK: : Added TXT record to bar.example.org"
+      "Added TXT record to bar.example.org."
     ],
     "warning": [],
     "error": [],
@@ -25669,7 +26360,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25714,9 +26405,7 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "host txt_show bar",
-    "ok": [
-      "OK: : showed TXT records for bar.example.org"
-    ],
+    "ok": [],
     "warning": [],
     "error": [],
     "output": [
@@ -25737,7 +26426,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25764,27 +26453,6 @@
           "comment": "This is the comment",
           "zone": 1
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/txts/?host=14",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 2,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 14
-            },
-            {
-              "txt": "Lorem ipsum dolor sit amet",
-              "host": 14
-            }
-          ]
-        }
       }
     ],
     "time": null
@@ -25796,7 +26464,7 @@
     "command_issued": "host txt_remove bar \"Whatever\" # no match",
     "ok": [],
     "warning": [
-      "WARNING: : bar.example.org has no TXT records equal: Whatever"
+      "bar.example.org has no TXT record matching 'Whatever'"
     ],
     "error": [],
     "output": [],
@@ -25814,7 +26482,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25863,7 +26531,7 @@
     "command_filter_negate": false,
     "command_issued": "host txt_remove bar \"Lorem ipsum dolor sit amet\"",
     "ok": [
-      "OK: : deleted TXT records from bar.example.org"
+      "Removed TXT record 'Lorem ipsum dolor sit amet' from bar.example.org."
     ],
     "warning": [],
     "error": [],
@@ -25882,7 +26550,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -25929,7 +26597,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/txts/16",
+        "url": "/api/v1/txts/<ID>",
         "data": {},
         "status": 204
       }
@@ -25952,7 +26620,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=%2A.example.org",
+        "url": "/api/v1/hosts/?name=*.example.org",
         "data": {},
         "status": 200,
         "response": {
@@ -25989,7 +26657,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=%2A.example.org",
+        "url": "/api/v1/cnames/?name=*.example.org",
         "data": {},
         "status": 200,
         "response": {
@@ -26026,7 +26694,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/%2A.example.org",
+        "url": "/api/v1/hosts/*.example.org",
         "data": {},
         "status": 200,
         "response": {
@@ -26052,7 +26720,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=17",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -26064,7 +26732,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=%2A.example.org",
+        "url": "/api/v1/srvs/?host__name=*.example.org",
         "data": {},
         "status": 200,
         "response": {
@@ -26168,7 +26836,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=14",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -26267,7 +26935,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A14",
+        "url": "/api/v1/networks/ip/<IPv6>",
         "data": {},
         "status": 200,
         "response": {
@@ -26284,7 +26952,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=15",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -26355,7 +27023,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=16",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -26619,7 +27287,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=18",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -26696,7 +27364,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=18",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27016,7 +27684,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=19",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27093,7 +27761,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=19",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27359,7 +28027,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=20",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27441,7 +28109,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=20",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27766,7 +28434,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=21",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27848,7 +28516,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=21",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -28183,7 +28851,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=22",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -28261,7 +28929,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=22",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29006,7 +29674,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=23",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29118,7 +29786,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/naptrs/?host=23",
+        "url": "/api/v1/naptrs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29211,14 +29879,14 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64/used_list",
+        "url": "/api/v1/networks/<IPv6>::/64/used_list",
         "data": {},
         "status": 200,
         "response": []
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/networks/2001%3Adb8%3A%3A/64",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 204
       }
@@ -29318,7 +29986,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?labels=1",
+        "url": "/api/v1/hostpolicy/roles/?labels=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29330,7 +29998,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?labels=1",
+        "url": "/api/v1/permissions/netgroupregex/?labels=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29374,7 +30042,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/labels/1",
+        "url": "/api/v1/labels/<ID>",
         "data": {
           "name": "mylabel"
         },
@@ -29382,7 +30050,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/labels/1",
+        "url": "/api/v1/labels/<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29664,7 +30332,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/labels/2",
+        "url": "/api/v1/labels/<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29778,7 +30446,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/hostpolicy/roles/myrole?labels=%5B%5D",
+        "url": "/api/v1/hostpolicy/roles/myrole?labels=[]",
         "data": {},
         "status": 204
       }
@@ -29871,7 +30539,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?group=mygroup&range=<IPv4>%2F16&regex=.%2A",
+        "url": "/api/v1/permissions/netgroupregex/?group=mygroup&range=<IPv4>/16&regex=.*",
         "data": {},
         "status": 200,
         "response": {
@@ -29900,7 +30568,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/2",
+        "url": "/api/v1/permissions/netgroupregex/<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29912,7 +30580,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/permissions/netgroupregex/2",
+        "url": "/api/v1/permissions/netgroupregex/<ID>",
         "data": {
           "labels": [
             2
@@ -29938,7 +30606,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?ordering=range%2Cgroup",
+        "url": "/api/v1/permissions/netgroupregex/?ordering=range,group",
         "data": {},
         "status": 200,
         "response": {
@@ -30055,7 +30723,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?group=mygroup&range=<IPv4>%2F16&regex=.%2A",
+        "url": "/api/v1/permissions/netgroupregex/?group=mygroup&range=<IPv4>/16&regex=.*",
         "data": {},
         "status": 200,
         "response": {
@@ -30086,7 +30754,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/2",
+        "url": "/api/v1/permissions/netgroupregex/<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -30100,7 +30768,7 @@
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/permissions/netgroupregex/2?labels=%5B%5D",
+        "url": "/api/v1/permissions/netgroupregex/2?labels=[]",
         "data": {},
         "status": 204
       }
@@ -30122,7 +30790,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?ordering=range%2Cgroup",
+        "url": "/api/v1/permissions/netgroupregex/?ordering=range,group",
         "data": {},
         "status": 200,
         "response": {
@@ -30173,7 +30841,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?group=mygroup&range=<IPv4>%2F16&regex=.%2A",
+        "url": "/api/v1/permissions/netgroupregex/?group=mygroup&range=<IPv4>/16&regex=.*",
         "data": {},
         "status": 200,
         "response": {
@@ -30192,7 +30860,7 @@
       },
       {
         "method": "DELETE",
-        "url": "/api/v1/permissions/netgroupregex/2",
+        "url": "/api/v1/permissions/netgroupregex/<ID>",
         "data": {},
         "status": 204
       }
@@ -30257,7 +30925,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?zone=1",
+        "url": "/api/v1/hosts/?zone=<ID>",
         "data": {},
         "status": 200,
         "response": {

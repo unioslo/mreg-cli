@@ -250,7 +250,7 @@ def mx_add(args: argparse.Namespace) -> None:
     if host.has_mx_with_priority(args.priority, args.mx):
         raise EntityAlreadyExists(f"{host} already has that MX defined.")
 
-    MX.create({"host": str(host.id), "priority": args.priority, "mx": args.mx})
+    MX.create({"host": host.id, "priority": args.priority, "mx": args.mx})
     OutputManager().add_ok(f"Added MX record to {host.name.hostname}.")
 
 
@@ -916,7 +916,7 @@ def txt_add(args: argparse.Namespace) -> None:
     if host.has_txt(args.text):
         raise EntityAlreadyExists(f"{host} already has that TXT defined.")
 
-    TXT.create({"host": str(host.id), "txt": args.text})
+    TXT.create({"host": host.id, "txt": args.text})
     OutputManager().add_ok(f"Added TXT record to {host}.")
 
 
@@ -940,7 +940,7 @@ def txt_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, text)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    txt = TXT.get_by_query_unique({"host": str(host.id), "txt": args.text})
+    txt = TXT.get_by_query_unique({"host": host.id, "txt": args.text})
 
     if not txt:
         raise EntityNotFound(f"{host} has no TXT record matching '{args.text}'")
