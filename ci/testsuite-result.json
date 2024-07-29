@@ -23799,7 +23799,7 @@
         "method": "POST",
         "url": "/api/v1/hinfos/",
         "data": {
-          "host": "15",
+          "host": 15,
           "cpu": "x86",
           "os": "Win"
         },
@@ -24054,7 +24054,7 @@
         "method": "POST",
         "url": "/api/v1/locs/",
         "data": {
-          "host": "15",
+          "host": 15,
           "loc": "52 22 23.000 N 4 53 32.000 E -2.00m 0.00m 10000m 10m"
         },
         "status": 201,
@@ -24890,7 +24890,7 @@
         "method": "POST",
         "url": "/api/v1/ptroverrides/",
         "data": {
-          "host": "15",
+          "host": 15,
           "ipaddress": "<IPv4>"
         },
         "status": 201,
@@ -25470,7 +25470,7 @@
           "priority": "1",
           "weight": "1",
           "port": "80",
-          "host": "15"
+          "host": 15
         },
         "status": 400,
         "response": {
@@ -25601,7 +25601,7 @@
           "priority": "10",
           "weight": "5",
           "port": "3456",
-          "host": "15"
+          "host": 15
         },
         "status": 201,
         "response": {
@@ -25940,7 +25940,7 @@
     "command_issued": "host sshfp_remove -fingerprint 394875985 bar # not found",
     "ok": [],
     "warning": [
-      "SSHFP with query {'fingerprint': '394875985', 'host': '14'} not found."
+      "SSHFP with query {'fingerprint': '394875985', 'host': 14} not found."
     ],
     "error": [],
     "output": [],
@@ -26610,24 +26610,35 @@
     "command_filter_negate": false,
     "command_issued": "host add *.example.org -force",
     "ok": [
-      "OK: : created host *.example.org"
+      "Created host *.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: *.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: *.example.org",
+      "Contact: ",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=*.example.org",
+        "url": "/api/v1/hosts/*.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/*.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -26656,8 +26667,42 @@
         }
       },
       {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "*.example.org"
+        },
+        "status": 201
+      },
+      {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=*.example.org",
+        "url": "/api/v1/hosts/*.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 17
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "*.example.org",
+          "contact": "",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -26668,14 +26713,52 @@
         }
       },
       {
-        "method": "POST",
-        "url": "/api/v1/hosts/",
-        "data": {
-          "name": "*.example.org",
-          "contact": null,
-          "comment": null
-        },
-        "status": 201
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -26686,7 +26769,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove *.example.org",
     "ok": [
-      "OK: : removed *.example.org"
+      "removed *.example.org"
     ],
     "warning": [],
     "error": [],
@@ -26732,7 +26815,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=*.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -26757,7 +26840,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove bar -f",
     "ok": [
-      "OK: : removed bar.example.org"
+      "removed bar.example.org"
     ],
     "warning": [],
     "error": [],
@@ -26776,7 +26859,7 @@
               "host": 14
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 14
             }
@@ -26848,7 +26931,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=bar.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -26873,7 +26956,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove baz -f",
     "ok": [
-      "OK: : removed baz.example.org"
+      "removed baz.example.org"
     ],
     "warning": [],
     "error": [],
@@ -26887,12 +26970,12 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv4>",
               "host": 15
             },
             {
-              "macaddress": "<IPv6>",
+              "macaddress": "<macaddress>",
               "ipaddress": "<IPv6>",
               "host": 15
             }
@@ -26964,7 +27047,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=baz.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -26989,7 +27072,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove clover",
     "ok": [
-      "OK: : removed clover.example.org"
+      "removed clover.example.org"
     ],
     "warning": [],
     "error": [],
@@ -27035,7 +27118,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=clover.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27060,24 +27143,37 @@
     "command_filter_negate": false,
     "command_issued": "host add foo -ip <IPv4> -contact \"foo@example.org\"",
     "ok": [
-      "OK: : created host foo.example.org with IP <IPv4>"
+      "Created host foo.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: foo.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: foo.example.org",
+      "Contact: foo@example.org",
+      "A_Records IP MAC",
+      " <IPv4> <not set>",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=foo.example.org",
+        "url": "/api/v1/hosts/foo.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/foo.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -27107,30 +27203,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/networks/ip/<IPv4>",
         "data": {},
         "status": 200,
@@ -27147,28 +27219,106 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
         "method": "POST",
         "url": "/api/v1/hosts/",
         "data": {
           "name": "foo.example.org",
           "contact": "foo@example.org",
-          "comment": null,
           "ipaddress": "<IPv4>"
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 18
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 18
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -27179,7 +27329,7 @@
     "command_filter_negate": false,
     "command_issued": "host mx_add foo 10 mail.example.org",
     "ok": [
-      "OK: : Added MX record to foo.example.org"
+      "Added MX record to foo.example.org."
     ],
     "warning": [],
     "error": [],
@@ -27242,7 +27392,7 @@
     "command_issued": "host remove foo # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
-      "WARNING: : foo.example.org requires force and override for deletion:\n 1 MX records, override with 'mx'\n - mail.example.org (priority: 10)"
+      "foo.example.org requires force and override for deletion:\n 1 MX records, override with 'mx'\n - mail.example.org (priority: 10)"
     ],
     "error": [],
     "output": [],
@@ -27299,7 +27449,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27318,7 +27468,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -force -override mx",
     "ok": [
-      "OK: : removed foo.example.org"
+      "removed foo.example.org"
     ],
     "warning": [],
     "error": [],
@@ -27376,7 +27526,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27401,24 +27551,37 @@
     "command_filter_negate": false,
     "command_issued": "host add foo -ip <IPv4> -contact \"foo@example.org\"",
     "ok": [
-      "OK: : created host foo.example.org with IP <IPv4>"
+      "Created host foo.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: foo.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: foo.example.org",
+      "Contact: foo@example.org",
+      "A_Records IP MAC",
+      " <IPv4> <not set>",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=foo.example.org",
+        "url": "/api/v1/hosts/foo.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/foo.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -27448,30 +27611,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/networks/ip/<IPv4>",
         "data": {},
         "status": 200,
@@ -27488,28 +27627,106 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
         "method": "POST",
         "url": "/api/v1/hosts/",
         "data": {
           "name": "foo.example.org",
           "contact": "foo@example.org",
-          "comment": null,
           "ipaddress": "<IPv4>"
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 19
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 19
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -27520,29 +27737,12 @@
     "command_filter_negate": false,
     "command_issued": "host ptr_add <IPv4> foo.example.org",
     "ok": [
-      "OK: : Added PTR record <IPv4> to foo.example.org"
+      "Added PTR record <IPv4> to foo.example.org."
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "lorem ipsum",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/foo.example.org",
@@ -27640,7 +27840,7 @@
     "command_issued": "host remove foo # Should fail, because it has a PTR record, must force and override with 'ptr'",
     "ok": [],
     "warning": [
-      "WARNING: : foo.example.org requires force and override for deletion:\n 1 PTR records, override with 'ptr'\n - <IPv4>"
+      "foo.example.org requires force and override for deletion:\n 1 PTR records, override with 'ptr'\n - <IPv4>"
     ],
     "error": [],
     "output": [],
@@ -27696,7 +27896,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27715,8 +27915,8 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -force -override ptr",
     "ok": [
-      "OK: : deleted PTR record <IPv4> when removing foo.example.org",
-      "OK: : removed foo.example.org"
+      "deleted PTR record <IPv4> when removing foo.example.org",
+      "removed foo.example.org"
     ],
     "warning": [],
     "error": [],
@@ -27773,7 +27973,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -27798,24 +27998,37 @@
     "command_filter_negate": false,
     "command_issued": "host add foo -ip <IPv4> -contact \"foo@example.org\"",
     "ok": [
-      "OK: : created host foo.example.org with IP <IPv4>"
+      "Created host foo.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: foo.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: foo.example.org",
+      "Contact: foo@example.org",
+      "A_Records IP MAC",
+      " <IPv4> <not set>",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=foo.example.org",
+        "url": "/api/v1/hosts/foo.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/foo.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -27845,30 +28058,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/networks/ip/<IPv4>",
         "data": {},
         "status": 200,
@@ -27885,28 +28074,106 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
         "method": "POST",
         "url": "/api/v1/hosts/",
         "data": {
           "name": "foo.example.org",
           "contact": "foo@example.org",
-          "comment": null,
           "ipaddress": "<IPv4>"
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 20
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 20
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -27917,7 +28184,7 @@
     "command_filter_negate": false,
     "command_issued": "host naptr_add -name foo -preference 16384 -order 3 -flag u -service \"SIP\" -regex \"[abc]+\" -replacement \"wonk\"",
     "ok": [
-      "OK: : created NAPTR record for foo.example.org"
+      "Added NAPTR record to foo.example.org."
     ],
     "warning": [],
     "error": [],
@@ -27953,6 +28220,18 @@
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?preference=16384&order=3&flag=u&service=SIP&regex=[abc]+&replacement=wonk&host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
         }
       },
       {
@@ -27988,7 +28267,7 @@
     "command_issued": "host remove foo",
     "ok": [],
     "warning": [
-      "WARNING: : foo.example.org requires force and override for deletion:\n 1 NAPTR records, override with 'naptr'\n - wonk"
+      "foo.example.org requires force and override for deletion:\n 1 NAPTR records, override with 'naptr'\n - wonk"
     ],
     "error": [],
     "output": [],
@@ -28049,7 +28328,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -28068,8 +28347,8 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -force -override naptr",
     "ok": [
-      "OK: : deleted NAPTR record wonk when removing foo.example.org",
-      "OK: : removed foo.example.org"
+      "deleted NAPTR record wonk when removing foo.example.org",
+      "removed foo.example.org"
     ],
     "warning": [],
     "error": [],
@@ -28131,7 +28410,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -28156,24 +28435,37 @@
     "command_filter_negate": false,
     "command_issued": "host add foo -ip <IPv4> -contact \"foo@example.org\"",
     "ok": [
-      "OK: : created host foo.example.org with IP <IPv4>"
+      "Created host foo.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: foo.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: foo.example.org",
+      "Contact: foo@example.org",
+      "A_Records IP MAC",
+      " <IPv4> <not set>",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=foo.example.org",
+        "url": "/api/v1/hosts/foo.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/foo.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -28203,30 +28495,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/networks/ip/<IPv4>",
         "data": {},
         "status": 200,
@@ -28243,28 +28511,106 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
         "method": "POST",
         "url": "/api/v1/hosts/",
         "data": {
           "name": "foo.example.org",
           "contact": "foo@example.org",
-          "comment": null,
           "ipaddress": "<IPv4>"
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 21
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 21
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -28275,12 +28621,44 @@
     "command_filter_negate": false,
     "command_issued": "host srv_add -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host foo.example.org",
     "ok": [
-      "OK: : Added SRV record _sip._tcp.example.org with target foo.example.org"
+      "Added SRV record _sip._tcp.example.org with target foo.example.org."
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 21
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 21
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/zones/forward/hostname/_sip._tcp.example.org",
@@ -28308,38 +28686,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "ipaddresses": [
-            {
-              "macaddress": "",
-              "ipaddress": "<IPv4>",
-              "host": 21
-            }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "txt": "v=spf1 -all",
-              "host": 21
-            }
-          ],
-          "ptr_overrides": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "name": "foo.example.org",
-          "contact": "foo@example.org",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/zones/forward/hostname/foo.example.org",
         "data": {},
         "status": 200,
@@ -28364,6 +28710,18 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&host=21&ttl=None",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/srvs/",
         "data": {
@@ -28371,8 +28729,7 @@
           "priority": "10",
           "weight": "5",
           "port": "3456",
-          "host": 21,
-          "ttl": null
+          "host": 21
         },
         "status": 201,
         "response": {
@@ -28395,7 +28752,7 @@
     "command_issued": "host remove foo # Should fail, because it has an SRV record, must force and override with 'srv'",
     "ok": [],
     "warning": [
-      "WARNING: : foo.example.org requires force and override for deletion:\n 1 SRV records, override with 'srv'\n - _sip._tcp.example.org"
+      "foo.example.org requires force and override for deletion:\n 1 SRV records, override with 'srv'\n - _sip._tcp.example.org"
     ],
     "error": [],
     "output": [],
@@ -28446,7 +28803,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -28475,8 +28832,8 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -force -override srv",
     "ok": [
-      "OK: : deleted SRV record _sip._tcp.example.org when removing foo.example.org",
-      "OK: : removed foo.example.org"
+      "deleted SRV record _sip._tcp.example.org when removing foo.example.org",
+      "removed foo.example.org"
     ],
     "warning": [],
     "error": [],
@@ -28528,7 +28885,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -28563,24 +28920,37 @@
     "command_filter_negate": false,
     "command_issued": "host add foo -ip <IPv4> -contact \"foo@example.org\"",
     "ok": [
-      "OK: : created host foo.example.org with IP <IPv4>"
+      "Created host foo.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: foo.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: foo.example.org",
+      "Contact: foo@example.org",
+      "A_Records IP MAC",
+      " <IPv4> <not set>",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=foo.example.org",
+        "url": "/api/v1/hosts/foo.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/foo.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -28610,30 +28980,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/networks/ip/<IPv4>",
         "data": {},
         "status": 200,
@@ -28650,28 +28996,106 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
         "method": "POST",
         "url": "/api/v1/hosts/",
         "data": {
           "name": "foo.example.org",
           "contact": "foo@example.org",
-          "comment": null,
           "ipaddress": "<IPv4>"
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 22
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 22
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -28682,11 +29106,9 @@
     "command_filter_negate": false,
     "command_issued": "host cname_add foo fubar",
     "ok": [
-      "OK: : Added cname alias fubar.example.org for foo.example.org"
+      "Added CNAME fubar.example.org for foo.example.org."
     ],
-    "warning": [
-      "WARNING: : host not found: 'fubar.example.org'"
-    ],
+    "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
@@ -28733,26 +29155,11 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?cnames__name=fubar.example.org",
+        "url": "/api/v1/cnames/fubar.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/cnames/?name=fubar.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       },
       {
@@ -28784,7 +29191,7 @@
         "method": "POST",
         "url": "/api/v1/cnames/",
         "data": {
-          "host": 22,
+          "host": "22",
           "name": "fubar.example.org"
         },
         "status": 201,
@@ -28793,6 +29200,64 @@
           "ttl": null,
           "zone": 1,
           "host": 22
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 22
+            }
+          ],
+          "cnames": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 22
+            }
+          ],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 22
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?host=22&name=fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 22
+            }
+          ]
         }
       }
     ],
@@ -28805,7 +29270,7 @@
     "command_issued": "host remove foo # Should fail, because it has a CNAME record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "WARNING: : foo.example.org requires force and override for deletion:\n 1 cnames, override with 'cname'\n - fubar.example.org"
+      "foo.example.org requires force and override for deletion:\n 1 cnames, override with 'cname'\n - fubar.example.org"
     ],
     "error": [],
     "output": [],
@@ -28863,7 +29328,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -28882,7 +29347,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -force -override cname",
     "ok": [
-      "OK: : removed foo.example.org"
+      "removed foo.example.org"
     ],
     "warning": [],
     "error": [],
@@ -28941,7 +29406,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -28966,24 +29431,37 @@
     "command_filter_negate": false,
     "command_issued": "host add foo -ip <IPv4> -contact \"foo@example.org\"",
     "ok": [
-      "OK: : created host foo.example.org with IP <IPv4>"
+      "Created host foo.example.org"
     ],
-    "warning": [
-      "WARNING: : host not found: foo.example.org"
-    ],
+    "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Name: foo.example.org",
+      "Contact: foo@example.org",
+      "A_Records IP MAC",
+      " <IPv4> <not set>",
+      "TTL: (Default)",
+      "TXT: v=spf1 -all",
+      "Created: <TIME>",
+      "Updated: <TIME>"
+    ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?name=foo.example.org",
+        "url": "/api/v1/hosts/foo.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/foo.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
         }
       },
       {
@@ -29013,30 +29491,6 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/cnames/?name=foo.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
         "url": "/api/v1/networks/ip/<IPv4>",
         "data": {},
         "status": 200,
@@ -29053,28 +29507,106 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/reserved_list",
-        "data": {},
-        "status": 200,
-        "response": [
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>",
-          "<IPv4>"
-        ]
-      },
-      {
         "method": "POST",
         "url": "/api/v1/hosts/",
         "data": {
           "name": "foo.example.org",
           "contact": "foo@example.org",
-          "comment": null,
           "ipaddress": "<IPv4>"
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 23
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 23
+            }
+          ],
+          "ptr_overrides": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/srvs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/sshfps/?host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?hosts=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
       }
     ],
     "time": null
@@ -29085,7 +29617,7 @@
     "command_filter_negate": false,
     "command_issued": "host mx_add foo 10 mail.example.org",
     "ok": [
-      "OK: : Added MX record to foo.example.org"
+      "Added MX record to foo.example.org."
     ],
     "warning": [],
     "error": [],
@@ -29147,29 +29679,12 @@
     "command_filter_negate": false,
     "command_issued": "host ptr_add <IPv4> foo.example.org",
     "ok": [
-      "OK: : Added PTR record <IPv4> to foo.example.org"
+      "Added PTR record <IPv4> to foo.example.org."
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/<IPv4>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "network": "<IPv4>/24",
-          "description": "lorem ipsum",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3
-        }
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/foo.example.org",
@@ -29272,7 +29787,7 @@
     "command_filter_negate": false,
     "command_issued": "host naptr_add -name foo -preference 16384 -order 3 -flag u -service \"SIP\" -regex \"[abc]+\" -replacement \"wonk\"",
     "ok": [
-      "OK: : created NAPTR record for foo.example.org"
+      "Added NAPTR record to foo.example.org."
     ],
     "warning": [],
     "error": [],
@@ -29319,6 +29834,18 @@
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/naptrs/?preference=16384&order=3&flag=u&service=SIP&regex=[abc]+&replacement=wonk&host=<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
         }
       },
       {
@@ -29353,37 +29880,12 @@
     "command_filter_negate": false,
     "command_issued": "host srv_add -name \"_sip._tcp.example.org\" -priority 10 -weight 5 -port 3456 -host foo.example.org",
     "ok": [
-      "OK: : Added SRV record _sip._tcp.example.org with target foo.example.org"
+      "Added SRV record _sip._tcp.example.org with target foo.example.org."
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
-      {
-        "method": "GET",
-        "url": "/api/v1/zones/forward/hostname/_sip._tcp.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "zone": {
-            "nameservers": [
-              {
-                "name": "ns2.example.org",
-                "ttl": null
-              }
-            ],
-            "updated": true,
-            "primary_ns": "ns2.example.org",
-            "email": "hostperson@example.org",
-            "refresh": 360,
-            "retry": 1800,
-            "expire": 2400,
-            "soa_ttl": 1800,
-            "default_ttl": 300,
-            "name": "example.org"
-          }
-        }
-      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/foo.example.org",
@@ -29429,6 +29931,31 @@
       },
       {
         "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/_sip._tcp.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
         "url": "/api/v1/zones/forward/hostname/foo.example.org",
         "data": {},
         "status": 200,
@@ -29453,6 +29980,18 @@
         }
       },
       {
+        "method": "GET",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&host=23&ttl=None",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/srvs/",
         "data": {
@@ -29460,8 +29999,7 @@
           "priority": "10",
           "weight": "5",
           "port": "3456",
-          "host": 23,
-          "ttl": null
+          "host": 23
         },
         "status": 201,
         "response": {
@@ -29483,11 +30021,9 @@
     "command_filter_negate": false,
     "command_issued": "host cname_add foo fubar",
     "ok": [
-      "OK: : Added cname alias fubar.example.org for foo.example.org"
+      "Added CNAME fubar.example.org for foo.example.org."
     ],
-    "warning": [
-      "WARNING: : host not found: 'fubar.example.org'"
-    ],
+    "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
@@ -29545,26 +30081,11 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?cnames__name=fubar.example.org",
+        "url": "/api/v1/cnames/fubar.example.org",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/cnames/?name=fubar.example.org",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       },
       {
@@ -29596,7 +30117,7 @@
         "method": "POST",
         "url": "/api/v1/cnames/",
         "data": {
-          "host": 23,
+          "host": "23",
           "name": "fubar.example.org"
         },
         "status": 201,
@@ -29605,6 +30126,75 @@
           "ttl": null,
           "zone": 1,
           "host": 23
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/foo.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "ipaddress": "<IPv4>",
+              "host": 23
+            }
+          ],
+          "cnames": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 23
+            }
+          ],
+          "mxs": [
+            {
+              "priority": 10,
+              "mx": "mail.example.org",
+              "host": 23
+            }
+          ],
+          "txts": [
+            {
+              "txt": "v=spf1 -all",
+              "host": 23
+            }
+          ],
+          "ptr_overrides": [
+            {
+              "ipaddress": "<IPv4>",
+              "host": 23
+            }
+          ],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "name": "foo.example.org",
+          "contact": "foo@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/?host=23&name=fubar.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "fubar.example.org",
+              "ttl": null,
+              "zone": 1,
+              "host": 23
+            }
+          ]
         }
       }
     ],
@@ -29617,7 +30207,7 @@
     "command_issued": "host remove foo # Should fail, because it has multiple records, must force and override with everything.",
     "ok": [],
     "warning": [
-      "WARNING: : foo.example.org requires force and override for deletion:\n 1 cnames, override with 'cname'\n - fubar.example.org\n 1 MX records, override with 'mx'\n - mail.example.org (priority: 10)\n 1 NAPTR records, override with 'naptr'\n - wonk\n 1 SRV records, override with 'srv'\n - _sip._tcp.example.org\n 1 PTR records, override with 'ptr'\n - <IPv4>"
+      "foo.example.org requires force and override for deletion:\n 1 cnames, override with 'cname'\n - fubar.example.org\n 1 MX records, override with 'mx'\n - mail.example.org (priority: 10)\n 1 NAPTR records, override with 'naptr'\n - wonk\n 1 SRV records, override with 'srv'\n - _sip._tcp.example.org\n 1 PTR records, override with 'ptr'\n - <IPv4>"
     ],
     "error": [],
     "output": [],
@@ -29696,7 +30286,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29725,10 +30315,10 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -force -override mx,ptr,naptr,srv,cname",
     "ok": [
-      "OK: : deleted NAPTR record wonk when removing foo.example.org",
-      "OK: : deleted SRV record _sip._tcp.example.org when removing foo.example.org",
-      "OK: : deleted PTR record <IPv4> when removing foo.example.org",
-      "OK: : removed foo.example.org"
+      "deleted NAPTR record wonk when removing foo.example.org",
+      "deleted SRV record _sip._tcp.example.org when removing foo.example.org",
+      "deleted PTR record <IPv4> when removing foo.example.org",
+      "removed foo.example.org"
     ],
     "warning": [],
     "error": [],
@@ -29808,7 +30398,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?host__name=foo.example.org",
+        "url": "/api/v1/srvs/?host=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -29843,7 +30433,7 @@
     "command_filter_negate": false,
     "command_issued": "network remove <IPv4>/24 -f",
     "ok": [
-      "OK: : removed network <IPv4>/24"
+      "Removed network <IPv4>/24"
     ],
     "warning": [],
     "error": [],
@@ -29851,10 +30441,27 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/<IPv4>/24/used_list",
+        "url": "/api/v1/networks/<IPv4>/24",
         "data": {},
         "status": 200,
-        "response": []
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv4>/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/<IPv4>/24/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
       },
       {
         "method": "DELETE",
@@ -29871,7 +30478,7 @@
     "command_filter_negate": false,
     "command_issued": "network remove <IPv6>::/64 -f",
     "ok": [
-      "OK: : removed network <IPv6>::/64"
+      "Removed network <IPv6>::/64"
     ],
     "warning": [],
     "error": [],
@@ -29879,10 +30486,27 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/<IPv6>::/64/used_list",
+        "url": "/api/v1/networks/<IPv6>::/64",
         "data": {},
         "status": 200,
-        "response": []
+        "response": {
+          "excluded_ranges": [],
+          "network": "<IPv6>::/64",
+          "description": "dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/<IPv6>::/64/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
       },
       {
         "method": "DELETE",
@@ -29899,7 +30523,7 @@
     "command_filter_negate": false,
     "command_issued": "label add postit 'This is a label'",
     "ok": [
-      "OK: : Added label \"postit\""
+      "Added label \"postit\""
     ],
     "warning": [],
     "error": [],
@@ -30017,7 +30641,7 @@
     "command_filter_negate": false,
     "command_issued": "label rename postit mylabel",
     "ok": [
-      "OK: : Renamed label \"postit\" to \"mylabel\""
+      "Renamed label \"postit\" to \"mylabel\""
     ],
     "warning": [],
     "error": [],
@@ -30067,7 +30691,7 @@
     "command_filter_negate": false,
     "command_issued": "label set_description mylabel 'This is the new description'",
     "ok": [
-      "OK: : Set description for label \"mylabel\" to \"This is the new description\""
+      "Set description for label \"mylabel\" to \"This is the new description\""
     ],
     "warning": [],
     "error": [],
@@ -30075,21 +30699,38 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/labels/name/mylabel",
+        "url": "/api/v1/labels/?name=mylabel",
         "data": {},
         "status": 200,
         "response": {
-          "name": "mylabel",
-          "description": "This is a label"
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "mylabel",
+              "description": "This is a label"
+            }
+          ]
         }
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/labels/name/mylabel",
+        "url": "/api/v1/labels/<ID>",
         "data": {
           "description": "This is the new description"
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/labels/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "mylabel",
+          "description": "This is the new description"
+        }
       }
     ],
     "time": null
@@ -30100,15 +30741,32 @@
     "command_filter_negate": false,
     "command_issued": "label remove mylabel",
     "ok": [
-      "OK: : Removed label \"mylabel\""
+      "Removed label \"mylabel\""
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
       {
+        "method": "GET",
+        "url": "/api/v1/labels/?name=mylabel",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "mylabel",
+              "description": "This is the new description"
+            }
+          ]
+        }
+      },
+      {
         "method": "DELETE",
-        "url": "/api/v1/labels/name/mylabel",
+        "url": "/api/v1/labels/<ID>",
         "data": {},
         "status": 204
       }
@@ -30121,7 +30779,7 @@
     "command_filter_negate": false,
     "command_issued": "label add postit 'A label again'",
     "ok": [
-      "OK: : Added label \"postit\""
+      "Added label \"postit\""
     ],
     "warning": [],
     "error": [],
@@ -30145,7 +30803,7 @@
     "command_filter_negate": false,
     "command_issued": "policy role_create myrole 'This is the description'",
     "ok": [
-      "OK: : Created new role 'myrole'"
+      "Created new role 'myrole'"
     ],
     "warning": [],
     "error": [],
@@ -30153,14 +30811,11 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?name=myrole",
+        "url": "/api/v1/hostpolicy/roles/myrole",
         "data": {},
-        "status": 200,
+        "status": 404,
         "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
+          "detail": "Not found."
         }
       },
       {
@@ -30171,6 +30826,19 @@
           "description": "This is the description"
         },
         "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/myrole",
+        "data": {},
+        "status": 200,
+        "response": {
+          "hosts": [],
+          "atoms": [],
+          "description": "This is the description",
+          "name": "myrole",
+          "labels": []
+        }
       }
     ],
     "time": null
@@ -30181,7 +30849,7 @@
     "command_filter_negate": false,
     "command_issued": "policy label_add postit myrole",
     "ok": [
-      "OK: : Added the label 'postit' to the role 'myrole'."
+      "Added the label 'postit' to the role 'myrole'."
     ],
     "warning": [],
     "error": [],
@@ -30202,12 +30870,19 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/?name=postit",
         "data": {},
         "status": 200,
         "response": {
-          "name": "postit",
-          "description": "A label again"
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "postit",
+              "description": "A label again"
+            }
+          ]
         }
       },
       {
@@ -30219,26 +30894,10 @@
           ]
         },
         "status": 204
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "policy list_roles *",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "policy list_roles *",
-    "ok": [],
-    "warning": [],
-    "error": [],
-    "output": [
-      "Role Description Labels ",
-      "myrole This is the description postit "
-    ],
-    "api_requests": [
+      },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?name__regex=.",
+        "url": "/api/v1/hostpolicy/roles/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -30257,60 +30916,26 @@
             }
           ]
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/labels/",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "name": "postit",
-              "description": "A label again"
-            }
-          ]
-        }
       }
     ],
     "time": null
   },
   {
-    "command": "policy info myrole",
+    "command": "policy list_roles *",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "policy info myrole",
+    "command_issued": "policy list_roles *",
     "ok": [],
     "warning": [],
     "error": [],
     "output": [
-      "Name: myrole",
-      "Created: <TIME>",
-      "Description: This is the description",
-      "Atom members:",
-      " None",
-      "Labels:",
-      " postit"
+      "Name Description Labels ",
+      "myrole This is the description postit "
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/atoms/?name=myrole",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 0,
-          "next": null,
-          "previous": null,
-          "results": []
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?name=myrole",
+        "url": "/api/v1/hostpolicy/roles/?name__regex=.",
         "data": {},
         "status": 200,
         "response": {
@@ -30344,6 +30969,61 @@
     "time": null
   },
   {
+    "command": "policy info myrole",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "policy info myrole",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name: myrole",
+      "Created: <TIME>",
+      "Updated: <TIME>",
+      "Description: This is the description",
+      "Atom members:",
+      "Labels:",
+      " postit"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/atoms/myrole",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/myrole",
+        "data": {},
+        "status": 200,
+        "response": {
+          "hosts": [],
+          "atoms": [],
+          "description": "This is the description",
+          "name": "myrole",
+          "labels": [
+            2
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/labels/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "postit",
+          "description": "A label again"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "label info postit",
     "command_filter": null,
     "command_filter_negate": false,
@@ -30354,25 +31034,32 @@
     "output": [
       "Name: postit",
       "Description: A label again",
-      "Roles with this label: ",
+      "Roles with this label:",
       " myrole",
       "Permissions with this label:",
-      " None"
+      "None"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/?name=postit",
         "data": {},
         "status": 200,
         "response": {
-          "name": "postit",
-          "description": "A label again"
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "postit",
+              "description": "A label again"
+            }
+          ]
         }
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?labels__name=postit",
+        "url": "/api/v1/hostpolicy/roles/?labels=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -30394,7 +31081,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?labels__name=postit",
+        "url": "/api/v1/permissions/netgroupregex/?labels=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -30413,7 +31100,7 @@
     "command_filter_negate": false,
     "command_issued": "policy label_remove postit myrole",
     "ok": [
-      "OK: : Removed the label 'postit' from the role 'myrole'."
+      "Removed the label 'postit' from the role 'myrole'."
     ],
     "warning": [],
     "error": [],
@@ -30436,38 +31123,32 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/?name=postit",
         "data": {},
         "status": 200,
         "response": {
-          "name": "postit",
-          "description": "A label again"
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "postit",
+              "description": "A label again"
+            }
+          ]
         }
       },
       {
         "method": "PATCH",
-        "url": "/api/v1/hostpolicy/roles/myrole?labels=[]",
-        "data": {},
+        "url": "/api/v1/hostpolicy/roles/myrole",
+        "data": {
+          "labels": []
+        },
         "status": 204
-      }
-    ],
-    "time": null
-  },
-  {
-    "command": "policy role_delete myrole",
-    "command_filter": null,
-    "command_filter_negate": false,
-    "command_issued": "policy role_delete myrole",
-    "ok": [
-      "OK: : Deleted role 'myrole'"
-    ],
-    "warning": [],
-    "error": [],
-    "output": [],
-    "api_requests": [
+      },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?name=myrole",
+        "url": "/api/v1/hostpolicy/roles/?id=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -30483,6 +31164,34 @@
               "labels": []
             }
           ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "policy role_delete myrole",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "policy role_delete myrole",
+    "ok": [
+      "Deleted role 'myrole'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostpolicy/roles/myrole",
+        "data": {},
+        "status": 200,
+        "response": {
+          "hosts": [],
+          "atoms": [],
+          "description": "This is the description",
+          "name": "myrole",
+          "labels": []
         }
       },
       {
@@ -30500,12 +31209,24 @@
     "command_filter_negate": false,
     "command_issued": "permission network_add <IPv4>/16 mygroup .*",
     "ok": [
-      "OK: : Added permission to <IPv4>/16"
+      "Added permission to <IPv4>/16"
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/permissions/netgroupregex/?range=<IPv4>/16&group=mygroup&regex=.*",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
       {
         "method": "POST",
         "url": "/api/v1/permissions/netgroupregex/",
@@ -30531,7 +31252,7 @@
     "command_filter_negate": false,
     "command_issued": "permission label_add <IPv4>/16 mygroup .* postit",
     "ok": [
-      "OK: : Added the label 'postit' to the permission."
+      "Added the label 'postit' to the permission."
     ],
     "warning": [],
     "error": [],
@@ -30558,24 +31279,19 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/?name=postit",
         "data": {},
         "status": 200,
         "response": {
-          "name": "postit",
-          "description": "A label again"
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/<ID>",
-        "data": {},
-        "status": 200,
-        "response": {
-          "group": "mygroup",
-          "range": "<IPv4>/16",
-          "regex": ".*",
-          "labels": []
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "postit",
+              "description": "A label again"
+            }
+          ]
         }
       },
       {
@@ -30587,6 +31303,20 @@
           ]
         },
         "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/permissions/netgroupregex/<ID>",
+        "data": {},
+        "status": 200,
+        "response": {
+          "group": "mygroup",
+          "range": "<IPv4>/16",
+          "regex": ".*",
+          "labels": [
+            2
+          ]
+        }
       }
     ],
     "time": null
@@ -30627,7 +31357,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/labels/",
+        "url": "/api/v1/labels/?ordering=name",
         "data": {},
         "status": 200,
         "response": {
@@ -30656,8 +31386,8 @@
     "output": [
       "Name: postit",
       "Description: A label again",
-      "Roles with this label: ",
-      " None",
+      "Roles with this label:",
+      "None",
       "Permissions with this label:",
       " IP range Group Reg.exp. ",
       " <IPv4>/16 mygroup .* "
@@ -30665,17 +31395,24 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/?name=postit",
         "data": {},
         "status": 200,
         "response": {
-          "name": "postit",
-          "description": "A label again"
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "postit",
+              "description": "A label again"
+            }
+          ]
         }
       },
       {
         "method": "GET",
-        "url": "/api/v1/hostpolicy/roles/?labels__name=postit",
+        "url": "/api/v1/hostpolicy/roles/?labels=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -30687,7 +31424,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/permissions/netgroupregex/?labels__name=postit",
+        "url": "/api/v1/permissions/netgroupregex/?labels=<ID>",
         "data": {},
         "status": 200,
         "response": {
@@ -30715,7 +31452,7 @@
     "command_filter_negate": false,
     "command_issued": "permission label_remove <IPv4>/16 mygroup .* postit",
     "ok": [
-      "OK: : Removed the label 'postit' from the permission."
+      "Removed the label 'postit' from the permission."
     ],
     "warning": [],
     "error": [],
@@ -30744,13 +31481,28 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/?name=postit",
         "data": {},
         "status": 200,
         "response": {
-          "name": "postit",
-          "description": "A label again"
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "postit",
+              "description": "A label again"
+            }
+          ]
         }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/permissions/netgroupregex/<ID>",
+        "data": {
+          "labels": []
+        },
+        "status": 204
       },
       {
         "method": "GET",
@@ -30761,16 +31513,8 @@
           "group": "mygroup",
           "range": "<IPv4>/16",
           "regex": ".*",
-          "labels": [
-            2
-          ]
+          "labels": []
         }
-      },
-      {
-        "method": "PATCH",
-        "url": "/api/v1/permissions/netgroupregex/2?labels=[]",
-        "data": {},
-        "status": 204
       }
     ],
     "time": null
@@ -30809,7 +31553,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/labels/",
+        "url": "/api/v1/labels/?ordering=name",
         "data": {},
         "status": 200,
         "response": {
@@ -30833,7 +31577,7 @@
     "command_filter_negate": false,
     "command_issued": "permission network_remove <IPv4>/16 mygroup .*",
     "ok": [
-      "OK: : Removed permission for <IPv4>/16"
+      "Removed permission for <IPv4>/16"
     ],
     "warning": [],
     "error": [],
@@ -30873,15 +31617,32 @@
     "command_filter_negate": false,
     "command_issued": "label remove postit",
     "ok": [
-      "OK: : Removed label \"postit\""
+      "Removed label \"postit\""
     ],
     "warning": [],
     "error": [],
     "output": [],
     "api_requests": [
       {
+        "method": "GET",
+        "url": "/api/v1/labels/?name=postit",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "postit",
+              "description": "A label again"
+            }
+          ]
+        }
+      },
+      {
         "method": "DELETE",
-        "url": "/api/v1/labels/name/postit",
+        "url": "/api/v1/labels/<ID>",
         "data": {},
         "status": 204
       }
@@ -30894,7 +31655,7 @@
     "command_filter_negate": false,
     "command_issued": "zone delete example.org",
     "ok": [
-      "OK: : deleted zone example.org"
+      "Deleted zone example.org"
     ],
     "warning": [],
     "error": [],
