@@ -7,8 +7,7 @@ import re
 import sys
 import urllib.parse
 from enum import StrEnum
-from itertools import zip_longest
-from typing import Any, Iterable
+from typing import Any, Generator, Iterable, NamedTuple
 
 from rich import box
 from rich.console import Console, Group
@@ -59,57 +58,6 @@ class CommandCountError(DiffError):
         )
 
 
-def unquote_url(match: re.Match[str]) -> str:
-    """Unquote URL encoded text in a /api/v1/ URL."""
-    return urllib.parse.unquote(match.group(0))
-
-
-def replace_url_id(match: re.Match[str]) -> str:
-    """Replace the final number (ID) in a URL with a placeholder."""
-    # match.group(1) contains the part before the separator (`"url": "/api/...`)
-    # match.group(2) contains the separator (/ or =)
-    # match.group(3) contains the number we want to replace
-    # match.group(4) contains the closing double quote
-    return f"{match.group(1)}{match.group(2)}<ID>{match.group(4)}"
-
-
-def group_objects(json_file_path: str) -> list[dict[str, Any]]:
-    """Group objects in a JSON file by a specific criterion.
-
-    :param json_file_path: Path to the JSON file.
-    :returns: A list of grouped objects.
-    """
-    with open(json_file_path, "r") as f:
-        s = f.read()
-        # Replace all URL encoded text in /api/v1/ URLs with unquoted text
-        # This lets us replace it down the line with our normal IPv{4,6} and MAC placeholders
-        # Must be done _before_ all other replacements
-        s = api_v1_pattern.sub(unquote_url, s)
-
-        # Replace all non-deterministic values with placeholders
-        s = timestamp_pattern.sub("<TIME>", s)
-        s = datetime_str_pattern.sub("<TIME>", s)
-        s = serial_pattern.sub("Serial: <NUMBER>", s)
-        s = mac_pattern.sub("<macaddress>", s)
-        s = ipv4_pattern.sub("<IPv4>", s)
-        s = ipv6_pattern.sub("<IPv6>", s)
-
-        # Replace all IDs in URLs with a placeholder
-        # Must be done _after_ all other replacements
-        s = api_v1_pattern_with_number.sub(replace_url_id, s)
-
-        s = re.sub(
-            r"\s+", " ", s
-        )  # replace all whitespace with one space, so the diff doesn't complain about different lengths
-        data = json.loads(s)
-
-    commands: list[dict[str, Any]] = []
-    for obj in data:
-        if "command" in obj:
-            commands.append(obj)
-    return commands
-
-
 DIFF_COLORS = {"-": "red", "+": "green"}
 
 
@@ -155,6 +103,98 @@ class Choice(StrEnum):
         return "/".join(choices)
 
 
+def unquote_url(match: re.Match[str]) -> str:
+    """Unquote URL encoded text in a /api/v1/ URL."""
+    return urllib.parse.unquote(match.group(0))
+
+
+def replace_url_id(match: re.Match[str]) -> str:
+    """Replace the final number (ID) in a URL with a placeholder."""
+    # match.group(1) contains the part before the separator (`"url": "/api/...`)
+    # match.group(2) contains the separator (/ or =)
+    # match.group(3) contains the number we want to replace
+    # match.group(4) contains the closing double quote
+    return f"{match.group(1)}{match.group(2)}<ID>{match.group(4)}"
+
+
+def preprocess_json(s: str) -> str:
+    """Preprocess JSON string for diffing. Replace non-deterministic values with placeholders."""
+    # Replace all URL encoded text in /api/v1/ URLs with unquoted text
+    # This lets us replace it down the line with our normal IPv{4,6} and MAC placeholders
+    # Must be done _before_ all other replacements
+    s = api_v1_pattern.sub(unquote_url, s)
+
+    # Replace all non-deterministic values with placeholders
+    s = timestamp_pattern.sub("<TIME>", s)
+    s = datetime_str_pattern.sub("<TIME>", s)
+    s = serial_pattern.sub("Serial: <NUMBER>", s)
+    s = mac_pattern.sub("<macaddress>", s)
+    s = ipv4_pattern.sub("<IPv4>", s)
+    s = ipv6_pattern.sub("<IPv6>", s)
+
+    # Replace all IDs in URLs with a placeholder
+    # Must be done _after_ all other replacements
+    s = api_v1_pattern_with_number.sub(replace_url_id, s)
+
+    s = re.sub(
+        r"\s+", " ", s
+    )  # replace all whitespace with one space, so the diff doesn't complain about different lengths
+    return s
+
+
+def load_commands(file: str, preprocess: bool = True) -> list[dict[str, Any]]:
+    """Load JSON commands from a test suite log file."""
+    with open(file, "r") as f:
+        s = f.read()
+    if preprocess:
+        s = preprocess_json(s)
+    data = json.loads(s)
+    commands: list[dict[str, Any]] = []
+    for obj in data:
+        if "command" in obj:
+            commands.append(obj)
+    return commands
+
+
+class TestCommand(NamedTuple):
+    """A single command from a test suite log."""
+
+    command: dict[str, Any]
+    original: dict[str, Any]
+
+
+class TestSuiteResult:
+    """The results of a test suite run."""
+
+    def __init__(self, file: str) -> None:
+        self.file = file
+        self.commands = load_commands(file)
+        self.commands_original = load_commands(file, preprocess=False)
+
+    def iterate(
+        self, other: TestSuiteResult
+    ) -> Generator[tuple[TestCommand, TestCommand], None, None]:
+        """Iterate over commands from two TestSuiteResult objects."""
+        for command, other_command in zip(self, other):
+            yield command, other_command
+
+    def __iter__(self) -> Generator[TestCommand, None, None]:
+        """Iterate over the commands and their original form."""
+        for i, command in enumerate(self.commands):
+            yield TestCommand(command, self.commands_original[i])
+
+    def ensure_comparable(self, other: TestSuiteResult) -> None:
+        """Check if self and other have the same number of commands."""
+        if len(self.commands) != len(other.commands):
+            raise CommandCountError(len(self.commands), len(other.commands))
+        for obj in [self, other]:
+            if len(obj.commands) != len(obj.commands_original):
+                raise DiffError(
+                    f"{obj.file} has different number of commands after preprocessing. "
+                    f"Before: {len(obj.commands_original)}, After: {len(obj.commands)}"
+                )
+
+
 class CommandDiffer:
     """Diffs the results (JSON output) of commands from two files."""
 
@@ -165,8 +205,9 @@ class CommandDiffer:
         self.review = review
 
         # Load files
-        self.expected = group_objects(self.file1)
-        self.result = group_objects(self.file2)
+        self.expected = TestSuiteResult(file1)
+        self.result = TestSuiteResult(file2)
+
         self.diff_resolved = 0
         self.diff_unresolved = 0
 
@@ -179,8 +220,8 @@ class CommandDiffer:
         """Diff the number and order of commands in the two files."""
         differ = difflib.Differ()
 
-        expected_commands = [c["command"] for c in self.expected]
-        result_commands = [c["command"] for c in self.result]
+        expected_commands = [c["command"] for c in self.expected.commands]
+        result_commands = [c["command"] for c in self.result.commands]
 
         diff = differ.compare(expected_commands, result_commands)
         differences = [line for line in diff if line.startswith("-") or line.startswith("+")]
@@ -207,12 +248,13 @@ class CommandDiffer:
         yes_all = False
         no_all = False
 
-        fill: dict[str, Any] = {}
-        for expected, result in zip_longest(self.expected, self.result, fillvalue=fill):
-            # TODO: Compare result and expected before splitting into lines
-            #       That SHOULD yield the same results, but we need to test it
-            expected_lines = json.dumps(expected, indent=2).splitlines(keepends=True)
-            result_lines = json.dumps(result, indent=2).splitlines(keepends=True)
+        # Check if everything is in order before we start iterating
+        self.expected.ensure_comparable(self.result)
+
+        for expected, result in self.expected.iterate(self.result):
+            expected_lines = json.dumps(expected.command, indent=2).splitlines(keepends=True)
+            result_lines = json.dumps(result.command, indent=2).splitlines(keepends=True)
+
             if expected_lines != result_lines:
                 diff_n += 1
                 d = get_diff(diff_n, expected_lines, result_lines)
@@ -241,15 +283,15 @@ class CommandDiffer:
 
                 if choice == Choice.YES:
                     # Accept new line
-                    new_testsuite_results.append(result)
+                    new_testsuite_results.append(result.original)
                     self.diff_resolved += 1
                 else:
                     # Keep old line
-                    new_testsuite_results.append(expected)
+                    new_testsuite_results.append(expected.original)
                     self.diff_unresolved += 1
             else:
                 # No diff, keep new line
-                new_testsuite_results.append(result)
+                new_testsuite_results.append(result.original)
 
         # Only write back changes if we are in review mode and there are changes
         if self.review and self.diff_resolved > 0:
