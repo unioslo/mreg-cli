@@ -183,6 +183,9 @@ def _add_ip(
     if not args.force and host.has_ip(ipaddr):
         raise EntityAlreadyExists(f"Host {host} already has IP {ipaddr}")
 
+    if not args.force and len(host.ipaddresses)>0:
+        raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
+
     mac = None
     if args.macaddress:
         try:

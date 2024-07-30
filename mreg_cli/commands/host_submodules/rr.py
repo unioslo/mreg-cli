@@ -91,7 +91,7 @@ def hinfo_add(args: argparse.Namespace) -> None:
     if host.hinfo:
         raise EntityAlreadyExists(f"{host} already has hinfo set.")
 
-    HInfo.create({"host": str(host.id), "cpu": args.cpu, "os": args.os})
+    HInfo.create({"host": host.id, "cpu": args.cpu, "os": args.os})
     host = host.refetch()
 
     if host.hinfo and host.hinfo.cpu == args.cpu and host.hinfo.os == args.os:
@@ -119,7 +119,7 @@ def hinfo_remove(args: argparse.Namespace) -> None:
     if not host.hinfo:
         raise EntityNotFound(f"{host} already has no hinfo set.")
 
-    hinfo = HInfo.get_by_field("host", str(host.id))
+    hinfo = HInfo.get_by_field("host", host.id)
     if hinfo and hinfo.delete():
         OutputManager().add_ok(f"Removed HINFO record for {host.name.hostname}.")
     else:
@@ -145,7 +145,7 @@ def hinfo_show(args: argparse.Namespace) -> None:
     if not host.hinfo:
         OutputManager().add_line(f"No hinfo for {host.name.hostname}")
 
-    hinfo = HInfo.get_by_field("host", str(host.id))
+    hinfo = HInfo.get_by_field("host", host.id)
     if hinfo:
         hinfo.output()
     else:
@@ -198,7 +198,7 @@ def loc_add(args: argparse.Namespace) -> None:
     if host.loc:
         raise EntityAlreadyExists(f"{host} already has loc set.")
 
-    Location.create({"host": str(host.id), "loc": args.loc})
+    Location.create({"host": host.id, "loc": args.loc})
     host = host.refetch()
 
     if host.loc and host.loc.loc == args.loc:
@@ -250,7 +250,7 @@ def mx_add(args: argparse.Namespace) -> None:
     if host.has_mx_with_priority(args.priority, args.mx):
         raise EntityAlreadyExists(f"{host} already has that MX defined.")
 
-    MX.create({"host": str(host.id), "priority": args.priority, "mx": args.mx})
+    MX.create({"host": host.id, "priority": args.priority, "mx": args.mx})
     OutputManager().add_ok(f"Added MX record to {host.name.hostname}.")
 
 
@@ -557,7 +557,7 @@ def ptr_add(args: argparse.Namespace) -> None:
     if network.is_reserved_ip(ip) and not args.force:
         raise ForceMissing("Address is reserved. Requires force")
 
-    PTR_override.create({"host": str(host.id), "ipaddress": str(ip)})
+    PTR_override.create({"host": host.id, "ipaddress": str(ip)})
     OutputManager().add_ok(f"Added PTR record {ip} to {host.name.hostname}.")
 
 
@@ -622,7 +622,7 @@ def srv_add(args: argparse.Namespace) -> None:
         "priority": args.priority,
         "weight": args.weight,
         "port": args.port,
-        "host": str(host.id),
+        "host": host.id,
         "ttl": args.ttl,
     }
 
@@ -673,7 +673,7 @@ def srv_remove(args: argparse.Namespace) -> None:
 
     data: QueryParams = {
         "name": sname.hostname,
-        "host": str(host.id),
+        "host": host.id,
         "priority": args.priority,
         "port": args.port,
         "weight": args.weight,
@@ -775,7 +775,7 @@ def sshfp_remove(args: argparse.Namespace) -> None:
     if args.fingerprint:
         sshfps = [
             SSHFP.get_by_query_unique_or_raise(
-                {"fingerprint": args.fingerprint, "host": str(host.id)}
+                {"fingerprint": args.fingerprint, "host": host.id}
             )
         ]
     else:
@@ -916,7 +916,7 @@ def txt_add(args: argparse.Namespace) -> None:
     if host.has_txt(args.text):
         raise EntityAlreadyExists(f"{host} already has that TXT defined.")
 
-    TXT.create({"host": str(host.id), "txt": args.text})
+    TXT.create({"host": host.id, "txt": args.text})
     OutputManager().add_ok(f"Added TXT record to {host}.")
 
 
@@ -940,7 +940,7 @@ def txt_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, text)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    txt = TXT.get_by_query_unique({"host": str(host.id), "txt": args.text})
+    txt = TXT.get_by_query_unique({"host": host.id, "txt": args.text})
 
     if not txt:
         raise EntityNotFound(f"{host} has no TXT record matching '{args.text}'")
