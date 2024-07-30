@@ -73,36 +73,38 @@ def replace_url_id(match: re.Match[str]) -> str:
     return f"{match.group(1)}{match.group(2)}<ID>{match.group(4)}"
 
 
-def group_objects(json_file_path: str) -> list[dict[str, Any]]:
-    """Group objects in a JSON file by a specific criterion.
+def preprocess_json(s: str) -> str:
+    """Preprocess JSON string for diffing. Replace non-deterministic values with placeholders."""
+    # Replace all URL encoded text in /api/v1/ URLs with unquoted text
+    # This lets us replace it down the line with our normal IPv{4,6} and MAC placeholders
+    # Must be done _before_ all other replacements
+    s = api_v1_pattern.sub(unquote_url, s)
 
-    :param json_file_path: Path to the JSON file.
-    :returns: A list of grouped objects.
-    """
-    with open(json_file_path, "r") as f:
+    # Replace all non-deterministic values with placeholders
+    s = timestamp_pattern.sub("<TIME>", s)
+    s = datetime_str_pattern.sub("<TIME>", s)
+    s = serial_pattern.sub("Serial: <NUMBER>", s)
+    s = mac_pattern.sub("<macaddress>", s)
+    s = ipv4_pattern.sub("<IPv4>", s)
+    s = ipv6_pattern.sub("<IPv6>", s)
+
+    # Replace all IDs in URLs with a placeholder
+    # Must be done _after_ all other replacements
+    s = api_v1_pattern_with_number.sub(replace_url_id, s)
+
+    s = re.sub(
+        r"\s+", " ", s
+    )  # replace all whitespace with one space, so the diff doesn't complain about different lengths
+    return s
+
+
+def load_commands(file: str, preprocess: bool = True) -> list[dict[str, Any]]:
+    """Load JSON commands from a test suite log file."""
+    with open(file, "r") as f:
         s = f.read()
-        # Replace all URL encoded text in /api/v1/ URLs with unquoted text
-        # This lets us replace it down the line with our normal IPv{4,6} and MAC placeholders
-        # Must be done _before_ all other replacements
-        s = api_v1_pattern.sub(unquote_url, s)
-
-        # Replace all non-deterministic values with placeholders
-        s = timestamp_pattern.sub("<TIME>", s)
-        s = datetime_str_pattern.sub("<TIME>", s)
-        s = serial_pattern.sub("Serial: <NUMBER>", s)
-        s = mac_pattern.sub("<macaddress>", s)
-        s = ipv4_pattern.sub("<IPv4>", s)
-        s = ipv6_pattern.sub("<IPv6>", s)
-
-        # Replace all IDs in URLs with a placeholder
-        # Must be done _after_ all other replacements
-        s = api_v1_pattern_with_number.sub(replace_url_id, s)
-
-        s = re.sub(
-            r"\s+", " ", s
-        )  # replace all whitespace with one space, so the diff doesn't complain about different lengths
-        data = json.loads(s)
-
+    if preprocess:
+        s = preprocess_json(s)
+    data = json.loads(s)
     commands: list[dict[str, Any]] = []
     for obj in data:
         if "command" in obj:
@@ -155,6 +157,7 @@ class Choice(StrEnum):
         return "/".join(choices)
 
 
+
 class CommandDiffer:
     """Diffs the results (JSON output) of commands from two files."""
 
@@ -165,8 +168,13 @@ class CommandDiffer:
         self.review = review
 
         # Load files
-        self.expected = group_objects(self.file1)
-        self.result = group_objects(self.file2)
+        self.expected = load_commands(self.file1)
+        self.expected_original = load_commands(self.file1, preprocess=False)
+        assert len(self.expected) == len(self.expected_original)
+        self.result = load_commands(self.file2)
+        self.result_original = load_commands(self.file2, preprocess=False)
+        assert len(self.result) == len(self.result_original)
+
         self.diff_resolved = 0
         self.diff_unresolved = 0
 
@@ -208,7 +216,13 @@ class CommandDiffer:
         no_all = False
 
         fill: dict[str, Any] = {}
-        for expected, result in zip_longest(self.expected, self.result, fillvalue=fill):
+
+        # This should never be False if we run diff_executed_commands first
+        assert len(self.expected) == len(self.result)
+        assert len(self.expected_original) == len(self.result_original)
+
+        for i, expected in enumerate(self.expected):
+            result = self.result[i]
             # TODO: Compare result and expected before splitting into lines
             #       That SHOULD yield the same results, but we need to test it
             expected_lines = json.dumps(expected, indent=2).splitlines(keepends=True)
@@ -241,15 +255,15 @@ class CommandDiffer:
 
                 if choice == Choice.YES:
                     # Accept new line
-                    new_testsuite_results.append(result)
+                    new_testsuite_results.append(self.result_original[i])
                     self.diff_resolved += 1
                 else:
                     # Keep old line
-                    new_testsuite_results.append(expected)
+                    new_testsuite_results.append(self.expected_original[i])
                     self.diff_unresolved += 1
             else:
                 # No diff, keep new line
-                new_testsuite_results.append(result)
+                new_testsuite_results.append(self.result_original[i])
 
         # Only write back changes if we are in review mode and there are changes
         if self.review and self.diff_resolved > 0:
