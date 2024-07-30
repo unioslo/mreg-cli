@@ -163,7 +163,7 @@ class TestCommand(NamedTuple):
     original: dict[str, Any]
 
 
-class TestSuiteLog:
+class TestSuiteResult:
     """The results of a test suite run."""
 
     def __init__(self, file: str) -> None:
@@ -172,9 +172,9 @@ class TestSuiteLog:
         self.commands_original = load_commands(file, preprocess=False)
 
     def iterate(
-        self, other: TestSuiteLog
+        self, other: TestSuiteResult
     ) -> Generator[tuple[TestCommand, TestCommand], None, None]:
-        """Iterate over commands from two TestSuiteLog objects."""
+        """Iterate over commands from two TestSuiteResult objects."""
         for command, other_command in zip(self, other):
             yield command, other_command
 
@@ -183,7 +183,7 @@ class TestSuiteLog:
         for i, command in enumerate(self.commands):
             yield TestCommand(command, self.commands_original[i])
 
-    def ensure_comparable(self, other: TestSuiteLog) -> None:
+    def ensure_comparable(self, other: TestSuiteResult) -> None:
         """Check if self and other have the same number of commands."""
         if len(self.commands) != len(other.commands):
             raise CommandCountError(len(self.commands), len(other.commands))
@@ -205,8 +205,8 @@ class CommandDiffer:
         self.review = review
 
         # Load files
-        self.expected = TestSuiteLog(file1)
-        self.result = TestSuiteLog(file2)
+        self.expected = TestSuiteResult(file1)
+        self.result = TestSuiteResult(file2)
 
         self.diff_resolved = 0
         self.diff_unresolved = 0
