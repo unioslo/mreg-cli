@@ -7,8 +7,7 @@ import re
 import sys
 import urllib.parse
 from enum import StrEnum
-from itertools import zip_longest
-from typing import Any, Iterable
+from typing import Any, Generator, Iterable, NamedTuple
 
 from rich import box
 from rich.console import Console, Group
@@ -57,6 +56,51 @@ class CommandCountError(DiffError):
         super().__init__(
             f"Expected {expected} commands, got {result} commands. Diff must be resolved manually."
         )
+
+
+DIFF_COLORS = {"-": "red", "+": "green"}
+
+
+def fmt_line(line: str) -> str:
+    """Format a single diff line with color."""
+    line = escape(line)
+    if line and (color := DIFF_COLORS.get(line[0], None)):
+        return f"[{color}]{line}[/]"
+    return line
+
+
+def fmt_lines(lines: Iterable[str]) -> str:
+    """Format diff lines."""
+    return "".join(fmt_line(line) for line in lines)
+
+
+DIFF_HEADER = f"{fmt_line('-expected')}, {fmt_line('+tested')}"
+
+
+def get_diff(count: int, expected: list[str], result: list[str]) -> Group:
+    """Print a diff between two lists of strings."""
+    gen = difflib.ndiff(expected, result)
+    lines = fmt_lines(gen)
+    diff_title = f"\n[bold]#{count}[/]"
+    return Group(diff_title, DIFF_HEADER, Panel(lines, box=box.HORIZONTALS))
+
+
+class Choice(StrEnum):
+    """Choices for diff review."""
+
+    YES = "y"
+    YES_TO_ALL = "Y"
+    NO = "n"
+    NO_TO_ALL = "N"
+
+    @classmethod
+    def as_string(cls) -> str:
+        """Get a list of choice names as a string."""
+        choices: list[str] = []
+        for choice in cls:
+            name = choice.name.capitalize().replace("_", " ")
+            choices.append(name)
+        return "/".join(choices)
 
 
 def unquote_url(match: re.Match[str]) -> str:
@@ -112,50 +156,43 @@ def load_commands(file: str, preprocess: bool = True) -> list[dict[str, Any]]:
     return commands
 
 
-DIFF_COLORS = {"-": "red", "+": "green"}
+class TestCommand(NamedTuple):
+    """A single command from a test suite log."""
+
+    command: dict[str, Any]
+    original: dict[str, Any]
 
 
-def fmt_line(line: str) -> str:
-    """Format a single diff line with color."""
-    line = escape(line)
-    if line and (color := DIFF_COLORS.get(line[0], None)):
-        return f"[{color}]{line}[/]"
-    return line
+class TestSuiteLog:
+    """The results of a test suite run."""
 
+    def __init__(self, file: str) -> None:
+        self.file = file
+        self.commands = load_commands(file)
+        self.commands_original = load_commands(file, preprocess=False)
 
-def fmt_lines(lines: Iterable[str]) -> str:
-    """Format diff lines."""
-    return "".join(fmt_line(line) for line in lines)
+    def iterate(
+        self, other: TestSuiteLog
+    ) -> Generator[tuple[TestCommand, TestCommand], None, None]:
+        """Iterate over commands from two TestSuiteLog objects."""
+        for command, other_command in zip(self, other):
+            yield command, other_command
 
+    def __iter__(self) -> Generator[TestCommand, None, None]:
+        """Iterate over the commands and their original form."""
+        for i, command in enumerate(self.commands):
+            yield TestCommand(command, self.commands_original[i])
 
-DIFF_HEADER = f"{fmt_line('-expected')}, {fmt_line('+tested')}"
-
-
-def get_diff(count: int, expected: list[str], result: list[str]) -> Group:
-    """Print a diff between two lists of strings."""
-    gen = difflib.ndiff(expected, result)
-    lines = fmt_lines(gen)
-    diff_title = f"\n[bold]#{count}[/]"
-    return Group(diff_title, DIFF_HEADER, Panel(lines, box=box.HORIZONTALS))
-
-
-class Choice(StrEnum):
-    """Choices for diff review."""
-
-    YES = "y"
-    YES_TO_ALL = "Y"
-    NO = "n"
-    NO_TO_ALL = "N"
-
-    @classmethod
-    def as_string(cls) -> str:
-        """Get a list of choice names as a string."""
-        choices: list[str] = []
-        for choice in cls:
-            name = choice.name.capitalize().replace("_", " ")
-            choices.append(name)
-        return "/".join(choices)
-
+    def ensure_comparable(self, other: TestSuiteLog) -> None:
+        """Check if self and other have the same number of commands."""
+        if len(self.commands) != len(other.commands):
+            raise CommandCountError(len(self.commands), len(other.commands))
+        for obj in [self, other]:
+            if len(obj.commands) != len(obj.commands_original):
+                raise DiffError(
+                    f"{obj.file} has different number of commands after preprocessing. "
+                    f"Before: {len(obj.commands_original)}, After: {len(obj.commands)}"
+                )
 
 
 class CommandDiffer:
@@ -168,12 +205,8 @@ class CommandDiffer:
         self.review = review
 
         # Load files
-        self.expected = load_commands(self.file1)
-        self.expected_original = load_commands(self.file1, preprocess=False)
-        assert len(self.expected) == len(self.expected_original)
-        self.result = load_commands(self.file2)
-        self.result_original = load_commands(self.file2, preprocess=False)
-        assert len(self.result) == len(self.result_original)
+        self.expected = TestSuiteLog(file1)
+        self.result = TestSuiteLog(file2)
 
         self.diff_resolved = 0
         self.diff_unresolved = 0
@@ -187,8 +220,8 @@ class CommandDiffer:
         """Diff the number and order of commands in the two files."""
         differ = difflib.Differ()
 
-        expected_commands = [c["command"] for c in self.expected]
-        result_commands = [c["command"] for c in self.result]
+        expected_commands = [c["command"] for c in self.expected.commands]
+        result_commands = [c["command"] for c in self.result.commands]
 
         diff = differ.compare(expected_commands, result_commands)
         differences = [line for line in diff if line.startswith("-") or line.startswith("+")]
@@ -215,18 +248,13 @@ class CommandDiffer:
         yes_all = False
         no_all = False
 
-        fill: dict[str, Any] = {}
+        # Check if everything is in order before we start iterating
+        self.expected.ensure_comparable(self.result)
 
-        # This should never be False if we run diff_executed_commands first
-        assert len(self.expected) == len(self.result)
-        assert len(self.expected_original) == len(self.result_original)
+        for expected, result in self.expected.iterate(self.result):
+            expected_lines = json.dumps(expected.command, indent=2).splitlines(keepends=True)
+            result_lines = json.dumps(result.command, indent=2).splitlines(keepends=True)
 
-        for i, expected in enumerate(self.expected):
-            result = self.result[i]
-            # TODO: Compare result and expected before splitting into lines
-            #       That SHOULD yield the same results, but we need to test it
-            expected_lines = json.dumps(expected, indent=2).splitlines(keepends=True)
-            result_lines = json.dumps(result, indent=2).splitlines(keepends=True)
             if expected_lines != result_lines:
                 diff_n += 1
                 d = get_diff(diff_n, expected_lines, result_lines)
@@ -255,15 +283,15 @@ class CommandDiffer:
 
                 if choice == Choice.YES:
                     # Accept new line
-                    new_testsuite_results.append(self.result_original[i])
+                    new_testsuite_results.append(result.original)
                     self.diff_resolved += 1
                 else:
                     # Keep old line
-                    new_testsuite_results.append(self.expected_original[i])
+                    new_testsuite_results.append(expected.original)
                     self.diff_unresolved += 1
             else:
                 # No diff, keep new line
-                new_testsuite_results.append(self.result_original[i])
+                new_testsuite_results.append(result.original)
 
         # Only write back changes if we are in review mode and there are changes
         if self.review and self.diff_resolved > 0:
