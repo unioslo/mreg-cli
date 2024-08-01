@@ -79,9 +79,7 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
 
     ip_obj.patch(fields={"ipaddress": str(new_ip)})
 
-    OutputManager().add_ok(
-        f"changed ip {args.old} to {new_ip} for {host}"
-    )
+    OutputManager().add_ok(f"changed ip {args.old} to {new_ip} for {host}")
 
 
 def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
@@ -177,13 +175,13 @@ def _add_ip(
         ip = ip_or_net
         ipaddr = ip.as_ip()
 
-    if not args.force and network.frozen:
+    if not args.force and network and network.frozen:
         raise ForceMissing(f"Network {network.network} is frozen, must force")
 
     if not args.force and host.has_ip(ipaddr):
         raise EntityAlreadyExists(f"Host {host} already has IP {ipaddr}")
 
-    if not args.force and len(host.ipaddresses)>0:
+    if not args.force and len(host.ipaddresses) > 0:
         raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
 
     mac = None
