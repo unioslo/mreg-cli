@@ -206,7 +206,7 @@ class APIMixin(ABC):
         return cls(**data)
 
     @classmethod
-    def get_by_field(cls, field: str, value: str) -> Self | None:
+    def get_by_field(cls, field: str, value: str | int) -> Self | None:
         """Get an object by a field.
 
         Note that some endpoints do not use the ID field for lookups. We do some

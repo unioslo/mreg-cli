@@ -374,7 +374,7 @@ def get_list_in(
 def get_item_by_key_value(
     path: str,
     search_field: str,
-    search_value: str,
+    search_value: str | int,
     ok404: bool = False,
 ) -> None | JsonMapping:
     """Get an item by a key value pair.
