@@ -56,7 +56,6 @@ ci/new_testsuite_log.json
 *.log
 local_settings.py
 db.sqlite3
-!ci/local_settings.py
 
 # Flask stuff:
 instance/
