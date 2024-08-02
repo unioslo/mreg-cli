@@ -32,6 +32,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
+    volumes:
+      - ${PWD}/local_settings.py:/app/mregsite/local_settings.py
 
   # The purpose of the dummy container is to depend on the mreg container,
   # so the "docker compose" command won't return until mreg is up and running.
