@@ -17,23 +17,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-#      - name: Cache pip
-#        uses: actions/cache@v3
-#        with:
-#          path: ~/.cache/pip
-#          key: v1-pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements-*.txt') }}
-#          restore-keys: |
-#            v1-pip-${{ runner.os }}-${{ matrix.python-version }}
-#            v1-pip-${{ runner.os }}
-#            v1-pip-
+      - uses: hynek/setup-cached-uv@v2
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install mreg-cli
         run: |
-          python -m ensurepip --upgrade
-          pip install -e .[dev]
+          uv pip install --system -e .[dev]
       - name: Test and compare api calls
         run: ci/run_testsuite_and_record.sh
 
@@ -53,10 +44,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - uses: hynek/setup-cached-uv@v2
       - name: Install dependencies
         run: |
           python -m ensurepip --upgrade
-          python -m pip install tox tox-uv tox-gh-actions 
+          uv pip install --system tox-uv tox-gh-actions 
       - name: Test with tox
         run: tox r
         
