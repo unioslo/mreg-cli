@@ -27,7 +27,7 @@ jobs:
           uv venv
           uv pip install -e .[dev]
       - name: Test and compare api calls
-        run: ci/run_testsuite_and_record.sh
+        run: uv run ci/run_testsuite_and_record.sh
 
   tox:
     name: tox
