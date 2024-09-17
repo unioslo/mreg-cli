@@ -11,33 +11,27 @@ import logging
 import os
 import re
 import sys
-from typing import (
-    Any,
-    Literal,
-    NoReturn,
-    TypeVar,
-    cast,
-    get_origin,
-    overload,
-)
+from typing import Any, Literal, NoReturn, TypeVar, get_origin, overload
 from urllib.parse import urljoin
 from uuid import uuid4
 
 import requests
 from prompt_toolkit import prompt
-from pydantic import (
-    BaseModel,
-    TypeAdapter,
-    field_validator,
-)
+from pydantic import BaseModel, TypeAdapter, field_validator
 from requests import Response
 
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import CliError, LoginFailedError, ValidationError
-from mreg_cli.log import cli_error, cli_warning
+from mreg_cli.exceptions import (
+    APINotOk,
+    CliError,
+    LoginFailedError,
+    MultipleEntititesFound,
+    TooManyResults,
+    ValidationError,
+)
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
-from mreg_cli.types import Json, JsonMapping
+from mreg_cli.types import Json, JsonMapping, QueryParams
 
 session = requests.Session()
 session.headers.update({"User-Agent": "mreg-cli"})
@@ -71,6 +65,14 @@ def create_and_set_corrolation_id(suffix: str) -> str:
 
     session.headers.update({"X-Correlation-ID": correlation_id})
     return correlation_id
+
+
+def get_correlation_id() -> str:
+    """Get the currently active corrolation id.
+
+    :returns: The currently active corrolation id.
+    """
+    return str(session.headers.get("X-Correlation-ID"))
 
 
 def set_session_token(token: str) -> None:
@@ -144,7 +146,7 @@ def prompt_for_password_and_login(user: str, url: str, catch_exception: bool = T
         if catch_exception:
             e.print_self()
         else:
-            raise LoginFailedError() from e
+            raise LoginFailedError("Updating token failed.") from e
 
 
 def logout() -> None:
@@ -163,7 +165,7 @@ def prompt_for_password_and_try_update_token() -> None:
     try:
         user = MregCliConfig().get("user")
         if not user:
-            raise CliError("Unable to determine username.")
+            raise LoginFailedError("Unable to determine username.")
         auth_and_update_token(user, password)
     except CliError as e:
         e.print_self()
@@ -172,6 +174,7 @@ def prompt_for_password_and_try_update_token() -> None:
 def auth_and_update_token(username: str, password: str) -> None:
     """Perform the actual token update."""
     tokenurl = urljoin(MregCliConfig().get_url(), "/api/token-auth/")
+    logger.info("Updating token for %s @ %s", username, tokenurl)
     try:
         result = requests.post(tokenurl, {"username": username, "password": password})
     except requests.exceptions.SSLError as e:
@@ -185,10 +188,11 @@ def auth_and_update_token(username: str, password: str) -> None:
             res = result.text
         if result.status_code == 400:
             if "non_field_errors" in res:
-                cli_error("Invalid username/password")
+                raise LoginFailedError("Invalid username/password")
         else:
-            cli_error(res)
+            raise LoginFailedError(res)
     token = result.json()["token"]
+    logger.info("Token updated for %s @ %s", username, tokenurl)
     set_session_token(token)
     TokenFile.set_entry(username, MregCliConfig().get_url(), token)
 
@@ -203,7 +207,7 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
             pass
         else:
             message += f"\n{json.dumps(body, indent=2)}"
-        cli_warning(message)
+        raise APINotOk(message)
 
 
 def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
@@ -221,9 +225,9 @@ def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def _request_wrapper(
-    operation_type: str,
+    operation_type: Literal["get", "post", "patch", "delete"],
     path: str,
-    params: dict[str, Any] | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     first: bool = True,
     **data: Any,
@@ -233,17 +237,58 @@ def _request_wrapper(
         params = {}
     url = urljoin(MregCliConfig().get_url(), path)
 
-    # Strip None values from data
+    logurl = url
+    if operation_type.upper() == "GET" and params:
+        logurl = logurl + "?" + "&".join(f"{k}={v}" for k, v in params.items())
+
+    logger.info("Request: %s %s [%s]", operation_type.upper(), logurl, get_correlation_id())
+
+    if operation_type.upper() != "GET" and params:
+        logger.debug("Params: %s", params)
+
     if data:
+        logger.debug("Data: %s", data)
+
+    # Strip None values from data
+    if data and operation_type != "patch":
         data = _strip_none(data)
 
-    result = getattr(session, operation_type)(
+    if operation_type == "get":
+        func = session.get
+    elif operation_type == "post":
+        func = session.post
+    elif operation_type == "patch":
+        func = session.patch
+    elif operation_type == "delete":
+        func = session.delete
+    else:
+        raise ValueError(f"Unknown operation type: {operation_type}")
+
+    result = func(
         url,
         params=params,
         json=data or None,
         timeout=HTTP_TIMEOUT,
     )
-    result = cast(requests.Response, result)  # convince mypy that result is a Response
+
+    request_id = result.headers.get("X-Request-Id", "?")
+    correlation_id = result.headers.get("X-Correlation-ID", "?")
+    id_str = f"[R:{request_id} C:{correlation_id}]"
+    log_message = f"Response: {operation_type.upper()} {logurl} {result.status_code} {id_str}"
+
+    if result.status_code >= 300:
+        logger.warning(log_message)
+    else:
+        logger.info(log_message)
+
+    # This is a workaround for old server versions that can't handle JSON data in requests
+    if (
+        result.status_code == 500
+        and (operation_type == "post" or operation_type == "patch")
+        and params == {}
+        and data is not None
+    ):
+        result = func(url, params={}, timeout=HTTP_TIMEOUT, data=data)
 
     OutputManager().recording_request(operation_type, url, params, data, result)
 
@@ -258,22 +303,22 @@ def _request_wrapper(
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[True]) -> Response | None: ...
+def get(path: str, params: QueryParams | None, ok404: Literal[True]) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None, ok404: Literal[False]) -> Response: ...
+def get(path: str, params: QueryParams | None, ok404: Literal[False]) -> Response: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ..., *, ok404: bool) -> Response | None: ...
+def get(path: str, params: QueryParams | None = ..., *, ok404: bool) -> Response | None: ...
 
 
 @overload
-def get(path: str, params: dict[str, Any] | None = ...) -> Response: ...
+def get(path: str, params: QueryParams | None = ...) -> Response: ...
 
 
-def get(path: str, params: dict[str, Any] | None = None, ok404: bool = False) -> Response | None:
+def get(path: str, params: QueryParams | None = None, ok404: bool = False) -> Response | None:
     """Make a standard get request."""
     if params is None:
         params = {}
@@ -282,7 +327,7 @@ def get(path: str, params: dict[str, Any] | None = None, ok404: bool = False) ->
 
 def get_list(
     path: str,
-    params: dict[str, Any] | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     limit: int | None = 500,
 ) -> list[Json]:
@@ -329,7 +374,7 @@ def get_list_in(
 def get_item_by_key_value(
     path: str,
     search_field: str,
-    search_value: str,
+    search_value: str | int,
     ok404: bool = False,
 ) -> None | JsonMapping:
     """Get an item by a key value pair.
@@ -348,7 +393,7 @@ def get_item_by_key_value(
 
 def get_list_unique(
     path: str,
-    params: dict[str, str],
+    params: QueryParams | None = None,
     ok404: bool = False,
 ) -> None | JsonMapping:
     """Do a get request that returns a single result from a search.
@@ -374,7 +419,7 @@ class PaginatedResponse(BaseModel):
     """Paginated response data from the API."""
 
     count: int
-    next: str | None
+    next: str | None  # noqa: A003
     previous: str | None
     results: list[Json]
 
@@ -383,8 +428,9 @@ class PaginatedResponse(BaseModel):
     def _none_count_is_0(cls, v: Any) -> Any:
         """Ensure `count` is never `None`."""
         # Django count doesn't seem to be guaranteed to be an integer.
-        # Ensures here that None is treated as 0.
         # https://github.com/django/django/blob/bcbc4b9b8a4a47c8e045b060a9860a5c038192de/django/core/paginator.py#L105-L111
+        # Theoretically any callable can be passed to the "count" attribute of the paginator.
+        # Ensures here that None (and any falsey value) is treated as 0.
         return v or 0
 
     @classmethod
@@ -428,7 +474,7 @@ def validate_paginated_response(response: Response) -> PaginatedResponse:
 @overload
 def get_list_generic(
     path: str,
-    params: dict[str, Any] | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[True] = True,
@@ -438,7 +484,7 @@ def get_list_generic(
 @overload
 def get_list_generic(
     path: str,
-    params: dict[str, Any] | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: Literal[False] = False,
@@ -447,7 +493,7 @@ def get_list_generic(
 
 def get_list_generic(
     path: str,
-    params: dict[str, Any] | None = None,
+    params: QueryParams | None = None,
     ok404: bool = False,
     limit: int | None = 500,
     expect_one_result: bool | None = False,
@@ -471,23 +517,6 @@ def get_list_generic(
 
     :returns: A list of dictionaries or a dictionary if expect_one_result is True.
     """
-
-    def _check_expect_one_result(
-        ret: list[Json],
-    ) -> Json | list[Json]:
-        if expect_one_result:
-            if len(ret) == 0:
-                return {}
-            if len(ret) != 1:
-                raise CliError(f"Expected exactly one result, got {len(ret)}.")
-
-            return ret[0]
-
-        return ret
-
-    if params is None:
-        params = {}
-
     response = get(path, params)
 
     # Non-paginated results, return them directly
@@ -497,33 +526,29 @@ def get_list_generic(
     resp = validate_paginated_response(response)
 
     if limit and resp.count > abs(limit):
-        cli_warning(f"Too many hits ({resp.count}), please refine your search criteria.")
-
-    # Short circuit if there are no more pages. This means that there are no more results to
-    # be had so we can return the results we already have.
-    if not resp.next:
-        return _check_expect_one_result(resp.results)
+        raise TooManyResults(f"Too many hits ({resp.count}), please refine your search criteria.")
 
     # Iterate over all pages and collect the results
-    ret: list[Json] = []
-    while True:
-        resp = get(path, params=params, ok404=ok404)
-        if resp is None:
-            return _check_expect_one_result(ret)
-        result = validate_paginated_response(resp)
-
-        ret.extend(result.results)
-
-        if result.next:
-            path = result.next
-        else:
-            return _check_expect_one_result(ret)
+    ret: list[Json] = resp.results
+    while resp.next:
+        response = get(resp.next, params=params, ok404=ok404)
+        if response is None:
+            break
+        resp = validate_paginated_response(response)
+        ret.extend(resp.results)
+    if expect_one_result:
+        if len(ret) == 0:
+            return {}
+        if len(ret) != 1:
+            raise MultipleEntititesFound(f"Expected exactly one result, got {len(ret)}.")
+        return ret[0]
+    return ret
 
 
 def get_typed(
     path: str,
     type_: type[T],
-    params: dict[str, Any] | None = None,
+    params: QueryParams | None = None,
     limit: int | None = 500,
 ) -> T:
     """Fetch and deserialize JSON from an endpoint into a specific type.
@@ -549,21 +574,21 @@ def get_typed(
         return adapter.validate_json(resp.text)
 
 
-def post(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> Response | None:
+def post(path: str, params: QueryParams | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
-def patch(path: str, params: dict[str, Any] | None = None, **kwargs: Any) -> Response | None:
+def patch(path: str, params: QueryParams | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
         params = {}
     return _request_wrapper("patch", path, params=params, **kwargs)
 
 
-def delete(path: str, params: dict[str, Any] | None = None) -> Response | None:
+def delete(path: str, params: QueryParams | None = None) -> Response | None:
     """Use requests to make a delete request."""
     if params is None:
         params = {}

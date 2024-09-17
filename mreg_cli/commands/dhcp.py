@@ -10,7 +10,7 @@ from mreg_cli.api.models import Host, IPAddress
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import EntityOwnershipMismatch, InputFailure
-from mreg_cli.log import cli_info
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
 command_registry = CommandRegistry()
@@ -34,6 +34,8 @@ def ipaddress_from_ip_arg(arg: str) -> IPAddress | None:
     :raises InputFailure: If the IP address is valid but does not exist.
     :raises EntityOwnershipMismatch: If the IP address is in use by multiple hosts.
     """
+    if not IPAddressField.is_valid(arg):
+        return None
     try:
         addr = IPAddressField.from_string(arg)
     except InputFailure:
@@ -80,9 +82,8 @@ def assoc(args: argparse.Namespace) -> None:
         ipaddress = host.get_associatable_ip()
 
     ipaddress.associate_mac(mac, force=force)
-    cli_info(
-        f"Associated mac address {mac} with ip {ipaddress.ip()}",
-        print_msg=True,
+    OutputManager().add_ok(
+        f"Associated mac address {mac} with ip {ipaddress.ip()}"
     )
 
 
@@ -130,7 +131,6 @@ def disassoc(args: argparse.Namespace) -> None:
             ipaddress = ips_with_mac[0]
 
     ipaddress.disassociate_mac()
-    cli_info(
-        f"Disassociated mac address {ipaddress.macaddress} from ip {ipaddress.ip()}",
-        print_msg=True,
+    OutputManager().add_ok(
+        f"Disassociated mac address {ipaddress.macaddress} from ip {ipaddress.ip()}"
     )

@@ -5,7 +5,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from typing import Any, ClassVar, Literal, Self, cast
+from typing import Any, ClassVar, Self, cast
 
 from pydantic import (
     AliasChoices,
@@ -14,7 +14,6 @@ from pydantic import (
     Field,
     computed_field,
     field_validator,
-    model_validator,
 )
 from typing_extensions import Unpack
 
@@ -24,12 +23,12 @@ from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
-    CliWarning,
     CreateError,
     DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,
+    ForceMissing,
     InputFailure,
     InternalError,
     InvalidIPAddress,
@@ -42,7 +41,7 @@ from mreg_cli.exceptions import (
     ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
+from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -220,8 +219,11 @@ class WithZone(BaseModel, APIMixin):
         return ForwardZone.model_validate(data)
 
 
-class WithTTL(BaseModel):
+class WithTTL(BaseModel, APIMixin):
     """Model for an object that needs to work with TTL values."""
+
+    _ttl_nullable: ClassVar[bool] = True
+    """TTL field(s) of model are nullable."""
 
     @property
     def MAX_TTL(self) -> int:
@@ -246,32 +248,35 @@ class WithTTL(BaseModel):
         label = f"{label.removesuffix(':')}:"
         OutputManager().add_line("{1:<{0}}{2}".format(padding, label, ttl_value or "(Default)"))
 
-    def valid_ttl_patch_value_with_default(
-        self, ttl: int | Literal["default"] | None
-    ) -> int | Literal[""]:
-        """Return a valid TTL value for patching with a possible default value.
+    def set_ttl(self, ttl: str | int | None, field: str | None = None) -> Self:
+        """Set a new TTL for the object and returns the updated object.
 
-        Note: The ttl fields are not nullable, so we need to convert None to an empty string.
+        Updates the `ttl` field of the object unless a different field name
+        is specified.
 
-        Valid "proper" TTL values are: 300 - 68400.
-
-        The value of "default" sets the value to None, which is then converted to the empty string.
-
-        If a numeric TTL value is outside of the bounds, InputFail is raised.
-
-        :param ttl: The TTL target to set.
+        :param ttl: The TTL value to set. Can be an integer, "default", or None.
+        :param field: The field to set the TTL value in.
         :raises InputFailure: If the TTL value is outside the bounds.
-        :returns: A valid TTL value that can be fed to the API.
+        :returns: The updated object.
         """
-        if ttl == "default" or ttl is None:
-            return ""
+        # NOTE: could add some sort of validation that model has `field`
+        ttl_field = field or "ttl"
 
-        try:
-            ttl = int(ttl)
-        except ValueError as e:
-            raise InputFailure(f"Invalid TTL value: {ttl}") from e
+        # str args can either be numeric or "default"
+        # Turn it into an int or None
+        if isinstance(ttl, str):
+            if self._ttl_nullable and ttl == "default":
+                ttl = None
+            else:
+                try:
+                    ttl = int(ttl)
+                except ValueError as e:
+                    raise InputFailure(f"Invalid TTL value: {ttl}") from e
 
-        return self.valid_numeric_ttl(ttl)
+        if isinstance(ttl, int):
+            ttl = self.valid_numeric_ttl(ttl)
+
+        return self.patch({ttl_field: ttl})
 
     def valid_numeric_ttl(self, ttl: int) -> int:
         """Return a valid TTL value.
@@ -282,7 +287,7 @@ class WithTTL(BaseModel):
         :raises InputFailure: If the TTL value is outside the bounds.
         :returns: A valid TTL vale
         """
-        if ttl <= self.MIN_TTL or ttl >= self.MAX_TTL:
+        if ttl < self.MIN_TTL or ttl > self.MAX_TTL:
             raise InputFailure(f"Invalid TTL value: {ttl} ({self.MIN_TTL}->{self.MAX_TTL})")
 
         return ttl
@@ -385,6 +390,11 @@ class NameServer(FrozenModelWithTimestamps, WithTTL):
     id: int  # noqa: A003
     name: str
 
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.Nameservers
+
 
 class Permission(FrozenModelWithTimestamps, APIMixin):
     """Model for a permission object."""
@@ -397,7 +407,7 @@ class Permission(FrozenModelWithTimestamps, APIMixin):
 
     @field_validator("range", mode="before")
     @classmethod
-    def validate_ip_or_network(cls, value: str) -> IP_NetworkT:
+    def validate_ip_or_network(cls, value: Any) -> IP_NetworkT:
         """Validate and convert the input to a network."""
         try:
             return ipaddress.ip_network(value)
@@ -476,6 +486,9 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
     soa_ttl: int
     default_ttl: int
     name: str
+
+    # Specify that TTL fields are NOT nullable for Zone objects
+    _ttl_nullable: ClassVar[bool] = False
 
     def is_delegated(self) -> bool:
         """Return True if the zone is delegated."""
@@ -613,7 +626,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
                     if not host.ipaddresses and not force:
                         errors.append(f"{nameserver} has no A-record/glue, must force")
         if errors:
-            raise CliWarning("\n".join(errors))
+            raise ForceMissing("\n".join(errors))
 
     @classmethod
     def create_zone(
@@ -717,14 +730,14 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         :param expire: The expire interval for the zone.
         :param soa_ttl: The TTL for the zone.
         """
-        params: dict[str, str | int | None] = {
+        params: QueryParams = {
             "primary_ns": primary_ns,
             "email": email,
             "serialno": serialno,
             "refresh": refresh,
             "retry": retry,
             "expire": expire,
-            "soa_ttl": soa_ttl,
+            "soa_ttl": self.valid_numeric_ttl(soa_ttl) if soa_ttl is not None else None,
         }
         params = {k: v for k, v in params.items() if v is not None}
         if not params:
@@ -848,15 +861,12 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         if not resp or not resp.ok:
             raise PatchError(f"Failed to update comment for delegation {delegation.name!r}")
 
-    def set_default_ttl(self, ttl: int) -> None:
+    def set_default_ttl(self, ttl: int) -> Self:
         """Set the default TTL for the zone.
 
         :param ttl: The TTL to set.
         """
-        ttl = self.valid_numeric_ttl(ttl)
-        resp = patch(self.endpoint().with_id(self.id), default_ttl=ttl)
-        if not resp or not resp.ok:
-            raise PatchError(f"Failed to update default TTL for zone {self.name!r}")
+        return self.set_ttl(ttl, "default_ttl")
 
     def update_nameservers(self, nameservers: list[str], force: bool = False) -> None:
         """Update the nameservers of the zone.
@@ -907,6 +917,9 @@ class ForwardZone(Zone, WithName, APIMixin):
 
         if "zone" in zoneblob:
             return ForwardZone.model_validate(zoneblob["zone"])
+
+        if "delegation" in zoneblob:
+            return ForwardZoneDelegation.model_validate(zoneblob["delegation"])
 
         raise UnexpectedDataError(f"Unexpected response from server: {zoneblob}")
 
@@ -1042,7 +1055,7 @@ class HostPolicy(FrozenModel, WithName):
             return datetime.combine(value, datetime.min.time())
         return value  # let pydantic throw the ValidationError
 
-    @computed_field
+    @computed_field  # noqa: A003
     def created_at(self) -> datetime:
         """Creation time."""
         return self.created_at_tz_naive.replace(tzinfo=self.updated_at.tzinfo)
@@ -1145,7 +1158,7 @@ class Role(HostPolicy, WithHistory):
         for label in labels:
             output_manager.add_formatted_line("", label.name, padding)
 
-    def output_hosts(self, padding: int = 14) -> None:
+    def output_hosts(self, _padding: int = 14) -> None:
         """Output the hosts that use the role.
 
         :param padding: Number of spaces for left-padding the output.
@@ -1158,7 +1171,7 @@ class Role(HostPolicy, WithHistory):
         else:
             manager.add_line("No host uses this role")
 
-    def output_atoms(self, padding: int = 14) -> None:
+    def output_atoms(self, _padding: int = 14) -> None:
         """Output the atoms that are members of the role.
 
         :param padding: Number of spaces for left-padding the output.
@@ -1186,7 +1199,7 @@ class Role(HostPolicy, WithHistory):
         )
 
     @classmethod
-    def output_multiple_table(cls, roles: list[Role], padding: int = 14) -> None:
+    def output_multiple_table(cls, roles: list[Role], _padding: int = 14) -> None:
         """Output multiple roles to the console in a table.
 
         :param roles: List of roles to output.
@@ -1445,10 +1458,25 @@ class Label(FrozenModelWithTimestamps, WithName):
 class ExcludedRange(FrozenModelWithTimestamps):
     """Model for an excluded IP range for a network."""
 
-    id: int
+    id: int  # noqa: A003
     network: int
-    start_ip: str  # TODO: use IPAddressField types
-    end_ip: str
+    start_ip: IPAddressField
+    end_ip: IPAddressField
+
+    @field_validator("start_ip", "end_ip", mode="before")
+    @classmethod
+    def convert_ip_address(cls, value: Any):
+        """Convert ipaddress string to IPAddressField if necessary."""
+        if isinstance(value, str):
+            try:
+                return IPAddressField(address=ipaddress.ip_address(value))
+            except ValueError as e:
+                raise InputFailure(f"Invalid IP address: {value}") from e
+        return value
+
+    def excluded_ips(self) -> int:
+        """Return the number of IP addresses in the excluded range."""
+        return int(self.end_ip.address) - int(self.start_ip.address) + 1
 
 
 class Network(FrozenModelWithTimestamps, APIMixin):
@@ -1613,6 +1641,12 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             fmt("", ip)
         if ipnet.broadcast_address in reserved_ips:
             fmt("", f"{ipnet.broadcast_address} (broadcast)")
+        if self.excluded_ranges:
+            excluded_ips = 0
+            for ex_range in self.excluded_ranges:
+                excluded_ips += ex_range.excluded_ips()
+            fmt("Excluded ranges:", f"{excluded_ips} ipaddresses")
+            self.output_excluded_ranges(padding=padding)
         fmt("Used addresses:", self.get_used_count())
         fmt("Unused addresses:", f"{self.get_unused_count()} (excluding reserved adr.)")
 
@@ -1667,9 +1701,9 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             manager.add_line(f"No excluded ranges for network {self.network}")
             return
 
-        manager.add_line(f"{'Start IP':<{padding}}End IP")
+        # manager.add_line(f"{'Start IP':<{padding}}End IP")
         for exrange in self.excluded_ranges:
-            manager.add_line(f"{exrange.start_ip:<{padding}}{exrange.end_ip}")
+            manager.add_line(f" {str(exrange.start_ip):<{padding}} -> {exrange.end_ip}")
 
     def overlaps(self, other: Network | str | IP_NetworkT) -> bool:
         """Check if the network overlaps with another network."""
@@ -1761,7 +1795,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         # No need to validate IPs - if we find a match it's valid
         exrange: ExcludedRange | None = None
         for excluded_range in self.excluded_ranges:
-            if excluded_range.start_ip == start and excluded_range.end_ip == end:
+            if str(excluded_range.start_ip) == start and str(excluded_range.end_ip) == end:
                 exrange = excluded_range
                 break
         else:
@@ -1840,21 +1874,19 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
     @field_validator("macaddress", mode="before")
     @classmethod
-    def create_valid_macadress_or_none(cls, v: str) -> MACAddressField | None:
+    def create_valid_macadress_or_none(cls, v: Any) -> MACAddressField | None:
         """Create macaddress or convert empty strings to None."""
         if v:
             return MACAddressField(address=v)
-
         return None
 
-    @model_validator(mode="before")
+    @field_validator("ipaddress", mode="before")
     @classmethod
-    def convert_ip_address(cls, values: Any):
-        """Convert ipaddress string to IPAddressField if necessary."""
-        ip_address = values.get("ipaddress")
-        if isinstance(ip_address, str):
-            values["ipaddress"] = {"address": ip_address}
-        return values
+    def create_valid_ipaddress(cls, v: Any) -> IPAddressField:
+        """Create macaddress or convert empty strings to None."""
+        if isinstance(v, str):
+            return IPAddressField.from_string(v)
+        return v  # let Pydantic handle it
 
     @classmethod
     def get_by_ip(cls, ip: IP_AddressT) -> list[Self]:
@@ -2017,7 +2049,7 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
 
     @field_validator("name", mode="before")
     @classmethod
-    def validate_name(cls, value: str) -> HostT:
+    def validate_name(cls, value: Any) -> HostT:
         """Validate the hostname."""
         return HostT(hostname=value)
 
@@ -2423,7 +2455,7 @@ class BacnetID(FrozenModel, WithHost, APIMixin):
         :param end: The end of the range.
         :returns: List of BacnetID objects in the range.
         """
-        params = {"id__range": f"{start},{end}"}
+        params: QueryParams = {"id__range": f"{start},{end}"}
         return get_typed(Endpoint.BacnetID, list[cls], params=params)
 
     @classmethod
@@ -2471,7 +2503,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     bacnetid: int | None = None
     contact: str
     ttl: int | None = None
-    comment: str | None = None
+    comment: str
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None
@@ -2480,23 +2512,16 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
     @field_validator("name", mode="before")
     @classmethod
-    def validate_name(cls, value: str) -> HostT:
+    def validate_name(cls, value: Any) -> HostT:
         """Validate the hostname."""
         return HostT(hostname=value)
 
-    @field_validator("comment", mode="before")
-    @classmethod
-    def empty_string_to_none(cls, v: str) -> str | None:
-        """Convert empty strings to None."""
-        return v or None
-
     @field_validator("bacnetid", mode="before")
     @classmethod
-    def convert_bacnetid(cls, v: dict[str, int] | None) -> int | None:
-        """Convert json id field to int or None."""
-        if v and "id" in v:
-            return v["id"]
-
+    def convert_bacnetid(cls, v: Any) -> Any:
+        """Use nested ID value in bacnetid value."""
+        if isinstance(v, dict):
+            return v.get("id")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
         return None
 
     @classmethod
@@ -2673,7 +2698,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: A new Host object fetched from the API with the updated IP address.
         """
-        params: dict[str, str | None] = {"ipaddress": str(ip), "host": str(self.id)}
+        params: QueryParams = {"ipaddress": str(ip), "host": str(self.id)}
         if mac:
             params["macaddress"] = mac.address
 
@@ -2734,7 +2759,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 return ipv4s[0]
 
         raise EntityOwnershipMismatch(
-            f"Host {self} has multiple IPs and cannot determine which one to use."
+            f"Host {self} has multiple IPs, cannot determine which one to use."
         )
 
     def has_ptr_override(self, arg_ip: IP_AddressT) -> bool:
@@ -2797,7 +2822,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if isinstance(ip, str):
             ip = IPAddressField(address=ipaddress.ip_address(ip))
 
-        params = {
+        params: QueryParams = {
             "macaddress": mac.address,
             "ordering": "ipaddress",
         }
@@ -2894,9 +2919,9 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """Return the zone for the host.
 
         :param accept_delegation: If True, accept delegation and return a Delegation object if the
-                                    zone of the host is delegated. Otherwise raise EntityOwnershipMismatch.
+                zone of the host is delegated. Otherwise raise EntityOwnershipMismatch.
         :param validate_zone_resolution: If True, validate that the resolved zone matches the
-                                          expected zone ID. Fail with ValidationFailure if it does not.
+                expected zone ID. Fail with ValidationFailure if it does not.
         """
         if not self.zone:
             return None
@@ -3005,7 +3030,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         output_manager.add_line(f"{'Name:':<{padding}}{self.name}")
         output_manager.add_line(f"{'Contact:':<{padding}}{self.contact}")
 
-        if self.comment is not None and self.comment != "":
+        if self.comment:
             output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
 
         self.output_ipaddresses(padding=padding, names=names)
@@ -3057,7 +3082,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         CNAME.output_multiple(self.cnames, padding=padding)
 
-    def output_roles(self, padding: int = 14) -> None:
+    def output_roles(self, _padding: int = 14) -> None:
         """Output the roles for the host."""
         roles = self.roles()
         manager = OutputManager()
@@ -3091,7 +3116,7 @@ class HostList(FrozenModel):
         return Endpoint.Hosts
 
     @classmethod
-    def get(cls, params: dict[str, Any] | None = None) -> HostList:
+    def get(cls, params: QueryParams | None = None) -> HostList:
         """Get a list of hosts.
 
         :param params: Optional parameters to pass to the API.
@@ -3116,12 +3141,6 @@ class HostList(FrozenModel):
         :returns: A HostList object.
         """
         return cls.get(params={"ipaddresses__ipaddress": str(ip), "ordering": "name"})
-
-    @field_validator("results", mode="before")
-    @classmethod
-    def check_results(cls, v: list[dict[str, str]]) -> list[dict[str, str]]:
-        """Check that the results are valid."""
-        return v
 
     def __len__(self):
         """Return the number of results."""
@@ -3164,7 +3183,7 @@ class HostList(FrozenModel):
 
         _format("Name", "Contact", "Comment")
         for i in self.results:
-            _format(str(i.name), i.contact, i.comment or "")
+            _format(str(i.name), i.contact, i.comment)
 
 
 class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):

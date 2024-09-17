@@ -9,9 +9,8 @@ from mreg_cli.api.models import Label, NetworkOrIP, Permission
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import DeleteError, EntityNotFound
-from mreg_cli.log import cli_info
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
+from mreg_cli.types import Flag, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 command_registry = CommandRegistry()
@@ -47,7 +46,7 @@ def network_list(args: argparse.Namespace) -> None:
     """
     permission_list: list[Permission] = []
 
-    params: dict[str, str] = {}
+    params: QueryParams = {}
     if args.group is not None:
         param, value = convert_wildcard_to_regex("group", args.group)
         params[param] = value
@@ -118,7 +117,7 @@ def network_add(args: argparse.Namespace) -> None:
 
     Permission.get_by_query_unique_and_raise(query)
     Permission.create(params=query)
-    cli_info(f"Added permission to {args.range}", print_msg=True)
+    OutputManager().add_ok(f"Added permission to {args.range}")
 
 
 @command_registry.register_command(
@@ -144,7 +143,7 @@ def network_remove(args: argparse.Namespace) -> None:
 
     permission = Permission.get_by_query_unique_or_raise(query)
     if permission.delete():
-        cli_info(f"Removed permission for {args.range}", print_msg=True)
+        OutputManager().add_ok(f"Removed permission for {args.range}")
     else:
         raise DeleteError(f"Failed to remove permission for {args.range}")
 
@@ -173,7 +172,7 @@ def add_label_to_permission(args: argparse.Namespace) -> None:
     }
     permission = Permission.get_by_query_unique_or_raise(query)
     permission.add_label(args.label)
-    cli_info(f"Added the label {args.label!r} to the permission.", print_msg=True)
+    OutputManager().add_ok(f"Added the label {args.label!r} to the permission.")
 
 
 @command_registry.register_command(
@@ -200,4 +199,4 @@ def remove_label_from_permission(args: argparse.Namespace) -> None:
     }
     permission = Permission.get_by_query_unique_or_raise(query)
     permission.remove_label(args.label)
-    cli_info(f"Removed the label {args.label!r} from the permission.", print_msg=True)
+    OutputManager().add_ok(f"Removed the label {args.label!r} from the permission.")

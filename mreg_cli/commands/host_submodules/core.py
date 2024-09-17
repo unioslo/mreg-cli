@@ -15,8 +15,15 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.history import HistoryResource
-from mreg_cli.api.models import ForwardZone, Host, HostList, HostT, MACAddressField, NetworkOrIP
+from mreg_cli.api.models import (
+    ForwardZone,
+    Host,
+    HostList,
+    HostT,
+    MACAddressField,
+    Network,
+    NetworkOrIP,
+)
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
@@ -28,8 +35,8 @@ from mreg_cli.exceptions import (
     InputFailure,
     PatchError,
 )
-from mreg_cli.log import cli_info
-from mreg_cli.types import Flag
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag, JsonMapping, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 
@@ -111,24 +118,30 @@ def add(args: argparse.Namespace) -> None:
         except ValueError as e:
             raise InputFailure(f"invalid MAC address: {macaddress}") from e
 
-    data: dict[str, str | None] = {
+    data: JsonMapping = {
         "name": hname.hostname,
         "contact": args.contact or None,
         "comment": args.comment or None,
     }
 
     if args.ip:
+        network = None
         net_or_ip = NetworkOrIP(ip_or_network=args.ip)
         if net_or_ip.is_ip():
             data["ipaddress"] = str(net_or_ip)
+            network = Network.get_by_ip(net_or_ip.as_ip())
         elif net_or_ip.is_network():
             data["network"] = str(net_or_ip)
+            network = Network.get_by_network(str(net_or_ip))
         else:
             raise EntityNotFound(f"Invalid ip or network: {args.ip}")
+        if network and network.frozen and not args.force:
+            raise ForceMissing(f"Network {network.network} is frozen, must force")
 
     host = Host.create(data)
     if not host:
         raise CreateError("Failed to add host.")
+    OutputManager().add_ok(f"Created host {host.name}")
 
     if macaddress is not None:
         if ip:
@@ -142,9 +155,8 @@ def add(args: argparse.Namespace) -> None:
             if len(host.ipaddresses) == 1:
                 host = host.associate_mac_to_ip(macaddress, host.ipaddresses[0].ipaddress)
             else:
-                cli_info(
-                    "Failed to associate MAC address to IP, multiple IP addresses after creation.",
-                    print_msg=True,
+                OutputManager().add_ok(
+                    "Failed to associate MAC address to IP, multiple IP addresses after creation."
                 )
 
     host.output()
@@ -244,7 +256,7 @@ def remove(args: argparse.Namespace) -> None:
                 warnings.append(f"    - {naptr.replacement}")
         else:
             for naptr in naptrs:
-                cli_info(
+                OutputManager().add_ok(
                     "deleted NAPTR record {} when removing {}".format(
                         naptr.replacement,
                         host.name,
@@ -260,7 +272,7 @@ def remove(args: argparse.Namespace) -> None:
                 warnings.append(f"    - {srv.name}")
         else:
             for srv in srvs:
-                cli_info(
+                OutputManager().add_ok(
                     "deleted SRV record {} when removing {}".format(
                         srv.name,
                         host.name,
@@ -275,7 +287,7 @@ def remove(args: argparse.Namespace) -> None:
                 warnings.append(f"    - {ptr.ipaddress}")
         else:
             for ptr in host.ptr_overrides:
-                cli_info(
+                OutputManager().add_ok(
                     "deleted PTR record {} when removing {}".format(
                         ptr.ipaddress,
                         host.name,
@@ -288,7 +300,7 @@ def remove(args: argparse.Namespace) -> None:
         raise ForceMissing(f"{host.name} requires force and override for deletion:\n{warn_msg}")
 
     if host.delete():
-        cli_info(f"removed {host.name}", print_msg=True)
+        OutputManager().add_ok(f"removed {host.name}")
     else:
         raise DeleteError(f"failed to remove {host.name}")
 
@@ -365,7 +377,7 @@ def find(args: argparse.Namespace) -> None:
     if not any([args.name, args.comment, args.contact]):
         raise InputFailure("Need at least one search critera")
 
-    params: dict[str, str | int] = {
+    params: QueryParams = {
         "ordering": "name",
     }
 
@@ -422,7 +434,7 @@ def rename(args: argparse.Namespace) -> None:
         raise ForceMissing("Wildcards must be forced.")
 
     new_host = old_host.rename(new_name)
-    cli_info(f"renamed {old_host} to {new_name}", print_msg=True)
+    OutputManager().add_ok(f"renamed {old_host} to {new_name}")
 
 
 # Add 'set_comment' as a sub command to the 'host' command
@@ -452,10 +464,7 @@ def set_comment(args: argparse.Namespace) -> None:
     if not updated_host:
         raise PatchError(f"Failed to update comment of {host.name}")
 
-    cli_info(
-        f"Updated comment of {host} to {args.comment}",
-        print_msg=True,
-    )
+    OutputManager().add_ok(f"Updated comment of {host} to {args.comment}")
 
 
 @command_registry.register_command(
@@ -478,7 +487,7 @@ def set_contact(args: argparse.Namespace) -> None:
     if not updated_host:
         raise PatchError(f"Failed to update contact of {host.name}")
 
-    cli_info(f"Updated contact of {host} to {args.contact}", print_msg=True)
+    OutputManager().add_ok(f"Updated contact of {host} to {args.contact}")
 
 
 @command_registry.register_command(

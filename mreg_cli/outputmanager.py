@@ -10,6 +10,7 @@ from __future__ import annotations
 import atexit
 import datetime
 import json
+import logging
 import os
 import re
 from collections.abc import Sequence
@@ -19,8 +20,10 @@ from urllib.parse import urlencode, urlparse
 import requests
 from pydantic import BaseModel
 
-from mreg_cli.exceptions import CliError
-from mreg_cli.types import RecordingEntry, TimeInfo
+from mreg_cli.exceptions import FileError, InputFailure
+from mreg_cli.types import JsonMapping, RecordingEntry, TimeInfo
+
+logger = logging.getLogger(__name__)
 
 
 @overload
@@ -90,7 +93,7 @@ def remove_dict_key_recursive(obj: object, key: str) -> None:
             remove_dict_key_recursive(other_value, key)
 
 
-def urlpath(url: str, params: dict[str, Any]) -> str:
+def urlpath(url: str, params: JsonMapping) -> str:
     """Return the path and query string of a URL."""
     if params:
         url = f"{url}?{urlencode(params)}"
@@ -175,7 +178,7 @@ class OutputManager:
             with open(filename, "w") as _:
                 pass
         except OSError as exc:
-            raise CliError(f"Unable open file for writing: {filename}") from exc
+            raise FileError(f"Unable open recording file for writing: {filename}") from exc
 
         self._recording = True
         self._filename = filename
@@ -274,7 +277,7 @@ class OutputManager:
         self,
         method: str,
         url: str,
-        params: dict[str, Any],
+        params: JsonMapping,
         data: dict[str, Any],
         result: requests.Response,
     ) -> None:
@@ -313,10 +316,12 @@ class OutputManager:
         :raises CliError: If the command is invalid.
         :return: The cleaned command, devoid of filters and other noise.
         """
+        logger.debug(f"From command: {command}")
         self._command_issued = command.rstrip()
         self._command_executed, self._filter_re, self._filter_negate = self.get_filter(
             remove_comments(self._command_issued)
         )
+        logger.info(f"From command (filtered): {self._command_executed}")
         return self._command_executed
 
     def add_line(self, line: str) -> None:
@@ -324,6 +329,7 @@ class OutputManager:
 
         :param line: The line to add.
         """
+        logger.debug(f"Adding line: {line}")
         self._output.append(line)
 
     def add_formatted_line(self, key: str, value: str, padding: int = 14) -> None:
@@ -388,12 +394,12 @@ class OutputManager:
                     filter_re = re.compile(filter_str)
                 except re.error as exc:
                     if "|" in filter_str:
-                        raise CliError(
-                            "ERROR: Command parts that contain a pipe ('|') must be quoted.",
+                        raise InputFailure(
+                            "Command parts that contain a pipe ('|') must be quoted.",
                         ) from exc
                     else:
-                        raise CliError(
-                            "ERROR: Unable to compile regex '{}': {}", filter_str, exc
+                        raise InputFailure(
+                            f"Unable to compile regex '{filter_str}': {exc}"
                         ) from exc
 
         return (command, filter_re, negate)

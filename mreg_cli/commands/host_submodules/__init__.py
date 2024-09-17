@@ -15,6 +15,8 @@ imports the submodules after it has been initialized.
 # We have to import each of the submodules explictly here in order to
 # ensure they are included when we build binaries with PyInstaller.
 # We also cannot do `from . import *`. Each module must be specified.
+from __future__ import annotations
+
 from . import a_aaaa, bacnet, cname, core, rr
 
 __all__ = [

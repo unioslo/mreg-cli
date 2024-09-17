@@ -8,8 +8,8 @@ from typing import Any
 from mreg_cli.api.models import Zone
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError
-from mreg_cli.log import cli_info, cli_warning
+from mreg_cli.exceptions import DeleteError, InputFailure
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
 command_registry = CommandRegistry()
@@ -40,7 +40,7 @@ def create(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (ns, force, zone, email)
     """
     Zone.create_zone(args.zone, args.email, args.ns, args.force)
-    cli_info(f"Created zone {args.zone}", print_msg=True)
+    OutputManager().add_ok(f"Created zone {args.zone}")
 
 
 @command_registry.register_command(
@@ -64,7 +64,7 @@ def delegation_create(args: argparse.Namespace) -> None:
     """
     zone = Zone.get_zone_or_raise(args.zone)
     zone.create_delegation(args.delegation, args.ns, args.comment, args.force)
-    cli_info(f"Created zone delegation {args.delegation}", print_msg=True)
+    OutputManager().add_ok(f"Created zone delegation {args.delegation}")
 
 
 @command_registry.register_command(
@@ -83,7 +83,7 @@ def zone_delete(args: argparse.Namespace) -> None:
     """
     zone = Zone.get_zone_or_raise(args.zone)
     if zone.delete_zone(args.force):
-        cli_info(f"Deleted zone {zone.name}", print_msg=True)
+        OutputManager().add_ok(f"Deleted zone {zone.name}")
     else:
         raise DeleteError(f"Unable to delete zone {zone.name}")
 
@@ -107,7 +107,7 @@ def delegation_delete(args: argparse.Namespace) -> None:
     # and we try to delete pederhan.uio.no?
     zone = Zone.get_zone_or_raise(args.zone)
     if zone.delete_delegation(args.delegation):
-        cli_info(f"Removed zone delegation {args.delegation}", True)
+        OutputManager().add_ok(f"Removed zone delegation {args.delegation}")
     else:
         raise DeleteError(f"Unable to delete delegation {args.delegation}")
 
@@ -154,7 +154,7 @@ def zone_list(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (forward, reverse)
     """
     if not (args.forward or args.reverse):
-        cli_warning("Add either -forward or -reverse as argument")
+        raise InputFailure("Add either -forward or -reverse as argument")
     Zone.output_zones(args.forward, args.reverse)
 
 
@@ -192,7 +192,7 @@ def zone_delegation_comment_set(args: argparse.Namespace) -> None:
     """
     zone = Zone.get_zone_or_raise(args.zone)
     zone.set_delegation_comment(args.delegation, args.comment)
-    cli_info(f"Updated comment for {args.delegation}", True)
+    OutputManager().add_ok(f"Updated comment for {args.delegation}")
 
 
 @command_registry.register_command(
@@ -211,7 +211,7 @@ def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
     """
     zone = Zone.get_zone_or_raise(args.zone)
     zone.set_delegation_comment(args.delegation, "")
-    cli_info(f"Removed comment for {args.delegation}", True)
+    OutputManager().add_ok(f"Removed comment for {args.delegation}")
 
 
 @command_registry.register_command(
@@ -233,7 +233,7 @@ def set_ns(args: argparse.Namespace) -> None:
     """
     zone = Zone.get_zone_or_raise(args.zone)
     zone.update_nameservers(args.ns, args.force)
-    cli_info(f"Updated nameservers for {args.zone}", print_msg=True)
+    OutputManager().add_ok(f"Updated nameservers for {args.zone}")
 
 
 @command_registry.register_command(
@@ -266,7 +266,7 @@ def set_soa(args: argparse.Namespace) -> None:
         expire=args.expire,
         soa_ttl=args.soa_ttl,
     )
-    cli_info(f"Updated SOA for {args.zone}", print_msg=True)
+    OutputManager().add_ok(f"Updated SOA for {args.zone}")
 
 
 @command_registry.register_command(
@@ -285,4 +285,4 @@ def set_default_ttl(args: argparse.Namespace) -> None:
     """
     zone = Zone.get_zone_or_raise(args.zone)
     zone.set_default_ttl(args.ttl)
-    cli_info(f"Set default TTL for {args.zone}", print_msg=True)
+    OutputManager().add_ok(f"Set default TTL for {args.zone}")

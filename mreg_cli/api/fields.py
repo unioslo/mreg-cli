@@ -20,7 +20,7 @@ class MACAddressField(FrozenModel):
 
     address: str
 
-    @field_validator("address", mode="before")
+    @field_validator("address", mode="after")
     @classmethod
     def validate_and_format_mac(cls, v: str) -> str:
         """Validate and normalize MAC address to 'aa:bb:cc:dd:ee:ff' format.
@@ -49,8 +49,13 @@ class IPAddressField(FrozenModel):
 
     @classmethod
     def from_string(cls, address: str) -> IPAddressField:
-        """Create an IPAddressField from a string."""
-        return cls(address=address)  # type: ignore # validator handles this
+        """Create an IPAddressField from a string.
+
+        Shortcut for creating an IPAddressField from a string,
+        without having to convince the type checker that we can
+        pass in a string to the address field each time.
+        """
+        return cls(address=address)  # pyright: ignore[reportArgumentType] # validator handles this
 
     @field_validator("address", mode="before")
     @classmethod
@@ -68,6 +73,15 @@ class IPAddressField(FrozenModel):
     def is_ipv6(self) -> bool:
         """Check if the IP address is IPv6."""
         return isinstance(self.address, ipaddress.IPv6Address)
+
+    @staticmethod
+    def is_valid(value: str) -> bool:
+        """Check if the value is a valid IP address."""
+        try:
+            ipaddress.ip_address(value)
+            return True
+        except ValueError:
+            return False
 
     def __str__(self) -> str:
         """Return the IP address as a string."""

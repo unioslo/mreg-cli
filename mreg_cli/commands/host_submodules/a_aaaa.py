@@ -26,7 +26,7 @@ from mreg_cli.exceptions import (
     ForceMissing,
     InputFailure,
 )
-from mreg_cli.log import cli_info
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
 
 
@@ -79,10 +79,7 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
 
     ip_obj.patch(fields={"ipaddress": str(new_ip)})
 
-    cli_info(
-        f"changed ip {args.old} to {new_ip} for {host}",
-        print_msg=True,
-    )
+    OutputManager().add_ok(f"changed ip {args.old} to {new_ip} for {host}")
 
 
 def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
@@ -119,7 +116,7 @@ def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
         ptr.patch(fields={"host": to_host.id})
         msg += "Moved PTR override."
 
-    cli_info(msg, print_msg=True)
+    OutputManager().add_line(msg)
 
 
 def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
@@ -141,7 +138,7 @@ def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
         raise EntityNotFound(f"Host {host} does not have IP {ip}")
 
     if host_ip.delete():
-        cli_info(f"Removed ipaddress {args.ip} from {host}", print_msg=True)
+        OutputManager().add_ok(f"Removed ipaddress {args.ip} from {host}")
     else:
         raise DeleteError(f"Failed to remove ipaddress {args.ip} from {host}")
 
@@ -168,16 +165,24 @@ def _add_ip(
         raise InputFailure("Use a_add for IPv4 addresses")
 
     ipaddr = None
+    network = None
     if ip_or_net.is_network():
         network = Network.get_by_network_or_raise(str(ip_or_net.ip_or_network))
         ip = network.get_first_available_ip()
         ipaddr = ip
     else:
+        network = Network.get_by_ip(ip_or_net.as_ip())
         ip = ip_or_net
         ipaddr = ip.as_ip()
 
+    if not args.force and network and network.frozen:
+        raise ForceMissing(f"Network {network.network} is frozen, must force")
+
     if not args.force and host.has_ip(ipaddr):
         raise EntityAlreadyExists(f"Host {host} already has IP {ipaddr}")
+
+    if not args.force and len(host.ipaddresses) > 0:
+        raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
 
     mac = None
     if args.macaddress:
@@ -189,8 +194,9 @@ def _add_ip(
     if not args.force:
         _bail_if_ip_in_use_and_not_force(ipaddr)
 
-    host.add_ip(ipaddr, mac)
-    return host.refetch()
+    host = host.add_ip(ipaddr, mac)  # returns the refetched host
+    OutputManager().add_ok(f"Added ipaddress {ipaddr} to {host}")
+    return host
 
 
 @command_registry.register_command(

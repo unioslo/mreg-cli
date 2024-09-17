@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.exceptions import EntityNotFound, InternalError
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import QueryParams
 from mreg_cli.utilities.api import get_typed
 
 
@@ -62,12 +63,14 @@ class HistoryItem(BaseModel):
     data: dict[str, Any]
 
     @field_validator("data", mode="before")
-    def parse_json_data(cls, v: Any) -> dict[str, Any]:
-        """Ensure that data is always treated as a dictionary."""
+    def parse_json_data(cls, v: Any) -> Any:
+        """Ensure that non-dict values are treated as JSON."""
         if isinstance(v, dict):
-            return v  # type: ignore
-        else:
+            return v  # pyright: ignore[reportUnknownVariableType]
+        try:
             return json.loads(v)
+        except json.JSONDecodeError as e:
+            raise ValueError("Failed to parse history data as JSON") from e
 
     def clean_timestamp(self) -> str:
         """Clean up the timestamp for output."""
@@ -79,14 +82,19 @@ class HistoryItem(BaseModel):
         action = self.action
         model = self.model
         if action in ("add", "remove"):
-            if self.name == basename:
-                msg = self.name
+            if action == "add":
+                direction = "to"
+            elif action == "remove":
+                direction = "from"
             else:
-                msg = self.resource + " " + self.name
-                if action == "add":
-                    action = "add to"
-                elif action == "remove":
-                    action = "remove from"
+                raise InternalError(f"Unhandled history entry: {action}")
+            rel = self.data["relation"][:-1]
+            cls = str(self.resource)
+            if "." in cls:
+                cls = cls[cls.rindex(".") + 1 :]
+            cls = cls.replace("HostPolicy_", "")
+            cls = cls.lower()
+            msg = f"{rel} {self.data['name']} {direction} {cls} {self.name}"
         elif action == "create":
             msg = ", ".join(f"{k} = '{v}'" for k, v in self.data.items())
         elif action == "update":
@@ -123,7 +131,7 @@ class HistoryItem(BaseModel):
     @classmethod
     def get(cls, name: str, resource: HistoryResource) -> list[Self]:
         """Get history items for a resource."""
-        params: dict[str, str] = {"resource": resource.resource(), "name": name}
+        params: QueryParams = {"resource": resource.resource(), "name": name}
         ret = get_typed(Endpoint.History, list[cls], params=params)
         if len(ret) == 0:
             raise EntityNotFound(f"No history found for {name}")

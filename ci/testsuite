@@ -52,15 +52,17 @@ host add somehost -ip 10.0.1.20 -contact support@example.org -force # should fai
 host add somehost -ip 10.0.1.0/24 -contact support@example.org -force
 network list_used_addresses 10.0.1.0/24
 network set_description 10.0.1.0/24 "Frozen but has one host"
-#TODO: populate category/location tags (see util.py line 38-39)
-#network set_category 10.0.1.0/24 Comedy_Drama
-#network set_location 10.0.1.0/24 Oslo_Norway
+network set_category 10.0.1.0/24 cat1
+network set_location 10.0.1.0/24 loc1
 network set_vlan 10.0.1.0/24 1234
 network info 10.0.1.0/24
 network find -network 10.0.1.0/24 -description '*one host*' -vlan 1234 -frozen 1 -reserved 6 -dns_delegated 0 -category Yellow -location Somewhere
 host set_contact somehost "new-support@example.org"
 host history somehost
-host remove somehost
+host a_add somehost 10.0.1.0/24  # should require force, because the network is frozen
+host a_add somehost 10.0.1.0/24 -force
+host remove somehost # requires force because host has 2 ip addresses
+host remove somehost -force
 network unset_frozen 10.0.1.0/24
 host add otherhost -ip 10.0.1.20 -contact support@example.org  # fails because reserved range
 network remove_excluded_range 10.0.1.0/24 10.0.1.20 10.0.1.30
@@ -70,13 +72,15 @@ network remove 10.0.1.0/24 -f
 # IPv6
 network create -network 2001:db8::/64 -desc "Lorem ipsum dolor sit amet"
 network set_frozen 2001:db8::/64
-host add somehost -ip 2001:db8::/64 -contact m@example.org  # should require force
+host add somehost -ip 2001:db8::/64 -contact m@example.org  # should require force, because the network is frozen
 network add_excluded_range 2001:db8::/64 2001:db8::20 2001:db8::30
-host add somehost -ip 2001:db8::20 -contact support@example.org -force # should fail
+host add somehost -ip 2001:db8::20 -contact support@example.org -force # should fail, because the address is in a reserved range
 host add somehost -ip 2001:db8::/64 -contact support@example.org -force
 network set_description 2001:db8::/64 "Frozen but has one host"
 network info 2001:db8::/64
-host remove somehost
+host aaaa_add somehost 2001:db8::/64  # should require force, because the network is frozen
+host aaaa_add somehost 2001:db8::/64 -force
+host remove somehost -force
 network remove 2001:db8::/64 -f
 
 

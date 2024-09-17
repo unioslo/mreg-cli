@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Callable, Self, cast
 
-from pydantic import AliasChoices, BaseModel
+from pydantic import AliasChoices, BaseModel, ConfigDict
 from pydantic.fields import FieldInfo
 
 from mreg_cli.api.endpoints import Endpoint
@@ -19,7 +19,7 @@ from mreg_cli.exceptions import (
     PatchError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import JsonMapping
+from mreg_cli.types import JsonMapping, QueryParams
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -89,7 +89,7 @@ def validate_patched_model(model: BaseModel, fields: dict[str, Any]) -> None:
         )
         if not validator(nval, value):
             raise PatchError(
-                f"Patch failure! Tried to set {key} to {value}, but server returned {nval}."
+                f"Patch failure! Tried to set {key} to {value!r}, but server returned {nval!r}."
             )
 
 
@@ -123,13 +123,10 @@ class FrozenModel(BaseModel):
         """Raise an exception when trying to delete an attribute."""
         raise AttributeError("Cannot delete attribute on a frozen object")
 
-    class Config:
-        """Pydantic configuration.
-
-        Set the class to frozen to make it immutable and thus hashable.
-        """
-
-        frozen = True
+    model_config = ConfigDict(
+        # Freeze model to make it immutable and thus hashable.
+        frozen=True,
+    )
 
 
 class FrozenModelWithTimestamps(FrozenModel):
@@ -163,15 +160,6 @@ class APIMixin(ABC):
         """
         field = self.endpoint().external_id_field()
         return getattr(self, field)
-
-    @classmethod
-    def field_for_endpoint(cls) -> str:
-        """Return the appropriate field for the object for its endpoint.
-
-        :param field: The field to return.
-        :returns: The correct field for the endpoint.
-        """
-        return cls.endpoint().external_id_field()
 
     @classmethod
     @abstractmethod
@@ -218,7 +206,7 @@ class APIMixin(ABC):
         return cls(**data)
 
     @classmethod
-    def get_by_field(cls, field: str, value: str) -> Self | None:
+    def get_by_field(cls, field: str, value: str | int) -> Self | None:
         """Get an object by a field.
 
         Note that some endpoints do not use the ID field for lookups. We do some
@@ -317,7 +305,7 @@ class APIMixin(ABC):
 
         :returns: A list of objects if found, an empty list otherwise.
         """
-        params = {field: value}
+        params: QueryParams = {field: value}
         if ordering:
             params["ordering"] = ordering
 
@@ -325,7 +313,7 @@ class APIMixin(ABC):
 
     @classmethod
     def get_by_query(
-        cls, query: dict[str, str], ordering: str | None = None, limit: int | None = 500
+        cls, query: QueryParams, ordering: str | None = None, limit: int | None = 500
     ) -> list[Self]:
         """Get a list of objects by a query.
 
@@ -338,12 +326,12 @@ class APIMixin(ABC):
         if ordering:
             query["ordering"] = ordering
 
-        return get_typed(cls.endpoint().with_query(query), list[cls], limit=limit)
+        return get_typed(cls.endpoint(), list[cls], query, limit=limit)
 
     @classmethod
     def get_by_query_unique_or_raise(
         cls,
-        query: dict[str, str],
+        query: QueryParams,
         exc_type: type[Exception] = EntityNotFound,
         exc_message: str | None = None,
     ) -> Self:
@@ -367,7 +355,7 @@ class APIMixin(ABC):
     @classmethod
     def get_by_query_unique_and_raise(
         cls,
-        query: dict[str, str],
+        query: QueryParams,
         exc_type: type[Exception] = EntityAlreadyExists,
         exc_message: str | None = None,
     ) -> None:
@@ -389,7 +377,7 @@ class APIMixin(ABC):
         return None
 
     @classmethod
-    def get_by_query_unique(cls, data: dict[str, str]) -> Self | None:
+    def get_by_query_unique(cls, data: QueryParams) -> Self | None:
         """Get an object with the given data.
 
         :param data: The data to search for.
@@ -408,7 +396,7 @@ class APIMixin(ABC):
 
         :returns: The fetched object.
         """
-        id_field = self.field_for_endpoint()
+        id_field = self.endpoint().external_id_field()
         identifier = getattr(self, id_field)
 
         if not identifier:
@@ -486,22 +474,12 @@ class APIMixin(ABC):
         if response and response.ok:
             location = response.headers.get("Location")
             if location and fetch_after_create:
-                obj = None
-                if cls.endpoint().external_id_field() == "name":
-                    obj = cls.get_by_field("name", location.split("/")[-1])
-                else:
-                    obj = cls.get_by_id(int(location.split("/")[-1]))
-
-                if obj:
-                    return obj
-
-                raise GetError(f"Could not fetch object from location {location}.")
-
+                return get_typed(location, cls)
             # else:
             # Lots of endpoints don't give locations on creation,
             # so we can't fetch the object, but it's not an error...
             # Per se.
-            # cli_warning("No location header in response.")
+            # raise APIError("No location header in response.")
 
         else:
             raise CreateError(f"Failed to create {cls} with {params} @ {cls.endpoint()}.")

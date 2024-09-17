@@ -7,14 +7,27 @@ context of a CLI command.
 
 from __future__ import annotations
 
+import logging
 import sys
+from typing import Any
 
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit.formatted_text.html import html_escape
+
+
+class CliExit(Exception):
+    """Exception used to exit the CLI."""
+
+    pass
 
 
 class CliException(Exception):
     """Base exception class for the CLI."""
+
+    def escape(self) -> str:
+        """Get an HTML-escaped string representation of the exception."""
+        return html_escape(str(self))
 
     def formatted_exception(self) -> str:
         """Return a formatted string representation of the exception.
@@ -35,12 +48,20 @@ class CliError(CliException):
     the user cannot be expected to resolve.
     """
 
+    def __init__(self, *args: Any, **kwargs: Any):
+        """Initialize the error."""
+        super().__init__(*args, **kwargs)
+        logging.getLogger(__name__).error(str(self))
+        from mreg_cli.outputmanager import OutputManager
+
+        OutputManager().add_error(str(self))
+
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML red tag for the error message.
 
         :returns: Formatted error message.
         """
-        return f"<ansired>{super().__str__()}</ansired>"
+        return f"<ansired>ERROR: {self.escape()}</ansired>"
 
 
 class CliWarning(CliException):
@@ -49,12 +70,20 @@ class CliWarning(CliException):
     Warnings should be recoverable by changing the user input.
     """
 
+    def __init__(self, *args: Any, **kwargs: Any):
+        """Initialize the warning."""
+        from mreg_cli.outputmanager import OutputManager
+
+        super().__init__(*args, **kwargs)
+        logging.getLogger(__name__).warning(str(self))
+        OutputManager().add_warning(str(self))
+
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML italic tag for the warning message.
 
         :returns: Formatted warning message.
         """
-        return f"<i>{super().__str__()}</i>"
+        return f"<i>{self.escape()}</i>"
 
 
 class CreateError(CliError):
@@ -101,6 +130,30 @@ class UnexpectedDataError(APIError):
 
 class ValidationError(CliError):
     """Error class for validation failures."""
+
+    pass
+
+
+class FileError(CliError):
+    """Error class for file errors."""
+
+    pass
+
+
+class APINotOk(CliWarning):
+    """Warning class for API not returning OK."""
+
+    pass
+
+
+class TooManyResults(CliWarning):
+    """Warning class for too many results."""
+
+    pass
+
+
+class NoHistoryFound(CliWarning):
+    """Warning class for no history found."""
 
     pass
 
@@ -165,6 +218,12 @@ class InvalidNetwork(CliWarning):
     pass
 
 
+class NetworkOverlap(CliWarning):
+    """Warning class for a networkthat overlaps with another network."""
+
+    pass
+
+
 class LoginFailedError(CliException):
     """Error class for login failure."""
 
@@ -173,10 +232,6 @@ class LoginFailedError(CliException):
 
         :returns: Formatted error message.
         """
-        return f"Login failed: {super().__str__()}"
-
-    def __str__(self) -> str:
-        """Return the error message."""
-        return "Login failed"
+        return f"Login failed: {self.escape()}"
 
     pass

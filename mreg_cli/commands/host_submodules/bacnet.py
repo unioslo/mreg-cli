@@ -21,7 +21,7 @@ from mreg_cli.exceptions import (
     EntityOwnershipMismatch,
     InputFailure,
 )
-from mreg_cli.log import cli_info
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
 
@@ -54,7 +54,7 @@ def bacnetid_add(args: argparse.Namespace) -> None:
 
     validator = BacnetID.get(args.id)
     if validator and validator.hostname == host.name.hostname:
-        cli_info(f"Assigned BACnet ID {validator.id} to {validator.hostname}.", print_msg=True)
+        OutputManager().add_ok(f"Assigned BACnet ID {validator.id} to {validator.hostname}.")
     else:
         raise CreateError(f"Failed to assign BACnet ID {args.id} to {host.name.hostname}.")
 
@@ -78,7 +78,7 @@ def bacnetid_remove(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"{host.name} does not have a BACnet ID assigned.")
 
     if host_bacnet.delete():
-        cli_info(f"Unassigned BACnet ID {host_bacnet.id} from {host.name}.", print_msg=True)
+        OutputManager().add_ok(f"Unassigned BACnet ID {host_bacnet.id} from {host.name}.")
     else:
         raise DeleteError(f"Failed to unassign BACnet ID {host_bacnet.id} from {host.name}.")
 
