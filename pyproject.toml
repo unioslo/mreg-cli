@@ -49,7 +49,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["ruff", "tox", "rich"]
+dev = ["ruff", "tox-uv", "rich", "setuptools", "setuptools-scm", "build"]
 
 [project.urls]
 Repository = 'https://github.com/unioslo/mreg-cli/'
