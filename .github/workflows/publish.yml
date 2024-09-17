@@ -8,10 +8,6 @@ on:
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
 
-env:
-  # https://docs.astral.sh/uv/guides/integration/github/#using-uv-pip
-  UV_SYSTEM_PYTHON: 1 
-
 jobs:
   build_pypi:
     name: Build wheels and source distribution
