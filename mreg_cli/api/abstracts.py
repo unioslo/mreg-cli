@@ -397,8 +397,7 @@ class APIMixin(ABC):
         :returns: The fetched object.
         """
         id_field = self.endpoint().external_id_field()
-        identifier = getattr(self, id_field)
-
+        identifier = getattr(self, id_field, None)
         if not identifier:
             raise InternalError(
                 f"Could not get identifier for {self.__class__.__name__} via {id_field}."
