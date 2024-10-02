@@ -474,21 +474,21 @@ def validate_paginated_response(response: Response) -> PaginatedResponse:
 @overload
 def get_list_generic(
     path: str,
-    params: QueryParams | None = None,
-    ok404: bool = False,
-    limit: int | None = 500,
-    expect_one_result: Literal[True] = True,
-) -> Json: ...
+    params: QueryParams | None = ...,
+    ok404: bool = ...,
+    limit: int | None = ...,
+    expect_one_result: Literal[False] = False,
+) -> list[Json]: ...
 
 
 @overload
 def get_list_generic(
     path: str,
-    params: QueryParams | None = None,
-    ok404: bool = False,
-    limit: int | None = 500,
-    expect_one_result: Literal[False] = False,
-) -> list[Json]: ...
+    params: QueryParams | None = ...,
+    ok404: bool = ...,
+    limit: int | None = ...,
+    expect_one_result: Literal[True] = True,
+) -> Json: ...
 
 
 def get_list_generic(
