@@ -531,7 +531,7 @@ def get_list_generic(
     # Iterate over all pages and collect the results
     ret: list[Json] = resp.results
     while resp.next:
-        response = get(resp.next, params=params, ok404=ok404)
+        response = get(resp.next, ok404=ok404)
         if response is None:
             break
         resp = validate_paginated_response(response)
