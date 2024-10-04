@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # type: ignore # private attribute
 
     # Subclasses of BaseCommand change the constructor signature from
-    # 3 arguments to a single argument `cli`. That means we cannot
+    # 6 arguments to a single argument `cli`. That means we cannot
     # declare the list of commands as a list of `type[BaseCommand]`
     # and then instantiate them. Instead, we need to declare this interface
     # which lets the type checker understand what kind of classes we are
