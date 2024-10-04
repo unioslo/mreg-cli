@@ -12,7 +12,7 @@ import os
 import shlex
 import sys
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
@@ -43,6 +43,16 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     # Can't use _SubParsersAction as generic in Python <3.9
     SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # type: ignore # private attribute
+
+    # Subclasses of BaseCommand change the constructor signature from
+    # 3 arguments to a single argument `cli`. That means we cannot
+    # declare the list of commands as a list of `type[BaseCommand]`
+    # and then instantiate them. Instead, we need to declare this interface
+    # which lets the type checker understand what kind of classes we are
+    # trying to instantiate.
+    class BaseCommandSubclass(Protocol):  # noqa: D101
+        def __init__(self, cli: "Command") -> None: ...  # noqa: D107
+        def register_all_commands(self) -> None: ...  # noqa: D102
 
 
 def _create_command_group(parent: argparse.ArgumentParser) -> SubparserType:
@@ -84,7 +94,7 @@ class Command(Completer):
 
         self.short_desc = short_desc
         self.children: dict[str, Command] = {}
-        self.flags = {}
+        self.flags: dict[str, Flag] = {}
         for flag in flags:
             if flag.name.startswith("-"):
                 self.flags[flag.name.lstrip("-")] = flag
@@ -268,8 +278,7 @@ class Command(Completer):
 # Top parser is the root of all the command parsers
 _top_parser = argparse.ArgumentParser(formatter_class=CustomHelpFormatter)
 cli = Command(_top_parser, list(), "")
-
-for command in [
+commands: list[type[BaseCommandSubclass]] = [
     DHCPCommands,
     GroupCommands,
     HelpCommands,
@@ -282,7 +291,8 @@ for command in [
     RecordingCommmands,
     LoggingCommmands,
     RootCommmands,
-]:
+]
+for command in commands:
     command(cli).register_all_commands()
 
 
