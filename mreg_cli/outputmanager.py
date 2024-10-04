@@ -383,6 +383,7 @@ class OutputManager:
             split_index = self._find_split_index(command)
 
             if split_index != -1:
+                command_issued = command
                 filter_str = command[split_index + 1 :].strip()
                 command = command[:split_index].strip()
 
@@ -393,7 +394,7 @@ class OutputManager:
                 try:
                     filter_re = re.compile(filter_str)
                 except re.error as exc:
-                    if "|" in filter_str:
+                    if "|" in command_issued:
                         raise InputFailure(
                             "Command parts that contain a pipe ('|') must be quoted.",
                         ) from exc
