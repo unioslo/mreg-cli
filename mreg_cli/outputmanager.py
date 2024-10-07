@@ -398,13 +398,8 @@ class OutputManager:
                     filter_re = re.compile(filter_str)
                 except re.error as exc:
                     base_msg = f"Unable to compile regex '{filter_str}'"
-                    msg = build_error_message(command_issued)
-                    if msg:
-                        # Custom error messages with suggestions go on their own line
-                        raise CliError(f"{base_msg}\n{msg}") from exc
-                    else:
-                        # Otherwise append to the base message
-                        raise CliError(f"{base_msg}: {exc}") from exc
+                    msg = build_error_message(command_issued, base_msg)
+                    raise CliError(msg) from exc
 
         return (command, filter_re, negate)
 

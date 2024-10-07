@@ -8,6 +8,14 @@ from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
+ExcOrStr = Exception | str
+
+
+# Re-usable function for error builders that don't need a specific implementation
+def default_get_offset(self: "ErrorBuilder") -> tuple[int, int]:  # noqa: ARG001
+    """Get the start and end index of the underlined part of the command."""
+    return -1, -1
+
 
 class ErrorBuilder(ABC):
     """Base class for building error messages with an underline and suggestion."""
@@ -20,10 +28,10 @@ class ErrorBuilder(ABC):
     CHAR_OFFSET = " "
     CHAR_SUGGESTION = "└"
 
-    def __init__(self, command: str, exception: Exception | None = None) -> None:
+    def __init__(self, command: str, exc_or_str: ExcOrStr) -> None:
         """Instantiate the builder with the command that caused the error."""
         self.command = command
-        self.exception = exception
+        self.exc_or_str = exc_or_str
 
     def get_underline(self, start: int, end: int) -> str:
         """Get the underline part of the message."""
@@ -48,12 +56,37 @@ class ErrorBuilder(ABC):
             self.get_underline(start, end),
             self.get_suggestion(start),
         ]
+        # prepend the exception message if it exists
+        if self.exc_or_str:
+            lines.insert(0, str(self.exc_or_str))
         return "\n".join(lines)
 
     @abstractmethod
     def get_offset(self) -> tuple[int, int]:
         """Compute the start and end index of the underlined part of the command."""
-        pass
+        raise NotImplementedError
+
+    @abstractmethod
+    def can_build(self) -> bool:
+        """Check if the builder can build an error message for the given command."""
+        raise NotImplementedError
+
+
+class FallbackErrorBuilder(ErrorBuilder):
+    """Builder for errors without a specific implementation.
+
+    Renders the error message as a single line without an underline or suggestion.
+    The error message is displayed as-is.
+    """
+
+    get_offset = default_get_offset  # needed for ABC parent class
+
+    def build(self) -> str:
+        """Build the error message without an underline or suggestion."""
+        return str(self.exc_or_str)
+
+    def can_build(self) -> bool:  # noqa: D102
+        return True
 
 
 class FilterErrorBuilder(ErrorBuilder):
@@ -100,17 +133,26 @@ class FilterErrorBuilder(ErrorBuilder):
     def get_offset(self) -> tuple[int, int]:  # noqa: D102 (missing docstring [inherit it from parent])
         return self.find_word_with_char_offset(self.command, "|")
 
+    def can_build(self) -> bool:
+        """Check if the builder can build an error message for the given command."""
+        return "|" in self.command
 
-def get_builder(command: str, exception: Exception | None = None) -> ErrorBuilder | None:
+
+BUILDERS: list[type[ErrorBuilder]] = [
+    FilterErrorBuilder,
+]
+
+
+def get_builder(command: str, exc_or_str: ExcOrStr) -> ErrorBuilder:
     """Get the appropriate error builder for the given command."""
-    if "|" in command:
-        return FilterErrorBuilder(command, exception)
-    return None
+    for builder in BUILDERS:
+        b = builder(command, exc_or_str)
+        if b.can_build():
+            return b
+    return FallbackErrorBuilder(command, exc_or_str)
 
 
-def build_error_message(command: str, exception: Exception | None = None) -> str:
+def build_error_message(command: str, exc_or_str: ExcOrStr) -> str:
     """Build an error message with an underline and suggestion."""
-    builder = get_builder(command, exception)
-    if builder:
-        return builder.build()
-    return ""
+    builder = get_builder(command, exc_or_str)
+    return builder.build()
