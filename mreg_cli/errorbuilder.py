@@ -34,22 +34,40 @@ class ErrorBuilder(ABC):
         self.exc_or_str = exc_or_str
 
     def get_underline(self, start: int, end: int) -> str:
-        """Get the underline part of the message."""
+        """Get the underline part of the message.
+
+        :param int start: The start index of the underlined part of the command.
+        :param int end: The end index of the underlined part of the command.
+
+        :returns: The underlined part of the command.
+        """
         return self.offset(self.CHAR_UNDERLINE * (end - start), start)
 
     def get_suggestion(self, start: int) -> str:
-        """Get the suggestion part of the message."""
+        """Get the suggestion part of the message.
+
+        :param int start: The start index of the underlined part of the command.
+        """
         msg = self.SUGGESTION
         if self.CHAR_SUGGESTION:
             msg = f"{self.CHAR_SUGGESTION} {msg}"
         return self.offset(msg, start)
 
     def offset(self, s: str, n: int) -> str:
-        """Offset the string by n spaces."""
+        """Offset the string by n spaces.
+
+        :param str s: The string to offset.
+        :param int n: The number of spaces to offset by.
+
+        :returns: The offset string.
+        """
         return " " * n + s
 
     def build(self) -> str:
-        """Build the error message with an underline and suggestion."""
+        """Build the error message with an underline and suggestion.
+
+        :returns: The error message with an underline and suggestion.
+        """
         start, end = self.get_offset()
         lines = [
             self.command,
@@ -99,6 +117,12 @@ class FilterErrorBuilder(ErrorBuilder):
         """Find the start and end index of a word containing a specific character.
 
         Cannot fail; will always return a tuple of two integers.
+
+        :param str command: The command to search.
+        :param str char: The character to search for.
+
+        :returns: Tuple of two integers representing the start and end index of the word.
+                  Returns (-1, -1) if the character is not found.
         """
         command = command.strip()
         if not command:
@@ -133,8 +157,7 @@ class FilterErrorBuilder(ErrorBuilder):
     def get_offset(self) -> tuple[int, int]:  # noqa: D102 (missing docstring [inherit it from parent])
         return self.find_word_with_char_offset(self.command, "|")
 
-    def can_build(self) -> bool:
-        """Check if the builder can build an error message for the given command."""
+    def can_build(self) -> bool:  # noqa: D102 (missing docstring [inherit it from parent])
         return "|" in self.command
 
 
@@ -144,7 +167,13 @@ BUILDERS: list[type[ErrorBuilder]] = [
 
 
 def get_builder(command: str, exc_or_str: ExcOrStr) -> ErrorBuilder:
-    """Get the appropriate error builder for the given command."""
+    """Get the appropriate error builder for the given command.
+
+    :param str command: The command that caused the error.
+    :param exc_or_str: The exception or error message.
+
+    :returns: An error builder instance.
+    """
     for builder in BUILDERS:
         b = builder(command, exc_or_str)
         if b.can_build():
@@ -153,6 +182,12 @@ def get_builder(command: str, exc_or_str: ExcOrStr) -> ErrorBuilder:
 
 
 def build_error_message(command: str, exc_or_str: ExcOrStr) -> str:
-    """Build an error message with an underline and suggestion."""
+    """Build an error message for the given command and exception.
+
+    :param str command: The command that caused the error.
+    :param exc_or_str: The exception or error message.
+
+    :returns: Error message based on the command and exception.
+    """
     builder = get_builder(command, exc_or_str)
     return builder.build()
