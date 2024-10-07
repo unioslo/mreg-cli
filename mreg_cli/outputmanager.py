@@ -20,20 +20,23 @@ from urllib.parse import urlencode, urlparse
 import requests
 from pydantic import BaseModel
 
-from mreg_cli.exceptions import FileError, InputFailure
+from mreg_cli.errorbuilder import build_error_message
+from mreg_cli.exceptions import CliError, FileError
 from mreg_cli.types import JsonMapping, RecordingEntry, TimeInfo
 
 logger = logging.getLogger(__name__)
 
 
 @overload
-def find_char_outside_quotes(line: str, target_char: str, return_position: Literal[True]) -> int:
-    ...
+def find_char_outside_quotes(
+    line: str, target_char: str, return_position: Literal[True]
+) -> int: ...
 
 
 @overload
-def find_char_outside_quotes(line: str, target_char: str, return_position: Literal[False]) -> str:
-    ...
+def find_char_outside_quotes(
+    line: str, target_char: str, return_position: Literal[False]
+) -> str: ...
 
 
 def find_char_outside_quotes(
@@ -394,14 +397,9 @@ class OutputManager:
                 try:
                     filter_re = re.compile(filter_str)
                 except re.error as exc:
-                    if "|" in command_issued:
-                        raise InputFailure(
-                            "Command parts that contain a pipe ('|') must be quoted.",
-                        ) from exc
-                    else:
-                        raise InputFailure(
-                            f"Unable to compile regex '{filter_str}': {exc}"
-                        ) from exc
+                    base_msg = f"Unable to compile regex '{filter_str}'"
+                    msg = build_error_message(command_issued, base_msg)
+                    raise CliError(msg) from exc
 
         return (command, filter_re, negate)
 
