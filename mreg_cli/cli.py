@@ -2,12 +2,17 @@
 
 This file contains the main CLI class and the top level parser.
 """
+
+from __future__ import annotations
+
 import argparse
 import html
+import logging
 import os
 import shlex
 import sys
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, NoReturn, Optional, Union
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Protocol
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
@@ -18,31 +23,39 @@ from mreg_cli.commands.group import GroupCommands
 from mreg_cli.commands.help import HelpCommands
 from mreg_cli.commands.host import HostCommands
 from mreg_cli.commands.label import LabelCommands
+from mreg_cli.commands.logging import LoggingCommmands
 from mreg_cli.commands.network import NetworkCommands
 from mreg_cli.commands.permission import PermissionCommands
 from mreg_cli.commands.policy import PolicyCommands
+from mreg_cli.commands.recording import RecordingCommmands
+from mreg_cli.commands.root import RootCommmands
 from mreg_cli.commands.zone import ZoneCommands
 
 # Import other mreg_cli modules
-from mreg_cli.exceptions import CliError, CliWarning
+from mreg_cli.exceptions import CliError, CliExit, CliWarning
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
 from mreg_cli.utilities.api import create_and_set_corrolation_id
-from mreg_cli.utilities.api import logout as _force_logout
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     # Can't use _SubParsersAction as generic in Python <3.9
-    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]
+    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # type: ignore # private attribute
+
+    # Subclasses of BaseCommand change the constructor signature from
+    # 6 arguments to a single argument `cli`. That means we cannot
+    # declare the list of commands as a list of `type[BaseCommand]`
+    # and then instantiate them. Instead, we need to declare this interface
+    # which lets the type checker understand what kind of classes we are
+    # trying to instantiate.
+    class BaseCommandSubclass(Protocol):  # noqa: D101 (undocumented-public-class)
+        def __init__(self, cli: "Command") -> None: ...  # noqa: D107 (undocumented-public-init)
+        def register_all_commands(self) -> None: ...  # noqa: D102 (undocumented-public-method)
 
 
-class CliExit(Exception):
-    """Exception used to exit the CLI."""
-
-    pass
-
-
-def _create_command_group(parent: argparse.ArgumentParser) -> "SubparserType":
+def _create_command_group(parent: argparse.ArgumentParser) -> SubparserType:
     """Create a sub parser for a command."""
     parent_name = parent.prog.strip()
 
@@ -70,18 +83,18 @@ class Command(Completer):
     """
 
     # Used to detect an error when running commands from a source file.
-    last_errno: Union[str, int, None] = 0
+    last_errno: str | int | None = 0
 
-    def __init__(self, parser: argparse.ArgumentParser, flags: List[Flag], short_desc: str):
+    def __init__(self, parser: argparse.ArgumentParser, flags: list[Flag], short_desc: str):
         """Initialize a Command object."""
         self.parser = parser
         # sub is an object used for creating sub parser for this command. A
         # command/ArgParser can only have one of this object.
-        self.sub: Optional["SubparserType"] = None
+        self.sub: SubparserType | None = None
 
         self.short_desc = short_desc
-        self.children: Dict[str, Command] = {}
-        self.flags = {}
+        self.children: dict[str, Command] = {}
+        self.flags: dict[str, Flag] = {}
         for flag in flags:
             if flag.name.startswith("-"):
                 self.flags[flag.name.lstrip("-")] = flag
@@ -91,9 +104,9 @@ class Command(Completer):
         prog: str,
         description: str,
         short_desc: str = "",
-        epilog: Optional[str] = None,
-        callback: Optional[CommandFunc] = None,
-        flags: Union[List[Flag], None] = None,
+        epilog: str | None = None,
+        callback: CommandFunc | None = None,
+        flags: list[Flag] | None = None,
     ):
         """Add a command to the current parser.
 
@@ -112,7 +125,7 @@ class Command(Completer):
             # parameters are sent, or else exceptions are raised. Ex: if
             # required is passed with an argument which doesn't accept the
             # required option.
-            args: Dict[str, Any] = {
+            args: dict[str, Any] = {
                 "help": f.description,
             }
             if f.type:
@@ -138,6 +151,7 @@ class Command(Completer):
 
     def parse(self, command: str) -> None:
         """Parse and execute a command."""
+        logger.debug(f"Parsing command: {command}")
         args = shlex.split(command, comments=True)
 
         try:
@@ -171,7 +185,7 @@ class Command(Completer):
         self,
         document: document.Document,
         complete_event: CompleteEvent,  # noqa: ARG002
-    ) -> Generator[Union[Completion, Any], Any, None]:
+    ) -> Generator[Completion | Any, Any, None]:
         """Prepare completions for the current command.
 
         :param document: The current document.
@@ -183,7 +197,7 @@ class Command(Completer):
         words = document.text.strip().split(" ")
         yield from self.complete(cur, words)
 
-    def complete(self, cur: str, words: List[str]) -> Generator[Union[Completion, Any], Any, None]:
+    def complete(self, cur: str, words: list[str]) -> Generator[Completion | Any, Any, None]:
         """Generate completions during typing.
 
         :param cur: The current word.
@@ -246,7 +260,11 @@ class Command(Completer):
         output.clear()
         # Set the command that generated the output
         # Also remove filters and other noise.
-        cmd = output.from_command(line)
+        try:
+            cmd = output.from_command(line)
+        except (CliWarning, CliError) as exc:
+            exc.print_self()
+            return
         # Create and set the corrolation id, using the cleaned command
         # as the suffix. This is used to track the command in the logs
         # on the server side.
@@ -260,42 +278,7 @@ class Command(Completer):
 # Top parser is the root of all the command parsers
 _top_parser = argparse.ArgumentParser(formatter_class=CustomHelpFormatter)
 cli = Command(_top_parser, list(), "")
-
-
-def _quit(_: argparse.Namespace) -> NoReturn:
-    raise CliExit
-
-
-def _start_recording(args: argparse.Namespace) -> None:
-    """Start recording commands and output to the given file."""
-    if not args.filename:
-        raise CliError("No filename given.")
-
-    OutputManager().recording_start(args.filename)
-
-
-def _stop_recording(_: argparse.Namespace):
-    """Stop recording commands and output to the given file."""
-    OutputManager().recording_stop()
-
-
-# Always need a quit command
-cli.add_command(
-    prog="quit",
-    description="Exit application.",
-    short_desc="Quit",
-    callback=_quit,
-)
-
-cli.add_command(
-    prog="exit",
-    description="Exit application.",
-    short_desc="Quit",
-    callback=_quit,
-)
-
-
-for command in [
+commands: list[type[BaseCommandSubclass]] = [
     DHCPCommands,
     GroupCommands,
     HelpCommands,
@@ -305,53 +288,15 @@ for command in [
     PolicyCommands,
     ZoneCommands,
     LabelCommands,
-]:
+    RecordingCommmands,
+    LoggingCommmands,
+    RootCommmands,
+]
+for command in commands:
     command(cli).register_all_commands()
 
 
-def logout(_: argparse.Namespace):
-    """Log out from mreg and exit. Will delete token."""
-    _force_logout()
-    raise CliExit
-
-
-cli.add_command(
-    prog="logout",
-    description="Log out from mreg and exit. Will delete the token.",
-    short_desc="Log out from mreg",
-    callback=logout,
-)
-
-recordings = cli.add_command(
-    prog="recording",
-    description="Recording related commands.",
-    short_desc="Recording related commands",
-)
-
-recordings.add_command(
-    prog="start",
-    description="Start recording commands to a file.",
-    short_desc="Start recording",
-    callback=_start_recording,
-    flags=[
-        Flag(
-            "filename",
-            description="The filename to record to.",
-            short_desc="Filename",
-            metavar="filename",
-        )
-    ],
-)
-
-recordings.add_command(
-    prog="stop",
-    description="Stop recording commands and output to the given file.",
-    short_desc="Stop recording",
-    callback=_stop_recording,
-)
-
-
-def source(files: List[str], ignore_errors: bool, verbose: bool) -> Generator[str, None, None]:
+def source(files: list[str], ignore_errors: bool, verbose: bool) -> Generator[str, None, None]:
     """Read commands from one or more source files and yield them.
 
     :param files: List of file paths to read commands from.
@@ -365,6 +310,7 @@ def source(files: List[str], ignore_errors: bool, verbose: bool) -> Generator[st
             filename = os.path.expanduser(filename)
         try:
             with open(filename) as f:
+                logger.info("Reading commands from %s", filename)
                 for i, line in enumerate(f):
                     # Shell commands can be called from scripts. They start with '!'
                     if line.startswith("!"):
@@ -377,23 +323,24 @@ def source(files: List[str], ignore_errors: bool, verbose: bool) -> Generator[st
                     yield line
 
                     if cli.last_errno != 0:
+                        col = "ansired"
                         print_formatted_text(
-                            HTML(
-                                (
-                                    f"<ansired><i>{filename}</i>: "
-                                    f"Error on line {i + 1}</ansired>"
-                                )
-                            )
+                            HTML(f"<{col}><i>{filename}</i>: Error on line {i + 1}</{col}>")
                         )
                         OutputManager().add_error(f"{filename}: Error on line {i + 1}")
                         if not ignore_errors:
                             return
         except FileNotFoundError:
             print_formatted_text(f"No such file: '{filename}'")
+            logger.error(f"File not found during source: '{filename}'")
         except PermissionError:
             print_formatted_text(f"Permission denied: '{filename}'")
+            logger.error(f"Permission denied during source: '{filename}'")
 
 
+# Always need the source command. This is located here due to the deep interaction with
+# the cli variable itself and the command processing. Moving this out to another file
+# would lead to circular imports in all its joy.
 def _source(args: argparse.Namespace):
     """Source command for the CLI.
 
@@ -405,7 +352,6 @@ def _source(args: argparse.Namespace):
         cli.process_command_line(command)
 
 
-# Always need the source command.
 cli.add_command(
     prog="source",
     description="Read and run commands from the given source files.",

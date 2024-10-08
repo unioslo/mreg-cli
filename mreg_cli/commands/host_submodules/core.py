@@ -11,34 +11,33 @@ Commands implemented:
     - set_contact
 """
 
+from __future__ import annotations
+
 import argparse
-from typing import Dict, List, Optional, Union
 
-from mreg_cli.commands.host import registry as command_registry
-from mreg_cli.exceptions import HostNotFoundWarning
-from mreg_cli.log import cli_info, cli_warning
-from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch, post
-from mreg_cli.utilities.history import format_history_items, get_history_items
-from mreg_cli.utilities.host import (
-    assoc_mac_to_ip,
-    clean_hostname,
-    cname_exists,
-    get_host_by_name,
-    get_requested_ip,
-    host_info_by_name,
-    host_info_by_name_or_ip,
+from mreg_cli.api.models import (
+    ForwardZone,
+    Host,
+    HostList,
+    HostT,
+    MACAddressField,
+    Network,
+    NetworkOrIP,
 )
-from mreg_cli.utilities.network import get_network_by_ip, ips_are_in_same_vlan
-from mreg_cli.utilities.output import output_host_info, output_ip_info
-from mreg_cli.utilities.shared import convert_wildcard_to_regex, format_mac
-from mreg_cli.utilities.validators import is_valid_email, is_valid_ip, is_valid_mac
-from mreg_cli.utilities.zone import zone_check_for_hostname
-
-#########################################
-#  Implementation of sub command 'add'  #
-#########################################
+from mreg_cli.commands.host import registry as command_registry
+from mreg_cli.exceptions import (
+    CreateError,
+    DeleteError,
+    EntityAlreadyExists,
+    EntityNotFound,
+    EntityOwnershipMismatch,
+    ForceMissing,
+    InputFailure,
+    PatchError,
+)
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag, JsonMapping, QueryParams
+from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 
 @command_registry.register_command(
@@ -75,58 +74,92 @@ from mreg_cli.utilities.zone import zone_check_for_hostname
 def add(args: argparse.Namespace) -> None:
     """Add a new host with the given name.
 
+    Required arguments in argparse:
+        - name: Name of new host
+        - ip: An ip or network
+
+    Optional arguments in argparse:
+        - contact: Contact mail for the host
+        - comment: A comment
+        - macaddress: Mac address for assocation to the IP
+
     :param args: argparse.Namespace (name, ip, contact, comment, force, macaddress)
+
     """
-    # Fail if given host exists
+    ip = args.ip
+    hname = HostT(hostname=args.name)
+    macaddress = args.macaddress
 
-    ip = None
-    name = clean_hostname(args.name)
-    try:
-        name = get_host_by_name(name)
-    except HostNotFoundWarning:
-        pass
-    else:
-        cli_warning("host {} already exists".format(name))
+    if macaddress is not None:
+        try:
+            macaddress = MACAddressField(address=macaddress).address
+        except ValueError as e:
+            raise InputFailure(f"invalid MAC address: {macaddress}") from e
 
-    if "*" in name and not args.force:
-        cli_warning("Wildcards must be forced.")
+    host = Host.get_by_any_means(hname)
+    if host:
+        if host.name.hostname != hname.hostname:
+            raise EntityOwnershipMismatch(f"{hname} is a CNAME pointing to {host.name}")
+        else:
+            raise EntityAlreadyExists(f"Host {hname} already exists.")
 
-    zone_check_for_hostname(name, args.force)
+    zone = ForwardZone.get_from_hostname(hname)
+    if not zone and not args.force:
+        raise ForceMissing(f"{hname} isn't in a zone controlled by MREG, must force")
+    if zone and zone.is_delegated() and not args.force:
+        raise ForceMissing(f"{hname} is in zone delegation {zone.name}, must force")
 
-    if cname_exists(name):
-        cli_warning("the name is already in use by a cname")
+    if "*" in hname.hostname and not args.force:
+        raise ForceMissing("Wildcards must be forced.")
 
-    if args.macaddress is not None and not is_valid_mac(args.macaddress):
-        cli_warning("invalid MAC address: {}".format(args.macaddress))
+    if macaddress is not None:
+        try:
+            macaddress = MACAddressField(address=macaddress)
+        except ValueError as e:
+            raise InputFailure(f"invalid MAC address: {macaddress}") from e
 
-    if args.ip:
-        ip = get_requested_ip(args.ip, args.force)
-
-    # Contact sanity check
-    if args.contact and not is_valid_email(args.contact):
-        cli_warning(
-            "invalid mail address ({}) when trying to add {}".format(args.contact, args.name)
-        )
-
-    # Create the new host with an ip address
-    path = "/api/v1/hosts/"
-    data = {
-        "name": name,
+    data: JsonMapping = {
+        "name": hname.hostname,
         "contact": args.contact or None,
         "comment": args.comment or None,
     }
-    if args.ip and ip:
-        data["ipaddress"] = ip
 
-    post(path, params=None, **data)
-    if args.macaddress is not None:
-        # It can only be one, as it was just created.
-        ipdata = get(f"{path}{name}").json()["ipaddresses"][0]
-        assoc_mac_to_ip(args.macaddress, ipdata, force=args.force)
-    msg = f"created host {name}"
     if args.ip:
-        msg += f" with IP {ip}"
-    cli_info(msg, print_msg=True)
+        network = None
+        net_or_ip = NetworkOrIP(ip_or_network=args.ip)
+        if net_or_ip.is_ip():
+            data["ipaddress"] = str(net_or_ip)
+            network = Network.get_by_ip(net_or_ip.as_ip())
+        elif net_or_ip.is_network():
+            data["network"] = str(net_or_ip)
+            network = Network.get_by_network(str(net_or_ip))
+        else:
+            raise EntityNotFound(f"Invalid ip or network: {args.ip}")
+        if network and network.frozen and not args.force:
+            raise ForceMissing(f"Network {network.network} is frozen, must force")
+
+    host = Host.create(data)
+    if not host:
+        raise CreateError("Failed to add host.")
+    OutputManager().add_ok(f"Created host {host.name}")
+
+    if macaddress is not None:
+        if ip:
+            host = host.associate_mac_to_ip(macaddress, str(ip))
+        else:
+            # We passed a network to create the host, so we need to find the IP
+            # that was assigned to the host. We don't get that in the response
+            # per se, so we check to see if there is only one IP in the host and
+            # use that. If there are more than one, we can't know which one was
+            # assigned to the host during create, so we abort.
+            if len(host.ipaddresses) == 1:
+                host = host.associate_mac_to_ip(macaddress, host.ipaddresses[0].ipaddress)
+            else:
+                OutputManager().add_ok(
+                    "Failed to associate MAC address to IP, multiple IP addresses after creation."
+                )
+
+    host.output()
 
 
 @command_registry.register_command(
@@ -158,16 +191,19 @@ def remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, force, override)
     """
-    # Get host info or raise exception
-    info = host_info_by_name_or_ip(args.name)
-    overrides: List[str] = args.override.split(",") if args.override else []
+    hostname = args.name
+    host = Host.get_by_any_means_or_raise(hostname, inform_as_cname=True)
+
+    overrides: list[str] = args.override.split(",") if args.override else []
 
     accepted_overrides = ["cname", "ipaddress", "mx", "srv", "ptr", "naptr"]
     for override in overrides:
         if override not in accepted_overrides:
-            cli_warning(f"Invalid override: {override}. Accepted overrides: {accepted_overrides}")
+            raise InputFailure(
+                f"Invalid override: {override}. Accepted overrides: {accepted_overrides}"
+            )
 
-    def forced(override_required: Optional[str] = None) -> bool:
+    def forced(override_required: str | None = None) -> bool:
         # If we require an override, check if it's in the list of provided overrides.
         if override_required:
             return override_required in overrides
@@ -179,100 +215,94 @@ def remove(args: argparse.Namespace) -> None:
         # And the fallback is "no".
         return False
 
-    warnings: List[str] = []
+    warnings: list[str] = []
     # Require force if host has any cnames.
-    if info["cnames"] and not args.force:
-        warnings.append(f"  {len(info['cnames'])} cnames, override with 'cname'")
-        for cname in info["cnames"]:
-            warnings.append(f"    - {cname['name']}")
+    if host.cnames and not args.force:
+        warnings.append(f"  {len(host.cnames)} cnames, override with 'cname'")
+        for cname in host.cnames:
+            warnings.append(f"    - {cname.name}")
 
     # Require force if host has multiple A/AAAA records and they are not in the same VLAN.
-    if len(info["ipaddresses"]) > 1:
-        same_vlan = ips_are_in_same_vlan([ip["ipaddress"] for ip in info["ipaddresses"]])
+    if len(host.ipaddresses) > 1:
+        host_vlans = host.vlans()
+        same_vlan = len(host_vlans) == 1
 
         if same_vlan and not forced():
             warnings.append("  multiple ipaddresses on the same VLAN. Must use 'force'.")
         elif not same_vlan and not forced("ipaddresses"):
             warnings.append(
                 "  {} ipaddresses on distinct VLANs, override with 'ipadress'".format(
-                    len(info["ipaddresses"])
+                    len(host.ipaddresses)
                 )
             )
-            for ip in info["ipaddresses"]:
-                vlan = get_network_by_ip(ip["ipaddress"]).get("vlan")
-                warnings.append(f"   - {ip['ipaddress']} (vlan: {vlan})")
+            for vlan in host_vlans:
+                vlan = host_vlans[vlan]
+                ip_strings = [str(ip.ipaddress.address) for ip in vlan]
+                ip_strings.sort()
+                warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan})")
 
-    if info["mxs"] and not forced("mx"):
-        warnings.append(f"  {len(info['mxs'])} MX records, override with 'mx'")
-        for mx in info["mxs"]:
-            warnings.append(f"    - {mx['mx']} (priority: {mx['priority']})")
+    if host.mxs and not forced("mx"):
+        warnings.append(f"  {len(host.mxs)} MX records, override with 'mx'")
+        for mx in host.mxs:
+            warnings.append(f"    - {mx.mx} (priority: {mx.priority})")
 
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
-    path = "/api/v1/naptrs/"
-    naptrs = get_list(path, params={"host": info["id"]})
+    naptrs = host.naptrs()
     if len(naptrs) > 0:
         if not forced("naptr"):
-            warnings.append("  {} NAPTR records, override with 'naptr'".format(len(naptrs)))
+            warnings.append(f"  {len(naptrs)} NAPTR records, override with 'naptr'")
             for naptr in naptrs:
-                warnings.append(f"    - {naptr['replacement']}")
+                warnings.append(f"    - {naptr.replacement}")
         else:
             for naptr in naptrs:
-                cli_info(
+                OutputManager().add_ok(
                     "deleted NAPTR record {} when removing {}".format(
-                        naptr["replacement"],
-                        info["name"],
+                        naptr.replacement,
+                        host.name,
                     )
                 )
 
     # Require force if host has any SRV records. Delete the SRV records if force
-    path = "/api/v1/srvs/"
-    srvs = get_list(path, params={"host__name": info["name"]})
+    srvs = host.srvs()
     if len(srvs) > 0:
         if not forced("srv"):
             warnings.append(f"  {len(srvs)} SRV records, override with 'srv'")
             for srv in srvs:
-                warnings.append(f"    - {srv['name']}")
+                warnings.append(f"    - {srv.name}")
         else:
             for srv in srvs:
-                cli_info(
+                OutputManager().add_ok(
                     "deleted SRV record {} when removing {}".format(
-                        srv["name"],
-                        info["name"],
+                        srv.name,
+                        host.name,
                     )
                 )
 
     # Require force if host has any PTR records. Delete the PTR records if force
-    if len(info["ptr_overrides"]) > 0:
+    if len(host.ptr_overrides) > 0:
         if not forced("ptr"):
-            warnings.append(f"  {len(info['ptr_overrides'])} PTR records, override with 'ptr'")
-            for ptr in info["ptr_overrides"]:
-                warnings.append(f"    - {ptr['ipaddress']}")
+            warnings.append(f"  {len(host.ptr_overrides)} PTR records, override with 'ptr'")
+            for ptr in host.ptr_overrides:
+                warnings.append(f"    - {ptr.ipaddress}")
         else:
-            for ptr in info["ptr_overrides"]:
-                cli_info(
+            for ptr in host.ptr_overrides:
+                OutputManager().add_ok(
                     "deleted PTR record {} when removing {}".format(
-                        ptr["ipaddress"],
-                        info["name"],
+                        ptr.ipaddress,
+                        host.name,
                     )
                 )
-
-    # To be able to undo the delete the ipaddress field of the 'old_data' has to
-    # be an ipaddress string
-    if len(info["ipaddresses"]) > 0:
-        info["ipaddress"] = info["ipaddresses"][0]["ipaddress"]
 
     # Warn user and raise exception if any force requirements was found
     if warnings:
         warn_msg = "\n".join(warnings)
-        cli_warning(
-            "{} requires force and override for deletion:\n{}".format(info["name"], warn_msg)
-        )
+        raise ForceMissing(f"{host.name} requires force and override for deletion:\n{warn_msg}")
 
-    # Delete host
-    path = f"/api/v1/hosts/{info['name']}"
-    delete(path)
-    cli_info("removed {}".format(info["name"]), print_msg=True)
+    if host.delete():
+        OutputManager().add_ok(f"removed {host.name}")
+    else:
+        raise DeleteError(f"failed to remove {host.name}")
 
 
 @command_registry.register_command(
@@ -286,33 +316,27 @@ def remove(args: argparse.Namespace) -> None:
             short_desc="One or more names, ips or macs.",
             nargs="+",
             metavar="NAME/IP/MAC",
-        )
+        ),
+        Flag(
+            "-traverse-hostgroups",
+            action="store_true",
+            description="Show memberships of all parent groups as well as direct groups.",
+            short_desc="Traverse hostgroups.",
+        ),
     ],
 )
 def host_info(args: argparse.Namespace) -> None:
     """Print information about host.
 
-    If <name> is an alias the cname hosts info is shown.
+    :param args: argparse.Namespace (hosts, traverse_hostgroups)
 
-    :param args: argparse.Namespace (hosts)
+    Setting traverse hostgroups will show memberships of all parent groups as well as
+    direct groups.
     """
-    for name_or_ip in args.hosts:
-        # Get host info or raise exception
-        if is_valid_ip(name_or_ip):
-            output_ip_info(name_or_ip)
-        elif is_valid_mac(name_or_ip):
-            mac = format_mac(name_or_ip)
-            ret = get_list("api/v1/hosts/", params={"ipaddresses__macaddress": mac})
-            if ret:
-                output_host_info(ret[0])
-            else:
-                cli_warning(f"Found no host with macaddress: {mac}")
-        else:
-            info = host_info_by_name(name_or_ip)
-            name = clean_hostname(name_or_ip)
-            if any(cname["name"] == name for cname in info["cnames"]):
-                OutputManager().add_line(f'{name} is a CNAME for {info["name"]}')
-            output_host_info(info)
+    for host in args.hosts:
+        Host.get_by_any_means_or_raise(host, inform_as_cname=True).output(
+            traverse_hostgroups=args.traverse_hostgroups
+        )
 
 
 @command_registry.register_command(
@@ -351,11 +375,10 @@ def find(args: argparse.Namespace) -> None:
         params[param] = value
 
     if not any([args.name, args.comment, args.contact]):
-        cli_warning("Need at least one search critera")
+        raise InputFailure("Need at least one search critera")
 
-    params: Dict[str, Union[str, int]] = {
+    params: QueryParams = {
         "ordering": "name",
-        "page_size": 1,
     }
 
     for param in ("contact", "comment", "name"):
@@ -363,29 +386,7 @@ def find(args: argparse.Namespace) -> None:
         if value:
             _add_param(param, value)
 
-    path = "/api/v1/hosts/"
-    ret = get(path, params=params).json()
-
-    if ret["count"] == 0:
-        cli_warning("No hosts found.")
-    elif ret["count"] > 500:
-        cli_warning(f'Too many hits, {ret["count"]}, more than limit of 500. Refine search.')
-
-    del params["page_size"]
-    ret = get_list(path, params=params)
-    max_name = max_contact = 20
-    for i in ret:
-        max_name = max(max_name, len(i["name"]))
-        max_contact = max(max_contact, len(i["contact"]))
-
-    def _print(name: str, contact: str, comment: str) -> None:
-        OutputManager().add_line(
-            "{0:<{1}} {2:<{3}} {4}".format(name, max_name, contact, max_contact, comment)
-        )
-
-    _print("Name", "Contact", "Comment")
-    for i in ret:
-        _print(i["name"], i["contact"], i["comment"])
+    HostList.get(params=params).output()
 
 
 @command_registry.register_command(
@@ -415,35 +416,25 @@ def rename(args: argparse.Namespace) -> None:
     """Rename host. If <old-name> is an alias then the alias is renamed.
 
     :param args: argparse.Namespace (old_name, new_name, force)
+
+    :return: The updated Host or None
     """
-    # Find old host
-    old_name = get_host_by_name(args.old_name)
-
-    # Make sure new hostname does not exist.
-    new_name = clean_hostname(args.new_name)
-    try:
-        new_name = get_host_by_name(new_name)
-    except HostNotFoundWarning:
-        pass
-    else:
-        if not args.force:
-            cli_warning("host {} already exists".format(new_name))
-
-    if cname_exists(new_name):
-        cli_warning("the name is already in use by a cname")
+    old_host = Host.get_by_any_means_or_raise(args.old_name)
+    new_name = HostT(hostname=args.new_name)
+    new_host = Host.get_by_any_means(new_name, inform_as_cname=True)
+    if new_host:
+        raise EntityAlreadyExists(f"host {new_host} already exists")
 
     # Require force if FQDN not in MREG zone
-    zone_check_for_hostname(new_name, args.force)
+    zone = ForwardZone.get_from_hostname(new_name)
+    if not zone and not args.force:
+        raise ForceMissing(f"{new_name} isn't in a zone controlled by MREG, must force")
 
-    if "*" in new_name and not args.force:
-        cli_warning("Wildcards must be forced.")
+    if "*" in new_name.hostname and not args.force:
+        raise ForceMissing("Wildcards must be forced.")
 
-    # Rename host
-    path = f"/api/v1/hosts/{old_name}"
-    # Cannot redo/undo now since it changes name
-    patch(path, name=new_name)
-
-    cli_info("renamed {} to {}".format(old_name, new_name), print_msg=True)
+    new_host = old_host.rename(new_name)
+    OutputManager().add_ok(f"renamed {old_host} to {new_name}")
 
 
 # Add 'set_comment' as a sub command to the 'host' command
@@ -467,15 +458,13 @@ def set_comment(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, comment)
     """
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-    # Update comment
-    path = f"/api/v1/hosts/{info['name']}"
-    patch(path, comment=args.comment)
-    cli_info(
-        'Updated comment of {} to "{}"'.format(info["name"], args.comment),
-        print_msg=True,
-    )
+    host = Host.get_by_any_means_or_raise(args.name, inform_as_cname=True)
+    updated_host = host.set_comment(args.comment)
+
+    if not updated_host:
+        raise PatchError(f"Failed to update comment of {host.name}")
+
+    OutputManager().add_ok(f"Updated comment of {host} to {args.comment}")
 
 
 @command_registry.register_command(
@@ -492,17 +481,13 @@ def set_contact(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, contact)
     """
-    # Contact sanity check
-    if not is_valid_email(args.contact):
-        cli_warning("invalid mail address {} (target host: {})".format(args.contact, args.name))
+    host = Host.get_by_any_means_or_raise(args.name, inform_as_cname=True)
+    updated_host = host.set_contact(args.contact)
 
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
+    if not updated_host:
+        raise PatchError(f"Failed to update contact of {host.name}")
 
-    # Update contact information
-    path = f"/api/v1/hosts/{info['name']}"
-    patch(path, contact=args.contact)
-    cli_info("Updated contact of {} to {}".format(info["name"], args.contact), print_msg=True)
+    OutputManager().add_ok(f"Updated contact of {host} to {args.contact}")
 
 
 @command_registry.register_command(
@@ -518,6 +503,5 @@ def history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    hostname = clean_hostname(args.name)
-    items = get_history_items(hostname, "host", data_relation="hosts")
-    format_history_items(hostname, items)
+    hostname = HostT(hostname=args.name)
+    Host.output_history(hostname.hostname)

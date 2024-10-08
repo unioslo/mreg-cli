@@ -1,5 +1,64 @@
 [build-system]
-requires = ["setuptools ~= 58.0"]
+requires = ["setuptools >= 68.0", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mreg-cli"
+description = "MREG interactive command line client"
+readme = "README.md"
+maintainers = [
+    # Active maintainers
+    { name = "Terje Kvernes", email = "terjekv@uio.no" },
+    { name = "Øyvind Hagberg", email = "oyvihag@uio.no" },
+    { name = "Peder Hovdan Andresen", email = "pederhan@uio.no" },
+]
+authors = [
+    # Historical authors
+    { name = "Øyvind Kolbu", email = "oyvind.kolbu@usit.uio.no" },
+    { name = "Safet A", email = "amedov@usit.uio.no" },
+    { name = "Magnus Hirth", email = "mhmorgan42@gmail.com" },
+    { name = "Nico", email = "nicolaydmohebi@gmail.com" },
+    { name = "Marius Bakke", email = "marius.bakke@usit.uio.no" },
+    { name = "Fredrik Larsen", email = "fredrik.larsen@usit.uio.no" },
+    { name = "Paal Braathen", email = "paal.braathen@usit.uio.no" },
+    { name = "Nils Hiorth", email = "nils@nls.me" },
+    { name = "Dmytro Karpenko", email = "dmytrok@usit.uio.no" },
+    { name = "Others (see AUTHORS)" },
+]
+
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+keywords = ["mreg", "cli", "interactive"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    'python-dateutil>=2.9.0',
+    'prompt_toolkit>=3.0.0',
+    'requests[socks]>=2.31.0',
+    'typing_extensions>=4.12.0',
+    "pydantic[email]>=2.7.1",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = ["ruff", "tox-uv", "rich", "setuptools", "setuptools-scm", "build"]
+
+[project.urls]
+Repository = 'https://github.com/unioslo/mreg-cli/'
+
+[project.scripts]
+mreg-cli = "mreg_cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["mreg_cli*"]
 
 [tool.black]
 max-line-length = 99
@@ -9,6 +68,14 @@ profile = "black"
 line_length = 99
 
 [tool.ruff]
+line-length = 99
+# Assume Python 3.11.
+target-version = "py311"
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint]
 select = [
     "A", # flake8-builtins
     # "ANN", # annotations
@@ -135,14 +202,12 @@ exclude = [
 ]
 per-file-ignores = {}
 
-line-length = 99
-
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.10.
-target-version = "py310"
-
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
+
+[tool.setuptools_scm]
+version_file = "mreg_cli/_version.py"

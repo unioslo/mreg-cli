@@ -5,38 +5,43 @@ output lines and formats them for display. It also manages the filter for the
 command.
 """
 
+from __future__ import annotations
+
 import atexit
 import datetime
 import json
+import logging
 import os
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union, overload
+from collections.abc import Sequence
+from typing import Any, Literal, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
+from pydantic import BaseModel
 
-from mreg_cli.exceptions import CliError
-from mreg_cli.types import RecordingEntry, TimeInfo
+from mreg_cli.errorbuilder import build_error_message
+from mreg_cli.exceptions import CliError, FileError
+from mreg_cli.types import JsonMapping, RecordingEntry, TimeInfo
 
-if TYPE_CHECKING:
-    from typing_extensions import Literal
-
-
-@overload
-def find_char_outside_quotes(line: str, target_char: str, return_position: "Literal[True]") -> int:
-    ...
+logger = logging.getLogger(__name__)
 
 
 @overload
 def find_char_outside_quotes(
-    line: str, target_char: str, return_position: "Literal[False]"
-) -> str:
-    ...
+    line: str, target_char: str, return_position: Literal[True]
+) -> int: ...
+
+
+@overload
+def find_char_outside_quotes(
+    line: str, target_char: str, return_position: Literal[False]
+) -> str: ...
 
 
 def find_char_outside_quotes(
     line: str, target_char: str, return_position: bool = False
-) -> Union[str, int]:
+) -> str | int:
     """Find a specified character in a line outside of quoted sections.
 
     :param line: The line of text to process.
@@ -91,7 +96,7 @@ def remove_dict_key_recursive(obj: object, key: str) -> None:
             remove_dict_key_recursive(other_value, key)
 
 
-def urlpath(url: str, params: Dict[str, Any]) -> str:
+def urlpath(url: str, params: JsonMapping) -> str:
     """Return the path and query string of a URL."""
     if params:
         url = f"{url}?{urlencode(params)}"
@@ -136,23 +141,23 @@ class OutputManager:
 
     def clear(self) -> None:
         """Clear the object."""
-        self._output: List[str] = []
-        self._filter_re: Optional["re.Pattern[str]"] = None
+        self._output: list[str] = []
+        self._filter_re: re.Pattern[str] | None = None
         self._filter_negate: bool = False
         self._command_executed: str = ""
         self._command_issued: str = ""
 
-        self._ok: List[str] = []  # This is typically commands that went OK but returned no content
-        self._warnings: List[str] = []
-        self._errors: List[str] = []
+        self._ok: list[str] = []  # This is typically commands that went OK but returned no content
+        self._warnings: list[str] = []
+        self._errors: list[str] = []
 
-        self._api_requests: List[Dict[str, Any]] = []
+        self._api_requests: list[dict[str, Any]] = []
 
         self._time_started: datetime.datetime = datetime.datetime.now()
 
     def recording_clear(self) -> None:
         """Clear the recording data."""
-        self._recorded_data: List[RecordingEntry] = []
+        self._recorded_data: list[RecordingEntry] = []
         self._recording: bool = False
         self._filename: str
         self._record_timestamps: bool = True
@@ -176,7 +181,7 @@ class OutputManager:
             with open(filename, "w") as _:
                 pass
         except OSError as exc:
-            raise CliError("Unable open file for writing: {}".format(filename)) from exc
+            raise FileError(f"Unable open recording file for writing: {filename}") from exc
 
         self._recording = True
         self._filename = filename
@@ -249,7 +254,7 @@ class OutputManager:
         """Return True if recording is active."""
         return self._recording
 
-    def recording_filename(self) -> Optional[str]:
+    def recording_filename(self) -> str | None:
         """Return the filename being recorded to.
 
         Return gracefully if recording is not active.
@@ -275,14 +280,14 @@ class OutputManager:
         self,
         method: str,
         url: str,
-        params: Dict[str, Any],
-        data: Dict[str, Any],
+        params: JsonMapping,
+        data: dict[str, Any],
         result: requests.Response,
     ) -> None:
         """Record a request, if recording is active."""
         if not self.recording_active():
             return
-        ret_dict: Dict[str, Any] = {
+        ret_dict: dict[str, Any] = {
             "method": method.upper(),
             "url": urlpath(url, params),
             "data": data,
@@ -314,10 +319,12 @@ class OutputManager:
         :raises CliError: If the command is invalid.
         :return: The cleaned command, devoid of filters and other noise.
         """
+        logger.debug(f"From command: {command}")
         self._command_issued = command.rstrip()
         self._command_executed, self._filter_re, self._filter_negate = self.get_filter(
             remove_comments(self._command_issued)
         )
+        logger.info(f"From command (filtered): {self._command_executed}")
         return self._command_executed
 
     def add_line(self, line: str) -> None:
@@ -325,6 +332,7 @@ class OutputManager:
 
         :param line: The line to add.
         """
+        logger.debug(f"Adding line: {line}")
         self._output.append(line)
 
     def add_formatted_line(self, key: str, value: str, padding: int = 14) -> None:
@@ -360,7 +368,7 @@ class OutputManager:
 
     # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
     # don't have that type. So we use Any instead.
-    def get_filter(self, command: str) -> Tuple[str, Any, bool]:
+    def get_filter(self, command: str) -> tuple[str, Any, bool]:
         """Return the filter for the output.
 
         Parses the command string and extracts a filter if present, taking into
@@ -378,6 +386,7 @@ class OutputManager:
             split_index = self._find_split_index(command)
 
             if split_index != -1:
+                command_issued = command
                 filter_str = command[split_index + 1 :].strip()
                 command = command[:split_index].strip()
 
@@ -388,14 +397,9 @@ class OutputManager:
                 try:
                     filter_re = re.compile(filter_str)
                 except re.error as exc:
-                    if "|" in filter_str:
-                        raise CliError(
-                            "ERROR: Command parts that contain a pipe ('|') must be quoted.",
-                        ) from exc
-                    else:
-                        raise CliError(
-                            "ERROR: Unable to compile regex '{}': {}", filter_str, exc
-                        ) from exc
+                    base_msg = f"Unable to compile regex '{filter_str}'"
+                    msg = build_error_message(command_issued, base_msg)
+                    raise CliError(msg) from exc
 
         return (command, filter_re, negate)
 
@@ -403,30 +407,35 @@ class OutputManager:
         self,
         headers: Sequence[str],
         keys: Sequence[str],
-        data: List[Dict[str, Any]],
+        data: Sequence[dict[str, Any] | BaseModel],
         indent: int = 0,
     ) -> None:
         """Format and add a table of data to the output.
 
         Generates a table of data from the given headers, keys, and data. The
         headers are used as the column headers, and the keys are used to
-        extract the data from the dicts in the data list. The data is
-        formatted and added to the output.
+        extract the data from the dicts or Pydantic models in the data list.
+        The data is formatted and added to the output.
+
+        :param headers: Column headers for the table.
+        :param keys: Keys to extract data from each item in the data list.
+        :param data: A list (or any sequence) of dictionaries or Pydantic models.
+        :param indent: The indentation level for the table in the output.
         """
+        output_data = [item.model_dump() if isinstance(item, BaseModel) else item for item in data]
+
+        # Prepare the format string with dynamic padding based on the longest data
         raw_format = " " * indent
         for key, header in zip(keys, headers):
-            longest = len(header)
-            for d in data:
-                longest = max(longest, len(str(d[key])))
+            longest = max(len(header), *(len(str(d[key])) for d in output_data))
             raw_format += "{:<%d}   " % longest
 
+        # Add headers and rows to the output
         self.add_line(raw_format.format(*headers))
-        for d in data:
-            self.add_line(raw_format.format(*[d[key] for key in keys]))
+        for d in output_data:
+            self.add_line(raw_format.format(*[str(d[key]) for key in keys]))
 
-        return
-
-    def filtered_output(self) -> List[str]:
+    def filtered_output(self) -> list[str]:
         """Return the lines of output.
 
         If the command is set, and it has a filter, the lines will

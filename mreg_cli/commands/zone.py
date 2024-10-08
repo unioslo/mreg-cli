@@ -1,16 +1,16 @@
 """Zone commands for mreg_cli."""
 
-import argparse
-from typing import Any, Dict, Tuple
+from __future__ import annotations
 
+import argparse
+from typing import Any
+
+from mreg_cli.api.models import Zone
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import HostNotFoundWarning
-from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.exceptions import DeleteError, InputFailure
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch, post
-from mreg_cli.utilities.host import host_info_by_name
 
 command_registry = CommandRegistry()
 
@@ -21,55 +21,6 @@ class ZoneCommands(BaseCommand):
     def __init__(self, cli: Any) -> None:
         """Initialize the zone commands."""
         super().__init__(cli, command_registry, "zone", "Manage zones.", "Manage zones")
-
-
-def _verify_nameservers(nameservers: str, force: bool) -> None:
-    """Verify that nameservers are in mreg and have A-records."""
-    if not nameservers:
-        cli_warning("At least one nameserver is required")
-
-    errors = []
-    for nameserver in nameservers:
-        try:
-            info = host_info_by_name(nameserver)
-        except HostNotFoundWarning:
-            if not force:
-                errors.append(f"{nameserver} is not in mreg, must force")
-        else:
-            if info["zone"] is not None:
-                if not info["ipaddresses"] and not force:
-                    errors.append(f"{nameserver} has no A-record/glue, must force")
-    if errors:
-        cli_warning("\n".join(errors))
-
-
-def format_ns(info: str, hostname: str, ttl: str, padding: int = 20) -> None:
-    """Format nameserver output."""
-    OutputManager().add_line(
-        "        {1:<{0}}{2:<{3}}{4}".format(padding, info, hostname, 20, ttl)
-    )
-
-
-def zone_basepath(name: str) -> str:
-    """Return the basepath for a zone."""
-    basepath = "/api/v1/zones/"
-    if name.endswith(".arpa"):
-        return f"{basepath}reverse/"
-    return f"{basepath}forward/"
-
-
-def zone_path(name: str) -> str:
-    """Return the path for a zone."""
-    return zone_basepath(name) + name
-
-
-def get_zone(name: str) -> Tuple[Dict[str, Any], str]:
-    """Return the zone and path for a zone."""
-    path = zone_path(name)
-    zone = get(path, ok404=True)
-    if zone is None:
-        cli_warning(f"Zone '{name}' does not exist")
-    return zone.json(), path
 
 
 @command_registry.register_command(
@@ -88,15 +39,15 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ns, force, zone, email)
     """
-    _verify_nameservers(args.ns, args.force)
-    path = zone_basepath(args.zone)
-    post(path, name=args.zone, email=args.email, primary_ns=args.ns)
-    cli_info("created zone {}".format(args.zone), True)
+    Zone.create_zone(args.zone, args.email, args.ns, args.force)
+    OutputManager().add_ok(f"Created zone {args.zone}")
 
 
 @command_registry.register_command(
     prog="delegation_create",
-    description="Create new zone delegation.",
+    description=(
+        "Create new zone delegation. Requires force if ns or zone doesn't exist in MREG."
+    ),
     short_desc="Create new zone delegation.",
     flags=[
         Flag("zone", description="Zone name.", metavar="ZONE"),
@@ -111,17 +62,9 @@ def delegation_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ns, force, zone, delegation, comment)
     """
-    _, path = get_zone(args.zone)
-    if not args.delegation.endswith(f".{args.zone}"):
-        cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
-    _verify_nameservers(args.ns, args.force)
-    post(
-        f"{path}/delegations/",
-        name=args.delegation,
-        nameservers=args.ns,
-        comment=args.comment,
-    )
-    cli_info("created zone delegation {}".format(args.delegation), True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.create_delegation(args.delegation, args.ns, args.comment, args.force)
+    OutputManager().add_ok(f"Created zone delegation {args.delegation}")
 
 
 @command_registry.register_command(
@@ -138,20 +81,11 @@ def zone_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, force)
     """
-    zone, path = get_zone(args.zone)
-    hosts = get_list("/api/v1/hosts/", params={"zone": zone["id"]})
-    zones = get_list(zone_basepath(args.zone), params={"name__endswith": f".{args.zone}"})
-
-    # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
-    if hosts:
-        cli_warning(f"Zone has {len(hosts)} registered entries. Can not delete.")
-    other_zones = [z["name"] for z in zones if z["name"] != args.zone]
-    if other_zones:
-        zone_desc = ", ".join(sorted(other_zones))
-        cli_warning(f"Zone has registered subzones: '{zone_desc}'. Can not delete")
-
-    delete(path)
-    cli_info("deleted zone {}".format(zone["name"]), True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    if zone.delete_zone(args.force):
+        OutputManager().add_ok(f"Deleted zone {zone.name}")
+    else:
+        raise DeleteError(f"Unable to delete zone {zone.name}")
 
 
 @command_registry.register_command(
@@ -168,11 +102,14 @@ def delegation_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, delegation)
     """
-    _, path = get_zone(args.zone)
-    if not args.delegation.endswith(f".{args.zone}"):
-        cli_warning(f"Delegation '{args.delegation}' is not in '{args.zone}'")
-    delete(f"{path}/delegations/{args.delegation}")
-    cli_info("Removed zone delegation {}".format(args.delegation), True)
+    # NOTE: how to handle delegation that has delegation?
+    # i.e. uio.no -> pederhan.uio.no -> sub.pederhan.uio.no
+    # and we try to delete pederhan.uio.no?
+    zone = Zone.get_zone_or_raise(args.zone)
+    if zone.delete_delegation(args.delegation):
+        OutputManager().add_ok(f"Removed zone delegation {args.delegation}")
+    else:
+        raise DeleteError(f"Unable to delete delegation {args.delegation}")
 
 
 @command_registry.register_command(
@@ -188,27 +125,8 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone)
     """
-
-    def print_soa(info: str, text: str, padding: int = 20) -> None:
-        OutputManager().add_line("{1:<{0}}{2}".format(padding, info, text))
-
-    if not args.zone:
-        cli_warning("Name is required")
-
-    zone, _ = get_zone(args.zone)
-    print_soa("Zone:", zone["name"])
-    format_ns("Nameservers:", "hostname", "TTL")
-    for ns in zone["nameservers"]:
-        ttl = ns["ttl"] if ns["ttl"] else "<not set>"
-        format_ns("", ns["name"], ttl)
-    print_soa("Primary ns:", zone["primary_ns"])
-    print_soa("Email:", zone["email"])
-    print_soa("Serialnumber:", zone["serialno"])
-    print_soa("Refresh:", zone["refresh"])
-    print_soa("Retry:", zone["retry"])
-    print_soa("Expire:", zone["expire"])
-    print_soa("SOA TTL:", zone["soa_ttl"])
-    print_soa("Default TTL:", zone["default_ttl"])
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.output()
 
 
 @command_registry.register_command(
@@ -235,28 +153,9 @@ def zone_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (forward, reverse)
     """
-    all_zones = []
-
-    def _get_zone_list(zonetype: str) -> None:
-        zones = get_list(f"/api/v1/zones/{zonetype}/")
-        all_zones.extend(zones)
-
     if not (args.forward or args.reverse):
-        cli_warning("Add either -forward or -reverse as argument")
-
-    if args.forward:
-        _get_zone_list("forward")
-    if args.reverse:
-        _get_zone_list("reverse")
-
-    manager = OutputManager()
-
-    if all_zones:
-        manager.add_line("Zones:")
-        for zone in all_zones:
-            manager.add_line("   {}".format(zone["name"]))
-    else:
-        manager.add_line("No zones found.")
+        raise InputFailure("Add either -forward or -reverse as argument")
+    Zone.output_zones(args.forward, args.reverse)
 
 
 @command_registry.register_command(
@@ -272,34 +171,8 @@ def zone_delegation_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone)
     """
-    _, path = get_zone(args.zone)
-    manager = OutputManager()
-    delegations = get_list(f"{path}/delegations/")
-    if delegations:
-        manager.add_line("Delegations:")
-        for i in sorted(delegations, key=lambda kv: kv["name"]):
-            manager.add_line("    {}".format(i["name"]))
-            if i["comment"]:
-                manager.add_line("        Comment: {}".format(i["comment"]))
-            format_ns("Nameservers:", "hostname", "TTL")
-            for ns in i["nameservers"]:
-                ttl = ns["ttl"] if ns["ttl"] else "<not set>"
-                format_ns("", ns["name"], ttl)
-    else:
-        cli_info(f"No delegations for {args.zone}", True)
-
-
-def _get_delegation_path(zone: str, delegation: str) -> str:
-    """Return the path for a delegation."""
-    if not delegation.endswith(f".{zone}"):
-        cli_warning(f"Delegation '{delegation}' is not in '{zone}'")
-    _, path = get_zone(zone)
-    path = f"{path}/delegations/{delegation}"
-    response = get(path, ok404=True)
-    if response is not None:
-        return path
-    else:
-        cli_error("Delegation {delegation} not found")
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.output_delegations()
 
 
 @command_registry.register_command(
@@ -317,9 +190,9 @@ def zone_delegation_comment_set(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, delegation, comment)
     """
-    path = _get_delegation_path(args.zone, args.delegation)
-    patch(path, comment=args.comment)
-    cli_info(f"Updated comment for {args.delegation}", True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.set_delegation_comment(args.delegation, args.comment)
+    OutputManager().add_ok(f"Updated comment for {args.delegation}")
 
 
 @command_registry.register_command(
@@ -336,9 +209,9 @@ def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, delegation)
     """
-    path = _get_delegation_path(args.zone, args.delegation)
-    patch(path, comment="")
-    cli_info(f"Removed comment for {args.delegation}", True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.set_delegation_comment(args.delegation, "")
+    OutputManager().add_ok(f"Removed comment for {args.delegation}")
 
 
 @command_registry.register_command(
@@ -354,12 +227,13 @@ def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
 def set_ns(args: argparse.Namespace) -> None:
     """Update nameservers for an existing zone.
 
+    If multiple nameservers are provided, the first one is set as the primary nameserver.
+
     :param args: argparse.Namespace (zone, ns, force)
     """
-    _verify_nameservers(args.ns, args.force)
-    _, path = get_zone(args.zone)
-    patch(f"{path}/nameservers", primary_ns=args.ns)
-    cli_info("updated nameservers for {}".format(args.zone), True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.update_nameservers(args.ns, args.force)
+    OutputManager().add_ok(f"Updated nameservers for {args.zone}")
 
 
 @command_registry.register_command(
@@ -382,27 +256,17 @@ def set_soa(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, ns, email, serialno, retry, expire, soa_ttl)
     """
-    _, path = get_zone(args.zone)
-    data = {}
-    for i in (
-        "email",
-        "expire",
-        "refresh",
-        "retry",
-        "serialno",
-        "soa_ttl",
-    ):
-        value = getattr(args, i, None)
-        if value is not None:
-            data[i] = value
-    if args.ns:
-        data["primary_ns"] = args.ns
-
-    if data:
-        patch(path, **data)
-        cli_info("set soa for {}".format(args.zone), True)
-    else:
-        cli_info("No options set, so unchanged.", True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.update_soa(
+        primary_ns=args.ns,
+        email=args.email,
+        serialno=args.serialno,
+        refresh=args.refresh,
+        retry=args.retry,
+        expire=args.expire,
+        soa_ttl=args.soa_ttl,
+    )
+    OutputManager().add_ok(f"Updated SOA for {args.zone}")
 
 
 @command_registry.register_command(
@@ -419,7 +283,6 @@ def set_default_ttl(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, ttl)
     """
-    _, path = get_zone(args.zone)
-    data = {"default_ttl": args.ttl}
-    patch(path, **data)
-    cli_info("set default TTL for {}".format(args.zone), True)
+    zone = Zone.get_zone_or_raise(args.zone)
+    zone.set_default_ttl(args.ttl)
+    OutputManager().add_ok(f"Set default TTL for {args.zone}")

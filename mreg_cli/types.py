@@ -1,54 +1,97 @@
 """Typing definitions for mreg_cli."""
 
+from __future__ import annotations
+
 import argparse
 import ipaddress
-import sys
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, NamedTuple, Optional, TypeVar, Union
+from collections.abc import Callable
+from enum import StrEnum
+from typing import (
+    Annotated,
+    Any,
+    Literal,
+    Mapping,
+    MutableMapping,
+    NamedTuple,
+    Sequence,
+    TypeAlias,
+    TypedDict,
+    TypeVar,
+    Union,
+)
+
+from pydantic import (
+    ValidationError,
+    ValidationInfo,
+    ValidatorFunctionWrapHandler,
+    WrapValidator,
+)
+from pydantic_core import PydanticCustomError
+from typing_extensions import TypeAliasType
 
 CommandFunc = Callable[[argparse.Namespace], None]
 
-# This is a seperate import due to using string annotation, so the
-# import can't be consolidated into a single line with other imports
-# from typing_extensions. This hack is required for RHEL7 support that
-# has a typing_extensions library that has some issues.
-if TYPE_CHECKING:
-    from typing_extensions import Literal, TypeAlias  # noqa: F401
 
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
+class TimeInfo(TypedDict):
+    """Type definition for time-related information in the recording entry."""
 
-    class TimeInfo(TypedDict):
-        """Type definition for time-related information in the recording entry."""
+    timestamp: str
+    timestamp_as_epoch: int
+    runtime_in_ms: int
 
-        timestamp: str
-        timestamp_as_epoch: int
-        runtime_in_ms: int
 
-    class RecordingEntry(TypedDict):
-        """Type definition for a recording entry."""
+class RecordingEntry(TypedDict):
+    """Type definition for a recording entry."""
 
-        command: str
-        command_filter: Optional[str]
-        command_filter_negate: bool
-        command_issued: str
-        ok: List[str]
-        warning: List[str]
-        error: List[str]
-        output: List[str]
-        api_requests: List[Dict[str, Any]]
-        time: Optional[TimeInfo]
+    command: str
+    command_filter: str | None
+    command_filter_negate: bool
+    command_issued: str
+    ok: list[str]
+    warning: list[str]
+    error: list[str]
+    output: list[str]
+    api_requests: list[dict[str, Any]]
+    time: TimeInfo | None
 
-else:
-    TimeInfo = Dict[str, Any]
-    RecordingEntry = Dict[str, Any]
 
-IP_Version: "TypeAlias" = "Literal[4, 6]"
-IP_networkT = TypeVar("IP_networkT", ipaddress.IPv4Network, ipaddress.IPv6Network)
+IP_Version: TypeAlias = Literal[4, 6]
+IP_AddressT = ipaddress.IPv4Address | ipaddress.IPv6Address
+IP_NetworkT = ipaddress.IPv4Network | ipaddress.IPv6Network
 
-if TYPE_CHECKING:
-    # https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
-    NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
-    NargsType = Union[int, NargsStr]
+IP_networkTV = TypeVar("IP_networkTV", ipaddress.IPv4Network, ipaddress.IPv6Network)
+
+
+# https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
+NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
+NargsType = int | NargsStr
+
+
+# Source: https://docs.pydantic.dev/2.7/concepts/types/#named-recursive-types
+def json_custom_error_validator(
+    value: Any, handler: ValidatorFunctionWrapHandler, _info: ValidationInfo
+) -> Any:
+    """Simplify the error message to avoid a gross error stemming from
+    exhaustive checking of all union options.
+    """  # noqa: D205
+    try:
+        return handler(value)
+    except ValidationError:
+        raise PydanticCustomError(
+            "invalid_json",
+            "Input is not valid json",
+        ) from None
+
+
+Json = TypeAliasType(
+    "Json",
+    Annotated[
+        Union[Mapping[str, "Json"], Sequence["Json"], str, int, float, bool, None],
+        WrapValidator(json_custom_error_validator),
+    ],
+)
+JsonMapping = Mapping[str, Json]
+QueryParams = MutableMapping[str, str | int | None]
 
 
 class Flag:
@@ -59,13 +102,13 @@ class Flag:
         name: str,
         description: str = "",
         short_desc: str = "",
-        nargs: Optional["NargsType"] = None,
+        nargs: NargsType | None = None,
         default: Any = None,
         flag_type: Any = None,
-        choices: Optional[List[str]] = None,
+        choices: Sequence[str] | None = None,
         required: bool = False,
-        metavar: Optional[str] = None,
-        action: Optional[str] = None,
+        metavar: str | None = None,
+        action: str | None = None,
     ):
         """Initialize a Flag object."""
         self.name = name
@@ -87,35 +130,31 @@ class Command(NamedTuple):
     description: str
     short_desc: str
     callback: CommandFunc
-    flags: Optional[List[Flag]] = None
+    flags: list[Flag] | None = None
 
 
 # Config
 DefaultType = TypeVar("DefaultType")
 
-if TYPE_CHECKING:
-    from typing import Any
 
-    from typing_extensions import Protocol
+class LogLevel(StrEnum):
+    """Enum for log levels."""
 
-    class ResponseLike(Protocol):
-        """Interface for objects that resemble a requests.Response object."""
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
-        @property
-        def ok(self) -> bool:
-            """Return True if the response was successful."""
-            ...
+    @classmethod
+    def _missing_(cls, value: Any) -> LogLevel:
+        """Case-insensitive lookup when normal lookup fails."""
+        try:
+            return LogLevel(value.upper())
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid log level: {value}") from None
 
-        @property
-        def status_code(self) -> int:
-            """Return the HTTP status code."""
-            ...
-
-        @property
-        def reason(self) -> str:
-            """Return the HTTP status reason."""
-            ...
-
-        def json(self, **kwargs: Any) -> Any:
-            """Return the response body as JSON."""
-            ...
+    @classmethod
+    def choices(cls) -> list[str]:
+        """Return a list of all log levels as strings."""
+        return [str(c) for c in list(cls)]

@@ -1,32 +1,25 @@
 """Network commands for mreg_cli."""
 
-import argparse
-import ipaddress
-import urllib.parse
-from typing import Any, Dict, List, Union
+from __future__ import annotations
 
+import argparse
+from typing import Any
+
+from mreg_cli.api.fields import IPAddressField
+from mreg_cli.api.models import Network
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.exceptions import (
+    DeleteError,
+    EntityNotFound,
+    ForceMissing,
+    InputFailure,
+    NetworkOverlap,
+)
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch, post
-from mreg_cli.utilities.network import (
-    get_network,
-    get_network_reserved_ips,
-    get_network_unused_count,
-    get_network_unused_list,
-    get_network_used_count,
-    get_network_used_list,
-    ipsort,
-)
+from mreg_cli.types import Flag, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
-from mreg_cli.utilities.validators import (
-    is_valid_category_tag,
-    is_valid_ip,
-    is_valid_location_tag,
-    is_valid_network,
-)
+from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
 command_registry = CommandRegistry()
 
@@ -37,77 +30,6 @@ class NetworkCommands(BaseCommand):
     def __init__(self, cli: Any) -> None:
         """Initialize the network commands."""
         super().__init__(cli, command_registry, "network", "Manage networks.", "Manage networks")
-
-
-def get_network_range_from_input(net: str) -> str:
-    """Return network range from input.
-
-    - If input is a valid ip address, return the network range of the ip address.
-    - If input is a valid network range, return the input.
-    - Otherwise, print a warning and abort.
-    """
-    if net.endswith("/"):
-        net = net[:-1]
-    if is_valid_ip(net):
-        network = get_network(net)
-        return network["network"]
-    elif is_valid_network(net):
-        return net
-    else:
-        cli_warning("Not a valid ip or network")
-
-
-# helper methods
-def print_network_unused(count: int, padding: int = 25) -> None:
-    """Pretty print amount of unused addresses."""
-    OutputManager().add_line(
-        "{1:<{0}}{2}{3}".format(padding, "Unused addresses:", count, " (excluding reserved adr.)")
-    )
-
-
-def format_network_excluded_ranges(info: List[Dict[str, Any]], padding: int = 25) -> None:
-    """Pretty print excluded ranges."""
-    if not info:
-        return
-    count = 0
-    for i in info:
-        start_ip = ipaddress.ip_address(i["start_ip"])
-        end_ip = ipaddress.ip_address(i["end_ip"])
-        count += int(end_ip) - int(start_ip) + 1
-    manager = OutputManager()
-    manager.add_line("{1:<{0}}{2} ipaddresses".format(padding, "Excluded ranges:", count))
-    for i in info:
-        manager.add_line("{1:<{0}}{2} -> {3}".format(padding, "", i["start_ip"], i["end_ip"]))
-
-
-def format_network_reserved(ip_range: str, reserved: int, padding: int = 25) -> None:
-    """Pretty print ip range and reserved addresses list."""
-    network = ipaddress.ip_network(ip_range)
-    manager = OutputManager()
-    manager.add_line(
-        "{1:<{0}}{2} - {3}".format(
-            padding, "IP-range:", network.network_address, network.broadcast_address
-        )
-    )
-    manager.add_line("{1:<{0}}{2}".format(padding, "Reserved host addresses:", reserved))
-    manager.add_line("{1:<{0}}{2}{3}".format(padding, "", network.network_address, " (net)"))
-    res = get_network_reserved_ips(ip_range)
-    res.remove(str(network.network_address))
-    broadcast = False
-    if str(network.broadcast_address) in res:
-        res.remove(str(network.broadcast_address))
-        broadcast = True
-    for host in res:
-        manager.add_line("{1:<{0}}{2}".format(padding, "", host))
-    if broadcast:
-        manager.add_line(
-            "{1:<{0}}{2}{3}".format(padding, "", network.broadcast_address, " (broadcast)")
-        )
-
-
-def print_network(info: Union[int, str], text: str, padding: int = 25) -> None:
-    """Pretty print network info."""
-    OutputManager().add_line("{1:<{0}}{2}".format(padding, text, info))
 
 
 ##########################################
@@ -138,34 +60,33 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, desc, vlan, category, location, frozen)
     """
-    frozen = True if args.frozen else False
     if args.vlan:
         string_to_int(args.vlan, "VLAN")
     if args.category and not is_valid_category_tag(args.category):
-        cli_warning("Not a valid category tag")
+        raise InputFailure("Not a valid category tag")
     if args.location and not is_valid_location_tag(args.location):
-        cli_warning("Not a valid location tag")
+        raise InputFailure("Not a valid location tag")
 
-    networks_existing = get_list("/api/v1/networks/")
-    for network in networks_existing:
-        network_object = ipaddress.ip_network(network["network"])
-        if network_object.overlaps(ipaddress.ip_network(args.network)):
-            cli_warning(
-                "Overlap found between new network {} and existing network {}".format(
-                    ipaddress.ip_network(args.network), network["network"]
-                )
+    arg_network = Network.str_to_network(args.network)
+    networks = Network.get_list()
+    for network in networks:
+        if network.overlaps(arg_network):
+            raise NetworkOverlap(
+                f"New network {arg_network} overlaps existing network {network.network}"
             )
 
-    post(
-        "/api/v1/networks/",
-        network=args.network,
-        description=args.desc,
-        vlan=args.vlan,
-        category=args.category,
-        location=args.location,
-        frozen=frozen,
+    Network.create(
+        {
+            "network": args.network,
+            "description": args.desc,
+            "vlan": args.vlan,
+            "category": args.category,
+            "location": args.location,
+            "frozen": args.frozen,
+        }
     )
-    cli_info("created network {}".format(args.network), True)
+
+    OutputManager().add_ok(f"created network {args.network}")
 
 
 @command_registry.register_command(
@@ -186,52 +107,8 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (networks)
     """
-    for net in args.networks:
-        print_network_info(net)
-
-
-def print_network_info(network_info: Union[str, Dict[str, Any]]) -> None:
-    """Print info about a network.
-
-    - Either a network address string (CIDR notation)
-    - Or a network info dict fetched by `get_network()`
-
-    :param network_info: Union[str, Dict[str, Any]]
-    :param padding: int
-    """
-    if isinstance(network_info, str):
-        addr = network_info
-        ip_range = get_network_range_from_input(addr)
-        network_info = get_network(ip_range)
-    elif isinstance(network_info, dict):
-        ip_range = network_info["network"]
-    else:
-        # TODO:improve error message. Possibly raise a built-in exception to signal
-        # that this is not a user error?
-        t = urllib.parse.quote(str(type(network_info)))  # quote to safely HTML print
-        cli_warning(f"Unable to display network information about a {t} object")
-
-    used = get_network_used_count(ip_range)
-    unused = get_network_unused_count(ip_range)
-    ip_network = ipaddress.ip_network(ip_range)
-
-    # Pretty print all network info
-    print_network(network_info["network"], "Network:")
-    print_network(ip_network.netmask.exploded, "Netmask:")
-    print_network(network_info["description"], "Description:")
-    print_network(network_info["category"], "Category:")
-    print_network(network_info["location"], "Location:")
-    print_network(network_info["vlan"], "VLAN")
-    print_network(
-        network_info["dns_delegated"] if network_info["dns_delegated"] else False,
-        "DNS delegated:",
-    )
-    print_network(network_info["frozen"] if network_info["frozen"] else False, "Frozen")
-    format_network_reserved(network_info["network"], network_info["reserved"])
-    format_network_excluded_ranges(network_info["excluded_ranges"])
-    print_network(used, "Used addresses:")
-    print_network_unused(unused)
-    cli_info(f"printed network info for {ip_range}")
+    networks = [Network.get_by_any_means_or_raise(net) for net in args.networks]
+    Network.output_multiple(networks)
 
 
 @command_registry.register_command(
@@ -310,14 +187,11 @@ def find(args: argparse.Namespace) -> None:
     """
     args_dict = vars(args)
 
-    ip_arg = args_dict.get("ip")
-
-    if ip_arg:
-        ip_range = get_network_range_from_input(ip_arg)
-        network_info = get_network(ip_range)
-        networks = [network_info]
+    if ip_arg := args_dict.get("ip"):
+        addr = IPAddressField(address=ip_arg)
+        networks = [Network.get_by_ip_or_raise(addr.address)]
     else:
-        params = {}
+        params: QueryParams = {}
         param_names = [
             "network",
             "description",
@@ -336,33 +210,19 @@ def find(args: argparse.Namespace) -> None:
             params[param] = val
 
         if not params:
-            cli_warning("Need at least one search criteria")
+            raise InputFailure("Need at least one search criteria")
 
-        path = "/api/v1/networks/"
-        networks = get_list(path, params)
+        networks = Network.get_by_query(params)
 
     if not networks:
-        cli_warning("No networks matching the query were found.")
+        raise EntityNotFound("No networks matching the query were found.")
 
-    manager = OutputManager()
-
-    n_networks = len(networks)
-    for i, nwork in enumerate(networks):
-        if args.limit and i >= args.limit:
-            omitted = n_networks - i
-            if not args.silent:
-                s = "s" if omitted > 1 else ""
-                manager.add_line(f"Reached limit ({args.limit}). Omitted {omitted} network{s}.")
-            break
-        if args.addr_only:
-            manager.add_line(nwork["network"])
-        else:
-            print_network_info(nwork)
-            manager.add_line("")  # Blank line between networks
-
+    Network.output_multiple(networks)
     if not args.silent:
-        s = "s" if n_networks > 1 else ""
-        manager.add_line(f"Found {n_networks} network{s} matching the search criteria.")
+        s = "s" if len(networks) > 1 else ""
+        OutputManager().add_line(
+            f"\nFound {len(networks)} network{s} matching the search criteria."
+        )
 
 
 @command_registry.register_command(
@@ -378,13 +238,8 @@ def list_unused_addresses(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    unused = get_network_unused_list(ip_range)
-    if not unused:
-        cli_warning(f"No free addresses remaining on network {ip_range}")
-
-    for address in unused:
-        OutputManager().add_line("{1:<{0}}".format(25, address))
+    net = Network.get_by_network_or_raise(args.network)
+    net.output_unused_addresses()
 
 
 @command_registry.register_command(
@@ -400,30 +255,8 @@ def list_used_addresses(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    urlencoded_ip_range = urllib.parse.quote(ip_range)
-
-    path = f"/api/v1/networks/{urlencoded_ip_range}/used_host_list"
-    ip2host = get(path).json()
-    path = f"/api/v1/networks/{urlencoded_ip_range}/ptroverride_host_list"
-    ptr2host = get(path).json()
-
-    ips = ipsort(set(list(ip2host.keys()) + list(ptr2host.keys())))
-    manager = OutputManager()
-    if not ips:
-        manager.add_line(f"No used addresses on {ip_range}")
-        return
-
-    for ip in ips:
-        if ip in ptr2host:
-            manager.add_line("{1:<{0}}{2} (ptr override)".format(25, ip, ptr2host[ip]))
-        elif ip in ip2host:
-            if len(ip2host[ip]) > 1:
-                hosts = ",".join(ip2host[ip])
-                host = f"{hosts} (NO ptr override!!)"
-            else:
-                host = ip2host[ip][0]
-            manager.add_line("{1:<{0}}{2}".format(25, ip, host))
+    net = Network.get_by_network_or_raise(args.network)
+    net.output_used_addresses()
 
 
 @command_registry.register_command(
@@ -440,16 +273,18 @@ def remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, force)
     """
-    ipaddress.ip_network(args.network)
-    host_list = get_network_used_list(args.network)
-    if host_list:
-        cli_warning("Network contains addresses that are in use. Remove hosts before deletion")
+    net = Network.get_by_any_means_or_raise(args.network)
+    if net.get_used_count():
+        raise DeleteError(
+            "Network contains addresses that are in use. Remove hosts before deletion"
+        )
 
     if not args.force:
-        cli_warning("Must force.")
-
-    delete(f"/api/v1/networks/{urllib.parse.quote(args.network)}")
-    cli_info("removed network {}".format(args.network), True)
+        raise ForceMissing("Must force.")
+    if net.delete():
+        OutputManager().add_ok(f"Removed network {args.network}")
+    else:
+        raise DeleteError(f"Unable to delete network {args.network}")
 
 
 @command_registry.register_command(
@@ -467,17 +302,9 @@ def add_excluded_range(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
-    info = get_network(args.network)
-    network = info["network"]
-    if not is_valid_ip(args.start_ip):
-        cli_error(f"Start ipaddress {args.start_ip} not valid")
-    if not is_valid_ip(args.end_ip):
-        cli_error(f"End ipaddress {args.end_ip} not valid")
-
-    path = f"/api/v1/networks/{urllib.parse.quote(network)}/excluded_ranges/"
-    data = {"network": info["id"], "start_ip": args.start_ip, "end_ip": args.end_ip}
-    post(path, **data)
-    cli_info(f"Added exclude range to {network}", True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.add_excluded_range(args.start_ip, args.end_ip)
+    OutputManager().add_ok(f"Added exclude range to {net.network}")
 
 
 @command_registry.register_command(
@@ -495,25 +322,26 @@ def remove_excluded_range(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
-    info = get_network(args.network)
-    network = info["network"]
+    net = Network.get_by_network_or_raise(args.network)
+    net.remove_excluded_range(args.start_ip, args.end_ip)
+    OutputManager().add_ok(f"Removed exclude range from {net.network}")
 
-    if not is_valid_ip(args.start_ip):
-        cli_error(f"Start ipaddress {args.start_ip} not valid")
-    if not is_valid_ip(args.end_ip):
-        cli_error(f"End ipaddress {args.end_ip} not valid")
 
-    if not info["excluded_ranges"]:
-        cli_error(f"Network {network} has no excluded ranges")
+@command_registry.register_command(
+    prog="list_excluded_ranges",
+    description="List excluded ranges for a network",
+    short_desc="List excluded ranges for a network",
+    flags=[
+        Flag("network", description="Network.", metavar="NETWORK"),
+    ],
+)
+def list_excluded_ranges(args: argparse.Namespace) -> None:
+    """List excluded ranges for a network.
 
-    for i in info["excluded_ranges"]:
-        if i["start_ip"] == args.start_ip and i["end_ip"] == args.end_ip:
-            path = f"/api/v1/networks/{urllib.parse.quote(network)}/excluded_ranges/{i['id']}"
-            break
-    else:
-        cli_error("Found no matching exclude range.")
-    delete(path)
-    cli_info(f"Removed exclude range from {network}", True)
+    :param args: argparse.Namespace (network, start_ip, end_ip)
+    """
+    net = Network.get_by_network_or_raise(args.network)
+    net.output_excluded_ranges()
 
 
 @command_registry.register_command(
@@ -530,20 +358,13 @@ def set_category(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, category)
     """
-    network = get_network(args.network)
-    if not is_valid_category_tag(args.category):
-        cli_warning("Not a valid category tag")
-
-    path = f"/api/v1/networks/{urllib.parse.quote(network['network'])}"
-    patch(path, category=args.category)
-    cli_info(
-        "updated category tag to '{}' for {}".format(args.category, network["network"]),
-        True,
-    )
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_category(args.category)
+    OutputManager().add_ok(f"Updated category tag to {args.category!r} for {net.network}")
 
 
 @command_registry.register_command(
-    prog="set_description",  # <network> <description>
+    prog="set_description",
     description="Set description for network",
     short_desc="Set description for network",
     flags=[
@@ -556,13 +377,9 @@ def set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, description)
     """
-    network = get_network(args.network)
-    path = f"/api/v1/networks/{urllib.parse.quote(network['network'])}"
-    patch(path, description=args.description)
-    cli_info(
-        "updated description to '{}' for {}".format(args.description, network["network"]),
-        True,
-    )
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_description(args.description)
+    OutputManager().add_ok(f"Updated description to {args.description!r} for {net.network}")
 
 
 @command_registry.register_command(
@@ -578,11 +395,9 @@ def set_dns_delegated(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, dns_delegated=True)
-    cli_info(f"updated dns_delegated to 'True' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_dns_delegation(True)
+    OutputManager().add_ok(f"Set DNS delegation to 'True' for {net.network!r}")
 
 
 @command_registry.register_command(
@@ -598,11 +413,9 @@ def set_frozen(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, frozen=True)
-    cli_info(f"updated frozen to 'True' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_frozen(True)
+    OutputManager().add_ok(f"Updated frozen to 'True' for {net.network}")
 
 
 @command_registry.register_command(
@@ -619,14 +432,9 @@ def set_location(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, location)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    if not is_valid_location_tag(args.location):
-        cli_warning("Not a valid location tag")
-
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, location=args.location)
-    cli_info("updated location tag to '{}' for {}".format(args.location, ip_range), True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_location(args.location)
+    OutputManager().add_ok(f"Updated location tag to '{args.location}' for {args.network}")
 
 
 @command_registry.register_command(
@@ -644,16 +452,13 @@ def set_location(args: argparse.Namespace) -> None:
     ],
 )
 def set_reserved(args: argparse.Namespace) -> None:
-    """Set number of reserved hosts.
+    """Set number of reserved hosts for a network.
 
     :param args: argparse.Namespace (network, number)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    reserved = args.number
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, reserved=reserved)
-    cli_info(f"updated reserved to '{reserved}' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_reserved(args.number)
+    OutputManager().add_ok(f"Updated reserved to '{args.number}' for {net.network}")
 
 
 @command_registry.register_command(
@@ -670,11 +475,9 @@ def set_vlan(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, vlan)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, vlan=args.vlan)
-    cli_info(f"updated vlan to {args.vlan} for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_vlan(args.vlan)
+    OutputManager().add_ok(f"Updated vlan to {args.vlan} for {net.network}")
 
 
 @command_registry.register_command(
@@ -690,11 +493,9 @@ def unset_dns_delegated(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, dns_delegated=False)
-    cli_info(f"updated dns_delegated to 'False' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_dns_delegation(False)
+    OutputManager().add_ok(f"Set DNS delegation to 'False' for {net.network!r}")
 
 
 @command_registry.register_command(
@@ -710,8 +511,6 @@ def unset_frozen(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    ip_range = get_network_range_from_input(args.network)
-    get_network(ip_range)
-    path = f"/api/v1/networks/{urllib.parse.quote(ip_range)}"
-    patch(path, frozen=False)
-    cli_info(f"updated frozen to 'False' for {ip_range}", print_msg=True)
+    net = Network.get_by_network_or_raise(args.network)
+    net.set_frozen(False)
+    OutputManager().add_ok(f"Updated frozen to 'False' for {net.network}")

@@ -2,8 +2,13 @@
 
 This module provides the :py:class:`BaseCommands` class, which is used as the
 base class for all CLI command classes.
+
+Note: Logging in this file is hard as logging is not configured when this is loaded.
 """
-from typing import Any, List, Optional
+
+from __future__ import annotations
+
+from typing import Any
 
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.types import CommandFunc, Flag
@@ -18,18 +23,21 @@ class BaseCommand:
         command_registry: CommandRegistry,
         command_name: str,
         description: str,
-        short_desc: Optional[str],
-        callback: Optional[CommandFunc] = None,
+        short_desc: str | None,
+        callback: CommandFunc | None = None,
     ) -> None:
         """Initialize the command class."""
         self.base_cli = cli
         self.command_registry = command_registry
-        self.scope = cli.add_command(
-            prog=command_name,
-            description=description,
-            short_desc=short_desc or description,
-            callback=callback,
-        )
+        if not command_registry.root:
+            self.scope = cli.add_command(
+                prog=command_name,
+                description=description,
+                short_desc=short_desc or description,
+                callback=callback,
+            )
+        else:
+            self.scope = cli
 
     def register_all_commands(self) -> None:
         """Register all commands currently in the registry."""
@@ -42,7 +50,7 @@ class BaseCommand:
         description: str,
         short_desc: str,
         callback: CommandFunc,
-        flags: Optional[List[Flag]] = None,
+        flags: list[Flag] | None = None,
     ) -> None:
         """Add a command to the registry."""
         self.scope.add_command(

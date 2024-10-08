@@ -1,14 +1,17 @@
 """DHCP commands for mreg_cli."""
 
+from __future__ import annotations
+
 import argparse
 from typing import Any
 
+from mreg_cli.api.fields import IPAddressField
+from mreg_cli.api.models import Host, IPAddress
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.log import cli_info
+from mreg_cli.exceptions import EntityOwnershipMismatch, InputFailure
+from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import patch
-from mreg_cli.utilities.host import assoc_mac_to_ip, get_unique_ip_by_name_or_ip
 
 command_registry = CommandRegistry()
 
@@ -19,6 +22,30 @@ class DHCPCommands(BaseCommand):
     def __init__(self, cli: Any) -> None:
         """Initialize the DHCP commands."""
         super().__init__(cli, command_registry, "dhcp", "Manage DHCP associations.", "Manage DHCP")
+
+
+def ipaddress_from_ip_arg(arg: str) -> IPAddress | None:
+    """Get an IPAddress object from an IP address argument.
+
+    :param arg: IP address argument.
+
+    :returns: IPAddress object if IP is valid and exists, None if IP is invalid.
+
+    :raises InputFailure: If the IP address is valid but does not exist.
+    :raises EntityOwnershipMismatch: If the IP address is in use by multiple hosts.
+    """
+    if not IPAddressField.is_valid(arg):
+        return None
+    try:
+        addr = IPAddressField.from_string(arg)
+    except InputFailure:
+        return None
+    ipobjs = IPAddress.get_by_ip(addr.address)
+    if not ipobjs:
+        raise InputFailure(f"IP address {arg} does not exist.")
+    elif len(ipobjs) > 1:
+        raise EntityOwnershipMismatch(f"IP {arg} is in use by {len(ipobjs)} hosts.")
+    return ipobjs[0]
 
 
 @command_registry.register_command(
@@ -41,14 +68,23 @@ def assoc(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, mac, force)
     """
-    ip = get_unique_ip_by_name_or_ip(args.name)
-    new_mac = assoc_mac_to_ip(args.mac, ip, force=args.force)
+    name: str = args.name
+    mac: str = args.mac
+    force: bool = args.force
 
-    if new_mac is not None:
-        cli_info(
-            "associated mac address {} with ip {}".format(new_mac, ip["ipaddress"]),
-            print_msg=True,
-        )
+    in_use = IPAddress.get_by_mac(mac)
+    if in_use:
+        raise InputFailure(f"MAC {mac} is already in use by {in_use.ip()}.")
+
+    ipaddress = ipaddress_from_ip_arg(name)
+    if not ipaddress:
+        host = Host.get_by_any_means_or_raise(name)
+        ipaddress = host.get_associatable_ip()
+
+    ipaddress.associate_mac(mac, force=force)
+    OutputManager().add_ok(
+        f"Associated mac address {mac} with ip {ipaddress.ip()}"
+    )
 
 
 @command_registry.register_command(
@@ -69,18 +105,32 @@ def disassoc(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    ip = get_unique_ip_by_name_or_ip(args.name)
+    name: str = args.name
 
-    if ip.get("macaddress"):
-        # Update ipaddress
-        path = f"/api/v1/ipaddresses/{ip['id']}"
-        patch(path, macaddress="")
-        cli_info(
-            "disassociated mac address {} from ip {}".format(ip["macaddress"], ip["ipaddress"]),
-            print_msg=True,
-        )
-    else:
-        cli_info(
-            "ipaddress {} has no associated mac address".format(ip["ipaddress"]),
-            print_msg=True,
-        )
+    ipaddress = ipaddress_from_ip_arg(name)
+    if not ipaddress:
+        host = Host.get_by_any_means_or_raise(name)
+        try:
+            ipaddress = host.has_ip_with_mac(name)
+        except ValueError:
+            pass
+
+        if not ipaddress:
+            ips_with_mac = host.ips_with_macaddresses()
+
+            if not ips_with_mac:
+                raise InputFailure(
+                    f"Host {host} does not have any IP addresses with MAC addresses."
+                ) from None
+
+            if len(ips_with_mac) > 1:
+                raise InputFailure(
+                    f"Host {host} has multiple IP addresses with MAC addresses."
+                ) from None
+
+            ipaddress = ips_with_mac[0]
+
+    ipaddress.disassociate_mac()
+    OutputManager().add_ok(
+        f"Disassociated mac address {ipaddress.macaddress} from ip {ipaddress.ip()}"
+    )

@@ -13,15 +13,32 @@ Commands implemented:
     - aaaa_show
 """
 
+from __future__ import annotations
+
 import argparse
 
+from mreg_cli.api.models import Host, HostList, IPAddress, MACAddressField, Network, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
-from mreg_cli.log import cli_info, cli_warning
-from mreg_cli.types import Flag, IP_Version
-from mreg_cli.utilities.api import delete, patch
-from mreg_cli.utilities.host import add_ip_to_host, get_requested_ip, host_info_by_name
-from mreg_cli.utilities.output import output_ipaddresses
-from mreg_cli.utilities.validators import is_ipversion
+from mreg_cli.exceptions import (
+    DeleteError,
+    EntityAlreadyExists,
+    EntityNotFound,
+    ForceMissing,
+    InputFailure,
+)
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag, IP_AddressT, IP_Version
+
+
+def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
+    """Check if an IP is in use and bail if it is.
+
+    :param ip: The IP address to check.
+    """
+    hosts_using_ip = HostList.get_by_ip(ip)
+    if hosts_using_ip:
+        hostnames = ", ".join(hosts_using_ip.hostnames())
+        raise ForceMissing(f"IP {ip} in use by {hostnames}, must force.")
 
 
 def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
@@ -30,30 +47,39 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
     :param args: argparse.Namespace (name, old, new, force)
     """
     if args.old == args.new:
-        cli_warning("New and old IP are equal")
+        raise EntityAlreadyExists("New and old IP are equal")
 
-    is_ipversion(args.old, ipversion)
+    old_ip = NetworkOrIP(ip_or_network=args.old).as_ip()
 
-    # Get host info or raise exception
-    info = host_info_by_name(args.name)
-
-    for i in info["ipaddresses"]:
-        if i["ipaddress"] == args.old:
-            ip_id = i["id"]
-            break
+    new_ip = NetworkOrIP(ip_or_network=args.new)
+    if new_ip.is_network():
+        network = Network.get_by_network_or_raise(str(new_ip.ip_or_network))
+        new_ip = network.get_first_available_ip()
     else:
-        cli_warning('"{}" is not owned by {}'.format(args.old, info["name"]))
+        new_ip = new_ip.as_ip()
 
-    new_ip = get_requested_ip(args.new, args.force, ipversion=ipversion)
+    if old_ip.version != ipversion:
+        raise InputFailure("Old IP version does not match the requested version")
 
-    # Update A/AAAA records ip address
-    path = f"/api/v1/ipaddresses/{ip_id}"
-    # Cannot redo/undo since recourse name changes
-    patch(path, ipaddress=new_ip)
-    cli_info(
-        "changed ip {} to {} for {}".format(args.old, new_ip, info["name"]),
-        print_msg=True,
-    )
+    if new_ip.version != ipversion:
+        raise InputFailure("New IP version does not match the requested version")
+
+    host = Host.get_by_any_means_or_raise(args.name)
+
+    host_ip = host.get_ip(old_ip)
+    if not host_ip:
+        raise EntityNotFound(f"Host {host} does not have IP {old_ip}")
+
+    ip_obj = IPAddress.get(host_ip.id)
+    if not ip_obj:
+        raise EntityNotFound(f"IP {old_ip} not found")
+
+    if not args.force:
+        _bail_if_ip_in_use_and_not_force(new_ip)
+
+    ip_obj.patch(fields={"ipaddress": str(new_ip)})
+
+    OutputManager().add_ok(f"changed ip {args.old} to {new_ip} for {host}")
 
 
 def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
@@ -62,31 +88,35 @@ def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
     :param args: argparse.Namespace (ip, fromhost, tohost)
     :param ipversion: 4 or 6
     """
-    is_ipversion(args.ip, ipversion)
-    frominfo = host_info_by_name(args.fromhost)
-    toinfo = host_info_by_name(args.tohost)
-    ip_id = None
-    for ip in frominfo["ipaddresses"]:
-        if ip["ipaddress"] == args.ip:
-            ip_id = ip["id"]
-    ptr_id = None
-    for ptr in frominfo["ptr_overrides"]:
-        if ptr["ipaddress"] == args.ip:
-            ptr_id = ptr["id"]
-    if ip_id is None and ptr_id is None:
-        cli_warning(f'Host {frominfo["name"]} have no IP or PTR with address {args.ip}')
+    ip = NetworkOrIP(ip_or_network=args.ip)
+    if ip.is_network():
+        raise InputFailure("IP cannot be a network")
+    if ip.as_ip().version != ipversion:
+        raise InputFailure(
+            f"IP version {ip.as_ip().version} does not match the requested version {ipversion}"
+        )
+
+    from_host = Host.get_by_any_means_or_raise(args.fromhost)
+    to_host = Host.get_by_any_means_or_raise(args.tohost)
+
+    host_ip = from_host.get_ip(ip.as_ip())
+
+    ptr = from_host.get_ptr_override(ip.as_ip())
+    if not host_ip and not ptr:
+        raise EntityNotFound(f"Host {from_host} has no IP or PTR with address {ip}")
+
     msg = ""
-    if ip_id:
-        path = f"/api/v1/ipaddresses/{ip_id}"
-        patch(path, host=toinfo["id"])
+    if host_ip:
+        host_ip.patch(fields={"host": to_host.id})
         msg = f"Moved ipaddress {args.ip}"
     else:
         msg += "No ipaddresses matched. "
-    if ptr_id:
-        path = f"/api/v1/ptroverrides/{ptr_id}"
-        patch(path, host=toinfo["id"])
+
+    if ptr:
+        ptr.patch(fields={"host": to_host.id})
         msg += "Moved PTR override."
-    cli_info(msg, print_msg=True)
+
+    OutputManager().add_line(msg)
 
 
 def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
@@ -94,23 +124,79 @@ def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
 
     :param args: argparse.Namespace (name, ip)
     """
-    ip_id = None
+    host = Host.get_by_any_means_or_raise(args.name)
+    ip = NetworkOrIP(ip_or_network=args.ip)
+    if ip.is_network():
+        raise InputFailure("IP cannot be a network")
+    if ip.as_ip().version != ipversion:
+        raise InputFailure(
+            f"IP version {ip.as_ip().version} does not match the requested version {ipversion}"
+        )
 
-    is_ipversion(args.ip, ipversion)
+    host_ip = host.get_ip(ip.as_ip())
+    if not host_ip:
+        raise EntityNotFound(f"Host {host} does not have IP {ip}")
 
-    # Check that ip belongs to host
-    info = host_info_by_name(args.name)
-    for rec in info["ipaddresses"]:
-        if rec["ipaddress"] == args.ip.lower():
-            ip_id = rec["id"]
-            break
+    if host_ip.delete():
+        OutputManager().add_ok(f"Removed ipaddress {args.ip} from {host}")
     else:
-        cli_warning("{} is not owned by {}".format(args.ip, info["name"]))
+        raise DeleteError(f"Failed to remove ipaddress {args.ip} from {host}")
 
-    # Remove ip
-    path = f"/api/v1/ipaddresses/{ip_id}"
-    delete(path)
-    cli_info("removed ip {} from {}".format(args.ip, info["name"]), print_msg=True)
+
+def _add_ip(
+    args: argparse.Namespace,
+    ipversion: IP_Version = 4,
+) -> Host:
+    """Add a new IP address to a host.
+
+    :param host: Name of the host to add the IP to.
+    :param ip: The IP address to add.
+    :param macaddress: The MAC address to add.
+    :param force: Whether to force the addition.
+
+    :return: The updated host object.
+    """
+    host = Host.get_by_any_means_or_raise(args.name)
+    ip_or_net = NetworkOrIP(ip_or_network=args.ip)
+
+    if ipversion == 4 and (ip_or_net.is_ipv6() or ip_or_net.is_ipv6_network()):
+        raise InputFailure("Use aaaa_add for IPv6 addresses")
+    elif ipversion == 6 and (ip_or_net.is_ipv4() or ip_or_net.is_ipv4_network()):
+        raise InputFailure("Use a_add for IPv4 addresses")
+
+    ipaddr = None
+    network = None
+    if ip_or_net.is_network():
+        network = Network.get_by_network_or_raise(str(ip_or_net.ip_or_network))
+        ip = network.get_first_available_ip()
+        ipaddr = ip
+    else:
+        network = Network.get_by_ip(ip_or_net.as_ip())
+        ip = ip_or_net
+        ipaddr = ip.as_ip()
+
+    if not args.force and network and network.frozen:
+        raise ForceMissing(f"Network {network.network} is frozen, must force")
+
+    if not args.force and host.has_ip(ipaddr):
+        raise EntityAlreadyExists(f"Host {host} already has IP {ipaddr}")
+
+    if not args.force and len(host.ipaddresses) > 0:
+        raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
+
+    mac = None
+    if args.macaddress:
+        try:
+            mac = MACAddressField(address=args.macaddress)
+        except ValueError as e:
+            raise InputFailure(f"Invalid MAC address: {mac}") from e
+
+    if not args.force:
+        _bail_if_ip_in_use_and_not_force(ipaddr)
+
+    host = host.add_ip(ipaddr, mac)  # returns the refetched host
+    OutputManager().add_ok(f"Added ipaddress {ipaddr} to {host}")
+    return host
 
 
 @command_registry.register_command(
@@ -137,7 +223,7 @@ def a_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ip, force, macaddress)
     """
-    add_ip_to_host(args, 4, macaddress=args.macaddress)
+    _add_ip(args, 4)
 
 
 @command_registry.register_command(
@@ -239,9 +325,7 @@ def a_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = host_info_by_name(args.name)
-    output_ipaddresses(info["ipaddresses"])
-    cli_info("showed ip addresses for {}".format(info["name"]))
+    Host.get_by_any_means_or_raise(args.name).output_ipaddresses(only=4)
 
 
 @command_registry.register_command(
@@ -264,7 +348,7 @@ def aaaa_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ip, force, macaddress)
     """
-    add_ip_to_host(args, 6, macaddress=args.macaddress)
+    _add_ip(args, 6)
 
 
 @command_registry.register_command(
@@ -365,6 +449,4 @@ def aaaa_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = host_info_by_name(args.name)
-    output_ipaddresses(info["ipaddresses"])
-    cli_info("showed aaaa records for {}".format(info["name"]))
+    Host.get_by_any_means_or_raise(args.name).output_ipaddresses(only=6)

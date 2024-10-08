@@ -1,31 +1,23 @@
 """Shared utilities for the mreg_cli package."""
 
-import re
-from typing import Any, Tuple
+from __future__ import annotations
 
-from mreg_cli.log import cli_warning
+from typing import Any
+
+from mreg_cli.exceptions import InputFailure
 
 
 def string_to_int(value: Any, error_tag: str) -> int:
     """Convert a string to an integer."""
     try:
         return int(value)
-    except ValueError:
-        cli_warning("%s: Not a valid integer" % error_tag)
-
-
-def format_mac(mac: str) -> str:
-    """Create a strict 'aa:bb:cc:11:22:33' MAC address.
-
-    Replaces any other delimiters with a colon and turns it into all lower case.
-    """
-    mac = re.sub("[.:-]", "", mac).lower()
-    return ":".join(["%s" % (mac[i : i + 2]) for i in range(0, 12, 2)])
+    except ValueError as e:
+        raise InputFailure("%s: Not a valid integer" % error_tag) from e
 
 
 def convert_wildcard_to_regex(
     param: str, arg: str, autoWildcards: bool = False
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     """Convert wildcard filter "foo*bar*" to something DRF will understand.
 
     E.g. "foo*bar*" -> "?name__regex=$foo.*bar.*"
@@ -62,3 +54,12 @@ def convert_wildcard_to_regex(
         regex = "."
 
     return (f"{param}__regex", regex)
+
+
+def sizeof_fmt(num: float, suffix: str = "B"):
+    """Human readable file size."""
+    for unit in ("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"):
+        if abs(num) < 1024.0:
+            return f"{num:3.1f}{unit}{suffix}"
+        num /= 1024.0
+    return f"{num:.1f}Yi{suffix}"

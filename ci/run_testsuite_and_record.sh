@@ -34,8 +34,13 @@ group.user_set.add(user)
 
 # run the test suite
 rm -f new_testsuite_log.json
-echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_testsuite_log.json --record-without-timestamps >/dev/null
+echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_testsuite_log.json --record-without-timestamps -v ERROR >/dev/null
 
-# show a detailed diff
-python diff.py testsuite-result.json new_testsuite_log.json
+# show a detailed diff (and review if running locally)
+if [[ -n "$GITHUB_ACTIONS" ]]; then
+    python diff.py testsuite-result.json new_testsuite_log.json
+else
+    python diff.py testsuite-result.json new_testsuite_log.json --review
+fi
 exit $?
+

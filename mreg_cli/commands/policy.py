@@ -1,17 +1,16 @@
 """Policy commands for mreg_cli."""
 
-import argparse
-from typing import Any, Dict, List, Tuple
+from __future__ import annotations
 
+import argparse
+from typing import Any
+
+from mreg_cli.api.models import Atom, Host, HostPolicy, Role
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.log import cli_error, cli_info, cli_warning
+from mreg_cli.exceptions import CreateError, DeleteError, EntityAlreadyExists
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.api import delete, get, get_list, patch, post
-from mreg_cli.utilities.history import format_history_items, get_history_items
-from mreg_cli.utilities.host import host_info_by_name
-from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 command_registry = CommandRegistry()
 
@@ -24,43 +23,6 @@ class PolicyCommands(BaseCommand):
         super().__init__(
             cli, command_registry, "policy", "Manage policies for hosts.", "Manage policies"
         )
-
-
-def _get_atom(name: str) -> List[Dict[str, Any]]:
-    """Return a list with the atom info."""
-    return get_list("/api/v1/hostpolicy/atoms/", params={"name": name})
-
-
-def get_atom(name: str) -> Dict[str, Any]:
-    """Return the atom info."""
-    ret = _get_atom(name)
-    if not ret:
-        cli_warning(f"Atom {name!r} does not exist")
-    return ret[0]
-
-
-def _get_role(name: str) -> List[Dict[str, Any]]:
-    """Return a list with the role info."""
-    return get_list("/api/v1/hostpolicy/roles/", params={"name": name})
-
-
-def get_role(name: str) -> Dict[str, Any]:
-    """Return the role info."""
-    ret = _get_role(name)
-    if not ret:
-        cli_warning(f"Role {name!r} does not exist")
-    return ret[0]
-
-
-def get_atom_or_role(name: str) -> Tuple[str, Dict[str, Any]]:
-    """Return the atom or role info."""
-    atom = _get_atom(name)
-    if atom:
-        return "atom", atom[0]
-    role = _get_role(name)
-    if role:
-        return "role", role[0]
-    cli_warning(f"Could not find an atom or a role with name: {name!r}")
 
 
 @command_registry.register_command(
@@ -78,18 +40,19 @@ def atom_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description, created)
     """
-    ret = _get_atom(args.name)
-    if ret:
-        cli_error(f'Atom "{args.name}" already in use')
+    name: str = args.name
+    description: str = args.description
+    created: str = args.created
 
-    data = {"name": args.name, "description": args.description}
+    # Check if atom with that name already exists
+    Atom.get_by_name_and_raise(name)
 
-    if args.created:
-        data["create_date"] = args.created
+    params = {"name": name, "description": description}
+    if created:
+        params["create_date"] = created
 
-    path = "/api/v1/hostpolicy/atoms/"
-    post(path, **data)
-    cli_info(f"Created new atom {args.name}", print_msg=True)
+    Atom.create(params)
+    OutputManager().add_ok(f"Created new atom {name}")
 
 
 @command_registry.register_command(
@@ -105,18 +68,13 @@ def atom_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    get_atom(args.name)
+    name: str = args.name
 
-    info = get_list("/api/v1/hostpolicy/roles/", params={"atoms__name__exact": args.name})
-    inuse = [i["name"] for i in info]
-
-    if inuse:
-        roles = ", ".join(inuse)
-        cli_error(f"Atom {args.name} used in roles: {roles}")
-
-    path = f"/api/v1/hostpolicy/atoms/{args.name}"
-    delete(path)
-    cli_info(f"Deleted atom {args.name}", print_msg=True)
+    atom = Atom.get_by_name_or_raise(name)
+    if atom.delete():
+        OutputManager().add_ok(f"Deleted atom {name}")
+    else:
+        raise DeleteError(f"Failed to delete atom {name}")
 
 
 @command_registry.register_command(
@@ -134,18 +92,19 @@ def role_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description, created)
     """
-    ret = _get_role(args.name)
-    if ret:
-        cli_error(f"Role name {args.name!r} already in use")
+    name: str = args.name
+    description: str = args.description
+    created: str = args.created
 
-    data = {"name": args.name, "description": args.description}
+    # Check if role with that name already exists
+    Role.get_by_name_and_raise(name)
 
-    if args.created:
-        data["create_date"] = args.created
+    params = {"name": name, "description": description}
+    if created:
+        params["create_date"] = created
 
-    path = "/api/v1/hostpolicy/roles/"
-    post(path, **data)
-    cli_info(f"Created new role {args.name!r}", print_msg=True)
+    Role.create(params)
+    OutputManager().add_ok(f"Created new role {name!r}")
 
 
 @command_registry.register_command(
@@ -161,16 +120,13 @@ def role_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = get_role(args.name)
-    inuse = [i["name"] for i in info["hosts"]]
+    name: str = args.name
 
-    if inuse:
-        hosts = ", ".join(inuse)
-        cli_error(f"Role {args.name!r} used on hosts: {hosts}")
-
-    path = f"/api/v1/hostpolicy/roles/{args.name}"
-    delete(path)
-    cli_info(f"Deleted role {args.name!r}", print_msg=True)
+    role = Role.get_by_name_or_raise(name)
+    if role.delete():
+        OutputManager().add_ok(f"Deleted role {name!r}")
+    else:
+        raise DeleteError(f"Failed to delete role {name!r}")
 
 
 @command_registry.register_command(
@@ -187,20 +143,14 @@ def add_atom(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, atom)
     """
-    info = get_role(args.role)
-    for atom in info["atoms"]:
-        if args.atom == atom["name"]:
-            cli_info(
-                f"Atom {args.atom!r} already a member of role {args.role!r}",
-                print_msg=True,
-            )
-            return
-    get_atom(args.atom)
+    role_name: str = args.role
+    atom_name: str = args.atom
 
-    data = {"name": args.atom}
-    path = f"/api/v1/hostpolicy/roles/{args.role}/atoms/"
-    post(path, **data)
-    cli_info(f"Added atom {args.atom!r} to role {args.role!r}", print_msg=True)
+    role = Role.get_by_name_or_raise(role_name)
+    if role.add_atom(atom_name):
+        OutputManager().add_ok(f"Added atom {atom_name!r} to role {role_name!r}")
+    else:
+        raise CreateError(f"Failed to add atom {atom_name!r} to role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -217,16 +167,14 @@ def remove_atom(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, atom)
     """
-    info = get_role(args.role)
-    for atom in info["atoms"]:
-        if args.atom == atom["name"]:
-            break
-    else:
-        cli_warning(f"Atom {args.atom!r} not a member of {args.role!r}")
+    role_name: str = args.role
+    atom_name: str = args.atom
 
-    path = f"/api/v1/hostpolicy/roles/{args.role}/atoms/{args.atom}"
-    delete(path)
-    cli_info(f"Removed atom {args.atom!r} from role {args.role!r}", print_msg=True)
+    role = Role.get_by_name_or_raise(role_name)
+    if role.remove_atom(atom_name):
+        OutputManager().add_ok(f"Removed atom {atom_name!r} from role {role_name!r}")
+    else:
+        raise DeleteError(f"Failed to remove atom {atom_name!r} from role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -242,38 +190,10 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    manager = OutputManager()
-
-    def _format(key: str, value: str, padding: int = 14) -> None:
-        manager.add_formatted_line(key, value, padding)
-
-    for name in args.name:
-        policy, info = get_atom_or_role(name)
-        _format("Name:", info["name"])
-        _format("Created:", info["create_date"])
-        _format("Description:", info["description"])
-
-        if policy == "atom":
-            manager.add_line("Roles where this atom is a member:")
-            if info["roles"]:
-                for i in info["roles"]:
-                    _format("", i["name"])
-            else:
-                manager.add_line("None")
-        else:
-            manager.add_line("Atom members:")
-            if info["atoms"]:
-                for i in info["atoms"]:
-                    _format("", i["name"])
-            else:
-                _format("", "None")
-
-            manager.add_line("Labels:")
-            for i in info["labels"]:
-                lb = get(f"/api/v1/labels/{i}").json()
-                _format("", lb["name"])
-            if not info["labels"]:
-                _format("", "None")
+    names: list[str] = args.name
+    for name in names:
+        role_or_atom = HostPolicy.get_role_or_atom_or_raise(name)
+        role_or_atom.output()
 
 
 @command_registry.register_command(
@@ -293,20 +213,13 @@ def list_atoms(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    manager = OutputManager()
+    name: str = args.name
 
-    def _format(key: str, value: str, padding: int = 20) -> None:
-        manager.add_formatted_line(key, value, padding)
-
-    params = {}
-    param, value = convert_wildcard_to_regex("name", args.name, True)
-    params[param] = value
-    info = get_list("/api/v1/hostpolicy/atoms/", params=params)
-    if info:
-        for i in info:
-            _format(i["name"], repr(i["description"]))
+    atoms = Atom.get_list_by_name_regex(name)
+    if atoms:
+        Atom.output_multiple_lines(atoms)
     else:
-        manager.add_line("No match")
+        OutputManager().add_line("No match")
 
 
 @command_registry.register_command(
@@ -326,33 +239,13 @@ def list_roles(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    manager = OutputManager()
+    name: str = args.name
 
-    params = {}
-    param, value = convert_wildcard_to_regex("name", args.name, True)
-    params[param] = value
-    info = get_list("/api/v1/hostpolicy/roles/", params=params)
-    if not info:
-        manager.add_line("No match")
+    roles = Role.get_list_by_name_regex(name)
+    if not roles:
+        OutputManager().add_line("No match")
         return
-
-    labelnames = {}
-    labellist = get_list("/api/v1/labels/")
-    if labellist:
-        for i in labellist:
-            labelnames[i["id"]] = i["name"]
-
-    rows = []
-    for i in info:
-        # show label names instead of id numbers
-        labels = []
-        for j in i["labels"]:
-            labels.append(labelnames[j])
-        i["labels"] = ", ".join(labels)
-        rows.append(i)
-    manager.add_formatted_table(
-        ("Role", "Description", "Labels"), ("name", "description", "labels"), rows
-    )
+    Role.output_multiple_table(roles)
 
 
 @command_registry.register_command(
@@ -360,7 +253,7 @@ def list_roles(args: argparse.Namespace) -> None:
     description="List hosts which use the given role",
     short_desc="List hosts which use the given role",
     flags=[
-        Flag("name", description="Role name", metavar="NAME"),
+        Flag("name", description="Role name", metavar="ROLE"),
     ],
 )
 def list_hosts(args: argparse.Namespace) -> None:
@@ -368,14 +261,10 @@ def list_hosts(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    manager = OutputManager()
-    info = get_role(args.name)
-    if info["hosts"]:
-        manager.add_line("Name:")
-        for i in info["hosts"]:
-            manager.add_line(f" {i['name']}")
-    else:
-        manager.add_line("No host uses this role")
+    name: str = args.name
+
+    role = Role.get_by_name_or_raise(name)
+    role.output_hosts()
 
 
 @command_registry.register_command(
@@ -383,7 +272,7 @@ def list_hosts(args: argparse.Namespace) -> None:
     description="List all members of a role",
     short_desc="List role members",
     flags=[
-        Flag("name", description="Role name", metavar="NAME"),
+        Flag("name", description="Role name", metavar="ROLE"),
     ],
 )
 def list_members(args: argparse.Namespace) -> None:
@@ -391,14 +280,10 @@ def list_members(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    info = get_role(args.name)
-    manager = OutputManager()
-    if info["atoms"]:
-        manager.add_line("Name:")
-        for i in info["atoms"]:
-            manager.add_line(f" {i['name']}")
-    else:
-        manager.add_line("No atom members")
+    name: str = args.name
+
+    role = Role.get_by_name_or_raise(name)
+    role.output_atoms()
 
 
 @command_registry.register_command(
@@ -415,19 +300,48 @@ def host_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, hosts)
     """
-    get_role(args.role)
-    info = []
-    for name in args.hosts:
-        info.append(host_info_by_name(name, follow_cname=False))
+    role_name: str = args.role
+    host_names: list[str] = args.hosts
 
-    for i in info:
-        name = i["name"]
-        data = {
-            "name": name,
-        }
-        path = f"/api/v1/hostpolicy/roles/{args.role}/hosts/"
-        post(path, **data)
-        cli_info(f"Added host '{name}' to role '{args.role}'", print_msg=True)
+    role = Role.get_by_name_or_raise(role_name)
+    hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
+
+    for host in hosts:
+        role.add_host(host.name.hostname)
+        OutputManager().add_ok(f"Added host {host.name!r} to role {role_name!r}")
+
+
+@command_registry.register_command(
+    prog="host_copy",
+    description="Copy roles from one host to another",
+    short_desc="Copy roles between hosts",
+    flags=[
+        Flag("source", description="Source host", metavar="SOURCE"),
+        Flag("destination", description="Destination host", nargs="+", metavar="DESTINATION"),
+    ],
+)
+def host_copy(args: argparse.Namespace) -> None:
+    """Copy roles from one host to another.
+
+    :param args: argparse.Namespace (source, destination)
+    """
+    source_name: str = args.source
+    source = Host.get_by_any_means_or_raise(source_name)
+    source_roles = set(source.roles())
+
+    for destination_name in args.destination:
+        destination = Host.get_by_any_means_or_raise(destination_name)
+        destination_roles = set(destination.roles())
+        OutputManager().add_line(f"Copying roles from from {source_name} to {destination_name}")
+
+        # Check if role already exists in destination
+        for role in source_roles & destination_roles:
+            OutputManager().add_line(f"    + {role.name} (existing membership)")
+
+        # Check what roles need to be added
+        for role in source_roles - destination_roles:
+            role.add_host(destination.name.hostname)
+            OutputManager().add_line(f"    + {role.name}")
 
 
 @command_registry.register_command(
@@ -443,27 +357,11 @@ def host_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (hosts)
     """
-    manager = OutputManager()
+    hosts: list[str] = args.hosts
 
-    def _format(hostname: str, roleinfo: List[Dict[str, Any]]) -> None:
-        if not roleinfo:
-            cli_info(f"Host {hostname!r} has no roles.", print_msg=True)
-        else:
-            manager.add_line(f"Roles for {hostname!r}:")
-            for role in roleinfo:
-                manager.add_line(f"  {role['name']}")
-
-    info = []
-    for name in args.hosts:
-        info.append(host_info_by_name(name))
-
-    for i in info:
-        name = i["name"]
-        path = "/api/v1/hostpolicy/roles/"
-        params = {
-            "hosts__name": name,
-        }
-        _format(name, get_list(path, params=params))
+    for name in hosts:
+        host = Host.get_by_any_means_or_raise(name)
+        host.output_roles()
 
 
 @command_registry.register_command(
@@ -480,16 +378,15 @@ def host_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, hosts)
     """
-    get_role(args.role)
-    info = []
-    for name in args.hosts:
-        info.append(host_info_by_name(name, follow_cname=False))
+    role_name: str = args.role
+    host_names: list[str] = args.hosts
 
-    for i in info:
-        name = i["name"]
-        path = f"/api/v1/hostpolicy/roles/{args.role}/hosts/{name}"
-        delete(path)
-        cli_info(f"Removed host '{name}' from role '{args.role}'", print_msg=True)
+    role = Role.get_by_name_or_raise(role_name)
+    hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
+
+    for host in hosts:
+        role.remove_host(host.name.hostname)
+        OutputManager().add_ok(f"Removed host {host.name!r} from role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -506,14 +403,18 @@ def rename(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (oldname, newname)
     """
-    if _get_atom(args.oldname):
-        path = f"/api/v1/hostpolicy/atoms/{args.oldname}"
-    elif _get_role(args.oldname):
-        path = f"/api/v1/hostpolicy/roles/{args.oldname}"
-    else:
-        cli_warning("Could not find an atom or role with name {args.name!r}")
-    patch(path, name=args.newname)
-    cli_info(f"Renamed {args.oldname!r} to {args.newname!r}", True)
+    oldname: str = args.oldname
+    newname: str = args.newname
+
+    if oldname == newname:
+        raise EntityAlreadyExists("Old and new names are the same")
+
+    # Check if role or atom with the new name already exists
+    HostPolicy.get_role_or_atom_and_raise(newname)
+
+    role_or_atom = HostPolicy.get_role_or_atom_or_raise(oldname)
+    role_or_atom.rename(newname)
+    OutputManager().add_ok(f"Renamed {oldname!r} to {newname!r}")
 
 
 @command_registry.register_command(
@@ -530,80 +431,56 @@ def set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
-    if _get_atom(args.name):
-        path = f"/api/v1/hostpolicy/atoms/{args.name}"
-    elif _get_role(args.name):
-        path = f"/api/v1/hostpolicy/roles/{args.name}"
-    else:
-        cli_warning("Could not find an atom or role with name {args.name!r}")
-    patch(path, description=args.description)
-    cli_info(f"updated description to {args.description!r} for {args.name!r}", print_msg=True)
+    name: str = args.name
+    description: str = args.description
+
+    role_or_atom = HostPolicy.get_role_or_atom_or_raise(name)
+    role_or_atom.set_description(description)
+    OutputManager().add_ok(f"updated description to {description!r} for {name!r}")
 
 
 @command_registry.register_command(
     prog="label_add",
     description="Add a label to a role",
     short_desc="Add label",
-    flags=[Flag("label"), Flag("role")],
+    flags=[
+        Flag("label", description="Label name", metavar="LABEL"),
+        Flag("role", description="Role name", metavar="ROLE"),
+    ],
 )
 def add_label_to_role(args: argparse.Namespace) -> None:
     """Add a label to a role.
 
     :param args: argparse.Namespace (role, label)
     """
-    # find the role
-    path = f"/api/v1/hostpolicy/roles/{args.role}"
-    res = get(path, ok404=True)
-    if not res:
-        cli_warning(f"Could not find a role with name {args.role!r}")
-    role = res.json()
-    # find the label
-    labelpath = f"/api/v1/labels/name/{args.label}"
-    res = get(labelpath, ok404=True)
-    if not res:
-        cli_warning(f"Could not find a label with name {args.label!r}")
-    label = res.json()
-    # check if the role already has the label
-    if label["id"] in role["labels"]:
-        cli_warning(f"The role {args.role!r} already has the label {args.label!r}")
-    # patch the role
-    ar = role["labels"]
-    ar.append(label["id"])
-    patch(path, labels=ar)
-    cli_info(f"Added the label {args.label!r} to the role {args.role!r}.", print_msg=True)
+    role_name: str = args.role
+    label_name: str = args.label
+
+    role = Role.get_by_name_or_raise(role_name)
+    role.add_label(label_name)
+    OutputManager().add_ok(f"Added the label {label_name!r} to the role {role_name!r}.")
 
 
 @command_registry.register_command(
     prog="label_remove",
     description="Remove a label from a role",
     short_desc="Remove label",
-    flags=[Flag("label"), Flag("role")],
+    flags=[
+        Flag("label", description="Label name", metavar="LABEL"),
+        Flag("role", description="Role name", metavar="ROLE"),
+    ],
 )
 def remove_label_from_role(args: argparse.Namespace) -> None:
     """Remove a label from a role.
 
     :param args: argparse.Namespace (role, label)
     """
-    # find the role
-    path = f"/api/v1/hostpolicy/roles/{args.role}"
-    res = get(path, ok404=True)
-    if not res:
-        cli_warning(f"Could not find a role with name {args.role!r}")
-    role = res.json()
-    # find the label
-    labelpath = f"/api/v1/labels/name/{args.label}"
-    res = get(labelpath, ok404=True)
-    if not res:
-        cli_warning(f"Could not find a label with name {args.label!r}")
-    label = res.json()
-    # check if the role has the label
-    if label["id"] not in role["labels"]:
-        cli_warning(f"The role {args.role!r} doesn't have the label {args.label!r}")
-    # patch the role
-    ar = role["labels"]
-    ar.remove(label["id"])
-    patch(path, use_json=True, params={"labels": ar})
-    cli_info(f"Removed the label {args.label!r} from the role {args.role!r}.", print_msg=True)
+    role_name: str = args.role
+    label_name: str = args.label
+
+    role = Role.get_by_name_or_raise(role_name)
+    role.remove_label(label_name)
+    OutputManager().add_ok(f"Removed the label {label_name!r} from the role {role_name!r}.")
 
 
 @command_registry.register_command(
@@ -611,7 +488,7 @@ def remove_label_from_role(args: argparse.Namespace) -> None:
     description="Show history for atom name",
     short_desc="Show history for atom name",
     flags=[
-        Flag("name", description="Host name", metavar="NAME"),
+        Flag("name", description="Atom name", metavar="NAME"),
     ],
 )
 def atom_history(args: argparse.Namespace) -> None:
@@ -619,8 +496,9 @@ def atom_history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    items = get_history_items(args.name, "hostpolicy_atom", data_relation="atoms")
-    format_history_items(args.name, items)
+    name: str = args.name
+
+    Atom.output_history(name)
 
 
 @command_registry.register_command(
@@ -628,7 +506,7 @@ def atom_history(args: argparse.Namespace) -> None:
     description="Show history for role name",
     short_desc="Show history for role name",
     flags=[
-        Flag("name", description="Host name", metavar="NAME"),
+        Flag("name", description="Role name", metavar="NAME"),
     ],
 )
 def role_history(args: argparse.Namespace) -> None:
@@ -636,5 +514,6 @@ def role_history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    items = get_history_items(args.name, "hostpolicy_role", data_relation="roles")
-    format_history_items(args.name, items)
+    name: str = args.name
+
+    Role.output_history(name)

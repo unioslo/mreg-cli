@@ -5,6 +5,8 @@ submodules. This base module contains the registry that the submodules
 add their commands to.
 """
 
+from __future__ import annotations
+
 import importlib
 import os
 import pkgutil
@@ -12,7 +14,7 @@ from typing import Any
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.log import cli_error
+from mreg_cli.exceptions import InternalError
 
 registry = CommandRegistry()
 
@@ -43,7 +45,7 @@ class HostCommands(BaseCommand):
 
         # Get the directory path of the package
         if package.__file__ is None:
-            cli_error(f"Unable to initalize host submodules from {package_name}")
+            raise InternalError(f"Unable to initalize host submodules from {package_name}")
 
         package_dir = os.path.dirname(package.__file__)
 

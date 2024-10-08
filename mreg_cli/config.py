@@ -14,13 +14,15 @@ translated according to a mapping:
     3. :py:const:`logging.DEBUG`
 """
 
+from __future__ import annotations
+
 import configparser
 import logging
 import os
 import sys
-from typing import Any, Dict, Optional, Tuple, Union, overload
+from typing import Any, overload
 
-from mreg_cli.types import DefaultType
+from mreg_cli.types import DefaultType, LogLevel
 
 logger = logging.getLogger(__name__)
 
@@ -36,17 +38,10 @@ DEFAULT_CONFIG_PATH = tuple(
     )
 )
 
-# Default logging format
-# TODO: Support logging config
-LOGGING_FORMAT = "%(levelname)s - %(name)s - %(message)s"
+DEFAULT_LOG_FILE = os.path.expanduser("~/.mreg-cli.log")
 
-# Verbosity count to logging level
-LOGGING_VERBOSITY: Tuple[int, int, int, int] = (
-    logging.ERROR,
-    logging.WARNING,
-    logging.INFO,
-    logging.DEBUG,
-)
+# Default logging format
+LOGGING_FORMAT = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
 
 
 class MregCliConfig:
@@ -60,11 +55,13 @@ class MregCliConfig:
     """
 
     _instance = None
-    _config_cmd: Dict[str, str]
-    _config_file: Dict[str, str]
-    _config_env: Dict[str, str]
+    _is_logging = False
+    _logfile = None
+    _config_cmd: dict[str, str]
+    _config_file: dict[str, str]
+    _config_env: dict[str, str]
 
-    def __new__(cls) -> "MregCliConfig":
+    def __new__(cls) -> MregCliConfig:
         """Create a new instance of the configuration class.
 
         This ensures that only one instance of the configuration class is created.
@@ -79,7 +76,7 @@ class MregCliConfig:
         return cls._instance
 
     @staticmethod
-    def _load_env_config() -> Dict[str, str]:
+    def _load_env_config() -> dict[str, str]:
         """Load environment variables into the configuration, filtering with 'MREGCLI_' prefix."""
         env_prefix = "MREGCLI_"
         return {
@@ -89,16 +86,12 @@ class MregCliConfig:
         }
 
     @overload
-    def get(self, key: str) -> Optional[str]:
-        ...
+    def get(self, key: str) -> str | None: ...
 
     @overload
-    def get(self, key: str, default: DefaultType = ...) -> Union[str, DefaultType]:
-        ...
+    def get(self, key: str, default: DefaultType = ...) -> str | DefaultType: ...
 
-    def get(
-        self, key: str, default: Optional[DefaultType] = None
-    ) -> Optional[Union[str, DefaultType]]:
+    def get(self, key: str, default: DefaultType | None = None) -> str | DefaultType | None:
         """Get a configuration value with priority: cmdline, env, file.
 
         :param str key: Configuration key.
@@ -110,7 +103,7 @@ class MregCliConfig:
             key, self._config_env.get(key, self._config_file.get(key, default))
         )
 
-    def set_cmd_config(self, cmd_config: Dict[str, Any]) -> None:
+    def set_cmd_config(self, cmd_config: dict[str, Any]) -> None:
         """Set command line configuration options.
 
         :param Dict[str, Any] cmd_config: Dictionary of command line configurations.
@@ -129,26 +122,65 @@ class MregCliConfig:
                 cfgparser.read(configpath)
                 self._config_file = dict(cfgparser["mreg"].items())
 
-    def get_verbosity(self, verbosity: int) -> int:
-        """Translate verbosity to logging level.
+    def get_logging_level(self) -> str:
+        """Get the current logging level by name.
 
-        Levels are traslated according to :py:const:`LOGGING_VERBOSITY`.
-
-        :param int verbosity: verbosity level
-
-        :rtype: int
+        :returns: The logging level by name.
         """
-        level = LOGGING_VERBOSITY[min(len(LOGGING_VERBOSITY) - 1, verbosity)]
-        return level
+        return logging.getLevelName(logging.getLogger().getEffectiveLevel())
 
-    def configure_logging(self, level: int = logging.INFO) -> None:
+    def set_logging_level(self, level: LogLevel) -> None:
+        """Set the logging level.
+
+        :param str level: The logging level to set (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        """
+        logging.getLogger().setLevel(level)
+
+    def start_logging(
+        self, logfile: str = DEFAULT_LOG_FILE, level: str | LogLevel = "INFO"
+    ) -> None:
         """Enable and configure logging.
 
-        :param int level: logging level, defaults to :py:const:`logging.INFO`
+        :param str logfile: Path to the logfile, defaults to DEFAULT_LOG_FILE.
+        :param str level: Logging level, defaults to 'INFO'.
         """
-        logging.basicConfig(level=level, format=LOGGING_FORMAT)
+        level = LogLevel(level)
+        if self._is_logging:
+            logging.shutdown()
+            self._is_logging = False
+        else:
+            logging.basicConfig(
+                filename=logfile,
+                level=logging.getLevelName(level),
+                format=LOGGING_FORMAT,
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
 
-    def get_config_file(self) -> Union[str, None]:
+        logging.getLogger().setLevel(level)
+        self._is_logging = True
+        self._logfile = logfile
+
+    def get_logging_status(self) -> bool:
+        """Get the logging status.
+
+        :returns: True if logging is enabled, False otherwise.
+        """
+        return self._is_logging
+
+    def print_logging_status(self) -> None:
+        """Print the logging status."""
+        if self._is_logging:
+            print(f"Logging enabled to {self._logfile}")
+        else:
+            print("Logging is not enabled")
+
+    def stop_logging(self) -> None:
+        """Stop logging."""
+        logging.shutdown()
+        self._is_logging = False
+        self._logfile = None
+
+    def get_config_file(self) -> str | None:
         """Get the first config file found in DEFAULT_CONFIG_PATH.
 
         :returns: path to config file, or None if no config file was found
@@ -163,18 +195,30 @@ class MregCliConfig:
 
     def get_default_domain(self):
         """Get the default domain from the application."""
-        return self.get("domain")
+        return self.get("domain", "uio.no")
+
+    def get_default_logfile(self):
+        """Get the default logfile from the application."""
+        return self.get("logfile", DEFAULT_LOG_FILE)
+
+    def get_location_tags(self) -> list[str]:
+        """Get the location tags from the application."""
+        return self.get("location_tags", "").split(",")
+
+    def get_category_tags(self) -> list[str]:
+        """Get the category tags from the application."""
+        return self.get("category_tags", "").split(",")
 
     # We handle url by itself because it's a required config option,
     # it cannot be none once options, env, and config file are parsed.
     def get_url(self) -> str:
         """Get the default url from the application."""
-        url = self.get("url", self.get("default_url"))
-        if url is None:
+        url = self.get("url", self.get("default_url", "https://mreg.uio.no"))
+        if not url:
             raise ValueError("No URL found in config, no defaults available!")
         return url
 
-    def _calculate_column_width(self, data: Dict[str, Any], min_width: int = 8) -> int:
+    def _calculate_column_width(self, data: dict[str, Any], min_width: int = 8) -> int:
         """Calculate the maximum column width, ensuring a minimum width.
 
         :param data: Dictionary of data for the column.

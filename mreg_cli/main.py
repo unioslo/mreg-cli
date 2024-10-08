@@ -1,34 +1,24 @@
 """Main entry point for mreg_cli."""
 
+from __future__ import annotations
+
 import argparse
 import getpass
 import logging
-from typing import Union
 
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
 import mreg_cli.utilities.api as api
+from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, source
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import LoginFailedError
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import LogLevel
 from mreg_cli.utilities.api import try_token_or_login
 
-from . import log
-
 logger = logging.getLogger(__name__)
-
-
-def setup_logging(verbosity: Union[int, None] = None):
-    """Configure logging verbosity."""
-    if verbosity is None:
-        root = logging.getLogger()
-        root.addHandler(logging.NullHandler())
-    else:
-        config = MregCliConfig()
-        level = config.get_verbosity(int(verbosity) - 1)
-        config.configure_logging(level)
 
 
 def main():
@@ -38,19 +28,16 @@ def main():
 
     parser = argparse.ArgumentParser(description="The MREG cli")
 
-    # Accept empty url as the default option for the --url parameter.
-    # If the user never sets the URL we will throw a value error on
-    # the initial connection attempt.
-    default_url = ""
-    try:
-        default_url = config.get_url()
-    except ValueError:
-        pass
+    parser.add_argument(
+        "--version",
+        help="Show version and exit.",
+        action="store_true",
+    )
 
     connect_args = parser.add_argument_group("connection settings")
     connect_args.add_argument(
         "--url",
-        default=default_url,
+        default=config.get_url(),
         help="use mreg server at %(metavar)s (default: %(default)s)",
         metavar="URL",
     )
@@ -75,19 +62,18 @@ def main():
     mreg_args.add_argument(
         "-p",
         "--prompt",
-        default="mreg",
-        help="default %(metavar)s (default: %(default)s)",
+        help="default %(metavar)s), defaults to the server name if not set.",
         metavar="PROMPT",
     )
 
     output_args = parser.add_argument_group("output settings")
     output_args.add_argument(
         "-v",
-        "--verbosity",
-        dest="verbosity",
-        action="count",
-        default=None,
-        help="show debug messages on stderr",
+        "--log-level",
+        dest="loglevel",
+        default="INFO",
+        choices=LogLevel.choices(),
+        help="Log level for logging.",
     )
     output_args.add_argument(
         "-l",
@@ -134,13 +120,21 @@ def main():
     )
 
     args = parser.parse_args()
-    setup_logging(args.verbosity)
-    logger.debug(f"args: {args}")
+
+    if args.version:
+        print(f"mreg-cli {__version__}")
+        raise SystemExit() from None
+
+    logfile = config.get_default_logfile()
     conf = {k: v for k, v in vars(args).items() if v}
     config.set_cmd_config(conf)
 
     if "logfile" in conf:
-        log.logfile = conf["logfile"]
+        logfile = conf["logfile"]
+
+    config.start_logging(logfile, args.loglevel)
+
+    logger.debug(f"args: {args}")
 
     if "record_traffic" in conf:
         OutputManager().recording_start(conf["record_traffic"])
@@ -157,23 +151,41 @@ def main():
 
     try:
         try_token_or_login(
-            config.get("user"), config.get("url"), fail_without_token=args.token_only
+            str(config.get("user")),
+            str(config.get("url")),
+            fail_without_token=args.token_only,
         )
 
     except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
         print(e)
         raise SystemExit() from None
     if args.show_token:
-        print(api.session.headers["Authorization"])
+        print(api.get_session_token() or "Token not found.")
+        raise SystemExit() from None
 
     # Define a function that returns the prompt message
     def get_prompt_message():
         """Return the prompt message."""
         manager = OutputManager()
-        if manager.recording_active():
-            return HTML(f"<i>[>'{manager.recording_filename()}']</i> <b>{args.prompt}</b>> ")
+
+        if args.prompt:
+            prompt = args.prompt
+        elif config.get("prompt"):
+            prompt = config.get("prompt")
         else:
-            return HTML(f"<b>{args.prompt}</b>> ")
+            host = str(config.get("url")).replace("https://", "").replace("http://", "")
+            user = args.user or config.get("user", "?")
+            prompt = f"{user}@{host}"
+
+        prefix: list[str] = []
+
+        if manager.recording_active():
+            prefix.append(f"&gt;'{manager.recording_filename()}'")
+
+        if prefix:
+            prefix_str = ",".join(prefix)
+            return HTML(f"[{prefix_str}] {prompt}> ")
+        return HTML(f"{prompt}> ")
 
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the
@@ -191,6 +203,7 @@ def main():
 
     # if the --source parameter was given, read commands from the source file and then exit
     if "source" in conf:
+        logger.info("Reading commands from %s", conf["source"])
         for command in source([conf["source"]], "verbosity" in conf, False):
             cli.process_command_line(command)
         return
@@ -206,6 +219,7 @@ def main():
         raise SystemExit() from None
 
     # The app runs in an infinite loop and is expected to exit using sys.exit()
+    logger.debug("Entering main loop")
     while True:
         try:
             lines = session.prompt()
