@@ -195,7 +195,7 @@ class MregCliConfig:
 
     def get_default_domain(self):
         """Get the default domain from the application."""
-        return self.get("domain")
+        return self.get("domain", "uio.no")
 
     def get_default_logfile(self):
         """Get the default logfile from the application."""
@@ -213,8 +213,8 @@ class MregCliConfig:
     # it cannot be none once options, env, and config file are parsed.
     def get_url(self) -> str:
         """Get the default url from the application."""
-        url = self.get("url", self.get("default_url"))
-        if url is None:
+        url = self.get("url", self.get("default_url", "https://mreg.uio.no"))
+        if not url:
             raise ValueError("No URL found in config, no defaults available!")
         return url
 
