@@ -67,7 +67,7 @@ jobs:
         run: |
           uv venv
           uv pip install tox-uv tox-gh-actions
-          tox
+          uv run tox
       
       - name: Rename binary
         run: |
