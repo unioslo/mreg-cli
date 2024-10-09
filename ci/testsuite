@@ -299,6 +299,11 @@ host remove *.example.org
 host remove bar -f
 host remove baz -f
 host remove clover
+# assigning mac to a host directly should work
+host add -ip 10.0.0.0/24 -macaddress aa:bb:cc:cc:bb:aa directok
+# assigning mac to a host directly when the mac is already taken should fail
+host add -ip 10.0.0.0/24 -macaddress aa:bb:cc:cc:bb:aa directfail
+host remove directok
 
 # Test handling of overrides
 # MX
