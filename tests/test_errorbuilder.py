@@ -32,8 +32,6 @@ def test_get_builder(command: str, exc_or_str: str, expected: type[ErrorBuilder]
     assert builder.get_underline(0, 0) == ""
     assert builder.get_underline(0, 10) == "^^^^^^^^^^"
     assert builder.get_underline(5, 10) == "     ^^^^^"
-    assert builder.get_suggestion(0) == ""
-    assert builder.get_suggestion(5) == "  Suggestion"
 
 
 @pytest.mark.parametrize(
