@@ -8,6 +8,7 @@ TODO: Add tests for the following scenarios:
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Iterator
 
@@ -62,7 +63,7 @@ def reset_token_file_path() -> Iterator[None]:
     TokenFile.tokens_path = TOKENS_PATH_ORIGINAL
 
 
-def testload_file_nonexistent(tmp_path: Path) -> None:
+def test_load_file_nonexistent(tmp_path: Path) -> None:
     """Load from a nonexistent tokens file."""
     tokens_path = tmp_path / "does_not_exist.json"
     assert not tokens_path.exists()
@@ -71,7 +72,7 @@ def testload_file_nonexistent(tmp_path: Path) -> None:
     assert tokenfile.tokens == []
 
 
-def testload_file_empty(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_load_file_empty(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Load from an empty tokens file."""
     tokens_path = tmp_path / "empty.json"
     tokens_path.touch()
@@ -82,7 +83,7 @@ def testload_file_empty(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> N
     assert "Failed to decode JSON" in capsys.readouterr().err
 
 
-def testload_file_invalid(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_load_file_invalid_json(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Load from a tokens file with invalid JSON."""
     tokens_path = tmp_path / "invalid.json"
     tokens_path.write_text("not json")
@@ -93,7 +94,36 @@ def testload_file_invalid(tmp_path: Path, capsys: pytest.CaptureFixture[str]) ->
     assert "Failed to decode JSON" in capsys.readouterr().err
 
 
-def testload_file_single(tmp_path: Path) -> None:
+def test_load_file_invalid_tokenfile(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Load from a tokens file that is not in the correct format."""
+    tokens_path = tmp_path / "invalid_format.json"
+
+    # Contents is valid JSON, but contents are not in the correct format
+    tokens_path.write_text(
+        json.dumps(
+            {
+                "tokens": [
+                    {
+                        "invalid_key": 123,
+                        "url": "https://example.com",
+                        # missing token and username keys
+                    },
+                    {
+                        "token": "exampletoken123",
+                        "url": "https://example.com",
+                        "username": "exampleuser",
+                    },
+                ]
+            }
+        )
+    )
+    TokenFile.tokens_path = str(tokens_path)
+    tokenfile = TokenFile.load()
+    assert tokenfile.tokens == []
+    assert "Failed to validate tokens from token file" in capsys.readouterr().err
+
+
+def test_load_file_single(tmp_path: Path) -> None:
     """Load from a tokens file with a single token."""
     tokens_path = tmp_path / "single.json"
     tokens_path.write_text(TOKEN_FILE_SINGLE)
@@ -106,7 +136,7 @@ def testload_file_single(tmp_path: Path) -> None:
     assert tokens[0].username == snapshot("exampleuser")
 
 
-def testload_file_multiple(tmp_path: Path) -> None:
+def test_load_file_multiple(tmp_path: Path) -> None:
     """Load from a tokens file with multiple tokens."""
     tokens_path = tmp_path / "multiple.json"
     tokens_path.write_text(TOKEN_FILE_MULTIPLE)

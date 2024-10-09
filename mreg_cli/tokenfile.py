@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 import os
 import sys
-from typing import Optional, Self
+from typing import Any, Optional, Self
 
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 # The contents of the token file is:
 
@@ -36,9 +36,22 @@ class TokenFile:
 
     tokens_path: str = os.path.join(os.getenv("HOME", ""), ".mreg-cli_auth_token.json")
 
-    def __init__(self, tokens: Optional[list[dict[str, str]]] = None):
+    def __init__(self, tokens: Any = None):
         """Initialize the TokenFile instance."""
-        self.tokens = TokenList.validate_python(tokens)
+        self.tokens = self.validate_tokens(tokens)
+
+    def validate_tokens(self, tokens: Any) -> list[Token]:
+        """Convert deserialized JSON to list of Token objects."""
+        if tokens is None:
+            return []
+        try:
+            return TokenList.validate_python(tokens)
+        except ValidationError as e:
+            print(
+                f"Failed to validate tokens from token file {self.tokens_path}: {e}",
+                file=sys.stderr,
+            )
+            return []
 
     def _set_file_permissions(self, mode: int) -> None:
         """Set the file permissions for the token file."""
