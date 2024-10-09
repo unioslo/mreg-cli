@@ -38,20 +38,19 @@ class TokenFile:
 
     def __init__(self, tokens: Any = None):
         """Initialize the TokenFile instance."""
-        self.tokens = self.validate_tokens(tokens)
+        self.tokens = self._validate_tokens(tokens)
 
-    def validate_tokens(self, tokens: Any) -> list[Token]:
+    def _validate_tokens(self, tokens: Any) -> list[Token]:
         """Convert deserialized JSON to list of Token objects."""
-        if tokens is None:
-            return []
-        try:
-            return TokenList.validate_python(tokens)
-        except ValidationError as e:
-            print(
-                f"Failed to validate tokens from token file {self.tokens_path}: {e}",
-                file=sys.stderr,
-            )
-            return []
+        if tokens:
+            try:
+                return TokenList.validate_python(tokens)
+            except ValidationError as e:
+                print(
+                    f"Failed to validate tokens from token file {self.tokens_path}: {e}",
+                    file=sys.stderr,
+                )
+        return []
 
     def _set_file_permissions(self, mode: int) -> None:
         """Set the file permissions for the token file."""
