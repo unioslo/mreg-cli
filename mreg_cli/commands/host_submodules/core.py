@@ -20,6 +20,7 @@ from mreg_cli.api.models import (
     Host,
     HostList,
     HostT,
+    IPAddress,
     MACAddressField,
     Network,
     NetworkOrIP,
@@ -86,7 +87,7 @@ def add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, ip, contact, comment, force, macaddress)
 
     """
-    ip = args.ip
+    network_or_ip = args.ip
     hname = HostT(hostname=args.name)
     macaddress = args.macaddress
 
@@ -95,6 +96,13 @@ def add(args: argparse.Namespace) -> None:
             macaddress = MACAddressField(address=macaddress).address
         except ValueError as e:
             raise InputFailure(f"invalid MAC address: {macaddress}") from e
+
+        ip_address = IPAddress.get_by_mac(macaddress)
+
+        if ip_address:
+            raise EntityAlreadyExists(
+                f"MAC address {macaddress} is already associated with {ip_address}"
+            )
 
     host = Host.get_by_any_means(hname)
     if host:
@@ -124,17 +132,17 @@ def add(args: argparse.Namespace) -> None:
         "comment": args.comment or None,
     }
 
-    if args.ip:
+    if network_or_ip:
         network = None
-        net_or_ip = NetworkOrIP(ip_or_network=args.ip)
-        if net_or_ip.is_ip():
-            data["ipaddress"] = str(net_or_ip)
-            network = Network.get_by_ip(net_or_ip.as_ip())
-        elif net_or_ip.is_network():
-            data["network"] = str(net_or_ip)
-            network = Network.get_by_network(str(net_or_ip))
+        network_or_ip = NetworkOrIP(ip_or_network=network_or_ip)
+        if network_or_ip.is_ip():
+            data["ipaddress"] = str(network_or_ip)
+            network = Network.get_by_ip(network_or_ip.as_ip())
+        elif network_or_ip.is_network():
+            data["network"] = str(network_or_ip)
+            network = Network.get_by_network(str(network_or_ip))
         else:
-            raise EntityNotFound(f"Invalid ip or network: {args.ip}")
+            raise EntityNotFound(f"Invalid ip or network: {network_or_ip}")
         if network and network.frozen and not args.force:
             raise ForceMissing(f"Network {network.network} is frozen, must force")
 
@@ -144,8 +152,8 @@ def add(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Created host {host.name}")
 
     if macaddress is not None:
-        if ip:
-            host = host.associate_mac_to_ip(macaddress, str(ip))
+        if network_or_ip.is_ip():
+            host = host.associate_mac_to_ip(macaddress, str(network_or_ip))
         else:
             # We passed a network to create the host, so we need to find the IP
             # that was assigned to the host. We don't get that in the response
