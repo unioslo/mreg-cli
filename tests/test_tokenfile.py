@@ -1,3 +1,11 @@
+"""Tests for token file handling.
+
+TODO: Add tests for the following scenarios:
+    - Error cases for token read/write operations
+    - Class methods behavior when called on the class itself
+      vs an instance of the class
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -78,7 +86,7 @@ def testload_file_invalid(tmp_path: Path, capsys: pytest.CaptureFixture[str]) ->
     """Load from a tokens file with invalid JSON."""
     tokens_path = tmp_path / "invalid.json"
     tokens_path.write_text("not json")
-    assert tokens_path.read_text() == "not json"
+    assert tokens_path.read_text() == snapshot("not json")
     TokenFile.tokens_path = str(tokens_path)
     tokenfile = TokenFile.load()
     assert tokenfile.tokens == []
@@ -91,10 +99,11 @@ def testload_file_single(tmp_path: Path) -> None:
     tokens_path.write_text(TOKEN_FILE_SINGLE)
     TokenFile.tokens_path = str(tokens_path)
     tokenfile = TokenFile.load()
-    assert len(tokenfile.tokens) == 1
-    assert tokenfile.tokens[0].token == snapshot("exampletoken123")
-    assert tokenfile.tokens[0].url == snapshot("https://example.com")
-    assert tokenfile.tokens[0].username == snapshot("exampleuser")
+    tokens = tokenfile.tokens
+    assert len(tokens) == 1
+    assert tokens[0].token == snapshot("exampletoken123")
+    assert tokens[0].url == snapshot("https://example.com")
+    assert tokens[0].username == snapshot("exampleuser")
 
 
 def testload_file_multiple(tmp_path: Path) -> None:
@@ -102,8 +111,7 @@ def testload_file_multiple(tmp_path: Path) -> None:
     tokens_path = tmp_path / "multiple.json"
     tokens_path.write_text(TOKEN_FILE_MULTIPLE)
     TokenFile.tokens_path = str(tokens_path)
-    tokenfile = TokenFile.load()
-    assert len(tokenfile.tokens) == snapshot(3)
+    assert len(TokenFile.load().tokens) == snapshot(3)
 
 
 def test_get_entry(tmp_path: Path) -> None:
@@ -111,27 +119,26 @@ def test_get_entry(tmp_path: Path) -> None:
     tokens_path = tmp_path / "get_token.json"
     tokens_path.write_text(TOKEN_FILE_MULTIPLE)
     TokenFile.tokens_path = str(tokens_path)
-    tokenfile = TokenFile.load()
 
-    token = tokenfile.get_entry("exampleuser", "https://example.com")
+    token = TokenFile.get_entry("exampleuser", "https://example.com")
     assert token is not None
     assert token.token == snapshot("exampletoken123")
     assert token.url == snapshot("https://example.com")
     assert token.username == snapshot("exampleuser")
 
-    token = tokenfile.get_entry("foouser", "https://foo.com")
+    token = TokenFile.get_entry("foouser", "https://foo.com")
     assert token is not None
     assert token.token == snapshot("footoken456")
     assert token.url == snapshot("https://foo.com")
     assert token.username == snapshot("foouser")
 
-    token = tokenfile.get_entry("baruser", "https://bar.com")
+    token = TokenFile.get_entry("baruser", "https://bar.com")
     assert token is not None
     assert token.token == snapshot("bartoken789")
     assert token.url == snapshot("https://bar.com")
     assert token.username == snapshot("baruser")
 
-    token = tokenfile.get_entry("nonexistent", "https://example.com")
+    token = TokenFile.get_entry("nonexistent", "https://example.com")
     assert token is None
 
 
@@ -140,12 +147,11 @@ def test_set_entry_existing(tmp_path: Path) -> None:
     tokens_path = tmp_path / "set_existing.json"
     tokens_path.write_text(TOKEN_FILE_MULTIPLE)
     TokenFile.tokens_path = str(tokens_path)
-    tokenfile = TokenFile.load()
 
-    assert len(tokenfile.tokens) == snapshot(3)
-    tokenfile = tokenfile.set_entry("newuser", "https://new.com", "newtoken123")
-    assert len(tokenfile.tokens) == snapshot(4)
-    token = tokenfile.get_entry("newuser", "https://new.com")
+    assert len(TokenFile.load().tokens) == snapshot(3)
+    TokenFile.set_entry("newuser", "https://new.com", "newtoken123")
+    assert len(TokenFile.load().tokens) == snapshot(4)
+    token = TokenFile.get_entry("newuser", "https://new.com")
     assert token is not None
     assert token.token == snapshot("newtoken123")
 
@@ -157,19 +163,17 @@ def test_set_entry_new(tmp_path: Path, create_before: bool) -> None:
     if create_before:
         tokens_path.touch()  # empty file
     TokenFile.tokens_path = str(tokens_path)
-    tokenfile = TokenFile.load()
 
     # Write tokens to the empty file
-    assert len(tokenfile.tokens) == snapshot(0)
-    tokenfile = tokenfile.set_entry("newuser", "https://new.com", "newtoken123")
-    assert len(tokenfile.tokens) == snapshot(1)
-    token = tokenfile.get_entry("newuser", "https://new.com")
+    assert len(TokenFile.load().tokens) == snapshot(0)
+    TokenFile.set_entry("newuser", "https://new.com", "newtoken123")
+    assert len(TokenFile.load().tokens) == snapshot(1)
+    token = TokenFile.get_entry("newuser", "https://new.com")
     assert token is not None
     assert token.token == snapshot("newtoken123")
 
     # Try to load the tokens from the file again
-    new_tokenfile = TokenFile.load()
-    assert len(new_tokenfile.tokens) == snapshot(1)
-    token = new_tokenfile.get_entry("newuser", "https://new.com")
+    assert len(TokenFile.load().tokens) == snapshot(1)
+    token = TokenFile.get_entry("newuser", "https://new.com")
     assert token is not None
     assert token.token == snapshot("newtoken123")

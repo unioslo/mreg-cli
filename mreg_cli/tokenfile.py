@@ -49,12 +49,11 @@ class TokenFile:
         except FileNotFoundError:
             pass
 
-    def save(self) -> Self:
+    def save(self) -> None:
         """Save tokens to a JSON file."""
         with open(self.tokens_path, "w") as file:
             json.dump({"tokens": [token.model_dump() for token in self.tokens]}, file, indent=4)
         self._set_file_permissions(0o600)
-        return self
 
     @classmethod
     def load(cls) -> Self:
@@ -78,14 +77,13 @@ class TokenFile:
         return None
 
     @classmethod
-    def set_entry(cls, username: str, url: str, new_token: str) -> Self:
+    def set_entry(cls, username: str, url: str, new_token: str) -> None:
         """Update or add a token based on the URL and username."""
         tokens_file = cls.load()
         for token in tokens_file.tokens:
             if token.url == url and token.username == username:
                 token.token = new_token
                 return tokens_file.save()
-
         # If not found, add a new token
         tokens_file.tokens.append(Token(token=new_token, url=url, username=username))
-        return tokens_file.save()
+        tokens_file.save()
