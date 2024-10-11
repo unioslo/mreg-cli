@@ -59,7 +59,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+      - name: Print cwd
+        run: pwd
+
       - name: Run ls in cwd
         run: ls -la
 
