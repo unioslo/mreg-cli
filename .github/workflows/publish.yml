@@ -51,15 +51,17 @@ jobs:
         include:
           - os: ubuntu-latest
             container: redhat/ubi8:latest
+            # options: -v "${{ github.workspace }}/.git:/__w/mreg-cli/mreg-cli"
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
-    env:
-      SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.ref_name }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
+      - name: Run ls in cwd
+        run: ls -la
 
       - name: install git in RHEL 8 container
         if: contains(matrix.container, 'redhat/ubi8')
