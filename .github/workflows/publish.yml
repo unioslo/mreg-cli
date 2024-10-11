@@ -3,7 +3,7 @@ name: build mreg-cli
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+**'
+      - '[0-9]+.[0-9]+.[0-9]+*'
 
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
@@ -18,7 +18,7 @@ jobs:
       
       # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs#determining-when-to-use-contexts
       - name: Exit if not on master branch
-        if: ${{ github.ref == 'refs/heads/master' }}
+        if: ${{ github.ref == 'refs/heads/fix-building' }}
         run: exit -1
       
       - name: Install uv
@@ -52,14 +52,18 @@ jobs:
           - os: ubuntu-latest
             container: redhat/ubi8:latest
     runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
+    container: 
+      image: ${{ matrix.container }}
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: install git in RHEL 8 container
+      - name: Install RHEL 8 dependencies
         if: contains(matrix.container, 'redhat/ubi8')
-        run: dnf install -y git
+        run: dnf install -y git binutils
+
+      - name: Ensure git is available
+        run: git --version
+      
+      - uses: actions/checkout@v4
       
       - name: Install uv
         uses: astral-sh/setup-uv@v2
