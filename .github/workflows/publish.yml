@@ -54,12 +54,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     container: 
       image: ${{ matrix.container }}
-      options: -v "${{ github.workspace }}/.git:/__w/mreg-cli/mreg-cli/.git"
+      # options: -v "${{ github.workspace }}/.git:/__w/mreg-cli/mreg-cli/.git"
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
       - name: Print cwd
         run: pwd
 
