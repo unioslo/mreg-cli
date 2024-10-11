@@ -3,7 +3,7 @@ name: build mreg-cli
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+**'
+      - '[0-9]+.[0-9]+.[0-9]+*'
 
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
