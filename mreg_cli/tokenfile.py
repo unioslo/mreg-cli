@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
-from typing import Any, Optional, Self
+from typing import ClassVar, Optional, Self
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import BaseModel, ValidationError
+
+logger = logging.getLogger(__name__)
 
 # The contents of the token file is:
 
@@ -28,29 +31,12 @@ class Token(BaseModel):
     username: str
 
 
-TokenList = TypeAdapter(list[Token])
-
-
-class TokenFile:
+class TokenFile(BaseModel):
     """A class for managing tokens in a JSON file."""
 
-    tokens_path: str = os.path.join(os.getenv("HOME", ""), ".mreg-cli_auth_token.json")
+    tokens: list[Token] = []
 
-    def __init__(self, tokens: Any = None):
-        """Initialize the TokenFile instance."""
-        self.tokens = self._validate_tokens(tokens)
-
-    def _validate_tokens(self, tokens: Any) -> list[Token]:
-        """Convert deserialized JSON to list of Token objects."""
-        if tokens:
-            try:
-                return TokenList.validate_python(tokens)
-            except ValidationError as e:
-                print(
-                    f"Failed to validate tokens from token file {self.tokens_path}: {e}",
-                    file=sys.stderr,
-                )
-        return []
+    tokens_path: ClassVar[str] = os.path.join(os.getenv("HOME", ""), ".mreg-cli_auth_token.json")
 
     def _set_file_permissions(self, mode: int) -> None:
         """Set the file permissions for the token file."""
@@ -64,7 +50,7 @@ class TokenFile:
     def save(self) -> None:
         """Save tokens to a JSON file."""
         with open(self.tokens_path, "w") as file:
-            json.dump({"tokens": [token.model_dump() for token in self.tokens]}, file, indent=4)
+            file.write(self.model_dump_json(indent=4))
         self._set_file_permissions(0o600)
 
     @classmethod
@@ -73,11 +59,17 @@ class TokenFile:
         try:
             with open(cls.tokens_path, "r") as file:
                 data = json.load(file)
-                return cls(tokens=data.get("tokens"))
-        except (FileNotFoundError, KeyError, json.JSONDecodeError) as e:
+                return cls.model_validate(data)
+        except (FileNotFoundError, KeyError, json.JSONDecodeError, ValidationError) as e:
+            msg = ""
             if isinstance(e, json.JSONDecodeError):
-                print(f"Failed to decode JSON in tokens file {cls.tokens_path}", file=sys.stderr)
-            return cls(tokens=[])
+                msg = f"Failed to decode JSON in token file {cls.tokens_path}"
+            elif isinstance(e, ValidationError):
+                msg = f"Failed to validate tokens from token file {cls.tokens_path}: {e}"
+            if msg:
+                print(msg, file=sys.stderr)
+            logger.error("Failed to load token file %r: %r", cls.tokens_path, e)
+        return cls()
 
     @classmethod
     def get_entry(cls, username: str, url: str) -> Optional[Token]:
