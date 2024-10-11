@@ -51,9 +51,10 @@ jobs:
         include:
           - os: ubuntu-latest
             container: redhat/ubi8:latest
-            options: -v "${{ github.workspace }}/.git:/__w/mreg-cli/mreg-cli/.git"
     runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
+    container: 
+      image: ${{ matrix.container }}
+      options: -v "${{ github.workspace }}/.git:/__w/mreg-cli/mreg-cli/.git"
 
     steps:
       - uses: actions/checkout@v4
