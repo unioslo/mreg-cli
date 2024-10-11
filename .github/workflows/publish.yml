@@ -51,10 +51,10 @@ jobs:
         include:
           - os: ubuntu-latest
             container: redhat/ubi8:latest
-            env:
-              SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.ref_name }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
+    env:
+      SETUPTOOLS_SCM_PRETEND_VERSION: ${{ github.ref_name }}
 
     steps:
       - uses: actions/checkout@v4
