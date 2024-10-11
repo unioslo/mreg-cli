@@ -54,26 +54,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     container: 
       image: ${{ matrix.container }}
-      # options: -v "${{ github.workspace }}/.git:/__w/mreg-cli/mreg-cli/.git"
 
     steps:
-      - name: install git in RHEL 8 container
+      - name: Install RHEL 8 dependencies
         if: contains(matrix.container, 'redhat/ubi8')
-        run: dnf install -y git
+        run: dnf install -y git binutils
 
       - name: Ensure git is available
         run: git --version
+      
       - uses: actions/checkout@v4
-      #   with:
-      #     fetch-depth: 0
-      #     fetch-tags: true
-      # - name: Print cwd
-      #   run: pwd
-
-      # - name: Run ls in cwd
-      #   run: ls -la
-
-
       
       - name: Install uv
         uses: astral-sh/setup-uv@v2
