@@ -57,22 +57,23 @@ jobs:
       # options: -v "${{ github.workspace }}/.git:/__w/mreg-cli/mreg-cli/.git"
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-      - name: Print cwd
-        run: pwd
-
-      - name: Run ls in cwd
-        run: ls -la
-
       - name: install git in RHEL 8 container
         if: contains(matrix.container, 'redhat/ubi8')
         run: dnf install -y git
 
       - name: Ensure git is available
         run: git --version
+      - uses: actions/checkout@v4
+      #   with:
+      #     fetch-depth: 0
+      #     fetch-tags: true
+      # - name: Print cwd
+      #   run: pwd
+
+      # - name: Run ls in cwd
+      #   run: ls -la
+
+
       
       - name: Install uv
         uses: astral-sh/setup-uv@v2
