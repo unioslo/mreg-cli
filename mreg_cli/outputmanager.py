@@ -458,6 +458,10 @@ class OutputManager:
     def render(self) -> None:
         """Print the output to stdout, and records it if recording is active."""
         self.recording_output()
+
+        for line in self._ok:
+            print(f"OK: {line}")
+
         for line in self.filtered_output():
             print(line)
 
