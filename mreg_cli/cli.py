@@ -221,7 +221,6 @@ class Command(Completer):
                 if name.startswith(cur) and cur:
                     yield Completion(
                         name,
-                        display_meta=self.children[name].short_desc,
                         start_position=-len(cur),
                     )
 
