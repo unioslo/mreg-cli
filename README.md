@@ -42,6 +42,20 @@ USER=mreg-user
 SERVER=https://mreg.example.com:8000
 ```
 
+### Prompt
+
+The prompt can be configured with a custom format string. The available variables are:
+
+- `{user}`: Username of active user
+- `{host}`: Hostname of the server
+
+By default the prompt is set to `{user}@{host}`:
+
+```ini
+[mreg]
+PROMPT={user}@{host}
+```
+
 ## General usage
 
 Commands in `mreg-cli` take on the form of a fairly standard command line interface:

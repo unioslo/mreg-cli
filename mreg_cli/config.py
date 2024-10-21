@@ -16,6 +16,7 @@ translated according to a mapping:
 
 from __future__ import annotations
 
+import argparse
 import configparser
 import logging
 import os
@@ -103,12 +104,13 @@ class MregCliConfig:
             key, self._config_env.get(key, self._config_file.get(key, default))
         )
 
-    def set_cmd_config(self, cmd_config: dict[str, Any]) -> None:
-        """Set command line configuration options.
+    def set_cmd_config(self, args: argparse.Namespace) -> None:
+        """Set command line configuration options from command args.
 
-        :param Dict[str, Any] cmd_config: Dictionary of command line configurations.
+        :param argparse.Namespace args: Command line arguments.
         """
-        self._config_cmd.update(cmd_config)
+        conf = {k: v for k, v in vars(args).items() if v}
+        self._config_cmd.update(conf)
 
     def get_config(self, reload: bool = False) -> None:
         """Load the configuration file into the class.

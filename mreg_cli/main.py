@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import getpass
 import logging
 
@@ -125,21 +126,17 @@ def main():
         print(f"mreg-cli {__version__}")
         raise SystemExit() from None
 
+    config.set_cmd_config(args)
+
     logfile = config.get_default_logfile()
-    conf = {k: v for k, v in vars(args).items() if v}
-    config.set_cmd_config(conf)
-
-    if "logfile" in conf:
-        logfile = conf["logfile"]
-
     config.start_logging(logfile, args.loglevel)
 
     logger.debug(f"args: {args}")
 
-    if "record_traffic" in conf:
-        OutputManager().recording_start(conf["record_traffic"])
+    if traffic_file := config.get("record_traffic"):
+        OutputManager().recording_start(traffic_file)
 
-    if "record_traffic_without_timestamps" in conf:
+    if config.get("record_traffic_without_timestamps"):
         OutputManager().record_timestamps(False)
 
     if config.get("user") is None:
@@ -163,35 +160,11 @@ def main():
         print(api.get_session_token() or "Token not found.")
         raise SystemExit() from None
 
-    # Define a function that returns the prompt message
-    def get_prompt_message():
-        """Return the prompt message."""
-        manager = OutputManager()
-
-        if args.prompt:
-            prompt = args.prompt
-        elif config.get("prompt"):
-            prompt = config.get("prompt")
-        else:
-            host = str(config.get("url")).replace("https://", "").replace("http://", "")
-            user = args.user or config.get("user", "?")
-            prompt = f"{user}@{host}"
-
-        prefix: list[str] = []
-
-        if manager.recording_active():
-            prefix.append(f"&gt;'{manager.recording_filename()}'")
-
-        if prefix:
-            prefix_str = ",".join(prefix)
-            return HTML(f"[{prefix_str}] {prompt}> ")
-        return HTML(f"{prompt}> ")
-
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the
     # completer; and other visual things.
     session = PromptSession(
-        message=get_prompt_message,
+        message=functools.partial(get_prompt_message, args, config),
         search_ignore_case=True,
         completer=cli,
         complete_while_typing=True,
@@ -202,9 +175,9 @@ def main():
     print("Type -h for help.")
 
     # if the --source parameter was given, read commands from the source file and then exit
-    if "source" in conf:
-        logger.info("Reading commands from %s", conf["source"])
-        for command in source([conf["source"]], "verbosity" in conf, False):
+    if source_file := config.get("source"):
+        logger.info("Reading commands from %s", source_file)
+        for command in source([source_file], bool(config.get("verbosity")), False):
             cli.process_command_line(command)
         return
 
@@ -232,6 +205,46 @@ def main():
                 cli.process_command_line(line)
         except ValueError as e:
             print(e)
+
+
+# Define a function that returns the prompt message
+def get_prompt_message(args: argparse.Namespace, config: MregCliConfig) -> HTML:
+    """Return the prompt message."""
+    manager = OutputManager()
+
+    def fmt_prompt(prompt: str) -> str:
+        host = str(config.get("url")).replace("https://", "").replace("http://", "")
+        user = args.user or config.get("user", "?")
+
+        return prompt.format(
+            # Available variables for the prompt:
+            user=user,
+            host=host,
+        )
+
+    DEFAULT_PROMPT = "{user}@{host}"
+    if args.prompt:
+        prompt = args.prompt
+    elif config.get("prompt"):
+        prompt = config.get("prompt", DEFAULT_PROMPT)
+    else:
+        prompt = DEFAULT_PROMPT
+
+    try:
+        prompt = fmt_prompt(prompt)
+    except KeyError:
+        logger.error("Invalid prompt format: %s", prompt)
+        prompt = fmt_prompt(DEFAULT_PROMPT)
+
+    prefix: list[str] = []
+
+    if manager.recording_active():
+        prefix.append(f"&gt;'{manager.recording_filename()}'")
+
+    if prefix:
+        prefix_str = ",".join(prefix)
+        return HTML(f"[{prefix_str}] {prompt}> ")
+    return HTML(f"{prompt}> ")
 
 
 if __name__ == "__main__":
