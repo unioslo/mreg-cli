@@ -211,11 +211,11 @@ def main():
 def get_prompt_message(args: argparse.Namespace, config: MregCliConfig) -> HTML:
     """Return the prompt message."""
     manager = OutputManager()
+    args_map = vars(args)
 
     def fmt_prompt(prompt: str) -> str:
         host = str(config.get("url")).replace("https://", "").replace("http://", "")
-        user = args.user or config.get("user", "?")
-
+        user = args_map.get("user") or config.get("user", "?")
         return prompt.format(
             # Available variables for the prompt:
             user=user,
@@ -223,10 +223,10 @@ def get_prompt_message(args: argparse.Namespace, config: MregCliConfig) -> HTML:
         )
 
     DEFAULT_PROMPT = "{user}@{host}"
-    if args.prompt:
-        prompt = args.prompt
-    elif config.get("prompt"):
-        prompt = config.get("prompt", DEFAULT_PROMPT)
+    if args_prompt := args_map.get("prompt"):
+        prompt = args_prompt
+    elif config_prompt := config.get("prompt"):
+        prompt = config_prompt
     else:
         prompt = DEFAULT_PROMPT
 
