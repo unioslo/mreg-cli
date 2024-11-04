@@ -45,6 +45,11 @@ jobs:
     name: Build pyinstaller binary
     strategy:
       matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest-large
+          - macos-latest
         include:
           - os: ubuntu-latest
             platform: linux-x86_64
