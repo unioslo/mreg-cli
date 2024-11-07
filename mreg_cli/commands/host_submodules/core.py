@@ -14,6 +14,7 @@ Commands implemented:
 from __future__ import annotations
 
 import argparse
+import re
 
 from mreg_cli.api.models import (
     ForwardZone,
@@ -123,8 +124,16 @@ def add(args: argparse.Namespace) -> None:
     }
 
     if network_or_ip:
-        autodetect = network_or_ip.endswith("/")
-        network_or_ip = network_or_ip.rstrip("/")
+        autodetect = False
+
+        # Combine multiple slashes, in case anyone is trying to be funny
+        network_or_ip = re.sub(r"/+", "/", network_or_ip)
+
+        if network_or_ip.endswith("/32"):
+            network_or_ip = network_or_ip[:-3]
+        elif network_or_ip.endswith("/"):
+            autodetect = True
+            network_or_ip = network_or_ip.rstrip("/")
 
         network_or_ip = NetworkOrIP(ip_or_network=network_or_ip)
 
