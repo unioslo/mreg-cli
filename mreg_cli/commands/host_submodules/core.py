@@ -126,17 +126,17 @@ def add(args: argparse.Namespace) -> None:
         autodetect = network_or_ip.endswith("/")
         network_or_ip = network_or_ip.rstrip("/")
 
-        network_or_ip_obj = NetworkOrIP(ip_or_network=network_or_ip)
+        network_or_ip = NetworkOrIP(ip_or_network=network_or_ip)
 
-        if network_or_ip_obj.is_ip() and not autodetect:
-            data["ipaddress"] = str(network_or_ip_obj)
-            network = Network.get_by_ip(network_or_ip_obj.as_ip())
+        if network_or_ip.is_ip() and not autodetect:
+            data["ipaddress"] = str(network_or_ip)
+            network = Network.get_by_ip(network_or_ip.as_ip())
 
-        elif network_or_ip_obj.is_network() or autodetect:
+        elif network_or_ip.is_network() or autodetect:
             network = (
-                Network.get_by_ip(network_or_ip_obj.as_ip())
+                Network.get_by_ip(network_or_ip.as_ip())
                 if autodetect
-                else Network.get_by_network(str(network_or_ip_obj))
+                else Network.get_by_network(str(network_or_ip))
             )
             if network:
                 data["network"] = str(network.network)
