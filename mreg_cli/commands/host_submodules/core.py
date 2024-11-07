@@ -146,7 +146,7 @@ def add(args: argparse.Namespace) -> None:
         else:
             raise EntityNotFound(f"Invalid ip or network: {network_or_ip}")
 
-        if network and network.frozen and not getattr(args, "force", False):
+        if network and network.frozen and not args.force:
             raise ForceMissing(f"Network {network.network} is frozen, must force")
 
     host = Host.create(data)
