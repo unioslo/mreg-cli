@@ -123,17 +123,30 @@ def add(args: argparse.Namespace) -> None:
     }
 
     if network_or_ip:
-        network = None
-        network_or_ip = NetworkOrIP(ip_or_network=network_or_ip)
-        if network_or_ip.is_ip():
-            data["ipaddress"] = str(network_or_ip)
-            network = Network.get_by_ip(network_or_ip.as_ip())
-        elif network_or_ip.is_network():
-            data["network"] = str(network_or_ip)
-            network = Network.get_by_network(str(network_or_ip))
+        autodetect = network_or_ip.endswith("/")
+        network_or_ip = network_or_ip.rstrip("/")
+
+        network_or_ip_obj = NetworkOrIP(ip_or_network=network_or_ip)
+
+        if network_or_ip_obj.is_ip() and not autodetect:
+            data["ipaddress"] = str(network_or_ip_obj)
+            network = Network.get_by_ip(network_or_ip_obj.as_ip())
+
+        elif network_or_ip_obj.is_network() or autodetect:
+            network = (
+                Network.get_by_ip(network_or_ip_obj.as_ip())
+                if autodetect
+                else Network.get_by_network(str(network_or_ip_obj))
+            )
+            if network:
+                data["network"] = str(network.network)
+            else:
+                raise EntityNotFound(f"Invalid ip or network: {network_or_ip}")
+
         else:
             raise EntityNotFound(f"Invalid ip or network: {network_or_ip}")
-        if network and network.frozen and not args.force:
+
+        if network and network.frozen and not getattr(args, "force", False):
             raise ForceMissing(f"Network {network.network} is frozen, must force")
 
     host = Host.create(data)
