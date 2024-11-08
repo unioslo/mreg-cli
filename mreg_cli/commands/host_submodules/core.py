@@ -92,11 +92,7 @@ def add(args: argparse.Namespace) -> None:
     macaddress = args.macaddress
 
     if macaddress is not None:
-        try:
-            macaddress = MACAddressField(address=macaddress).address
-        except ValueError as e:
-            raise InputFailure(f"invalid MAC address: {macaddress}") from e
-
+        macaddress = MACAddressField.validate_mac(macaddress)
         ip_address = IPAddress.get_by_mac(macaddress)
 
         if ip_address:
@@ -119,12 +115,6 @@ def add(args: argparse.Namespace) -> None:
 
     if "*" in hname.hostname and not args.force:
         raise ForceMissing("Wildcards must be forced.")
-
-    if macaddress is not None:
-        try:
-            macaddress = MACAddressField(address=macaddress)
-        except ValueError as e:
-            raise InputFailure(f"invalid MAC address: {macaddress}") from e
 
     data: JsonMapping = {
         "name": hname.hostname,

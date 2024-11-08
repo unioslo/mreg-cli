@@ -186,10 +186,7 @@ def _add_ip(
 
     mac = None
     if args.macaddress:
-        try:
-            mac = MACAddressField(address=args.macaddress)
-        except ValueError as e:
-            raise InputFailure(f"Invalid MAC address: {mac}") from e
+        mac = MACAddressField.validate_mac(args.macaddress)
 
     if not args.force:
         _bail_if_ip_in_use_and_not_force(ipaddr)
