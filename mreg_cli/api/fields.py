@@ -3,43 +3,32 @@
 from __future__ import annotations
 
 import ipaddress
-import re
-from typing import Annotated, Any
+from typing import Annotated, Any, Self
 
-from pydantic import BeforeValidator, field_validator
+from pydantic import BeforeValidator, ValidationError, field_validator
+from pydantic_extra_types.mac_address import MacAddress
 
 from mreg_cli.api.abstracts import FrozenModel
 from mreg_cli.exceptions import InputFailure
 from mreg_cli.types import IP_AddressT
 
-_mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
-
 
 class MACAddressField(FrozenModel):
     """Represents a MAC address."""
 
-    address: str
+    address: MacAddress
 
-    @field_validator("address", mode="after")
     @classmethod
-    def validate_and_format_mac(cls, v: str) -> str:
-        """Validate and normalize MAC address to 'aa:bb:cc:dd:ee:ff' format.
-
-        :param v: The input MAC address string.
-        :raises ValueError: If the input does not match the expected MAC address pattern.
-        :returns: The normalized MAC address.
-        """
-        # Validate input format
-        if not _mac_regex.match(v):
-            raise ValueError("Invalid MAC address format")
-
-        # Normalize MAC address
-        v = re.sub(r"[.:-]", "", v).lower()
-        return ":".join(v[i : i + 2] for i in range(0, 12, 2))
+    def validate_mac(cls, value: str | MacAddress) -> Self:
+        """Validate a MAC address and return it as a string."""
+        try:
+            return cls(address=value)  # pyright: ignore[reportArgumentType]
+        except ValidationError as e:
+            raise InputFailure(f"Invalid MAC address '{value}'") from e
 
     def __str__(self) -> str:
         """Return the MAC address as a string."""
-        return self.address
+        return str(self.address)
 
 
 class IPAddressField(FrozenModel):
