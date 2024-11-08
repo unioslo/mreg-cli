@@ -3,6 +3,9 @@ from __future__ import annotations
 import pytest
 
 from mreg_cli.api.fields import MACAddressField
+from mreg_cli.exceptions import InputFailure
+
+MacAddresValidationFailure = pytest.mark.xfail(raises=InputFailure, strict=True)
 
 
 @pytest.mark.parametrize(
@@ -26,6 +29,18 @@ from mreg_cli.api.fields import MACAddressField
         ("A1B2.C3D4.E5F6", "a1:b2:c3:d4:e5:f6"),
         ("a1b2.c3d4.e5f6", "a1:b2:c3:d4:e5:f6"),
         ("Ab12.cD34.eF56", "ab:12:cd:34:ef:56"),
+        # Invalid mac addresses
+        pytest.param("00:00:00:00:00:00:00", "", marks=MacAddresValidationFailure),
+        pytest.param("00:00:00:00:00", "", marks=MacAddresValidationFailure),
+        pytest.param("00:00:00:00:00:0", "", marks=MacAddresValidationFailure),
+        pytest.param("00:00:00:00:00:0g", "", marks=MacAddresValidationFailure),
+        pytest.param("00-00-00-00-00-00:00", "", marks=MacAddresValidationFailure),
+        pytest.param("00-00-00-00-00", "", marks=MacAddresValidationFailure),
+        pytest.param("00-00-00-00-00-0", "", marks=MacAddresValidationFailure),
+        pytest.param("00-00-00-00-00-0g", "", marks=MacAddresValidationFailure),
+        pytest.param("ab:cd:ef:12:34", "", marks=MacAddresValidationFailure),
+        pytest.param("ab-cd-ef-12-34", "", marks=MacAddresValidationFailure),
+        pytest.param("abcd.ef12.34", "", marks=MacAddresValidationFailure),
     ],
 )
 def test_mac_address_field(inp: str, expect: str) -> None:
