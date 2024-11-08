@@ -5,7 +5,8 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from typing import Any, ClassVar, Self, cast
+from enum import StrEnum
+from typing import Any, ClassVar, Literal, Self, cast, overload
 
 from pydantic import (
     AliasChoices,
@@ -58,10 +59,67 @@ from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_locati
 _mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
 
 
+class IPNetMode(StrEnum):
+    """IP or network validation mode."""
+
+    IPv4 = "IPv4"
+    IPv6 = "IPv6"
+    IP = "IP"
+    NETWORK = "network"
+
+
 class NetworkOrIP(BaseModel):
     """A model for either a network or an IP address."""
 
-    ip_or_network: str | IP_AddressT | IP_NetworkT
+    ip_or_network: IP_AddressT | IP_NetworkT
+
+    @overload
+    @classmethod
+    def from_string(cls, val: Any, mode: None = None) -> IP_AddressT | IP_NetworkT: ...
+
+    @overload
+    @classmethod
+    def from_string(cls, val: Any, mode: Literal[IPNetMode.IP]) -> IP_AddressT: ...
+
+    @overload
+    @classmethod
+    def from_string(cls, val: Any, mode: Literal[IPNetMode.IPv4]) -> ipaddress.IPv4Address: ...
+
+    @overload
+    @classmethod
+    def from_string(cls, val: Any, mode: Literal[IPNetMode.IPv6]) -> ipaddress.IPv6Address: ...
+
+    @overload
+    @classmethod
+    def from_string(cls, val: Any, mode: Literal[IPNetMode.NETWORK]) -> IP_NetworkT: ...
+
+    @overload
+    @classmethod
+    def from_string(cls, val: Any, mode: IPNetMode) -> IP_AddressT | IP_NetworkT: ...
+
+    @classmethod
+    def from_string(cls, val: Any, mode: IPNetMode | None = None) -> IP_AddressT | IP_NetworkT:
+        """Construct a network or IP address from a string.
+
+        Optionally specify the mode to validate the input as.
+
+        :param val: The value to convert.
+        :param mode: The mode to validate the input as.
+        :returns: The IP address or network.
+        """
+        try:
+            ipnet = cls(ip_or_network=val)
+        except ValidationError as e:
+            raise InputFailure(f"Invalid IP address or network: {val}") from e
+        if mode == IPNetMode.IP:
+            return ipnet.as_ip()
+        if mode == IPNetMode.NETWORK:
+            return ipnet.as_network()
+        if mode == IPNetMode.IPv4:
+            return ipnet.as_ipv4()
+        if mode == IPNetMode.IPv6:
+            return ipnet.as_ipv6()
+        return ipnet.ip_or_network
 
     @field_validator("ip_or_network", mode="before")
     @classmethod
