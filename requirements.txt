@@ -14,20 +14,32 @@ idna==3.7
     # via
     #   email-validator
     #   requests
+platformdirs==4.3.6
+    # via mreg-cli (pyproject.toml)
 prompt-toolkit==3.0.43
+    # via mreg-cli (pyproject.toml)
 pydantic==2.7.1
+    # via
+    #   mreg-cli (pyproject.toml)
+    #   pydantic-extra-types
 pydantic-core==2.18.2
     # via pydantic
+pydantic-extra-types==2.10.0
+    # via mreg-cli (pyproject.toml)
 pysocks==1.7.1
     # via requests
 python-dateutil==2.9.0.post0
+    # via mreg-cli (pyproject.toml)
 requests==2.32.2
+    # via mreg-cli (pyproject.toml)
 six==1.16.0
     # via python-dateutil
 typing-extensions==4.12.0
     # via
+    #   mreg-cli (pyproject.toml)
     #   pydantic
     #   pydantic-core
+    #   pydantic-extra-types
 urllib3==2.2.2
     # via requests
 wcwidth==0.2.13

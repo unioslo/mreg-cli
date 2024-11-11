@@ -6,7 +6,13 @@ altgraph==0.17.4
     #   pyinstaller
 annotated-types==0.7.0
     # via pydantic
-cachetools==5.3.3
+asttokens==2.4.1
+    # via inline-snapshot
+black==24.10.0
+    # via inline-snapshot
+build==1.2.2.post1
+    # via mreg-cli (pyproject.toml)
+cachetools==5.5.0
     # via tox
 certifi==2024.7.4
     # via requests
@@ -14,6 +20,10 @@ chardet==5.2.0
     # via tox
 charset-normalizer==3.3.2
     # via requests
+click==8.1.7
+    # via
+    #   black
+    #   inline-snapshot
 colorama==0.4.6
     # via tox
 distlib==0.3.8
@@ -22,7 +32,9 @@ dnspython==2.6.1
     # via email-validator
 email-validator==2.1.1
     # via pydantic
-filelock==3.14.0
+executing==2.1.0
+    # via inline-snapshot
+filelock==3.16.1
     # via
     #   tox
     #   virtualenv
@@ -30,49 +42,109 @@ idna==3.7
     # via
     #   email-validator
     #   requests
+iniconfig==2.0.0
+    # via pytest
+inline-snapshot==0.14.0
+    # via mreg-cli (pyproject.toml)
 macholib==1.16.3
     # via pyinstaller
-packaging==24.0
+markdown-it-py==3.0.0
+    # via rich
+markupsafe==3.0.2
+    # via werkzeug
+mdurl==0.1.2
+    # via markdown-it-py
+mypy-extensions==1.0.0
+    # via black
+packaging==24.2
     # via
+    #   black
+    #   build
     #   pyinstaller
     #   pyinstaller-hooks-contrib
     #   pyproject-api
+    #   pytest
+    #   setuptools-scm
     #   tox
-platformdirs==4.2.2
+    #   tox-uv
+pathspec==0.12.1
+    # via black
+platformdirs==4.3.6
     # via
+    #   mreg-cli (pyproject.toml)
+    #   black
     #   tox
     #   virtualenv
 pluggy==1.5.0
-    # via tox
+    # via
+    #   pytest
+    #   tox
 prompt-toolkit==3.0.43
+    # via mreg-cli (pyproject.toml)
 pydantic==2.7.1
+    # via
+    #   mreg-cli (pyproject.toml)
+    #   pydantic-extra-types
 pydantic-core==2.18.2
     # via pydantic
+pydantic-extra-types==2.10.0
+    # via mreg-cli (pyproject.toml)
+pygments==2.18.0
+    # via rich
 pyinstaller==6.7.0
+    # via mreg-cli (pyproject.toml)
 pyinstaller-hooks-contrib==2024.6
     # via pyinstaller
-pyproject-api==1.6.1
+pyproject-api==1.8.0
     # via tox
+pyproject-hooks==1.2.0
+    # via build
 pysocks==1.7.1
     # via requests
+pytest==8.3.3
+    # via mreg-cli (pyproject.toml)
+pytest-httpserver==1.1.0
+    # via mreg-cli (pyproject.toml)
 python-dateutil==2.9.0.post0
+    # via mreg-cli (pyproject.toml)
 requests==2.32.2
+    # via mreg-cli (pyproject.toml)
 rich==13.7.1
+    # via
+    #   mreg-cli (pyproject.toml)
+    #   inline-snapshot
 ruff==0.4.5
+    # via mreg-cli (pyproject.toml)
 setuptools==70.0.0
     # via
+    #   mreg-cli (pyproject.toml)
     #   pyinstaller
     #   pyinstaller-hooks-contrib
+    #   setuptools-scm
+setuptools-scm==8.1.0
+    # via mreg-cli (pyproject.toml)
 six==1.16.0
-    # via python-dateutil
-tox==4.15.0
+    # via
+    #   asttokens
+    #   python-dateutil
+tox==4.23.2
+    # via tox-uv
+tox-uv==1.16.0
+    # via mreg-cli (pyproject.toml)
 typing-extensions==4.12.0
     # via
+    #   mreg-cli (pyproject.toml)
+    #   inline-snapshot
     #   pydantic
     #   pydantic-core
+    #   pydantic-extra-types
 urllib3==2.2.2
     # via requests
-virtualenv==20.26.2
+uv==0.5.1
+    # via tox-uv
+virtualenv==20.27.1
     # via tox
 wcwidth==0.2.13
     # via prompt-toolkit
+werkzeug==3.1.3
+    # via pytest-httpserver

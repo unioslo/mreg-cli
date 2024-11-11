@@ -161,7 +161,7 @@ def logout() -> None:
 
 def prompt_for_password_and_try_update_token() -> None:
     """Prompt for a password and try to update the token."""
-    password = prompt("You need to re-autenticate\nEnter password: ", is_password=True)
+    password = prompt("You need to re-authenticate\nEnter password: ", is_password=True)
     try:
         user = MregCliConfig().get("user")
         if not user:
