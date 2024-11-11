@@ -56,6 +56,7 @@ if not os.path.exists(data_dir):
 
 if not os.access(data_dir, os.W_OK):
     tmp_data_dir = tempfile.mkdtemp(prefix="mreg-cli.", suffix="." + str(os.getuid()))
+    print(f"Default logging directory is not writable, using {tmp_data_dir} instead.")
     os.makedirs(tmp_data_dir, exist_ok=True)
     data_dir = tmp_data_dir
 
