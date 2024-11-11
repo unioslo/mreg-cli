@@ -2810,10 +2810,10 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: A new Host object fetched from the API after updating the IP address.
         """
         if isinstance(mac, str):
-            mac = MACAddressField(address=mac)
+            mac = MACAddressField.validate_mac(mac)
 
         if isinstance(ip, str):
-            ip = IPAddressField(address=ipaddress.ip_address(ip))
+            ip = IPAddressField.from_string(ip)
 
         params: QueryParams = {
             "macaddress": mac.address,
