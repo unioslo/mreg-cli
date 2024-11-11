@@ -34,7 +34,8 @@ class CliException(Exception):
 
         :returns: Formatted string for the exception message.
         """
-        raise NotImplementedError("This method should be implemented by subclasses")
+        # NOTE: override this in subclasses to provide custom formatting.
+        return self.escape()
 
     def print_self(self):
         """Print the exception with appropriate formatting."""
