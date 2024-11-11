@@ -149,12 +149,28 @@ class MregCliConfig:
             logging.shutdown()
             self._is_logging = False
         else:
-            logging.basicConfig(
-                filename=logfile,
-                level=logging.getLevelName(level),
-                format=LOGGING_FORMAT,
-                datefmt="%Y-%m-%d %H:%M:%S",
-            )
+            try:
+                logging.basicConfig(
+                    filename=logfile,
+                    level=logging.getLevelName(level),
+                    format=LOGGING_FORMAT,
+                    datefmt="%Y-%m-%d %H:%M:%S",
+                )
+            except PermissionError:
+                failing_logfile = logfile
+                logfile = f"/tmp/mreg-cli.{os.getuid()}.log"
+                print(f"Permission denied for {failing_logfile}, trying {logfile}.")
+                try:
+                    logging.basicConfig(
+                        filename=logfile,
+                        level=logging.getLevelName(level),
+                        format=LOGGING_FORMAT,
+                        datefmt="%Y-%m-%d %H:%M:%S",
+                    )
+                    print(f"Logging to {logfile} OK. Please note that this is a temporary file.")
+                except Exception as e:
+                    print(f"Failed to set up logging: {e}")
+                    return
 
         logging.getLogger().setLevel(level)
         self._is_logging = True
