@@ -1908,11 +1908,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         :returns: The IP address if found, None otherwise.
         """
         if isinstance(mac, str):
-            try:
-                mac = MACAddressField(address=mac)
-            except ValueError as e:
-                raise InputFailure(f"Invalid MAC address: {mac}") from e
-
+            mac = MACAddressField.validate_mac(mac)
         return cls.get_by_field("macaddress", mac.address)
 
     @classmethod
@@ -1955,10 +1951,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         :returns: A new IPAddress object fetched from the API with the updated MAC address.
         """
         if isinstance(mac, str):
-            try:
-                mac = MACAddressField(address=mac)
-            except ValueError as e:
-                raise InputFailure(f"Invalid MAC address: {mac}") from e
+            mac = MACAddressField.validate_mac(mac)
 
         if self.macaddress and not force:
             raise EntityAlreadyExists(
