@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import getpass
 import logging
-import sys
 
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
