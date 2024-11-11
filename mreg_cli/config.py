@@ -22,11 +22,14 @@ import os
 import sys
 from typing import Any, overload
 
+import platformdirs
+
 from mreg_cli.types import DefaultType, LogLevel
 
 logger = logging.getLogger(__name__)
 
-# Config file locations
+# Config file locations.
+# This needs migration to platformdirs... Without breaking historical usage.
 DEFAULT_CONFIG_PATH = tuple(
     (
         os.path.expanduser("~/.config/mreg-cli.conf"),
@@ -38,7 +41,19 @@ DEFAULT_CONFIG_PATH = tuple(
     )
 )
 
-DEFAULT_LOG_FILE = os.path.expanduser("~/.mreg-cli.log")
+data_dir = platformdirs.user_data_dir(appname="mreg-cli", appauthor="UiO", ensure_exists=True)
+log_file_name = "mreg-cli.log"
+
+# Check if the data_dir is writable, if not, use a temporary directory
+if not os.access(data_dir, os.W_OK):
+    tmp_data_dir = "/tmp/mreg-cli." + str(os.getuid())
+    print(f"{data_dir} or the log file within is not writable, trying {tmp_data_dir}")
+    os.makedirs(tmp_data_dir, exist_ok=True)
+    data_dir = tmp_data_dir
+
+# Set the data directory
+DATA_DIR = data_dir
+DEFAULT_LOG_FILE = os.path.join(DATA_DIR, log_file_name)
 
 # Default logging format
 LOGGING_FORMAT = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
@@ -156,21 +171,10 @@ class MregCliConfig:
                     format=LOGGING_FORMAT,
                     datefmt="%Y-%m-%d %H:%M:%S",
                 )
-            except PermissionError:
-                failing_logfile = logfile
-                logfile = f"/tmp/mreg-cli.{os.getuid()}.log"
-                print(f"Permission denied for {failing_logfile}, trying {logfile}.")
-                try:
-                    logging.basicConfig(
-                        filename=logfile,
-                        level=logging.getLevelName(level),
-                        format=LOGGING_FORMAT,
-                        datefmt="%Y-%m-%d %H:%M:%S",
-                    )
-                    print(f"Logging to {logfile} OK. Please note that this is a temporary file.")
-                except Exception as e:
-                    print(f"Failed to set up logging: {e}")
-                    return
+                print(f"Logging enabled to {logfile}")
+            except Exception as e:
+                print(f"Failed to set up logging: {e}")
+                return
 
         logging.getLogger().setLevel(level)
         self._is_logging = True
