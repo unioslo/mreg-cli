@@ -47,7 +47,7 @@ log_file_name = "mreg-cli.log"
 # Check if the data_dir is writable, if not, use a temporary directory
 if not os.access(data_dir, os.W_OK):
     tmp_data_dir = "/tmp/mreg-cli." + str(os.getuid())
-    print(f"{data_dir} or the log file within is not writable, trying {tmp_data_dir}")
+    print(f"{data_dir} is not writable, trying {tmp_data_dir}")
     os.makedirs(tmp_data_dir, exist_ok=True)
     data_dir = tmp_data_dir
 
