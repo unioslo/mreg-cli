@@ -193,7 +193,7 @@ def main():
     # session is a PromptSession object from prompt_toolkit which handles
     # some configurations of the prompt for us: the text of the prompt; the
     # completer; and other visual things.
-    session = PromptSession(
+    session: PromptSession[str] = PromptSession(
         message=get_prompt_message,
         search_ignore_case=True,
         completer=cli,
