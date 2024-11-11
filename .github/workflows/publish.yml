@@ -18,7 +18,7 @@ jobs:
       
       # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs#determining-when-to-use-contexts
       - name: Exit if not on master branch
-        if: ${{ github.ref == 'refs/heads/macos-intel' }}
+        if: ${{ github.ref == 'refs/heads/master' }}
         run: exit -1
       
       - name: Install uv
