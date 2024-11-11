@@ -20,6 +20,7 @@ import configparser
 import logging
 import os
 import sys
+import tempfile
 from typing import Any, overload
 
 import platformdirs
@@ -41,12 +42,12 @@ DEFAULT_CONFIG_PATH = tuple(
     )
 )
 
-data_dir = platformdirs.user_data_dir(appname="mreg-cli", appauthor="UiO", ensure_exists=True)
+data_dir = platformdirs.user_data_dir(appname="mreg-cli", appauthor="UiO")
 log_file_name = "mreg-cli.log"
 
 # Check if the data_dir is writable, if not, use a temporary directory
 if not os.access(data_dir, os.W_OK):
-    tmp_data_dir = "/tmp/mreg-cli." + str(os.getuid())
+    tmp_data_dir = tempfile.mkdtemp(prefix="mreg-cli.", suffix="." + str(os.getuid()))
     print(f"{data_dir} is not writable, trying {tmp_data_dir}")
     os.makedirs(tmp_data_dir, exist_ok=True)
     data_dir = tmp_data_dir
