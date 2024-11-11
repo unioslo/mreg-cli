@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import getpass
 import logging
+import sys
 
 from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
@@ -13,7 +14,7 @@ import mreg_cli.utilities.api as api
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, source
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import LoginFailedError
+from mreg_cli.exceptions import CliException, LoginFailedError
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import LogLevel
 from mreg_cli.utilities.api import try_token_or_login
@@ -155,10 +156,13 @@ def main():
             str(config.get("url")),
             fail_without_token=args.token_only,
         )
-
     except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
-        print(e)
+        if isinstance(e, LoginFailedError):
+            e.print_self()
+        else:
+            print(e)
         raise SystemExit() from None
+
     if args.show_token:
         print(api.get_session_token() or "Token not found.")
         raise SystemExit() from None
@@ -227,11 +231,15 @@ def main():
             continue
         except EOFError:
             raise SystemExit() from None
-        try:
-            for line in lines.splitlines():
-                cli.process_command_line(line)
-        except ValueError as e:
-            print(e)
+        except CliException as e:
+            e.print_self()
+            raise SystemExit() from None
+        else:
+            try:
+                for line in lines.splitlines():
+                    cli.process_command_line(line)
+            except ValueError as e:
+                print(e)
 
 
 if __name__ == "__main__":

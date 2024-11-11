@@ -224,7 +224,7 @@ class NetworkOverlap(CliWarning):
     pass
 
 
-class LoginFailedError(CliException):
+class LoginFailedError(CliError):
     """Error class for login failure."""
 
     def formatted_exception(self) -> str:
@@ -233,5 +233,3 @@ class LoginFailedError(CliException):
         :returns: Formatted error message.
         """
         return f"Login failed: {self.escape()}"
-
-    pass
