@@ -45,10 +45,17 @@ DEFAULT_CONFIG_PATH = tuple(
 data_dir = platformdirs.user_data_dir(appname="mreg-cli", appauthor="UiO")
 log_file_name = "mreg-cli.log"
 
-# Check if the data_dir is writable, if not, use a temporary directory
+# Try to ensure that the data directory exists, but if it doesn't, we'll fall through and
+# eventually use a temp dir. This makes the assumption that os.access on a non-existent directory
+# will return False.
+if not os.path.exists(data_dir):
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+    except Exception:
+        pass
+
 if not os.access(data_dir, os.W_OK):
     tmp_data_dir = tempfile.mkdtemp(prefix="mreg-cli.", suffix="." + str(os.getuid()))
-    print(f"{data_dir} is not writable, trying {tmp_data_dir}")
     os.makedirs(tmp_data_dir, exist_ok=True)
     data_dir = tmp_data_dir
 
@@ -172,7 +179,6 @@ class MregCliConfig:
                     format=LOGGING_FORMAT,
                     datefmt="%Y-%m-%d %H:%M:%S",
                 )
-                print(f"Logging enabled to {logfile}")
             except Exception as e:
                 print(f"Failed to set up logging: {e}")
                 return
