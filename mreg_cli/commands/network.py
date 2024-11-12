@@ -238,7 +238,7 @@ def list_unused_addresses(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.output_unused_addresses()
 
 
@@ -255,7 +255,7 @@ def list_used_addresses(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.output_used_addresses()
 
 
@@ -302,7 +302,7 @@ def add_excluded_range(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.add_excluded_range(args.start_ip, args.end_ip)
     OutputManager().add_ok(f"Added exclude range to {net.network}")
 
@@ -322,7 +322,7 @@ def remove_excluded_range(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.remove_excluded_range(args.start_ip, args.end_ip)
     OutputManager().add_ok(f"Removed exclude range from {net.network}")
 
@@ -340,7 +340,7 @@ def list_excluded_ranges(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raisef(args.network)
     net.output_excluded_ranges()
 
 
@@ -358,7 +358,7 @@ def set_category(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, category)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.set_category(args.category)
     OutputManager().add_ok(f"Updated category tag to {args.category!r} for {net.network}")
 
@@ -377,7 +377,7 @@ def set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, description)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.set_description(args.description)
     OutputManager().add_ok(f"Updated description to {args.description!r} for {net.network}")
 
@@ -395,7 +395,7 @@ def set_dns_delegated(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.set_dns_delegation(True)
     OutputManager().add_ok(f"Set DNS delegation to 'True' for {net.network!r}")
 
@@ -413,7 +413,7 @@ def set_frozen(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.set_frozen(True)
     OutputManager().add_ok(f"Updated frozen to 'True' for {net.network}")
 
@@ -432,7 +432,7 @@ def set_location(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, location)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.set_location(args.location)
     OutputManager().add_ok(f"Updated location tag to '{args.location}' for {args.network}")
 
@@ -456,7 +456,7 @@ def set_reserved(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, number)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.set_reserved(args.number)
     OutputManager().add_ok(f"Updated reserved to '{args.number}' for {net.network}")
 
@@ -475,7 +475,7 @@ def set_vlan(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, vlan)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.set_vlan(args.vlan)
     OutputManager().add_ok(f"Updated vlan to {args.vlan} for {net.network}")
 
@@ -493,7 +493,7 @@ def unset_dns_delegated(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.set_dns_delegation(False)
     OutputManager().add_ok(f"Set DNS delegation to 'False' for {net.network!r}")
 
@@ -511,6 +511,6 @@ def unset_frozen(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network)
     """
-    net = Network.get_by_network_or_raise(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.set_frozen(False)
     OutputManager().add_ok(f"Updated frozen to 'False' for {net.network}")
