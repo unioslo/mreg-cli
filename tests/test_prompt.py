@@ -56,7 +56,26 @@ PROMPT_TEST_CASES = [
     pytest.param(
         {"url": "https://example.com", "user": "admin", "prompt": None},
         "admin@example.com",
-        id="Empty prompt (None)",
+        id="Empty prompt (None) (default prompt)",
+    ),
+    pytest.param(
+        {"url": "http://127.0.0.1:8000", "user": "admin"},
+        "admin@127.0.0.1",
+        id="URL w/ IPv4 & port (default prompt)",
+    ),
+    pytest.param(
+        {"url": "https://[fe80::5074:f2ff:feb1:a87f]:8000", "user": "admin"},
+        "admin@fe80::5074:f2ff:feb1:a87f",
+        id="URL w/ IPv6 (Link-local) & port (default prompt)",
+    ),
+    pytest.param(
+        {
+            "url": "https://[fe80::5074:f2ff:feb1:a87f]:8000",
+            "user": "admin",
+            "prompt": "{user}@{proto}://{host}:{port}",
+        },
+        "admin@https://fe80::5074:f2ff:feb1:a87f:8000",
+        id="URL w/ IPv6 (Link-local) & port (custom prompt)",
     ),
 ]
 
