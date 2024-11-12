@@ -21,13 +21,17 @@ import configparser
 import logging
 import os
 import sys
+import tempfile
 from typing import Any, overload
+
+import platformdirs
 
 from mreg_cli.types import DefaultType, LogLevel
 
 logger = logging.getLogger(__name__)
 
-# Config file locations
+# Config file locations.
+# This needs migration to platformdirs... Without breaking historical usage.
 DEFAULT_CONFIG_PATH = tuple(
     (
         os.path.expanduser("~/.config/mreg-cli.conf"),
@@ -39,7 +43,27 @@ DEFAULT_CONFIG_PATH = tuple(
     )
 )
 
-DEFAULT_LOG_FILE = os.path.expanduser("~/.mreg-cli.log")
+data_dir = platformdirs.user_data_dir(appname="mreg-cli", appauthor="UiO")
+log_file_name = "mreg-cli.log"
+
+# Try to ensure that the data directory exists, but if it doesn't, we'll fall through and
+# eventually use a temp dir. This makes the assumption that os.access on a non-existent directory
+# will return False.
+if not os.path.exists(data_dir):
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+    except Exception:
+        pass
+
+if not os.access(data_dir, os.W_OK):
+    tmp_data_dir = tempfile.mkdtemp(prefix="mreg-cli.", suffix="." + str(os.getuid()))
+    print(f"Default logging directory is not writable, using {tmp_data_dir} instead.")
+    os.makedirs(tmp_data_dir, exist_ok=True)
+    data_dir = tmp_data_dir
+
+# Set the data directory
+DATA_DIR = data_dir
+DEFAULT_LOG_FILE = os.path.join(DATA_DIR, log_file_name)
 
 # Default logging format
 LOGGING_FORMAT = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
@@ -151,12 +175,16 @@ class MregCliConfig:
             logging.shutdown()
             self._is_logging = False
         else:
-            logging.basicConfig(
-                filename=logfile,
-                level=logging.getLevelName(level),
-                format=LOGGING_FORMAT,
-                datefmt="%Y-%m-%d %H:%M:%S",
-            )
+            try:
+                logging.basicConfig(
+                    filename=logfile,
+                    level=logging.getLevelName(level),
+                    format=LOGGING_FORMAT,
+                    datefmt="%Y-%m-%d %H:%M:%S",
+                )
+            except Exception as e:
+                print(f"Failed to set up logging: {e}")
+                return
 
         logging.getLogger().setLevel(level)
         self._is_logging = True

@@ -14,6 +14,7 @@ Commands implemented:
 from __future__ import annotations
 
 import argparse
+import re
 
 from mreg_cli.api.models import (
     ForwardZone,
@@ -87,16 +88,12 @@ def add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, ip, contact, comment, force, macaddress)
 
     """
-    network_or_ip = args.ip
+    network_or_ip: str = args.ip
     hname = HostT(hostname=args.name)
     macaddress = args.macaddress
 
     if macaddress is not None:
-        try:
-            macaddress = MACAddressField(address=macaddress).address
-        except ValueError as e:
-            raise InputFailure(f"invalid MAC address: {macaddress}") from e
-
+        macaddress = MACAddressField.validate_mac(macaddress)
         ip_address = IPAddress.get_by_mac(macaddress)
 
         if ip_address:
@@ -120,12 +117,6 @@ def add(args: argparse.Namespace) -> None:
     if "*" in hname.hostname and not args.force:
         raise ForceMissing("Wildcards must be forced.")
 
-    if macaddress is not None:
-        try:
-            macaddress = MACAddressField(address=macaddress)
-        except ValueError as e:
-            raise InputFailure(f"invalid MAC address: {macaddress}") from e
-
     data: JsonMapping = {
         "name": hname.hostname,
         "contact": args.contact or None,
@@ -133,26 +124,51 @@ def add(args: argparse.Namespace) -> None:
     }
 
     if network_or_ip:
-        network = None
-        network_or_ip = NetworkOrIP(ip_or_network=network_or_ip)
-        if network_or_ip.is_ip():
+        autodetect = False
+
+        # Combine multiple slashes, in case anyone is trying to be funny
+        network_or_ip = re.sub(r"/+", "/", network_or_ip)
+
+        if network_or_ip.endswith("/32"):
+            network_or_ip = network_or_ip[:-3]
+        elif network_or_ip.endswith("/"):
+            autodetect = True
+            network_or_ip = network_or_ip.rstrip("/")
+
+        net_or_ip = NetworkOrIP(ip_or_network=network_or_ip)
+
+        if net_or_ip.is_ip() and not autodetect:
             data["ipaddress"] = str(network_or_ip)
-            network = Network.get_by_ip(network_or_ip.as_ip())
-        elif network_or_ip.is_network():
-            data["network"] = str(network_or_ip)
-            network = Network.get_by_network(str(network_or_ip))
+            network = Network.get_by_ip(net_or_ip.as_ip())
+
+        elif net_or_ip.is_network() or autodetect:
+            network = (
+                Network.get_by_ip(net_or_ip.as_ip())
+                if autodetect
+                else Network.get_by_network(str(network_or_ip))
+            )
+            if network:
+                data["network"] = str(network.network)
+            else:
+                raise EntityNotFound(f"Invalid ip or network: {network_or_ip}")
+
         else:
             raise EntityNotFound(f"Invalid ip or network: {network_or_ip}")
+
         if network and network.frozen and not args.force:
             raise ForceMissing(f"Network {network.network} is frozen, must force")
+        else:
+            net_or_ip = NetworkOrIP(ip_or_network=network.network)
+    else:
+        net_or_ip = None
 
     host = Host.create(data)
     if not host:
         raise CreateError("Failed to add host.")
     OutputManager().add_ok(f"Created host {host.name}")
 
-    if macaddress is not None:
-        if network_or_ip.is_ip():
+    if macaddress is not None and net_or_ip is not None:
+        if net_or_ip.is_ip():
             host = host.associate_mac_to_ip(macaddress, str(network_or_ip))
         else:
             # We passed a network to create the host, so we need to find the IP
