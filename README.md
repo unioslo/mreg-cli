@@ -42,6 +42,9 @@ url=https://mreg.example.com:8000
 user=mreg-user
 ```
 
+<details>
+<summary>Other options</summary>
+
 ### Prompt
 
 The prompt text can be configured with a custom format string. The available variables are:
@@ -86,11 +89,13 @@ PROMPT=
 mreg-cli --prompt ""
 ```
 
-Which results in a prompt like this:
+Which results in the following prompt:
 
 ```cli
 >
 ```
+
+</details>
 
 ## General usage
 
