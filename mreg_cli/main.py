@@ -7,15 +7,15 @@ import functools
 import getpass
 import logging
 
-from prompt_toolkit import HTML
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
 import mreg_cli.utilities.api as api
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, source
-from mreg_cli.config import DEFAULT_PROMPT, MregCliConfig
+from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliException, LoginFailedError
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.prompt import get_prompt_message
 from mreg_cli.types import LogLevel
 from mreg_cli.utilities.api import try_token_or_login
 
@@ -212,47 +212,6 @@ def main():
                     cli.process_command_line(line)
             except ValueError as e:
                 print(e)
-
-
-# Define a function that returns the prompt message
-def get_prompt_message(args: argparse.Namespace, config: MregCliConfig) -> HTML:
-    """Return the prompt message."""
-    manager = OutputManager()
-    args_map = vars(args)
-
-    def fmt_prompt(prompt: str) -> str:
-        host = str(config.get("url")).replace("https://", "").replace("http://", "")
-        user = args_map.get("user") or config.get("user", "?")
-        return prompt.format(
-            # Available variables for the prompt:
-            user=user,
-            host=host,
-        )
-
-    # Try to get prompt from args -> config -> default
-    if (args_prompt := args_map.get("prompt")) is not None:
-        prompt = str(args_prompt)
-    elif (config_prompt := config.get_prompt()) is not None:
-        prompt = config_prompt
-    else:
-        prompt = DEFAULT_PROMPT
-
-    # Fall back on default prompt if the prompt is invalid
-    try:
-        prompt = fmt_prompt(prompt)
-    except KeyError:
-        logger.error("Invalid prompt format: %s", prompt)
-        prompt = fmt_prompt(DEFAULT_PROMPT)
-
-    prefix: list[str] = []
-
-    if manager.recording_active():
-        prefix.append(f"&gt;'{manager.recording_filename()}'")
-
-    if prefix:
-        prefix_str = ",".join(prefix)
-        return HTML(f"[{prefix_str}] {prompt}> ")
-    return HTML(f"{prompt}> ")
 
 
 if __name__ == "__main__":

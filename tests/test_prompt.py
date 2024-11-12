@@ -6,7 +6,7 @@ import pytest
 from prompt_toolkit import HTML
 
 from mreg_cli.config import MregCliConfig
-from mreg_cli.main import get_prompt_message
+from mreg_cli.prompt import get_prompt_message
 
 PROMPT_TEST_CASES = [
     pytest.param(
@@ -22,7 +22,26 @@ PROMPT_TEST_CASES = [
     pytest.param(
         {"url": "https://example.com", "user": "admin", "prompt": "foo{host}bar"},
         "fooexample.combar",
-        id="Custom prompt (interpolated)",
+        id="Interpolation mid-word",
+    ),
+    pytest.param(
+        {
+            "url": "https://example.com:8000",
+            "user": "admin",
+            "domain": "custom.url",
+            "prompt": "{user}@{proto}://{host}:{port} ({domain})",
+        },
+        "admin@https://example.com:8000 (custom.url)",
+        id="Prompt with all variables",
+    ),
+    pytest.param(
+        {
+            "url": "https://example.com",
+            "user": "admin",
+            "prompt": "{user}@{proto}://{host}:{port} ({domain})",
+        },
+        "admin@https://example.com: (uio.no)",
+        id="Prompt with all variables (no port in url, no custom domain)",
     ),
     pytest.param(
         {"url": "https://example.com", "user": "admin"},
@@ -39,17 +58,17 @@ PROMPT_TEST_CASES = [
         "admin@example.com",
         id="Empty prompt (None)",
     ),
-    pytest.param(
-        {"url": "https://example.com", "user": "admin", "prompt": "{user}@{domain}"},
-        "admin@example.com",  # default
-        id="Invalid format variable (domain)",
-    ),
 ]
 
 
 @pytest.mark.parametrize("args, expected", PROMPT_TEST_CASES)
 def test_get_prompt_message_args(empty_config: MregCliConfig, args: dict, expected: str) -> None:
-    a = argparse.Namespace(prompt=args.get("prompt"), user=args.get("user"), url=args.get("url"))
+    a = argparse.Namespace(
+        prompt=args.get("prompt"),
+        user=args.get("user"),
+        url=args.get("url"),
+        domain=args.get("domain"),
+    )
     conf = empty_config
     conf._config_file = {}
     conf.set_cmd_config(a)

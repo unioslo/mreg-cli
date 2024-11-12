@@ -47,9 +47,12 @@ user=mreg-user
 The prompt text can be configured with a custom format string. The available variables are:
 
 - `{user}`: Username of active user
-- `{host}`: Hostname of the server
+- `{proto}`: Protocol part of the server URL
+- `{host}`: Name part of the server URL
+- `{port}`: Port part of the server URL (if any)
+- `{domain}`: Domain name. Defaults to `uio.no` if not specified.
 
-By default the prompt is set to `{user}@{host}`, equivalent to the following config:
+By default the prompt is set to `{user}@{host}`, which is equivalent to the following config:
 
 ```ini
 [mreg]
@@ -59,20 +62,20 @@ PROMPT={user}@{host}
 Which results in a prompt like this:
 
 ```cli
-admin@mreg.example.com:8000>
+admin@mreg.example.com>
 ```
 
 #### Command line
 
-The prompt can be specified as a command line argument as well:
+A custom prompt string can be specified as a command line argument as well:
 
 ```bash
 mreg-cli --prompt "<string>"
 ```
 
-#### Disabling the prompt text
+#### Disabling the prompt prefix text
 
-The prompt text can be disabled by setting it to an empty string in either the config or as a command line argument:
+The prompt text can be disabled by setting it to no value in the config file or by using the `--prompt` flag with an empty string.
 
 ```ini
 [mreg]
