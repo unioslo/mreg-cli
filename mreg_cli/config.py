@@ -68,6 +68,8 @@ DEFAULT_LOG_FILE = os.path.join(DATA_DIR, log_file_name)
 # Default logging format
 LOGGING_FORMAT = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
 
+DEFAULT_PROMPT = "{user}@{host}"
+
 
 class MregCliConfig:
     """Configuration class for the mreg-cli.
@@ -238,6 +240,10 @@ class MregCliConfig:
     def get_category_tags(self) -> list[str]:
         """Get the category tags from the application."""
         return self.get("category_tags", "").split(",")
+
+    def get_prompt(self) -> str | None:
+        """Get the prompt from the application."""
+        return self.get("prompt")
 
     # We handle url by itself because it's a required config option,
     # it cannot be none once options, env, and config file are parsed.

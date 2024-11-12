@@ -38,22 +38,49 @@ Options can be set in ~/.config/mreg-cli.conf. A typical config file looks like 
 
 ```ini
 [mreg]
-USER=mreg-user
-SERVER=https://mreg.example.com:8000
+url=https://mreg.example.com:8000
+user=mreg-user
 ```
 
 ### Prompt
 
-The prompt can be configured with a custom format string. The available variables are:
+The prompt text can be configured with a custom format string. The available variables are:
 
 - `{user}`: Username of active user
 - `{host}`: Hostname of the server
 
-By default the prompt is set to `{user}@{host}`:
+By default the prompt is set to `{user}@{host}`, equivalent to the following config:
 
 ```ini
 [mreg]
 PROMPT={user}@{host}
+```
+
+Which results in a prompt like this:
+
+```cli
+admin@mreg.example.com:8000>
+```
+
+#### Command line
+
+The prompt can be specified as a command line argument as well:
+
+```bash
+mreg-cli --prompt "<string>"
+```
+
+#### Disabling the prompt text
+
+The prompt text can be disabled by setting it to an empty string in either the config or as a command line argument:
+
+```ini
+[mreg]
+PROMPT=
+```
+
+```bash
+mreg-cli --prompt ""
 ```
 
 ## General usage

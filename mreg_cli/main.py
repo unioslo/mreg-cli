@@ -13,7 +13,7 @@ from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 import mreg_cli.utilities.api as api
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, source
-from mreg_cli.config import MregCliConfig
+from mreg_cli.config import DEFAULT_PROMPT, MregCliConfig
 from mreg_cli.exceptions import CliException, LoginFailedError
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import LogLevel
@@ -229,14 +229,15 @@ def get_prompt_message(args: argparse.Namespace, config: MregCliConfig) -> HTML:
             host=host,
         )
 
-    DEFAULT_PROMPT = "{user}@{host}"
-    if args_prompt := args_map.get("prompt"):
-        prompt = args_prompt
-    elif config_prompt := config.get("prompt"):
+    # Try to get prompt from args -> config -> default
+    if (args_prompt := args_map.get("prompt")) is not None:
+        prompt = str(args_prompt)
+    elif (config_prompt := config.get_prompt()) is not None:
         prompt = config_prompt
     else:
         prompt = DEFAULT_PROMPT
 
+    # Fall back on default prompt if the prompt is invalid
     try:
         prompt = fmt_prompt(prompt)
     except KeyError:

@@ -31,8 +31,13 @@ PROMPT_TEST_CASES = [
     ),
     pytest.param(
         {"url": "https://example.com", "user": "admin", "prompt": ""},
+        "",
+        id="Empty prompt (empty string)",
+    ),
+    pytest.param(
+        {"url": "https://example.com", "user": "admin", "prompt": None},
         "admin@example.com",
-        id="Empty prompt (default)",
+        id="Empty prompt (None)",
     ),
     pytest.param(
         {"url": "https://example.com", "user": "admin", "prompt": "{user}@{domain}"},
