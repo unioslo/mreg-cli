@@ -45,6 +45,8 @@ dependencies = [
     'requests[socks]>=2.31.0',
     'typing_extensions>=4.12.0',
     "pydantic[email]>=2.7.1",
+    "pydantic-extra-types>=2.1.0",
+    "platformdirs>=4.3.0",
 ]
 dynamic = ["version"]
 
