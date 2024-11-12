@@ -86,6 +86,12 @@ PROMPT=
 mreg-cli --prompt ""
 ```
 
+Which results in a prompt like this:
+
+```cli
+>
+```
+
 ## General usage
 
 Commands in `mreg-cli` take on the form of a fairly standard command line interface:
