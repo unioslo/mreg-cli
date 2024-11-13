@@ -1,0 +1,104 @@
+from __future__ import annotations
+
+import argparse
+
+import pytest
+from prompt_toolkit import HTML
+
+from mreg_cli.config import MregCliConfig
+from mreg_cli.prompt import get_prompt_message
+
+PROMPT_TEST_CASES = [
+    pytest.param(
+        {"url": "https://example.com", "user": "admin", "prompt": "{user}@{host}"},
+        "admin@example.com",
+        id="Custom prompt (name+host)",
+    ),
+    pytest.param(
+        {"url": "https://example.com", "user": "admin", "prompt": "{user}"},
+        "admin",
+        id="Custom prompt (name)",
+    ),
+    pytest.param(
+        {"url": "https://example.com", "user": "admin", "prompt": "foo{host}bar"},
+        "fooexample.combar",
+        id="Interpolation mid-word",
+    ),
+    pytest.param(
+        {
+            "url": "https://example.com:8000",
+            "user": "admin",
+            "domain": "custom.url",
+            "prompt": "{user}@{proto}://{host}:{port} ({domain})",
+        },
+        "admin@https://example.com:8000 (custom.url)",
+        id="Prompt with all variables",
+    ),
+    pytest.param(
+        {
+            "url": "https://example.com",
+            "user": "admin",
+            "prompt": "{user}@{proto}://{host}:{port} ({domain})",
+        },
+        "admin@https://example.com: (uio.no)",
+        id="Prompt with all variables (no port in url, no custom domain)",
+    ),
+    pytest.param(
+        {"url": "https://example.com", "user": "admin"},
+        "admin@example.com",
+        id="Default prompt",
+    ),
+    pytest.param(
+        {"url": "https://example.com", "user": "admin", "prompt": ""},
+        "",
+        id="Empty prompt (empty string)",
+    ),
+    pytest.param(
+        {"url": "https://example.com", "user": "admin", "prompt": None},
+        "admin@example.com",
+        id="Empty prompt (None) (default prompt)",
+    ),
+    pytest.param(
+        {"url": "http://127.0.0.1:8000", "user": "admin"},
+        "admin@127.0.0.1",
+        id="URL w/ IPv4 & port (default prompt)",
+    ),
+    pytest.param(
+        {"url": "https://[fe80::5074:f2ff:feb1:a87f]:8000", "user": "admin"},
+        "admin@fe80::5074:f2ff:feb1:a87f",
+        id="URL w/ IPv6 (Link-local) & port (default prompt)",
+    ),
+    pytest.param(
+        {
+            "url": "https://[fe80::5074:f2ff:feb1:a87f]:8000",
+            "user": "admin",
+            "prompt": "{user}@{proto}://{host}:{port}",
+        },
+        "admin@https://fe80::5074:f2ff:feb1:a87f:8000",
+        id="URL w/ IPv6 (Link-local) & port (custom prompt)",
+    ),
+]
+
+
+@pytest.mark.parametrize("args, expected", PROMPT_TEST_CASES)
+def test_get_prompt_message_args(empty_config: MregCliConfig, args: dict, expected: str) -> None:
+    a = argparse.Namespace(
+        prompt=args.get("prompt"),
+        user=args.get("user"),
+        url=args.get("url"),
+        domain=args.get("domain"),
+    )
+    conf = empty_config
+    conf._config_file = {}
+    conf.set_cmd_config(a)
+    assert get_prompt_message(a, conf).value == HTML(f"{expected}> ").value
+
+
+@pytest.mark.parametrize("config, expected", PROMPT_TEST_CASES)
+def test_get_prompt_message_config(
+    empty_config: MregCliConfig, config: dict, expected: str
+) -> None:
+    args = argparse.Namespace()
+    conf = empty_config
+    conf._config_file = config
+    assert get_prompt_message(args, conf).value == HTML(f"{expected}> ").value

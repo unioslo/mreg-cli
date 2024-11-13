@@ -35,3 +35,21 @@ def check_assertions(httpserver: HTTPServer) -> Iterator[None]:
     yield
     httpserver.check_assertions()
     httpserver.check_handler_errors()
+
+
+@pytest.fixture(autouse=True)
+def refresh_config() -> Iterator[MregCliConfig]:
+    """Delete the singleton instance after each test."""
+    conf = MregCliConfig()
+    yield conf
+    conf._instance = None
+
+
+@pytest.fixture()
+def empty_config() -> Iterator[MregCliConfig]:
+    """A config with no values set in any source."""
+    conf = MregCliConfig()
+    conf._config_cmd = {}
+    conf._config_env = {}
+    conf._config_file = {}
+    yield conf
