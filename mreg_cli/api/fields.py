@@ -5,7 +5,7 @@ from __future__ import annotations
 import ipaddress
 from typing import Annotated, Any, Self
 
-from pydantic import BeforeValidator, ValidationError, field_validator
+from pydantic import BeforeValidator, ValidationError
 from pydantic_extra_types.mac_address import MacAddress
 
 from mreg_cli.api.abstracts import FrozenModel
@@ -19,12 +19,24 @@ class MACAddressField(FrozenModel):
     address: MacAddress
 
     @classmethod
-    def validate_mac(cls, value: str | MacAddress) -> Self:
+    def validate(cls, value: str | MacAddress | Self) -> Self:
         """Validate a MAC address and return it as a string."""
+        try:
+            return cls.validate_naive(value)
+        except ValueError as e:
+            raise InputFailure(e) from e
+
+    # HACK: extremely hacky workaround for our custom exceptions always
+    # logging errors/warnings even when caught.
+    @classmethod
+    def validate_naive(cls, value: str | MacAddress | Self) -> Self:
+        """Validate but raise built-in exceptions on failure."""
+        if isinstance(value, MACAddressField):
+            return cls.validate_naive(value.address)
         try:
             return cls(address=value)  # pyright: ignore[reportArgumentType]
         except ValidationError as e:
-            raise InputFailure(f"Invalid MAC address '{value}'") from e
+            raise ValueError(f"Invalid MAC address '{value}'") from e
 
     def __str__(self) -> str:
         """Return the MAC address as a string."""
@@ -37,21 +49,15 @@ class IPAddressField(FrozenModel):
     address: IP_AddressT
 
     @classmethod
-    def from_string(cls, address: str) -> IPAddressField:
-        """Create an IPAddressField from a string.
+    def validate(cls, value: str | IP_AddressT | Self) -> IPAddressField:
+        """Construct an IPAddressField from a string.
 
-        Shortcut for creating an IPAddressField from a string,
-        without having to convince the type checker that we can
-        pass in a string to the address field each time.
+        Handles validation and exception handling for creating an IPAddressField.
         """
-        return cls(address=address)  # pyright: ignore[reportArgumentType] # validator handles this
-
-    @field_validator("address", mode="before")
-    @classmethod
-    def parse_ip_address(cls, value: Any) -> IP_AddressT:
-        """Parse and validate the IP address."""
+        if isinstance(value, IPAddressField):
+            return cls.validate(value.address)
         try:
-            return ipaddress.ip_address(value)
+            return cls(address=value)  # pyright: ignore[reportArgumentType] # validator handles this
         except ValueError as e:
             raise InputFailure(f"Invalid IP address '{value}'.") from e
 

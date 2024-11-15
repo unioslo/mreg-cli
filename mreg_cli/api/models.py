@@ -5,7 +5,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from typing import Any, ClassVar, Self, cast
+from typing import Any, Callable, ClassVar, Literal, Self, cast, overload
 
 from pydantic import (
     AliasChoices,
@@ -55,13 +55,77 @@ from mreg_cli.utilities.api import (
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
-_mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
+IPNetMode = Literal["ipv4", "ipv6", "ip", "network", "networkv4", "networkv6"]
 
 
 class NetworkOrIP(BaseModel):
     """A model for either a network or an IP address."""
 
-    ip_or_network: str | IP_AddressT | IP_NetworkT
+    ip_or_network: IP_AddressT | IP_NetworkT
+
+    @classmethod
+    def validate(cls, value: str | IP_AddressT | IP_NetworkT | Self) -> Self:
+        """Create a NetworkOrIP model instance from a value.
+
+        This constructor validates and wraps the IP/network in the model.
+
+        :param value:The value to convert (string or IP object)
+        :returns: A NetworkOrIP model instance
+        :raises InputFailure: If validation fails
+        """
+        if isinstance(value, NetworkOrIP):
+            return cls.validate(value.ip_or_network)
+        try:
+            return cls(ip_or_network=value)  # pyright: ignore[reportArgumentType] # validator handles this
+        except ValidationError as e:
+            raise InputFailure(f"Invalid IP address or network: {value}") from e
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: None = None) -> IP_AddressT | IP_NetworkT: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["ip"]) -> IP_AddressT: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["ipv4"]) -> ipaddress.IPv4Address: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["ipv6"]) -> ipaddress.IPv6Address: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["network"]) -> IP_NetworkT: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: IPNetMode) -> IP_AddressT | IP_NetworkT: ...
+
+    @classmethod
+    def parse(cls, value: Any, mode: IPNetMode | None = None) -> IP_AddressT | IP_NetworkT:
+        """Parse a value as an IP address or network.
+
+        Optionally specify the mode to validate the input as.
+
+        :param value:The value to parse.
+        :param mode: The mode to validate the input as.
+        :returns: The parsed value as an IP address or network.
+        """
+        ipnet = cls.validate(value)
+        funcmap: dict[IPNetMode, Callable[..., IP_AddressT | IP_NetworkT]] = {
+            "ip": cls.as_ip,
+            "ipv4": cls.as_ipv4,
+            "ipv6": cls.as_ipv6,
+            "network": cls.as_network,
+            "networkv4": cls.as_ipv4_network,
+            "networkv6": cls.as_ipv6_network,
+        }
+        if mode and (func := funcmap.get(mode)):
+            return func(ipnet)
+        return ipnet.ip_or_network
 
     @field_validator("ip_or_network", mode="before")
     @classmethod
@@ -115,6 +179,18 @@ class NetworkOrIP(BaseModel):
         if not self.is_network():
             raise InvalidNetwork(f"{self.ip_or_network} is not a network.")
         return cast(IP_NetworkT, self.ip_or_network)
+
+    def as_ipv4_network(self) -> ipaddress.IPv4Network:
+        """Return the value as a network."""
+        if not self.is_ipv4_network():
+            raise InvalidNetwork(f"{self.ip_or_network} is not an IPv4 network.")
+        return cast(ipaddress.IPv4Network, self.ip_or_network)
+
+    def as_ipv6_network(self) -> IP_NetworkT:
+        """Return the value as a network."""
+        if not self.is_ipv6_network():
+            raise InvalidNetwork(f"{self.ip_or_network} is not an IPv6 network.")
+        return cast(ipaddress.IPv6Network, self.ip_or_network)
 
     def is_ipv6(self) -> bool:
         """Return True if the value is an IPv6 address."""
@@ -1071,7 +1147,11 @@ class HostPolicy(FrozenModel, WithName):
         :param name: The name to search for.
         :returns: The Atom or Role if found, else None.
         """
-        for func in [Atom.get_by_name, Role.get_by_name]:
+        funcs: list[Callable[[str], Atom | Role | None]] = [
+            Atom.get_by_name,
+            Role.get_by_name,
+        ]
+        for func in funcs:
             role_or_atom = func(name)
             if role_or_atom:
                 return role_or_atom
@@ -1516,7 +1596,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         # Check if identifier is IP or network
         try:
-            net_or_ip = NetworkOrIP(ip_or_network=identifier)
+            net_or_ip = NetworkOrIP.validate(identifier)
         except InputFailure:
             pass
         else:
@@ -1772,8 +1852,8 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
         :returns: The new ExcludedRange object.
         """
-        start_ip = IPAddressField(address=start)  # type: ignore # validator converts this
-        end_ip = IPAddressField(address=end)  # type: ignore # validator converts this
+        start_ip = IPAddressField.validate(start)
+        end_ip = IPAddressField.validate(end)
         if start_ip.address.version != end_ip.address.version:
             raise InputFailure("Start and end IP addresses must be of the same version")
 
@@ -1877,7 +1957,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
     def create_valid_macadress_or_none(cls, v: Any) -> MACAddressField | None:
         """Create macaddress or convert empty strings to None."""
         if v:
-            return MACAddressField(address=v)
+            return MACAddressField.validate(v)
         return None
 
     @field_validator("ipaddress", mode="before")
@@ -1885,7 +1965,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
     def create_valid_ipaddress(cls, v: Any) -> IPAddressField:
         """Create macaddress or convert empty strings to None."""
         if isinstance(v, str):
-            return IPAddressField.from_string(v)
+            return IPAddressField.validate(v)
         return v  # let Pydantic handle it
 
     @classmethod
@@ -1908,7 +1988,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         :returns: The IP address if found, None otherwise.
         """
         if isinstance(mac, str):
-            mac = MACAddressField.validate_mac(mac)
+            mac = MACAddressField.validate(mac)
         return cls.get_by_field("macaddress", mac.address)
 
     @classmethod
@@ -1951,7 +2031,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         :returns: A new IPAddress object fetched from the API with the updated MAC address.
         """
         if isinstance(mac, str):
-            mac = MACAddressField.validate_mac(mac)
+            mac = MACAddressField.validate(mac)
 
         if self.macaddress and not force:
             raise EntityAlreadyExists(
@@ -2615,7 +2695,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 pass
 
             try:
-                mac = MACAddressField(address=identifier)
+                mac = MACAddressField.validate_naive(identifier)
                 return Host.get_by_field("ipaddresses__macaddress", mac.address)
             except ValueError:
                 pass
@@ -2715,7 +2795,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: The IP address object if found, None otherwise.
         """
         if not isinstance(arg_mac, MACAddressField):
-            arg_mac = MACAddressField(address=arg_mac)
+            arg_mac = MACAddressField.validate_naive(arg_mac)
         return next((ip for ip in self.ipaddresses if ip.macaddress == arg_mac), None)
 
     def ips_with_macaddresses(self) -> list[IPAddress]:
@@ -2810,10 +2890,10 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: A new Host object fetched from the API after updating the IP address.
         """
         if isinstance(mac, str):
-            mac = MACAddressField.validate_mac(mac)
+            mac = MACAddressField.validate(mac)
 
         if isinstance(ip, str):
-            ip = IPAddressField.from_string(ip)
+            ip = IPAddressField.validate(ip)
 
         params: QueryParams = {
             "macaddress": mac.address,

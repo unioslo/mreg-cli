@@ -49,9 +49,9 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
     if args.old == args.new:
         raise EntityAlreadyExists("New and old IP are equal")
 
-    old_ip = NetworkOrIP(ip_or_network=args.old).as_ip()
+    old_ip = NetworkOrIP.parse(args.old, mode="ip")
 
-    new_ip = NetworkOrIP(ip_or_network=args.new)
+    new_ip = NetworkOrIP.validate(args.new)
     if new_ip.is_network():
         network = Network.get_by_network_or_raise(str(new_ip.ip_or_network))
         new_ip = network.get_first_available_ip()
@@ -88,20 +88,18 @@ def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
     :param args: argparse.Namespace (ip, fromhost, tohost)
     :param ipversion: 4 or 6
     """
-    ip = NetworkOrIP(ip_or_network=args.ip)
-    if ip.is_network():
-        raise InputFailure("IP cannot be a network")
-    if ip.as_ip().version != ipversion:
+    ip = NetworkOrIP.parse(args.ip, mode="ip")
+    if ip.version != ipversion:
         raise InputFailure(
-            f"IP version {ip.as_ip().version} does not match the requested version {ipversion}"
+            f"IP version {ip.version} does not match the requested version {ipversion}"
         )
 
     from_host = Host.get_by_any_means_or_raise(args.fromhost)
     to_host = Host.get_by_any_means_or_raise(args.tohost)
 
-    host_ip = from_host.get_ip(ip.as_ip())
+    host_ip = from_host.get_ip(ip)
 
-    ptr = from_host.get_ptr_override(ip.as_ip())
+    ptr = from_host.get_ptr_override(ip)
     if not host_ip and not ptr:
         raise EntityNotFound(f"Host {from_host} has no IP or PTR with address {ip}")
 
@@ -125,15 +123,13 @@ def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
     :param args: argparse.Namespace (name, ip)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    ip = NetworkOrIP(ip_or_network=args.ip)
-    if ip.is_network():
-        raise InputFailure("IP cannot be a network")
-    if ip.as_ip().version != ipversion:
+    ip = NetworkOrIP.parse(args.ip, mode="ip")
+    if ip.version != ipversion:
         raise InputFailure(
-            f"IP version {ip.as_ip().version} does not match the requested version {ipversion}"
+            f"IP version {ip.version} does not match the requested version {ipversion}"
         )
 
-    host_ip = host.get_ip(ip.as_ip())
+    host_ip = host.get_ip(ip)
     if not host_ip:
         raise EntityNotFound(f"Host {host} does not have IP {ip}")
 
@@ -157,7 +153,7 @@ def _add_ip(
     :return: The updated host object.
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    ip_or_net = NetworkOrIP(ip_or_network=args.ip)
+    ip_or_net = NetworkOrIP.validate(args.ip)
 
     if ipversion == 4 and (ip_or_net.is_ipv6() or ip_or_net.is_ipv6_network()):
         raise InputFailure("Use aaaa_add for IPv6 addresses")
@@ -186,7 +182,7 @@ def _add_ip(
 
     mac = None
     if args.macaddress:
-        mac = MACAddressField.validate_mac(args.macaddress)
+        mac = MACAddressField.validate(args.macaddress)
 
     if not args.force:
         _bail_if_ip_in_use_and_not_force(ipaddr)

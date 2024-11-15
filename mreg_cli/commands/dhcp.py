@@ -37,7 +37,7 @@ def ipaddress_from_ip_arg(arg: str) -> IPAddress | None:
     if not IPAddressField.is_valid(arg):
         return None
     try:
-        addr = IPAddressField.from_string(arg)
+        addr = IPAddressField.validate(arg)
     except InputFailure:
         return None
     ipobjs = IPAddress.get_by_ip(addr.address)
@@ -82,9 +82,7 @@ def assoc(args: argparse.Namespace) -> None:
         ipaddress = host.get_associatable_ip()
 
     ipaddress.associate_mac(mac, force=force)
-    OutputManager().add_ok(
-        f"Associated mac address {mac} with ip {ipaddress.ip()}"
-    )
+    OutputManager().add_ok(f"Associated mac address {mac} with ip {ipaddress.ip()}")
 
 
 @command_registry.register_command(

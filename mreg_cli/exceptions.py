@@ -183,7 +183,7 @@ class EntityOwnershipMismatch(CliWarning):
     pass
 
 
-class InputFailure(CliWarning):
+class InputFailure(CliWarning, ValueError):
     """Warning class for input failure."""
 
     pass
