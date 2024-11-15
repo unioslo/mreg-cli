@@ -21,8 +21,6 @@ class MACAddressField(FrozenModel):
     @classmethod
     def validate(cls, value: str | MacAddress | Self) -> Self:
         """Validate a MAC address and return it as a string."""
-        if isinstance(value, MACAddressField):
-            return cls.validate(value.address)
         try:
             return cls.validate_naive(value)
         except ValueError as e:
@@ -34,7 +32,7 @@ class MACAddressField(FrozenModel):
     def validate_naive(cls, value: str | MacAddress | Self) -> Self:
         """Validate but raise built-in exceptions on failure."""
         if isinstance(value, MACAddressField):
-            return cls.validate(value.address)
+            return cls.validate_naive(value.address)
         try:
             return cls(address=value)  # pyright: ignore[reportArgumentType]
         except ValidationError as e:
