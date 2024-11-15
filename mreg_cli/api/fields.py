@@ -61,6 +61,14 @@ class IPAddressField(FrozenModel):
         except ValueError as e:
             raise InputFailure(f"Invalid IP address '{value}'.") from e
 
+    def is_ipv4(self) -> bool:
+        """Check if the IP address is IPv4."""
+        return isinstance(self.address, ipaddress.IPv4Address)
+
+    def is_ipv6(self) -> bool:
+        """Check if the IP address is IPv6."""
+        return isinstance(self.address, ipaddress.IPv6Address)
+
     @staticmethod
     def is_valid(value: str) -> bool:
         """Check if the value is a valid IP address."""
