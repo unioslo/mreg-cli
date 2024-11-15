@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import ipaddress
-from typing import Annotated, Any, Literal, cast, overload, Self
+from typing import Annotated, Any, Literal, Self, cast, overload
 
-from pydantic import ValidationError, field_validator
+from pydantic import BeforeValidator, ValidationError
 from pydantic_extra_types.mac_address import MacAddress
 
 from mreg_cli.api.abstracts import FrozenModel
