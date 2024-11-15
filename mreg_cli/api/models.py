@@ -5,8 +5,7 @@ from __future__ import annotations
 import ipaddress
 import re
 from datetime import date, datetime
-from enum import StrEnum
-from typing import Any, ClassVar, Literal, Self, cast, overload
+from typing import Any, Callable, ClassVar, Literal, Self, cast, overload
 
 from pydantic import (
     AliasChoices,
@@ -56,16 +55,7 @@ from mreg_cli.utilities.api import (
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
-_mac_regex = re.compile(r"^([0-9A-Fa-f]{2}[.:-]){5}([0-9A-Fa-f]{2})$")
-
-
-class IPNetMode(StrEnum):
-    """IP or network validation mode."""
-
-    IPv4 = "IPv4"
-    IPv6 = "IPv6"
-    IP = "IP"
-    NETWORK = "network"
+IPNetMode = Literal["ipv4", "ipv6", "ip", "network", "networkv4", "networkv6"]
 
 
 class NetworkOrIP(BaseModel):
@@ -73,52 +63,66 @@ class NetworkOrIP(BaseModel):
 
     ip_or_network: IP_AddressT | IP_NetworkT
 
-    @overload
     @classmethod
-    def from_string(cls, val: Any, mode: None = None) -> IP_AddressT | IP_NetworkT: ...
+    def validate(cls, value: Any) -> Self:
+        """Create a NetworkOrIP model instance from a value.
+
+        This constructor validates and wraps the IP/network in the model.
+
+        :param value:The value to convert (string or IP object)
+        :returns: A NetworkOrIP model instance
+        :raises InputFailure: If validation fails
+        """
+        try:
+            return cls(ip_or_network=value)
+        except ValidationError as e:
+            raise InputFailure(f"Invalid IP address or network: {value}") from e
 
     @overload
     @classmethod
-    def from_string(cls, val: Any, mode: Literal[IPNetMode.IP]) -> IP_AddressT: ...
+    def parse(cls, value: Any, mode: None = None) -> IP_AddressT | IP_NetworkT: ...
 
     @overload
     @classmethod
-    def from_string(cls, val: Any, mode: Literal[IPNetMode.IPv4]) -> ipaddress.IPv4Address: ...
+    def parse(cls, value: Any, mode: Literal["ip"]) -> IP_AddressT: ...
 
     @overload
     @classmethod
-    def from_string(cls, val: Any, mode: Literal[IPNetMode.IPv6]) -> ipaddress.IPv6Address: ...
+    def parse(cls, value: Any, mode: Literal["ipv4"]) -> ipaddress.IPv4Address: ...
 
     @overload
     @classmethod
-    def from_string(cls, val: Any, mode: Literal[IPNetMode.NETWORK]) -> IP_NetworkT: ...
+    def parse(cls, value: Any, mode: Literal["ipv6"]) -> ipaddress.IPv6Address: ...
 
     @overload
     @classmethod
-    def from_string(cls, val: Any, mode: IPNetMode) -> IP_AddressT | IP_NetworkT: ...
+    def parse(cls, value: Any, mode: Literal["network"]) -> IP_NetworkT: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: IPNetMode) -> IP_AddressT | IP_NetworkT: ...
 
     @classmethod
-    def from_string(cls, val: Any, mode: IPNetMode | None = None) -> IP_AddressT | IP_NetworkT:
-        """Construct a network or IP address from a string.
+    def parse(cls, value: Any, mode: IPNetMode | None = None) -> IP_AddressT | IP_NetworkT:
+        """Parse a value as an IP address or network.
 
         Optionally specify the mode to validate the input as.
 
-        :param val: The value to convert.
+        :param value:The value to parse.
         :param mode: The mode to validate the input as.
-        :returns: The IP address or network.
+        :returns: The parsed value as an IP address or network.
         """
-        try:
-            ipnet = cls(ip_or_network=val)
-        except ValidationError as e:
-            raise InputFailure(f"Invalid IP address or network: {val}") from e
-        if mode == IPNetMode.IP:
-            return ipnet.as_ip()
-        if mode == IPNetMode.NETWORK:
-            return ipnet.as_network()
-        if mode == IPNetMode.IPv4:
-            return ipnet.as_ipv4()
-        if mode == IPNetMode.IPv6:
-            return ipnet.as_ipv6()
+        ipnet = cls.validate(value)
+        funcmap: dict[IPNetMode, Callable[..., IP_AddressT | IP_NetworkT]] = {
+            "ip": cls.as_ip,
+            "ipv4": cls.as_ipv4,
+            "ipv6": cls.as_ipv6,
+            "network": cls.as_network,
+            "networkv4": cls.as_ipv4_network,
+            "networkv6": cls.as_ipv6_network,
+        }
+        if mode and (func := funcmap.get(mode)):
+            return func(ipnet)
         return ipnet.ip_or_network
 
     @field_validator("ip_or_network", mode="before")
@@ -173,6 +177,18 @@ class NetworkOrIP(BaseModel):
         if not self.is_network():
             raise InvalidNetwork(f"{self.ip_or_network} is not a network.")
         return cast(IP_NetworkT, self.ip_or_network)
+
+    def as_ipv4_network(self) -> ipaddress.IPv4Network:
+        """Return the value as a network."""
+        if not self.is_ipv4_network():
+            raise InvalidNetwork(f"{self.ip_or_network} is not an IPv4 network.")
+        return cast(ipaddress.IPv4Network, self.ip_or_network)
+
+    def as_ipv6_network(self) -> IP_NetworkT:
+        """Return the value as a network."""
+        if not self.is_ipv6_network():
+            raise InvalidNetwork(f"{self.ip_or_network} is not an IPv6 network.")
+        return cast(ipaddress.IPv6Network, self.ip_or_network)
 
     def is_ipv6(self) -> bool:
         """Return True if the value is an IPv6 address."""
@@ -1129,7 +1145,11 @@ class HostPolicy(FrozenModel, WithName):
         :param name: The name to search for.
         :returns: The Atom or Role if found, else None.
         """
-        for func in [Atom.get_by_name, Role.get_by_name]:
+        funcs: list[Callable[[str], Atom | Role | None]] = [
+            Atom.get_by_name,
+            Role.get_by_name,
+        ]
+        for func in funcs:
             role_or_atom = func(name)
             if role_or_atom:
                 return role_or_atom
@@ -1574,7 +1594,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         # Check if identifier is IP or network
         try:
-            net_or_ip = NetworkOrIP(ip_or_network=identifier)
+            net_or_ip = NetworkOrIP.validate(identifier)
         except InputFailure:
             pass
         else:
@@ -1830,8 +1850,8 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
         :returns: The new ExcludedRange object.
         """
-        start_ip = IPAddressField(address=start)  # type: ignore # validator converts this
-        end_ip = IPAddressField(address=end)  # type: ignore # validator converts this
+        start_ip = IPAddressField.validate(start)
+        end_ip = IPAddressField.validate(end)
         if start_ip.address.version != end_ip.address.version:
             raise InputFailure("Start and end IP addresses must be of the same version")
 
@@ -1943,7 +1963,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
     def create_valid_ipaddress(cls, v: Any) -> IPAddressField:
         """Create macaddress or convert empty strings to None."""
         if isinstance(v, str):
-            return IPAddressField.from_string(v)
+            return IPAddressField.validate(v)
         return v  # let Pydantic handle it
 
     @classmethod

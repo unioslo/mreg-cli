@@ -474,11 +474,7 @@ def ptr_change(args: argparse.Namespace) -> None:
     if not old_host.ptr_overrides:
         raise EntityNotFound(f"No PTR records for {old_host}")
 
-    ip = NetworkOrIP(ip_or_network=args.ip)
-    if not ip.is_ip():
-        raise InputFailure(f"{args.ip} is not a valid IP")
-
-    ip = ip.as_ip()
+    ip = NetworkOrIP.parse(args.ip, mode="ip")
     ptr_override = old_host.get_ptr_override(ip)
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {old_host} with IP {ip}")
@@ -507,11 +503,7 @@ def ptr_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (ip, name)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    ip = NetworkOrIP(ip_or_network=args.ip)
-    if not ip.is_ip():
-        raise InputFailure(f"{args.ip} is not a valid IP")
-
-    ip = ip.as_ip()
+    ip = NetworkOrIP.parse(args.ip, mode="ip")
     ptr_override = host.get_ptr_override(ip)
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {host} with IP {ip}")
@@ -537,10 +529,7 @@ def ptr_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, name, force)
     """
-    ip = NetworkOrIP(ip_or_network=args.ip)
-    if not ip.is_ip():
-        raise InputFailure(f"{args.ip} is not a valid IP")
-    ip = ip.as_ip()
+    ip = NetworkOrIP.parse(args.ip, mode="ip")
 
     host = Host.get_by_any_means_or_raise(args.name)
     existing_ptrs = PTR_override.get_list_by_field("ipaddress", str(ip))
@@ -574,16 +563,13 @@ def ptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip)
     """
-    ip = NetworkOrIP(ip_or_network=args.ip)
-    if not ip.is_ip():
-        raise InputFailure(f"{args.ip} is not a valid IP")
-
+    ip = NetworkOrIP.parse(args.ip, mode="ip")
     host = Host.get_by_any_means_or_raise(str(ip), inform_as_ptr=False)
     if not host.ptr_overrides:
         OutputManager().add_line(f"No PTR records for {host.name.hostname}")
 
     for ptr in host.ptr_overrides:
-        if ip.as_ip() == ptr.ipaddress:
+        if ip == ptr.ipaddress:
             ptr.output()
 
 
@@ -774,9 +760,7 @@ def sshfp_remove(args: argparse.Namespace) -> None:
 
     if args.fingerprint:
         sshfps = [
-            SSHFP.get_by_query_unique_or_raise(
-                {"fingerprint": args.fingerprint, "host": host.id}
-            )
+            SSHFP.get_by_query_unique_or_raise({"fingerprint": args.fingerprint, "host": host.id})
         ]
     else:
         sshfps = host.sshfps()

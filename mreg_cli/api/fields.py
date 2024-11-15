@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import ipaddress
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Literal, cast, overload, Self
 
-from pydantic import BeforeValidator, ValidationError, field_validator
+from pydantic import ValidationError, field_validator
 from pydantic_extra_types.mac_address import MacAddress
 
 from mreg_cli.api.abstracts import FrozenModel
@@ -31,29 +31,50 @@ class MACAddressField(FrozenModel):
         return str(self.address)
 
 
+IPVersion = Literal["v4", "v6"]
+
+
+IPVersion = Literal["v4", "v6"]
+
+
 class IPAddressField(FrozenModel):
     """Represents an IP address, automatically determines if it's IPv4 or IPv6."""
 
     address: IP_AddressT
 
     @classmethod
-    def from_string(cls, address: str) -> IPAddressField:
-        """Create an IPAddressField from a string.
+    def validate(cls, value: str) -> IPAddressField:
+        """Construct an IPAddressField from a string.
 
-        Shortcut for creating an IPAddressField from a string,
-        without having to convince the type checker that we can
-        pass in a string to the address field each time.
+        Handles validation and exception handling for creating an IPAddressField.
         """
-        return cls(address=address)  # pyright: ignore[reportArgumentType] # validator handles this
-
-    @field_validator("address", mode="before")
-    @classmethod
-    def parse_ip_address(cls, value: Any) -> IP_AddressT:
-        """Parse and validate the IP address."""
         try:
-            return ipaddress.ip_address(value)
+            return cls(address=value)  # pyright: ignore[reportArgumentType] # validator handles this
         except ValueError as e:
             raise InputFailure(f"Invalid IP address '{value}'.") from e
+
+    @overload
+    @classmethod
+    def parse(cls, value: str, mode: Literal["v4"]) -> ipaddress.IPv4Address: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: str, mode: Literal["v6"]) -> ipaddress.IPv6Address: ...
+
+    @classmethod
+    def parse(cls, value: str, mode: IPVersion) -> IP_AddressT:
+        """Parse a string as a specific IP version."""
+        ip = cls.validate(value)
+        if mode == "v4":
+            if not ip.is_ipv4():
+                raise InputFailure(f"Expected IPv4 address, got {ip.address!r}.")
+            return cast(ipaddress.IPv4Address, ip.address)
+        elif mode == "v6":
+            if not ip.is_ipv6():
+                raise InputFailure(f"Expected IPv6 address, got {ip.address!r}.")
+            return cast(ipaddress.IPv6Address, ip.address)
+        # This should be unreachable in type checked code. Keep it as a fallback.
+        return ip.address
 
     def is_ipv4(self) -> bool:
         """Check if the IP address is IPv4."""

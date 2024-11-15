@@ -18,12 +18,14 @@ from mreg_cli.exceptions import (
     "inp, mode, expect",
     [
         # Basic tests for each type
-        ("192.168.0.1", IPNetMode.IP, IPv4Address("192.168.0.1")),
-        ("192.168.0.1", IPNetMode.IPv4, IPv4Address("192.168.0.1")),
-        ("192.168.0.0/24", IPNetMode.NETWORK, IPv4Network("192.168.0.0/24")),
-        ("2001:db8::1", IPNetMode.IP, IPv6Address("2001:db8::1")),
-        ("2001:db8::1", IPNetMode.IPv6, IPv6Address("2001:db8::1")),
-        ("2001:db8::/64", IPNetMode.NETWORK, IPv6Network("2001:db8::/64")),
+        ("192.168.0.1", "ip", IPv4Address("192.168.0.1")),
+        ("192.168.0.1", "ipv4", IPv4Address("192.168.0.1")),
+        ("192.168.0.0/24", "network", IPv4Network("192.168.0.0/24")),
+        ("192.168.0.0/24", "networkv4", IPv4Network("192.168.0.0/24")),
+        ("2001:db8::1", "ip", IPv6Address("2001:db8::1")),
+        ("2001:db8::1", "ipv6", IPv6Address("2001:db8::1")),
+        ("2001:db8::/64", "network", IPv6Network("2001:db8::/64")),
+        ("2001:db8::/64", "networkv6", IPv6Network("2001:db8::/64")),
         # No mode (auto-detect) tests for each type
         ("192.168.0.1", None, IPv4Address("192.168.0.1")),
         ("192.168.0.0/24", None, IPv4Network("192.168.0.0/24")),
@@ -32,49 +34,49 @@ from mreg_cli.exceptions import (
         # Invalid input (wrong mode)
         pytest.param(
             "192.168.0.1",
-            IPNetMode.IPv6,
+            "ipv6",
             None,
             marks=pytest.mark.xfail(raises=InvalidIPv6Address, strict=True),
         ),
         pytest.param(
             "192.168.0.1",
-            IPNetMode.NETWORK,
+            "network",
             None,
             marks=pytest.mark.xfail(raises=InvalidNetwork, strict=True),
         ),
         pytest.param(
             "192.168.0.0/24",
-            IPNetMode.IPv4,
+            "ipv4",
             None,
             marks=pytest.mark.xfail(raises=InvalidIPv4Address, strict=True),
         ),
         pytest.param(
             "192.168.0.0/24",
-            IPNetMode.IP,
+            "ip",
             None,
             marks=pytest.mark.xfail(raises=InvalidIPAddress, strict=True),
         ),
         pytest.param(
             "2001:db8::1",
-            IPNetMode.IPv4,
+            "ipv4",
             None,
             marks=pytest.mark.xfail(raises=InvalidIPv4Address, strict=True),
         ),
         pytest.param(
             "2001:db8::1",
-            IPNetMode.NETWORK,
+            "network",
             None,
             marks=pytest.mark.xfail(raises=InvalidNetwork, strict=True),
         ),
         pytest.param(
             "2001:db8::/64",
-            IPNetMode.IPv6,
+            "ipv6",
             None,
             marks=pytest.mark.xfail(raises=InvalidIPv6Address, strict=True),
         ),
     ],
 )
-def test_network_or_ip_from_string(inp: str, mode: IPNetMode, expect: Any) -> None:
+def test_network_or_ip_parse(inp: str, mode: IPNetMode, expect: Any) -> None:
     """Test the network or IP address from string."""
-    res = NetworkOrIP.from_string(inp, mode)
+    res = NetworkOrIP.parse(inp, mode)
     assert res == expect
