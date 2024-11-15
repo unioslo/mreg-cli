@@ -2697,7 +2697,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             try:
                 mac = MACAddressField.validate(identifier)
                 return Host.get_by_field("ipaddresses__macaddress", mac.address)
-            except ValueError:
+            except InputFailure:
                 pass
 
             # Let us try to find the host by name...
