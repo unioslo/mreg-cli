@@ -135,4 +135,4 @@ def test_name_list_with_empty_name() -> None:
     # just like with the list of dictionaries. Whether or not this is
     # desirable is up for debate.
     # This test ensures that any change to that behavior is caught.
-    assert m.model_dump(mode="json") == snapshot({"hosts": ["test1", "tests2", "test3"]})
+    assert m.model_dump(mode="json") == snapshot({"hosts": ["test1", "test2", "test3"]})
