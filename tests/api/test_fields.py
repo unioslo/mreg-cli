@@ -69,8 +69,10 @@ def test_name_list_basic():
     assert m.model_dump(mode="json") == snapshot({"hosts": ["test1", "test2", "test3"]})
 
 
-def test_name_list_with_invalid_item():
-    """Test NameList field with an item without a name."""
+def test_name_list_with_invalid_item(caplog: pytest.LogCaptureFixture):
+    """Test NameList field with an item without a name.
+
+    Should log an error and skip the item."""
     inp = {
         "hosts": [
             {"name": "test1", "value": 1},
@@ -85,6 +87,10 @@ def test_name_list_with_invalid_item():
     m = TestModel.model_validate(inp)
 
     assert m.model_dump(mode="json") == snapshot({"hosts": ["test1", "test3"]})
+
+    assert caplog.record_tuples == snapshot(
+        [("mreg_cli.api.fields", 40, "No 'name' key in {'value': 2}")]
+    )
 
 
 def test_name_list_invalid_type():

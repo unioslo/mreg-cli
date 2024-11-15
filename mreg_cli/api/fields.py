@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import ipaddress
+import logging
 from typing import Annotated, Any, Self
 
-from pydantic import BeforeValidator, ValidationError, AfterValidator
+from pydantic import AfterValidator, BeforeValidator, ValidationError
 from pydantic_extra_types.mac_address import MacAddress
 
 from mreg_cli.api.abstracts import FrozenModel
 from mreg_cli.exceptions import InputFailure
 from mreg_cli.types import IP_AddressT
+
+logger = logging.getLogger(__name__)
 
 
 class MACAddressField(FrozenModel):
@@ -97,6 +100,7 @@ def _extract_name(value: Any) -> str:
         try:
             return str(value["name"])  # pyright: ignore[reportUnknownArgumentType]
         except KeyError:
+            logger.error("No 'name' key in %s", value)  # pyright: ignore[reportUnknownArgumentType]
             return ""
     return value
 
