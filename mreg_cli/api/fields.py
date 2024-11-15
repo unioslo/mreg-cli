@@ -34,9 +34,6 @@ class MACAddressField(FrozenModel):
 IPVersion = Literal["v4", "v6"]
 
 
-IPVersion = Literal["v4", "v6"]
-
-
 class IPAddressField(FrozenModel):
     """Represents an IP address, automatically determines if it's IPv4 or IPv6."""
 
