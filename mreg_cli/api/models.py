@@ -2695,7 +2695,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 pass
 
             try:
-                mac = MACAddressField(address=identifier)  # type: ignore
+                mac = MACAddressField.validate_naive(identifier)
                 return Host.get_by_field("ipaddresses__macaddress", mac.address)
             except ValueError:
                 pass
@@ -2795,7 +2795,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: The IP address object if found, None otherwise.
         """
         if not isinstance(arg_mac, MACAddressField):
-            arg_mac = MACAddressField.validate(arg_mac)
+            arg_mac = MACAddressField.validate_naive(arg_mac)
         return next((ip for ip in self.ipaddresses if ip.macaddress == arg_mac), None)
 
     def ips_with_macaddresses(self) -> list[IPAddress]:

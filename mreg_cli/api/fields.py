@@ -24,9 +24,21 @@ class MACAddressField(FrozenModel):
         if isinstance(value, MACAddressField):
             return cls.validate(value.address)
         try:
+            return cls.validate_naive(value)
+        except ValueError as e:
+            raise InputFailure(e) from e
+
+    # HACK: extremely hacky workaround for our custom exceptions always
+    # logging errors/warnings even when caught.
+    @classmethod
+    def validate_naive(cls, value: str | MacAddress | Self) -> Self:
+        """Validate but raise built-in exceptions on failure."""
+        if isinstance(value, MACAddressField):
+            return cls.validate(value.address)
+        try:
             return cls(address=value)  # pyright: ignore[reportArgumentType]
         except ValidationError as e:
-            raise InputFailure(f"Invalid MAC address '{value}'") from e
+            raise ValueError(f"Invalid MAC address '{value}'") from e
 
     def __str__(self) -> str:
         """Return the MAC address as a string."""
