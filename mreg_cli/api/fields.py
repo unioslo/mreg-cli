@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
-from typing import Annotated, Any, Literal, Self, cast, overload
+from typing import Annotated, Any, Self
 
 from pydantic import BeforeValidator, ValidationError
 from pydantic_extra_types.mac_address import MacAddress
@@ -43,9 +43,6 @@ class MACAddressField(FrozenModel):
         return str(self.address)
 
 
-IPVersion = Literal["v4", "v6"]
-
-
 class IPAddressField(FrozenModel):
     """Represents an IP address, automatically determines if it's IPv4 or IPv6."""
 
@@ -63,37 +60,6 @@ class IPAddressField(FrozenModel):
             return cls(address=value)  # pyright: ignore[reportArgumentType] # validator handles this
         except ValueError as e:
             raise InputFailure(f"Invalid IP address '{value}'.") from e
-
-    @overload
-    @classmethod
-    def parse(cls, value: str, mode: Literal["v4"]) -> ipaddress.IPv4Address: ...
-
-    @overload
-    @classmethod
-    def parse(cls, value: str, mode: Literal["v6"]) -> ipaddress.IPv6Address: ...
-
-    @classmethod
-    def parse(cls, value: str, mode: IPVersion) -> IP_AddressT:
-        """Parse a string as a specific IP version."""
-        ip = cls.validate(value)
-        if mode == "v4":
-            if not ip.is_ipv4():
-                raise InputFailure(f"Expected IPv4 address, got {ip.address!r}.")
-            return cast(ipaddress.IPv4Address, ip.address)
-        elif mode == "v6":
-            if not ip.is_ipv6():
-                raise InputFailure(f"Expected IPv6 address, got {ip.address!r}.")
-            return cast(ipaddress.IPv6Address, ip.address)
-        # This should be unreachable in type checked code. Keep it as a fallback.
-        return ip.address
-
-    def is_ipv4(self) -> bool:
-        """Check if the IP address is IPv4."""
-        return isinstance(self.address, ipaddress.IPv4Address)
-
-    def is_ipv6(self) -> bool:
-        """Check if the IP address is IPv6."""
-        return isinstance(self.address, ipaddress.IPv6Address)
 
     @staticmethod
     def is_valid(value: str) -> bool:
