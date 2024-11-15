@@ -64,7 +64,7 @@ class NetworkOrIP(BaseModel):
     ip_or_network: IP_AddressT | IP_NetworkT
 
     @classmethod
-    def validate(cls, value: Any) -> Self:
+    def validate(cls, value: str | IP_AddressT | IP_NetworkT | Self) -> Self:
         """Create a NetworkOrIP model instance from a value.
 
         This constructor validates and wraps the IP/network in the model.
@@ -73,8 +73,10 @@ class NetworkOrIP(BaseModel):
         :returns: A NetworkOrIP model instance
         :raises InputFailure: If validation fails
         """
+        if isinstance(value, NetworkOrIP):
+            return cls.validate(value.ip_or_network)
         try:
-            return cls(ip_or_network=value)
+            return cls(ip_or_network=value)  # pyright: ignore[reportArgumentType] # validator handles this
         except ValidationError as e:
             raise InputFailure(f"Invalid IP address or network: {value}") from e
 
@@ -1955,7 +1957,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
     def create_valid_macadress_or_none(cls, v: Any) -> MACAddressField | None:
         """Create macaddress or convert empty strings to None."""
         if v:
-            return MACAddressField(address=v)
+            return MACAddressField.validate(v)
         return None
 
     @field_validator("ipaddress", mode="before")

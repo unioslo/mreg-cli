@@ -19,8 +19,10 @@ class MACAddressField(FrozenModel):
     address: MacAddress
 
     @classmethod
-    def validate(cls, value: str | MacAddress) -> Self:
+    def validate(cls, value: str | MacAddress | Self) -> Self:
         """Validate a MAC address and return it as a string."""
+        if isinstance(value, MACAddressField):
+            return cls.validate(value.address)
         try:
             return cls(address=value)  # pyright: ignore[reportArgumentType]
         except ValidationError as e:
@@ -40,11 +42,13 @@ class IPAddressField(FrozenModel):
     address: IP_AddressT
 
     @classmethod
-    def validate(cls, value: str) -> IPAddressField:
+    def validate(cls, value: str | IP_AddressT | Self) -> IPAddressField:
         """Construct an IPAddressField from a string.
 
         Handles validation and exception handling for creating an IPAddressField.
         """
+        if isinstance(value, IPAddressField):
+            return cls.validate(value.address)
         try:
             return cls(address=value)  # pyright: ignore[reportArgumentType] # validator handles this
         except ValueError as e:
