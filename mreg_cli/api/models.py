@@ -1986,7 +1986,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         :returns: The IP address if found, None otherwise.
         """
         if isinstance(mac, str):
-            mac = MACAddressField.validate_mac(mac)
+            mac = MACAddressField.validate(mac)
         return cls.get_by_field("macaddress", mac.address)
 
     @classmethod
@@ -2029,7 +2029,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         :returns: A new IPAddress object fetched from the API with the updated MAC address.
         """
         if isinstance(mac, str):
-            mac = MACAddressField.validate_mac(mac)
+            mac = MACAddressField.validate(mac)
 
         if self.macaddress and not force:
             raise EntityAlreadyExists(
@@ -2693,7 +2693,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 pass
 
             try:
-                mac = MACAddressField(address=identifier)
+                mac = MACAddressField.validate(identifier)
                 return Host.get_by_field("ipaddresses__macaddress", mac.address)
             except ValueError:
                 pass
@@ -2793,7 +2793,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: The IP address object if found, None otherwise.
         """
         if not isinstance(arg_mac, MACAddressField):
-            arg_mac = MACAddressField(address=arg_mac)
+            arg_mac = MACAddressField.validate(arg_mac)
         return next((ip for ip in self.ipaddresses if ip.macaddress == arg_mac), None)
 
     def ips_with_macaddresses(self) -> list[IPAddress]:
@@ -2888,10 +2888,10 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: A new Host object fetched from the API after updating the IP address.
         """
         if isinstance(mac, str):
-            mac = MACAddressField.validate_mac(mac)
+            mac = MACAddressField.validate(mac)
 
         if isinstance(ip, str):
-            ip = IPAddressField.from_string(ip)
+            ip = IPAddressField.validate(ip)
 
         params: QueryParams = {
             "macaddress": mac.address,

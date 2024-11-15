@@ -19,7 +19,7 @@ class MACAddressField(FrozenModel):
     address: MacAddress
 
     @classmethod
-    def validate_mac(cls, value: str | MacAddress) -> Self:
+    def validate(cls, value: str | MacAddress) -> Self:
         """Validate a MAC address and return it as a string."""
         try:
             return cls(address=value)  # pyright: ignore[reportArgumentType]

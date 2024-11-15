@@ -93,7 +93,7 @@ def add(args: argparse.Namespace) -> None:
     macaddress = args.macaddress
 
     if macaddress is not None:
-        macaddress = MACAddressField.validate_mac(macaddress)
+        macaddress = MACAddressField.validate(macaddress)
         ip_address = IPAddress.get_by_mac(macaddress)
 
         if ip_address:

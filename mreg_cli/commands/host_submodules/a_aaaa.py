@@ -182,7 +182,7 @@ def _add_ip(
 
     mac = None
     if args.macaddress:
-        mac = MACAddressField.validate_mac(args.macaddress)
+        mac = MACAddressField.validate(args.macaddress)
 
     if not args.force:
         _bail_if_ip_in_use_and_not_force(ipaddr)

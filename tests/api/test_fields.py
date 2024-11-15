@@ -45,5 +45,5 @@ MacAddresValidationFailure = pytest.mark.xfail(raises=InputFailure, strict=True)
 )
 def test_mac_address_field(inp: str, expect: str) -> None:
     """Test the MAC address field."""
-    res = MACAddressField.validate_mac(inp)
+    res = MACAddressField.validate(inp)
     assert str(res) == expect
