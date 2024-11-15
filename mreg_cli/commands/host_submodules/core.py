@@ -135,7 +135,7 @@ def add(args: argparse.Namespace) -> None:
             autodetect = True
             network_or_ip = network_or_ip.rstrip("/")
 
-        net_or_ip = NetworkOrIP(ip_or_network=network_or_ip)
+        net_or_ip = NetworkOrIP.validate(network_or_ip)
 
         if net_or_ip.is_ip() and not autodetect:
             data["ipaddress"] = str(network_or_ip)
@@ -155,10 +155,11 @@ def add(args: argparse.Namespace) -> None:
         else:
             raise EntityNotFound(f"Invalid ip or network: {network_or_ip}")
 
-        if network and network.frozen and not args.force:
-            raise ForceMissing(f"Network {network.network} is frozen, must force")
-        else:
-            net_or_ip = NetworkOrIP(ip_or_network=network.network)
+        if network:
+            if network.frozen and not args.force:
+                raise ForceMissing(f"Network {network.network} is frozen, must force")
+            else:
+                net_or_ip = NetworkOrIP.validate(network.network)
     else:
         net_or_ip = None
 
