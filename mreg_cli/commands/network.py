@@ -340,7 +340,7 @@ def list_excluded_ranges(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
-    net = Network.get_by_any_means_or_raisef(args.network)
+    net = Network.get_by_any_means_or_raise(args.network)
     net.output_excluded_ranges()
 
 
