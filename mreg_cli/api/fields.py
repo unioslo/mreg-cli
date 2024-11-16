@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import ipaddress
+import logging
 from typing import Annotated, Any, Self
 
-from pydantic import BeforeValidator, ValidationError
+from pydantic import AfterValidator, BeforeValidator, ValidationError
 from pydantic_extra_types.mac_address import MacAddress
 
 from mreg_cli.api.abstracts import FrozenModel
 from mreg_cli.exceptions import InputFailure
 from mreg_cli.types import IP_AddressT
+
+logger = logging.getLogger(__name__)
 
 
 class MACAddressField(FrozenModel):
@@ -87,13 +90,33 @@ class IPAddressField(FrozenModel):
         return hash(self.address)
 
 
-def _extract_name(value: dict[str, Any]) -> str:
-    """Extract the name from the dictionary.
+def _extract_name(value: Any) -> str:
+    """Extract the "name" value from a dictionary.
 
     :param v: Dictionary containing the name.
     :returns: Extracted name as a string.
     """
-    return value["name"]
+    if isinstance(value, dict):
+        try:
+            return str(value["name"])  # pyright: ignore[reportUnknownArgumentType]
+        except KeyError:
+            logger.error("No 'name' key in %s", value)  # pyright: ignore[reportUnknownArgumentType]
+            return ""
+    return value
 
 
-NameList = list[Annotated[str, BeforeValidator(_extract_name)]]
+def _remove_falsy_list_items(value: Any) -> Any:
+    """Remove falsy items from a list.
+
+    For use in validators only.
+    """
+    if isinstance(value, list):
+        return [i for i in value if i]  # pyright: ignore[reportUnknownVariableType]
+    return value
+
+
+NameList = Annotated[
+    list[Annotated[str, BeforeValidator(_extract_name)]],
+    AfterValidator(_remove_falsy_list_items),
+]
+"""List of names extracted from a list of dicts."""
