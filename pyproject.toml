@@ -50,10 +50,18 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[project.optional-dependencies]
-test = ["pytest", "inline-snapshot", "pytest-httpserver"]
+
+[project.urls]
+Repository = 'https://github.com/unioslo/mreg-cli/'
+
+[project.scripts]
+mreg-cli = "mreg_cli.main:main"
+
+[dependency-groups]
 dev = [
-    "mreg-cli[test]",
+    "pytest",
+    "inline-snapshot",
+    "pytest-httpserver",
     "ruff",
     "tox-uv",
     "rich",
@@ -62,12 +70,8 @@ dev = [
     "build",
     "pyinstaller",
 ]
+ci = [{ include-group = "dev" }, "tox-gh-actions"]
 
-[project.urls]
-Repository = 'https://github.com/unioslo/mreg-cli/'
-
-[project.scripts]
-mreg-cli = "mreg_cli.main:main"
 
 [tool.setuptools.packages.find]
 include = ["mreg_cli*"]
