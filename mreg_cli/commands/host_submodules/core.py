@@ -35,6 +35,7 @@ from mreg_cli.exceptions import (
     EntityOwnershipMismatch,
     ForceMissing,
     InputFailure,
+    InvalidIPAddress,
     PatchError,
 )
 from mreg_cli.outputmanager import OutputManager
@@ -138,8 +139,12 @@ def add(args: argparse.Namespace) -> None:
         net_or_ip = NetworkOrIP.validate(network_or_ip)
 
         if net_or_ip.is_ip() and not autodetect:
+            ipaddr = net_or_ip.as_ip()
+            network = Network.get_by_ip(ipaddr)
+            if network and ipaddr == network.network_address:
+                raise InvalidIPAddress(f"IP {ipaddr} is a network address, not a host address")
+            # NOTE: should we raise if no network found? We currently don't
             data["ipaddress"] = str(network_or_ip)
-            network = Network.get_by_ip(net_or_ip.as_ip())
 
         elif net_or_ip.is_network() or autodetect:
             network = (
