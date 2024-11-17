@@ -1690,18 +1690,6 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         return get_typed(cls.endpoint(), list[cls], limit=None)
 
-    @staticmethod
-    def str_to_network(network: str) -> ipaddress.IPv4Network | ipaddress.IPv6Network:
-        """Convert a network string to an ipaddress network object.
-
-        :param network: The network string to convert.
-        :returns: The network object.
-        """
-        try:
-            return ipaddress.ip_network(network)
-        except ValueError as e:
-            raise InputFailure(f"Invalid network: {network}") from e
-
     def output(self, padding: int = 25) -> None:
         """Output the network to the console."""
         manager = OutputManager()
@@ -1709,7 +1697,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         def fmt(label: str, value: Any) -> None:
             manager.add_line(f"{label:<{padding}}{value}")
 
-        ipnet = self.str_to_network(self.network)
+        ipnet = NetworkOrIP.parse(self.network, mode="network")
         reserved_ips = self.get_reserved_ips()
         # Remove network address and broadcast address from reserved IPs
         reserved_ips_filtered = [
@@ -1801,9 +1789,9 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         if isinstance(other, Network):
             other = other.network
         if isinstance(other, str):
-            other = self.str_to_network(other)
+            other = NetworkOrIP.parse(other, mode="network")
 
-        self_net = self.str_to_network(self.network)
+        self_net = NetworkOrIP.parse(self.network, mode="network")
         return self_net.overlaps(other)
 
     def get_first_available_ip(self) -> IP_AddressT:
