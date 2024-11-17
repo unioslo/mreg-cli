@@ -23,9 +23,7 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
       - name: Install mreg-cli
-        run: |
-          uv venv
-          uv pip install -e .[dev]
+        run: uv sync
       - name: Test and compare api calls
         run: uv run ci/run_testsuite_and_record.sh
 
@@ -45,9 +43,7 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
       - name: Install dependencies
-        run: |
-          uv venv
-          uv pip install tox-uv tox-gh-actions 
+        run: uv sync --group ci
       - name: Test building with tox
         run: uv run tox r
         
@@ -67,8 +63,6 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
       - name: Install dependencies
-        run: |
-          uv venv
-          uv pip install -U -e ".[test]"
+        run: uv sync
       - name: Run unittest
         run: uv run pytest

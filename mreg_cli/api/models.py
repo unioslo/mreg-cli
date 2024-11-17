@@ -1577,6 +1577,16 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """Return a hash of the network."""
         return hash((self.id, self.network))
 
+    @property
+    def network_address(self) -> IP_AddressT:
+        """The network address of the network."""
+        return NetworkOrIP.parse(self.network, mode="network").network_address
+
+    @property
+    def broadcast_address(self) -> IP_AddressT:
+        """The broadcast address of the network."""
+        return NetworkOrIP.parse(self.network, mode="network").broadcast_address
+
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
