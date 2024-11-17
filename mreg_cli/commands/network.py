@@ -6,7 +6,7 @@ import argparse
 from typing import Any
 
 from mreg_cli.api.fields import IPAddressField
-from mreg_cli.api.models import Network
+from mreg_cli.api.models import Network, NetworkOrIP
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import (
@@ -67,7 +67,7 @@ def create(args: argparse.Namespace) -> None:
     if args.location and not is_valid_location_tag(args.location):
         raise InputFailure("Not a valid location tag")
 
-    arg_network = Network.str_to_network(args.network)
+    arg_network = NetworkOrIP.parse(args.network, mode="network")
     networks = Network.get_list()
     for network in networks:
         if network.overlaps(arg_network):
