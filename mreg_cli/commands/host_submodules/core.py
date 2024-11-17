@@ -141,8 +141,13 @@ def add(args: argparse.Namespace) -> None:
         if net_or_ip.is_ip() and not autodetect:
             ipaddr = net_or_ip.as_ip()
             network = Network.get_by_ip(ipaddr)
-            if network and network.is_reserved_ip(ipaddr):
-                raise InvalidIPAddress(f"IP {ipaddr} is a reserved IP")
+            if network:
+                if ipaddr == network.network_address:
+                    raise InvalidIPAddress(f"IP {ipaddr} is a network address, not a host address")
+                elif ipaddr == network.broadcast_address:
+                    raise InvalidIPAddress(
+                        f"IP {ipaddr} is a broadcast address, not a host address"
+                    )
             # NOTE: should we raise if no network found? We currently don't
             data["ipaddress"] = str(network_or_ip)
 
