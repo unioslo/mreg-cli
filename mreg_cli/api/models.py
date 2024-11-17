@@ -1584,7 +1584,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
     @property
     def broadcast_address(self) -> IP_AddressT:
-        """The network address of the network."""
+        """The broadcast address of the network."""
         return NetworkOrIP.parse(self.network, mode="network").broadcast_address
 
     @classmethod
