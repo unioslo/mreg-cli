@@ -20,6 +20,7 @@ from prompt_toolkit import prompt
 from pydantic import BaseModel, TypeAdapter, field_validator
 from requests import Response
 
+from mreg_cli.__about__ import __version__
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     APINotOk,
@@ -34,7 +35,7 @@ from mreg_cli.tokenfile import TokenFile
 from mreg_cli.types import Json, JsonMapping, QueryParams
 
 session = requests.Session()
-session.headers.update({"User-Agent": "mreg-cli"})
+session.headers.update({"User-Agent": f"mreg-cli-{__version__}"})
 
 logger = logging.getLogger(__name__)
 
