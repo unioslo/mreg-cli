@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import ipaddress
+import logging
 import re
 from datetime import date, datetime
+from functools import cached_property
 from typing import Any, Callable, ClassVar, Literal, Self, cast, overload
 
 from pydantic import (
@@ -35,6 +37,7 @@ from mreg_cli.exceptions import (
     InvalidIPv4Address,
     InvalidIPv6Address,
     InvalidNetwork,
+    IPNetworkWarning,
     MultipleEntititesFound,
     PatchError,
     UnexpectedDataError,
@@ -54,6 +57,8 @@ from mreg_cli.utilities.api import (
 )
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
+
+logger = logging.getLogger(__name__)
 
 IPNetMode = Literal["ipv4", "ipv6", "ip", "network", "networkv4", "networkv6"]
 
@@ -1577,15 +1582,26 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """Return a hash of the network."""
         return hash((self.id, self.network))
 
+    @cached_property
+    def ip_network(self) -> IP_NetworkT:
+        """IP network object for the network."""
+        try:
+            return NetworkOrIP.parse(self.network, mode="network")
+        except IPNetworkWarning as e:
+            logger.error(
+                "Invalid network address %s for network with ID %s", self.network, self.id
+            )
+            raise e
+
     @property
     def network_address(self) -> IP_AddressT:
         """The network address of the network."""
-        return NetworkOrIP.parse(self.network, mode="network").network_address
+        return self.ip_network.network_address
 
     @property
     def broadcast_address(self) -> IP_AddressT:
         """The broadcast address of the network."""
-        return NetworkOrIP.parse(self.network, mode="network").broadcast_address
+        return self.ip_network.broadcast_address
 
     @classmethod
     def endpoint(cls) -> Endpoint:

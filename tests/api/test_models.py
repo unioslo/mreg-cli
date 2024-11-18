@@ -1,17 +1,19 @@
 from __future__ import annotations
 
+from datetime import datetime
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Any
 
 import pytest
 
-from mreg_cli.api.models import IPNetMode, NetworkOrIP
+from mreg_cli.api.models import IPNetMode, Network, NetworkOrIP
 from mreg_cli.exceptions import (
     InvalidIPAddress,
     InvalidIPv4Address,
     InvalidIPv6Address,
     InvalidNetwork,
 )
+from mreg_cli.types import IP_NetworkT
 
 
 @pytest.mark.parametrize(
@@ -80,3 +82,32 @@ def test_network_or_ip_parse(inp: str, mode: IPNetMode, expect: Any) -> None:
     """Test the network or IP address from string."""
     res = NetworkOrIP.parse(inp, mode)
     assert res == expect
+
+
+@pytest.mark.parametrize(
+    "inp, expect",
+    [
+        ("192.168.0.0/24", IPv4Network("192.168.0.0/24")),
+        ("2001:db8::/64", IPv6Network("2001:db8::/64")),
+    ],
+)
+def test_network_ip_network(inp: str, expect: IP_NetworkT) -> None:
+    """Test usage of `Network.ip_network` and related properties."""
+    network = Network(
+        id=123,
+        excluded_ranges=[],
+        network=inp,
+        description="testnet",
+        vlan=123,
+        dns_delegated=False,
+        category="test",
+        location="testnet",
+        frozen=False,
+        reserved=0,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
+
+    assert network.ip_network == expect
+    assert network.broadcast_address == expect.broadcast_address
+    assert network.network_address == expect.network_address

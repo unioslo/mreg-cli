@@ -195,31 +195,37 @@ class ForceMissing(CliWarning):
     pass
 
 
-class InvalidIPAddress(CliWarning):
+class IPNetworkWarning(CliWarning):
+    """Warning class for IP network/address warnings."""
+
+    pass
+
+
+class InvalidIPAddress(IPNetworkWarning):
     """Warning class for an entity that is not an IP address."""
 
     pass
 
 
-class InvalidIPv4Address(CliWarning):
+class InvalidIPv4Address(IPNetworkWarning):
     """Warning class for an entity that is not an IPv4 address."""
 
     pass
 
 
-class InvalidIPv6Address(CliWarning):
+class InvalidIPv6Address(IPNetworkWarning):
     """Warning class for an entity that is not an IPv6 address."""
 
     pass
 
 
-class InvalidNetwork(CliWarning):
+class InvalidNetwork(IPNetworkWarning):
     """Warning class for an entity that is not a network."""
 
     pass
 
 
-class NetworkOverlap(CliWarning):
+class NetworkOverlap(IPNetworkWarning):
     """Warning class for a networkthat overlaps with another network."""
 
     pass
