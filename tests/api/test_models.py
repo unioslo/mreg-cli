@@ -92,7 +92,7 @@ def test_network_or_ip_parse(inp: str, mode: IPNetMode, expect: Any) -> None:
     ],
 )
 def test_network_ip_network(inp: str, expect: IP_NetworkT) -> None:
-    """Test the network or IP address from string."""
+    """Test usage of `Network.ip_network` and related properties."""
     network = Network(
         id=123,
         excluded_ranges=[],
