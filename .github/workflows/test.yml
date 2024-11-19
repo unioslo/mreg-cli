@@ -1,5 +1,7 @@
 on: [push, pull_request]
 
+env:
+  UV_FROZEN: 1
 
 name: CI
 jobs:
