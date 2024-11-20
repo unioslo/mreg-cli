@@ -21,9 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `host add`: Re-introduced support for network/ip ending with `/`.
+- `host add`: Re-introduced support for network/IP ending with `/`.
   - Automatically deduces the correct network to assign an IP from.
-- `host add`: No longer possible to assign the network ID (first address of subnet) to a host.
+- `host add`: No longer possible to assign network address (first address of subnet) or broadcast address (last address of subnet) to a host.
 
 ## [1.0.1](https://github.com/unioslo/mreg-cli/releases/tag/1.0.1) - 2024-10-21
 
