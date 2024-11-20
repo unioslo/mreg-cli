@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
-## [1.1.0] - 2024-11-19
+## [1.1.0](https://github.com/unioslo/mreg-cli/releases/tag/1.1.0) - 2024-11-19
 
 ### Added
 
@@ -25,14 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatically deduces the correct network to assign an IP from.
 - `host add`: No longer possible to assign the network ID (first address of subnet) to a host.
 
-## [1.0.1] - 2024-10-21
+## [1.0.1](https://github.com/unioslo/mreg-cli/releases/tag/1.0.1) - 2024-10-21
 
 ### Fixed
 
 - Rendering of top level command autocompletion in REPL.
 - `OK:` messages not being displayed outside of `--record` mode
 
-## [1.0.0] - 2024-10-12
+## [1.0.0](https://github.com/unioslo/mreg-cli/releases/tag/1.0.0) - 2024-10-12
 
 The big Pydantic update. The entire codebase has been rewritten to use Pydantic for request and response validation. This brings with it a huge improvement to the development experience and the robustness of the code.
 
