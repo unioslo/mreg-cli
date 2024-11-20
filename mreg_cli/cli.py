@@ -222,6 +222,7 @@ class Command(Completer):
                     yield Completion(
                         name,
                         start_position=-len(cur),
+                        display_meta=self.children[name].short_desc,
                     )
 
         # if the line starts with one of the sub commands, pass it along
