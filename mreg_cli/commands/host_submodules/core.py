@@ -28,6 +28,7 @@ from mreg_cli.api.models import (
 )
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
+    APINotOk,
     CreateError,
     DeleteError,
     EntityAlreadyExists,
@@ -126,6 +127,7 @@ def add(args: argparse.Namespace) -> None:
 
     if network_or_ip:
         autodetect = False
+        network = None
 
         # Combine multiple slashes, in case anyone is trying to be funny
         network_or_ip = re.sub(r"/+", "/", network_or_ip)
@@ -140,15 +142,20 @@ def add(args: argparse.Namespace) -> None:
 
         if net_or_ip.is_ip() and not autodetect:
             ipaddr = net_or_ip.as_ip()
-            network = Network.get_by_ip(ipaddr)
-            if network:
-                if ipaddr == network.network_address:
-                    raise InvalidIPAddress(f"IP {ipaddr} is a network address, not a host address")
-                elif ipaddr == network.broadcast_address:
-                    raise InvalidIPAddress(
-                        f"IP {ipaddr} is a broadcast address, not a host address"
-                    )
-            # NOTE: should we raise if no network found? We currently don't
+            try:
+                network = Network.get_by_ip(ipaddr)
+                if network:
+                    if ipaddr == network.network_address:
+                        raise InvalidIPAddress(
+                            f"IP {ipaddr} is a network address, not a host address"
+                        )
+                    elif ipaddr == network.broadcast_address:
+                        raise InvalidIPAddress(
+                            f"IP {ipaddr} is a broadcast address, not a host address"
+                        )
+            except (EntityNotFound, APINotOk) as e:
+                if not args.force:
+                    raise ForceMissing(f"IP {ipaddr} is not in a network, must force") from e
             data["ipaddress"] = str(network_or_ip)
 
         elif net_or_ip.is_network() or autodetect:
