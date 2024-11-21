@@ -118,6 +118,7 @@ class NetworkOrIP(BaseModel):
         :param value:The value to parse.
         :param mode: The mode to validate the input as.
         :returns: The parsed value as an IP address or network.
+        :raises IPNetworkWarning: If the value is not an IP address or network.
         """
         ipnet = cls.validate(value)
         funcmap: dict[IPNetMode, Callable[..., IP_AddressT | IP_NetworkT]] = {
@@ -2684,28 +2685,22 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             try:
                 ptr = False
                 ipaddress.ip_address(identifier)
+                NetworkOrIP.parse(identifier, mode="ip")
 
-                hosts = Host.get_list_by_field(
-                    "ipaddresses__ipaddress", identifier, ordering="name"
-                )
-
-                if not hosts:
-                    hosts = Host.get_list_by_field("ptr_overrides__ipaddress", identifier)
+                host = Host.get_by_field("ipaddresses__ipaddress", identifier)
+                if not host:
+                    host = Host.get_by_field("ptr_overrides__ipaddress", identifier)
                     ptr = True
 
-                if len(hosts) == 1:
+                if host:
                     if ptr and inform_as_ptr:
-                        OutputManager().add_line(
-                            f"{identifier} is a PTR override for {hosts[0].name}"
-                        )
-                    return hosts[0]
-
-                if len(hosts) > 1:
-                    raise MultipleEntitiesFound(
-                        f"Multiple hosts found with IP address or PTR {identifier}."
-                    )
-
-            except ValueError:
+                        OutputManager().add_line(f"{identifier} is a PTR override for {host.name}")
+                    return host
+            except MultipleEntitiesFound as e:
+                raise MultipleEntitiesFound(
+                    f"Multiple hosts found with IP address or PTR {identifier}."
+                ) from e
+            except ValueError:  # invalid IP
                 pass
 
             try:

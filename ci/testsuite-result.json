@@ -25049,7 +25049,7 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/?ipaddresses__ipaddress=10.0.0.20&ordering=name",
+        "url": "/api/v1/hosts/?ipaddresses__ipaddress=10.0.0.20",
         "data": {},
         "status": 200,
         "response": {

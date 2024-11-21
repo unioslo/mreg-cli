@@ -195,7 +195,7 @@ class ForceMissing(CliWarning):
     pass
 
 
-class IPNetworkWarning(CliWarning):
+class IPNetworkWarning(ValueError, CliWarning):
     """Warning class for IP network/address warnings."""
 
     pass
