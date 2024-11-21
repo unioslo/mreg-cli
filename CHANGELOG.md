@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## [Unreleased] -->
+## [Unreleased]
+
+### Fixed
+
+- REPL command completion not showing descriptions for commands.
 
 ## [1.1.0](https://github.com/unioslo/mreg-cli/releases/tag/1.1.0) - 2024-11-19
 
@@ -21,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- MAC adress validation. Now supports all common formats. See the [Pydantic docs](https://docs.pydantic.dev/latest/api/pydantic_extra_types_mac_address/) for more information.
 - `host add`: Re-introduced support for network/IP ending with `/`.
   - Automatically deduces the correct network to assign an IP from.
 - `host add`: No longer possible to assign network address (first address of subnet) or broadcast address (last address of subnet) to a host.
