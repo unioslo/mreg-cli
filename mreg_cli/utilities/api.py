@@ -17,11 +17,10 @@ from uuid import uuid4
 
 import requests
 from prompt_toolkit import prompt
-from pydantic import TypeAdapter, field_validator
+from pydantic import BaseModel, TypeAdapter, field_validator
 from requests import Response
 
 from mreg_cli.__about__ import __version__
-from mreg_cli.base_model import BaseModel
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     APINotOk,
