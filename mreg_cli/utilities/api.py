@@ -541,7 +541,9 @@ def get_list_generic(
         if len(ret) == 0:
             return {}
         if len(ret) > 1 and not all(ret[0] == x for x in ret):
-            raise MultipleEntititesFound(f"Expected exactly one result, got {len(ret)}.")
+            raise MultipleEntititesFound(
+                f"Expected a unique result, got {len(ret)} distinct results."
+            )
         return ret[0]
     return ret
 
