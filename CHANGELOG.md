@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - REPL command completion not showing descriptions for commands.
 - `host info` with MAC address argument not working for hosts with multiple IPs associated with the same MAC address.
+- Failed token file write causing the application to crash.
 
 ## [1.1.0](https://github.com/unioslo/mreg-cli/releases/tag/1.1.0) - 2024-11-19
 
