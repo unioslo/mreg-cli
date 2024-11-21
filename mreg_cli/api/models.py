@@ -38,7 +38,7 @@ from mreg_cli.exceptions import (
     InvalidIPv6Address,
     InvalidNetwork,
     IPNetworkWarning,
-    MultipleEntititesFound,
+    MultipleEntitiesFound,
     PatchError,
     UnexpectedDataError,
     ValidationError,
@@ -2185,7 +2185,7 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
             raise EntityNotFound(f"CNAME record for {name} not found for {target_hostname}.")
 
         if len(results) > 1:
-            raise MultipleEntititesFound(f"Multiple CNAME records found for {host} with {name}!")
+            raise MultipleEntitiesFound(f"Multiple CNAME records found for {host} with {name}!")
 
         return results[0]
 
@@ -2701,7 +2701,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                     return hosts[0]
 
                 if len(hosts) > 1:
-                    raise MultipleEntititesFound(
+                    raise MultipleEntitiesFound(
                         f"Multiple hosts found with IP address or PTR {identifier}."
                     )
 

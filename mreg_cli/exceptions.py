@@ -171,7 +171,7 @@ class EntityAlreadyExists(CliWarning):
     pass
 
 
-class MultipleEntititesFound(CliWarning):
+class MultipleEntitiesFound(CliWarning):
     """Warning class for multiple entities found."""
 
     pass
