@@ -171,7 +171,7 @@ class EntityAlreadyExists(CliWarning):
     pass
 
 
-class MultipleEntititesFound(CliWarning):
+class MultipleEntitiesFound(CliWarning):
     """Warning class for multiple entities found."""
 
     pass
@@ -195,7 +195,7 @@ class ForceMissing(CliWarning):
     pass
 
 
-class IPNetworkWarning(CliWarning):
+class IPNetworkWarning(ValueError, CliWarning):
     """Warning class for IP network/address warnings."""
 
     pass

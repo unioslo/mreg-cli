@@ -7,7 +7,7 @@ from inline_snapshot import snapshot
 from pytest_httpserver import HTTPServer
 from werkzeug import Response
 
-from mreg_cli.exceptions import MultipleEntititesFound, ValidationError
+from mreg_cli.exceptions import MultipleEntitiesFound, ValidationError
 from mreg_cli.utilities.api import _strip_none, get_list, get_list_unique  # type: ignore
 
 
@@ -200,7 +200,7 @@ def test_get_list_unique_paginated(httpserver: HTTPServer) -> None:
 
 
 def test_get_list_unique_paginated_too_many_results(httpserver: HTTPServer) -> None:
-    """Non-paginated response with invalid JSON is an error."""
+    """get_list_unique with multiple unique results is an error."""
     httpserver.expect_oneshot_request("/foobar").respond_with_json(
         {
             "results": [{"foo": "bar"}],
@@ -217,9 +217,33 @@ def test_get_list_unique_paginated_too_many_results(httpserver: HTTPServer) -> N
             "previous": "/foobar",
         }
     )
-    with pytest.raises(MultipleEntititesFound) as exc_info:
+    with pytest.raises(MultipleEntitiesFound) as exc_info:
         get_list_unique("/foobar", params={})
-    assert "Expected exactly one result, got 2" in exc_info.exconly()
+    assert exc_info.exconly() == snapshot(
+        "mreg_cli.exceptions.MultipleEntitiesFound: Expected a unique result, got 2 distinct results."
+    )
+
+
+def test_get_list_unique_paginated_duplicate_result_ok(httpserver: HTTPServer) -> None:
+    """get_list_unique with _only_ duplicate results is ok."""
+    httpserver.expect_oneshot_request("/foobar").respond_with_json(
+        {
+            "results": [{"foo": "bar"}],
+            "count": 1,
+            "next": "/foobar?page=2",
+            "previous": None,
+        }
+    )
+    httpserver.expect_oneshot_request("/foobar", query_string="page=2").respond_with_json(
+        {
+            "results": [{"foo": "bar"}],
+            "count": 1,
+            "next": None,
+            "previous": "/foobar",
+        }
+    )
+    resp = get_list_unique("/foobar", params={})
+    assert resp == snapshot({"foo": "bar"})
 
 
 def test_get_list_unique_paginated_no_result(httpserver: HTTPServer) -> None:
