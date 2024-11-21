@@ -540,7 +540,7 @@ def get_list_generic(
     if expect_one_result:
         if len(ret) == 0:
             return {}
-        if len(ret) > 1 and not all(ret[0] == x for x in ret):
+        if len(ret) > 1 and any(ret[0] != x for x in ret):
             raise MultipleEntititesFound(
                 f"Expected a unique result, got {len(ret)} distinct results."
             )
