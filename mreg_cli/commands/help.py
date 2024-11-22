@@ -11,6 +11,7 @@ from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.config import MregCliConfig
 from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag
 
 command_registry = CommandRegistry()
 
@@ -30,7 +31,9 @@ class HelpCommands(BaseCommand):
         )
 
 
-@command_registry.register_command("filtering", "Show help for filtering.", "Filtering Help")
+@command_registry.register_command(
+    prog="filtering", description="Show help for filtering.", short_desc="Filtering Help"
+)
 def filtering_help(_: argparse.Namespace) -> None:
     """Show help for filtering."""
     print(
@@ -74,14 +77,18 @@ TXT:          v=spf1 -all
     )
 
 
-@command_registry.register_command("configuration", "Show configuration", "Show configuration")
+@command_registry.register_command(
+    prog="configuration", description="Show configuration", short_desc="Show configuration"
+)
 def configuration_help(_: argparse.Namespace) -> None:
     """Show configuration."""
     MregCliConfig().print_config_table()
 
 
 @command_registry.register_command(
-    "versions", "Show versions of client and server as much as possible", "Show versions"
+    prog="versions",
+    description="Show versions of client and server as much as possible",
+    short_desc="Show versions",
 )
 def versions_help(_: argparse.Namespace) -> None:
     """Show versions of client and server as much as possible."""
@@ -93,11 +100,21 @@ def versions_help(_: argparse.Namespace) -> None:
 
 
 @command_registry.register_command(
-    "whoami", "Show information about the current user", "Show user info"
+    prog="whoami",
+    description="Show information about the a user",
+    short_desc="Show user info",
+    flags=[
+        Flag(
+            "user",
+            description="User to show information about, defaults to the current user",
+            metavar="NAME",
+            nargs="?",
+        ),
+    ],
 )
-def whoami_help(_: argparse.Namespace) -> None:
+def whoami_help(args: argparse.Namespace) -> None:
     """Show information about the current user."""
     try:
-        UserInfo.fetch(ignore_errors=False).output()
+        UserInfo.fetch(ignore_errors=False, user=args.user).output()
     except Exception as e:
         print("Failed to fetch user info:", e)

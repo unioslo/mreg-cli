@@ -3620,16 +3620,23 @@ class UserInfo(BaseModel):
         return Endpoint.MetaUser
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True) -> "UserInfo":
+    def fetch(cls, ignore_errors: bool = True, user: str | None = None) -> "UserInfo":
         """Fetch the user information from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.
+        :param user: The username to fetch information for. If None, fetch information for the
+                              current user.
+
         :raises ValidationError: If the response data is invalid and ignore_errors is False.
         :raises requests.RequestException: If the HTTP request fails and ignore_errors is False.
-        :returns: An instance of ServerLibraries with the fetched data.
+        :returns: An instance of UserInfo with the fetched data.
         """
         try:
-            response = get(cls.endpoint())
+            endpoint = cls.endpoint()
+            if user:
+                endpoint = f"{endpoint}?username={user}"
+
+            response = get(endpoint)
             return cls.model_validate(response.json())
         except Exception as e:
             if ignore_errors:

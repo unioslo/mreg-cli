@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support for `help versions` to show versions of the CLI and the server for servers that have implemented the `/meta/version` (and `/meta/libraries` endpoints for superusers).
-- Support for `help whoami` which shows information about the current user as the server sees them. This includes the username, attributes, groups, and permissions. This command is only available if the server has implemented the `/meta/users` endpoint.
+- Support for `help whoami` which shows information about the current user as the server sees them. This includes the username, attributes, groups, and permissions. This command is only available if the server has implemented the `/meta/users` endpoint. Superusers can see information about any user by providing the username as an argument (e.g. `help whoami someuser`).
 
 ## [1.1.0](https://github.com/unioslo/mreg-cli/releases/tag/1.1.0) - 2024-11-19
 
