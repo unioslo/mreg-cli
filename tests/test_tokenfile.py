@@ -207,3 +207,37 @@ def test_set_entry_new(tmp_path: Path, create_before: bool) -> None:
     token = TokenFile.get_entry("newuser", "https://new.com")
     assert token is not None
     assert token.token == snapshot("newtoken123")
+
+
+@pytest.mark.parametrize("exists", [True, False], ids=["existing_tokenfile", "no_tokenfile"])
+def test_set_token_fails(
+    caplog: pytest.LogCaptureFixture, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, exists: bool
+) -> None:
+    """Test setting a token when the file cannot be saved."""
+
+    def failing_save(self: TokenFile) -> None:
+        raise OSError(f"Permission denied for file {Path(self.tokens_path).name}")
+
+    monkeypatch.setattr(TokenFile, "save", failing_save)
+
+    tokens_path = tmp_path / "set_existing.json"
+    if exists:
+        tokens_path.write_text(TOKEN_FILE_MULTIPLE)
+    TokenFile.tokens_path = str(tokens_path)
+
+    TokenFile.set_entry("newuser", "https://new.com", "newtoken123")
+
+    if exists:
+        assert len(caplog.record_tuples) == snapshot(1)
+        record = caplog.record_tuples[0]
+    else:
+        assert len(caplog.record_tuples) == snapshot(2)
+        record = caplog.record_tuples[1]  # [0] is the warning about the missing file
+
+    assert record == snapshot(
+        (
+            "mreg_cli.tokenfile",
+            40,
+            "Failed to set token: OSError('Permission denied for file set_existing.json')",
+        )
+    )
