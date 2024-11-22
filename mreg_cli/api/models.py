@@ -7,16 +7,9 @@ import logging
 import re
 from datetime import date, datetime
 from functools import cached_property
-from typing import Any, Callable, ClassVar, Literal, Self, cast, overload
+from typing import Any, Callable, ClassVar, List, Literal, Self, cast, overload
 
-from pydantic import (
-    AliasChoices,
-    BaseModel,
-    ConfigDict,
-    Field,
-    computed_field,
-    field_validator,
-)
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator
 from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
@@ -3496,3 +3489,192 @@ class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
 
         for host in self.hosts:
             manager.add_formatted_line_with_source("host", host, self.name)
+
+
+### Meta models
+
+
+class UserDjangoStatus(BaseModel):
+    """Model for Django status in the user response."""
+
+    superuser: bool
+    staff: bool
+    active: bool
+
+
+class UserMregStatus(BaseModel):
+    """Model for Mreg status in the user response."""
+
+    superuser: bool
+    admin: bool
+    group_admin: bool
+    network_admin: bool
+    hostpolicy_admin: bool
+    dns_wildcard_admin: bool
+    underscore_admin: bool
+
+
+class UserPermission(BaseModel):
+    """Model for permissions in the user response."""
+
+    group: str
+    range: str
+    regex: str
+    labels: List[str]
+
+
+class ServerVersion(BaseModel):
+    """Model for server version metadata."""
+
+    version: str
+
+    @classmethod
+    def endpoint(cls) -> str:
+        """Return the endpoint for the class."""
+        return Endpoint.MetaVersion
+
+    @classmethod
+    def fetch(cls, ignore_errors: bool = True) -> "ServerVersion":
+        """Fetch the server version from the endpoint.
+
+        :param ignore_errors: Whether to ignore errors.
+        :raises ValidationError: If the response data is invalid and ignore_errors is False.
+        :raises requests.RequestException: If the HTTP request fails and ignore_errors is False.
+        :returns: An instance of ServerVersion with the fetched data.
+        """
+        try:
+            response = get(cls.endpoint())
+            return cls.model_validate(response.json())
+        except Exception as e:
+            if ignore_errors:
+                return cls(version="Unknown")
+            raise e
+
+    def output(self) -> None:
+        """Output the server version to the console."""
+        manager = OutputManager()
+        manager.add_line(f"mreg-server: {self.version}")
+
+
+class Library(BaseModel):
+    """Model for library metadata."""
+
+    name: str
+    version: str
+
+
+class ServerLibraries(BaseModel):
+    """Model for server libraries metadata."""
+
+    libraries: List[Library]
+
+    @classmethod
+    def endpoint(cls) -> str:
+        """Return the endpoint for the class."""
+        return Endpoint.MetaLibraries
+
+    @classmethod
+    def fetch(cls, ignore_errors: bool = True) -> "ServerLibraries":
+        """Fetch the server libraries from the endpoint.
+
+        :param ignore_errors: Whether to ignore errors.
+        :raises ValidationError: If the response data is invalid and ignore_errors is False.
+        :raises requests.RequestException: If the HTTP request fails and ignore_errors is False.
+        :returns: An instance of ServerLibraries with the fetched data.
+        """
+        try:
+            response = get(cls.endpoint())
+            libraries: List[Library] = []
+
+            for name, version in response.json().items():
+                libraries.append(Library(name=name, version=version))
+            return cls(libraries=libraries)
+        except Exception as e:
+            if ignore_errors:
+                return cls(libraries=[])
+            raise e
+
+    def output(self, indent: int = 4) -> None:
+        """Output the server libraries to the console."""
+        manager = OutputManager()
+        if not self.libraries:
+            return
+
+        manager.add_line("Libraries:")
+        for lib in self.libraries:
+            manager.add_line(f"{" " * indent}{lib.name}: {lib.version}")
+
+
+class UserInfo(BaseModel):
+    """Model for the user information."""
+
+    username: str
+    django_status: UserDjangoStatus
+    mreg_status: UserMregStatus
+    groups: List[str]
+    permissions: List[UserPermission]
+
+    @classmethod
+    def endpoint(cls) -> str:
+        """Return the endpoint for the class."""
+        return Endpoint.MetaUser
+
+    @classmethod
+    def fetch(cls, ignore_errors: bool = True) -> "UserInfo":
+        """Fetch the user information from the endpoint.
+
+        :param ignore_errors: Whether to ignore errors.
+        :raises ValidationError: If the response data is invalid and ignore_errors is False.
+        :raises requests.RequestException: If the HTTP request fails and ignore_errors is False.
+        :returns: An instance of ServerLibraries with the fetched data.
+        """
+        try:
+            response = get(cls.endpoint())
+            return cls.model_validate(response.json())
+        except Exception as e:
+            if ignore_errors:
+                return cls(
+                    username="Unknown",
+                    django_status=UserDjangoStatus(superuser=False, staff=False, active=False),
+                    mreg_status=UserMregStatus(
+                        superuser=False,
+                        admin=False,
+                        group_admin=False,
+                        network_admin=False,
+                        hostpolicy_admin=False,
+                        dns_wildcard_admin=False,
+                        underscore_admin=False,
+                    ),
+                    groups=[],
+                    permissions=[],
+                )
+            raise e
+
+    def output(self) -> None:
+        """Output the user information to the console."""
+        outputmanager = OutputManager()
+        outputmanager.add_line(f"Username: {self.username}")
+        outputmanager.add_line("Django status:")
+        outputmanager.add_line(f"  Superuser: {self.django_status.superuser}")
+        outputmanager.add_line(f"  Staff: {self.django_status.staff}")
+        outputmanager.add_line(f"  Active: {self.django_status.active}")
+        outputmanager.add_line("Mreg status:")
+        outputmanager.add_line(f"  Superuser: {self.mreg_status.superuser}")
+        outputmanager.add_line(f"  Admin: {self.mreg_status.admin}")
+        outputmanager.add_line(f"  Group admin: {self.mreg_status.group_admin}")
+        outputmanager.add_line(f"  Network admin: {self.mreg_status.network_admin}")
+        outputmanager.add_line(f"  Hostpolicy admin: {self.mreg_status.hostpolicy_admin}")
+        outputmanager.add_line(f"  DNS wildcard admin: {self.mreg_status.dns_wildcard_admin}")
+        outputmanager.add_line(f"  Underscore admin: {self.mreg_status.underscore_admin}")
+        outputmanager.add_line("Groups:")
+        for group in self.groups:
+            outputmanager.add_line(f"  {group}")
+        outputmanager.add_line("Permissions:")
+        if not self.permissions:
+            outputmanager.add_line("  None")
+
+        for perm in self.permissions:
+            outputmanager.add_line(f"  Group: {perm.group}")
+            outputmanager.add_line(f"  Range: {perm.range}")
+            outputmanager.add_line(f"  Regex: {perm.regex}")
+            outputmanager.add_line(f"  Labels: {', '.join(perm.labels)}")

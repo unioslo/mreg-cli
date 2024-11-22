@@ -77,6 +77,13 @@ class Endpoint(str, Enum):
 
     ForwardZoneForHost = f"{ForwardZones}hostname/"
 
+    TokenIsValid = "/api/token-is-valid/"
+
+    MetaUser = "/api/meta/user"
+    MetaVersion = "/api/meta/version"
+    MetaLibraries = "/api/meta/libraries"
+    MetaHeartbeat = "/api/meta/heartbeat"
+
     def __str__(self):
         """Prevent direct usage without parameters where needed."""
         if "{}" in self.value:

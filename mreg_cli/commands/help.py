@@ -5,9 +5,12 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from mreg_cli.__about__ import __version__ as mreg_cli_version
+from mreg_cli.api.models import ServerLibraries, ServerVersion, UserInfo
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.config import MregCliConfig
+from mreg_cli.outputmanager import OutputManager
 
 command_registry = CommandRegistry()
 
@@ -75,3 +78,26 @@ TXT:          v=spf1 -all
 def configuration_help(_: argparse.Namespace) -> None:
     """Show configuration."""
     MregCliConfig().print_config_table()
+
+
+@command_registry.register_command(
+    "versions", "Show versions of client and server as much as possible", "Show versions"
+)
+def versions_help(_: argparse.Namespace) -> None:
+    """Show versions of client and server as much as possible."""
+    output_manager = OutputManager()
+    output_manager.add_line(f"mreg-cli: {mreg_cli_version}")
+
+    ServerVersion.fetch().output()
+    ServerLibraries.fetch().output()
+
+
+@command_registry.register_command(
+    "whoami", "Show information about the current user", "Show user info"
+)
+def whoami_help(_: argparse.Namespace) -> None:
+    """Show information about the current user."""
+    try:
+        UserInfo.fetch(ignore_errors=False).output()
+    except Exception as e:
+        print("Failed to fetch user info:", e)
