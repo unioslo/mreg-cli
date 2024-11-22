@@ -5,9 +5,13 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from mreg_cli.__about__ import __version__ as mreg_cli_version
+from mreg_cli.api.models import ServerLibraries, ServerVersion, UserInfo
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.config import MregCliConfig
+from mreg_cli.outputmanager import OutputManager
+from mreg_cli.types import Flag
 
 command_registry = CommandRegistry()
 
@@ -27,7 +31,9 @@ class HelpCommands(BaseCommand):
         )
 
 
-@command_registry.register_command("filtering", "Show help for filtering.", "Filtering Help")
+@command_registry.register_command(
+    prog="filtering", description="Show help for filtering.", short_desc="Filtering Help"
+)
 def filtering_help(_: argparse.Namespace) -> None:
     """Show help for filtering."""
     print(
@@ -71,7 +77,50 @@ TXT:          v=spf1 -all
     )
 
 
-@command_registry.register_command("configuration", "Show configuration", "Show configuration")
+@command_registry.register_command(
+    prog="configuration", description="Show configuration", short_desc="Show configuration"
+)
 def configuration_help(_: argparse.Namespace) -> None:
     """Show configuration."""
     MregCliConfig().print_config_table()
+
+
+@command_registry.register_command(
+    prog="versions",
+    description="Show versions of client and server as much as possible",
+    short_desc="Show versions",
+)
+def versions_help(_: argparse.Namespace) -> None:
+    """Show versions of client and server as much as possible."""
+    output_manager = OutputManager()
+    output_manager.add_line(f"mreg-cli: {mreg_cli_version}")
+
+    ServerVersion.fetch().output()
+    ServerLibraries.fetch().output()
+
+
+@command_registry.register_command(
+    prog="whoami",
+    description="Show information about the the current user",
+    short_desc="Show self info",
+)
+def whoami_help(_: argparse.Namespace) -> None:
+    """Show information about the current user."""
+    try:
+        UserInfo.fetch(ignore_errors=False).output()
+    except Exception as e:
+        print("Failed to fetch user info:", e)
+
+
+@command_registry.register_command(
+    prog="whois",
+    description="Show information about a user",
+    short_desc="Show user info",
+    flags=[Flag("user", description="The user to show information about")],
+)
+def whois_help(args: argparse.Namespace) -> None:
+    """Show information about a user."""
+    try:
+        UserInfo.fetch(ignore_errors=False, user=args.user).output()
+    except Exception as e:
+        print("Failed to fetch user info:", e)
