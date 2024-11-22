@@ -43,7 +43,7 @@ def test_build_error_message() -> None:
     ) == snapshot("""\
 Unable to compile regex 'cman)ora.*\\.example\\.com$ oracle'
 permission label_add 192.168.0.0/24 oracle-group ^(db|cman)ora.*\\.example\\.com$ oracle
-                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
                                                  └ Consider enclosing this part in quotes.\
 """)
 
@@ -54,7 +54,7 @@ permission label_add 192.168.0.0/24 oracle-group ^(db|cman)ora.*\\.example\\.com
     ) == snapshot("""\
 Unable to compile regex 'db(pg|my).*\\.example\\.com$'
 permission network_add 192.168.0.0/24 pg-group ^db(pg|my).*\\.example\\.com$
-                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
                                                └ Consider enclosing this part in quotes.\
 """)
 

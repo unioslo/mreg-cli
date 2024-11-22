@@ -141,8 +141,8 @@ class FilterErrorBuilder(ErrorBuilder):
                 continue
 
             try:
-                start, end = command.index(part), command.index(part) + len(part) - 1
-                if start > end or start >= len(command) or end >= len(command):
+                start, end = command.index(part), command.index(part) + len(part)
+                if start > end or start >= len(command) or end > len(command):
                     raise ValueError(f"Invalid start and end values: {start}, {end}")
             except ValueError as e:
                 logger.error(
