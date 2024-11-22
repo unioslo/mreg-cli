@@ -101,19 +101,25 @@ def versions_help(_: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="whoami",
-    description="Show information about the a user",
-    short_desc="Show user info",
-    flags=[
-        Flag(
-            "user",
-            description="User to show information about, defaults to the current user",
-            metavar="NAME",
-            nargs="?",
-        ),
-    ],
+    description="Show information about the the current user",
+    short_desc="Show self info",
 )
-def whoami_help(args: argparse.Namespace) -> None:
+def whoami_help(_: argparse.Namespace) -> None:
     """Show information about the current user."""
+    try:
+        UserInfo.fetch(ignore_errors=False).output()
+    except Exception as e:
+        print("Failed to fetch user info:", e)
+
+
+@command_registry.register_command(
+    prog="whois",
+    description="Show information about a user",
+    short_desc="Show user info",
+    flags=[Flag("user", description="The user to show information about")],
+)
+def whois_help(args: argparse.Namespace) -> None:
+    """Show information about a user."""
     try:
         UserInfo.fetch(ignore_errors=False, user=args.user).output()
     except Exception as e:
