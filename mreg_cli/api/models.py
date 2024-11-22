@@ -3602,7 +3602,7 @@ class ServerLibraries(BaseModel):
 
         manager.add_line("Libraries:")
         for lib in self.libraries:
-            manager.add_line(f"{" " * indent}{lib.name}: {lib.version}")
+            manager.add_line(f"{' ' * indent}{lib.name}: {lib.version}")
 
 
 class UserInfo(BaseModel):
