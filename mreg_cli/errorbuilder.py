@@ -137,21 +137,23 @@ class FilterErrorBuilder(ErrorBuilder):
             if "'" in part or '"' in part:
                 continue
 
-            if char in part:
-                try:
-                    start, end = command.index(part), command.index(part) + len(part)
-                    if start > end or start >= len(command) or end >= len(command):
-                        raise ValueError(f"Invalid start and end values: {start}, {end}")
-                except ValueError as e:
-                    logger.error(
-                        "Failed to get index of char '%s' in part '%s' of command %s: %s",
-                        char,
-                        part,
-                        command,
-                        e,
-                    )
-                else:
-                    return start, end
+            if char not in part:
+                continue
+
+            try:
+                start, end = command.index(part), command.index(part) + len(part)
+                if start > end or start >= len(command) or end > len(command):
+                    raise ValueError(f"Invalid start and end values: {start}, {end}")
+            except ValueError as e:
+                logger.error(
+                    "Failed to get index of char '%s' in part '%s' of command %s: %s",
+                    char,
+                    part,
+                    command,
+                    e,
+                )
+            else:
+                return start, end
         return -1, -1
 
     def get_offset(self) -> tuple[int, int]:  # noqa: D102 (missing docstring [inherit it from parent])
