@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-<!-- ## [1.1.0] - 2024-11-xx -->
+### Fixed
+
+- REPL command completion not showing descriptions for commands.
+- `host info` with MAC address argument not working for hosts with multiple IPs associated with the same MAC address.
+- Failed token file write causing the application to crash.
+
+### Added
+
+- Support for `help versions` which shows versions of the CLI and the server for servers that have implemented the `/meta/version` (and `/meta/libraries` endpoints for superusers).
+- Support for `help whoami` which shows information about the current user as the server sees them. This includes the username, attributes, groups, and permissions. This command is only available if the server has implemented the `/meta/users` endpoint.
+- Support for `help whois <username>` which allows elevated users to see information about the given user. Also requires the `/meta/users` endpoint to be implemented on the server.
+
+## [1.1.0](https://github.com/unioslo/mreg-cli/releases/tag/1.1.0) - 2024-11-19
 
 ### Added
 
@@ -21,18 +33,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `host add`: Re-introduced support for network/ip ending with `/`.
+- MAC adress validation. Now supports all common formats. See the [Pydantic docs](https://docs.pydantic.dev/latest/api/pydantic_extra_types_mac_address/) for more information.
+- `host add`: Re-introduced support for network/IP ending with `/`.
   - Automatically deduces the correct network to assign an IP from.
-- `host add`: No longer possible to assign the network ID (first address of subnet) to a host.
+- `host add`: No longer possible to assign network address (first address of subnet) or broadcast address (last address of subnet) to a host.
 
-## [1.0.1] - 2024-10-21
+## [1.0.1](https://github.com/unioslo/mreg-cli/releases/tag/1.0.1) - 2024-10-21
 
 ### Fixed
 
 - Rendering of top level command autocompletion in REPL.
 - `OK:` messages not being displayed outside of `--record` mode
 
-## [1.0.0] - 2024-10-12
+## [1.0.0](https://github.com/unioslo/mreg-cli/releases/tag/1.0.0) - 2024-10-12
 
 The big Pydantic update. The entire codebase has been rewritten to use Pydantic for request and response validation. This brings with it a huge improvement to the development experience and the robustness of the code.
 

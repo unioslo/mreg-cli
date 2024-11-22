@@ -83,6 +83,13 @@ class TokenFile(BaseModel):
     @classmethod
     def set_entry(cls, username: str, url: str, new_token: str) -> None:
         """Update or add a token based on the URL and username."""
+        try:
+            cls._do_set_entry(username, url, new_token)
+        except OSError as e:
+            logger.error("Failed to set token: %r", e)
+
+    @classmethod
+    def _do_set_entry(cls, username: str, url: str, new_token: str) -> None:
         tokens_file = cls.load()
         for token in tokens_file.tokens:
             if token.url == url and token.username == username:

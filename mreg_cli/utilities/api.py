@@ -26,7 +26,7 @@ from mreg_cli.exceptions import (
     APINotOk,
     CliError,
     LoginFailedError,
-    MultipleEntititesFound,
+    MultipleEntitiesFound,
     TooManyResults,
     ValidationError,
 )
@@ -540,8 +540,10 @@ def get_list_generic(
     if expect_one_result:
         if len(ret) == 0:
             return {}
-        if len(ret) != 1:
-            raise MultipleEntititesFound(f"Expected exactly one result, got {len(ret)}.")
+        if len(ret) > 1 and any(ret[0] != x for x in ret):
+            raise MultipleEntitiesFound(
+                f"Expected a unique result, got {len(ret)} distinct results."
+            )
         return ret[0]
     return ret
 

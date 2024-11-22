@@ -203,6 +203,7 @@ dhcp assoc foo aa:bb:cc:dd:ee:ff # should fail, the host has two IPs of differen
 host aaaa_remove foo 2001:db9::5
 host aaaa_add foo 2001:db8::5 -f
 dhcp assoc foo aa:bb:cc:dd:ee:ff # should work, the host now has two IPs of different types on the same VLAN.
+host info foo # should work and show both IPs
 host remove foo -f
 network remove 10.0.0.0/24 -f
 network remove 2001:db8::/64 -f

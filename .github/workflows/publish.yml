@@ -8,6 +8,9 @@ on:
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
 
+env:
+  UV_FROZEN: 1
+
 jobs:
   build_pypi:
     name: Build wheels and source distribution
@@ -127,8 +130,8 @@ jobs:
   publish_github:
     name: Publish GitHub release
     needs:
-      - build_pypi
       - build_pyinstaller
+      - publish_pypi
     runs-on: ubuntu-latest
 
     steps:
