@@ -4,5 +4,6 @@
         "siblings_only": true
     },
     "line-length": false,
-    "no-bare-urls": false
+    "no-bare-urls": false,
+    "no-inline-html": false
 }
