@@ -22,15 +22,7 @@
       - [DHCP](#dhcp)
     - [subnet](#subnet)
     - [zone](#zone)
-    - [history](#history)
     - [other](#other)
-  - [Devhelp](#devhelp)
-        - [client.py](#clientpy)
-        - [commands.py](#commandspy)
-        - [util.py](#utilpy)
-        - [history.py](#historypy)
-        - [config.py](#configpy)
-        - [log.py](#logpy)
 
 ## Setup
 
