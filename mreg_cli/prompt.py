@@ -37,10 +37,7 @@ def parse_connection_string(
     """
     # Regular expression to match the protocol (http or https), host/IP (v4/v6), and port
     regex = (
-        r"^(?P<protocol>https?)://"
-        r"(?P<host>(?:(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|"
-        r"(?:\d{1,3}\.){3}\d{1,3}|\[.*?\]))"
-        r"(?::(?P<port>\d+))?$"
+        r"^(?P<protocol>https?)://" r"(?P<host>(?:[a-zA-Z0-9.-]+|\[.*?\]))" r"(?::(?P<port>\d+))?$"
     )
 
     match = re.match(regex, connection_string)
@@ -61,7 +58,8 @@ def parse_connection_string(
         return ConnectionInfo(protocol, host, None, port)
 
     # Otherwise, it's a domain
-    return ConnectionInfo(protocol, host, host.split(".")[-1], port)
+    domain = host.split(".")[-1] if "." in host else None
+    return ConnectionInfo(protocol, host, domain, port)
 
 
 def get_prompt_message(args: argparse.Namespace, config: MregCliConfig) -> HTML:
