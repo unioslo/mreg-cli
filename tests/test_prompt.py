@@ -77,6 +77,24 @@ PROMPT_TEST_CASES = [
         "admin@https://fe80::5074:f2ff:feb1:a87f:8000",
         id="URL w/ IPv6 (Link-local) & port (custom prompt)",
     ),
+    pytest.param(
+        {
+            "url": "http://localhost:8000",
+            "user": "admin",
+            "prompt": "{user}@{proto}://{host}:{port}",
+        },
+        "admin@http://localhost:8000",
+        id="URL w/ localhost & port (custom prompt)",
+    ),
+    pytest.param(
+        {
+            "url": "http://localhost.localdomain:8000",
+            "user": "admin",
+            "prompt": "{user}@{host}:{port}",
+        },
+        "admin@localhost.localdomain:8000",
+        id="URL w/ localhost.localdomain & port (custom prompt)",
+    ),
 ]
 
 
