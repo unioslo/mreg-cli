@@ -48,7 +48,16 @@ jobs:
         run: uv sync --group ci
       - name: Test building with tox
         run: uv run tox r
-        
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: DavidAnson/markdownlint-cli2-action@v18
+        with:
+          config: '.markdownlint.json'
+          globs: '**/*.md'
+
   unit:
     name: Unit tests
     runs-on: ubuntu-latest
