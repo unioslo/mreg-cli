@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+<!-- ## [Unreleased] -->
+
+## [1.2.0](https://github.com/unioslo/mreg-cli/releases/tag/1.2.0) - 2024-11-25
+
+### Added
+
+- Support for `help versions` which shows versions of the CLI and the server for servers that have implemented the `/meta/version` (and `/meta/libraries` endpoints for superusers).
+- Support for `help whoami` which shows information about the current user as the server sees them. This includes the username, attributes, groups, and permissions. This command is only available if the server has implemented the `/meta/users` endpoint.
+- Support for `help whois <username>` which allows elevated users to see information about the given user. Also requires the `/meta/users` endpoint to be implemented on the server.
 
 ### Fixed
 
@@ -13,12 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `host info` with MAC address argument not working for hosts with multiple IPs associated with the same MAC address.
 - Failed token file write causing the application to crash.
 - Connection strings without domains and with ports are now parsed properly for prompt interpolation.
-
-### Added
-
-- Support for `help versions` which shows versions of the CLI and the server for servers that have implemented the `/meta/version` (and `/meta/libraries` endpoints for superusers).
-- Support for `help whoami` which shows information about the current user as the server sees them. This includes the username, attributes, groups, and permissions. This command is only available if the server has implemented the `/meta/users` endpoint.
-- Support for `help whois <username>` which allows elevated users to see information about the given user. Also requires the `/meta/users` endpoint to be implemented on the server.
 
 ## [1.1.0](https://github.com/unioslo/mreg-cli/releases/tag/1.1.0) - 2024-11-19
 
