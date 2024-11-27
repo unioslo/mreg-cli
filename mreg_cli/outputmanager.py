@@ -13,8 +13,7 @@ import json
 import logging
 import os
 import re
-from collections.abc import Sequence
-from typing import Any, Literal, overload
+from typing import Any, Iterable, Literal, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
@@ -405,9 +404,9 @@ class OutputManager:
 
     def add_formatted_table(
         self,
-        headers: Sequence[str],
-        keys: Sequence[str],
-        data: Sequence[dict[str, Any] | BaseModel],
+        headers: Iterable[str],
+        keys: Iterable[str],
+        data: Iterable[dict[str, Any] | BaseModel],
         indent: int = 0,
     ) -> None:
         """Format and add a table of data to the output.

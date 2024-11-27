@@ -30,6 +30,9 @@ from mreg_cli.types import DefaultType, LogLevel
 
 logger = logging.getLogger(__name__)
 
+
+p = platformdirs.PlatformDirs("mreg-cli", "UiO")
+
 # Config file locations.
 # This needs migration to platformdirs... Without breaking historical usage.
 DEFAULT_CONFIG_PATH = tuple(
@@ -240,6 +243,10 @@ class MregCliConfig:
     def get_category_tags(self) -> list[str]:
         """Get the category tags from the application."""
         return self.get("category_tags", "").split(",")
+
+    def get_user(self) -> str | None:
+        """Get the user from the application."""
+        return self.get("user")
 
     def get_prompt(self) -> str | None:
         """Get the prompt from the application."""
