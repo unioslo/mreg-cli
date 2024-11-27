@@ -17,7 +17,12 @@ from mreg_cli.errorbuilder import (
     [
         (
             r"permission label_add 192.168.0.0/24 oracle-group ^(db|cman)ora.*\.example\.com$ oracle",
-            "failed to compile regex",
+            "Unable to compile regex",
+            FilterErrorBuilder,
+        ),
+        (
+            r"permission network_add 192.168.0.0/24 pg-group ^db(pg|my).*\.example\.com$",
+            "Unable to compile regex",
             FilterErrorBuilder,
         ),
         (
@@ -35,7 +40,8 @@ def test_get_builder(command: str, exc_or_str: str, expected: type[ErrorBuilder]
     assert builder.get_underline(5, 10) == "     ^^^^^"
 
 
-def test_build_error_message() -> None:
+def test_build_error_message_regex() -> None:
+    """Test the build_error_message function with command with regex argument."""
     # Regex as part of the command
     assert build_error_message(
         r"permission label_add 192.168.0.0/24 oracle-group ^(db|cman)ora.*\.example\.com$ oracle",
@@ -47,6 +53,9 @@ permission label_add 192.168.0.0/24 oracle-group ^(db|cman)ora.*\\.example\\.com
                                                  └ Consider enclosing this part in quotes.\
 """)
 
+
+def test_build_error_message_regex_final_part() -> None:
+    """Test the build_error_message function with command with regex argument as final argument."""
     # Regex as final part of the command
     assert build_error_message(
         r"permission network_add 192.168.0.0/24 pg-group ^db(pg|my).*\.example\.com$",
@@ -58,6 +67,8 @@ permission network_add 192.168.0.0/24 pg-group ^db(pg|my).*\\.example\\.com$
                                                └ Consider enclosing this part in quotes.\
 """)
 
+
+def test_build_error_message_fallback_default() -> None:
     # No suggestion for this error
     assert build_error_message(
         r"permission label_add other_error", "Other error message"

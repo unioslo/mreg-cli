@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import cache
 import logging
 import shlex
 from abc import ABC, abstractmethod
@@ -107,12 +108,16 @@ class FallbackErrorBuilder(ErrorBuilder):
         return True
 
 
+DEFAULT_OFFSET = (-1, -1)
+
+
 class FilterErrorBuilder(ErrorBuilder):
     """Error builder for commands with a filter."""
 
     SUGGESTION = "Consider enclosing this part in quotes."
 
     @staticmethod
+    @cache
     def find_word_with_char_offset(command: str, char: str) -> tuple[int, int]:
         """Find the start and end index of a word containing a specific character.
 
@@ -126,7 +131,7 @@ class FilterErrorBuilder(ErrorBuilder):
         """
         command = command.strip()
         if not command:
-            return -1, -1
+            return DEFAULT_OFFSET
 
         # Parse the command into parts
         cmd = shlex.split(command, posix=False)  # keep quotes and backslashes
@@ -154,13 +159,14 @@ class FilterErrorBuilder(ErrorBuilder):
                 )
             else:
                 return start, end
-        return -1, -1
+        return DEFAULT_OFFSET
 
     def get_offset(self) -> tuple[int, int]:  # noqa: D102 (missing docstring [inherit it from parent])
         return self.find_word_with_char_offset(self.command, "|")
 
     def can_build(self) -> bool:  # noqa: D102 (missing docstring [inherit it from parent])
-        return "|" in self.command
+        offset = self.get_offset()
+        return offset != DEFAULT_OFFSET
 
 
 BUILDERS: list[type[ErrorBuilder]] = [
