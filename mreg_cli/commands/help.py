@@ -108,11 +108,14 @@ def versions_help(_: argparse.Namespace) -> None:
     prog="whoami",
     description="Show information about the the current user",
     short_desc="Show self info",
+    flags=[
+        Flag("-django", action="store_true", description="Show Django internal roles"),
+    ],
 )
-def whoami_help(_: argparse.Namespace) -> None:
+def whoami_help(args: argparse.Namespace) -> None:
     """Show information about the current user."""
     try:
-        UserInfo.fetch(ignore_errors=False).output()
+        UserInfo.fetch(ignore_errors=False).output(django=args.django)
     except Exception as e:
         raise CliError(
             f"Failed to display user info for current user {MregCliConfig().get_user()!r}: {e}"
