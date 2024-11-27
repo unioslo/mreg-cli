@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from typing import Any
 
 from mreg_cli.__about__ import __version__ as mreg_cli_version
@@ -10,6 +11,7 @@ from mreg_cli.api.models import ServerLibraries, ServerVersion, UserInfo
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.config import MregCliConfig
+from mreg_cli.exceptions import CliError
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -103,24 +105,32 @@ def versions_help(_: argparse.Namespace) -> None:
     prog="whoami",
     description="Show information about the the current user",
     short_desc="Show self info",
+    flags=[
+        Flag("-django", action="store_true", description="Show Django internal roles"),
+    ],
 )
-def whoami_help(_: argparse.Namespace) -> None:
+def whoami_help(args: argparse.Namespace) -> None:
     """Show information about the current user."""
     try:
-        UserInfo.fetch(ignore_errors=False).output()
+        UserInfo.fetch(ignore_errors=False).output(django=args.django)
     except Exception as e:
-        print("Failed to fetch user info:", e)
+        raise CliError(
+            f"Failed to display user info for current user {MregCliConfig().get_user()!r}: {e}"
+        ) from e
 
 
 @command_registry.register_command(
     prog="whois",
     description="Show information about a user",
     short_desc="Show user info",
-    flags=[Flag("user", description="The user to show information about")],
+    flags=[
+        Flag("user", description="The user to show information about"),
+        Flag("-django", action="store_true", description="Show Django internal roles"),
+    ],
 )
 def whois_help(args: argparse.Namespace) -> None:
     """Show information about a user."""
     try:
-        UserInfo.fetch(ignore_errors=False, user=args.user).output()
+        UserInfo.fetch(ignore_errors=False, user=args.user).output(django=args.django)
     except Exception as e:
-        print("Failed to fetch user info:", e)
+        raise CliError(f"Failed to display user info for {args.user!r}: {e}") from e
