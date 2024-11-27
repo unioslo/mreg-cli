@@ -31,8 +31,6 @@ from mreg_cli.types import DefaultType, LogLevel
 logger = logging.getLogger(__name__)
 
 
-p = platformdirs.PlatformDirs("mreg-cli", "UiO")
-
 # Config file locations.
 # This needs migration to platformdirs... Without breaking historical usage.
 DEFAULT_CONFIG_PATH = tuple(
