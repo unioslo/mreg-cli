@@ -18,9 +18,6 @@ from mreg_cli.types import Flag
 command_registry = CommandRegistry()
 
 
-logger = logging.getLogger(__name__)
-
-
 class HelpCommands(BaseCommand):
     """Help commands for the CLI."""
 
