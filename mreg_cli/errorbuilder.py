@@ -2,20 +2,17 @@
 
 from __future__ import annotations
 
-from functools import cache
 import logging
 import shlex
 from abc import ABC, abstractmethod
+from functools import cache
 
 logger = logging.getLogger(__name__)
 
 ExcOrStr = Exception | str
 
 
-# Re-usable function for error builders that don't need a specific implementation
-def default_get_offset(self: "ErrorBuilder") -> tuple[int, int]:  # noqa: ARG001
-    """Get the start and end index of the underlined part of the command."""
-    return -1, -1
+OFFSET_NOT_FOUND = (0, 0)
 
 
 class ErrorBuilder(ABC):
@@ -80,10 +77,9 @@ class ErrorBuilder(ABC):
             lines.insert(0, str(self.exc_or_str))
         return "\n".join(lines)
 
-    @abstractmethod
     def get_offset(self) -> tuple[int, int]:
-        """Compute the start and end index of the underlined part of the command."""
-        raise NotImplementedError
+        """Get the start and end index of the underlined part of the command."""
+        return OFFSET_NOT_FOUND
 
     @abstractmethod
     def can_build(self) -> bool:
@@ -98,17 +94,12 @@ class FallbackErrorBuilder(ErrorBuilder):
     The error message is displayed as-is.
     """
 
-    get_offset = default_get_offset  # needed for ABC parent class
-
     def build(self) -> str:
         """Build the error message without an underline or suggestion."""
         return str(self.exc_or_str)
 
     def can_build(self) -> bool:  # noqa: D102
         return True
-
-
-DEFAULT_OFFSET = (-1, -1)
 
 
 class FilterErrorBuilder(ErrorBuilder):
@@ -118,23 +109,26 @@ class FilterErrorBuilder(ErrorBuilder):
 
     @staticmethod
     @cache
-    def find_word_with_char_offset(command: str, char: str) -> tuple[int, int]:
-        """Find the start and end index of a word containing a specific character.
+    def get_cmd_part_with_char_offset(command: str, char: str) -> tuple[int, int]:
+        """Find the start and end index of a command part containing a specific character.
 
-        Cannot fail; will always return a tuple of two integers.
+        Always returns a valid tuple of start and end indexes.
 
         :param str command: The command to search.
         :param str char: The character to search for.
 
-        :returns: Tuple of two integers representing the start and end index of the word.
-                  Returns (-1, -1) if the character is not found.
-        """
-        command = command.strip()
-        if not command:
-            return DEFAULT_OFFSET
+        :returns: Tuple of two integers representing the start and end index of
+            the command part containing the character.
+            Returns (0, 0) if the character is not found.
 
-        # Parse the command into parts
-        cmd = shlex.split(command, posix=False)  # keep quotes and backslashes
+        :examples:
+            >>> FilterErrorBuilder.get_cmd_part_with_char_offset("do_thing ^(yes|no)_thing$", "|")
+            (9, 25)
+            >>> FilterErrorBuilder.get_cmd_part_with_char_offset("do_thing bar, "|")
+            (0, 0)
+        """
+        cmd = shlex.split(command.strip(), posix=False)  # keep quotes and backslashes
+
         for part in cmd:
             # Skip parts that contain quotes
             # NOTE: This is a very naive check, and will not work for all cases
@@ -159,14 +153,14 @@ class FilterErrorBuilder(ErrorBuilder):
                 )
             else:
                 return start, end
-        return DEFAULT_OFFSET
+        return OFFSET_NOT_FOUND
 
-    def get_offset(self) -> tuple[int, int]:  # noqa: D102 (missing docstring [inherit it from parent])
-        return self.find_word_with_char_offset(self.command, "|")
+    def get_offset(self) -> tuple[int, int]:
+        """Get start and end index of command part containing the filter character."""
+        return self.get_cmd_part_with_char_offset(self.command, "|")
 
     def can_build(self) -> bool:  # noqa: D102 (missing docstring [inherit it from parent])
-        offset = self.get_offset()
-        return offset != DEFAULT_OFFSET
+        return self.get_offset() != OFFSET_NOT_FOUND
 
 
 BUILDERS: list[type[ErrorBuilder]] = [
