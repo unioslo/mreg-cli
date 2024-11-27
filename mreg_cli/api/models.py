@@ -7,7 +7,7 @@ import logging
 import re
 from datetime import date, datetime
 from functools import cached_property
-from typing import Any, Callable, ClassVar, List, Literal, Self, cast, overload
+from typing import Any, Callable, ClassVar, Iterable, List, Literal, Self, cast, overload
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator
 from typing_extensions import Unpack
@@ -3522,6 +3522,39 @@ class UserPermission(BaseModel):
     regex: str
     labels: List[str]
 
+    # NOTE: _needs_ to be a computed field in order to use it in
+    # OutputManager.add_formatted_table, since we dump the model to a dict
+    # inside that method.
+    @computed_field
+    @property
+    def labels_str(self) -> str:
+        """Return the labels as a string."""
+        return ", ".join(self.labels)
+
+    @classmethod
+    def output_multiple(cls, permissions: Iterable[Self]) -> None:
+        """Output multiple permissions to the console.
+
+        :param permissions: List of UserPermission records to output.
+        """
+        # NOTE: this is more or less identical to `Permission.output_multiple()`
+        # with the addition of printing labels.
+        # Since UserPermission is a different model from Permission, sharing a
+        # common method is difficult to make type safe without declaring some sort
+        # of protocol class, which seems a bit overkill.
+        manager = OutputManager()
+        manager.add_line("Permissions:")
+        if not permissions:
+            manager.add_line("  None")
+            return
+
+        OutputManager().add_formatted_table(
+            ("IP range", "Group", "Reg.exp.", "Labels"),
+            ("range", "group", "regex", "labels_str"),
+            permissions,
+            indent=2,
+        )
+
 
 class ServerVersion(BaseModel):
     """Model for server version metadata."""
@@ -3657,15 +3690,18 @@ class UserInfo(BaseModel):
                 )
             raise e
 
-    def output(self) -> None:
+    def output(self, django: bool = False) -> None:
         """Output the user information to the console."""
         outputmanager = OutputManager()
         outputmanager.add_line(f"Username: {self.username}")
-        outputmanager.add_line("Django status:")
-        outputmanager.add_line(f"  Superuser: {self.django_status.superuser}")
-        outputmanager.add_line(f"  Staff: {self.django_status.staff}")
-        outputmanager.add_line(f"  Active: {self.django_status.active}")
-        outputmanager.add_line("Mreg status:")
+
+        if django:
+            outputmanager.add_line("Django roles:")
+            outputmanager.add_line(f"  Superuser: {self.django_status.superuser}")
+            outputmanager.add_line(f"  Staff: {self.django_status.staff}")
+            outputmanager.add_line(f"  Active: {self.django_status.active}")
+
+        outputmanager.add_line("Mreg roles:")
         outputmanager.add_line(f"  Superuser: {self.mreg_status.superuser}")
         outputmanager.add_line(f"  Admin: {self.mreg_status.admin}")
         outputmanager.add_line(f"  Group admin: {self.mreg_status.group_admin}")
@@ -3673,15 +3709,9 @@ class UserInfo(BaseModel):
         outputmanager.add_line(f"  Hostpolicy admin: {self.mreg_status.hostpolicy_admin}")
         outputmanager.add_line(f"  DNS wildcard admin: {self.mreg_status.dns_wildcard_admin}")
         outputmanager.add_line(f"  Underscore admin: {self.mreg_status.underscore_admin}")
+
         outputmanager.add_line("Groups:")
         for group in self.groups:
             outputmanager.add_line(f"  {group}")
-        outputmanager.add_line("Permissions:")
-        if not self.permissions:
-            outputmanager.add_line("  None")
 
-        for perm in self.permissions:
-            outputmanager.add_line(f"  Group: {perm.group}")
-            outputmanager.add_line(f"  Range: {perm.range}")
-            outputmanager.add_line(f"  Regex: {perm.regex}")
-            outputmanager.add_line(f"  Labels: {', '.join(perm.labels)}")
+        UserPermission.output_multiple(self.permissions)
