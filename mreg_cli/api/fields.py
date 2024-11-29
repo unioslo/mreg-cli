@@ -41,6 +41,29 @@ class MACAddressField(FrozenModel):
         except ValidationError as e:
             raise ValueError(f"Invalid MAC address '{value}'") from e
 
+    @classmethod
+    def parse(cls, obj: Any) -> MacAddress:
+        """Parse a MAC address from a string. Returns the MAC address as a string.
+
+        :param obj: The object to parse.
+        :returns: The MAC address as a string.
+        :raises ValueError: If the object is not a valid MAC address.
+        """
+        # Match interface of NetworkOrIP.parse
+        return cls.validate(obj).address
+
+    @classmethod
+    def parse_optional(cls, obj: Any) -> MacAddress | None:
+        """Parse a MAC address from a string. Returns None if the MAC address is invalid.
+
+        :param obj: The object to parse.
+        :returns: The MAC address as a string or None if it is invalid.
+        """
+        try:
+            return cls.parse(obj)
+        except ValueError:
+            return None
+
     def __str__(self) -> str:
         """Return the MAC address as a string."""
         return str(self.address)
