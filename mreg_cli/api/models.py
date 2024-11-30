@@ -10,6 +10,7 @@ from functools import cached_property
 from typing import Any, Callable, ClassVar, Iterable, List, Literal, Self, cast, overload
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic_extra_types.mac_address import MacAddress
 from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
@@ -100,7 +101,11 @@ class NetworkOrIP(BaseModel):
 
     @overload
     @classmethod
-    def parse(cls, value: Any, mode: IPNetMode) -> IP_AddressT | IP_NetworkT: ...
+    def parse(cls, value: Any, mode: Literal["networkv4"]) -> ipaddress.IPv4Network: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["networkv6"]) -> ipaddress.IPv6Network: ...
 
     @classmethod
     def parse(cls, value: Any, mode: IPNetMode | None = None) -> IP_AddressT | IP_NetworkT:
@@ -125,6 +130,38 @@ class NetworkOrIP(BaseModel):
         if mode and (func := funcmap.get(mode)):
             return func(ipnet)
         return ipnet.ip_or_network
+
+    @classmethod
+    def parse_ip_optional(
+        cls, ip: str, version: Literal[4, 6] | None = None
+    ) -> IP_AddressT | None:
+        """Check if a value is a valid IP address.
+
+        :param ip: The IP address to parse.
+        :param version: The IP version to parse as. Parses as any version if None.
+        :returns: The parsed IP address or None if parsing fails.
+        """
+        mode = "ipv4" if version == 4 else "ipv6" if version == 6 else "ip"
+        try:
+            return cls.parse(ip, mode=mode)
+        except ValueError:
+            return None
+
+    @classmethod
+    def parse_network_optional(
+        cls, ip: str, version: Literal[4, 6] | None = None
+    ) -> IP_NetworkT | None:
+        """Parse a value as an IP network. Returns None if parsing fails.
+
+        :param ip: The IP network to parse.
+        :param version: The IP version to parse as. Parses as any version if None.
+        :returns: The parsed IP network or None if parsing fails.
+        """
+        mode = "networkv4" if version == 4 else "networkv6" if version == 6 else "network"
+        try:
+            return cls.parse(ip, mode=mode)
+        except ValueError:
+            return None
 
     @field_validator("ip_or_network", mode="before")
     @classmethod
@@ -2611,6 +2648,58 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         return Endpoint.Hosts
 
     @classmethod
+    def get_by_ip(cls, ip: IP_AddressT, inform_as_ptr: bool = True) -> Host | None:
+        """Get a host by IP address.
+
+        :param ip: The IP address to search for.
+        :param check_ptr: If True, check for PTR overrides as well.
+        :returns: The Host object if found, None otherwise.
+        """
+        try:
+            host = cls.get_by_field("ipaddresses__ipaddress", str(ip))
+            if not host:
+                host = cls.get_by_field("ptr_overrides__ipaddress", str(ip))
+                if host and inform_as_ptr:
+                    OutputManager().add_line(f"{ip} is a PTR override for {host.name}")
+            return host
+        except MultipleEntitiesFound as e:
+            raise MultipleEntitiesFound(f"Multiple hosts found with IP address {ip}.") from e
+
+    @classmethod
+    def get_by_ip_or_raise(cls, ip: IP_AddressT, inform_as_ptr: bool = True) -> Host:
+        """Get a host by IP address or raise EntityNotFound.
+
+        :param ip: The IP address to search for.
+        :returns: The Host object if found.
+        :param check_ptr: If True, check for PTR overrides as well.
+        """
+        host = cls.get_by_ip(ip, inform_as_ptr=inform_as_ptr)
+        if not host:
+            raise EntityNotFound(f"Host with IP address {ip} not found.")
+        return host
+
+    @classmethod
+    def get_by_mac(cls, mac: MacAddress) -> Host | None:
+        """Get a host by MAC address.
+
+        :param ip: The MAC address to search for.
+        :returns: The Host object if found, None otherwise.
+        """
+        return cls.get_by_field("ipaddresses__macaddress", str(mac))
+
+    @classmethod
+    def get_by_mac_or_raise(cls, mac: MacAddress) -> Host:
+        """Get a host by MAC address or raise EntityNotFound.
+
+        :param ip: The MAC address to search for.
+        :returns: The Host object if found.
+        """
+        host = cls.get_by_mac(mac)
+        if not host:
+            raise EntityNotFound(f"Host with MAC address {mac} not found.")
+        return host
+
+    @classmethod
     def get_by_any_means_or_raise(
         cls, identifier: str | HostT, inform_as_cname: bool = True, inform_as_ptr: bool = True
     ) -> Host:
@@ -2670,56 +2759,31 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: A Host object if the host was found, otherwise None.
         """
-        host = None
         if not isinstance(identifier, HostT):
             if identifier.isdigit():
                 return Host.get_by_id(int(identifier))
 
-            try:
-                ptr = False
-                ipaddress.ip_address(identifier)
-                NetworkOrIP.parse(identifier, mode="ip")
+            if ip := NetworkOrIP.parse_ip_optional(identifier):
+                host = cls.get_by_ip_or_raise(ip, inform_as_ptr=inform_as_ptr)
+                return host
 
-                host = Host.get_by_field("ipaddresses__ipaddress", identifier)
-                if not host:
-                    host = Host.get_by_field("ptr_overrides__ipaddress", identifier)
-                    ptr = True
-
-                if host:
-                    if ptr and inform_as_ptr:
-                        OutputManager().add_line(f"{identifier} is a PTR override for {host.name}")
-                    return host
-            except MultipleEntitiesFound as e:
-                raise MultipleEntitiesFound(
-                    f"Multiple hosts found with IP address or PTR {identifier}."
-                ) from e
-            except ValueError:  # invalid IP
-                pass
-
-            try:
-                mac = MACAddressField.validate_naive(identifier)
-                return Host.get_by_field("ipaddresses__macaddress", mac.address)
-            except ValueError:
-                pass
+            if mac := MACAddressField.parse_optional(identifier):
+                return cls.get_by_mac_or_raise(mac)
 
             # Let us try to find the host by name...
-            name = HostT(hostname=identifier)
-        else:
-            name = identifier
+            identifier = HostT(hostname=identifier)
 
-        host = Host.get_by_field("name", name.hostname)
-
-        if host:
+        if host := cls.get_by_field("name", identifier.hostname):
             return host
 
-        cname = CNAME.get_by_field("name", name.hostname)
+        cname = CNAME.get_by_field("name", identifier.hostname)
         # If we found a CNAME, get the host it points to. We're not interested in the
         # CNAME itself.
         if cname is not None:
             host = Host.get_by_id(cname.host)
 
             if host and inform_as_cname:
-                OutputManager().add_line(f"{name} is a CNAME for {host.name}")
+                OutputManager().add_line(f"{identifier.hostname} is a CNAME for {host.name}")
 
         return host
 
