@@ -16,6 +16,9 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
 
 
+logger = logging.getLogger(__name__)
+
+
 class CliExit(Exception):
     """Exception used to exit the CLI."""
 
@@ -37,9 +40,21 @@ class CliException(Exception):
         # NOTE: override this in subclasses to provide custom formatting.
         return self.escape()
 
+    def log(self):
+        """Log the exception."""
+        from mreg_cli.outputmanager import OutputManager
+
+        logger.error(str(self))
+        OutputManager().add_error(str(self))
+
     def print_self(self):
         """Print the exception with appropriate formatting."""
         print_formatted_text(HTML(self.formatted_exception()), file=sys.stdout)
+
+    def print_and_log(self):
+        """Print the exception and log it."""
+        self.log()
+        self.print_self()
 
 
 class CliError(CliException):
@@ -48,14 +63,6 @@ class CliError(CliException):
     Errors are not recoverable and stem from internal failures that
     the user cannot be expected to resolve.
     """
-
-    def __init__(self, *args: Any, **kwargs: Any):
-        """Initialize the error."""
-        super().__init__(*args, **kwargs)
-        logging.getLogger(__name__).error(str(self))
-        from mreg_cli.outputmanager import OutputManager
-
-        OutputManager().add_error(str(self))
 
     def formatted_exception(self) -> str:
         """Return a string formatted with HTML red tag for the error message.
@@ -71,12 +78,11 @@ class CliWarning(CliException):
     Warnings should be recoverable by changing the user input.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        """Initialize the warning."""
+    def log(self):
+        """Log the exception."""
         from mreg_cli.outputmanager import OutputManager
 
-        super().__init__(*args, **kwargs)
-        logging.getLogger(__name__).warning(str(self))
+        logger.warning(str(self))
         OutputManager().add_warning(str(self))
 
     def formatted_exception(self) -> str:

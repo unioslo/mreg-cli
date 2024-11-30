@@ -154,7 +154,7 @@ def main():
         )
     except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
         if isinstance(e, LoginFailedError):
-            e.print_self()
+            e.print_and_log()
         else:
             print(e)
         raise SystemExit() from None
@@ -204,7 +204,7 @@ def main():
         except EOFError:
             raise SystemExit() from None
         except CliException as e:
-            e.print_self()
+            e.print_and_log()
             raise SystemExit() from None
         else:
             try:
