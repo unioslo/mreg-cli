@@ -167,7 +167,7 @@ class Command(Completer):
             self.last_errno = e.code
 
         except (CliWarning, CliError) as exc:
-            exc.print_self()
+            exc.print_and_log()
 
         except CliExit:
             # If we have active recordings going on, save them before exiting
@@ -263,7 +263,7 @@ class Command(Completer):
         try:
             cmd = output.from_command(line)
         except (CliWarning, CliError) as exc:
-            exc.print_self()
+            exc.print_and_log()
             return
         # Create and set the corrolation id, using the cleaned command
         # as the suffix. This is used to track the command in the logs
