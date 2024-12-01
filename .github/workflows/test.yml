@@ -14,20 +14,15 @@ jobs:
         python-version:
           - '3.11'
           - '3.12'
+          - '3.13'
     env:
       # Disable colors and formatting in Rich console output
       TERM: dumb
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
-      - name: Install mreg-cli
-        run: uv sync
       - name: Test and compare api calls
-        run: uv run ci/run_testsuite_and_record.sh
+        run: ci/run_testsuite_and_record_V2.sh ${{ matrix.python-version }}
 
   tox:
     name: tox
@@ -68,6 +63,7 @@ jobs:
         python-version:
           - "3.11"
           - "3.12"
+          - '3.13'
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
