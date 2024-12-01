@@ -49,7 +49,7 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
     if args.old == args.new:
         raise EntityAlreadyExists("New and old IP are equal")
 
-    old_ip = NetworkOrIP.parse(args.old, mode="ip")
+    old_ip = NetworkOrIP.parse_or_raise(args.old, mode="ip")
 
     new_ip = NetworkOrIP.validate(args.new)
     if new_ip.is_network():
@@ -88,7 +88,7 @@ def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
     :param args: argparse.Namespace (ip, fromhost, tohost)
     :param ipversion: 4 or 6
     """
-    ip = NetworkOrIP.parse(args.ip, mode="ip")
+    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
     if ip.version != ipversion:
         raise InputFailure(
             f"IP version {ip.version} does not match the requested version {ipversion}"
@@ -123,7 +123,7 @@ def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
     :param args: argparse.Namespace (name, ip)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    ip = NetworkOrIP.parse(args.ip, mode="ip")
+    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
     if ip.version != ipversion:
         raise InputFailure(
             f"IP version {ip.version} does not match the requested version {ipversion}"

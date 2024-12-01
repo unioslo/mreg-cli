@@ -56,7 +56,7 @@ def network_list(args: argparse.Namespace) -> None:
     permissions = Permission.get_by_query(query=params, ordering="range,group", limit=None)
 
     if args.range is not None:
-        argnetwork = NetworkOrIP.parse(args.range, mode="network")
+        argnetwork = NetworkOrIP.parse_or_raise(args.range, mode="network")
 
         for permission in permissions:
             permnet = permission.range
@@ -107,7 +107,7 @@ def network_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (range, group, regex)
     """
-    NetworkOrIP.parse(args.range, mode="network")
+    NetworkOrIP.parse_or_raise(args.range, mode="network")
 
     query = {
         "range": args.range,

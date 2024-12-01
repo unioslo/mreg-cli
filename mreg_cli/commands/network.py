@@ -67,7 +67,7 @@ def create(args: argparse.Namespace) -> None:
     if args.location and not is_valid_location_tag(args.location):
         raise InputFailure("Not a valid location tag")
 
-    arg_network = NetworkOrIP.parse(args.network, mode="network")
+    arg_network = NetworkOrIP.parse_or_raise(args.network, mode="network")
     networks = Network.get_list()
     for network in networks:
         if network.overlaps(arg_network):
