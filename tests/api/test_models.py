@@ -86,7 +86,7 @@ def test_network_or_ip_parse(inp: str, mode: IPNetMode, expect: Any) -> None:
 
 
 @pytest.mark.parametrize(
-    "inp, expect_type",
+    "inp, expect_type_call",
     [
         ("192.168.0.1", NetworkOrIP.is_ipv4),
         ("192.168.0.0/24", NetworkOrIP.is_ipv4_network),
@@ -101,11 +101,11 @@ def test_network_or_ip_parse(inp: str, mode: IPNetMode, expect: Any) -> None:
         ),
     ],
 )
-def test_network_or_ip_validate(inp: Any, expect_type: Callable[[NetworkOrIP], bool]) -> None:
+def test_network_or_ip_validate(inp: Any, expect_type_call: Callable[[NetworkOrIP], bool]) -> None:
     """Test the validation of network or IP address."""
     res = NetworkOrIP.validate(inp)
     # Ensure it's validated as the correct type
-    assert expect_type(res)
+    assert expect_type_call(res)
 
 
 @pytest.mark.parametrize(
