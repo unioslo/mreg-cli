@@ -10,6 +10,7 @@ from functools import cached_property
 from typing import Any, Callable, ClassVar, Iterable, List, Literal, Self, cast, overload
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import ValidationError as PydanticValidationError
 from pydantic_extra_types.mac_address import MacAddress
 from typing_extensions import Unpack
 
@@ -76,39 +77,41 @@ class NetworkOrIP(BaseModel):
             return cls.validate(value.ip_or_network)
         try:
             return cls(ip_or_network=value)  # pyright: ignore[reportArgumentType] # validator handles this
-        except ValidationError as e:
+        except PydanticValidationError as e:
             raise InputFailure(f"Invalid IP address or network: {value}") from e
 
     @overload
     @classmethod
-    def parse(cls, value: Any, mode: None = None) -> IP_AddressT | IP_NetworkT: ...
+    def parse_or_raise(cls, value: Any, mode: None = None) -> IP_AddressT | IP_NetworkT: ...
 
     @overload
     @classmethod
-    def parse(cls, value: Any, mode: Literal["ip"]) -> IP_AddressT: ...
+    def parse_or_raise(cls, value: Any, mode: Literal["ip"]) -> IP_AddressT: ...
 
     @overload
     @classmethod
-    def parse(cls, value: Any, mode: Literal["ipv4"]) -> ipaddress.IPv4Address: ...
+    def parse_or_raise(cls, value: Any, mode: Literal["ipv4"]) -> ipaddress.IPv4Address: ...
 
     @overload
     @classmethod
-    def parse(cls, value: Any, mode: Literal["ipv6"]) -> ipaddress.IPv6Address: ...
+    def parse_or_raise(cls, value: Any, mode: Literal["ipv6"]) -> ipaddress.IPv6Address: ...
 
     @overload
     @classmethod
-    def parse(cls, value: Any, mode: Literal["network"]) -> IP_NetworkT: ...
+    def parse_or_raise(cls, value: Any, mode: Literal["network"]) -> IP_NetworkT: ...
 
     @overload
     @classmethod
-    def parse(cls, value: Any, mode: Literal["networkv4"]) -> ipaddress.IPv4Network: ...
+    def parse_or_raise(cls, value: Any, mode: Literal["networkv4"]) -> ipaddress.IPv4Network: ...
 
     @overload
     @classmethod
-    def parse(cls, value: Any, mode: Literal["networkv6"]) -> ipaddress.IPv6Network: ...
+    def parse_or_raise(cls, value: Any, mode: Literal["networkv6"]) -> ipaddress.IPv6Network: ...
 
     @classmethod
-    def parse(cls, value: Any, mode: IPNetMode | None = None) -> IP_AddressT | IP_NetworkT:
+    def parse_or_raise(
+        cls, value: Any, mode: IPNetMode | None = None
+    ) -> IP_AddressT | IP_NetworkT:
         """Parse a value as an IP address or network.
 
         Optionally specify the mode to validate the input as.
@@ -131,35 +134,46 @@ class NetworkOrIP(BaseModel):
             return func(ipnet)
         return ipnet.ip_or_network
 
+    @overload
     @classmethod
-    def parse_ip_optional(
-        cls, ip: str, version: Literal[4, 6] | None = None
-    ) -> IP_AddressT | None:
-        """Check if a value is a valid IP address.
+    def parse(cls, value: Any, mode: None = None) -> IP_AddressT | IP_NetworkT | None: ...
 
-        :param ip: The IP address to parse.
-        :param version: The IP version to parse as. Parses as any version if None.
-        :returns: The parsed IP address or None if parsing fails.
-        """
-        mode = "ipv4" if version == 4 else "ipv6" if version == 6 else "ip"
-        try:
-            return cls.parse(ip, mode=mode)
-        except ValueError:
-            return None
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["ip"]) -> IP_AddressT | None: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["ipv4"]) -> ipaddress.IPv4Address | None: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["ipv6"]) -> ipaddress.IPv6Address | None: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["network"]) -> IP_NetworkT | None: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["networkv4"]) -> ipaddress.IPv4Network | None: ...
+
+    @overload
+    @classmethod
+    def parse(cls, value: Any, mode: Literal["networkv6"]) -> ipaddress.IPv6Network | None: ...
 
     @classmethod
-    def parse_network_optional(
-        cls, ip: str, version: Literal[4, 6] | None = None
-    ) -> IP_NetworkT | None:
-        """Parse a value as an IP network. Returns None if parsing fails.
+    def parse(cls, value: Any, mode: IPNetMode | None = None) -> IP_AddressT | IP_NetworkT | None:
+        """Parse a value as an IP address or network, or None if parsing fails.
 
-        :param ip: The IP network to parse.
-        :param version: The IP version to parse as. Parses as any version if None.
-        :returns: The parsed IP network or None if parsing fails.
+        Optionally specify the mode to validate the input as.
+
+        :param value:The value to parse.
+        :param mode: The mode to validate the input as.
+        :returns: The parsed value as an IP address or network, or None.
         """
-        mode = "networkv4" if version == 4 else "networkv6" if version == 6 else "network"
         try:
-            return cls.parse(ip, mode=mode)
+            return cls.parse_or_raise(value, mode)
         except ValueError:
             return None
 
@@ -1617,7 +1631,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     def ip_network(self) -> IP_NetworkT:
         """IP network object for the network."""
         try:
-            return NetworkOrIP.parse(self.network, mode="network")
+            return NetworkOrIP.parse_or_raise(self.network, mode="network")
         except IPNetworkWarning as e:
             logger.error(
                 "Invalid network address %s for network with ID %s", self.network, self.id
@@ -1744,7 +1758,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         def fmt(label: str, value: Any) -> None:
             manager.add_line(f"{label:<{padding}}{value}")
 
-        ipnet = NetworkOrIP.parse(self.network, mode="network")
+        ipnet = NetworkOrIP.parse_or_raise(self.network, mode="network")
         reserved_ips = self.get_reserved_ips()
         # Remove network address and broadcast address from reserved IPs
         reserved_ips_filtered = [
@@ -1836,9 +1850,9 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         if isinstance(other, Network):
             other = other.network
         if isinstance(other, str):
-            other = NetworkOrIP.parse(other, mode="network")
+            other = NetworkOrIP.parse_or_raise(other, mode="network")
 
-        self_net = NetworkOrIP.parse(self.network, mode="network")
+        self_net = NetworkOrIP.parse_or_raise(self.network, mode="network")
         return self_net.overlaps(other)
 
     def get_first_available_ip(self) -> IP_AddressT:
@@ -2763,11 +2777,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             if identifier.isdigit():
                 return Host.get_by_id(int(identifier))
 
-            if ip := NetworkOrIP.parse_ip_optional(identifier):
+            if ip := NetworkOrIP.parse(identifier, mode="ip"):
                 host = cls.get_by_ip_or_raise(ip, inform_as_ptr=inform_as_ptr)
                 return host
 
-            if mac := MACAddressField.parse_optional(identifier):
+            if mac := MACAddressField.parse(identifier):
                 return cls.get_by_mac_or_raise(mac)
 
             # Let us try to find the host by name...
@@ -2861,7 +2875,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: The IP address object if found, None otherwise.
         """
         if not isinstance(arg_mac, MACAddressField):
-            arg_mac = MACAddressField.validate_naive(arg_mac)
+            arg_mac = MACAddressField.validate(arg_mac)
         return next((ip for ip in self.ipaddresses if ip.macaddress == arg_mac), None)
 
     def ips_with_macaddresses(self) -> list[IPAddress]:

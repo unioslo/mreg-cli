@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime
 from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
-from typing import Any
+from typing import Any, Callable
 
 import pytest
 
 from mreg_cli.api.models import IPNetMode, Network, NetworkOrIP
 from mreg_cli.exceptions import (
+    InputFailure,
     InvalidIPAddress,
     InvalidIPv4Address,
     InvalidIPv6Address,
@@ -80,8 +81,31 @@ from mreg_cli.types import IP_NetworkT
 )
 def test_network_or_ip_parse(inp: str, mode: IPNetMode, expect: Any) -> None:
     """Test the network or IP address from string."""
-    res = NetworkOrIP.parse(inp, mode)
+    res = NetworkOrIP.parse_or_raise(inp, mode)
     assert res == expect
+
+
+@pytest.mark.parametrize(
+    "inp, expect_type_call",
+    [
+        ("192.168.0.1", NetworkOrIP.is_ipv4),
+        ("192.168.0.0/24", NetworkOrIP.is_ipv4_network),
+        ("2001:db8::1", NetworkOrIP.is_ipv6),
+        ("2001:db8::/64", NetworkOrIP.is_ipv6_network),
+        ("2001:db8::/", NetworkOrIP.is_ipv6),  # valid address because validator removes suffix
+        pytest.param(
+            "192.168.0.0/33", None, marks=pytest.mark.xfail(raises=InputFailure, strict=True)
+        ),
+        pytest.param(
+            "2001:db8::/129", None, marks=pytest.mark.xfail(raises=InputFailure, strict=True)
+        ),
+    ],
+)
+def test_network_or_ip_validate(inp: Any, expect_type_call: Callable[[NetworkOrIP], bool]) -> None:
+    """Test the validation of network or IP address."""
+    res = NetworkOrIP.validate(inp)
+    # Ensure it's validated as the correct type
+    assert expect_type_call(res)
 
 
 @pytest.mark.parametrize(

@@ -474,7 +474,7 @@ def ptr_change(args: argparse.Namespace) -> None:
     if not old_host.ptr_overrides:
         raise EntityNotFound(f"No PTR records for {old_host}")
 
-    ip = NetworkOrIP.parse(args.ip, mode="ip")
+    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
     ptr_override = old_host.get_ptr_override(ip)
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {old_host} with IP {ip}")
@@ -503,7 +503,7 @@ def ptr_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (ip, name)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    ip = NetworkOrIP.parse(args.ip, mode="ip")
+    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
     ptr_override = host.get_ptr_override(ip)
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {host} with IP {ip}")
@@ -529,7 +529,7 @@ def ptr_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, name, force)
     """
-    ip = NetworkOrIP.parse(args.ip, mode="ip")
+    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
 
     host = Host.get_by_any_means_or_raise(args.name)
     existing_ptrs = PTR_override.get_list_by_field("ipaddress", str(ip))
@@ -563,7 +563,7 @@ def ptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip)
     """
-    ip = NetworkOrIP.parse(args.ip, mode="ip")
+    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
     host = Host.get_by_any_means_or_raise(str(ip), inform_as_ptr=False)
     if not host.ptr_overrides:
         OutputManager().add_line(f"No PTR records for {host.name.hostname}")

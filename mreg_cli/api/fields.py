@@ -21,46 +21,38 @@ class MACAddressField(FrozenModel):
 
     address: MacAddress
 
-    @classmethod
-    def validate(cls, value: str | MacAddress | Self) -> Self:
-        """Validate a MAC address and return it as a string."""
-        try:
-            return cls.validate_naive(value)
-        except ValueError as e:
-            raise InputFailure(e) from e
-
     # HACK: extremely hacky workaround for our custom exceptions always
     # logging errors/warnings even when caught.
     @classmethod
-    def validate_naive(cls, value: str | MacAddress | Self) -> Self:
+    def validate(cls, value: str | MacAddress | Self) -> Self:
         """Validate but raise built-in exceptions on failure."""
         if isinstance(value, MACAddressField):
-            return cls.validate_naive(value.address)
+            return cls.validate(value.address)
         try:
             return cls(address=value)  # pyright: ignore[reportArgumentType]
         except ValidationError as e:
-            raise ValueError(f"Invalid MAC address '{value}'") from e
+            raise InputFailure(f"Invalid MAC address '{value}'") from e
 
     @classmethod
-    def parse(cls, obj: Any) -> MacAddress:
+    def parse_or_raise(cls, obj: Any) -> MacAddress:
         """Parse a MAC address from a string. Returns the MAC address as a string.
 
         :param obj: The object to parse.
         :returns: The MAC address as a string.
         :raises ValueError: If the object is not a valid MAC address.
         """
-        # Match interface of NetworkOrIP.parse
+        # Match interface of NetworkOrIP.parse_or_raise
         return cls.validate(obj).address
 
     @classmethod
-    def parse_optional(cls, obj: Any) -> MacAddress | None:
+    def parse(cls, obj: Any) -> MacAddress | None:
         """Parse a MAC address from a string. Returns None if the MAC address is invalid.
 
         :param obj: The object to parse.
         :returns: The MAC address as a string or None if it is invalid.
         """
         try:
-            return cls.parse(obj)
+            return cls.parse_or_raise(obj)
         except ValueError:
             return None
 
