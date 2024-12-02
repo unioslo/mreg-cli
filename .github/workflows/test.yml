@@ -28,7 +28,12 @@ jobs:
         run: uv sync
       - name: Test and compare api calls
         run: uv run ci/run_testsuite_and_record.sh
-
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-integration-${{ matrix.python-version }}
+          path: .coverage
+      
   tox:
     name: tox
     runs-on: ubuntu-latest
@@ -76,5 +81,59 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
       - name: Install dependencies
         run: uv sync
-      - name: Run unittest
-        run: uv run pytest
+      - name: Run unit tests with coverage
+        run: uv run coverage run -m pytest
+      - name: Install Coveralls
+        run: uv pip install coveralls
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-unit-${{ matrix.python-version }}
+          path: .coverage
+      
+  coveralls:
+    if: ${{ github.event_name == 'pull_request' || github.repository == 'unioslo/mreg-cli' }}
+    name: Coveralls
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+      - name: Download coverage files
+        uses: actions/download-artifact@v4
+      - name: Install Coveralls
+        run: |
+          uv venv --no-project
+          uv pip install coveralls
+      - name: Run Coveralls
+        run: uv run --no-project coveralls
+        env:
+          # Note: Set service name to work around
+          # https://github.com/TheKevJames/coveralls-python/issues/252
+          COVERALLS_SERVICE_NAME: github
+          COVERALLS_PARALLEL: true
+          COVERALLS_FLAG_NAME: mreg-cli-coveralls
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  finish:
+    name: Indicate completion to coveralls.io
+    needs: coveralls
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+    - name: Set up Python 3.12
+      run: uv python install 3.12
+    - name: Install coveralls
+      run: |
+        uv venv
+        uv pip install --upgrade coveralls
+    - name: Finished
+      run: uv run coveralls --finish
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
