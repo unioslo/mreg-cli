@@ -3,11 +3,25 @@
 # exit immediately on error
 set -e
 
+# check if we have docker or podman
+if command -v docker >/dev/null 2>&1 && ! docker 2>&1 | grep -q podman; then
+	echo "Using Docker"
+	GH_PARAMS="--ansi=never"
+elif command -v podman >/dev/null 2>&1; then
+	echo "Using Podman"
+	GH_PARAMS="--no-ansi"
+	PODMAN=1
+	alias docker=podman
+else
+	echo "Found neither docker nor podman."
+	exit 1
+fi
+
 # clean up on exit, even if something fails
 function cleanup {
 	set +e
 	if [[ -n "$GITHUB_ACTIONS" ]]; then
-    	docker compose --ansi=never down
+		docker compose $GH_PARAMS down
 	else
 		docker compose down
 	fi
@@ -34,10 +48,14 @@ docker build -f Dockerfile -t mreg-cli --build-arg python_version=$PYTHON_VERSIO
 
 # start mreg+postgres in containers
 if [[ -n "$GITHUB_ACTIONS" ]]; then
-    docker compose --ansi=never pull --quiet
-    docker compose --ansi=never up -d
+	if [[ "$PODMAN" == "1" ]]; then
+		docker compose $GH_PARAMS pull >/dev/null 2>&1
+	else
+		docker compose $GH_PARAMS pull --quiet
+	fi
+	docker compose $GH_PARAMS up -d
 else
-    docker compose up -d
+	docker compose up -d
 fi
 
 # give mreg some time to create the database schema and start up
