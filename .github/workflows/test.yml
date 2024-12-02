@@ -107,12 +107,14 @@ jobs:
         run: uv python install 3.12
       - name: Download coverage files
         uses: actions/download-artifact@v4
-      - name: Install Coveralls
+      - name: Install Coveralls & Coverage
         run: |
           uv venv --no-project
-          uv pip install coveralls
+          uv pip install coveralls coverage
+      - name: Combine coverage files
+        run: uv run coverage combine
       - name: Run Coveralls
-        run: uv run --no-project coveralls
+        run: uv run coveralls
         env:
           # Note: Set service name to work around
           # https://github.com/TheKevJames/coveralls-python/issues/252
