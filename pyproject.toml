@@ -231,6 +231,7 @@ version_file = "mreg_cli/_version.py"
 
 [tool.coverage.run]
 branch = true
+source = ["mreg_cli"]
 
 [tool.coverage.report]
 # Regexes for lines to exclude from consideration
