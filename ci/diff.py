@@ -290,8 +290,8 @@ class CommandDiffer:
                     new_testsuite_results.append(expected.original)
                     self.diff_unresolved += 1
             else:
-                # No diff, keep new line
-                new_testsuite_results.append(result.original)
+                # No diff, keep old line
+                new_testsuite_results.append(expected.original)
 
         # Only write back changes if we are in review mode and there are changes
         if self.review and self.diff_resolved > 0:
