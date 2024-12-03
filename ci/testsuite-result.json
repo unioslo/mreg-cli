@@ -23730,57 +23730,6 @@
           "comment": "This is the comment",
           "zone": 1
         }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/hosts/?id=14",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 1,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "ipaddresses": [
-                {
-                  "macaddress": "",
-                  "ipaddress": "10.0.0.14",
-                  "host": 14
-                },
-                {
-                  "macaddress": "11:22:33:44:55:66",
-                  "ipaddress": "10.0.0.15",
-                  "host": 14
-                }
-              ],
-              "cnames": [
-                {
-                  "name": "fubar.example.org",
-                  "ttl": null,
-                  "zone": 1,
-                  "host": 14
-                }
-              ],
-              "mxs": [],
-              "txts": [
-                {
-                  "txt": "v=spf1 -all",
-                  "host": 14
-                }
-              ],
-              "ptr_overrides": [],
-              "hinfo": null,
-              "loc": null,
-              "bacnetid": null,
-              "name": "bar.example.org",
-              "contact": "me@example.org",
-              "ttl": null,
-              "comment": "This is the comment",
-              "zone": 1
-            }
-          ]
-        }
       }
     ],
     "time": null

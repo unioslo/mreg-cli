@@ -268,6 +268,14 @@ class HostT(BaseModel):
 
     hostname: str
 
+    @field_validator("hostname", mode="before")
+    @classmethod
+    def extract_hostname(cls, value: Any) -> Any:
+        """Extract the hostname from a HostT input value."""
+        if isinstance(value, HostT):
+            return value.hostname
+        return value
+
     @field_validator("hostname")
     @classmethod
     def validate_hostname(cls, value: str) -> str:
@@ -2234,25 +2242,32 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
 
         return results[0]
 
-    def output(self, padding: int = 14) -> None:
+    def output(self, host: Host | None = None, padding: int = 14) -> None:
         """Output the CNAME record to the console.
 
+        :param host: Host CNAME points to. Attempts to resolve the host if not provided.
         :param padding: Number of spaces for left-padding the output.
         """
-        actual_host = self.resolve_host()
-        host = actual_host.name if actual_host else "<Not found>"
-
-        OutputManager().add_line(f"{'Cname:':<{padding}}{self.name} -> {host}")
+        if host:
+            hostname = host.name.hostname
+        elif not host and (actual_host := self.resolve_host()):
+            hostname = actual_host.name.hostname
+        else:
+            hostname = "<Not found>"
+        OutputManager().add_line(f"{'Cname:':<{padding}}{self.name} -> {hostname}")
 
     @classmethod
-    def output_multiple(cls, cnames: list[CNAME], padding: int = 14) -> None:
+    def output_multiple(
+        cls, cnames: list[CNAME], host: Host | None = None, padding: int = 14
+    ) -> None:
         """Output multiple CNAME records to the console.
 
         :param cnames: List of CNAME records to output.
+        :param host: Host CNAMEs point to. Attempts to resolve the host if not provided.
         :param padding: Number of spaces for left-padding the output.
         """
         for cname in cnames:
-            cname.output(padding=padding)
+            cname.output(host=host, padding=padding)
 
 
 class TXT(FrozenModelWithTimestamps, WithHost, APIMixin):
@@ -3232,8 +3247,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """Output the CNAME records for the host."""
         if not self.cnames:
             return
-
-        CNAME.output_multiple(self.cnames, padding=padding)
+        CNAME.output_multiple(self.cnames, host=self, padding=padding)
 
     def output_roles(self, _padding: int = 14) -> None:
         """Output the roles for the host."""
