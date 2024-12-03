@@ -2187,31 +2187,6 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
     name: HostT
     ttl: int | None = None
 
-    canonical_name: HostT | None = Field(default=None, exclude=True)
-    """Custom field to store the canonical hostname of the CNAME record.
-
-    Only used when instantiated from a host's CNAME record.
-    """
-
-    @classmethod
-    def from_host_cname(cls, host: HostT, cname: CNAME) -> CNAME:
-        """Create a CNAME record from a host and a CNAME record.
-
-        :param host: The host to use.
-        :param record: The CNAME record to use.
-        :returns: The new CNAME record.
-        """
-        return cls(
-            id=cname.id,
-            name=cname.name,
-            ttl=cname.ttl,
-            created_at=cname.created_at,
-            updated_at=cname.updated_at,
-            canonical_name=host,
-            host=cname.host,
-            zone=cname.zone,
-        )
-
     @field_validator("name", mode="before")
     @classmethod
     def validate_name(cls, value: Any) -> HostT:
@@ -2267,28 +2242,32 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
 
         return results[0]
 
-    def output(self, padding: int = 14, resolve: bool = True) -> None:
+    def output(self, host: Host | None = None, padding: int = 14) -> None:
         """Output the CNAME record to the console.
 
+        :param host: Host CNAME points to. Attempts to resolve the host if not provided.
         :param padding: Number of spaces for left-padding the output.
         """
-        if resolve and (actual_host := self.resolve_host()):
-            host = actual_host.name.hostname
-        elif self.canonical_name:
-            host = self.canonical_name.hostname
+        if not host and (actual_host := self.resolve_host()):
+            hostname = actual_host.name.hostname
+        elif host:
+            hostname = host.name.hostname
         else:
-            host = "<Not found>"
-        OutputManager().add_line(f"{'Cname:':<{padding}}{self.name} -> {host}")
+            hostname = "<Not found>"
+        OutputManager().add_line(f"{'Cname:':<{padding}}{self.name} -> {hostname}")
 
     @classmethod
-    def output_multiple(cls, cnames: list[CNAME], resolve: bool = True, padding: int = 14) -> None:
+    def output_multiple(
+        cls, cnames: list[CNAME], host: Host | None = None, padding: int = 14
+    ) -> None:
         """Output multiple CNAME records to the console.
 
         :param cnames: List of CNAME records to output.
+        :param host: Host CNAMEs point to. Attempts to resolve the host if not provided.
         :param padding: Number of spaces for left-padding the output.
         """
         for cname in cnames:
-            cname.output(resolve=resolve, padding=padding)
+            cname.output(host=host, padding=padding)
 
 
 class TXT(FrozenModelWithTimestamps, WithHost, APIMixin):
@@ -3268,8 +3247,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """Output the CNAME records for the host."""
         if not self.cnames:
             return
-        cnames = [CNAME.from_host_cname(self.name, cname) for cname in self.cnames]
-        CNAME.output_multiple(cnames, resolve=False, padding=padding)
+        CNAME.output_multiple(self.cnames, host=self, padding=padding)
 
     def output_roles(self, _padding: int = 14) -> None:
         """Output the roles for the host."""
