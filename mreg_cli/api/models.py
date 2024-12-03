@@ -2248,10 +2248,10 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
         :param host: Host CNAME points to. Attempts to resolve the host if not provided.
         :param padding: Number of spaces for left-padding the output.
         """
-        if not host and (actual_host := self.resolve_host()):
-            hostname = actual_host.name.hostname
-        elif host:
+        if host:
             hostname = host.name.hostname
+        elif not host and (actual_host := self.resolve_host()):
+            hostname = actual_host.name.hostname
         else:
             hostname = "<Not found>"
         OutputManager().add_line(f"{'Cname:':<{padding}}{self.name} -> {hostname}")
