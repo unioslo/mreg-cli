@@ -9,6 +9,10 @@ If you would like to contribute to this project, please follow these steps:
 5. Push to the branch (`git push origin feature/branch-name`)
 6. Create a Pull Request
 
+## Testing
+
+To run tests locally, just run the script `ci/run_testsuite_and_record_V2.sh` from anywhere. The only prerequisite is a working installation of docker or podman.
+
 ## Publishing
 
 Publishing new versions is automatically handled by GitHub actions for versions tagged with `x.y.z[.prerelease]` (`1.2.3`, `1.2.3.rc1`, etc.). If you are a maintainer, you can create a new release by following these steps:

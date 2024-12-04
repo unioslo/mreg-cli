@@ -4,7 +4,7 @@ ARG python_version=3.12
 
 RUN apt-get -qq update
 RUN apt-get -y install curl git >/dev/null
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN curl -LsSf https://astral.sh/uv/0.5.6/install.sh | sh
 RUN /root/.local/bin/uv self update -q
 RUN /root/.local/bin/uv python install ${python_version}
 COPY . /build
