@@ -62,7 +62,11 @@ fi
 sleep 5s
 
 # create a superuser
-docker exec -t mreg /app/manage.py create_mreg_superuser --username test --password test
+if docker exec -t mreg uv version >/dev/null; then
+	docker exec -t mreg uv run /app/manage.py create_mreg_superuser --username test --password test
+else
+	docker exec -t mreg /app/manage.py create_mreg_superuser --username test --password test
+fi
 
 # test connectivity
 #docker run --rm --tty --network host --entrypoint curl mreg-cli --head http://127.0.0.1:8000/admin/login/
