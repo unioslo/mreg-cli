@@ -49,7 +49,7 @@ from mreg_cli.api.models import (
     ForwardZone,
     HInfo,
     Host,
-    HostT,
+    HostName,
     Location,
     Network,
     NetworkOrIP,
@@ -95,7 +95,7 @@ def hinfo_add(args: argparse.Namespace) -> None:
     host = host.refetch()
 
     if host.hinfo and host.hinfo.cpu == args.cpu and host.hinfo.os == args.os:
-        OutputManager().add_ok(f"Added HINFO record for {host.name.hostname}.")
+        OutputManager().add_ok(f"Added HINFO record for {host.name}.")
     else:
         raise CreateError(f"Failed to add correct HINFO for {host}")
 
@@ -121,7 +121,7 @@ def hinfo_remove(args: argparse.Namespace) -> None:
 
     hinfo = HInfo.get_by_field("host", host.id)
     if hinfo and hinfo.delete():
-        OutputManager().add_ok(f"Removed HINFO record for {host.name.hostname}.")
+        OutputManager().add_ok(f"Removed HINFO record for {host.name}.")
     else:
         raise DeleteError(f"Failed to remove HINFO for {host}")
 
@@ -143,13 +143,13 @@ def hinfo_show(args: argparse.Namespace) -> None:
     """
     host = Host.get_by_any_means_or_raise(args.name)
     if not host.hinfo:
-        OutputManager().add_line(f"No hinfo for {host.name.hostname}")
+        OutputManager().add_line(f"No hinfo for {host.name}")
 
     hinfo = HInfo.get_by_field("host", host.id)
     if hinfo:
         hinfo.output()
     else:
-        OutputManager().add_line(f"No hinfo for {host.name.hostname}")
+        OutputManager().add_line(f"No hinfo for {host.name}")
 
 
 @command_registry.register_command(
@@ -172,7 +172,7 @@ def loc_remove(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"{host} already has no loc set.")
 
     if host.loc.delete():
-        OutputManager().add_ok(f"Removed LOC for {host.name.hostname}.")
+        OutputManager().add_ok(f"Removed LOC for {host.name}.")
     else:
         raise DeleteError(f"Failed to remove LOC for {host}")
 
@@ -202,7 +202,7 @@ def loc_add(args: argparse.Namespace) -> None:
     host = host.refetch()
 
     if host.loc and host.loc.loc == args.loc:
-        OutputManager().add_ok(f"Added LOC record for {host.name.hostname}.")
+        OutputManager().add_ok(f"Added LOC record for {host.name}.")
     else:
         CreateError(f"Failed to set LOC for {host}")
 
@@ -224,7 +224,7 @@ def loc_show(args: argparse.Namespace) -> None:
     """
     host = Host.get_by_any_means_or_raise(args.name)
     if not host.loc:
-        raise EntityNotFound(f"No loc for {host.name.hostname}")
+        raise EntityNotFound(f"No loc for {host.name}")
 
     host.loc.output()
 
@@ -251,7 +251,7 @@ def mx_add(args: argparse.Namespace) -> None:
         raise EntityAlreadyExists(f"{host} already has that MX defined.")
 
     MX.create({"host": host.id, "priority": args.priority, "mx": args.mx})
-    OutputManager().add_ok(f"Added MX record to {host.name.hostname}.")
+    OutputManager().add_ok(f"Added MX record to {host.name}.")
 
 
 @command_registry.register_command(
@@ -277,7 +277,7 @@ def mx_remove(args: argparse.Namespace) -> None:
         )
 
     if mx.delete():
-        OutputManager().add_ok(f"deleted MX from {host.name.hostname}.")
+        OutputManager().add_ok(f"deleted MX from {host.name}.")
     else:
         raise DeleteError(f"Failed to remove MX for {host}")
 
@@ -353,7 +353,7 @@ def naptr_add(args: argparse.Namespace) -> None:
     if existing_naptr:
         raise EntityAlreadyExists(f"{host} already has that NAPTR defined.")
     NAPTR.create(params=params)
-    OutputManager().add_ok(f"Added NAPTR record to {host.name.hostname}.")
+    OutputManager().add_ok(f"Added NAPTR record to {host.name}.")
 
 
 @command_registry.register_command(
@@ -422,7 +422,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
     # Right now we may end up in a situation where some records are deleted and some are not.
     for naptr in to_delete:
         if naptr.delete():
-            OutputManager().add_ok(f"Deleted NAPTR record from {host.name.hostname}.")
+            OutputManager().add_ok(f"Deleted NAPTR record from {host.name}.")
         else:
             raise DeleteError(f"Failed to remove NAPTR for {host}")
 
@@ -483,9 +483,7 @@ def ptr_change(args: argparse.Namespace) -> None:
     if not ptr_override.patch(data):
         raise PatchError(f"Failed to move PTR record from {old_host} to {new_host}")
     else:
-        OutputManager().add_ok(
-            f"Moved PTR record {ip} from {old_host.name.hostname} to {new_host.name.hostname}."
-        )
+        OutputManager().add_ok(f"Moved PTR record {ip} from {old_host.name} to {new_host.name}.")
 
 
 @command_registry.register_command(
@@ -509,7 +507,7 @@ def ptr_remove(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"No PTR record for {host} with IP {ip}")
 
     if ptr_override.delete():
-        OutputManager().add_ok(f"Removed PTR record {ip} from {host.name.hostname}.")
+        OutputManager().add_ok(f"Removed PTR record {ip} from {host.name}.")
     else:
         raise DeleteError(f"Failed to remove PTR record from {host}")
 
@@ -547,7 +545,7 @@ def ptr_add(args: argparse.Namespace) -> None:
         raise ForceMissing("Address is reserved. Requires force")
 
     PTR_override.create({"host": host.id, "ipaddress": str(ip)})
-    OutputManager().add_ok(f"Added PTR record {ip} to {host.name.hostname}.")
+    OutputManager().add_ok(f"Added PTR record {ip} to {host.name}.")
 
 
 @command_registry.register_command(
@@ -566,7 +564,7 @@ def ptr_show(args: argparse.Namespace) -> None:
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
     host = Host.get_by_any_means_or_raise(str(ip), inform_as_ptr=False)
     if not host.ptr_overrides:
-        OutputManager().add_line(f"No PTR records for {host.name.hostname}")
+        OutputManager().add_line(f"No PTR records for {host.name}")
 
     for ptr in host.ptr_overrides:
         if ip == ptr.ipaddress:
@@ -592,7 +590,9 @@ def srv_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, weight, port, host, ttl, force)
     """
-    sname = HostT(hostname=args.name)
+    name: str = args.name
+
+    sname = HostName.parse_or_raise(name)
     host = Host.get_by_any_means_or_raise(args.host)
 
     szone = ForwardZone.get_from_hostname(sname)
@@ -604,7 +604,7 @@ def srv_add(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"{host} isn't in a zone controlled by MREG")
 
     data: QueryParams = {
-        "name": sname.hostname,
+        "name": sname,
         "priority": args.priority,
         "weight": args.weight,
         "port": args.port,
@@ -654,11 +654,14 @@ def srv_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, weight, port, host)
     """
-    host = Host.get_by_any_means_or_raise(args.host)
-    sname = HostT(hostname=args.name)
+    name: str = args.name
+    host_arg: str = args.host
+
+    host = Host.get_by_any_means_or_raise(host_arg)
+    sname = HostName.parse_or_raise(name)
 
     data: QueryParams = {
-        "name": sname.hostname,
+        "name": sname,
         "host": host.id,
         "priority": args.priority,
         "port": args.port,
@@ -672,7 +675,7 @@ def srv_remove(args: argparse.Namespace) -> None:
         )
 
     if srv.delete():
-        OutputManager().add_ok(f"Removed SRV record {sname} from {host.name.hostname}.")
+        OutputManager().add_ok(f"Removed SRV record {sname} from {host.name}.")
     else:
         raise DeleteError(f"Failed to remove SRV for {sname}")
 
@@ -690,8 +693,10 @@ def srv_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (service)
     """
-    sname = HostT(hostname=args.service)
-    srvs = Srv.get_list_by_field("name", sname.hostname)
+    service: str = args.service
+
+    sname = HostName.parse_or_raise(service)
+    srvs = Srv.get_list_by_field("name", sname)
 
     if len(srvs) == 0:
         raise EntityNotFound(f"No SRV records for {sname}")
@@ -729,7 +734,7 @@ def sshfp_add(args: argparse.Namespace) -> None:
         raise EntityAlreadyExists(f"{host} already has that SSHFP defined.")
 
     SSHFP.create(data)
-    OutputManager().add_ok(f"Added SSHFP record for {host.name.hostname}.")
+    OutputManager().add_ok(f"Added SSHFP record for {host.name}.")
 
 
 @command_registry.register_command(

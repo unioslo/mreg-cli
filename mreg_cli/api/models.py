@@ -9,14 +9,23 @@ from datetime import date, datetime
 from functools import cached_property
 from typing import Any, Callable, ClassVar, Iterable, List, Literal, Self, cast, overload
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    GetCoreSchemaHandler,
+    IPvAnyAddress,
+    computed_field,
+    field_validator,
+)
 from pydantic import ValidationError as PydanticValidationError
-from pydantic_extra_types.mac_address import MacAddress
+from pydantic_core import core_schema
 from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.api.fields import IPAddressField, MACAddressField, NameList
+from mreg_cli.api.fields import MacAddress, NameList
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
@@ -39,7 +48,7 @@ from mreg_cli.exceptions import (
     ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams
+from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams, get_type_adapter
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -263,27 +272,47 @@ class NetworkOrIP(BaseModel):
         return self.is_ipv4_network() or self.is_ipv6_network()
 
 
-class HostT(BaseModel):
-    """A type for a hostname."""
+class HostName(str):
+    """Hostname string type."""
 
-    hostname: str
-
-    @field_validator("hostname", mode="before")
     @classmethod
-    def extract_hostname(cls, value: Any) -> Any:
-        """Extract the hostname from a HostT input value."""
-        if isinstance(value, HostT):
-            return value.hostname
-        return value
+    def parse(cls, obj: Any) -> HostName | None:
+        """Parse a MAC address from a string. Returns None if the MAC address is invalid.
 
-    @field_validator("hostname")
+        :param obj: The object to parse.
+        :returns: The MAC address as a string or None if it is invalid.
+        """
+        try:
+            return cls.parse_or_raise(obj)
+        except InputFailure:
+            return None
+
     @classmethod
-    def validate_hostname(cls, value: str) -> str:
+    def parse_or_raise(cls, obj: Any) -> HostName:
+        """Parse a hostname from a string. Returns the MAC address as a string.
+
+        :param obj: The object to parse.
+        :returns: The hostname as a string.
+        :raises ValueError: If the object is not a valid hostname.
+        """
+        try:
+            adapter = get_type_adapter(cls)
+            return adapter.validate_python(obj)
+        except ValueError as e:
+            raise InputFailure(f"Invalid MAC address '{obj}'") from e
+
+    @staticmethod
+    def validate_hostname(value: str) -> str:
         """Validate the hostname."""
         value = value.lower()
 
         if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", value) is None:
             raise InputFailure(f"Invalid input for hostname: {value}")
+            # raise PydanticCustomError(
+            #     "hostname_format",
+            #     "Invalid input for hostname: {value}",
+            #     {"value": value},
+            # )
 
         # Assume user is happy with domain, but strip the dot.
         if value.endswith("."):
@@ -300,13 +329,38 @@ class HostT(BaseModel):
             return f"{value}.{default_domain}"
         return value
 
-    def __str__(self) -> str:
-        """Return the hostname as a string."""
-        return self.hostname
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source: type[Any], handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        """Return a Pydantic CoreSchema with the hostname validation.
 
-    def __repr__(self) -> str:
-        """Return the hostname as a string."""
-        return self.hostname
+        Args:
+            source: The source type to be converted.
+            handler: The handler to get the CoreSchema.
+
+        Returns:
+            A Pydantic CoreSchema with the hostname validation.
+
+        """
+        return core_schema.with_info_before_validator_function(
+            cls._validate,
+            core_schema.str_schema(),
+        )
+
+    @classmethod
+    def _validate(cls, __input_value: str, _: Any) -> str:
+        """Validate a hostname from the provided str value.
+
+        Args:
+            __input_value: The str value to be validated.
+            _: The source type to be converted.
+
+        Returns:
+            str: The parsed hostname.
+
+        """
+        return cls.validate_hostname(__input_value)
 
 
 class WithHost(BaseModel):
@@ -1032,7 +1086,7 @@ class ForwardZone(Zone, WithName, APIMixin):
         return Endpoint.ForwardZonesNameservers
 
     @classmethod
-    def get_from_hostname(cls, hostname: HostT) -> ForwardZoneDelegation | ForwardZone | None:
+    def get_from_hostname(cls, hostname: HostName) -> ForwardZoneDelegation | ForwardZone | None:
         """Get the zone from a hostname.
 
         Note: This method may return either a ForwardZoneDelegation or a ForwardZone object.
@@ -1040,7 +1094,7 @@ class ForwardZone(Zone, WithName, APIMixin):
         :param hostname: The hostname to search for.
         :returns: The zone if found, None otherwise.
         """
-        data = get(Endpoint.ForwardZoneForHost.with_id(hostname.hostname), ok404=True)
+        data = get(Endpoint.ForwardZoneForHost.with_id(hostname), ok404=True)
         if not data:
             return None
 
@@ -1598,23 +1652,12 @@ class ExcludedRange(FrozenModelWithTimestamps):
 
     id: int  # noqa: A003
     network: int
-    start_ip: IPAddressField
-    end_ip: IPAddressField
-
-    @field_validator("start_ip", "end_ip", mode="before")
-    @classmethod
-    def convert_ip_address(cls, value: Any):
-        """Convert ipaddress string to IPAddressField if necessary."""
-        if isinstance(value, str):
-            try:
-                return IPAddressField(address=ipaddress.ip_address(value))
-            except ValueError as e:
-                raise InputFailure(f"Invalid IP address: {value}") from e
-        return value
+    start_ip: IPvAnyAddress
+    end_ip: IPvAnyAddress
 
     def excluded_ips(self) -> int:
         """Return the number of IP addresses in the excluded range."""
-        return int(self.end_ip.address) - int(self.start_ip.address) + 1
+        return int(self.end_ip) - int(self.start_ip) + 1
 
 
 class Network(FrozenModelWithTimestamps, APIMixin):
@@ -1919,16 +1962,16 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
         :returns: The new ExcludedRange object.
         """
-        start_ip = IPAddressField.validate(start)
-        end_ip = IPAddressField.validate(end)
-        if start_ip.address.version != end_ip.address.version:
+        start_ip = NetworkOrIP.parse_or_raise(start, mode="ip")
+        end_ip = NetworkOrIP.parse_or_raise(end, mode="ip")
+        if start_ip.version != end_ip.version:
             raise InputFailure("Start and end IP addresses must be of the same version")
 
         resp = post(
             Endpoint.NetworksAddExcludedRanges.with_params(self.network),
             network=self.id,
-            start_ip=str(start_ip.address),
-            end_ip=str(end_ip.address),
+            start_ip=str(start_ip),
+            end_ip=str(end_ip),
         )
         if not resp or not resp.ok:
             raise CreateError(f"Failed to create excluded range for network {self.network}")
@@ -2016,24 +2059,20 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents an IP address with associated details."""
 
     id: int  # noqa: A003
-    macaddress: MACAddressField | None = None
-    ipaddress: IPAddressField
+    macaddress: MacAddress | None = None
+    ipaddress: IPvAnyAddress
 
     @field_validator("macaddress", mode="before")
     @classmethod
-    def create_valid_macadress_or_none(cls, v: Any) -> MACAddressField | None:
-        """Create macaddress or convert empty strings to None."""
-        if v:
-            return MACAddressField.validate(v)
-        return None
+    def create_valid_macadress_or_none(cls, v: Any) -> MacAddress | None:
+        """Create macaddress or convert empty strings to None.
 
-    @field_validator("ipaddress", mode="before")
-    @classmethod
-    def create_valid_ipaddress(cls, v: Any) -> IPAddressField:
-        """Create macaddress or convert empty strings to None."""
-        if isinstance(v, str):
-            return IPAddressField.validate(v)
-        return v  # let Pydantic handle it
+        The API can return an empty string for this field, which fails to validate
+        as a MAC address.
+        """
+        if v:
+            return v
+        return None
 
     @classmethod
     def get_by_ip(cls, ip: IP_AddressT) -> list[Self]:
@@ -2048,15 +2087,13 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         return cls.get_list_by_field("ipaddress", str(ip))
 
     @classmethod
-    def get_by_mac(cls, mac: MACAddressField | str) -> IPAddress | None:
+    def get_by_mac(cls, mac: MacAddress) -> IPAddress | None:
         """Get the IP address objects by MAC address.
 
         :param mac: The MAC address to search for.
         :returns: The IP address if found, None otherwise.
         """
-        if isinstance(mac, str):
-            mac = MACAddressField.validate(mac)
-        return cls.get_by_field("macaddress", mac.address)
+        return cls.get_by_field("macaddress", mac)
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -2069,26 +2106,22 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
     def is_ipv4(self) -> bool:
         """Return True if the IP address is IPv4."""
-        return self.ipaddress.is_ipv4()
+        return self.ipaddress.version == 4
 
     def is_ipv6(self) -> bool:
         """Return True if the IP address is IPv6."""
-        return self.ipaddress.is_ipv6()
+        return self.ipaddress.version == 6
 
     def network(self) -> Network:
         """Return the network of the IP address."""
-        data = get(Endpoint.NetworksByIP.with_id(str(self.ip())))
+        data = get(Endpoint.NetworksByIP.with_id(str(self.ipaddress)))
         return Network.model_validate(data.json())
 
     def vlan(self) -> int | None:
         """Return the VLAN of the IP address."""
         return self.network().vlan
 
-    def ip(self) -> IP_AddressT:
-        """Return the IP address."""
-        return self.ipaddress.address
-
-    def associate_mac(self, mac: MACAddressField | str, force: bool = False) -> IPAddress:
+    def associate_mac(self, mac: MacAddress, force: bool = False) -> IPAddress:
         """Associate a MAC address with the IP address.
 
         :param mac: The MAC address to associate.
@@ -2097,15 +2130,12 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
         :returns: A new IPAddress object fetched from the API with the updated MAC address.
         """
-        if isinstance(mac, str):
-            mac = MACAddressField.validate(mac)
-
         if self.macaddress and not force:
             raise EntityAlreadyExists(
                 f"IP address {self.ipaddress} already has MAC address {self.macaddress}."
             )
 
-        return self.patch(fields={"macaddress": mac.address})
+        return self.patch(fields={"macaddress": mac})
 
     def disassociate_mac(self) -> IPAddress:
         """Disassociate the MAC address from the IP address.
@@ -2159,7 +2189,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
     def __hash__(self):
         """Return a hash of the IP address."""
-        return hash((self.id, self.ipaddress.address, self.macaddress))
+        return hash((self.id, self.ipaddress, self.macaddress))
 
 
 class HInfo(FrozenModelWithTimestamps, WithHost, APIMixin):
@@ -2184,14 +2214,8 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
     """Represents a CNAME record."""
 
     id: int  # noqa: A003
-    name: HostT
+    name: HostName
     ttl: int | None = None
-
-    @field_validator("name", mode="before")
-    @classmethod
-    def validate_name(cls, value: Any) -> HostT:
-        """Validate the hostname."""
-        return HostT(hostname=value)
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -2199,19 +2223,19 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
         return Endpoint.Cnames
 
     @classmethod
-    def get_by_name(cls, name: HostT) -> CNAME:
+    def get_by_name(cls, name: HostName) -> CNAME:
         """Get a CNAME record by name.
 
         :param name: The name to search for.
         :returns: The CNAME record if found, None otherwise.
         """
-        data = get_item_by_key_value(Endpoint.Cnames, "name", name.hostname)
+        data = get_item_by_key_value(Endpoint.Cnames, "name", name)
         if not data:
             raise EntityNotFound(f"CNAME record for {name} not found.")
         return CNAME.model_validate(data)
 
     @classmethod
-    def get_by_host_and_name(cls, host: HostT | int, name: HostT) -> CNAME:
+    def get_by_host_and_name(cls, host: HostName | int, name: HostName) -> CNAME:
         """Get a CNAME record by host and name.
 
         :param host: The host to search for, either a hostname or an ID.
@@ -2219,20 +2243,20 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
         :returns: The CNAME record if found, None otherwise.
         """
         target_hostname = None
-        if isinstance(host, HostT):
+        if isinstance(host, HostName):
             hostobj = Host.get_by_any_means(host, inform_as_cname=False)
             if not hostobj:
-                raise EntityNotFound(f"Host with name {host.hostname} not found.")
+                raise EntityNotFound(f"Host with name {host} not found.")
 
             host = hostobj.id
-            target_hostname = hostobj.name.hostname
+            target_hostname = hostobj.name
         else:
             hostobj = Host.get_by_id(host)
             if not hostobj:
                 raise EntityNotFound(f"Host with ID {host} not found.")
-            target_hostname = hostobj.name.hostname
+            target_hostname = hostobj.name
 
-        results = cls.get_by_query({"host": str(host), "name": name.hostname})
+        results = cls.get_by_query({"host": str(host), "name": name})
 
         if not results or len(results) == 0:
             raise EntityNotFound(f"CNAME record for {name} not found for {target_hostname}.")
@@ -2639,7 +2663,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     """Model for an individual host."""
 
     id: int  # noqa: A003
-    name: HostT
+    name: HostName
     ipaddresses: list[IPAddress]
     cnames: list[CNAME] = []
     mxs: list[MX] = []
@@ -2656,12 +2680,6 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     zone: int | None = None
 
     history_resource: ClassVar[HistoryResource] = HistoryResource.Host
-
-    @field_validator("name", mode="before")
-    @classmethod
-    def validate_name(cls, value: Any) -> HostT:
-        """Validate the hostname."""
-        return HostT(hostname=value)
 
     @field_validator("bacnetid", mode="before")
     @classmethod
@@ -2730,7 +2748,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
     @classmethod
     def get_by_any_means_or_raise(
-        cls, identifier: str | HostT, inform_as_cname: bool = True, inform_as_ptr: bool = True
+        cls, identifier: str | HostName, inform_as_cname: bool = True, inform_as_ptr: bool = True
     ) -> Host:
         """Get a host by the given identifier or raise EntityNotFound.
 
@@ -2753,7 +2771,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
     @classmethod
     def get_by_any_means(
-        cls, identifier: str | HostT, inform_as_cname: bool = True, inform_as_ptr: bool = True
+        cls, identifier: HostName | str, inform_as_cname: bool = True, inform_as_ptr: bool = True
     ) -> Host | None:
         """Get a host by the given identifier.
 
@@ -2788,7 +2806,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: A Host object if the host was found, otherwise None.
         """
-        if not isinstance(identifier, HostT):
+        if not isinstance(identifier, HostName):
             if identifier.isdigit():
                 return Host.get_by_id(int(identifier))
 
@@ -2796,23 +2814,23 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 host = cls.get_by_ip_or_raise(ip, inform_as_ptr=inform_as_ptr)
                 return host
 
-            if mac := MACAddressField.parse(identifier):
+            if mac := MacAddress.parse(identifier):
                 return cls.get_by_mac_or_raise(mac)
 
             # Let us try to find the host by name...
-            identifier = HostT(hostname=identifier)
+            identifier = HostName.parse_or_raise(identifier)
 
-        if host := cls.get_by_field("name", identifier.hostname):
+        if host := cls.get_by_field("name", identifier):
             return host
 
-        cname = CNAME.get_by_field("name", identifier.hostname)
+        cname = CNAME.get_by_field("name", identifier)
         # If we found a CNAME, get the host it points to. We're not interested in the
         # CNAME itself.
         if cname is not None:
             host = Host.get_by_id(cname.host)
 
             if host and inform_as_cname:
-                OutputManager().add_line(f"{identifier.hostname} is a CNAME for {host.name}")
+                OutputManager().add_line(f"{identifier} is a CNAME for {host.name}")
 
         return host
 
@@ -2831,14 +2849,14 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         return op.status_code >= 200 and op.status_code < 300
 
-    def rename(self, new_name: HostT) -> Host:
+    def rename(self, new_name: HostName) -> Host:
         """Rename the host.
 
         :param new_name: The new name for the host.
 
         :returns: A new Host object fetched from the API with the updated name.
         """
-        return self.patch(fields={"name": new_name.hostname})
+        return self.patch(fields={"name": new_name})
 
     def set_comment(self, comment: str) -> Host:
         """Set the comment for the host.
@@ -2859,7 +2877,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """
         return self.patch(fields={"contact": contact})
 
-    def add_ip(self, ip: IP_AddressT, mac: MACAddressField | None = None) -> Host:
+    def add_ip(self, ip: IP_AddressT, mac: MacAddress | None = None) -> Host:
         """Add an IP address to the host.
 
         :param ip: The IP address to add. IPv4 or IPv6.
@@ -2868,7 +2886,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """
         params: QueryParams = {"ipaddress": str(ip), "host": str(self.id)}
         if mac:
-            params["macaddress"] = mac.address
+            params["macaddress"] = mac
 
         IPAddress.create(params=params)
         return self.refetch()
@@ -2880,17 +2898,15 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: True if the host has the IP address, False otherwise.
         """
-        return any([ip.ipaddress.address == arg_ip for ip in self.ipaddresses])
+        return any([ip.ipaddress == arg_ip for ip in self.ipaddresses])
 
-    def has_ip_with_mac(self, arg_mac: MACAddressField | str) -> IPAddress | None:
+    def has_ip_with_mac(self, arg_mac: MacAddress) -> IPAddress | None:
         """Check if the host has the given MAC address.
 
         :param mac: The MAC address to check for.
 
         :returns: The IP address object if found, None otherwise.
         """
-        if not isinstance(arg_mac, MACAddressField):
-            arg_mac = MACAddressField.validate(arg_mac)
         return next((ip for ip in self.ipaddresses if ip.macaddress == arg_mac), None)
 
     def ips_with_macaddresses(self) -> list[IPAddress]:
@@ -2955,7 +2971,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: The IP address object if found, None otherwise.
         """
-        return next((ip for ip in self.ipaddresses if ip.ipaddress.address == arg_ip), None)
+        return next((ip for ip in self.ipaddresses if ip.ipaddress == arg_ip), None)
 
     def get_ptr_override(self, ip: IP_AddressT) -> PTR_override | None:
         """Get the PTR override for the given IP address.
@@ -2975,7 +2991,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         return [ip for ip in self.ipaddresses if ip.is_ipv6()]
 
     def associate_mac_to_ip(
-        self, mac: MACAddressField | str, ip: IPAddressField | str, force: bool = False
+        self, mac: MacAddress, ip: IP_AddressT | str, force: bool = False
     ) -> Host:
         """Associate a MAC address to an IP address.
 
@@ -2984,14 +3000,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: A new Host object fetched from the API after updating the IP address.
         """
-        if isinstance(mac, str):
-            mac = MACAddressField.validate(mac)
-
         if isinstance(ip, str):
-            ip = IPAddressField.validate(ip)
+            ip = NetworkOrIP.parse_or_raise(ip, mode="ip")
 
         params: QueryParams = {
-            "macaddress": mac.address,
+            "macaddress": mac,
             "ordering": "ipaddress",
         }
 
@@ -3003,13 +3016,13 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if len(ipadresses) and not force:
             raise EntityOwnershipMismatch(
                 "mac {} already in use by: {}. Use force to add {} -> {} as well.".format(
-                    mac, ipadresses, ip.address, mac
+                    mac, ipadresses, ip, mac
                 )
             )
 
         ip_found_in_host = False
         for myip in self.ipaddresses:
-            if myip.ipaddress.address == ip.address:
+            if myip.ipaddress == ip:
                 myip.associate_mac(mac, force=force)
                 ip_found_in_host = True
 
@@ -3018,7 +3031,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         return self.refetch()
 
-    def disassociate_mac_from_ip(self, ip: IPAddressField | str) -> Host:
+    def disassociate_mac_from_ip(self, ip: IP_AddressT | str) -> Host:
         """Disassociate a MAC address from an IP address.
 
         Note: This method blindly disassociates the current MAC address
@@ -3029,11 +3042,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: A new Host object fetched from the API after updating the IP address.
         """
         if isinstance(ip, str):
-            ip = IPAddressField(address=ipaddress.ip_address(ip))
+            ip = NetworkOrIP.parse_or_raise(ip, mode="ip")
 
         ip_found_in_host = False
         for myip in self.ipaddresses:
-            if myip.ipaddress.address == ip.address:
+            if myip.ipaddress == ip:
                 myip.disassociate_mac()
                 ip_found_in_host = True
 
@@ -3254,15 +3267,15 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         roles = self.roles()
         manager = OutputManager()
         if not roles:
-            manager.add_line(f"Host {self.name!r} has no roles")
+            manager.add_line(f"Host {self.name} has no roles")
         else:
-            manager.add_line(f"Roles for {self.name!r}:")
+            manager.add_line(f"Roles for {self.name}:")
             for role in roles:
                 manager.add_line(f"  {role.name}")
 
     def __str__(self) -> str:
         """Return the host name as a string."""
-        return self.name.hostname
+        return self.name
 
     def __hash__(self):
         """Return a hash of the host."""
@@ -3327,7 +3340,7 @@ class HostList(FrozenModel):
 
     def hostnames(self) -> list[str]:
         """Return a list of hostnames."""
-        return [host.name.hostname for host in self.results]
+        return [host.name for host in self.results]
 
     def count(self):
         """Return the number of results."""

@@ -16,13 +16,13 @@ from __future__ import annotations
 import argparse
 import re
 
+from mreg_cli.api.fields import MacAddress
 from mreg_cli.api.models import (
     ForwardZone,
     Host,
     HostList,
-    HostT,
+    HostName,
     IPAddress,
-    MACAddressField,
     Network,
     NetworkOrIP,
 )
@@ -91,11 +91,11 @@ def add(args: argparse.Namespace) -> None:
 
     """
     network_or_ip: str = args.ip
-    hname = HostT(hostname=args.name)
-    macaddress = args.macaddress
+    hname = HostName.parse_or_raise(args.name)
+    macaddress: str | None = args.macaddress
 
     if macaddress is not None:
-        macaddress = MACAddressField.validate(macaddress)
+        macaddress = MacAddress.parse_or_raise(macaddress)
         ip_address = IPAddress.get_by_mac(macaddress)
 
         if ip_address:
@@ -105,7 +105,7 @@ def add(args: argparse.Namespace) -> None:
 
     host = Host.get_by_any_means(hname)
     if host:
-        if host.name.hostname != hname.hostname:
+        if host.name != hname:
             raise EntityOwnershipMismatch(f"{hname} is a CNAME pointing to {host.name}")
         else:
             raise EntityAlreadyExists(f"Host {hname} already exists.")
@@ -116,11 +116,11 @@ def add(args: argparse.Namespace) -> None:
     if zone and zone.is_delegated() and not args.force:
         raise ForceMissing(f"{hname} is in zone delegation {zone.name}, must force")
 
-    if "*" in hname.hostname and not args.force:
+    if "*" in hname and not args.force:
         raise ForceMissing("Wildcards must be forced.")
 
     data: JsonMapping = {
-        "name": hname.hostname,
+        "name": hname,
         "contact": args.contact or None,
         "comment": args.comment or None,
     }
@@ -279,7 +279,7 @@ def remove(args: argparse.Namespace) -> None:
             )
             for vlan in host_vlans:
                 vlan = host_vlans[vlan]
-                ip_strings = [str(ip.ipaddress.address) for ip in vlan]
+                ip_strings = [str(ip.ipaddress) for ip in vlan]
                 ip_strings.sort()
                 warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan})")
 
@@ -461,8 +461,12 @@ def rename(args: argparse.Namespace) -> None:
 
     :return: The updated Host or None
     """
-    old_host = Host.get_by_any_means_or_raise(args.old_name)
-    new_name = HostT(hostname=args.new_name)
+    old_name: str = args.old_name
+    new_name: str = args.new_name
+
+    old_host = Host.get_by_any_means_or_raise(old_name)
+    new_name = HostName.parse_or_raise(new_name)
+
     new_host = Host.get_by_any_means(new_name, inform_as_cname=True)
     if new_host:
         raise EntityAlreadyExists(f"host {new_host} already exists")
@@ -472,7 +476,7 @@ def rename(args: argparse.Namespace) -> None:
     if not zone and not args.force:
         raise ForceMissing(f"{new_name} isn't in a zone controlled by MREG, must force")
 
-    if "*" in new_name.hostname and not args.force:
+    if "*" in new_name and not args.force:
         raise ForceMissing("Wildcards must be forced.")
 
     new_host = old_host.rename(new_name)
@@ -545,5 +549,7 @@ def history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    hostname = HostT(hostname=args.name)
-    Host.output_history(hostname.hostname)
+    name: str = args.name
+
+    hostname = HostName.parse_or_raise(name)
+    Host.output_history(hostname)

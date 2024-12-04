@@ -189,7 +189,7 @@ def host_add(args: argparse.Namespace) -> None:
 
     for name in args.hosts:
         host = Host.get_by_any_means_or_raise(name)
-        fqname = host.name.hostname
+        fqname = host.name
         hostgroup.add_host(fqname)
         OutputManager().add_ok(f"Added host {fqname!r} to {args.group!r}")
 
@@ -213,7 +213,7 @@ def host_remove(args: argparse.Namespace) -> None:
     to_remove: set[str] = set()
     for name in args.hosts:
         host = Host.get_by_any_means_or_raise(name)
-        fqname = host.name.hostname
+        fqname = host.name
         if not hostgroup.has_host(fqname):
             raise EntityNotFound(f"Host {name!r} ({fqname}) not a member in {args.group!r}")
         to_remove.add(fqname)

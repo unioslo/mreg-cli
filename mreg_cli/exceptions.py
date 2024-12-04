@@ -9,12 +9,10 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import Any
 
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
-
 
 logger = logging.getLogger(__name__)
 

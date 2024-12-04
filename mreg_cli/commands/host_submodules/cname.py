@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.models import CNAME, ForwardZone, Host, HostT
+from mreg_cli.api.models import CNAME, ForwardZone, Host, HostName
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
@@ -37,18 +37,21 @@ def cname_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, alias, force)
     """
+    name: str = args.name
+    alias: str = args.alias
+
     # Get host info or raise exception
-    host = Host.get_by_any_means_or_raise(args.name)
-    alias = HostT(hostname=args.alias)
+    host = Host.get_by_any_means_or_raise(name)
+    alias = HostName.parse_or_raise(alias)
 
     alias_in_use = Host.get_by_any_means(alias, inform_as_cname=False)
     if alias_in_use:
         if alias_in_use.id == host.id:
             raise EntityAlreadyExists(f"The alias {alias} is already active for {host}.")
 
-        if alias_in_use.name.hostname != alias.hostname:
+        if alias_in_use.name != alias:
             raise EntityOwnershipMismatch(
-                f"The alias {alias} is already in use as a CNAME for {alias_in_use.name.hostname}."
+                f"The alias {alias} is already in use as a CNAME for {alias_in_use.name}."
             )
 
         # Catchall for any other case, should not be possible.
@@ -60,13 +63,13 @@ def cname_add(args: argparse.Namespace) -> None:
     if not zone:
         raise EntityNotFound(f"Could not find a zone for the alias {alias}.")
 
-    CNAME.create(params={"host": str(host.id), "name": alias.hostname})
+    CNAME.create(params={"host": str(host.id), "name": alias})
     cname = CNAME.get_by_host_and_name(host.name, alias)
 
     if cname:
-        OutputManager().add_ok(f"Added CNAME {cname.name} for {host.name.hostname}.")
+        OutputManager().add_ok(f"Added CNAME {cname.name} for {host.name}.")
     else:
-        raise CreateError(f"Failed to add CNAME {alias} for {host.name.hostname}.")
+        raise CreateError(f"Failed to add CNAME {alias} for {host.name}.")
 
 
 @command_registry.register_command(
@@ -83,14 +86,17 @@ def cname_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, alias)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
-    alias = HostT(hostname=args.alias)
+    name: str = args.name
+    alias: str = args.alias
 
-    alias_as_host = Host.get_by_field("name", alias.hostname)
+    host = Host.get_by_any_means_or_raise(name)
+    alias = HostName.parse_or_raise(alias)
+
+    alias_as_host = Host.get_by_field("name", alias)
     if alias_as_host:
         raise InputFailure(f"The alias {alias} is a host, did you mix up the arguments?")
 
-    cname = CNAME.get_by_field("name", alias.hostname)
+    cname = CNAME.get_by_field("name", alias)
     if not cname:
         raise EntityNotFound(f"No CNAME record found for {alias}.")
 
@@ -99,8 +105,8 @@ def cname_remove(args: argparse.Namespace) -> None:
         cname_host = Host.get_by_id(cname.host)
         if not cname_host:
             raise EntityNotFound(f"Could not find the host for the CNAME {alias}.")
-        actual = cname_host.name.hostname
-        desired = host.name.hostname
+        actual = cname_host.name
+        desired = host.name
         raise EntityOwnershipMismatch(
             f"The CNAME {cname.name} is associated with {actual}, NOT {desired}."
         )
@@ -125,11 +131,13 @@ def cname_replace(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (cname, host)
     """
-    cname = HostT(hostname=args.cname)
-    host = Host.get_by_any_means_or_raise(args.host)
+    cname: str = args.cname
+    host_arg: str = args.host
+
+    cname = HostName.parse_or_raise(cname)
+    host = Host.get_by_any_means_or_raise(host_arg)
 
     cname_obj = CNAME.get_by_name(cname)
-
     if not cname_obj:
         raise EntityNotFound(f"No CNAME record found for {cname}.")
 
@@ -139,9 +147,7 @@ def cname_replace(args: argparse.Namespace) -> None:
 
     updated_cname = cname_obj.patch({"host": host.id})
     if updated_cname:
-        OutputManager().add_ok(
-            f"Moved CNAME alias {cname}: {old_host.name.hostname} -> {host.name}."
-        )
+        OutputManager().add_ok(f"Moved CNAME alias {cname}: {old_host.name} -> {host.name}.")
     else:
         raise PatchError(f"Failed to move CNAME alias {cname}.")
 

@@ -5,8 +5,8 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.fields import IPAddressField
-from mreg_cli.api.models import Host, IPAddress
+from mreg_cli.api.fields import MacAddress
+from mreg_cli.api.models import Host, IPAddress, NetworkOrIP
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import EntityOwnershipMismatch, InputFailure
@@ -34,13 +34,10 @@ def ipaddress_from_ip_arg(arg: str) -> IPAddress | None:
     :raises InputFailure: If the IP address is valid but does not exist.
     :raises EntityOwnershipMismatch: If the IP address is in use by multiple hosts.
     """
-    if not IPAddressField.is_valid(arg):
+    if not (addr := NetworkOrIP.parse(arg, mode="ip")):
         return None
-    try:
-        addr = IPAddressField.validate(arg)
-    except InputFailure:
-        return None
-    ipobjs = IPAddress.get_by_ip(addr.address)
+
+    ipobjs = IPAddress.get_by_ip(addr)
     if not ipobjs:
         raise InputFailure(f"IP address {arg} does not exist.")
     elif len(ipobjs) > 1:
@@ -72,9 +69,10 @@ def assoc(args: argparse.Namespace) -> None:
     mac: str = args.mac
     force: bool = args.force
 
+    mac = MacAddress.parse_or_raise(mac)
     in_use = IPAddress.get_by_mac(mac)
     if in_use:
-        raise InputFailure(f"MAC {mac} is already in use by {in_use.ip()}.")
+        raise InputFailure(f"MAC {mac} is already in use by {in_use.ipaddress}.")
 
     ipaddress = ipaddress_from_ip_arg(name)
     if not ipaddress:
@@ -82,7 +80,7 @@ def assoc(args: argparse.Namespace) -> None:
         ipaddress = host.get_associatable_ip()
 
     ipaddress.associate_mac(mac, force=force)
-    OutputManager().add_ok(f"Associated mac address {mac} with ip {ipaddress.ip()}")
+    OutputManager().add_ok(f"Associated mac address {mac} with ip {ipaddress.ipaddress}")
 
 
 @command_registry.register_command(
@@ -130,5 +128,5 @@ def disassoc(args: argparse.Namespace) -> None:
 
     ipaddress.disassociate_mac()
     OutputManager().add_ok(
-        f"Disassociated mac address {ipaddress.macaddress} from ip {ipaddress.ip()}"
+        f"Disassociated mac address {ipaddress.macaddress} from ip {ipaddress.ipaddress}"
     )

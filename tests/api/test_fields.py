@@ -4,7 +4,7 @@ import pytest
 from inline_snapshot import snapshot
 from pydantic import BaseModel, ValidationError
 
-from mreg_cli.api.fields import MACAddressField, NameList
+from mreg_cli.api.fields import MacAddress, NameList
 from mreg_cli.exceptions import InputFailure
 
 MacAddresValidationFailure = pytest.mark.xfail(raises=InputFailure, strict=True)
@@ -45,10 +45,13 @@ MacAddresValidationFailure = pytest.mark.xfail(raises=InputFailure, strict=True)
         pytest.param("abcd.ef12.34", "", marks=MacAddresValidationFailure),
     ],
 )
-def test_mac_address_field(inp: str, expect: str) -> None:
+def test_mac_address_type(inp: str, expect: str) -> None:
     """Test the MAC address field."""
-    res = MACAddressField.validate(inp)
+    res = MacAddress.parse_or_raise(inp)
     assert str(res) == expect
+    # Narrow and broad type
+    assert isinstance(res, MacAddress)
+    assert isinstance(res, str)
 
 
 def test_name_list_basic():

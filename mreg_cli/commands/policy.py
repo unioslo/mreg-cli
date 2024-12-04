@@ -307,8 +307,8 @@ def host_add(args: argparse.Namespace) -> None:
     hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
 
     for host in hosts:
-        role.add_host(host.name.hostname)
-        OutputManager().add_ok(f"Added host {host.name!r} to role {role_name!r}")
+        role.add_host(host.name)
+        OutputManager().add_ok(f"Added host {host.name} to role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -340,7 +340,7 @@ def host_copy(args: argparse.Namespace) -> None:
 
         # Check what roles need to be added
         for role in source_roles - destination_roles:
-            role.add_host(destination.name.hostname)
+            role.add_host(destination.name)
             OutputManager().add_line(f"    + {role.name}")
 
 
@@ -385,7 +385,7 @@ def host_remove(args: argparse.Namespace) -> None:
     hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
 
     for host in hosts:
-        role.remove_host(host.name.hostname)
+        role.remove_host(host.name)
         OutputManager().add_ok(f"Removed host {host.name!r} from role {role_name!r}")
 
 
