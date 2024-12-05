@@ -16,12 +16,11 @@ from __future__ import annotations
 import argparse
 import re
 
-from mreg_cli.api.fields import MacAddress
+from mreg_cli.api.fields import HostName, MacAddress
 from mreg_cli.api.models import (
     ForwardZone,
     Host,
     HostList,
-    HostName,
     IPAddress,
     Network,
     NetworkOrIP,

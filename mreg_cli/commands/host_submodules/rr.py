@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 
+from mreg_cli.api.fields import HostName
 from mreg_cli.api.models import (
     MX,
     NAPTR,
@@ -49,7 +50,6 @@ from mreg_cli.api.models import (
     ForwardZone,
     HInfo,
     Host,
-    HostName,
     Location,
     Network,
     NetworkOrIP,

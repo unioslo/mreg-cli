@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ipaddress
 import logging
-import re
 from datetime import date, datetime
 from functools import cached_property
 from typing import Any, Callable, ClassVar, Iterable, List, Literal, Self, cast, overload
@@ -14,20 +13,17 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    GetCoreSchemaHandler,
     IPvAnyAddress,
     computed_field,
     field_validator,
 )
 from pydantic import ValidationError as PydanticValidationError
-from pydantic_core import core_schema
 from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.api.fields import MacAddress, NameList
+from mreg_cli.api.fields import HostName, MacAddress, NameList
 from mreg_cli.api.history import HistoryItem, HistoryResource
-from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     CreateError,
     DeleteError,
@@ -48,7 +44,7 @@ from mreg_cli.exceptions import (
     ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams, get_type_adapter
+from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -270,94 +266,6 @@ class NetworkOrIP(BaseModel):
     def is_network(self) -> bool:
         """Return True if the value is a network."""
         return self.is_ipv4_network() or self.is_ipv6_network()
-
-
-class HostName(str):
-    """Hostname string type."""
-
-    @classmethod
-    def parse(cls, obj: Any) -> HostName | None:
-        """Parse a MAC address from a string. Returns None if the MAC address is invalid.
-
-        :param obj: The object to parse.
-        :returns: The MAC address as a string or None if it is invalid.
-        """
-        try:
-            return cls.parse_or_raise(obj)
-        except InputFailure:
-            return None
-
-    @classmethod
-    def parse_or_raise(cls, obj: Any) -> HostName:
-        """Parse a hostname from a string. Returns the MAC address as a string.
-
-        :param obj: The object to parse.
-        :returns: The hostname as a string.
-        :raises ValueError: If the object is not a valid hostname.
-        """
-        try:
-            adapter = get_type_adapter(cls)
-            return cls(adapter.validate_python(obj))
-        except ValueError as e:
-            raise InputFailure(f"Invalid MAC address '{obj}'") from e
-
-    @staticmethod
-    def validate_hostname(value: str) -> str:
-        """Validate the hostname."""
-        value = value.lower()
-
-        if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", value) is None:
-            raise InputFailure(f"Invalid input for hostname: {value}")
-            # raise PydanticCustomError(
-            #     "hostname_format",
-            #     "Invalid input for hostname: {value}",
-            #     {"value": value},
-            # )
-
-        # Assume user is happy with domain, but strip the dot.
-        if value.endswith("."):
-            return value[:-1]
-
-        # If a dot in name, assume long name.
-        if "." in value:
-            return value
-
-        config = MregCliConfig()
-        default_domain = config.get("domain")
-        # Append domain name if in config and it does not end with it
-        if default_domain and not value.endswith(default_domain):
-            return f"{value}.{default_domain}"
-        return value
-
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls, source: type[Any], handler: GetCoreSchemaHandler
-    ) -> core_schema.CoreSchema:
-        """Return a Pydantic CoreSchema with the hostname validation.
-
-        :param source: The source type to be converted.
-        :param handler: The handler to get the CoreSchema.
-        :returns: A Pydantic CoreSchema with the hostname validation.
-
-        """
-        return core_schema.with_info_before_validator_function(
-            cls._validate,
-            core_schema.str_schema(),
-        )
-
-    @classmethod
-    def _validate(cls, __input_value: str, _: Any) -> str:
-        """Validate a hostname from the provided str value.
-
-        Args:
-            __input_value: The str value to be validated.
-            _: The source type to be converted.
-
-        Returns:
-            str: The parsed hostname.
-
-        """
-        return cls.validate_hostname(__input_value)
 
 
 class WithHost(BaseModel):

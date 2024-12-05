@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.models import CNAME, ForwardZone, Host, HostName
+from mreg_cli.api.fields import HostName
+from mreg_cli.api.models import CNAME, ForwardZone, Host
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,

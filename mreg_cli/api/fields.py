@@ -3,15 +3,106 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Annotated, Any
 
-from pydantic import AfterValidator, BeforeValidator
+from pydantic import AfterValidator, BeforeValidator, GetCoreSchemaHandler
+from pydantic_core import core_schema
 from pydantic_extra_types.mac_address import MacAddress as PydanticMacAddress
 
+from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import InputFailure
 from mreg_cli.types import get_type_adapter
 
 logger = logging.getLogger(__name__)
+
+
+class HostName(str):
+    """Hostname string type."""
+
+    @classmethod
+    def parse(cls, obj: Any) -> HostName | None:
+        """Parse a MAC address from a string. Returns None if the MAC address is invalid.
+
+        :param obj: The object to parse.
+        :returns: The MAC address as a string or None if it is invalid.
+        """
+        try:
+            return cls.parse_or_raise(obj)
+        except InputFailure:
+            return None
+
+    @classmethod
+    def parse_or_raise(cls, obj: Any) -> HostName:
+        """Parse a hostname from a string. Returns the MAC address as a string.
+
+        :param obj: The object to parse.
+        :returns: The hostname as a string.
+        :raises ValueError: If the object is not a valid hostname.
+        """
+        try:
+            adapter = get_type_adapter(cls)
+            return cls(adapter.validate_python(obj))
+        except ValueError as e:
+            raise InputFailure(f"Invalid MAC address '{obj}'") from e
+
+    @staticmethod
+    def validate_hostname(value: str) -> str:
+        """Validate the hostname."""
+        value = value.lower()
+
+        if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", value) is None:
+            raise InputFailure(f"Invalid input for hostname: {value}")
+            # raise PydanticCustomError(
+            #     "hostname_format",
+            #     "Invalid input for hostname: {value}",
+            #     {"value": value},
+            # )
+
+        # Assume user is happy with domain, but strip the dot.
+        if value.endswith("."):
+            return value[:-1]
+
+        # If a dot in name, assume long name.
+        if "." in value:
+            return value
+
+        config = MregCliConfig()
+        default_domain = config.get("domain")
+        # Append domain name if in config and it does not end with it
+        if default_domain and not value.endswith(default_domain):
+            return f"{value}.{default_domain}"
+        return value
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source: type[Any], handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        """Return a Pydantic CoreSchema with the hostname validation.
+
+        :param source: The source type to be converted.
+        :param handler: The handler to get the CoreSchema.
+        :returns: A Pydantic CoreSchema with the hostname validation.
+
+        """
+        return core_schema.with_info_before_validator_function(
+            cls._validate,
+            core_schema.str_schema(),
+        )
+
+    @classmethod
+    def _validate(cls, __input_value: str, _: Any) -> str:
+        """Validate a hostname from the provided str value.
+
+        Args:
+            __input_value: The str value to be validated.
+            _: The source type to be converted.
+
+        Returns:
+            str: The parsed hostname.
+
+        """
+        return cls.validate_hostname(__input_value)
 
 
 class MacAddress(PydanticMacAddress):
