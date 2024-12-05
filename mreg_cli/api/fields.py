@@ -39,7 +39,12 @@ class MacAddress(PydanticMacAddress):
         """
         try:
             adapter = get_type_adapter(cls)
-            return adapter.validate_python(obj)
+            # Convert regular string to MacAddress string after validation.
+            # The pydantic validator returns a regular string even though the
+            # Pydantic MacAddress type is a distinct type that subclasses str.
+            # By converting the string to a MacAddress string, we can distinguish
+            # between a valid MAC address and a valid string at runtime if needed.
+            return cls(adapter.validate_python(obj))
         except ValueError as e:
             raise InputFailure(f"Invalid MAC address '{obj}'") from e
 

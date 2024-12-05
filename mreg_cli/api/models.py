@@ -297,7 +297,7 @@ class HostName(str):
         """
         try:
             adapter = get_type_adapter(cls)
-            return adapter.validate_python(obj)
+            return cls(adapter.validate_python(obj))
         except ValueError as e:
             raise InputFailure(f"Invalid MAC address '{obj}'") from e
 
@@ -335,12 +335,9 @@ class HostName(str):
     ) -> core_schema.CoreSchema:
         """Return a Pydantic CoreSchema with the hostname validation.
 
-        Args:
-            source: The source type to be converted.
-            handler: The handler to get the CoreSchema.
-
-        Returns:
-            A Pydantic CoreSchema with the hostname validation.
+        :param source: The source type to be converted.
+        :param handler: The handler to get the CoreSchema.
+        :returns: A Pydantic CoreSchema with the hostname validation.
 
         """
         return core_schema.with_info_before_validator_function(
