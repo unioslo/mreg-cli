@@ -2178,9 +2178,9 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
         :param padding: Number of spaces for left-padding the output.
         """
         if host:
-            hostname = host.name.hostname
+            hostname = host.name
         elif not host and (actual_host := self.resolve_host()):
-            hostname = actual_host.name.hostname
+            hostname = actual_host.name
         else:
             hostname = "<Not found>"
         OutputManager().add_line(f"{'Cname:':<{padding}}{self.name} -> {hostname}")
