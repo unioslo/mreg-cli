@@ -13,7 +13,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    IPvAnyAddress,
     computed_field,
     field_validator,
 )
@@ -1557,8 +1556,8 @@ class ExcludedRange(FrozenModelWithTimestamps):
 
     id: int  # noqa: A003
     network: int
-    start_ip: IPvAnyAddress
-    end_ip: IPvAnyAddress
+    start_ip: IP_AddressT
+    end_ip: IP_AddressT
 
     def excluded_ips(self) -> int:
         """Return the number of IP addresses in the excluded range."""
@@ -1965,7 +1964,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
     id: int  # noqa: A003
     macaddress: MacAddress | None = None
-    ipaddress: IPvAnyAddress
+    ipaddress: IP_AddressT
 
     @field_validator("macaddress", mode="before")
     @classmethod
@@ -1973,7 +1972,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         """Create macaddress or convert empty strings to None.
 
         The API can return an empty string for this field, which fails to validate
-        as a MAC address.
+        as a MAC address. Therefore, treat empty strings as None.
         """
         if v:
             return v
