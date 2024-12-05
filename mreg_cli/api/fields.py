@@ -1,4 +1,9 @@
-"""Fields for models of the API."""
+"""Custom field types for Pydantic models.
+
+The types validate to basic types like str, int, etc., but with additional
+validation added to them. The types are used in Pydantic models for consistent
+validation of common fields such as hostnames, MAC addresses, etc.
+"""
 
 from __future__ import annotations
 
@@ -53,11 +58,6 @@ class HostName(str):
 
         if re.search(r"^(\*\.)?([a-z0-9_][a-z0-9\-]*\.?)+$", value) is None:
             raise InputFailure(f"Invalid input for hostname: {value}")
-            # raise PydanticCustomError(
-            #     "hostname_format",
-            #     "Invalid input for hostname: {value}",
-            #     {"value": value},
-            # )
 
         # Assume user is happy with domain, but strip the dot.
         if value.endswith("."):
@@ -130,11 +130,6 @@ class MacAddress(PydanticMacAddress):
         """
         try:
             adapter = get_type_adapter(cls)
-            # Convert regular string to MacAddress string after validation.
-            # The pydantic validator returns a regular string even though the
-            # Pydantic MacAddress type is a distinct type that subclasses str.
-            # By converting the string to a MacAddress string, we can distinguish
-            # between a valid MAC address and a valid string at runtime if needed.
             return cls(adapter.validate_python(obj))
         except ValueError as e:
             raise InputFailure(f"Invalid MAC address '{obj}'") from e

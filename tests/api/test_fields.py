@@ -14,6 +14,7 @@ from mreg_cli.exceptions import InputFailure
         "example.com",
         "sub.domain.com",
         "localhost",
+        "localhost.",
         "my-host-123.com",
         "123-start-with-number.com",
         "singlelabel",
@@ -34,7 +35,22 @@ from mreg_cli.exceptions import InputFailure
     ],
 )
 def test_valid_hostname(hostname: str) -> None:
-    assert HostName.parse_or_raise(hostname) == hostname
+    res = HostName.parse_or_raise(hostname)
+    assert res
+
+    # Narrow and broad type when validated directly
+    assert isinstance(res, HostName)
+    assert isinstance(res, str)
+
+    # When used as a Pydantic field type, the field validates to str:
+    class TestModel(BaseModel):
+        name: HostName
+
+    m = TestModel(name=hostname)
+    assert m.name == res  # Identical value to standalone validation
+    assert isinstance(m.name, str)
+    assert not isinstance(m.name, HostName)  # Core schema coerces this to str
+    assert type(m.name) != type(res)  # Different types
 
 
 @pytest.mark.parametrize(
@@ -64,13 +80,6 @@ def test_valid_hostname(hostname: str) -> None:
             "*.example-.com",
             marks=pytest.mark.xfail(
                 reason="ends with '-'",
-                strict=True,
-            ),
-        ),
-        pytest.param(
-            "localhost.",
-            marks=pytest.mark.xfail(
-                reason="ends with '.'",
                 strict=True,
             ),
         ),
@@ -156,6 +165,15 @@ def test_mac_address_type(inp: str, expect: str) -> None:
     # Narrow and broad type
     assert isinstance(res, MacAddress)
     assert isinstance(res, str)
+
+    # When used as a Pydantic field type, the field validates to str
+    class TestModel(BaseModel):
+        mac: MacAddress
+
+    m = TestModel(mac=inp)
+    assert m.mac == expect
+    assert isinstance(m.mac, str)
+    assert not isinstance(m.mac, MacAddress)  # Core schema coerces this to str
 
 
 def test_name_list_basic():
