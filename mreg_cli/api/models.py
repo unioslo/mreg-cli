@@ -2148,7 +2148,7 @@ class CNAME(FrozenModelWithTimestamps, WithHost, WithZone, WithTTL, APIMixin):
         :returns: The CNAME record if found, None otherwise.
         """
         target_hostname = None
-        if isinstance(host, HostName):
+        if isinstance(host, str):
             hostobj = Host.get_by_any_means(host, inform_as_cname=False)
             if not hostobj:
                 raise EntityNotFound(f"Host with name {host} not found.")
