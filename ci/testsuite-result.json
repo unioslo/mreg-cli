@@ -17441,7 +17441,7 @@
     "command_filter_negate": false,
     "command_issued": "policy host_remove fruit foo",
     "ok": [
-      "Removed host foo.example.org from role 'fruit'"
+      "Removed host 'foo.example.org' from role 'fruit'"
     ],
     "warning": [],
     "error": [],
