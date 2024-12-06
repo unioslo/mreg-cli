@@ -106,10 +106,8 @@ def disassoc(args: argparse.Namespace) -> None:
     ipaddress = ipaddress_from_ip_arg(name)
     if not ipaddress:
         host = Host.get_by_any_means_or_raise(name)
-        try:
-            ipaddress = host.has_ip_with_mac(name)
-        except ValueError:
-            pass
+        if mac := MacAddress.parse(name):
+            ipaddress = host.has_ip_with_mac(mac)
 
         if not ipaddress:
             ips_with_mac = host.ips_with_macaddresses()
