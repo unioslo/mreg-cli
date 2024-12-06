@@ -52,7 +52,7 @@ def test_validation_error_get_host(httpserver: HTTPServer) -> None:
     assert exc_info.value.error_count() == snapshot(1)
     assert [repr(err) for err in exc_info.value.errors(include_url=False)] == snapshot(
         [
-            "{'type': 'value_error', 'loc': ('name', 'hostname'), 'msg': 'Value error, Invalid input for hostname: _.--host123_example.com', 'input': '_.--host123_example.com', 'ctx': {'error': InputFailure('Invalid input for hostname: _.--host123_example.com')}}"
+            "{'type': 'value_error', 'loc': ('name',), 'msg': 'Value error, Invalid input for hostname: _.--host123_example.com', 'input': '_.--host123_example.com', 'ctx': {'error': InputFailure('Invalid input for hostname: _.--host123_example.com')}}"
         ]
     )
 
@@ -65,7 +65,7 @@ def test_validation_error_get_host(httpserver: HTTPServer) -> None:
 Failed to validate Host response from GET http://localhost:12345/hosts/foobar
   Input: _.--host123_example.com
   Errors:
-    Field: name, hostname
+    Field: name
     Reason: Value error, Invalid input for hostname: _.--host123_example.com\
 """
     )
