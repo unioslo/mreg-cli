@@ -50,13 +50,13 @@ def bacnetid_add(args: argparse.Namespace) -> None:
             f"BACnet ID {existing.id} is already in use by {existing.hostname}."
         )
 
-    BacnetID.create(params={"hostname": host.name.hostname, "id": args.id})
+    BacnetID.create(params={"hostname": host.name, "id": args.id})
 
     validator = BacnetID.get(args.id)
-    if validator and validator.hostname == host.name.hostname:
+    if validator and validator.hostname == host.name:
         OutputManager().add_ok(f"Assigned BACnet ID {validator.id} to {validator.hostname}.")
     else:
-        raise CreateError(f"Failed to assign BACnet ID {args.id} to {host.name.hostname}.")
+        raise CreateError(f"Failed to assign BACnet ID {args.id} to {host.name}.")
 
 
 @command_registry.register_command(

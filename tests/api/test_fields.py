@@ -4,10 +4,123 @@ import pytest
 from inline_snapshot import snapshot
 from pydantic import BaseModel, ValidationError
 
-from mreg_cli.api.fields import MACAddressField, NameList
+from mreg_cli.api.fields import HostName, MacAddress, NameList
 from mreg_cli.exceptions import InputFailure
 
-MacAddresValidationFailure = pytest.mark.xfail(raises=InputFailure, strict=True)
+
+@pytest.mark.parametrize(
+    "hostname",
+    [
+        "example.com",
+        "sub.domain.com",
+        "localhost",
+        "localhost.",
+        "my-host-123.com",
+        "123-start-with-number.com",
+        "singlelabel",
+        "sub.sub2.sub3.domain.com",
+        "_underscore.hostname.com",
+        "host-name-with-dashes.com",
+        "multi.label.domain.co.uk",
+        "*.example.com",
+        "*.sub.domain.com",
+        "*.localhost",
+        "*.my-host-123.com",
+        "*.123-start-with-number.com",
+        "*.singlelabel",
+        "*.sub.sub2.sub3.domain.com",
+        "*.underscore.hostname.com",
+        "*.host-name-with-dashes.com",
+        "*.multi.label.domain.co.uk",
+    ],
+)
+def test_valid_hostname(hostname: str) -> None:
+    res = HostName.parse_or_raise(hostname)
+    assert res
+
+    # Narrow and broad type when validated directly
+    assert isinstance(res, HostName)
+    assert isinstance(res, str)
+
+    # When used as a Pydantic field type, the field validates to str:
+    class TestModel(BaseModel):
+        name: HostName
+
+    m = TestModel(name=hostname)
+    assert m.name == res  # Identical value to standalone validation
+    assert isinstance(m.name, str)
+    assert not isinstance(m.name, HostName)  # Core schema coerces this to str
+    assert type(m.name) != type(res)  # Different types
+
+
+@pytest.mark.parametrize(
+    "hostname",
+    [
+        "-example.com",
+        "sub..domain.com",
+        ".singlelabel",
+        "multi..label.domain.co.uk",
+        "*.sub.-domain.com",
+        "localhost*",
+        "host name with spaces.com",
+        "example.com/net",
+        "*.sub..domain.com",
+        "host>name.com",
+        "example.com#section",
+        "123&456.com",
+        # TODO: Make these invalid names fail validation:
+        pytest.param(
+            "example-.com",
+            marks=pytest.mark.xfail(
+                reason="ends with '-'",
+                strict=True,
+            ),
+        ),
+        pytest.param(
+            "*.example-.com",
+            marks=pytest.mark.xfail(
+                reason="ends with '-'",
+                strict=True,
+            ),
+        ),
+        pytest.param(
+            "host--name-with-dashes.com",
+            marks=pytest.mark.xfail(
+                reason="double '-'",
+                strict=True,
+            ),
+        ),
+        pytest.param(
+            "_underscore_.hostname.com",
+            marks=pytest.mark.xfail(
+                reason="Ends with '_'",
+                strict=True,
+            ),
+        ),
+        pytest.param(
+            "my_host_123.com",
+            marks=pytest.mark.xfail(
+                reason="Underscores between words",
+                strict=True,
+            ),
+        ),
+        pytest.param(
+            "123.start-with-number.com",
+            marks=pytest.mark.xfail(
+                reason="Starts with number",
+                strict=True,
+            ),
+        ),
+    ],
+)
+def test_invalid_hostname(hostname: str) -> None:
+    with pytest.raises(InputFailure):
+        HostName.parse_or_raise(hostname)
+
+    assert HostName.parse(hostname) is None
+
+
+MacAddressValidationFailure = pytest.mark.xfail(raises=InputFailure, strict=True)
 
 
 @pytest.mark.parametrize(
@@ -32,23 +145,35 @@ MacAddresValidationFailure = pytest.mark.xfail(raises=InputFailure, strict=True)
         ("a1b2.c3d4.e5f6", "a1:b2:c3:d4:e5:f6"),
         ("Ab12.cD34.eF56", "ab:12:cd:34:ef:56"),
         # Invalid mac addresses
-        pytest.param("00:00:00:00:00:00:00", "", marks=MacAddresValidationFailure),
-        pytest.param("00:00:00:00:00", "", marks=MacAddresValidationFailure),
-        pytest.param("00:00:00:00:00:0", "", marks=MacAddresValidationFailure),
-        pytest.param("00:00:00:00:00:0g", "", marks=MacAddresValidationFailure),
-        pytest.param("00-00-00-00-00-00:00", "", marks=MacAddresValidationFailure),
-        pytest.param("00-00-00-00-00", "", marks=MacAddresValidationFailure),
-        pytest.param("00-00-00-00-00-0", "", marks=MacAddresValidationFailure),
-        pytest.param("00-00-00-00-00-0g", "", marks=MacAddresValidationFailure),
-        pytest.param("ab:cd:ef:12:34", "", marks=MacAddresValidationFailure),
-        pytest.param("ab-cd-ef-12-34", "", marks=MacAddresValidationFailure),
-        pytest.param("abcd.ef12.34", "", marks=MacAddresValidationFailure),
+        pytest.param("00:00:00:00:00:00:00", "", marks=MacAddressValidationFailure),
+        pytest.param("00:00:00:00:00", "", marks=MacAddressValidationFailure),
+        pytest.param("00:00:00:00:00:0", "", marks=MacAddressValidationFailure),
+        pytest.param("00:00:00:00:00:0g", "", marks=MacAddressValidationFailure),
+        pytest.param("00-00-00-00-00-00:00", "", marks=MacAddressValidationFailure),
+        pytest.param("00-00-00-00-00", "", marks=MacAddressValidationFailure),
+        pytest.param("00-00-00-00-00-0", "", marks=MacAddressValidationFailure),
+        pytest.param("00-00-00-00-00-0g", "", marks=MacAddressValidationFailure),
+        pytest.param("ab:cd:ef:12:34", "", marks=MacAddressValidationFailure),
+        pytest.param("ab-cd-ef-12-34", "", marks=MacAddressValidationFailure),
+        pytest.param("abcd.ef12.34", "", marks=MacAddressValidationFailure),
     ],
 )
-def test_mac_address_field(inp: str, expect: str) -> None:
+def test_mac_address_type(inp: str, expect: str) -> None:
     """Test the MAC address field."""
-    res = MACAddressField.validate(inp)
+    res = MacAddress.parse_or_raise(inp)
     assert str(res) == expect
+    # Narrow and broad type
+    assert isinstance(res, MacAddress)
+    assert isinstance(res, str)
+
+    # When used as a Pydantic field type, the field validates to str
+    class TestModel(BaseModel):
+        mac: MacAddress
+
+    m = TestModel(mac=inp)
+    assert m.mac == expect
+    assert isinstance(m.mac, str)
+    assert not isinstance(m.mac, MacAddress)  # Core schema coerces this to str
 
 
 def test_name_list_basic():

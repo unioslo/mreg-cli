@@ -6,6 +6,7 @@ import argparse
 import ipaddress
 from collections.abc import Callable
 from enum import StrEnum
+from functools import lru_cache
 from typing import (
     Annotated,
     Any,
@@ -21,6 +22,7 @@ from typing import (
 )
 
 from pydantic import (
+    TypeAdapter,
     ValidationError,
     ValidationInfo,
     ValidatorFunctionWrapHandler,
@@ -158,3 +160,17 @@ class LogLevel(StrEnum):
     def choices(cls) -> list[str]:
         """Return a list of all log levels as strings."""
         return [str(c) for c in list(cls)]
+
+
+T = TypeVar("T")
+
+
+@lru_cache(maxsize=100)
+def get_type_adapter(t: type[T]) -> TypeAdapter[T]:
+    """Get the type adapter for a given type.
+
+    :param t: The type to get the adapter for.
+    :returns: The type adapter.
+
+    """
+    return TypeAdapter(t)

@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.fields import IPAddressField
 from mreg_cli.api.models import Network, NetworkOrIP
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -188,8 +187,8 @@ def find(args: argparse.Namespace) -> None:
     args_dict = vars(args)
 
     if ip_arg := args_dict.get("ip"):
-        addr = IPAddressField(address=ip_arg)
-        networks = [Network.get_by_ip_or_raise(addr.address)]
+        addr = NetworkOrIP.parse_or_raise(ip_arg, mode="ip")
+        networks = [Network.get_by_ip_or_raise(addr)]
     else:
         params: QueryParams = {}
         param_names = [

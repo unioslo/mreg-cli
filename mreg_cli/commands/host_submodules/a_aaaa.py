@@ -17,7 +17,8 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.models import Host, HostList, IPAddress, MACAddressField, Network, NetworkOrIP
+from mreg_cli.api.fields import MacAddress
+from mreg_cli.api.models import Host, HostList, IPAddress, Network, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     DeleteError,
@@ -182,7 +183,7 @@ def _add_ip(
 
     mac = None
     if args.macaddress:
-        mac = MACAddressField.validate(args.macaddress)
+        mac = MacAddress.parse_or_raise(args.macaddress)
 
     if not args.force:
         _bail_if_ip_in_use_and_not_force(ipaddr)

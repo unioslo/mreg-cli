@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import logging
 from typing import Any
 
 from mreg_cli.__about__ import __version__ as mreg_cli_version
