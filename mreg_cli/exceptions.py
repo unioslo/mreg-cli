@@ -178,6 +178,13 @@ class ValidationError(CliError):
         err_msg = f"{msg}\n  Input: {inp}\n  Errors:\n" + "\n\n".join(errors)
         return cls(err_msg, e)
 
+    def log(self):
+        """Log the exception with traceback."""
+        from mreg_cli.outputmanager import OutputManager
+
+        logger.exception(str(self), stack_info=True, exc_info=self)
+        OutputManager().add_error(str(self))
+
 
 class FileError(CliError):
     """Error class for file errors."""

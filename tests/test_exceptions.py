@@ -71,7 +71,7 @@ Failed to validate Host response from GET http://localhost:12345/hosts/foobar
     )
 
 
-def test_validation_error_no_request() -> None:
+def test_validation_error_no_request(caplog, capsys) -> None:
     """Test a validation error that did not originate from an API request."""
     with pytest.raises(PydanticValidationError) as exc_info:
         Host.model_validate({"name": "test"})  # Missing required fields
@@ -111,5 +111,65 @@ Failed to validate Host
 
     Field: comment
     Reason: Field required\
+"""
+    )
+
+    # Call method and check output
+    validationerror.print_and_log()
+
+    assert caplog.record_tuples == snapshot(
+        [
+            (
+                "mreg_cli.exceptions",
+                40,
+                """\
+Failed to validate Host
+  Input: {'name': 'test'}
+  Errors:
+    Field: created_at
+    Reason: Field required
+
+    Field: updated_at
+    Reason: Field required
+
+    Field: id
+    Reason: Field required
+
+    Field: ipaddresses
+    Reason: Field required
+
+    Field: contact
+    Reason: Field required
+
+    Field: comment
+    Reason: Field required\
+""",
+            )
+        ]
+    )
+
+    out, err = capsys.readouterr()
+    assert out == snapshot(
+        """\
+ERROR: Failed to validate Host\r
+  Input: {'name': 'test'}\r
+  Errors:\r
+    Field: created_at\r
+    Reason: Field required\r
+\r
+    Field: updated_at\r
+    Reason: Field required\r
+\r
+    Field: id\r
+    Reason: Field required\r
+\r
+    Field: ipaddresses\r
+    Reason: Field required\r
+\r
+    Field: contact\r
+    Reason: Field required\r
+\r
+    Field: comment\r
+    Reason: Field required\r
 """
     )
