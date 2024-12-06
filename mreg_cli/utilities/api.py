@@ -11,6 +11,7 @@ import logging
 import os
 import re
 import sys
+from contextvars import ContextVar
 from typing import Any, Literal, NoReturn, TypeVar, get_origin, overload
 from urllib.parse import urljoin
 from uuid import uuid4
@@ -44,6 +45,10 @@ HTTP_TIMEOUT = 20
 T = TypeVar("T")
 
 JsonMappingValidator = TypeAdapter(JsonMapping)
+
+# Thread-local context variables for storing the last request URL and method.
+last_request_url: ContextVar[str | None] = ContextVar("last_request_url", default=None)
+last_request_method: ContextVar[str | None] = ContextVar("last_request_method", default=None)
 
 
 def error(msg: str | Exception, code: int = os.EX_UNAVAILABLE) -> NoReturn:
@@ -271,6 +276,9 @@ def _request_wrapper(
         json=data or None,
         timeout=HTTP_TIMEOUT,
     )
+
+    last_request_url.set(logurl)
+    last_request_method.set(operation_type)
 
     request_id = result.headers.get("X-Request-Id", "?")
     correlation_id = result.headers.get("X-Correlation-ID", "?")

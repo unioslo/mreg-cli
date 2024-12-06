@@ -7,6 +7,7 @@ import pytest
 from pytest_httpserver import HTTPServer
 
 from mreg_cli.config import MregCliConfig
+from mreg_cli.utilities.api import last_request_method, last_request_url
 
 
 @pytest.fixture(autouse=True)
@@ -53,3 +54,12 @@ def empty_config() -> Iterator[MregCliConfig]:
     conf._config_env = {}
     conf._config_file = {}
     yield conf
+
+
+@pytest.fixture(autouse=True)
+def reset_context_vars() -> Iterator[None]:
+    """Reset all context variables after each test."""
+    yield
+
+    last_request_method.set(None)
+    last_request_url.set(None)
