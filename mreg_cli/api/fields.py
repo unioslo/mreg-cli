@@ -32,10 +32,10 @@ class HostName(str):
 
     @classmethod
     def parse(cls, obj: Any) -> HostName | None:
-        """Parse a MAC address from a string. Returns None if the MAC address is invalid.
+        """Parse a hostname from a string. Returns None if the hostname is invalid.
 
         :param obj: The object to parse.
-        :returns: The MAC address as a string or None if it is invalid.
+        :returns: The hostname as a string or None if it is invalid.
         """
         try:
             return cls.parse_or_raise(obj)
@@ -44,7 +44,7 @@ class HostName(str):
 
     @classmethod
     def parse_or_raise(cls, obj: Any) -> HostName:
-        """Parse a hostname from a string. Returns the MAC address as a string.
+        """Parse a hostname from a string. Returns the hostname as a string.
 
         :param obj: The object to parse.
         :returns: The hostname as a string.
@@ -54,7 +54,7 @@ class HostName(str):
             adapter = get_type_adapter(cls)
             return cls(adapter.validate_python(obj))
         except ValueError as e:
-            raise InputFailure(f"Invalid MAC address '{obj}'") from e
+            raise InputFailure(f"Invalid hostname '{obj}'") from e
 
     @staticmethod
     def validate_hostname(value: str) -> str:
