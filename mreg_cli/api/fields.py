@@ -3,6 +3,11 @@
 The types validate to basic types like str, int, etc., but with additional
 validation added to them. The types are used in Pydantic models for consistent
 validation of common fields such as hostnames, MAC addresses, etc.
+
+Warning:
+Values constructed from these types should NOT be checked at runtime with isinstance()!
+Pydantic will always coerce these types to their schema types (str, int, etc.).
+
 """
 
 from __future__ import annotations
