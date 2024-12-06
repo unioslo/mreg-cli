@@ -2675,7 +2675,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
     @classmethod
     def get_by_any_means(
-        cls, identifier: HostName | str, inform_as_cname: bool = True, inform_as_ptr: bool = True
+        cls, identifier: str, inform_as_cname: bool = True, inform_as_ptr: bool = True
     ) -> Host | None:
         """Get a host by the given identifier.
 
@@ -2710,19 +2710,18 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: A Host object if the host was found, otherwise None.
         """
-        if not isinstance(identifier, HostName):
-            if identifier.isdigit():
-                return Host.get_by_id(int(identifier))
+        if identifier.isdigit():
+            return Host.get_by_id(int(identifier))
 
-            if ip := NetworkOrIP.parse(identifier, mode="ip"):
-                host = cls.get_by_ip_or_raise(ip, inform_as_ptr=inform_as_ptr)
-                return host
+        if ip := NetworkOrIP.parse(identifier, mode="ip"):
+            host = cls.get_by_ip_or_raise(ip, inform_as_ptr=inform_as_ptr)
+            return host
 
-            if mac := MacAddress.parse(identifier):
-                return cls.get_by_mac_or_raise(mac)
+        if mac := MacAddress.parse(identifier):
+            return cls.get_by_mac_or_raise(mac)
 
-            # Let us try to find the host by name...
-            identifier = HostName.parse_or_raise(identifier)
+        # Let us try to find the host by name...
+        identifier = HostName.parse_or_raise(identifier)
 
         if host := cls.get_by_field("name", identifier):
             return host
