@@ -201,7 +201,7 @@ def test_get_list_unique_paginated(httpserver: HTTPServer) -> None:
 
 def test_get_list_unique_paginated_too_many_results(httpserver: HTTPServer) -> None:
     """get_list_unique with multiple unique results is an error."""
-    httpserver.expect_oneshot_request("/foobar").respond_with_json(
+    httpserver.expect_request("/foobar", query_string="").respond_with_json(
         {
             "results": [{"foo": "bar"}],
             "count": 1,
@@ -209,7 +209,7 @@ def test_get_list_unique_paginated_too_many_results(httpserver: HTTPServer) -> N
             "previous": None,
         }
     )
-    httpserver.expect_oneshot_request("/foobar", query_string="page=2").respond_with_json(
+    httpserver.expect_request("/foobar", query_string="page=2").respond_with_json(
         {
             "results": [{"baz": "qux"}],
             "count": 1,
@@ -217,11 +217,17 @@ def test_get_list_unique_paginated_too_many_results(httpserver: HTTPServer) -> N
             "previous": "/foobar",
         }
     )
+
+    # Test with expect_one_result=True (error)
     with pytest.raises(MultipleEntitiesFound) as exc_info:
-        get_list_unique("/foobar", params={})
+        get_list_unique("/foobar", params={}, expect_one_result=True)
     assert exc_info.exconly() == snapshot(
         "mreg_cli.exceptions.MultipleEntitiesFound: Expected a unique result, got 2 distinct results."
     )
+
+    # Test with expect_one_result=False (returns first result)
+    resp = get_list_unique("/foobar", params={}, expect_one_result=False)
+    assert resp == snapshot({"foo": "bar"})
 
 
 def test_get_list_unique_paginated_duplicate_result_ok(httpserver: HTTPServer) -> None:

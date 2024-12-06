@@ -32,7 +32,7 @@ from mreg_cli.exceptions import (
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
-from mreg_cli.types import Json, JsonMapping, QueryParams
+from mreg_cli.types import Json, JsonMapping, QueryParams, get_type_adapter
 
 session = requests.Session()
 session.headers.update({"User-Agent": f"mreg-cli-{__version__}"})
@@ -43,7 +43,7 @@ HTTP_TIMEOUT = 20
 
 T = TypeVar("T")
 
-JsonMappingValidator = TypeAdapter(JsonMapping)
+JsonMappingListValidator = TypeAdapter(list[JsonMapping])
 
 
 def error(msg: str | Exception, code: int = os.EX_UNAVAILABLE) -> NoReturn:
@@ -396,22 +396,36 @@ def get_list_unique(
     path: str,
     params: QueryParams | None = None,
     ok404: bool = False,
+    expect_one_result: bool = False,
 ) -> None | JsonMapping:
     """Do a get request that returns a single result from a search.
 
     :param path: The path to the API endpoint.
     :param params: The parameters to pass to the API endpoint.
     :param ok404: Whether to allow 404 responses.
+    :param expect_one_result: Whether to expect only a single unique result.
 
     :raises CliWarning: If no result was found and ok404 is False.
 
     :returns: A single dictionary, or None if no result was found and ok404 is True.
     """
-    ret = get_list_generic(path, params, ok404, expect_one_result=True)
-    if not ret:
-        return None
+    ret = get_list_generic(path, params, ok404=ok404, expect_one_result=expect_one_result)
     try:
-        return JsonMappingValidator.validate_python(ret)
+        if expect_one_result:
+            adapter = get_type_adapter(JsonMapping)
+            return adapter.validate_python(ret)
+        else:
+            # FIXME: typeshed mangles nontrivial annotations in functools.lru_cache
+            # More complex container types such as `list[T]`, `Dict[str, T]`, etc. are not supported.
+            # Once fixed in typeshed, we can change this to use get_type_adapter(list[JsonMapping])
+            # See:
+            # https://github.com/python/typeshed/issues/11280
+            # https://github.com/python/typeshed/issues/6347
+            # https://discuss.python.org/t/why-do-some-all-type-checkers-discard-classmethod-staticmethod-property-instead-of-using-the-descriptor-protocol/72261
+            adapter = JsonMappingListValidator
+            res = adapter.validate_python(ret)
+            return res[0] if res else None
+
     except ValueError as e:
         raise ValidationError(f"Failed to validate response from {path}: {e}") from e
 
@@ -492,12 +506,22 @@ def get_list_generic(
 ) -> Json: ...
 
 
+@overload
+def get_list_generic(
+    path: str,
+    params: QueryParams | None = ...,
+    ok404: bool = ...,
+    limit: int | None = ...,
+    expect_one_result: bool = ...,
+) -> Json | list[Json]: ...
+
+
 def get_list_generic(
     path: str,
     params: QueryParams | None = None,
     ok404: bool = False,
     limit: int | None = 500,
-    expect_one_result: bool | None = False,
+    expect_one_result: bool = False,
 ) -> Json | list[Json]:
     """Make a get request that produces a list.
 
