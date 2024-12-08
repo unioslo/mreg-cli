@@ -70,6 +70,7 @@ def assoc(args: argparse.Namespace) -> None:
     force: bool = args.force
 
     mac = MacAddress.parse_or_raise(mac)
+    IPAddress.ensure_associable(mac, force=force)
 
     ipaddress = ipaddress_from_ip_arg(name)
     if not ipaddress:

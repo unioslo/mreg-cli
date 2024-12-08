@@ -96,6 +96,7 @@ def add(args: argparse.Namespace) -> None:
 
     if macaddress is not None:
         macaddress = MacAddress.parse_or_raise(macaddress)
+        IPAddress.ensure_associable(macaddress, force=force)
 
     host = Host.get_by_any_means(hname)
     if host:

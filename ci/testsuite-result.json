@@ -27485,7 +27485,7 @@
     "command_issued": "host add -ip 10.0.0.0/24 -macaddress aa:bb:cc:cc:bb:aa directfail",
     "ok": [],
     "warning": [
-      "MAC address aa:bb:cc:cc:bb:aa is already associated with 10.0.0.4"
+      "MAC address aa:bb:cc:cc:bb:aa is already associated with IP address 10.0.0.184, must force."
     ],
     "error": [],
     "output": [],
@@ -27502,7 +27502,7 @@
           "results": [
             {
               "macaddress": "aa:bb:cc:cc:bb:aa",
-              "ipaddress": "10.0.0.4",
+              "ipaddress": "10.0.0.184",
               "host": 18
             }
           ]

@@ -1996,7 +1996,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
         :param mac: The MAC address to check.
         :param force: Force is active. If True, the check is skipped.
-        :raises EntityAlreadyExists: If the MAC address is already associated with an IP address.
+        :raises EntityAlreadyExists: If the MAC address is already associated with one or more IPs.
         """
         if force:
             return
@@ -2073,7 +2073,10 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
         :returns: A new IPAddress object fetched from the API with the updated MAC address.
         """
-        self.ensure_associable(mac, force=force)
+        if self.macaddress and not force:
+            raise EntityAlreadyExists(
+                f"IP address {self.ipaddress} already has MAC address {self.macaddress}."
+            )
         return self.patch(fields={"macaddress": mac})
 
     def disassociate_mac(self) -> IPAddress:
