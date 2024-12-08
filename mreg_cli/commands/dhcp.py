@@ -70,9 +70,7 @@ def assoc(args: argparse.Namespace) -> None:
     force: bool = args.force
 
     mac = MacAddress.parse_or_raise(mac)
-    in_use = IPAddress.get_by_mac(mac)
-    if in_use:
-        raise InputFailure(f"MAC {mac} is already in use by {in_use.ipaddress}.")
+    IPAddress.ensure_associable(mac, force=force)
 
     ipaddress = ipaddress_from_ip_arg(name)
     if not ipaddress:
