@@ -1991,13 +1991,52 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         return cls.get_list_by_field("ipaddress", str(ip))
 
     @classmethod
-    def get_by_mac(cls, mac: MacAddress) -> IPAddress | None:
+    def ensure_associable(cls, mac: MacAddress, force: bool) -> None:
+        """Check if the MAC address can be associated with this IP address.
+
+        :param mac: The MAC address to check.
+        :param force: Force is active. If True, the check is skipped.
+        :raises EntityAlreadyExists: If the MAC address is already associated with an IP address.
+        """
+        if force:
+            return
+
+        ips = cls.get_ips_by_mac(mac)
+        if not ips:
+            return
+
+        if len(ips) == 1:
+            raise EntityAlreadyExists(
+                f"MAC address {mac} is already associated with IP address {ips[0].ipaddress}"
+                ", must force."
+            )
+        else:
+            ips_str = ", ".join([str(ip.ipaddress) for ip in ips])
+            raise MultipleEntitiesFound(
+                f"MAC address {mac} is already associated with multiple IP addresses: {ips_str}"
+                ", must force."
+            )
+
+    @classmethod
+    def get_by_mac(cls, mac: MacAddress) -> Self | None:
         """Get the IP address objects by MAC address.
 
         :param mac: The MAC address to search for.
         :returns: The IP address if found, None otherwise.
         """
-        return cls.get_by_field("macaddress", mac)
+        try:
+            return cls.get_by_field("macaddress", mac)
+        except MultipleEntitiesFound as e:
+            raise MultipleEntitiesFound(f"Multiple IPs found with MAC address {mac}.") from e
+
+    @classmethod
+    def get_ips_by_mac(cls, mac: MacAddress) -> list[Self]:
+        """Get a list of IP addresses by MAC address.
+
+        :param mac: The MAC address to search for.
+        :returns: A list of IP addresses.
+        """
+        return cls.get_list_by_field("macaddress", mac)
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -2034,11 +2073,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
         :returns: A new IPAddress object fetched from the API with the updated MAC address.
         """
-        if self.macaddress and not force:
-            raise EntityAlreadyExists(
-                f"IP address {self.ipaddress} already has MAC address {self.macaddress}."
-            )
-
+        self.ensure_associable(mac, force=force)
         return self.patch(fields={"macaddress": mac})
 
     def disassociate_mac(self) -> IPAddress:
@@ -2918,9 +2953,9 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         if len(ipadresses) and not force:
             raise EntityOwnershipMismatch(
-                "mac {} already in use by: {}. Use force to add {} -> {} as well.".format(
-                    mac, ipadresses, ip, mac
-                )
+                f"mac {mac} already in use by: "
+                f"{', '.join(str(ip.ipaddress) for ip in ipadresses)}. "
+                f"Use force to add {ip} -> {mac} as well."
             )
 
         ip_found_in_host = False

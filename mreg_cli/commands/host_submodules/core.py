@@ -89,18 +89,13 @@ def add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, ip, contact, comment, force, macaddress)
 
     """
-    network_or_ip: str = args.ip
     hname = HostName.parse_or_raise(args.name)
+    network_or_ip: str = args.ip
     macaddress: str | None = args.macaddress
+    force: bool = args.force
 
     if macaddress is not None:
         macaddress = MacAddress.parse_or_raise(macaddress)
-        ip_address = IPAddress.get_by_mac(macaddress)
-
-        if ip_address:
-            raise EntityAlreadyExists(
-                f"MAC address {macaddress} is already associated with {ip_address}"
-            )
 
     host = Host.get_by_any_means(hname)
     if host:
@@ -110,12 +105,12 @@ def add(args: argparse.Namespace) -> None:
             raise EntityAlreadyExists(f"Host {hname} already exists.")
 
     zone = ForwardZone.get_from_hostname(hname)
-    if not zone and not args.force:
+    if not zone and not force:
         raise ForceMissing(f"{hname} isn't in a zone controlled by MREG, must force")
-    if zone and zone.is_delegated() and not args.force:
+    if zone and zone.is_delegated() and not force:
         raise ForceMissing(f"{hname} is in zone delegation {zone.name}, must force")
 
-    if "*" in hname and not args.force:
+    if "*" in hname and not force:
         raise ForceMissing("Wildcards must be forced.")
 
     data: JsonMapping = {
@@ -153,7 +148,7 @@ def add(args: argparse.Namespace) -> None:
                             f"IP {ipaddr} is a broadcast address, not a host address"
                         )
             except (EntityNotFound, APINotOk) as e:
-                if not args.force:
+                if not force:
                     raise ForceMissing(f"IP {ipaddr} is not in a network, must force") from e
             data["ipaddress"] = str(network_or_ip)
 
@@ -172,7 +167,7 @@ def add(args: argparse.Namespace) -> None:
             raise EntityNotFound(f"Invalid ip or network: {network_or_ip}")
 
         if network:
-            if network.frozen and not args.force:
+            if network.frozen and not force:
                 raise ForceMissing(f"Network {network.network} is frozen, must force")
             else:
                 net_or_ip = NetworkOrIP.validate(network.network)
@@ -186,7 +181,7 @@ def add(args: argparse.Namespace) -> None:
 
     if macaddress is not None and net_or_ip is not None:
         if net_or_ip.is_ip():
-            host = host.associate_mac_to_ip(macaddress, str(network_or_ip))
+            host = host.associate_mac_to_ip(macaddress, network_or_ip, force=force)
         else:
             # We passed a network to create the host, so we need to find the IP
             # that was assigned to the host. We don't get that in the response
@@ -194,7 +189,9 @@ def add(args: argparse.Namespace) -> None:
             # use that. If there are more than one, we can't know which one was
             # assigned to the host during create, so we abort.
             if len(host.ipaddresses) == 1:
-                host = host.associate_mac_to_ip(macaddress, host.ipaddresses[0].ipaddress)
+                host = host.associate_mac_to_ip(
+                    macaddress, host.ipaddresses[0].ipaddress, force=force
+                )
             else:
                 OutputManager().add_ok(
                     "Failed to associate MAC address to IP, multiple IP addresses after creation."
