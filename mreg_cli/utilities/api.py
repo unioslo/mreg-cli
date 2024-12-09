@@ -33,7 +33,7 @@ from mreg_cli.exceptions import (
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.tokenfile import TokenFile
-from mreg_cli.types import Json, JsonMapping, QueryParams
+from mreg_cli.types import Json, JsonMapping, QueryParams, get_type_adapter
 
 session = requests.Session()
 session.headers.update({"User-Agent": f"mreg-cli-{__version__}"})
@@ -576,7 +576,7 @@ def get_typed(
 
     :returns: An instance of `type_` populated with data from the response.
     """
-    adapter = TypeAdapter(type_)
+    adapter = get_type_adapter(type_)
     if type_ is list or get_origin(type_) is list:
         resp = get_list(path, params=params, limit=limit)
         return adapter.validate_python(resp)
