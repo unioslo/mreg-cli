@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
+from pydantic import ValidationError as PydanticValidationError
 
 # Import all the commands
 from mreg_cli.commands.dhcp import DHCPCommands
@@ -32,11 +33,11 @@ from mreg_cli.commands.root import RootCommmands
 from mreg_cli.commands.zone import ZoneCommands
 
 # Import other mreg_cli modules
-from mreg_cli.exceptions import CliError, CliExit, CliWarning
+from mreg_cli.exceptions import CliError, CliExit, CliWarning, ValidationError
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
-from mreg_cli.utilities.api import create_and_set_corrolation_id
+from mreg_cli.utilities.api import create_and_set_corrolation_id, last_request_url
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +167,9 @@ class Command(Completer):
             # after it prints a help msg.
             self.last_errno = e.code
 
+        except PydanticValidationError as exc:
+            ValidationError.from_pydantic(exc).print_and_log()
+
         except (CliWarning, CliError) as exc:
             exc.print_and_log()
 
@@ -178,6 +182,11 @@ class Command(Completer):
             # If no exception occurred make sure errno isn't set to an error
             # code.
             self.last_errno = 0
+        finally:
+            # Unset URL after we have finished processing the command
+            # so that validation errors that happen before a new request
+            # is made don't show a URL.
+            last_request_url.set(None)
 
     # We ignore ARG0002 (unused-argument) because the method signature is
     # required by the Completer class.
