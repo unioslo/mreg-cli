@@ -1992,11 +1992,15 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
     @classmethod
     def ensure_associable(cls, mac: MacAddress, force: bool) -> None:
-        """Check if the MAC address can be associated with this IP address.
+        """Check if a MAC address can be associated with this IP address.
+
+        Raise an exception if the MAC address is already associated with another IP address,
+        and force is not set.
 
         :param mac: The MAC address to check.
         :param force: Force is active. If True, the check is skipped.
-        :raises EntityAlreadyExists: If the MAC address is already associated with one or more IPs.
+        :raises EntityAlreadyExists: If the MAC address is already associated with one IP.
+        :raises MultipleEntitiesFound: If the MAC address is already associated multiple IPs.
         """
         if force:
             return
