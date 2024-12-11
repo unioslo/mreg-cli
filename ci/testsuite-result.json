@@ -95,7 +95,7 @@
               "ttl": null
             }
           ],
-          "updated": false,
+          "updated": true,
           "primary_ns": "ns1.example.org",
           "email": "hostmaster@example.org",
           "refresh": 10800,
@@ -143,7 +143,7 @@
               "ttl": null
             }
           ],
-          "updated": false,
+          "updated": true,
           "primary_ns": "ns1.example.org",
           "email": "hostmaster@example.org",
           "refresh": 10800,
@@ -187,7 +187,7 @@
                   "ttl": null
                 }
               ],
-              "updated": false,
+              "updated": true,
               "primary_ns": "ns1.example.org",
               "email": "hostmaster@example.org",
               "refresh": 10800,
@@ -227,7 +227,7 @@
               "ttl": null
             }
           ],
-          "updated": false,
+          "updated": true,
           "primary_ns": "ns1.example.org",
           "email": "hostmaster@example.org",
           "refresh": 10800,
@@ -283,7 +283,7 @@
               "ttl": null
             }
           ],
-          "updated": false,
+          "updated": true,
           "primary_ns": "ns1.example.org",
           "email": "hostmaster@example.org",
           "refresh": 10800,
@@ -14633,10 +14633,10 @@
               ],
               "owners": [
                 {
-                  "name": "anotherowner"
+                  "name": "myself"
                 },
                 {
-                  "name": "myself"
+                  "name": "anotherowner"
                 }
               ],
               "name": "mygroup",
