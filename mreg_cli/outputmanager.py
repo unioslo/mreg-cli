@@ -122,10 +122,7 @@ class OutputManager:
     COMMANDS_NOT_TO_RECORD = ["recording", "quit", "exit", "source"]
     KEYS_NOT_TO_RECORD = [
         "id",
-        "created_at",
-        "updated_at",
         "serialno",
-        "serialno_updated_at",
         "create_date",
     ]
 

@@ -126,7 +126,7 @@ def preprocess_json(s: str) -> str:
 
     # Replace all non-deterministic values with placeholders
     s = timestamp_pattern.sub("<TIME>", s)
-    s = datetime_str_pattern.sub("<TIME>", s)
+    s = datetime_str_pattern.sub("<DATETIME>", s)
     s = serial_pattern.sub("Serial: <NUMBER>", s)
     s = mac_pattern.sub("<macaddress>", s)
     s = ipv4_pattern.sub("<IPv4>", s)
