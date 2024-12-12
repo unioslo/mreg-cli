@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ipaddress
+import logging
 from collections.abc import Callable
 from enum import StrEnum
 from functools import lru_cache
@@ -160,6 +161,18 @@ class LogLevel(StrEnum):
     def choices(cls) -> list[str]:
         """Return a list of all log levels as strings."""
         return [str(c) for c in list(cls)]
+
+    def as_int(self) -> int:
+        """Convert the log level to an integer."""
+        # logging.getLevelName considered a mistake - let's implement our own
+        _nameToLevel = {
+            self.CRITICAL: logging.CRITICAL,
+            self.ERROR: logging.ERROR,
+            self.WARNING: logging.WARNING,
+            self.INFO: logging.INFO,
+            self.DEBUG: logging.DEBUG,
+        }
+        return _nameToLevel[self]
 
 
 T = TypeVar("T")
