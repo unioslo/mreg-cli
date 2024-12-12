@@ -181,7 +181,7 @@ class MregCliConfig:
             try:
                 logging.basicConfig(
                     filename=logfile,
-                    level=logging.getLevelName(level),
+                    level=level.as_int(),
                     format=LOGGING_FORMAT,
                     datefmt="%Y-%m-%d %H:%M:%S",
                 )
