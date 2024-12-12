@@ -432,6 +432,7 @@ class APIMixin(ABC):
         :param fields: The values to patch.
         :param validate: Whether to validate the patched object.
         :returns: The object refetched from the server.
+
         """
         patch(self.endpoint().with_id(self.id_for_endpoint()), **fields)
         new_object = self.refetch()

@@ -6,7 +6,7 @@ import ipaddress
 import logging
 from datetime import date, datetime
 from functools import cached_property
-from typing import Any, Callable, ClassVar, Iterable, List, Literal, Self, cast, overload
+from typing import Any, Callable, ClassVar, Iterable, Literal, Self, cast, overload
 
 from pydantic import (
     AliasChoices,
@@ -3570,7 +3570,7 @@ class UserPermission(BaseModel):
     group: str
     range: str
     regex: str
-    labels: List[str]
+    labels: list[str]
 
     # NOTE: _needs_ to be a computed field in order to use it in
     # OutputManager.add_formatted_table, since we dump the model to a dict
@@ -3617,7 +3617,7 @@ class ServerVersion(BaseModel):
         return Endpoint.MetaVersion
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True) -> "ServerVersion":
+    def fetch(cls, ignore_errors: bool = True) -> ServerVersion:
         """Fetch the server version from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.
@@ -3649,7 +3649,7 @@ class Library(BaseModel):
 class ServerLibraries(BaseModel):
     """Model for server libraries metadata."""
 
-    libraries: List[Library]
+    libraries: list[Library]
 
     @classmethod
     def endpoint(cls) -> str:
@@ -3657,7 +3657,7 @@ class ServerLibraries(BaseModel):
         return Endpoint.MetaLibraries
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True) -> "ServerLibraries":
+    def fetch(cls, ignore_errors: bool = True) -> ServerLibraries:
         """Fetch the server libraries from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.
@@ -3667,7 +3667,7 @@ class ServerLibraries(BaseModel):
         """
         try:
             response = get(cls.endpoint())
-            libraries: List[Library] = []
+            libraries: list[Library] = []
 
             for name, version in response.json().items():
                 libraries.append(Library(name=name, version=version))
@@ -3694,8 +3694,8 @@ class UserInfo(BaseModel):
     username: str
     django_status: UserDjangoStatus
     mreg_status: UserMregStatus
-    groups: List[str]
-    permissions: List[UserPermission]
+    groups: list[str]
+    permissions: list[UserPermission]
 
     @classmethod
     def endpoint(cls) -> str:
@@ -3703,7 +3703,7 @@ class UserInfo(BaseModel):
         return Endpoint.MetaUser
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True, user: str | None = None) -> "UserInfo":
+    def fetch(cls, ignore_errors: bool = True, user: str | None = None) -> UserInfo:
         """Fetch the user information from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.

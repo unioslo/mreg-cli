@@ -6,7 +6,7 @@ import json
 import logging
 import os
 import sys
-from typing import ClassVar, Optional, Self
+from typing import ClassVar, Self
 
 from pydantic import BaseModel, ValidationError
 
@@ -57,7 +57,7 @@ class TokenFile(BaseModel):
     def load(cls) -> Self:
         """Load tokens from a JSON file, returning a new instance of TokenFile."""
         try:
-            with open(cls.tokens_path, "r") as file:
+            with open(cls.tokens_path) as file:
                 data = json.load(file)
                 return cls.model_validate(data)
         except (FileNotFoundError, KeyError, json.JSONDecodeError, ValidationError) as e:
@@ -72,7 +72,7 @@ class TokenFile(BaseModel):
         return cls()
 
     @classmethod
-    def get_entry(cls, username: str, url: str) -> Optional[Token]:
+    def get_entry(cls, username: str, url: str) -> Token | None:
         """Retrieve a token by username and URL."""
         tokens_file = cls.load()
         for token in tokens_file.tokens:

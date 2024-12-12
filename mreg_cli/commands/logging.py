@@ -104,7 +104,7 @@ def logging_status(_: argparse.Namespace):
     file = MregCliConfig().get_default_logfile()
 
     lines_in_logfile = 0
-    with open(file, "r") as f:
+    with open(file) as f:
         lines_in_logfile = sum(1 for _ in f)
 
     filesize = sizeof_fmt(os.path.getsize(file))

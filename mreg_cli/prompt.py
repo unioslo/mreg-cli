@@ -1,10 +1,12 @@
+"""Prompt customization for the CLI."""
+
 from __future__ import annotations
 
 import argparse
 import functools
 import logging
 import re
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 from prompt_toolkit import HTML
 
@@ -18,9 +20,9 @@ class ConnectionInfo(NamedTuple):
     """Connection information for a server."""
 
     protocol: str
-    host: Optional[str]
-    tld: Optional[str]
-    port: Optional[int]
+    host: str | None
+    tld: str | None
+    port: int | None
 
 
 @functools.lru_cache()
