@@ -69,10 +69,7 @@ from mreg_cli.types import Json
 )
 def test_remove_dict_key_recursive(inp: Json, key: str, expected: Json) -> None:
     """Test remove_dict_key_recursive with a variety of inputs."""
-    # Call the function
     remove_dict_key_recursive(inp, key)
-
-    # Assert the result matches expected
     assert inp == expected
 
 
