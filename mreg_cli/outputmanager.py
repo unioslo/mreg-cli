@@ -21,7 +21,7 @@ from pydantic import BaseModel
 
 from mreg_cli.errorbuilder import build_error_message
 from mreg_cli.exceptions import CliError, FileError
-from mreg_cli.types import JsonMapping, RecordingEntry, TimeInfo
+from mreg_cli.types import Json, JsonMapping, RecordingEntry, TimeInfo
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +77,8 @@ def remove_comments(line: str) -> str:
     return find_char_outside_quotes(line, "#", False).rstrip(" ")
 
 
-def remove_dict_key_recursive(obj: object, key: str) -> None:
-    """Remove a key from a dict, recursively.
+def remove_dict_key_recursive(obj: Json, key: str) -> None:
+    """Remove a key from a dict or list of dicts, recursively.
 
     This is a destructive operation, and will modify the object in place.
     """
