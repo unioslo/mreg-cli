@@ -77,7 +77,7 @@ class HistoryItem(BaseModel):
         """Clean up the timestamp for output."""
         return self.timestamp.strftime("%Y-%m-%d %H:%M:%S")
 
-    def msg(self, basename: str) -> str:
+    def msg(self, _basename: str) -> str:
         """Attempt to make a history item human readable."""
         msg = ""
         action = self.action

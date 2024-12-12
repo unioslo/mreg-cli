@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     # which lets the type checker understand what kind of classes we are
     # trying to instantiate.
     class BaseCommandSubclass(Protocol):  # noqa: D101 (undocumented-public-class)
-        def __init__(self, cli: "Command") -> None: ...  # noqa: D107 (undocumented-public-init)
+        def __init__(self, cli: Command) -> None: ...  # noqa: D107 (undocumented-public-init)
         def register_all_commands(self) -> None: ...  # noqa: D102 (undocumented-public-method)
 
 
@@ -305,7 +305,7 @@ for command in commands:
     command(cli).register_all_commands()
 
 
-def source(files: list[str], ignore_errors: bool, verbose: bool) -> Generator[str, None, None]:
+def source(files: list[str], ignore_errors: bool, verbose: bool) -> Generator[str]:
     """Read commands from one or more source files and yield them.
 
     :param files: List of file paths to read commands from.
