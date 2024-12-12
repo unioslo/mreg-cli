@@ -8,7 +8,7 @@ from mreg_cli.types import LogLevel
 def test_loglevel_as_int() -> None:
     """Test that all LogLevel members have an integer representation."""
     for level in list(LogLevel):
-        # If it doesn't implement as_int, this will raise a KeyError
+        # Ensure as_int() implements all levels
         assert level.as_int() is not None
 
     # Snapshot so we can see if any values are changed
