@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Added
+
+- `a_add` & `aaaa_add` `-force` option to force use an IP from a network that cannot be found in MREG.
+
+### Fixed
+
+- Commands that try to find networks by IP raising a 404 error instead of a proper error message when no network can be found with the given IP.
 
 ## [1.2.2](https://github.com/unioslo/mreg-cli/releases/tag/1.2.2) - 2024-12-09
 
