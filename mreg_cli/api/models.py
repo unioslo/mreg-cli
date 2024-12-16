@@ -1658,7 +1658,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         :returns: The network if found, None otherwise.
         :raises EntityNotFound: If the network is not found.
         """
-        resp = get(Endpoint.NetworksByIP.with_id(str(ip)))
+        resp = get(Endpoint.NetworksByIP.with_id(str(ip)), ok404=True)
         if not resp:
             return None
         return cls.model_validate_json(resp.text)
