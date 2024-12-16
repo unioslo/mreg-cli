@@ -181,6 +181,9 @@ def _add_ip(
         network = Network.get_by_ip(ip_or_net.as_ip())
         ip = ip_or_net.as_ip()
 
+    if not force and not network:
+        raise ForceMissing(f"Network for {ip} not found, must force")
+
     if not force and network and network.frozen:
         raise ForceMissing(f"Network {network.network} is frozen, must force")
 
