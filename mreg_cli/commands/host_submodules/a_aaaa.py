@@ -42,17 +42,21 @@ def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
         raise ForceMissing(f"IP {ip} in use by {hostnames}, must force.")
 
 
-def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
+def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version) -> None:
     """Change A record. If <name> is an alias the cname host is used.
 
-    :param args: argparse.Namespace (name, old, new, force)
+    :param name: Name of the target host.
+    :param old: The existing IP that should be changed.
+    :param new: The new IP address.
+    :param force: Whether to force the change.
+    :param ipversion: 4 or 6
     """
-    if args.old == args.new:
+    if old == new:
         raise EntityAlreadyExists("New and old IP are equal")
 
-    old_ip = NetworkOrIP.parse_or_raise(args.old, mode="ip")
+    old_ip = NetworkOrIP.parse_or_raise(old, mode="ip")
 
-    new_ip = NetworkOrIP.validate(args.new)
+    new_ip = NetworkOrIP.validate(new)
     if new_ip.is_network():
         network = Network.get_by_network_or_raise(str(new_ip.ip_or_network))
         new_ip = network.get_first_available_ip()
@@ -65,7 +69,7 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
     if new_ip.version != ipversion:
         raise InputFailure("New IP version does not match the requested version")
 
-    host = Host.get_by_any_means_or_raise(args.name)
+    host = Host.get_by_any_means_or_raise(name)
 
     host_ip = host.get_ip(old_ip)
     if not host_ip:
@@ -75,28 +79,30 @@ def _ip_change(args: argparse.Namespace, ipversion: IP_Version) -> None:
     if not ip_obj:
         raise EntityNotFound(f"IP {old_ip} not found")
 
-    if not args.force:
+    if not force:
         _bail_if_ip_in_use_and_not_force(new_ip)
 
     ip_obj.patch(fields={"ipaddress": str(new_ip)})
 
-    OutputManager().add_ok(f"changed ip {args.old} to {new_ip} for {host}")
+    OutputManager().add_ok(f"changed ip {old} to {new_ip} for {host}")
 
 
-def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
+def _ip_move(ipaddr: str, fromhost: str, tohost: str, ipversion: IP_Version) -> None:
     """Move an IP from a host to another host. Will move also move the PTR, if any.
 
-    :param args: argparse.Namespace (ip, fromhost, tohost)
+    :param ipaddr: IP to move
+    :param fromhost: Name of source host
+    :param tohost: Name of destination host
     :param ipversion: 4 or 6
     """
-    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
+    ip = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
     if ip.version != ipversion:
         raise InputFailure(
             f"IP version {ip.version} does not match the requested version {ipversion}"
         )
 
-    from_host = Host.get_by_any_means_or_raise(args.fromhost)
-    to_host = Host.get_by_any_means_or_raise(args.tohost)
+    from_host = Host.get_by_any_means_or_raise(fromhost)
+    to_host = Host.get_by_any_means_or_raise(tohost)
 
     host_ip = from_host.get_ip(ip)
 
@@ -107,7 +113,7 @@ def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
     msg = ""
     if host_ip:
         host_ip.patch(fields={"host": to_host.id})
-        msg = f"Moved ipaddress {args.ip}"
+        msg = f"Moved ipaddress {ipaddr}"
     else:
         msg += "No ipaddresses matched. "
 
@@ -118,13 +124,15 @@ def _ip_move(args: argparse.Namespace, ipversion: IP_Version) -> None:
     OutputManager().add_line(msg)
 
 
-def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
+def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version) -> None:
     """Remove A record from host. If <name> is an alias the cname host is used.
 
-    :param args: argparse.Namespace (name, ip)
+    :param name: Name of the target host.
+    :param ipaddr: IP to remove.
+    :param ipversion: 4 or 6
     """
-    host = Host.get_by_any_means_or_raise(args.name)
-    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
+    host = Host.get_by_any_means_or_raise(name)
+    ip = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
     if ip.version != ipversion:
         raise InputFailure(
             f"IP version {ip.version} does not match the requested version {ipversion}"
@@ -135,61 +143,62 @@ def _ip_remove(args: argparse.Namespace, ipversion: IP_Version) -> None:
         raise EntityNotFound(f"Host {host} does not have IP {ip}")
 
     if host_ip.delete():
-        OutputManager().add_ok(f"Removed ipaddress {args.ip} from {host}")
+        OutputManager().add_ok(f"Removed ipaddress {ipaddr} from {host}")
     else:
-        raise DeleteError(f"Failed to remove ipaddress {args.ip} from {host}")
+        raise DeleteError(f"Failed to remove ipaddress {ipaddr} from {host}")
 
 
 def _add_ip(
-    args: argparse.Namespace,
+    name: str,
+    ipaddr: str,
+    macaddress: str | None = None,
+    force: bool = False,
     ipversion: IP_Version = 4,
 ) -> Host:
     """Add a new IP address to a host.
 
     :param host: Name of the host to add the IP to.
-    :param ip: The IP address to add.
+    :param ipaddr: The IP address to add.
     :param macaddress: The MAC address to add.
     :param force: Whether to force the addition.
 
     :return: The updated host object.
     """
-    host = Host.get_by_any_means_or_raise(args.name)
-    ip_or_net = NetworkOrIP.validate(args.ip)
+    host = Host.get_by_any_means_or_raise(name)
+    ip_or_net = NetworkOrIP.validate(ipaddr)
 
     if ipversion == 4 and (ip_or_net.is_ipv6() or ip_or_net.is_ipv6_network()):
         raise InputFailure("Use aaaa_add for IPv6 addresses")
     elif ipversion == 6 and (ip_or_net.is_ipv4() or ip_or_net.is_ipv4_network()):
         raise InputFailure("Use a_add for IPv4 addresses")
 
-    ipaddr = None
+    ip = None
     network = None
     if ip_or_net.is_network():
         network = Network.get_by_network_or_raise(str(ip_or_net.ip_or_network))
         ip = network.get_first_available_ip()
-        ipaddr = ip
     else:
         network = Network.get_by_ip(ip_or_net.as_ip())
-        ip = ip_or_net
-        ipaddr = ip.as_ip()
+        ip = ip_or_net.as_ip()
 
-    if not args.force and network and network.frozen:
+    if not force and network and network.frozen:
         raise ForceMissing(f"Network {network.network} is frozen, must force")
 
-    if not args.force and host.has_ip(ipaddr):
-        raise EntityAlreadyExists(f"Host {host} already has IP {ipaddr}")
+    if not force and host.has_ip(ip):
+        raise EntityAlreadyExists(f"Host {host} already has IP {ip}")
 
-    if not args.force and len(host.ipaddresses) > 0:
+    if not force and len(host.ipaddresses) > 0:
         raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
 
     mac = None
-    if args.macaddress:
-        mac = MacAddress.parse_or_raise(args.macaddress)
+    if macaddress:
+        mac = MacAddress.parse_or_raise(macaddress)
 
-    if not args.force:
-        _bail_if_ip_in_use_and_not_force(ipaddr)
+    if not force:
+        _bail_if_ip_in_use_and_not_force(ip)
 
-    host = host.add_ip(ipaddr, mac)  # returns the refetched host
-    OutputManager().add_ok(f"Added ipaddress {ipaddr} to {host}")
+    host = host.add_ip(ip, mac)  # returns the refetched host
+    OutputManager().add_ok(f"Added ipaddress {ip} to {host}")
     return host
 
 
@@ -217,7 +226,12 @@ def a_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ip, force, macaddress)
     """
-    _add_ip(args, 4)
+    name: str = args.name
+    ip: str = args.ip
+    macaddress: str | None = args.macaddress
+    force: bool = args.force
+
+    _add_ip(name, ip, macaddress, force, 4)
 
 
 @command_registry.register_command(
@@ -258,7 +272,12 @@ def a_change(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, old, new, force)
     """
-    _ip_change(args, 4)
+    name: str = args.name
+    old: str = args.old
+    new: str = args.new
+    force: bool = args.force
+
+    _ip_change(name, old, new, force, 4)
 
 
 @command_registry.register_command(
@@ -286,7 +305,11 @@ def a_move(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, fromhost, tohost)
     """
-    _ip_move(args, 4)
+    ip: str = args.ip
+    fromhost: str = args.fromhost
+    tohost: str = args.tohost
+
+    _ip_move(ip, fromhost, tohost, 4)
 
 
 @command_registry.register_command(
@@ -303,7 +326,10 @@ def a_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ip)
     """
-    _ip_remove(args, 4)
+    name: str = args.name
+    ip: str = args.ip
+
+    _ip_remove(name, ip, 4)
 
 
 @command_registry.register_command(
@@ -319,7 +345,9 @@ def a_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    Host.get_by_any_means_or_raise(args.name).output_ipaddresses(only=4)
+    name: str = args.name
+
+    Host.get_by_any_means_or_raise(name).output_ipaddresses(only=4)
 
 
 @command_registry.register_command(
@@ -342,7 +370,12 @@ def aaaa_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ip, force, macaddress)
     """
-    _add_ip(args, 6)
+    name: str = args.name
+    ip: str = args.ip
+    macaddress: str | None = args.macaddress
+    force: bool = args.force
+
+    _add_ip(name, ip, macaddress, force, 6)
 
 
 @command_registry.register_command(
@@ -378,7 +411,12 @@ def aaaa_change(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, old, new, force)
     """
-    _ip_change(args, 6)
+    name: str = args.name
+    old: str = args.old
+    new: str = args.new
+    force: bool = args.force
+
+    _ip_change(name, old, new, force, 6)
 
 
 @command_registry.register_command(
@@ -406,7 +444,11 @@ def aaaa_move(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, fromhost, tohost)
     """
-    _ip_move(args, 6)
+    ip: str = args.ip
+    fromhost: str = args.fromhost
+    tohost: str = args.tohost
+
+    _ip_move(ip, fromhost, tohost, 6)
 
 
 @command_registry.register_command(
@@ -425,7 +467,10 @@ def aaaa_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ip)
     """
-    _ip_remove(args, 6)
+    name: str = args.name
+    ip: str = args.ip
+
+    _ip_remove(name, ip, 6)
 
 
 @command_registry.register_command(
@@ -443,4 +488,6 @@ def aaaa_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    Host.get_by_any_means_or_raise(args.name).output_ipaddresses(only=6)
+    name: str = args.name
+
+    Host.get_by_any_means_or_raise(name).output_ipaddresses(only=6)
