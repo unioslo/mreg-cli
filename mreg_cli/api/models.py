@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import cached_property
 from typing import Any, Callable, ClassVar, Iterable, Literal, Self, cast, overload
 
@@ -24,6 +24,7 @@ from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import HostName, MacAddress, NameList
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.exceptions import (
+    APINotOk,
     CreateError,
     DeleteError,
     EntityAlreadyExists,
@@ -3765,3 +3766,89 @@ class UserInfo(BaseModel):
             outputmanager.add_line(f"  {group}")
 
         UserPermission.output_multiple(self.permissions)
+
+
+class LDAPHealth(BaseModel, APIMixin):
+    """Model for LDAP health endpoint."""
+
+    ok: bool
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.HealthLDAP
+
+    @classmethod
+    def fetch(cls, ignore_errors: bool = True) -> Self:
+        """Fetch the LDAP status from the endpoint.
+
+        :param ignore_errors: Whether to ignore errors.
+        :raises ValidationError: If the response data is invalid and ignore_errors is False.
+        :raises requests.RequestException: If the HTTP request fails and ignore_errors is False.
+        :returns: An instance of LDAPStatus with the fetched data.
+        """
+        try:
+            get(cls.endpoint())
+            return cls(ok=True)
+        except Exception as e:
+            if isinstance(e, APINotOk):
+                if e.response.status_code == 503:
+                    return cls(ok=False)
+            if ignore_errors:
+                return cls(ok=False)
+            raise e
+
+
+class HeartbeatHealth(BaseModel, APIMixin):
+    """Model for heartbeat health endpoint."""
+
+    uptime: int
+    start_time: int
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.HealthHeartbeat
+
+    @property
+    def uptime_str(self) -> str:
+        """Return the uptime as a string."""
+        return str(timedelta(seconds=self.uptime))
+
+    @classmethod
+    def fetch(cls) -> Self:
+        """Fetch the heartbeat status from the endpoint.
+
+        :raises ValidationError: If the response data is invalid.
+        :raises requests.RequestException: If the HTTP request fails.
+        :returns: An instance of HeartbeatHealth with the fetched data.
+        """
+        result = get(cls.endpoint())
+        return cls.model_validate_json(result.text)
+
+
+class HealthInfo(BaseModel):
+    """Combined information from all health endpoints."""
+
+    heartbeat: HeartbeatHealth
+    ldap: LDAPHealth
+
+    @classmethod
+    def fetch(cls) -> HealthInfo:
+        """Fetch the health information from the endpoint.
+
+        :raises ValidationError: If the response data is invalid.
+        :raises requests.RequestException: If the HTTP request fails.
+        :returns: An instance of HealthInfo with the fetched data.
+        """
+        return cls(
+            heartbeat=HeartbeatHealth.fetch(),
+            ldap=LDAPHealth.fetch(),
+        )
+
+    def output(self) -> None:
+        """Output the health information to the console."""
+        manager = OutputManager()
+        manager.add_line("Health Information:")
+        manager.add_line(f"  Uptime: {self.heartbeat.uptime_str}")
+        manager.add_line(f"  LDAP: {'OK' if self.ldap.ok else 'Down'}")

@@ -14,6 +14,7 @@ from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
 from pydantic import ValidationError as PydanticValidationError
+from requests import Response
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +196,16 @@ class FileError(CliError):
 class APINotOk(CliWarning):
     """Warning class for API not returning OK."""
 
-    pass
+    response: Response
+
+    def __init__(self, message: str, response: Response):
+        """Initialize an APINotOk warning.
+
+        :param message: The warning message.
+        :param response: The response object that triggered the warning.
+        """
+        super().__init__(message)
+        self.response = response
 
 
 class TooManyResults(CliWarning):
