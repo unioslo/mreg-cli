@@ -6,7 +6,7 @@ import ipaddress
 import logging
 from datetime import date, datetime, timedelta
 from functools import cached_property
-from typing import Any, Callable, ClassVar, Iterable, Literal, Self, cast, overload
+from typing import Any, Callable, ClassVar, Iterable, Literal, Self, TypeVar, cast, overload
 
 from pydantic import (
     AliasChoices,
@@ -59,6 +59,8 @@ from mreg_cli.utilities.shared import convert_wildcard_to_regex
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 IPNetMode = Literal["ipv4", "ipv6", "ip", "network", "networkv4", "networkv6"]
 
@@ -3779,22 +3781,17 @@ class LDAPHealth(BaseModel, APIMixin):
         return Endpoint.HealthLDAP
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True) -> Self:
+    def fetch(cls) -> Self:
         """Fetch the LDAP status from the endpoint.
 
-        :param ignore_errors: Whether to ignore errors.
-        :raises ValidationError: If the response data is invalid and ignore_errors is False.
-        :raises requests.RequestException: If the HTTP request fails and ignore_errors is False.
-        :returns: An instance of LDAPStatus with the fetched data.
+        :raises requests.APINotOk: If the response code is not 200 or 503.
+        :returns: An instance of LDAPStatus.
         """
         try:
             get(cls.endpoint())
             return cls(ok=True)
-        except Exception as e:
-            if isinstance(e, APINotOk):
-                if e.response.status_code == 503:
-                    return cls(ok=False)
-            if ignore_errors:
+        except APINotOk as e:
+            if e.response.status_code == 503:
                 return cls(ok=False)
             raise e
 
@@ -3819,8 +3816,6 @@ class HeartbeatHealth(BaseModel, APIMixin):
     def fetch(cls) -> Self:
         """Fetch the heartbeat status from the endpoint.
 
-        :raises ValidationError: If the response data is invalid.
-        :raises requests.RequestException: If the HTTP request fails.
         :returns: An instance of HeartbeatHealth with the fetched data.
         """
         result = get(cls.endpoint())
@@ -3830,25 +3825,32 @@ class HeartbeatHealth(BaseModel, APIMixin):
 class HealthInfo(BaseModel):
     """Combined information from all health endpoints."""
 
-    heartbeat: HeartbeatHealth
-    ldap: LDAPHealth
+    heartbeat: HeartbeatHealth | None = None
+    ldap: LDAPHealth | None = None
 
     @classmethod
     def fetch(cls) -> HealthInfo:
         """Fetch the health information from the endpoint.
 
-        :raises ValidationError: If the response data is invalid.
-        :raises requests.RequestException: If the HTTP request fails.
         :returns: An instance of HealthInfo with the fetched data.
         """
+
+        def try_call(callable_: Callable[[], T]) -> T | None:
+            try:
+                return callable_()
+            except Exception:
+                return None
+
         return cls(
-            heartbeat=HeartbeatHealth.fetch(),
-            ldap=LDAPHealth.fetch(),
+            heartbeat=try_call(HeartbeatHealth.fetch),
+            ldap=try_call(LDAPHealth.fetch),
         )
 
     def output(self) -> None:
         """Output the health information to the console."""
         manager = OutputManager()
         manager.add_line("Health Information:")
-        manager.add_line(f"  Uptime: {self.heartbeat.uptime_str}")
-        manager.add_line(f"  LDAP: {'OK' if self.ldap.ok else 'Down'}")
+        manager.add_line(f"  Uptime: {self.heartbeat.uptime_str if self.heartbeat else 'Unknown'}")
+        manager.add_line(
+            f"  LDAP: {('OK' if self.ldap.ok else 'Down') if self.ldap else 'Unknown'}"
+        )
