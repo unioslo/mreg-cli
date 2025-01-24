@@ -561,7 +561,7 @@ def community_create(args: argparse.Namespace) -> None:
         Flag("attributes", description="Policy Attributes", metavar="ATTRIBUTES", nargs="+"),
     ],
 )
-def create_network_policy(args: argparse.Namespace) -> None:
+def policy_create(args: argparse.Namespace) -> None:
     """Create a network policy.
 
     :param args: argparse.Namespace (name, attributes)
@@ -579,6 +579,35 @@ def create_network_policy(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Created network policy {name!r}")
 
 
+# TODO[rename]: network policy delete
+@command_registry.register_command(
+    prog="policy_delete",
+    description="Delete a network policy",
+    short_desc="Delete a network policy",
+    flags=[
+        Flag("name", description="Policy name", metavar="NAME"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def policy_delete(args: argparse.Namespace) -> None:
+    """Delete a network policy.
+
+    :param args: argparse.Namespace (name)
+    """
+    name: str = args.name
+    force: bool = args.force
+
+    policy = NetworkPolicy.get_by_name_or_raise(name)
+    for community in policy.communities:
+        if community.hosts and not force:
+            raise ForceMissing(
+                f"Cannot delete policy {name!r}. Its community {community.name!r} has hosts. Must force."
+            )
+
+    policy.delete()
+    OutputManager().add_ok(f"Deleted network policy {name!r}")
+
+
 # TODO[rename]: network policy attribute create
 @command_registry.register_command(
     prog="policy_attribute_create",
@@ -589,7 +618,7 @@ def create_network_policy(args: argparse.Namespace) -> None:
         Flag("description", description="Description", metavar="DESCRIPTION"),
     ],
 )
-def create_network_policy_attribute(args: argparse.Namespace) -> None:
+def policy_attribute_create(args: argparse.Namespace) -> None:
     """Create a network policy attribute.
 
     :param args: argparse.Namespace (name, description)
@@ -615,7 +644,7 @@ def create_network_policy_attribute(args: argparse.Namespace) -> None:
         Flag("-description", description="Description", metavar="RANGE"),
     ],
 )
-def list_network_policy_attributes(args: argparse.Namespace) -> None:
+def policy_attribute_list(args: argparse.Namespace) -> None:
     """List all network policy attributes.
 
     :param args: argparse.Namespace (name, description)
