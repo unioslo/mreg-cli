@@ -5,12 +5,20 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Atom, Host, HostPolicy, NetworkPolicy, NetworkPolicyAttribute, Role
+from mreg_cli.api.models import (
+    Atom,
+    Community,
+    Host,
+    HostPolicy,
+    NetworkPolicy,
+    NetworkPolicyAttribute,
+    Role,
+)
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CreateError, DeleteError, EntityAlreadyExists
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag
+from mreg_cli.types import Flag, JsonMapping
 
 command_registry = CommandRegistry()
 
@@ -519,26 +527,37 @@ def role_history(args: argparse.Namespace) -> None:
     Role.output_history(name)
 
 
-# @command_registry.register_command(
-#     prog="community_add",
-#     description="Create a community within a network policy",
-#     short_desc="Create a network community",
-#     flags=[
-#         Flag("name", description="Community name", metavar="NAME"),
-#         Flag("description", description="Description", metavar="DESCRIPTION"),
-#         Flag("policy", description="Policy name", metavar="POLICY"),
-#     ],
-# )
-# def community_add(args: argparse.Namespace) -> None:
-#     """Show history for name.
+# TODO[rename]: network policy community create
+@command_registry.register_command(
+    prog="community_add",
+    description="Create a community within a network policy",
+    short_desc="Create a network community",
+    flags=[
+        Flag("name", description="Community name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+        Flag("policy", description="Policy name", metavar="POLICY"),
+    ],
+)
+def community_create(args: argparse.Namespace) -> None:
+    """Create a network community.
 
-#     :param args: argparse.Namespace (name)
-#     """
-#     name: str = args.name
+    :param args: argparse.Namespace (name, description, policy)
+    """
+    name: str = args.name
+    description: str = args.description
+    policy_name: str = args.policy
 
-#     Role.output_history(name)
+    # Community should not exist, Policy should exist
+    Community.get_by_name_and_raise(policy_name)
+    policy = NetworkPolicy.get_by_name_or_raise(policy_name)
+
+    params: JsonMapping = {"name": name, "description": description, "policy": policy.id}
+    Community.create(params)
+
+    OutputManager().add_ok(f"Created network community {name!r} for policy {policy_name!r}")
 
 
+# TODO[rename]: network policy create
 @command_registry.register_command(
     prog="network_create",
     description="Create a network policy",
@@ -566,6 +585,7 @@ def create_network_policy(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Created network policy {name!r}")
 
 
+# TODO[rename]: network policy attribute create
 @command_registry.register_command(
     prog="attribute_create",
     description="Create a network policy attribute",
@@ -587,6 +607,7 @@ def create_network_policy_attribute(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Created network policy attribute {name!r}")
 
 
+# TODO[rename]: network policy attribute list
 @command_registry.register_command(
     prog="attribute_list",
     description="List all network policy attributes",

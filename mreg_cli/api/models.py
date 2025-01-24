@@ -1577,6 +1577,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     location: str
     frozen: bool
     reserved: int
+    policy: NetworkPolicy | None = None
 
     def __hash__(self):
         """Return a hash of the network."""
@@ -1972,19 +1973,6 @@ class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
         return Endpoint.NetworkPolicyAttributes
 
 
-class NetworkPolicy(WithName):
-    """Network policy used in a community."""
-
-    id: int
-    name: str
-    attributes: list[NetworkPolicyAttribute] = []
-
-    @classmethod
-    def endpoint(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.NetworkPolicies
-
-
 class Community(FrozenModelWithTimestamps, WithName):
     """Network community."""
 
@@ -1992,6 +1980,7 @@ class Community(FrozenModelWithTimestamps, WithName):
     name: str
     description: str
     policy: int
+    hosts: list[Host] = []
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -2015,6 +2004,20 @@ class Community(FrozenModelWithTimestamps, WithName):
         if not policy:
             raise EntityNotFound(f"Network policy {self.policy} not found.")
         return policy
+
+
+class NetworkPolicy(WithName):
+    """Network policy used in a community."""
+
+    id: int
+    name: str
+    attributes: list[NetworkPolicyAttribute] = []
+    communities: list[Community] = []
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkPolicies
 
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
