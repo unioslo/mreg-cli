@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Atom, Host, HostPolicy, Role
+from mreg_cli.api.models import Atom, Host, HostPolicy, NetworkPolicy, NetworkPolicyAttribute, Role
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CreateError, DeleteError, EntityAlreadyExists
@@ -517,3 +517,90 @@ def role_history(args: argparse.Namespace) -> None:
     name: str = args.name
 
     Role.output_history(name)
+
+
+# @command_registry.register_command(
+#     prog="community_add",
+#     description="Create a community within a network policy",
+#     short_desc="Create a network community",
+#     flags=[
+#         Flag("name", description="Community name", metavar="NAME"),
+#         Flag("description", description="Description", metavar="DESCRIPTION"),
+#         Flag("policy", description="Policy name", metavar="POLICY"),
+#     ],
+# )
+# def community_add(args: argparse.Namespace) -> None:
+#     """Show history for name.
+
+#     :param args: argparse.Namespace (name)
+#     """
+#     name: str = args.name
+
+#     Role.output_history(name)
+
+
+@command_registry.register_command(
+    prog="network_create",
+    description="Create a network policy",
+    short_desc="Create a network policy",
+    flags=[
+        Flag("name", description="Policy name", metavar="NAME"),
+        Flag("attributes", description="Policy Attributes", metavar="ATTRIBUTES", nargs="+"),
+    ],
+)
+def create_network_policy(args: argparse.Namespace) -> None:
+    """Create a network policy.
+
+    :param args: argparse.Namespace (name, attributes)
+    """
+    name: str = args.name
+    attributes: list[str] = args.attributes
+
+    policy_attributes = [NetworkPolicyAttribute.get_by_name_or_raise(a) for a in attributes]
+    NetworkPolicy.create(
+        {
+            "name": name,
+            "attributes": [{"attribute": a.id, "value": True} for a in policy_attributes],
+        }
+    )
+    OutputManager().add_ok(f"Created network policy {name!r}")
+
+
+@command_registry.register_command(
+    prog="attribute_create",
+    description="Create a network policy attribute",
+    short_desc="Create a network policy attribute",
+    flags=[
+        Flag("name", description="Name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+    ],
+)
+def create_network_policy_attribute(args: argparse.Namespace) -> None:
+    """Create a network policy attribute.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    name: str = args.name
+    description: str = args.description
+
+    NetworkPolicyAttribute.create({"name": name, "description": description})
+    OutputManager().add_ok(f"Created network policy attribute {name!r}")
+
+
+@command_registry.register_command(
+    prog="attribute_list",
+    description="List all network policy attributes",
+    short_desc="List network policy attributes",
+    flags=[],
+)
+def list_network_policy_attributes(args: argparse.Namespace) -> None:
+    """List all network policy attributes.
+
+    :param args: argparse.Namespace ()
+    """
+    attributes = NetworkPolicyAttribute.get_by_query({})
+    for attr in attributes:
+        OutputManager().add_line(f"  Name: {attr.name}")
+        OutputManager().add_line(f"  Description: {attr.description}")
+        OutputManager().add_line("")
+    # OutputManager().add_ok(f"Created network policy attribute {name!r}")

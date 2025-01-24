@@ -43,7 +43,7 @@ from mreg_cli.exceptions import (
     ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams
+from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, Json, QueryParams
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -1959,6 +1959,64 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         return self.patch({"vlan": vlan})
 
 
+class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
+    """Attribute for a network policy."""
+
+    id: int
+    name: str
+    description: str
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkPolicyAttributes
+
+
+class NetworkPolicy(WithName):
+    """Network policy used in a community."""
+
+    id: int
+    name: str
+    attributes: list[NetworkPolicyAttribute] = []
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkPolicies
+
+
+class Community(FrozenModelWithTimestamps, WithName):
+    """Network community."""
+
+    id: int
+    name: str
+    description: str
+    policy: int
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkPoliciesCommunities
+
+    def get_policy(self) -> NetworkPolicy | None:
+        """Get the network policy of the community.
+
+        :returns: The NetworkPolicy object.
+        """
+        return NetworkPolicy.get(self.policy)
+
+    def get_policy_or_raise(self) -> NetworkPolicy:
+        """Get the network policy of the community, and raise if not found.
+
+        :returns: The NetworkPolicy object.
+        :raises EntityNotFound: If the policy is not found.
+        """
+        policy = self.get_policy()
+        if not policy:
+            raise EntityNotFound(f"Network policy {self.policy} not found.")
+        return policy
+
+
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents an IP address with associated details."""
 
@@ -3321,6 +3379,7 @@ class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
     groups: NameList
     hosts: NameList
     owners: NameList
+    network_communities: list[Community] = []
 
     history_resource: ClassVar[HistoryResource] = HistoryResource.Group
 
