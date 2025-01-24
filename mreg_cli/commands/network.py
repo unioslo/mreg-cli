@@ -633,7 +633,7 @@ def policy_rename(args: argparse.Namespace) -> None:
 
 # TODO[rename]: network policy set_description
 @command_registry.register_command(
-    prog="set_description",
+    prog="policy_set_description",
     description="Set a description on a network policy",
     short_desc="Set a description on a network policy",
     flags=[
@@ -656,7 +656,7 @@ def policy_set_description(args: argparse.Namespace) -> None:
 
 # TODO[rename]: network policy assign
 @command_registry.register_command(
-    prog="set_description",
+    prog="policy_assign",
     description="Assign a policy to a network",
     short_desc="Assign a policy to a network",
     flags=[
