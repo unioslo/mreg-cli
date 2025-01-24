@@ -694,19 +694,17 @@ def policy_attribute_set_description(args: argparse.Namespace) -> None:
     description="Rename a network policy attribute",
     short_desc="Rename a network policy attribute",
     flags=[
-        Flag(
-            "name",
-            description="Name of the attribute",
-            metavar="NAME",
-        )
+        Flag("oldname", description="Old name of the attribute", metavar="NAME"),
+        Flag("newname", description="New name of the attribute", metavar="NAME"),
     ],
 )
 def policy_attribute_rename(args: argparse.Namespace) -> None:
     """Rename a network policy attribute.
 
-    :param args: argparse.Namespace (name)
+    :param args: argparse.Namespace (oldname, newname)
     """
-    name: str = args.name
+    oldname: str = args.oldname
+    newname: str = args.newname
 
-    attribute = NetworkPolicyAttribute.get_by_name_or_raise(name)
-    attribute.patch({"name": name})
+    attribute = NetworkPolicyAttribute.get_by_name_or_raise(oldname)
+    attribute.patch({"name": newname})
