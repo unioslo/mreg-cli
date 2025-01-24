@@ -1959,6 +1959,14 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         return self.patch({"vlan": vlan})
 
+    def set_policy(self, policy: NetworkPolicy) -> Self:
+        """Set the network policy of the network.
+
+        :param policy: The new network policy.
+        :returns: The updated Network object.
+        """
+        return self.patch({"policy": policy.id})
+
 
 class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
     """Attribute for a network policy."""

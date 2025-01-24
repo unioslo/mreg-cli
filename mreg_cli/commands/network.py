@@ -614,8 +614,8 @@ def policy_delete(args: argparse.Namespace) -> None:
     description="Rename a network policy",
     short_desc="Rename a network policy",
     flags=[
-        Flag("oldname", description="Old policy name", metavar="NAME"),
-        Flag("newname", description="New policy name", metavar="NAME"),
+        Flag("oldname", description="Old policy name", metavar="OLDNAME"),
+        Flag("newname", description="New policy name", metavar="NEWNAME"),
     ],
 )
 def policy_rename(args: argparse.Namespace) -> None:
@@ -629,6 +629,59 @@ def policy_rename(args: argparse.Namespace) -> None:
     policy = NetworkPolicy.get_by_name_or_raise(oldname)
     policy.patch({"name": newname})
     OutputManager().add_ok(f"Renamed network policy {oldname!r} to {newname!r}")
+
+
+# TODO[rename]: network policy set_description
+@command_registry.register_command(
+    prog="set_description",
+    description="Set a description on a network policy",
+    short_desc="Set a description on a network policy",
+    flags=[
+        Flag("name", description="Name of network policy", metavar="NAME"),
+        Flag("description", description="New description", metavar="DESCRIPTION"),
+    ],
+)
+def policy_set_description(args: argparse.Namespace) -> None:
+    """Set a description on a network policy.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    name: str = args.name
+    description: str = args.description
+
+    policy = NetworkPolicy.get_by_name_or_raise(name)
+    policy.patch({"name": description})
+    OutputManager().add_ok(f"Set new description for network policy {name!r}")
+
+
+# TODO[rename]: network policy assign
+@command_registry.register_command(
+    prog="set_description",
+    description="Assign a policy to a network",
+    short_desc="Assign a policy to a network",
+    flags=[
+        Flag("name", description="Name of network policy", metavar="NAME"),
+        Flag("network", description="Network to assign to", metavar="NETWORK"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def policy_assign(args: argparse.Namespace) -> None:
+    """Assign a policy to a network.
+
+    :param args: argparse.Namespace (name, network)
+    """
+    name: str = args.name
+    network: str = args.network
+    force: bool = args.force
+
+    policy = NetworkPolicy.get_by_name_or_raise(name)
+    net = Network.get_by_network_or_raise(network)
+
+    if net.policy and not force:
+        raise ForceMissing(f"Network {net.network!r} already has a policy assigned. Must force.")
+
+    net.set_policy(policy)
+    OutputManager().add_ok(f"Set new description for network policy {name!r}")
 
 
 # TODO[rename]: network policy attribute create
