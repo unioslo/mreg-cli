@@ -608,6 +608,29 @@ def policy_delete(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Deleted network policy {name!r}")
 
 
+# TODO[rename]: network policy rename
+@command_registry.register_command(
+    prog="policy_rename",
+    description="Rename a network policy",
+    short_desc="Rename a network policy",
+    flags=[
+        Flag("oldname", description="Old policy name", metavar="NAME"),
+        Flag("newname", description="New policy name", metavar="NAME"),
+    ],
+)
+def policy_rename(args: argparse.Namespace) -> None:
+    """Rename a network policy.
+
+    :param args: argparse.Namespace (oldname, newname)
+    """
+    oldname: str = args.oldname
+    newname: str = args.newname
+
+    policy = NetworkPolicy.get_by_name_or_raise(oldname)
+    policy.patch({"name": newname})
+    OutputManager().add_ok(f"Renamed network policy {oldname!r} to {newname!r}")
+
+
 # TODO[rename]: network policy attribute create
 @command_registry.register_command(
     prog="policy_attribute_create",
