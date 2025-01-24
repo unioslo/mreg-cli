@@ -5,7 +5,13 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Network, NetworkOrIP
+from mreg_cli.api.models import (
+    Community,
+    Network,
+    NetworkOrIP,
+    NetworkPolicy,
+    NetworkPolicyAttribute,
+)
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import (
@@ -16,8 +22,8 @@ from mreg_cli.exceptions import (
     NetworkOverlap,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag, QueryParams
-from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
+from mreg_cli.types import Flag, JsonMapping, QueryParams
+from mreg_cli.utilities.shared import args_to_mapping, convert_wildcard_to_regex, string_to_int
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
 command_registry = CommandRegistry()
@@ -513,3 +519,165 @@ def unset_frozen(args: argparse.Namespace) -> None:
     net = Network.get_by_any_means_or_raise(args.network)
     net.set_frozen(False)
     OutputManager().add_ok(f"Updated frozen to 'False' for {net.network}")
+
+
+# TODO[rename]: network policy community create
+@command_registry.register_command(
+    prog="policy_community_create",
+    description="Create a community within a network policy",
+    short_desc="Create a network community",
+    flags=[
+        Flag("name", description="Community name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+        Flag("policy", description="Policy name", metavar="POLICY"),
+    ],
+)
+def community_create(args: argparse.Namespace) -> None:
+    """Create a network community.
+
+    :param args: argparse.Namespace (name, description, policy)
+    """
+    name: str = args.name
+    description: str = args.description
+    policy_name: str = args.policy
+
+    # Community should not exist, Policy should exist
+    Community.get_by_name_and_raise(policy_name)
+    policy = NetworkPolicy.get_by_name_or_raise(policy_name)
+
+    params: JsonMapping = {"name": name, "description": description, "policy": policy.id}
+    Community.create(params)
+
+    OutputManager().add_ok(f"Created network community {name!r} for policy {policy_name!r}")
+
+
+# TODO[rename]: network policy create
+@command_registry.register_command(
+    prog="policy_create",
+    description="Create a network policy",
+    short_desc="Create a network policy",
+    flags=[
+        Flag("name", description="Policy name", metavar="NAME"),
+        Flag("attributes", description="Policy Attributes", metavar="ATTRIBUTES", nargs="+"),
+    ],
+)
+def create_network_policy(args: argparse.Namespace) -> None:
+    """Create a network policy.
+
+    :param args: argparse.Namespace (name, attributes)
+    """
+    name: str = args.name
+    attributes: list[str] = args.attributes
+
+    policy_attributes = [NetworkPolicyAttribute.get_by_name_or_raise(a) for a in attributes]
+    NetworkPolicy.create(
+        {
+            "name": name,
+            "attributes": [{"attribute": a.id, "value": True} for a in policy_attributes],
+        }
+    )
+    OutputManager().add_ok(f"Created network policy {name!r}")
+
+
+# TODO[rename]: network policy attribute create
+@command_registry.register_command(
+    prog="policy_attribute_create",
+    description="Create a network policy attribute",
+    short_desc="Create a network policy attribute",
+    flags=[
+        Flag("name", description="Name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+    ],
+)
+def create_network_policy_attribute(args: argparse.Namespace) -> None:
+    """Create a network policy attribute.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    name: str = args.name
+    description: str = args.description
+
+    NetworkPolicyAttribute.create({"name": name, "description": description})
+    OutputManager().add_ok(f"Created network policy attribute {name!r}")
+
+
+# TODO[rename]: network policy attribute list
+@command_registry.register_command(
+    prog="policy_attribute_list",
+    description="List all network policy attributes",
+    short_desc="List network policy attributes",
+    flags=[
+        Flag(
+            "-name",
+            description="Name of the attribute",
+            metavar="NAME",
+        ),
+        Flag("-description", description="Description", metavar="RANGE"),
+    ],
+)
+def list_network_policy_attributes(args: argparse.Namespace) -> None:
+    """List all network policy attributes.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    # TODO: Implement filtering in the API
+    params: QueryParams = {}
+
+    for arg, val in args_to_mapping(args).items():
+        if val is None:
+            continue
+        arg, val = convert_wildcard_to_regex(arg, val)
+        params[arg] = val
+
+    attributes = NetworkPolicyAttribute.get_by_query(params)
+    NetworkPolicyAttribute.output_multiple(attributes)
+
+
+# TODO[rename]: network policy attribute set_description
+@command_registry.register_command(
+    prog="policy_attribute_set_description",
+    description="Set the description on a network policy attribute",
+    short_desc="Set the description on a network policy attribute",
+    flags=[
+        Flag(
+            "name",
+            description="Name of the attribute",
+            metavar="NAME",
+        ),
+        Flag("description", description="New description for the attribute", metavar="RANGE"),
+    ],
+)
+def policy_attribute_set_description(args: argparse.Namespace) -> None:
+    """Set the description on a network policy attribute.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    name: str = args.name
+    description: str = args.description
+
+    attribute = NetworkPolicyAttribute.get_by_name_or_raise(name)
+    attribute.patch({"description": description})
+
+
+# TODO[rename]: network policy attribute rename
+@command_registry.register_command(
+    prog="policy_attribute_rename",
+    description="Rename a network policy attribute",
+    short_desc="Rename a network policy attribute",
+    flags=[
+        Flag(
+            "name",
+            description="Name of the attribute",
+            metavar="NAME",
+        )
+    ],
+)
+def policy_attribute_rename(args: argparse.Namespace) -> None:
+    """Rename a network policy attribute.
+
+    :param args: argparse.Namespace (name)
+    """
+    name: str = args.name
+
+    attribute = NetworkPolicyAttribute.get_by_name_or_raise(name)
+    attribute.patch({"name": name})

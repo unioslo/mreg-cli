@@ -1972,6 +1972,21 @@ class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
         """Return the endpoint for the class."""
         return Endpoint.NetworkPolicyAttributes
 
+    def output(self) -> None:
+        """Output the network policy attribute to the console."""
+        manager = OutputManager()
+        manager.add_line(f"Name: {self.name}")
+        manager.add_line(f"Description: {self.description}")
+
+    @classmethod
+    def output_multiple(cls, attributes: list[Self]) -> None:
+        """Output multiple network policy attributes to the console."""
+        manager = OutputManager()
+        for i, attribute in enumerate(attributes, start=1):
+            attribute.output()
+            if len(attributes) != i:
+                manager.add_line("")
+
 
 class Community(FrozenModelWithTimestamps, WithName):
     """Network community."""
