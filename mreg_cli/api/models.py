@@ -391,6 +391,14 @@ class WithName(BaseModel, APIMixin):
     __name_field__: str = "name"
     """Name of the API field that holds the object's name."""
 
+    __name_lowercase__: bool = False
+    """Lower case name in API requests."""
+
+    @classmethod
+    def _case_name(cls, name: str) -> str:
+        """Set the name case based on the class attribute."""
+        return name.lower() if cls.__name_lowercase__ else name
+
     @classmethod
     def get_by_name(cls, name: str) -> Self | None:
         """Get a resource by name.
@@ -398,7 +406,7 @@ class WithName(BaseModel, APIMixin):
         :param name: The resource name to search for.
         :returns: The resource if found.
         """
-        return cls.get_by_field(cls.__name_field__, name)
+        return cls.get_by_field(cls.__name_field__, cls._case_name(name))
 
     @classmethod
     def get_by_name_and_raise(cls, name: str) -> None:
@@ -407,7 +415,7 @@ class WithName(BaseModel, APIMixin):
         :param name: The resource name to search for.
         :raises EntityAlreadyExists: If the resource is found.
         """
-        return cls.get_by_field_and_raise(cls.__name_field__, name)
+        return cls.get_by_field_and_raise(cls.__name_field__, cls._case_name(name))
 
     @classmethod
     def get_by_name_or_raise(cls, name: str) -> Self:
@@ -417,7 +425,7 @@ class WithName(BaseModel, APIMixin):
         :returns: The resource.
         :raises EntityNotFound: If the resource is not found.
         """
-        return cls.get_by_field_or_raise(cls.__name_field__, name)
+        return cls.get_by_field_or_raise(cls.__name_field__, cls._case_name(name))
 
     @classmethod
     def get_list_by_name_regex(cls, name: str) -> list[Self]:
@@ -426,7 +434,7 @@ class WithName(BaseModel, APIMixin):
         :param name: The regex pattern for names to search for.
         :returns: A list of resource objects.
         """
-        param, value = convert_wildcard_to_regex(cls.__name_field__, name, True)
+        param, value = convert_wildcard_to_regex(cls.__name_field__, cls._case_name(name), True)
         return get_typed(cls.endpoint(), list[cls], params={param: value})
 
     def rename(self, new_name: str) -> Self:
@@ -435,7 +443,7 @@ class WithName(BaseModel, APIMixin):
         :param new_name: The new name to set.
         :returns: True if the rename was successful.
         """
-        return self.patch({self.__name_field__: new_name})
+        return self.patch({self.__name_field__: self._case_name(new_name)})
 
 
 ClassVarNotSet = object()
@@ -2075,6 +2083,8 @@ class NetworkPolicyAttributeValue(BaseModel):
 
 class NetworkPolicy(WithName):
     """Network policy used in a community."""
+
+    __name_lowercase__ = True  # name is always lower case
 
     id: int
     name: str
