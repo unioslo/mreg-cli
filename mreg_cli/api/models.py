@@ -2096,6 +2096,19 @@ class NetworkPolicy(WithName):
         """Return the endpoint for the class."""
         return Endpoint.NetworkPolicies
 
+    def output(self) -> None:
+        """Output the network policy to the console."""
+        manager = OutputManager()
+        manager.add_line(f"Name: {self.name}")
+        if self.attributes:
+            manager.add_line("Attributes:")
+            for attribute in self.attributes:
+                manager.add_line(f" {attribute.name}: {attribute.value}")
+        if self.communities:
+            manager.add_line("Communities:")
+            for community in self.communities:
+                manager.add_line(f" {community.name}")
+
     def get_community(self, name: str) -> Community | None:
         """Get a community by name.
 

@@ -552,6 +552,26 @@ def policy_create(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Created network policy {name!r}")
 
 
+# TODO[rename]: network policy info
+@command_registry.register_command(
+    prog="policy_info",
+    description="Show information about a network policy",
+    short_desc="Show information about a network policy",
+    flags=[
+        Flag("name", description="Policy name", metavar="NAME"),
+    ],
+)
+def policy_info(args: argparse.Namespace) -> None:
+    """Show information about a network policy.
+
+    :param args: argparse.Namespace (name, attributes)
+    """
+    name: str = args.name
+
+    policy = NetworkPolicy.get_by_name_or_raise(name)
+    policy.output()
+
+
 # TODO[rename]: network policy delete
 @command_registry.register_command(
     prog="policy_delete",
