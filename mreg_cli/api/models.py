@@ -2002,7 +2002,7 @@ class Community(FrozenModelWithTimestamps, WithName):
     id: int
     name: str
     description: str
-    policy: int
+    policy: NetworkPolicy
     hosts: list[Host] = []
 
     @classmethod
@@ -2010,23 +2010,14 @@ class Community(FrozenModelWithTimestamps, WithName):
         """Return the endpoint for the class."""
         return Endpoint.NetworkPoliciesCommunities
 
-    def get_policy(self) -> NetworkPolicy | None:
-        """Get the network policy of the community.
+    def add_host(self, host: Host) -> bool:
+        """Add a host to the community.
 
-        :returns: The NetworkPolicy object.
+        :param host: The host to add.
+        :returns: True if the host was added, False otherwise.
         """
-        return NetworkPolicy.get(self.policy)
-
-    def get_policy_or_raise(self) -> NetworkPolicy:
-        """Get the network policy of the community, and raise if not found.
-
-        :returns: The NetworkPolicy object.
-        :raises EntityNotFound: If the policy is not found.
-        """
-        policy = self.get_policy()
-        if not policy:
-            raise EntityNotFound(f"Network policy {self.policy} not found.")
-        return policy
+        resp = post(self.endpoint().with_params(self.policy.id, self.id), {"id": host.id})
+        return resp.ok if resp else False
 
 
 class NetworkPolicy(WithName):
@@ -2705,6 +2696,8 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     contact: str
     ttl: int | None = None
     comment: str
+
+    network_community: Community | None = None
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None

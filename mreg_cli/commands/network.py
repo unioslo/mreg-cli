@@ -7,6 +7,7 @@ from typing import Any
 
 from mreg_cli.api.models import (
     Community,
+    Host,
     Network,
     NetworkOrIP,
     NetworkPolicy,
@@ -15,6 +16,7 @@ from mreg_cli.api.models import (
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import (
+    CreateError,
     DeleteError,
     EntityNotFound,
     ForceMissing,
@@ -681,7 +683,41 @@ def policy_assign(args: argparse.Namespace) -> None:
         raise ForceMissing(f"Network {net.network!r} already has a policy assigned. Must force.")
 
     net.set_policy(policy)
-    OutputManager().add_ok(f"Set new description for network policy {name!r}")
+    OutputManager().add_ok(f"Assigned network policy {name!r} to {network}")
+
+
+# TODO[rename]: network community add_host
+@command_registry.register_command(
+    prog="community_add_host",
+    description="Add a host to a community",
+    short_desc="Add a host to a community",
+    flags=[
+        Flag("host", description="Hostname or IP", metavar="NAME"),
+        Flag("community", description="Community to add host to", metavar="COMMUNITY"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def community_add_host(args: argparse.Namespace) -> None:
+    """Add a host to a community.
+
+    :param args: argparse.Namespace (host, community, force)
+    """
+    hostname_or_ip: str = args.host
+    community: str = args.community
+    force: bool = args.force
+
+    comm = Community.get_by_name_or_raise(community)
+    host = Host.get_by_any_means_or_raise(hostname_or_ip)
+
+    if not force and host.network_community and host.network_community.id != comm.id:
+        raise CreateError(
+            f"Host {host.name!r} is already part of community {host.network_community.name!r}. Must force."
+        )
+
+    if comm.add_host(host):
+        OutputManager().add_ok(f"Added host {host.name!r} to community {comm.name!r}")
+    else:
+        raise CreateError(f"Failed to add host {host.name!r} to community {comm.name!r}")
 
 
 # TODO[rename]: network policy attribute create
