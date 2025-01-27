@@ -2010,13 +2010,34 @@ class Community(FrozenModelWithTimestamps, WithName):
         """Return the endpoint for the class."""
         return Endpoint.NetworkPoliciesCommunities
 
+    @property
+    def endpoint_with_ids(self) -> str:
+        """Return the endpoint with policy and community IDs."""
+        return self.endpoint().with_params(self.policy.id, self.id)
+
+    def output(self, *, show_hosts: bool = True) -> None:
+        """Output the community to the console."""
+        manager = OutputManager()
+        manager.add_line(f"Name: {self.name}")
+        manager.add_line(f"Description: {self.description}")
+        manager.add_line(f"Policy: {self.policy.name}")
+        if show_hosts and self.hosts:
+            manager.add_line("Hosts:")
+            for host in self.hosts:
+                manager.add_line(f" {host.name}")
+
     def add_host(self, host: Host) -> bool:
         """Add a host to the community.
 
         :param host: The host to add.
         :returns: True if the host was added, False otherwise.
         """
-        resp = post(self.endpoint().with_params(self.policy.id, self.id), {"id": host.id})
+        resp = post(self.endpoint_with_ids, {"id": host.id})
+        return resp.ok if resp else False
+
+    def delete(self) -> bool:
+        """Delete the community."""
+        resp = delete(self.endpoint_with_ids)
         return resp.ok if resp else False
 
 
@@ -2032,6 +2053,17 @@ class NetworkPolicy(WithName):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.NetworkPolicies
+
+    def get_community(self, name: str) -> Community | None:
+        """Get a community by name.
+
+        :param name: The name of the community to search for.
+        :returns: The community if found, None otherwise.
+        """
+        for community in self.communities:
+            if community.name == name:
+                return community
+        return None
 
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
