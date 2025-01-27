@@ -2003,7 +2003,7 @@ class Community(FrozenModelWithTimestamps, WithName):
     name: str
     description: str
     policy: NetworkPolicy
-    hosts: list[Host] = []
+    hosts: list[str] = []
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -2024,7 +2024,7 @@ class Community(FrozenModelWithTimestamps, WithName):
         if show_hosts and self.hosts:
             manager.add_line("Hosts:")
             for host in self.hosts:
-                manager.add_line(f" {host.name}")
+                manager.add_line(f" {host}")
 
     def add_host(self, host: Host) -> bool:
         """Add a host to the community.
