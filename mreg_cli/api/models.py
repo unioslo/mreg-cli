@@ -2035,6 +2035,25 @@ class Community(FrozenModelWithTimestamps, WithName):
         resp = post(self.endpoint_with_ids, {"id": host.id})
         return resp.ok if resp else False
 
+    def remove_host(self, host: Host) -> bool:
+        """Remove a host from the community.
+
+        :param host: The host to remove.
+        :returns: True if the host was removed, False otherwise.
+        """
+        resp = delete(self.endpoint_with_ids, {"id": host.id})
+        return resp.ok if resp else False
+
+    def get_hosts(self) -> list[Host]:
+        """Get the complete definitions for hosts in the community.
+
+        :returns: A list of Host objects.
+        """
+        return get_typed(
+            Endpoint.NetworkPoliciesCommunityHosts.with_params(self.policy.id, self.id),
+            list[Host],
+        )
+
     def delete(self) -> bool:
         """Delete the community."""
         resp = delete(self.endpoint_with_ids)

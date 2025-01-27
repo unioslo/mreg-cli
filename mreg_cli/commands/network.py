@@ -866,6 +866,37 @@ def community_add_host(args: argparse.Namespace) -> None:
         raise CreateError(f"Failed to add host {host.name!r} to community {comm.name!r}")
 
 
+# TODO[rename]: network community remove_host
+@command_registry.register_command(
+    prog="community_add_host",
+    description="Remove a host from a community",
+    short_desc="Remove a host from a community",
+    flags=[
+        Flag("host", description="Hostname or IP", metavar="NAME"),
+        Flag("community", description="Community to add host to", metavar="COMMUNITY"),
+    ],
+)
+def community_remove_host(args: argparse.Namespace) -> None:
+    """Remove a host from a community.
+
+    :param args: argparse.Namespace (host, community)
+    """
+    hostname_or_ip: str = args.host
+    community: str = args.community
+
+    comm = Community.get_by_name_or_raise(community)
+    host = Host.get_by_any_means_or_raise(hostname_or_ip)
+    if not host.network_community:
+        raise EntityNotFound(f"Host {host.name!r} is not part of any community")
+    if host.network_community.id != comm.id:
+        raise EntityNotFound(f"Host {host.name!r} is not part of community {comm.name!r}")
+
+    if comm.remove_host(host):
+        OutputManager().add_ok(f"Removed host {host.name!r} from community {comm.name!r}")
+    else:
+        raise DeleteError(f"Failed to remove host {host.name!r} from community {comm.name!r}")
+
+
 # TODO[rename]: network policy attribute create
 @command_registry.register_command(
     prog="policy_attribute_create",
