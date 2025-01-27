@@ -542,10 +542,11 @@ def policy_create(args: argparse.Namespace) -> None:
     attributes: list[str] = args.attributes
 
     policy_attributes = [NetworkPolicyAttribute.get_by_name_or_raise(a) for a in attributes]
+
     NetworkPolicy.create(
         {
             "name": name,
-            "attributes": [{"attribute": a.id, "value": True} for a in policy_attributes],
+            "attributes": [{"name": a.name, "value": True} for a in policy_attributes],
         }
     )
     OutputManager().add_ok(f"Created network policy {name!r}")

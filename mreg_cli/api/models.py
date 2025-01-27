@@ -1969,7 +1969,10 @@ class Network(FrozenModelWithTimestamps, APIMixin):
 
 
 class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
-    """Attribute for a network policy."""
+    """The definition of a network policy attribute.
+
+    See NetworkPolicyAttr for the representation of attributes in Policies.
+    """
 
     id: int
     name: str
@@ -2063,12 +2066,19 @@ class Community(FrozenModelWithTimestamps, WithName):
         return get_typed(self.hosts_endpoint, list[Host])
 
 
+class NetworkPolicyAttributeValue(BaseModel):
+    """Name and value of a network policy's attribute."""
+
+    name: str
+    value: Json
+
+
 class NetworkPolicy(WithName):
     """Network policy used in a community."""
 
     id: int
     name: str
-    attributes: list[NetworkPolicyAttribute] = []
+    attributes: list[NetworkPolicyAttributeValue] = []
     communities: list[Community] = []
 
     @classmethod
@@ -2087,7 +2097,7 @@ class NetworkPolicy(WithName):
                 return community
         return None
 
-    def create_community(self, name: str, description: str) -> Community:
+    def create_community(self, name: str, description: str) -> Community | None:
         """Create a new community.
 
         :param name: The name of the community.
@@ -2099,7 +2109,9 @@ class NetworkPolicy(WithName):
             name=name,
             description=description,
         )
-        return Community.model_validate_json(resp.text)
+        if resp and (location := resp.headers.get("Location")):
+            return get_typed(location, Community)
+        return None
 
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
