@@ -748,15 +748,12 @@ def policy_community_create(args: argparse.Namespace) -> None:
     policy: str = args.policy
     community: str = args.community
 
+    # Policy should exist, Community should not exist
     pol = NetworkPolicy.get_by_name_or_raise(policy)
-
     if pol.get_community(community):
         raise CreateError(f"Policy {policy!r} already has the community {community!r}")
 
-    if Community.get_by_name(community):
-        raise CreateError(f"Community {community!r} already exists")
-
-    Community.create({"name": community, "policy": pol.id})
+    Community.create({"name": community, "desc": pol.id})
     OutputManager().add_ok(f"Created community {community!r} for policy {policy!r}")
 
 
@@ -868,7 +865,7 @@ def community_add_host(args: argparse.Namespace) -> None:
 
 # TODO[rename]: network community remove_host
 @command_registry.register_command(
-    prog="community_add_host",
+    prog="community_remove_host",
     description="Remove a host from a community",
     short_desc="Remove a host from a community",
     flags=[

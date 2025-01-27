@@ -2011,9 +2011,9 @@ class Community(FrozenModelWithTimestamps, WithName):
         return Endpoint.NetworkPoliciesCommunities
 
     @property
-    def endpoint_with_ids(self) -> str:
+    def hosts_endpoint(self) -> str:
         """Return the endpoint with policy and community IDs."""
-        return self.endpoint().with_params(self.policy.id, self.id)
+        return Endpoint.NetworkPoliciesCommunityHosts.with_params(self.policy.id, self.id)
 
     def output(self, *, show_hosts: bool = True) -> None:
         """Output the community to the console."""
@@ -2026,13 +2026,18 @@ class Community(FrozenModelWithTimestamps, WithName):
             for host in self.hosts:
                 manager.add_line(f" {host}")
 
+    def delete(self) -> bool:
+        """Delete the community."""
+        resp = delete(self.endpoint().with_params(self.policy.id, self.id))
+        return resp.ok if resp else False
+
     def add_host(self, host: Host) -> bool:
         """Add a host to the community.
 
         :param host: The host to add.
         :returns: True if the host was added, False otherwise.
         """
-        resp = post(self.endpoint_with_ids, {"id": host.id})
+        resp = post(self.hosts_endpoint, id=host.id)
         return resp.ok if resp else False
 
     def remove_host(self, host: Host) -> bool:
@@ -2041,7 +2046,13 @@ class Community(FrozenModelWithTimestamps, WithName):
         :param host: The host to remove.
         :returns: True if the host was removed, False otherwise.
         """
-        resp = delete(self.endpoint_with_ids, {"id": host.id})
+        resp = delete(
+            Endpoint.NetworkPoliciesCommunityHost.with_params(
+                self.policy.id,
+                self.id,
+                host.id,
+            )
+        )
         return resp.ok if resp else False
 
     def get_hosts(self) -> list[Host]:
@@ -2049,15 +2060,7 @@ class Community(FrozenModelWithTimestamps, WithName):
 
         :returns: A list of Host objects.
         """
-        return get_typed(
-            Endpoint.NetworkPoliciesCommunityHosts.with_params(self.policy.id, self.id),
-            list[Host],
-        )
-
-    def delete(self) -> bool:
-        """Delete the community."""
-        resp = delete(self.endpoint_with_ids)
-        return resp.ok if resp else False
+        return get_typed(self.hosts_endpoint, list[Host])
 
 
 class NetworkPolicy(WithName):
@@ -2083,6 +2086,20 @@ class NetworkPolicy(WithName):
             if community.name == name:
                 return community
         return None
+
+    def create_community(self, name: str, description: str) -> Community:
+        """Create a new community.
+
+        :param name: The name of the community.
+        :param description: The description of the community.
+        :returns: The new Community object.
+        """
+        resp = post(
+            Endpoint.NetworkPoliciesCommunities.with_params(self.id),
+            name=name,
+            description=description,
+        )
+        return Community.model_validate_json(resp.text)
 
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
