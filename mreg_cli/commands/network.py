@@ -523,36 +523,6 @@ def unset_frozen(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Updated frozen to 'False' for {net.network}")
 
 
-# TODO[rename]: network policy community create
-@command_registry.register_command(
-    prog="policy_community_create",
-    description="Create a community within a network policy",
-    short_desc="Create a network community",
-    flags=[
-        Flag("name", description="Community name", metavar="NAME"),
-        Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("policy", description="Policy name", metavar="POLICY"),
-    ],
-)
-def community_create(args: argparse.Namespace) -> None:
-    """Create a network community.
-
-    :param args: argparse.Namespace (name, description, policy)
-    """
-    name: str = args.name
-    description: str = args.description
-    policy_name: str = args.policy
-
-    # Community should not exist, Policy should exist
-    Community.get_by_name_and_raise(policy_name)
-    policy = NetworkPolicy.get_by_name_or_raise(policy_name)
-
-    params: JsonMapping = {"name": name, "description": description, "policy": policy.id}
-    Community.create(params)
-
-    OutputManager().add_ok(f"Created network community {name!r} for policy {policy_name!r}")
-
-
 # TODO[rename]: network policy create
 @command_registry.register_command(
     prog="policy_create",
@@ -737,7 +707,8 @@ def policy_list_communities(args: argparse.Namespace) -> None:
     short_desc="Create a community",
     flags=[
         Flag("policy", description="Name of policy", metavar="POLICY"),
-        Flag("community", description="Name of community", metavar="COMMUNITY"),
+        Flag("name", description="Name of community", metavar="NAME"),
+        Flag("description", description="Description of community", metavar="DESCRIPTION"),
     ],
 )
 def policy_community_create(args: argparse.Namespace) -> None:
@@ -746,15 +717,16 @@ def policy_community_create(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (policy, community)
     """
     policy: str = args.policy
-    community: str = args.community
+    name: str = args.name
+    description: str = args.description
 
     # Policy should exist, Community should not exist
     pol = NetworkPolicy.get_by_name_or_raise(policy)
-    if pol.get_community(community):
-        raise CreateError(f"Policy {policy!r} already has the community {community!r}")
+    if pol.get_community(name):
+        raise CreateError(f"Policy {policy!r} already has the community {name!r}")
 
-    Community.create({"name": community, "desc": pol.id})
-    OutputManager().add_ok(f"Created community {community!r} for policy {policy!r}")
+    pol.create_community(name, description)
+    OutputManager().add_ok(f"Created community {name!r} for policy {policy!r}")
 
 
 # TODO[rename]: network policy community rename
