@@ -2013,7 +2013,7 @@ class Community(FrozenModelWithTimestamps, WithName):
     id: int
     name: str
     description: str
-    policy: NetworkPolicy
+    policy: int
     hosts: list[str] = []
 
     @classmethod
@@ -2024,14 +2024,13 @@ class Community(FrozenModelWithTimestamps, WithName):
     @property
     def hosts_endpoint(self) -> str:
         """Return the endpoint with policy and community IDs."""
-        return Endpoint.NetworkPoliciesCommunityHosts.with_params(self.policy.id, self.id)
+        return Endpoint.NetworkPoliciesCommunityHosts.with_params(self.policy, self.id)
 
-    def output(self, *, show_hosts: bool = True) -> None:
+    def output(self, *, padding: int = 14, show_hosts: bool = True) -> None:
         """Output the community to the console."""
         manager = OutputManager()
         manager.add_line(f"Name: {self.name}")
         manager.add_line(f"Description: {self.description}")
-        manager.add_line(f"Policy: {self.policy.name}")
         if show_hosts and self.hosts:
             manager.add_line("Hosts:")
             for host in self.hosts:
@@ -2039,7 +2038,7 @@ class Community(FrozenModelWithTimestamps, WithName):
 
     def delete(self) -> bool:
         """Delete the community."""
-        resp = delete(self.endpoint().with_params(self.policy.id, self.id))
+        resp = delete(self.endpoint().with_params(self.policy, self.id))
         return resp.ok if resp else False
 
     def add_host(self, host: Host) -> bool:
@@ -2059,7 +2058,7 @@ class Community(FrozenModelWithTimestamps, WithName):
         """
         resp = delete(
             Endpoint.NetworkPoliciesCommunityHost.with_params(
-                self.policy.id,
+                self.policy,
                 self.id,
                 host.id,
             )
