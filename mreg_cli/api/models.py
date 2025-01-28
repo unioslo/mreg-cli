@@ -2108,6 +2108,18 @@ class NetworkPolicy(WithName):
             for community in self.communities:
                 manager.add_line(f" {community.name}")
 
+    def get_community_or_raise(self, name: str) -> Community:
+        """Get a community by name, and raise if not found.
+
+        :param name: The name of the community to search for.
+        :returns: The community if found.
+        :raises EntityNotFound: If the community is not found.
+        """
+        community = self.get_community(name)
+        if not community:
+            raise EntityNotFound(f"Community {name!r} not found.")
+        return community
+
     def get_community(self, name: str) -> Community | None:
         """Get a community by name.
 

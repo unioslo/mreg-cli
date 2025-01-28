@@ -683,6 +683,7 @@ def policy_assign(args: argparse.Namespace) -> None:
     description="Show information about a community",
     short_desc="Show information about a community",
     flags=[
+        Flag("policy", description="Name of policy", metavar="POLICY"),
         Flag("community", description="Name of community", metavar="COMMUNITY"),
     ],
 )
@@ -692,8 +693,10 @@ def policy_community_info(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (community)
     """
     community: str = args.community
+    policy: str = args.policy
 
-    comm = Community.get_by_name_or_raise(community)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    comm = pol.get_community_or_raise(community)
     comm.output()
 
 
@@ -756,8 +759,9 @@ def policy_community_create(args: argparse.Namespace) -> None:
     description="Rename a community",
     short_desc="Rename a community",
     flags=[
-        Flag("oldname", description="Old name of community", metavar="COMMUNITY"),
-        Flag("newname", description="New name of community", metavar="COMMUNITY"),
+        Flag("policy", description="Policy the community is in", metavar="POLICY"),
+        Flag("oldname", description="Old name of community", metavar="OLDNAME"),
+        Flag("newname", description="New name of community", metavar="NEWNAME"),
     ],
 )
 def policy_community_rename(args: argparse.Namespace) -> None:
@@ -765,10 +769,12 @@ def policy_community_rename(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (oldname, newname)
     """
+    policy: str = args.policy
     oldname: str = args.oldname
     newname: str = args.newname
 
-    community = Community.get_by_name_or_raise(oldname)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    community = pol.get_community_or_raise(oldname)
     community.patch({"name": newname})
     OutputManager().add_ok(f"Renamed community {oldname!r} to {newname!r}")
 
@@ -779,6 +785,7 @@ def policy_community_rename(args: argparse.Namespace) -> None:
     description="Set description for a community",
     short_desc="Set community description",
     flags=[
+        Flag("policy", description="Policy the community is in", metavar="POLICY"),
         Flag("community", description="Name of community", metavar="COMMUNITY"),
         Flag("description", description="New description", metavar="DESCRIPTION"),
     ],
@@ -788,10 +795,12 @@ def policy_community_set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (community, description)
     """
+    policy: str = args.policy
     community: str = args.community
     description: str = args.description
 
-    comm = Community.get_by_name_or_raise(community)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    comm = pol.get_community_or_raise(community)
     comm.patch({"description": description})
     OutputManager().add_ok(f"Set new description for community {community!r}")
 
@@ -802,6 +811,7 @@ def policy_community_set_description(args: argparse.Namespace) -> None:
     description="Delete a community",
     short_desc="Delete a community",
     flags=[
+        Flag("policy", description="Policy the community is in", metavar="POLICY"),
         Flag("community", description="Name of community", metavar="COMMUNITY"),
         Flag("-force", action="store_true", description="Enable force."),
     ],
@@ -811,15 +821,17 @@ def policy_community_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (community, force)
     """
+    policy: str = args.policy
     community: str = args.community
     force: bool = args.force
 
-    comm = Community.get_by_name_or_raise(community)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    comm = pol.get_community_or_raise(community)
     if comm.hosts and not force:
         raise ForceMissing(f"Community {community!r} has hosts. Must force.")
 
     comm.delete()
-    OutputManager().add_ok(f"Deleted community {community!r}")
+    OutputManager().add_ok(f"Deleted community {community!r} from policy {policy!r}")
 
 
 # TODO[rename]: network community add_host
@@ -828,8 +840,9 @@ def policy_community_delete(args: argparse.Namespace) -> None:
     description="Add a host to a community",
     short_desc="Add a host to a community",
     flags=[
-        Flag("host", description="Hostname or IP", metavar="NAME"),
+        Flag("policy", description="Policy the community is in", metavar="POLICY"),
         Flag("community", description="Community to add host to", metavar="COMMUNITY"),
+        Flag("host", description="Hostname or IP", metavar="NAME"),
         Flag("-force", action="store_true", description="Enable force."),
     ],
 )
@@ -838,11 +851,13 @@ def community_add_host(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (host, community, force)
     """
-    hostname_or_ip: str = args.host
+    policy: str = args.policy
     community: str = args.community
+    hostname_or_ip: str = args.host
     force: bool = args.force
 
-    comm = Community.get_by_name_or_raise(community)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    comm = pol.get_community_or_raise(community)
     host = Host.get_by_any_means_or_raise(hostname_or_ip)
 
     if not force and host.network_community and host.network_community.id != comm.id:
@@ -862,8 +877,9 @@ def community_add_host(args: argparse.Namespace) -> None:
     description="Remove a host from a community",
     short_desc="Remove a host from a community",
     flags=[
-        Flag("host", description="Hostname or IP", metavar="NAME"),
+        Flag("policy", description="Policy the community is in", metavar="POLICY"),
         Flag("community", description="Community to add host to", metavar="COMMUNITY"),
+        Flag("host", description="Hostname or IP", metavar="NAME"),
     ],
 )
 def community_remove_host(args: argparse.Namespace) -> None:
@@ -871,11 +887,14 @@ def community_remove_host(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (host, community)
     """
-    hostname_or_ip: str = args.host
+    policy: str = args.policy
     community: str = args.community
+    hostname_or_ip: str = args.host
 
-    comm = Community.get_by_name_or_raise(community)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    comm = pol.get_community_or_raise(community)
     host = Host.get_by_any_means_or_raise(hostname_or_ip)
+
     if not host.network_community:
         raise EntityNotFound(f"Host {host.name!r} is not part of any community")
     if host.network_community.id != comm.id:
