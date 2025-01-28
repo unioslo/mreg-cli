@@ -8,15 +8,9 @@ from datetime import date, datetime
 from functools import cached_property
 from typing import Any, Callable, ClassVar, Iterable, Literal, Self, cast, overload
 
-from pydantic import (
-    AliasChoices,
-    BaseModel,
-    ConfigDict,
-    Field,
-    computed_field,
-    field_validator,
-)
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic import ValidationError as PydanticValidationError
+from pydantic import computed_field, field_validator
 from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
@@ -1050,6 +1044,11 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         return Endpoint.ForwardZonesDelegations
 
     @classmethod
+    def is_reverse(cls) -> bool:
+        """Return True if the delegation is for a reverse zone."""
+        return False
+
+    @classmethod
     def endpoint_with_id(cls, zone: Zone, name: str) -> str:
         """Return the path to a delegation in a specific zone."""
         if cls.is_reverse():
@@ -1086,6 +1085,11 @@ class ReverseZoneDelegation(Delegation, APIMixin):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.ReverseZonesDelegations
+
+    @classmethod
+    def is_reverse(cls) -> bool:
+        """Return True if the delegation is for a reverse zone."""
+        return True
 
 
 class HostPolicy(FrozenModel, WithName):
