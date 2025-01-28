@@ -1049,7 +1049,6 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         """Return the endpoint for the class."""
         return Endpoint.ForwardZonesDelegations
 
-
     @classmethod
     def endpoint_with_id(cls, zone: Zone, name: str) -> str:
         """Return the path to a delegation in a specific zone."""
@@ -1059,14 +1058,15 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
             endpoint = Endpoint.ForwardZonesDelegationsZone
         return endpoint.with_params(zone.name, name)
 
+    def is_delegated(self) -> bool:
+        """Return True if the zone is delegated."""
+        return True
+
     @classmethod
     def is_reverse(cls) -> bool:
         """Return True if the delegation is for a reverse zone."""
         return False
 
-    def is_delegated(self) -> bool:
-        """Return True if the zone is delegated."""
-        return True
 
     @classmethod
     def type_by_zone(cls, zone: Zone) -> type[ForwardZoneDelegation | ReverseZoneDelegation]:
