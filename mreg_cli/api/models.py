@@ -1067,7 +1067,6 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
         """Return True if the delegation is for a reverse zone."""
         return False
 
-
     @classmethod
     def type_by_zone(cls, zone: Zone) -> type[ForwardZoneDelegation | ReverseZoneDelegation]:
         """Get the delegation type for a zone."""
