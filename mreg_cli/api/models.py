@@ -2029,8 +2029,8 @@ class Community(FrozenModelWithTimestamps, WithName):
     def output(self, *, padding: int = 14, show_hosts: bool = True) -> None:
         """Output the community to the console."""
         manager = OutputManager()
-        manager.add_line(f"Name: {self.name}")
-        manager.add_line(f"Description: {self.description}")
+        manager.add_line(f"{'Name:':<{padding}} {self.name}")
+        manager.add_line(f"{'Description:':<{padding}} {self.description}")
         if show_hosts and self.hosts:
             manager.add_line("Hosts:")
             for host in self.hosts:
