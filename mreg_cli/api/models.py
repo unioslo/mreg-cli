@@ -43,7 +43,7 @@ from mreg_cli.exceptions import (
     ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, Json, QueryParams
+from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -1982,6 +1982,8 @@ class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
     See NetworkPolicyAttr for the representation of attributes in Policies.
     """
 
+    __name_lowercase__ = True  # name is always lower case
+
     id: int
     name: str
     description: str
@@ -2077,7 +2079,7 @@ class NetworkPolicyAttributeValue(BaseModel):
     """Name and value of a network policy's attribute."""
 
     name: str
-    value: Json
+    value: bool
 
 
 class NetworkPolicy(WithName):
@@ -2130,6 +2132,66 @@ class NetworkPolicy(WithName):
             if community.name == name:
                 return community
         return None
+
+    def get_attribute_or_raise(self, name: str) -> NetworkPolicyAttributeValue:
+        """Get a network attribute value by name, and raise if not found.
+
+        :param name: The name of the attribute to search for.
+        :returns: The attribute if found.
+        :raises EntityNotFound: If the attribute is not found.
+        """
+        attribute = self.get_attribute(name)
+        if not attribute:
+            raise EntityNotFound(f"Attribute {name!r} not found in policy.")
+        return attribute
+
+    def get_attribute(self, name: str) -> NetworkPolicyAttributeValue | None:
+        """Get a attribute by name.
+
+        :param name: The name of the attribute to search for.
+        :returns: The attribute if found, None otherwise.
+        """
+        for attribute in self.attributes:
+            if attribute.name == name:
+                return attribute
+        return None
+
+    def add_attribute(self, attribute: NetworkPolicyAttribute, value: bool = True) -> None:
+        """Add an attribute to the policy.
+
+        :param attribute: The attribute to add.
+        :param value: The value of the attribute.
+        """
+        if self.get_attribute(attribute.name):
+            raise EntityAlreadyExists(f"Attribute {attribute.name!r} already exists in policy.")
+        attrs = self.attributes.copy()
+        attrs.append(NetworkPolicyAttributeValue(name=attribute.name, value=value))
+        self._patch_attrs(attrs)
+
+    def remove_attribute(self, attribute: str) -> None:
+        """Add an attribute to the policy.
+
+        :param attribute: The attribute to add.
+        :param value: The value of the attribute.
+        """
+        attr = self.get_attribute_or_raise(attribute)
+        attrs = self.attributes.copy()
+        attrs.remove(attr)
+        # attrs = [a for a in self.attributes if a.name != attribute]
+        self._patch_attrs(attrs)
+
+    def _patch_attrs(self, attrs: list[NetworkPolicyAttributeValue]) -> None:
+        """Patch the attributes of the policy.
+
+        Sets the attributes on the model itself after a successful patch.
+
+        :param attrs: The new attributes.
+        """
+        self.patch(
+            {"attributes": [{"name": a.name, "value": a.value} for a in attrs]},
+            validate=False,
+        )
+        self.attributes = attrs
 
     def create_community(self, name: str, description: str) -> Community | None:
         """Create a new community.

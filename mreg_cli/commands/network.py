@@ -1006,3 +1006,50 @@ def policy_attribute_rename(args: argparse.Namespace) -> None:
 
     attribute = NetworkPolicyAttribute.get_by_name_or_raise(oldname)
     attribute.patch({"name": newname})
+
+
+# TODO[rename]: network policy attribute assign
+@command_registry.register_command(
+    prog="policy_attribute_assign",
+    description="Assign an attribute to a network policy",
+    short_desc="Assign attribute to policy",
+    flags=[
+        Flag("policy", description="Policy to assign to", metavar="POLICY"),
+        Flag("attribute", description="Attribute to assign", metavar="ATTRIBUTE"),
+    ],
+)
+def policy_attribute_assign(args: argparse.Namespace) -> None:
+    """Assign an attribute to a network policy.
+
+    :param args: argparse.Namespace (policy, attribute)
+    """
+    policy: str = args.policy
+    attribute: str = args.attribute
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+    pol.add_attribute(attr)  # we check for duplicates in this method
+    OutputManager().add_ok(f"Assigned attribute {attribute!r} to policy {policy!r}")
+
+
+# TODO[rename]: network policy attribute remove
+@command_registry.register_command(
+    prog="policy_attribute_remove",
+    description="Remove an attribute to a network policy",
+    short_desc="Remove attribute from policy",
+    flags=[
+        Flag("policy", description="Policy to remove from", metavar="POLICY"),
+        Flag("attribute", description="Attribute to remove", metavar="ATTRIBUTE"),
+    ],
+)
+def policy_attribute_remove(args: argparse.Namespace) -> None:
+    """Remove an attribute from a network policy.
+
+    :param args: argparse.Namespace (policy, attribute)
+    """
+    policy: str = args.policy
+    attribute: str = args.attribute
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    pol.remove_attribute(attribute)
+    OutputManager().add_ok(f"Removed attribute {attribute!r} to policy {policy!r}")
