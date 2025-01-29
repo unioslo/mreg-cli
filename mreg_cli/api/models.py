@@ -1733,6 +1733,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         fmt("Netmask:", ipnet.netmask)
         fmt("Description:", self.description)
         fmt("Category:", self.category)
+        fmt("Network policy: ", self.policy.name if self.policy else "None")
         fmt("Location:", self.location)
         fmt("VLAN:", self.vlan)
         fmt("DNS delegated:", str(self.dns_delegated))
