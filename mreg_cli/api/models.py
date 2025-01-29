@@ -1733,7 +1733,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         fmt("Netmask:", ipnet.netmask)
         fmt("Description:", self.description)
         fmt("Category:", self.category)
-        fmt("Network policy: ", self.policy.name if self.policy else "None")
+        fmt("Network policy: ", self.policy.name if self.policy else "")
         fmt("Location:", self.location)
         fmt("VLAN:", self.vlan)
         fmt("DNS delegated:", str(self.dns_delegated))
@@ -1974,7 +1974,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         :param policy: The new network policy.
         :returns: The updated Network object.
         """
-        return self.patch({"policy": policy.id})
+        return self.patch({"policy": policy.id}, validate=False)
 
 
 class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
