@@ -677,6 +677,37 @@ def policy_assign(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Assigned network policy {name!r} to {network}")
 
 
+# TODO[rename]: network policy remove
+@command_registry.register_command(
+    prog="policy_remove",
+    description="Remove a policy from a network",
+    short_desc="Remove a policy from a network",
+    flags=[
+        Flag("name", description="Name of network policy", metavar="NAME"),
+        Flag("network", description="Network to assign to", metavar="NETWORK"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def policy_remove(args: argparse.Namespace) -> None:
+    """Assign a policy to a network.
+
+    :param args: argparse.Namespace (name, network)
+    """
+    name: str = args.name
+    network: str = args.network
+    force: bool = args.force
+
+    policy = NetworkPolicy.get_by_name_or_raise(name)
+    net = Network.get_by_network_or_raise(network)
+
+    # FIXME: add check for hosts assigned to communities in policy
+    if not net.policy:
+        raise EntityNotFound(f"Network {net.network!r} does not have a policy assigned.")
+
+    net.set_policy(policy)
+    OutputManager().add_ok(f"Assigned network policy {name!r} to {network}")
+
+
 # TODO[rename]: network policy community info
 @command_registry.register_command(
     prog="policy_community_info",
