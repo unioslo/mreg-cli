@@ -1053,3 +1053,38 @@ def policy_attribute_remove(args: argparse.Namespace) -> None:
     pol = NetworkPolicy.get_by_name_or_raise(policy)
     pol.remove_attribute(attribute)
     OutputManager().add_ok(f"Removed attribute {attribute!r} to policy {policy!r}")
+
+
+def parse_bool(arg: str) -> bool:
+    """Parse an argument as a boolean value."""
+    if arg in ["0", "False", "false"]:
+        return False
+    elif arg in ["1", "True", "true"]:
+        return True
+    else:
+        raise ValueError("Value must be a boolean")
+
+
+# TODO[rename]: network policy attribute set_value
+@command_registry.register_command(
+    prog="policy_attribute_set_value",
+    description="Set the value of a network policy attribute",
+    short_desc="Set policy attribute value",
+    flags=[
+        Flag("policy", description="Policy to remove from", metavar="POLICY"),
+        Flag("attribute", description="Attribute to remove", metavar="ATTRIBUTE"),
+        Flag("value", description="The value to set", metavar="VALUE", flag_type=parse_bool),
+    ],
+)
+def policy_attribute_set_value(args: argparse.Namespace) -> None:
+    """Set the value of a network policy attribute.
+
+    :param args: argparse.Namespace (policy, attribute, value)
+    """
+    policy: str = args.policy
+    attribute: str = args.attribute
+    value: bool = args.value
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    pol.set_attribute_value(attribute, value)
+    OutputManager().add_ok(f"Set attribute {attribute!r} of policy {policy!r} to {value!r}")

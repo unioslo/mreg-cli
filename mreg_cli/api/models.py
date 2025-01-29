@@ -2178,7 +2178,22 @@ class NetworkPolicy(WithName):
         attr = self.get_attribute_or_raise(attribute)
         attrs = self.attributes.copy()
         attrs.remove(attr)
-        # attrs = [a for a in self.attributes if a.name != attribute]
+        self._patch_attrs(attrs)
+
+    def set_attribute_value(self, attribute: str, value: bool) -> None:
+        """Add an attribute to the policy.
+
+        :param attribute: The attribute to add.
+        :param value: The value of the attribute.
+        """
+        # Check if attribute exists
+        # NOTE: yes, we iterate over it twice here, but it's a small list
+        self.get_attribute_or_raise(attribute)
+        attrs = self.attributes.copy()
+        for a in attrs:
+            if a.name == attribute:
+                a.value = value
+                break
         self._patch_attrs(attrs)
 
     def _patch_attrs(self, attrs: list[NetworkPolicyAttributeValue]) -> None:
