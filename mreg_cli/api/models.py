@@ -588,7 +588,7 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
 
     def is_reverse(self) -> bool:
         """Return True if the zone is a reverse zone."""
-        return False
+        return is_reverse_zone_name(self.name)
 
     # Default to forward zone endpoints for the base class
     # This can be overridden in the subclasses
@@ -1064,7 +1064,7 @@ class Delegation(FrozenModelWithTimestamps, WithZone):
 
     @classmethod
     def is_reverse(cls) -> bool:
-        """Return True if the zone is a reverse zone."""
+        """Return True if the delegation is for a reverse zone."""
         return False
 
     @classmethod
@@ -1094,7 +1094,7 @@ class ReverseZoneDelegation(Delegation, APIMixin):
 
     @classmethod
     def is_reverse(cls) -> bool:
-        """Return True if the zone is a reverse zone."""
+        """Return True if the delegation is for a reverse zone."""
         return True
 
 
