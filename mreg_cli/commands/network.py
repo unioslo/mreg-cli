@@ -767,7 +767,7 @@ def policy_community_create(args: argparse.Namespace) -> None:
 def policy_community_rename(args: argparse.Namespace) -> None:
     """Rename a community.
 
-    :param args: argparse.Namespace (oldname, newname)
+    :param args: argparse.Namespace (policy, oldname, newname)
     """
     policy: str = args.policy
     oldname: str = args.oldname
@@ -793,7 +793,7 @@ def policy_community_rename(args: argparse.Namespace) -> None:
 def policy_community_set_description(args: argparse.Namespace) -> None:
     """Set description for a community.
 
-    :param args: argparse.Namespace (community, description)
+    :param args: argparse.Namespace (policy, community, description)
     """
     policy: str = args.policy
     community: str = args.community
@@ -819,7 +819,7 @@ def policy_community_set_description(args: argparse.Namespace) -> None:
 def policy_community_delete(args: argparse.Namespace) -> None:
     """Delete a community.
 
-    :param args: argparse.Namespace (community, force)
+    :param args: argparse.Namespace (policy, community, force)
     """
     policy: str = args.policy
     community: str = args.community
@@ -834,9 +834,9 @@ def policy_community_delete(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Deleted community {community!r} from policy {policy!r}")
 
 
-# TODO[rename]: network community add_host
+# TODO[rename]: network policy community add_host
 @command_registry.register_command(
-    prog="community_add_host",
+    prog="policy_community_add_host",
     description="Add a host to a community",
     short_desc="Add a host to a community",
     flags=[
@@ -849,7 +849,7 @@ def policy_community_delete(args: argparse.Namespace) -> None:
 def community_add_host(args: argparse.Namespace) -> None:
     """Add a host to a community.
 
-    :param args: argparse.Namespace (host, community, force)
+    :param args: argparse.Namespace (policy, community, host, force)
     """
     policy: str = args.policy
     community: str = args.community
@@ -871,9 +871,9 @@ def community_add_host(args: argparse.Namespace) -> None:
         raise CreateError(f"Failed to add host {host.name!r} to community {comm.name!r}")
 
 
-# TODO[rename]: network community remove_host
+# TODO[rename]: network policy community remove_host
 @command_registry.register_command(
-    prog="community_remove_host",
+    prog="policy_community_remove_host",
     description="Remove a host from a community",
     short_desc="Remove a host from a community",
     flags=[
@@ -885,7 +885,7 @@ def community_add_host(args: argparse.Namespace) -> None:
 def community_remove_host(args: argparse.Namespace) -> None:
     """Remove a host from a community.
 
-    :param args: argparse.Namespace (host, community)
+    :param args: argparse.Namespace (policy, community, host)
     """
     policy: str = args.policy
     community: str = args.community

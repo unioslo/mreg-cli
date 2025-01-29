@@ -2019,7 +2019,7 @@ class Community(FrozenModelWithTimestamps, WithName):
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
-        return Endpoint.NetworkPoliciesCommunities
+        return Endpoint.NetworkPoliciesCommunity
 
     @property
     def hosts_endpoint(self) -> str:

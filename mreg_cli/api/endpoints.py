@@ -54,6 +54,7 @@ class Endpoint(str, Enum):
 
     NetworkPolicies = "/api/v1/networkpolicies/"
     NetworkPoliciesCommunities = "/api/v1/networkpolicies/{}/communities/"
+    NetworkPoliciesCommunity = "/api/v1/networkpolicies/{}/communities/{}"
     NetworkPoliciesCommunityHosts = "/api/v1/networkpolicies/{}/communities/{}/hosts/"
     NetworkPoliciesCommunityHost = "/api/v1/networkpolicies/{}/communities/{}/hosts/{}"
     NetworkPolicyAttributes = "/api/v1/networkpolicyattributes/"
