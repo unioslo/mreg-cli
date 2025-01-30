@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+## [1.2.4](https://github.com/unioslo/mreg-cli/releases/tag/1.2.4) - 2025-01-30
+
+### Fixed
+
+- Reverse zone management was completely broken. This affected all zone-related commands when using reverse zones.
+
 ## [1.2.3](https://github.com/unioslo/mreg-cli/releases/tag/1.2.3) - 2024-12-16
 
 ### Added
