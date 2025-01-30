@@ -213,7 +213,7 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
             pass
         else:
             message += f"\n{json.dumps(body, indent=2)}"
-        raise APINotOk(message)
+        raise APINotOk(message, result)
 
 
 def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
