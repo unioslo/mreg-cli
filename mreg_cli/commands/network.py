@@ -535,7 +535,7 @@ def unset_frozen(args: argparse.Namespace) -> None:
     short_desc="Create a community",
     flags=[
         Flag("name", description="Community name", metavar="NAME"),
-        Flag("community", description="Description", metavar="DESCRIPTION"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
     ],
 )
 def community_create(args: argparse.Namespace) -> None:
@@ -543,9 +543,13 @@ def community_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
-    name: str | None = args.name
-    description: str | None = args.description
-    # TODO: implement
+    name: str = args.name
+    description: str = args.description
+
+    Community.get_by_name_and_raise(name)
+
+    com = Community.create({"name": name, "description": description})
+    OutputManager().add_ok(f"Created community {com.name if com else name!r}")
 
 
 # TODO[rename]: network community delete
@@ -566,7 +570,15 @@ def community_delete(args: argparse.Namespace) -> None:
     community: str = args.community
     force: bool = args.force
 
-    # TODO: implement
+    com = Community.get_by_name_or_raise(community)
+
+    if not force and com.get_hosts():  # or some other interface for this
+        raise ForceMissing(f"Community {com.name!r} has hosts assigned. Must force.")
+
+    com.delete()
+    OutputManager().add_ok(f"Deleted community {community!r}")
+
+    # TODO: finish implementation
 
 
 # TODO[rename]: network community host_add
@@ -586,9 +598,19 @@ def community_host_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (community, host, force)
     """
     community: str = args.community
-    hostname_or_ip: str = args.host
+    host: str = args.host
     force: bool = args.force
+
+    com = Community.get_by_name_or_raise(community)
+    h = Host.get_by_any_means_or_raise(host)
+
+    if not force and h.community:
+        raise ForceMissing(f"Host {h.name!r} already has a community assigned. Must force.")
+
     # TODO: implement
+    h.set_community(com)
+    # or
+    com.add_host(h)
 
 
 # TODO[rename]: network community host_remove
@@ -597,20 +619,32 @@ def community_host_add(args: argparse.Namespace) -> None:
     description="Remove host from a community",
     short_desc="Remove host from a community",
     flags=[
-        Flag("community", description="Community to add host to", metavar="COMMUNITY"),
+        Flag("community", description="Community to remove host from", metavar="COMMUNITY"),
         Flag("host", description="Hostname or IP", metavar="NAME"),
         Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 def community_host_remove(args: argparse.Namespace) -> None:
-    """Remove a host from a community
+    """Remove a host from a community.
 
     :param args: argparse.Namespace (community, host, force)
     """
     community: str = args.community
-    hostname_or_ip: str = args.host
+    host: str = args.host
     force: bool = args.force
+
+    h = Host.get_by_any_means_or_raise(host)
+    com = Community.get_by_name_or_raise(community)
+
+    if not force and h.community != com:
+        raise ForceMissing(
+            f"Host {h.name!r} is not assigned to community {com.name!r}. Must force."
+        )
+
     # TODO: implement
+    h.remove_community()
+    # or
+    com.remove_host(h)
 
 
 # TODO[rename]: network community info
