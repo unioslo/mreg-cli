@@ -391,6 +391,14 @@ class WithName(BaseModel, APIMixin):
     __name_field__: str = "name"
     """Name of the API field that holds the object's name."""
 
+    __name_lowercase__: bool = False
+    """Lower case name in API requests."""
+
+    @classmethod
+    def _case_name(cls, name: str) -> str:
+        """Set the name case based on the class attribute."""
+        return name.lower() if cls.__name_lowercase__ else name
+
     @classmethod
     def get_by_name(cls, name: str) -> Self | None:
         """Get a resource by name.
@@ -398,7 +406,7 @@ class WithName(BaseModel, APIMixin):
         :param name: The resource name to search for.
         :returns: The resource if found.
         """
-        return cls.get_by_field(cls.__name_field__, name)
+        return cls.get_by_field(cls.__name_field__, cls._case_name(name))
 
     @classmethod
     def get_by_name_and_raise(cls, name: str) -> None:
@@ -407,7 +415,7 @@ class WithName(BaseModel, APIMixin):
         :param name: The resource name to search for.
         :raises EntityAlreadyExists: If the resource is found.
         """
-        return cls.get_by_field_and_raise(cls.__name_field__, name)
+        return cls.get_by_field_and_raise(cls.__name_field__, cls._case_name(name))
 
     @classmethod
     def get_by_name_or_raise(cls, name: str) -> Self:
@@ -417,7 +425,7 @@ class WithName(BaseModel, APIMixin):
         :returns: The resource.
         :raises EntityNotFound: If the resource is not found.
         """
-        return cls.get_by_field_or_raise(cls.__name_field__, name)
+        return cls.get_by_field_or_raise(cls.__name_field__, cls._case_name(name))
 
     @classmethod
     def get_list_by_name_regex(cls, name: str) -> list[Self]:
@@ -426,7 +434,7 @@ class WithName(BaseModel, APIMixin):
         :param name: The regex pattern for names to search for.
         :returns: A list of resource objects.
         """
-        param, value = convert_wildcard_to_regex(cls.__name_field__, name, True)
+        param, value = convert_wildcard_to_regex(cls.__name_field__, cls._case_name(name), True)
         return get_typed(cls.endpoint(), list[cls], params={param: value})
 
     def rename(self, new_name: str) -> Self:
@@ -435,7 +443,7 @@ class WithName(BaseModel, APIMixin):
         :param new_name: The new name to set.
         :returns: True if the rename was successful.
         """
-        return self.patch({self.__name_field__: new_name})
+        return self.patch({self.__name_field__: self._case_name(new_name)})
 
 
 ClassVarNotSet = object()
@@ -1577,6 +1585,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     location: str
     frozen: bool
     reserved: int
+    policy: NetworkPolicy | None = None
 
     def __hash__(self):
         """Return a hash of the network."""
@@ -1724,6 +1733,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         fmt("Netmask:", ipnet.netmask)
         fmt("Description:", self.description)
         fmt("Category:", self.category)
+        fmt("Network policy: ", self.policy.name if self.policy else "")
         fmt("Location:", self.location)
         fmt("VLAN:", self.vlan)
         fmt("DNS delegated:", str(self.dns_delegated))
@@ -1957,6 +1967,263 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         :returns: The updated Network object.
         """
         return self.patch({"vlan": vlan})
+
+    def set_policy(self, policy: NetworkPolicy) -> Self:
+        """Set the network policy of the network.
+
+        :param policy: The new network policy.
+        :returns: The updated Network object.
+        """
+        return self.patch({"policy": policy.id}, validate=False)
+
+
+class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
+    """The definition of a network policy attribute.
+
+    See NetworkPolicyAttr for the representation of attributes in Policies.
+    """
+
+    __name_lowercase__ = True  # name is always lower case
+
+    id: int
+    name: str
+    description: str
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkPolicyAttributes
+
+    def output(self) -> None:
+        """Output the network policy attribute to the console."""
+        manager = OutputManager()
+        manager.add_line(f"Name: {self.name}")
+        manager.add_line(f"Description: {self.description}")
+
+    @classmethod
+    def output_multiple(cls, attributes: list[Self]) -> None:
+        """Output multiple network policy attributes to the console."""
+        manager = OutputManager()
+        for i, attribute in enumerate(attributes, start=1):
+            attribute.output()
+            if len(attributes) != i:
+                manager.add_line("")
+
+
+class Community(FrozenModelWithTimestamps, WithName):
+    """Network community."""
+
+    id: int
+    name: str
+    description: str
+    policy: int
+    hosts: list[str] = []
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkPoliciesCommunity
+
+    @property
+    def hosts_endpoint(self) -> str:
+        """Return the endpoint with policy and community IDs."""
+        return Endpoint.NetworkPoliciesCommunityHosts.with_params(self.policy, self.id)
+
+    def output(self, *, padding: int = 14, show_hosts: bool = True) -> None:
+        """Output the community to the console."""
+        manager = OutputManager()
+        manager.add_line(f"{'Name:':<{padding}} {self.name}")
+        manager.add_line(f"{'Description:':<{padding}} {self.description}")
+        if show_hosts and self.hosts:
+            manager.add_line("Hosts:")
+            for host in self.hosts:
+                manager.add_line(f" {host}")
+
+    def delete(self) -> bool:
+        """Delete the community."""
+        resp = delete(self.endpoint().with_params(self.policy, self.id))
+        return resp.ok if resp else False
+
+    def add_host(self, host: Host) -> bool:
+        """Add a host to the community.
+
+        :param host: The host to add.
+        :returns: True if the host was added, False otherwise.
+        """
+        resp = post(self.hosts_endpoint, id=host.id)
+        return resp.ok if resp else False
+
+    def remove_host(self, host: Host) -> bool:
+        """Remove a host from the community.
+
+        :param host: The host to remove.
+        :returns: True if the host was removed, False otherwise.
+        """
+        resp = delete(
+            Endpoint.NetworkPoliciesCommunityHost.with_params(
+                self.policy,
+                self.id,
+                host.id,
+            )
+        )
+        return resp.ok if resp else False
+
+    def get_hosts(self) -> list[Host]:
+        """Get the complete definitions for hosts in the community.
+
+        :returns: A list of Host objects.
+        """
+        return get_typed(self.hosts_endpoint, list[Host])
+
+
+class NetworkPolicyAttributeValue(BaseModel):
+    """Name and value of a network policy's attribute."""
+
+    name: str
+    value: bool
+
+
+class NetworkPolicy(WithName):
+    """Network policy used in a community."""
+
+    __name_lowercase__ = True  # name is always lower case
+
+    id: int
+    name: str
+    attributes: list[NetworkPolicyAttributeValue] = []
+    communities: list[Community] = []
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkPolicies
+
+    def output(self) -> None:
+        """Output the network policy to the console."""
+        manager = OutputManager()
+        manager.add_line(f"Name: {self.name}")
+        if self.attributes:
+            manager.add_line("Attributes:")
+            for attribute in self.attributes:
+                manager.add_line(f" {attribute.name}: {attribute.value}")
+        if self.communities:
+            manager.add_line("Communities:")
+            for community in self.communities:
+                manager.add_line(f" {community.name}")
+
+    def get_community_or_raise(self, name: str) -> Community:
+        """Get a community by name, and raise if not found.
+
+        :param name: The name of the community to search for.
+        :returns: The community if found.
+        :raises EntityNotFound: If the community is not found.
+        """
+        community = self.get_community(name)
+        if not community:
+            raise EntityNotFound(f"Community {name!r} not found.")
+        return community
+
+    def get_community(self, name: str) -> Community | None:
+        """Get a community by name.
+
+        :param name: The name of the community to search for.
+        :returns: The community if found, None otherwise.
+        """
+        for community in self.communities:
+            if community.name == name:
+                return community
+        return None
+
+    def get_attribute_or_raise(self, name: str) -> NetworkPolicyAttributeValue:
+        """Get a network attribute value by name, and raise if not found.
+
+        :param name: The name of the attribute to search for.
+        :returns: The attribute if found.
+        :raises EntityNotFound: If the attribute is not found.
+        """
+        attribute = self.get_attribute(name)
+        if not attribute:
+            raise EntityNotFound(f"Attribute {name!r} not found in policy.")
+        return attribute
+
+    def get_attribute(self, name: str) -> NetworkPolicyAttributeValue | None:
+        """Get a attribute by name.
+
+        :param name: The name of the attribute to search for.
+        :returns: The attribute if found, None otherwise.
+        """
+        for attribute in self.attributes:
+            if attribute.name == name:
+                return attribute
+        return None
+
+    def add_attribute(self, attribute: NetworkPolicyAttribute, value: bool = True) -> None:
+        """Add an attribute to the policy.
+
+        :param attribute: The attribute to add.
+        :param value: The value of the attribute.
+        """
+        if self.get_attribute(attribute.name):
+            raise EntityAlreadyExists(f"Attribute {attribute.name!r} already exists in policy.")
+        attrs = self.attributes.copy()
+        attrs.append(NetworkPolicyAttributeValue(name=attribute.name, value=value))
+        self._patch_attrs(attrs)
+
+    def remove_attribute(self, attribute: str) -> None:
+        """Add an attribute to the policy.
+
+        :param attribute: The attribute to add.
+        :param value: The value of the attribute.
+        """
+        attr = self.get_attribute_or_raise(attribute)
+        attrs = self.attributes.copy()
+        attrs.remove(attr)
+        self._patch_attrs(attrs)
+
+    def set_attribute_value(self, attribute: str, value: bool) -> None:
+        """Add an attribute to the policy.
+
+        :param attribute: The attribute to add.
+        :param value: The value of the attribute.
+        """
+        # Check if attribute exists
+        # NOTE: yes, we iterate over it twice here, but it's a small list
+        self.get_attribute_or_raise(attribute)
+        attrs = self.attributes.copy()
+        for a in attrs:
+            if a.name == attribute:
+                a.value = value
+                break
+        self._patch_attrs(attrs)
+
+    def _patch_attrs(self, attrs: list[NetworkPolicyAttributeValue]) -> None:
+        """Patch the attributes of the policy.
+
+        Sets the attributes on the model itself after a successful patch.
+
+        :param attrs: The new attributes.
+        """
+        self.patch(
+            {"attributes": [{"name": a.name, "value": a.value} for a in attrs]},
+            validate=False,
+        )
+        self.attributes = attrs
+
+    def create_community(self, name: str, description: str) -> Community | None:
+        """Create a new community.
+
+        :param name: The name of the community.
+        :param description: The description of the community.
+        :returns: The new Community object.
+        """
+        resp = post(
+            Endpoint.NetworkPoliciesCommunities.with_params(self.id),
+            name=name,
+            description=description,
+        )
+        if resp and (location := resp.headers.get("Location")):
+            return get_typed(location, Community)
+        return None
 
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
@@ -2621,6 +2888,8 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     contact: str
     ttl: int | None = None
     comment: str
+
+    network_community: Community | None = None
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None
@@ -3321,6 +3590,7 @@ class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
     groups: NameList
     hosts: NameList
     owners: NameList
+    network_communities: list[Community] = []
 
     history_resource: ClassVar[HistoryResource] = HistoryResource.Group
 

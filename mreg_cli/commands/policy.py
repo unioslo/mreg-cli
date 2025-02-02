@@ -5,7 +5,12 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Atom, Host, HostPolicy, Role
+from mreg_cli.api.models import (
+    Atom,
+    Host,
+    HostPolicy,
+    Role,
+)
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CreateError, DeleteError, EntityAlreadyExists
