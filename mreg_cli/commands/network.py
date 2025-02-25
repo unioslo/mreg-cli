@@ -621,7 +621,7 @@ def policy_delete(args: argparse.Namespace) -> None:
     if networks and not force:
         raise ForceMissing(
             f"Policy {pol.name!r} is assigned to the following networks, must force:"
-            f"\n{'\n'.join([f'    {net.network}' for net in networks])}"
+            f"{', '.join(net.network for net in networks)}"
         )
 
     pol.delete()
