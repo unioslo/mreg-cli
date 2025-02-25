@@ -2919,7 +2919,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     ttl: int | None = None
     comment: str
 
-    network_community: Community | None = None
+    communities: list[Community] | None = None
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None
@@ -3467,15 +3467,16 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if policies:
             output_manager.add_line(f"{'Policy:':<{padding}}{', '.join(policies)}")
 
-        if policies or self.network_community:
+        if policies or self.communities:
             community_line = f"{'Community:':<{padding}}"
-            if self.network_community:
-                name = self.network_community.name
-                if self.network_community.global_name:
-                    name += f" (Global: {self.network_community.global_name})"
-
-                community_from_network = f" [{self.network_community.network_address}]" if len(networks) > 1 else ""
-                community_line += f"{name}{community_from_network}"
+            community_parts: list[str] = []
+            if self.communities:
+                for community in self.communities:
+                    global_name = f" (Global: {community.global_name})" if community.global_name else ""
+                    community_from_network = f" [{community.network_address}]" if len(networks) > 1 else ""
+                    community_parts.append(f"{community.name}{global_name}{community_from_network}")
+                
+                community_line += ", ".join(community_parts)
 
             output_manager.add_line(community_line)
 

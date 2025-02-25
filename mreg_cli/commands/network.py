@@ -979,13 +979,12 @@ def community_host_add(args: argparse.Namespace) -> None:
     com = net.get_community_or_raise(community)
     h = Host.get_by_any_means_or_raise(host)
 
-    if h.network_community and h.network_community.id == com.id:
-        raise InputFailure(f"Host {h.name!r} is already in community {com.name!r}")
-
-    if not force and h.network_community:
-        raise ForceMissing(
-            f"Host {h.name!r} is assigned to other community {com.name!r}. Must force."
-        )
+    if h.communities and not force:
+        for c in h.communities:
+            if c.network == net.id:
+                raise ForceMissing(
+                f"Host {h.name!r} is assigned to another community in the network ({c.name!r}). Must force."
+            )
 
     com.add_host(h)
 
