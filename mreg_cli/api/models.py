@@ -3456,13 +3456,28 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if self.comment:
             output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
 
+        networks = self.networks()
+
+        policies: list[str] = []
+        for network, _ in networks.items():
+            if network.policy:
+                name = network.policy.name
+
+                if len(networks.items()) > 1:                    
+                    policies.append(f"{name} [{network.network}]")
+                else:
+                    policies.append(f"{name}")
+
+        if policies:   
+            output_manager.add_line(f"{'Policy:':<{padding}}{', '.join(policies)}")         
+
         if self.network_community:
             name = self.network_community.name
             if self.network_community.global_name:
                 name += f"(Global: {self.network_community.global_name})"
 
             community_from_network = ""
-            if len(self.networks()) > 1:
+            if len(networks.items()) > 1:
                 network = self.network_community.network_address
                 community_from_network = f" [{network}]"
 
@@ -3521,29 +3536,17 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             output_manager.add_line(f"{record_type}_Records:")
             data: list[dict[str, str]] = []
 
-            any_ip_has_policy = any(network.policy for network, _ in networks)
-
-            for network, ip in networks:
-                policy_blob = {}
-                if any_ip_has_policy:
-                    policy_blob = {"policy": network.policy.name if network.policy else ""}
+            for _, ip in networks:
 
                 d: dict[str, str] = {
                     "ip": str(ip.ipaddress),
                     "mac": ip.macaddress or "<not set>",
-                    **policy_blob,
                 }
                 data.append(d)
 
-            headers = ("IP", "MAC")
-            keys = ("ip", "mac")
-            if any_ip_has_policy:
-                headers += ("Policy",)
-                keys += ("policy",)
-
             output_manager.add_formatted_table(
-                headers=headers,
-                keys=keys,
+                headers=("IP", "MAC"),
+                keys=("ip", "mac"),
                 data=data,
                 indent=padding,
             )
