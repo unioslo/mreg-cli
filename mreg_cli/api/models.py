@@ -3458,30 +3458,26 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         networks = self.networks()
 
-        policies: list[str] = []
-        for network, _ in networks.items():
-            if network.policy:
-                name = network.policy.name
+        policies = [
+            f"{network.policy.name} [{network.network}]" if len(networks) > 1 else network.policy.name
+            for network in networks
+            if network.policy
+        ]
 
-                if len(networks.items()) > 1:                    
-                    policies.append(f"{name} [{network.network}]")
-                else:
-                    policies.append(f"{name}")
+        if policies:
+            output_manager.add_line(f"{'Policy:':<{padding}}{', '.join(policies)}")
 
-        if policies:   
-            output_manager.add_line(f"{'Policy:':<{padding}}{', '.join(policies)}")         
+        if policies or self.network_community:
+            community_line = f"{'Community:':<{padding}}"
+            if self.network_community:
+                name = self.network_community.name
+                if self.network_community.global_name:
+                    name += f" (Global: {self.network_community.global_name})"
 
-        if self.network_community:
-            name = self.network_community.name
-            if self.network_community.global_name:
-                name += f"(Global: {self.network_community.global_name})"
+                community_from_network = f" [{self.network_community.network_address}]" if len(networks) > 1 else ""
+                community_line += f"{name}{community_from_network}"
 
-            community_from_network = ""
-            if len(networks.items()) > 1:
-                network = self.network_community.network_address
-                community_from_network = f" [{network}]"
-
-            output_manager.add_line(f"{'Community:':<{padding}}{name}{community_from_network}")
+            output_manager.add_line(community_line)
 
         self.output_networks()
         PTR_override.output_multiple(self.ptr_overrides, padding=padding)
