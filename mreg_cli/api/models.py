@@ -3481,6 +3481,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         self.output_timestamps()
 
     def output_networks(self, padding: int = 14, only: Literal[4, 6, None] = None) -> None:
+        """Output all A(AAA) records along with the MAC address and network policy for the host."""
         networks = self.networks()
         if not networks:
             return
@@ -3504,10 +3505,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             output_manager.add_line(f"{record_type}_Records:")
             data: list[dict[str, str]] = []
             for network, ip in networks:
-                d: dict[str, str] = {}
-                d["ip"] = str(ip.ipaddress)
-                d["mac"] = ip.macaddress or "<not set>"
-                d["policy"] = network.policy.name if network.policy else "None"
+                d: dict[str, str] = {
+                    "ip": str(ip.ipaddress),
+                    "mac": ip.macaddress or "<not set>",
+                    "policy": network.policy.name if network.policy else "None",
+                }
                 data.append(d)
 
             output_manager.add_formatted_table(
