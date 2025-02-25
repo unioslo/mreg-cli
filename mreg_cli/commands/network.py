@@ -404,7 +404,7 @@ def set_dns_delegated(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_any_means_or_raise(args.network)
     net.set_dns_delegation(True)
-    OutputManager().add_ok(f"Set DNS delegation to 'True' for {net.network!r}")
+    OutputManager().add_ok(f"Set DNS delegation to 'True' for {net.network}")
 
 
 @command_registry.register_command(
@@ -502,7 +502,7 @@ def unset_dns_delegated(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_any_means_or_raise(args.network)
     net.set_dns_delegation(False)
-    OutputManager().add_ok(f"Set DNS delegation to 'False' for {net.network!r}")
+    OutputManager().add_ok(f"Set DNS delegation to 'False' for {net.network}")
 
 
 @command_registry.register_command(
@@ -524,172 +524,6 @@ def unset_frozen(args: argparse.Namespace) -> None:
 
 
 ##########################################
-#           COMMUNITY COMMANDS           #
-##########################################
-
-
-# TODO[rename]: network community create
-@command_registry.register_command(
-    prog="community_create",
-    description="Create a community",
-    short_desc="Create a community",
-    flags=[
-        Flag("name", description="Community name", metavar="NAME"),
-        Flag("description", description="Description", metavar="DESCRIPTION"),
-    ],
-)
-def community_create(args: argparse.Namespace) -> None:
-    """Create a community.
-
-    :param args: argparse.Namespace (name, description)
-    """
-    name: str = args.name
-    description: str = args.description
-
-    Community.get_by_name_and_raise(name)
-
-    com = Community.create({"name": name, "description": description})
-    OutputManager().add_ok(f"Created community {com.name if com else name!r}")
-
-
-# TODO[rename]: network community delete
-@command_registry.register_command(
-    prog="community_delete",
-    description="Delete a community",
-    short_desc="Delete a community",
-    flags=[
-        Flag("community", description="Community name", metavar="COMMUNITY"),
-        Flag("-force", action="store_true", description="Enable force."),
-    ],
-)
-def community_delete(args: argparse.Namespace) -> None:
-    """Delete a community.
-
-    :param args: argparse.Namespace (community, force)
-    """
-    community: str = args.community
-    force: bool = args.force
-
-    com = Community.get_by_name_or_raise(community)
-
-    if not force and com.get_hosts():  # or some other interface for this
-        raise ForceMissing(f"Community {com.name!r} has hosts assigned. Must force.")
-
-    com.delete()
-    OutputManager().add_ok(f"Deleted community {community!r}")
-
-    # TODO: finish implementation
-
-
-# TODO[rename]: network community host_add
-@command_registry.register_command(
-    prog="community_host_add",
-    description="Add host to a community",
-    short_desc="Add host to a community",
-    flags=[
-        Flag("community", description="Community to add host to", metavar="COMMUNITY"),
-        Flag("host", description="Hostname or IP", metavar="NAME"),
-        Flag("-force", action="store_true", description="Enable force."),
-    ],
-)
-def community_host_add(args: argparse.Namespace) -> None:
-    """Add a host to a community.
-
-    :param args: argparse.Namespace (community, host, force)
-    """
-    community: str = args.community
-    host: str = args.host
-    force: bool = args.force
-
-    com = Community.get_by_name_or_raise(community)
-    h = Host.get_by_any_means_or_raise(host)
-
-    if not force and h.community:
-        raise ForceMissing(f"Host {h.name!r} already has a community assigned. Must force.")
-
-    # TODO: implement
-    h.set_community(com)
-    # or
-    com.add_host(h)
-
-
-# TODO[rename]: network community host_remove
-@command_registry.register_command(
-    prog="community_host_remove",
-    description="Remove host from a community",
-    short_desc="Remove host from a community",
-    flags=[
-        Flag("community", description="Community to remove host from", metavar="COMMUNITY"),
-        Flag("host", description="Hostname or IP", metavar="NAME"),
-        Flag("-force", action="store_true", description="Enable force."),
-    ],
-)
-def community_host_remove(args: argparse.Namespace) -> None:
-    """Remove a host from a community.
-
-    :param args: argparse.Namespace (community, host, force)
-    """
-    community: str = args.community
-    host: str = args.host
-    force: bool = args.force
-
-    h = Host.get_by_any_means_or_raise(host)
-    com = Community.get_by_name_or_raise(community)
-
-    if not force and h.community != com:
-        raise ForceMissing(
-            f"Host {h.name!r} is not assigned to community {com.name!r}. Must force."
-        )
-
-    # TODO: implement
-    h.remove_community()
-    # or
-    com.remove_host(h)
-
-
-# TODO[rename]: network community info
-@command_registry.register_command(
-    prog="community_info",
-    description="Show detailed information about a community",
-    short_desc="Show community info",
-    flags=[
-        Flag("community", description="Community name", metavar="COMMUNITY"),
-    ],
-)
-def community_info(args: argparse.Namespace) -> None:
-    """Show detailed information about a community.
-
-    :param args: argparse.Namespace (community)
-    """
-    community: str | None = args.community
-    # TODO: implement
-
-
-# TODO[rename]: network community list
-@command_registry.register_command(
-    prog="community_list",
-    description="List all or a subset of communities",
-    short_desc="List communities",
-    flags=[
-        Flag("-name", description="Name to search for. Can be a regex pattern.", metavar="NAME"),
-        Flag(
-            "-description",
-            description="Description to search for. Can be a regex pattern.",
-            metavar="DESCRIPTION",
-        ),
-    ],
-)
-def community_list(args: argparse.Namespace) -> None:
-    """List all or a subset of communities.
-
-    :param args: argparse.Namespace (name, description)
-    """
-    name: str | None = args.name
-    description: str | None = args.description
-    # TODO: implement
-
-
-##########################################
 #           POLICY COMMANDS              #
 ##########################################
 
@@ -700,8 +534,8 @@ def community_list(args: argparse.Namespace) -> None:
     description="Add a policy to a network",
     short_desc="Add a policy to a network",
     flags=[
-        Flag("policy", description="Policy name", metavar="POLICY"),
         Flag("network", description="Network", metavar="NETWORK"),
+        Flag("policy", description="Policy name", metavar="POLICY"),
         Flag("-force", action="store_true", description="Enable force."),
     ],
 )
@@ -717,8 +551,11 @@ def policy_add(args: argparse.Namespace) -> None:
     pol = NetworkPolicy.get_by_name_or_raise(policy)
     net = Network.get_by_network_or_raise(network)
 
+    if net.policy and net.policy.id == pol.id:
+        raise InputFailure(f"Network {net.network} already has policy {pol.name!r}.")
+
     if net.policy and not force:
-        raise ForceMissing(f"Network {net.network!r} already has a policy assigned. Must force.")
+        raise ForceMissing(f"Network {net.network} already has a policy assigned. Must force.")
 
     net.set_policy(pol)
     OutputManager().add_ok(f"Added network policy {pol.name!r} to {network}")
@@ -732,18 +569,32 @@ def policy_add(args: argparse.Namespace) -> None:
     flags=[
         Flag("name", description="Name", metavar="NAME"),
         Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("-communities", description="Communities", metavar="COMMUNITIES", nargs="+"),
+        Flag("-attributes", description="Attributes", metavar="ATTRIBUTES", nargs="+"),
     ],
 )
 def policy_create(args: argparse.Namespace) -> None:
     """Create a network policy.
 
-    :param args: argparse.Namespace (name, description, communities)
+    :param args: argparse.Namespace (name, description, attributes)
     """
     name: str = args.name
     description: str = args.description
-    communities: list[str] = args.communities
-    # TODO: implement
+    attributes: list[str] = args.attributes or []
+
+    NetworkPolicy.get_by_name_and_raise(name)
+
+    attrs: list[NetworkPolicyAttribute] = []
+    for attr in attributes:
+        attrs.append(NetworkPolicyAttribute.get_by_name_or_raise(attr))
+
+    NetworkPolicy.create(
+        {
+            "name": name,
+            "description": description,
+            "attributes": [{"attribute": attr.id, "value": True} for attr in attrs],
+        }
+    )
+    OutputManager().add_ok(f"Created network policy {name!r}")
 
 
 # TODO[rename]: network policy delete
@@ -763,7 +614,18 @@ def policy_delete(args: argparse.Namespace) -> None:
     """
     name: str = args.name
     force: bool = args.force
-    # TODO: implement
+
+    pol = NetworkPolicy.get_by_name_or_raise(name)
+    networks = Network.get_list_by_field("policy", pol.id)
+
+    if networks and not force:
+        raise ForceMissing(
+            f"Policy {pol.name!r} is assigned to the following networks, must force:"
+            f"\n{'\n'.join([f'    {net.network}' for net in networks])}"
+        )
+
+    pol.delete()
+    OutputManager().add_ok(f"Deleted network policy {name!r}")
 
 
 # TODO[rename]: network policy info
@@ -798,23 +660,25 @@ def policy_info(args: argparse.Namespace) -> None:
             description="Description. Can be a regex pattern.",
             metavar="DESCRIPTION",
         ),
-        Flag(
-            "-community",
-            description="Show policies with the given community.",
-            metavar="COMMUNITY",
-        ),
     ],
 )
 def policy_list(args: argparse.Namespace) -> None:
     """List all or a subset of policies.
 
-    :param args: argparse.Namespace (name)
+    :param args: argparse.Namespace (name, description)
     """
     name: str | None = args.name
     description: str | None = args.description
-    community: str | None = args.community
 
-    # TODO: implement
+    params = {"name": name, "description": description}
+    query: QueryParams = {}
+    for k, v in params.items():
+        if v:
+            param, val = convert_wildcard_to_regex(k, v)
+            query[param] = val
+
+    policies = NetworkPolicy.get_by_query(query)
+    NetworkPolicy.output_multiple(policies)
 
 
 # TODO[rename]: network policy rename
@@ -835,38 +699,35 @@ def policy_rename(args: argparse.Namespace) -> None:
     oldname: str = args.oldname
     newname: str = args.newname
 
-    # TODO: implement
+    pol = NetworkPolicy.get_by_name_or_raise(oldname)
+    pol.rename(newname)
+    OutputManager().add_ok(f"Renamed network policy {oldname!r} to {newname!r}")
 
 
 # TODO[rename]: network policy remove
 @command_registry.register_command(
     prog="policy_remove",
-    description="Remove a policy from a network",
-    short_desc="Remove a policy from a network",
+    description="Remove a network's policy",
+    short_desc="Remove a network's policy",
     flags=[
-        Flag("policy", description="Policy name", metavar="POLICY"),
         Flag("network", description="Network", metavar="NETWORK"),
         Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 def policy_remove(args: argparse.Namespace) -> None:
-    """Remove a policy to a network.
+    """Remove a policy from a network.
 
-    :param args: argparse.Namespace (policy, network, force)
+    :param args: argparse.Namespace (network, force)
     """
-    policy: str = args.policy
     network: str = args.network
-    force: bool = args.force  # NOTE: do we need this?
 
-    pol = NetworkPolicy.get_by_name_or_raise(policy)
     net = Network.get_by_network_or_raise(network)
 
-    # FIXME: add check for hosts assigned to communities in policy
     if not net.policy:
-        raise EntityNotFound(f"Network {net.network!r} does not have a policy assigned.")
+        raise EntityNotFound(f"Network {net.network} does not have a policy assigned.")
 
-    net.set_policy(pol)
-    OutputManager().add_ok(f"Assigned network policy {pol.name!r} to {network}")
+    net.unset_policy()
+    OutputManager().add_ok(f"Removed network policy from {network}")
 
 
 # TODO[rename]: network policy set_description
@@ -875,7 +736,7 @@ def policy_remove(args: argparse.Namespace) -> None:
     description="Set a description on a network policy",
     short_desc="Set a description on a network policy",
     flags=[
-        Flag("name", description="Name of network policy", metavar="NAME"),
+        Flag("policy", description="Policy", metavar="POLICY"),
         Flag("description", description="New description", metavar="DESCRIPTION"),
     ],
 )
@@ -884,108 +745,238 @@ def policy_set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
+    policy: str = args.policy
+    description: str = args.description
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    pol.patch({"description": description}, validate=False)
+    OutputManager().add_ok(f"Set new description for network policy {policy!r}")
+
+
+##########################################
+#           COMMUNITY COMMANDS           #
+##########################################
+
+
+# TODO[rename]: network community create
+@command_registry.register_command(
+    prog="community_create",
+    description="Create a network community",
+    short_desc="Create a network community",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("name", description="Community name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+    ],
+)
+def community_create(args: argparse.Namespace) -> None:
+    """Create a community.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    network: str = args.network
     name: str = args.name
     description: str = args.description
 
-    policy = NetworkPolicy.get_by_name_or_raise(name)
-    policy.patch({"name": description})
-    OutputManager().add_ok(f"Set new description for network policy {name!r}")
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community(name)
+    if com:
+        raise CreateError(f"Community {name!r} already exists for network {network}")
+    net.create_community(name, description)
+    OutputManager().add_ok(f"Created community {name!r} for network {network}")
 
 
-##########################################
-#       POLICY COMMUNITY COMMANDS        #
-##########################################
-
-
-# TODO[rename]: network policy community add
+# TODO[rename]: network community delete
 @command_registry.register_command(
-    prog="policy_community_add",
-    description="Add a community to a policy",
-    short_desc="Add a community to a policy",
+    prog="community_delete",
+    description="Delete a community",
+    short_desc="Delete a community",
     flags=[
-        Flag("policy", description="Policy", metavar="POLICY"),
-        Flag("community", description="Community", metavar="COMMUNITY"),
-    ],
-)
-def policy_community_add(args: argparse.Namespace) -> None:
-    """Add a community to a policy.
-
-    :param args: argparse.Namespace (policy, community)
-    """
-    policy: str = args.policy
-    community: str = args.communtiy
-    # TODO: implement
-
-
-# TODO[rename]: network policy community remove
-@command_registry.register_command(
-    prog="policy_community_remove",
-    description="Remove a community from a policy",
-    short_desc="Remove a community from a policy",
-    flags=[
-        Flag("policy", description="Policy", metavar="POLICY"),
-        Flag("community", description="Community", metavar="COMMUNITY"),
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("community", description="Community name", metavar="COMMUNITY"),
         Flag("-force", action="store_true", description="Enable force."),
     ],
 )
-def policy_community_remove(args: argparse.Namespace) -> None:
-    """Remove a community from a policy.
+def community_delete(args: argparse.Namespace) -> None:
+    """Delete a community.
 
-    :param args: argparse.Namespace (policy, community, force)
+    :param args: argparse.Namespace (network, community, force)
     """
-    policy: str = args.policy
-    community: str = args.communtiy
+    network: str = args.network
+    community: str = args.community
     force: bool = args.force
-    # TODO: implement
+
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community_or_raise(community)
+
+    if not force and com.get_hosts():  # or some other interface for this
+        raise ForceMissing(f"Community {com.name!r} has hosts. Must force.")
+
+    com.delete()
+    OutputManager().add_ok(f"Deleted community {community!r}")
 
 
-# TODO[rename]: network policy community rename
+# TODO[rename]: network community host_add
 @command_registry.register_command(
-    prog="policy_community_rename",
+    prog="community_host_add",
+    description="Add host to a community",
+    short_desc="Add host to a community",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("community", description="Community to add host to", metavar="COMMUNITY"),
+        Flag("host", description="Hostname or IP", metavar="NAME"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def community_host_add(args: argparse.Namespace) -> None:
+    """Add a host to a community.
+
+    :param args: argparse.Namespace (network, community, host, force)
+    """
+    network: str = args.network
+    community: str = args.community
+    host: str = args.host
+    force: bool = args.force
+
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community_or_raise(community)
+    h = Host.get_by_any_means_or_raise(host)
+
+    if h.network_community and h.network_community.id == com.id:
+        raise CreateError(f"Host {h.name!r} is already in community {com.name!r}")
+
+    if not force and h.network_community:
+        raise ForceMissing(
+            f"Host {h.name!r} is assigned to other community {com.name!r}. Must force."
+        )
+
+    com.add_host(h)
+
+    OutputManager().add_ok(f"Added host {h.name!r} to community {com.name!r}")
+
+
+# TODO[rename]: network community host_remove
+@command_registry.register_command(
+    prog="community_host_remove",
+    description="Remove host from a community",
+    short_desc="Remove host from a community",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("community", description="Community to remove host from", metavar="COMMUNITY"),
+        Flag("host", description="Hostname or IP", metavar="NAME"),
+    ],
+)
+def community_host_remove(args: argparse.Namespace) -> None:
+    """Remove a host from a community.
+
+    :param args: argparse.Namespace (network, community, host)
+    """
+    network: str = args.network
+    community: str = args.community
+    host: str = args.host
+
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community_or_raise(community)
+    h = Host.get_by_any_means_or_raise(host)
+
+    com.remove_host(h)
+
+    OutputManager().add_ok(f"Removed host {h.name!r} from community {com.name!r}")
+
+
+# TODO[rename]: network community info
+@command_registry.register_command(
+    prog="community_info",
+    description="Show detailed information about a community",
+    short_desc="Show community info",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("community", description="Community name", metavar="COMMUNITY"),
+    ],
+)
+def community_info(args: argparse.Namespace) -> None:
+    """Show detailed information about a community.
+
+    :param args: argparse.Namespace (network, community)
+    """
+    network: str = args.network
+    community: str = args.community
+
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community_or_raise(community)
+
+    com.output()
+
+
+# TODO[rename]: network community list
+@command_registry.register_command(
+    prog="community_list",
+    description="List all or a subset of communities in a network",
+    short_desc="List communities",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("-hosts", action="store_true", description="Include hosts in output."),
+    ],
+)
+def community_list(args: argparse.Namespace) -> None:
+    """List all communities in a network.
+
+    :param args: argparse.Namespace (network, hosts)
+    """
+    network: str = args.network
+    hosts: bool = args.hosts
+
+    net = Network.get_by_network_or_raise(network)
+    Community.output_multiple(net.communities, show_hosts=hosts)
+
+
+# TODO[rename]: network community rename
+@command_registry.register_command(
+    prog="community_rename",
     description="Rename a community",
     short_desc="Rename a community",
     flags=[
-        Flag("policy", description="Policy the community is in", metavar="POLICY"),
+        Flag("network", description="Network", metavar="NETWORK"),
         Flag("oldname", description="Old name of community", metavar="OLDNAME"),
         Flag("newname", description="New name of community", metavar="NEWNAME"),
     ],
 )
-def policy_community_rename(args: argparse.Namespace) -> None:
+def community_rename(args: argparse.Namespace) -> None:
     """Rename a community.
 
-    :param args: argparse.Namespace (policy, oldname, newname)
+    :param args: argparse.Namespace (network, oldname, newname)
     """
-    policy: str = args.policy
+    network: str = args.network
     oldname: str = args.oldname
     newname: str = args.newname
 
-    pol = NetworkPolicy.get_by_name_or_raise(policy)
-    community = pol.get_community_or_raise(oldname)
+    net = Network.get_by_network_or_raise(network)
+    community = net.get_community_or_raise(oldname)
     community.patch({"name": newname})
     OutputManager().add_ok(f"Renamed community {oldname!r} to {newname!r}")
 
 
-# TODO[rename]: network policy community set_description
+# TODO[rename]: network community set_description
 @command_registry.register_command(
-    prog="policy_community_set_description",
+    prog="community_set_description",
     description="Set description for a community",
     short_desc="Set community description",
     flags=[
-        Flag("policy", description="Policy the community is in", metavar="POLICY"),
+        Flag("network", description="Network", metavar="NETWORK"),
         Flag("community", description="Name of community", metavar="COMMUNITY"),
         Flag("description", description="New description", metavar="DESCRIPTION"),
     ],
 )
-def policy_community_set_description(args: argparse.Namespace) -> None:
-    """Set description for a community.
+def community_set_description(args: argparse.Namespace) -> None:
+    """Set description for a network community.
 
-    :param args: argparse.Namespace (policy, community, description)
+    :param args: argparse.Namespace (network, community, description)
     """
-    policy: str = args.policy
+    network: str = args.network
     community: str = args.community
     description: str = args.description
 
-    pol = NetworkPolicy.get_by_name_or_raise(policy)
-    comm = pol.get_community_or_raise(community)
-    comm.patch({"description": description})
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community_or_raise(community)
+    com.patch({"description": description})
     OutputManager().add_ok(f"Set new description for community {community!r}")

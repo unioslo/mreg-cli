@@ -441,7 +441,7 @@ class WithName(BaseModel, APIMixin):
         """Rename the resource.
 
         :param new_name: The new name to set.
-        :returns: True if the rename was successful.
+        :returns: The patched resource.
         """
         return self.patch({self.__name_field__: self._case_name(new_name)})
 
@@ -679,14 +679,6 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
             if delegation.comment:
                 manager.add_line(f"        Comment: {delegation.comment}")
             self.output_nameservers(delegation.nameservers, padding=padding)
-
-    @classmethod
-    def get_list(cls) -> list[Self]:
-        """Get all zones of the given zone type.
-
-        :returns: A list of all zones.
-        """
-        return get_typed(cls.endpoint(), list[cls])
 
     def ensure_delegation_in_zone(self, name: str) -> None:
         """Ensure a delegation is in the zone.
@@ -1586,6 +1578,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     frozen: bool
     reserved: int
     policy: NetworkPolicy | None = None
+    communities: list[Community] = []
 
     def __hash__(self):
         """Return a hash of the network."""
@@ -1707,13 +1700,37 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             raise EntityNotFound(f"Network {network} not found.")
         return net
 
-    @classmethod
-    def get_list(cls) -> list[Self]:
-        """Get all networks.
+    def get_community_or_raise(self, name: str) -> Community:
+        """Get a community by name, and raise if not found.
 
-        :returns: A list of all networks.
+        :param name: The name of the community to search for.
+        :returns: The community if found.
+        :raises EntityNotFound: If the community is not found.
         """
-        return get_typed(cls.endpoint(), list[cls], limit=None)
+        community = self.get_community(name)
+        if not community:
+            raise EntityNotFound(f"Community {name!r} not found.")
+        return community
+
+    def get_community(self, name: str) -> Community | None:
+        """Get a community by name.
+
+        :param name: The name of the community to search for.
+        :returns: The community if found, None otherwise.
+        """
+        for community in self.communities:
+            if community.name == name:
+                return community
+        return None
+
+    def create_community(self, name: str, description: str) -> bool:
+        """Create a community for the network."""
+        resp = post(
+            Endpoint.NetworkCommunities.with_params(self.network),
+            name=name,
+            description=description,
+        )
+        return resp.ok if resp else False
 
     def output(self, padding: int = 25) -> None:
         """Output the network to the console."""
@@ -1976,6 +1993,14 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         return self.patch({"policy": policy.id}, validate=False)
 
+    def unset_policy(self) -> Self:
+        """Unset the network policy of the network.
+
+        :param policy: The new network policy.
+        :returns: The updated Network object.
+        """
+        return self.patch({"policy": None}, validate=False)
+
 
 class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
     """The definition of a network policy attribute.
@@ -2010,24 +2035,38 @@ class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
                 manager.add_line("")
 
 
-class Community(FrozenModelWithTimestamps, WithName):
+class Community(FrozenModelWithTimestamps, APIMixin):
     """Network community."""
 
     id: int
     name: str
     description: str
-    policy: int
+    network: int
     hosts: list[str] = []
 
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
-        return Endpoint.NetworkPoliciesCommunity
+        return Endpoint.NetworkCommunity
+
+    @property
+    def network_address(self) -> str:
+        """Return the network object for the community."""
+        return Network.get_by_field_or_raise("id", str(self.network)).network
 
     @property
     def hosts_endpoint(self) -> str:
         """Return the endpoint with policy and community IDs."""
-        return Endpoint.NetworkPoliciesCommunityHosts.with_params(self.policy, self.id)
+        return Endpoint.NetworkCommunityHosts.with_params(self.network_address, self.id)
+
+    @classmethod
+    def output_multiple(
+        cls, communities: list[Self], padding: int = 14, show_hosts: bool = True
+    ) -> None:
+        """Output multiple communities to the console."""
+        for community in communities:
+            community.output(padding=padding, show_hosts=show_hosts)
+            OutputManager().add_line("")  # add newline between communities
 
     def output(self, *, padding: int = 14, show_hosts: bool = True) -> None:
         """Output the community to the console."""
@@ -2041,8 +2080,15 @@ class Community(FrozenModelWithTimestamps, WithName):
 
     def delete(self) -> bool:
         """Delete the community."""
-        resp = delete(self.endpoint().with_params(self.policy, self.id))
+        resp = delete(self.endpoint().with_params(self.network_address, self.id))
         return resp.ok if resp else False
+
+    def get_hosts(self) -> list[Host]:
+        """Get the complete definitions for hosts in the community.
+
+        :returns: A list of Host objects.
+        """
+        return get_typed(self.hosts_endpoint, list[Host])
 
     def add_host(self, host: Host) -> bool:
         """Add a host to the community.
@@ -2060,20 +2106,13 @@ class Community(FrozenModelWithTimestamps, WithName):
         :returns: True if the host was removed, False otherwise.
         """
         resp = delete(
-            Endpoint.NetworkPoliciesCommunityHost.with_params(
-                self.policy,
+            Endpoint.NetworkCommunityHost.with_params(
+                self.network_address,
                 self.id,
                 host.id,
             )
         )
         return resp.ok if resp else False
-
-    def get_hosts(self) -> list[Host]:
-        """Get the complete definitions for hosts in the community.
-
-        :returns: A list of Host objects.
-        """
-        return get_typed(self.hosts_endpoint, list[Host])
 
 
 class NetworkPolicyAttributeValue(BaseModel):
@@ -2090,49 +2129,31 @@ class NetworkPolicy(WithName):
 
     id: int
     name: str
+    description: str | None = None
     attributes: list[NetworkPolicyAttributeValue] = []
-    communities: list[Community] = []
 
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.NetworkPolicies
 
+    @classmethod
+    def output_multiple(cls, policies: list[Self]) -> None:
+        """Output multiple network policies to the console."""
+        for policy in policies:
+            policy.output()
+            OutputManager().add_line("")  # add newline between policies
+
     def output(self) -> None:
         """Output the network policy to the console."""
         manager = OutputManager()
         manager.add_line(f"Name: {self.name}")
+        if self.description:
+            manager.add_line(f"Description: {self.description}")
         if self.attributes:
             manager.add_line("Attributes:")
             for attribute in self.attributes:
                 manager.add_line(f" {attribute.name}: {attribute.value}")
-        if self.communities:
-            manager.add_line("Communities:")
-            for community in self.communities:
-                manager.add_line(f" {community.name}")
-
-    def get_community_or_raise(self, name: str) -> Community:
-        """Get a community by name, and raise if not found.
-
-        :param name: The name of the community to search for.
-        :returns: The community if found.
-        :raises EntityNotFound: If the community is not found.
-        """
-        community = self.get_community(name)
-        if not community:
-            raise EntityNotFound(f"Community {name!r} not found.")
-        return community
-
-    def get_community(self, name: str) -> Community | None:
-        """Get a community by name.
-
-        :param name: The name of the community to search for.
-        :returns: The community if found, None otherwise.
-        """
-        for community in self.communities:
-            if community.name == name:
-                return community
-        return None
 
     def get_attribute_or_raise(self, name: str) -> NetworkPolicyAttributeValue:
         """Get a network attribute value by name, and raise if not found.
@@ -2217,7 +2238,7 @@ class NetworkPolicy(WithName):
         :returns: The new Community object.
         """
         resp = post(
-            Endpoint.NetworkPoliciesCommunities.with_params(self.id),
+            Endpoint.NetworkCommunities.with_params(self.id),
             name=name,
             description=description,
         )
@@ -2278,14 +2299,12 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
         if len(ips) == 1:
             raise EntityAlreadyExists(
-                f"MAC address {mac} is already associated with IP address {ips[0].ipaddress}"
-                ", must force."
+                f"MAC address {mac} is already associated with IP address {ips[0].ipaddress}, must force."
             )
         else:
             ips_str = ", ".join([str(ip.ipaddress) for ip in ips])
             raise MultipleEntitiesFound(
-                f"MAC address {mac} is already associated with multiple IP addresses: {ips_str}"
-                ", must force."
+                f"MAC address {mac} is already associated with multiple IP addresses: {ips_str}, must force."
             )
 
     @classmethod
@@ -3229,9 +3248,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         if len(ipadresses) and not force:
             raise EntityOwnershipMismatch(
-                f"mac {mac} already in use by: "
-                f"{', '.join(str(ip.ipaddress) for ip in ipadresses)}. "
-                f"Use force to add {ip} -> {mac} as well."
+                f"mac {mac} already in use by: {', '.join(str(ip.ipaddress) for ip in ipadresses)}. Use force to add {ip} -> {mac} as well."
             )
 
         ip_found_in_host = False
