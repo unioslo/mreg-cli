@@ -2043,6 +2043,7 @@ class Community(FrozenModelWithTimestamps, APIMixin):
     description: str
     network: int
     hosts: list[str] = []
+    global_name: str | None = None
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -3215,11 +3216,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """
         return next((ptr for ptr in self.ptr_overrides if ptr.ipaddress == ip), None)
 
-    def ipv4_addresses(self):
+    def ipv4_addresses(self) -> list[IPAddress]:
         """Return a list of IPv4 addresses."""
         return [ip for ip in self.ipaddresses if ip.is_ipv4()]
 
-    def ipv6_addresses(self):
+    def ipv6_addresses(self) -> list[IPAddress]:
         """Return a list of IPv6 addresses."""
         return [ip for ip in self.ipaddresses if ip.is_ipv6()]
 
@@ -3445,7 +3446,13 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if self.comment:
             output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
 
-        self.output_ipaddresses(padding=padding, names=names)
+        if self.network_community:
+            name = self.network_community.name
+            if self.network_community.global_name:
+                name += f"(Global: {self.network_community.global_name})"
+            output_manager.add_line(f"{'Community:':<{padding}}{name}")
+
+        self.output_networks()
         PTR_override.output_multiple(self.ptr_overrides, padding=padding)
 
         self.output_ttl(padding=padding)
@@ -3472,6 +3479,48 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         HostGroup.output_multiple(self.hostgroups(traverse=traverse_hostgroups), padding=padding)
 
         self.output_timestamps()
+
+    def output_networks(self, padding: int = 14, only: Literal[4, 6, None] = None) -> None:
+        networks = self.networks()
+        if not networks:
+            return
+
+        output_manager = OutputManager()
+
+        v4: list[tuple[Network, IPAddress]] = []
+        v6: list[tuple[Network, IPAddress]] = []
+
+        for network, ips in networks.items():
+            for ip in ips:
+                if network.ip_network.version == 4:
+                    v4.append((network, ip))
+                elif network.ip_network.version == 6:
+                    v6.append((network, ip))
+
+        def output_a_records(networks: list[tuple[Network, IPAddress]], version: int):
+            if not networks:
+                return
+            record_type = "A" if version == 4 else "AAAA"
+            output_manager.add_line(f"{record_type}_Records:")
+            data: list[dict[str, str]] = []
+            for network, ip in networks:
+                d: dict[str, str] = {}
+                d["ip"] = str(ip.ipaddress)
+                d["mac"] = ip.macaddress or "<not set>"
+                d["policy"] = network.policy.name if network.policy else "None"
+                data.append(d)
+
+            output_manager.add_formatted_table(
+                headers=("IP", "MAC", "Policy"),
+                keys=("ip", "mac", "policy"),
+                data=data,
+                indent=padding,
+            )
+
+        if only is None or only == 4:
+            output_a_records(v4, 4)
+        if only is None or only == 6:
+            output_a_records(v6, 6)
 
     def output_ipaddresses(
         self, padding: int = 14, names: bool = False, only: IP_Version | None = None
