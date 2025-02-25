@@ -754,6 +754,143 @@ def policy_set_description(args: argparse.Namespace) -> None:
 
 
 ##########################################
+#        POLICY ATTRIBUTE COMMANDS       #
+##########################################
+
+
+# TODO[rename]: network policy attribute create
+@command_registry.register_command(
+    prog="policy_attribute_add",
+    description="Add an attribute to a policy",
+    short_desc="Add attribute to policy",
+    flags=[
+        Flag("policy", description="Policy", metavar="POLICY"),
+        Flag("attribute", description="Attribute", metavar="ATTRIBUTE"),
+    ],
+)
+def policy_attribute_add(args: argparse.Namespace) -> None:
+    """Add an attribute to a policy.
+
+    :param args: argparse.Namespace (attribute, policy)
+    """
+    attribute: str = args.attribute
+    policy: str = args.policy
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+
+    if pol.get_attribute(attribute):
+        raise InputFailure(f"Policy {pol.name!r} already has attribute {attr.name!r}")
+
+    pol.add_attribute(attr, value=True)
+
+    OutputManager().add_ok(f"Added attribute {attr.name!r} to policy {pol.name!r}")
+
+
+# TODO[rename]: network policy attribute create
+@command_registry.register_command(
+    prog="policy_attribute_create",
+    description="Create a network policy attribute",
+    short_desc="Create a network policy attribute",
+    flags=[
+        Flag("name", description="Name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+    ],
+)
+def policy_attribute_create(args: argparse.Namespace) -> None:
+    """Create a new network policy attribute.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    name: str = args.name
+    description: str = args.description
+
+    NetworkPolicyAttribute.get_by_name_and_raise(name)
+
+    NetworkPolicyAttribute.create({"name": name, "description": description})
+
+    OutputManager().add_ok(f"Created network policy attribute {name!r}")
+
+
+# TODO[rename]: network policy attribute delete
+@command_registry.register_command(
+    prog="policy_attribute_delete",
+    description="Delete a network policy attribute",
+    short_desc="Delete a network policy attribute",
+    flags=[
+        Flag("attribute", description="attribute", metavar="ATTRIBUTE"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def policy_attribute_delete(args: argparse.Namespace) -> None:
+    """Delete a network policy attribute.
+
+    :param args: argparse.Namespace (attribute, force)
+    """
+    attribute: str = args.attribute
+    force: bool = args.force
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+
+    if not force and (pols := attr.get_policies()):
+        policy_names = ", ".join(f"{pol.name!r}" for pol in pols)
+        raise ForceMissing(
+            f"Attribute {attr.name!r} is used by the following policies: {policy_names}. Must force."
+        )
+
+    OutputManager().add_ok(f"Deleted network policy attribute {attribute!r}")
+
+
+# TODO[rename]: network policy attribute info
+@command_registry.register_command(
+    prog="policy_attribute_info",
+    description="Show information about a network policy attribute",
+    short_desc="Policy attribute info",
+    flags=[
+        Flag("attribute", description="Attribute", metavar="ATTRIBUTE"),
+    ],
+)
+def policy_attribute_info(args: argparse.Namespace) -> None:
+    """Show information about a network policy attribute.
+
+    :param args: argparse.Namespace (attribute)
+    """
+    attribute: str = args.attribute
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+    attr.output()
+
+
+# TODO[rename]: network policy attribute create
+@command_registry.register_command(
+    prog="policy_attribute_remove",
+    description="Remove an attribute from a policy",
+    short_desc="Remove attribute from policy",
+    flags=[
+        Flag("policy", description="Policy", metavar="POLICY"),
+        Flag("attribute", description="Attribute", metavar="ATTRIBUTE"),
+    ],
+)
+def policy_attribute_remove(args: argparse.Namespace) -> None:
+    """Remove an attribute from a policy.
+
+    :param args: argparse.Namespace (attribute, policy)
+    """
+    attribute: str = args.attribute
+    policy: str = args.policy
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+
+    if not pol.get_attribute(attribute):
+        raise InputFailure(f"Policy {pol.name!r} does not have attribute {attr.name!r}")
+
+    pol.remove_attribute(attribute)
+
+    OutputManager().add_ok(f"Removed attribute {attr.name!r} from policy {pol.name!r}")
+
+
+##########################################
 #           COMMUNITY COMMANDS           #
 ##########################################
 
@@ -781,7 +918,7 @@ def community_create(args: argparse.Namespace) -> None:
     net = Network.get_by_network_or_raise(network)
     com = net.get_community(name)
     if com:
-        raise CreateError(f"Community {name!r} already exists for network {network}")
+        raise InputFailure(f"Community {name!r} already exists for network {network}")
     net.create_community(name, description)
     OutputManager().add_ok(f"Created community {name!r} for network {network}")
 
@@ -843,7 +980,7 @@ def community_host_add(args: argparse.Namespace) -> None:
     h = Host.get_by_any_means_or_raise(host)
 
     if h.network_community and h.network_community.id == com.id:
-        raise CreateError(f"Host {h.name!r} is already in community {com.name!r}")
+        raise InputFailure(f"Host {h.name!r} is already in community {com.name!r}")
 
     if not force and h.network_community:
         raise ForceMissing(

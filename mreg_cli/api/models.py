@@ -2014,6 +2014,10 @@ class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
     name: str
     description: str
 
+    def get_policies(self) -> list[NetworkPolicy]:
+        """Get all policies using this attribute."""
+        return NetworkPolicy.get_list_by_field("attributes", self.id)
+
     @classmethod
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
