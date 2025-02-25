@@ -8,9 +8,15 @@ from datetime import date, datetime
 from functools import cached_property
 from typing import Any, Callable, ClassVar, Iterable, Literal, Self, cast, overload
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    field_validator,
+)
 from pydantic import ValidationError as PydanticValidationError
-from pydantic import computed_field, field_validator
 from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
