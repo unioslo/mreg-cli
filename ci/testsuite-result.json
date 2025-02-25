@@ -818,12 +818,13 @@
     "output": [
       "Name:         tinyhost.example.org",
       "Contact:      tinyhost@example.org",
-      "A_Records     IP            MAC",
-      "              10.0.2.9      <not set>",
+      "A_Records:",
+      "              IP         MAC         Policy   ",
+      "              10.0.2.9   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:44:41 2024",
-      "Updated:      Wed Dec 11 16:44:41 2024"
+      "Created:      Tue Feb 25 15:31:08 2025",
+      "Updated:      Tue Feb 25 15:31:08 2025"
     ],
     "api_requests": [
       {
@@ -853,18 +854,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:44:40.710848+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:08.247036+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -881,8 +882,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:44:40.886409+01:00",
-          "updated_at": "2024-12-11T16:44:41.314670+01:00",
+          "created_at": "2025-02-25T15:31:08.327853+01:00",
+          "updated_at": "2025-02-25T15:31:08.497334+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -912,8 +913,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:44:41.709138+01:00",
-              "updated_at": "2024-12-11T16:44:41.709149+01:00",
+              "created_at": "2025-02-25T15:31:08.773718+01:00",
+              "updated_at": "2025-02-25T15:31:08.773725+01:00",
               "ipaddress": "10.0.2.9",
               "host": 1
             }
@@ -922,8 +923,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:44:41.688378+01:00",
-              "updated_at": "2024-12-11T16:44:41.688391+01:00",
+              "created_at": "2025-02-25T15:31:08.757970+01:00",
+              "updated_at": "2025-02-25T15:31:08.757976+01:00",
               "txt": "v=spf1 -all",
               "host": 1
             }
@@ -932,13 +933,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:44:41.683671+01:00",
-          "updated_at": "2024-12-11T16:44:41.683683+01:00",
+          "created_at": "2025-02-25T15:31:08.754832+01:00",
+          "updated_at": "2025-02-25T15:31:08.754841+01:00",
           "name": "tinyhost.example.org",
           "contact": "tinyhost@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.2.9",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:08.327853+01:00",
+          "updated_at": "2025-02-25T15:31:08.497334+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 8
         }
       },
       {
@@ -9655,12 +9675,13 @@
     "output": [
       "Name:         tinyhost.example.org",
       "Contact:      me@example.org",
-      "AAAA_Records  IP            MAC",
-      "              2001:db8::33  <not set>",
+      "AAAA_Records:",
+      "              IP             MAC         Policy   ",
+      "              2001:db8::33   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:44:43 2024",
-      "Updated:      Wed Dec 11 16:44:43 2024"
+      "Created:      Tue Feb 25 15:31:09 2025",
+      "Updated:      Tue Feb 25 15:31:09 2025"
     ],
     "api_requests": [
       {
@@ -9690,18 +9711,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:44:42.599830+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:09.286698+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -9718,8 +9739,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:44:42.899068+01:00",
-          "updated_at": "2024-12-11T16:44:43.431469+01:00",
+          "created_at": "2025-02-25T15:31:09.401551+01:00",
+          "updated_at": "2025-02-25T15:31:09.635525+01:00",
           "network": "2001:db8::/64",
           "description": "Lorem ipsum dolor sit amet",
           "vlan": null,
@@ -9749,8 +9770,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:44:43.799845+01:00",
-              "updated_at": "2024-12-11T16:44:43.799865+01:00",
+              "created_at": "2025-02-25T15:31:09.784432+01:00",
+              "updated_at": "2025-02-25T15:31:09.784439+01:00",
               "ipaddress": "2001:db8::33",
               "host": 2
             }
@@ -9759,8 +9780,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:44:43.765364+01:00",
-              "updated_at": "2024-12-11T16:44:43.765383+01:00",
+              "created_at": "2025-02-25T15:31:09.768497+01:00",
+              "updated_at": "2025-02-25T15:31:09.768503+01:00",
               "txt": "v=spf1 -all",
               "host": 2
             }
@@ -9769,13 +9790,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:44:43.759890+01:00",
-          "updated_at": "2024-12-11T16:44:43.759911+01:00",
+          "created_at": "2025-02-25T15:31:09.766521+01:00",
+          "updated_at": "2025-02-25T15:31:09.766531+01:00",
           "name": "tinyhost.example.org",
           "contact": "me@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A33",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:09.401551+01:00",
+          "updated_at": "2025-02-25T15:31:09.635525+01:00",
+          "network": "2001:db8::/64",
+          "description": "Lorem ipsum dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 50
         }
       },
       {
@@ -9850,7 +9890,7 @@
     "warning": [],
     "error": [],
     "output": [
-      "              2001:db8::33  <not set>"
+      "              2001:db8::33   <not set>   None     "
     ],
     "api_requests": [
       {
@@ -9862,8 +9902,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:44:43.799845+01:00",
-              "updated_at": "2024-12-11T16:44:43.799865+01:00",
+              "created_at": "2025-02-25T15:31:09.784432+01:00",
+              "updated_at": "2025-02-25T15:31:09.784439+01:00",
               "ipaddress": "2001:db8::33",
               "host": 2
             }
@@ -9872,8 +9912,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:44:43.765364+01:00",
-              "updated_at": "2024-12-11T16:44:43.765383+01:00",
+              "created_at": "2025-02-25T15:31:09.768497+01:00",
+              "updated_at": "2025-02-25T15:31:09.768503+01:00",
               "txt": "v=spf1 -all",
               "host": 2
             }
@@ -9882,13 +9922,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:44:43.759890+01:00",
-          "updated_at": "2024-12-11T16:44:43.759911+01:00",
+          "created_at": "2025-02-25T15:31:09.766521+01:00",
+          "updated_at": "2025-02-25T15:31:09.766531+01:00",
           "name": "tinyhost.example.org",
           "contact": "me@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A33",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:09.401551+01:00",
+          "updated_at": "2025-02-25T15:31:09.635525+01:00",
+          "network": "2001:db8::/64",
+          "description": "Lorem ipsum dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 50
         }
       },
       {
@@ -9963,12 +10022,13 @@
     "warning": [],
     "error": [],
     "output": [
-      "AAAA_Records  IP            MAC",
-      "              2001:db8::33  <not set>",
+      "AAAA_Records:",
+      "              IP             MAC         Policy   ",
+      "              2001:db8::33   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:44:43 2024",
-      "Updated:      Wed Dec 11 16:44:43 2024"
+      "Created:      Tue Feb 25 15:31:09 2025",
+      "Updated:      Tue Feb 25 15:31:09 2025"
     ],
     "api_requests": [
       {
@@ -9980,8 +10040,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:44:43.799845+01:00",
-              "updated_at": "2024-12-11T16:44:43.799865+01:00",
+              "created_at": "2025-02-25T15:31:09.784432+01:00",
+              "updated_at": "2025-02-25T15:31:09.784439+01:00",
               "ipaddress": "2001:db8::33",
               "host": 2
             }
@@ -9990,8 +10050,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:44:43.765364+01:00",
-              "updated_at": "2024-12-11T16:44:43.765383+01:00",
+              "created_at": "2025-02-25T15:31:09.768497+01:00",
+              "updated_at": "2025-02-25T15:31:09.768503+01:00",
               "txt": "v=spf1 -all",
               "host": 2
             }
@@ -10000,13 +10060,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:44:43.759890+01:00",
-          "updated_at": "2024-12-11T16:44:43.759911+01:00",
+          "created_at": "2025-02-25T15:31:09.766521+01:00",
+          "updated_at": "2025-02-25T15:31:09.766531+01:00",
           "name": "tinyhost.example.org",
           "contact": "me@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A33",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:09.401551+01:00",
+          "updated_at": "2025-02-25T15:31:09.635525+01:00",
+          "network": "2001:db8::/64",
+          "description": "Lorem ipsum dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 50
         }
       },
       {
@@ -10570,12 +10649,13 @@
     "output": [
       "Name:         somehost.example.org",
       "Contact:      support@example.org",
-      "A_Records     IP            MAC",
-      "              10.0.1.4      <not set>",
+      "A_Records:",
+      "              IP         MAC         Policy   ",
+      "              10.0.1.4   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:44:46 2024",
-      "Updated:      Wed Dec 11 16:44:46 2024"
+      "Created:      Tue Feb 25 15:31:11 2025",
+      "Updated:      Tue Feb 25 15:31:11 2025"
     ],
     "api_requests": [
       {
@@ -10605,18 +10685,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:44:45.067149+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:10.816992+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -10634,15 +10714,15 @@
         "response": {
           "excluded_ranges": [
             {
-              "created_at": "2024-12-11T16:44:45.955630+01:00",
-              "updated_at": "2024-12-11T16:44:45.955656+01:00",
+              "created_at": "2025-02-25T15:31:11.397652+01:00",
+              "updated_at": "2025-02-25T15:31:11.397664+01:00",
               "start_ip": "10.0.1.20",
               "end_ip": "10.0.1.30",
               "network": 3
             }
           ],
-          "created_at": "2024-12-11T16:44:45.393437+01:00",
-          "updated_at": "2024-12-11T16:44:45.582957+01:00",
+          "created_at": "2025-02-25T15:31:11.137813+01:00",
+          "updated_at": "2025-02-25T15:31:11.228631+01:00",
           "network": "10.0.1.0/24",
           "description": "Frozzzen",
           "vlan": null,
@@ -10672,8 +10752,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:44:46.560426+01:00",
-              "updated_at": "2024-12-11T16:44:46.560441+01:00",
+              "created_at": "2025-02-25T15:31:11.659100+01:00",
+              "updated_at": "2025-02-25T15:31:11.659106+01:00",
               "ipaddress": "10.0.1.4",
               "host": 4
             }
@@ -10682,8 +10762,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:44:46.533402+01:00",
-              "updated_at": "2024-12-11T16:44:46.533419+01:00",
+              "created_at": "2025-02-25T15:31:11.647781+01:00",
+              "updated_at": "2025-02-25T15:31:11.647788+01:00",
               "txt": "v=spf1 -all",
               "host": 4
             }
@@ -10692,13 +10772,40 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:44:46.528383+01:00",
-          "updated_at": "2024-12-11T16:44:46.528401+01:00",
+          "created_at": "2025-02-25T15:31:11.645988+01:00",
+          "updated_at": "2025-02-25T15:31:11.645996+01:00",
           "name": "somehost.example.org",
           "contact": "support@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.1.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [
+            {
+              "created_at": "2025-02-25T15:31:11.397652+01:00",
+              "updated_at": "2025-02-25T15:31:11.397664+01:00",
+              "start_ip": "10.0.1.20",
+              "end_ip": "10.0.1.30",
+              "network": 3
+            }
+          ],
+          "created_at": "2025-02-25T15:31:11.137813+01:00",
+          "updated_at": "2025-02-25T15:31:11.228631+01:00",
+          "network": "10.0.1.0/24",
+          "description": "Frozzzen",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": true,
+          "reserved": 3
         }
       },
       {
@@ -12295,12 +12402,13 @@
     "output": [
       "Name:         otherhost.example.org",
       "Contact:      support@example.org",
-      "A_Records     IP            MAC",
-      "              10.0.1.20     <not set>",
+      "A_Records:",
+      "              IP          MAC         Policy   ",
+      "              10.0.1.20   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:44:50 2024",
-      "Updated:      Wed Dec 11 16:44:50 2024"
+      "Created:      Tue Feb 25 15:31:13 2025",
+      "Updated:      Tue Feb 25 15:31:13 2025"
     ],
     "api_requests": [
       {
@@ -12330,18 +12438,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:44:49.630468+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:13.124354+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -12358,8 +12466,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:44:45.393437+01:00",
-          "updated_at": "2024-12-11T16:44:49.759182+01:00",
+          "created_at": "2025-02-25T15:31:11.137813+01:00",
+          "updated_at": "2025-02-25T15:31:13.171300+01:00",
           "network": "10.0.1.0/24",
           "description": "Frozen but has one host",
           "vlan": 1234,
@@ -12389,8 +12497,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:44:50.481015+01:00",
-              "updated_at": "2024-12-11T16:44:50.481025+01:00",
+              "created_at": "2025-02-25T15:31:13.450323+01:00",
+              "updated_at": "2025-02-25T15:31:13.450329+01:00",
               "ipaddress": "10.0.1.20",
               "host": 6
             }
@@ -12399,8 +12507,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:44:50.463021+01:00",
-              "updated_at": "2024-12-11T16:44:50.463029+01:00",
+              "created_at": "2025-02-25T15:31:13.439574+01:00",
+              "updated_at": "2025-02-25T15:31:13.439595+01:00",
               "txt": "v=spf1 -all",
               "host": 6
             }
@@ -12409,13 +12517,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:44:50.460417+01:00",
-          "updated_at": "2024-12-11T16:44:50.460427+01:00",
+          "created_at": "2025-02-25T15:31:13.437918+01:00",
+          "updated_at": "2025-02-25T15:31:13.437924+01:00",
           "name": "otherhost.example.org",
           "contact": "support@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.1.20",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:11.137813+01:00",
+          "updated_at": "2025-02-25T15:31:13.171300+01:00",
+          "network": "10.0.1.0/24",
+          "description": "Frozen but has one host",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "cat1",
+          "location": "loc1",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -12979,12 +13106,13 @@
     "output": [
       "Name:         somehost.example.org",
       "Contact:      support@example.org",
-      "AAAA_Records  IP            MAC",
-      "              2001:db8::4   <not set>",
+      "AAAA_Records:",
+      "              IP            MAC         Policy   ",
+      "              2001:db8::4   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:44:52 2024",
-      "Updated:      Wed Dec 11 16:44:52 2024"
+      "Created:      Tue Feb 25 15:31:14 2025",
+      "Updated:      Tue Feb 25 15:31:14 2025"
     ],
     "api_requests": [
       {
@@ -13014,18 +13142,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:44:51.003885+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:13.751876+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -13043,15 +13171,15 @@
         "response": {
           "excluded_ranges": [
             {
-              "created_at": "2024-12-11T16:44:51.818052+01:00",
-              "updated_at": "2024-12-11T16:44:51.818069+01:00",
+              "created_at": "2025-02-25T15:31:14.071368+01:00",
+              "updated_at": "2025-02-25T15:31:14.071377+01:00",
               "start_ip": "2001:db8::20",
               "end_ip": "2001:db8::30",
               "network": 4
             }
           ],
-          "created_at": "2024-12-11T16:44:51.283232+01:00",
-          "updated_at": "2024-12-11T16:44:51.463783+01:00",
+          "created_at": "2025-02-25T15:31:13.861757+01:00",
+          "updated_at": "2025-02-25T15:31:13.920126+01:00",
           "network": "2001:db8::/64",
           "description": "Lorem ipsum dolor sit amet",
           "vlan": null,
@@ -13081,8 +13209,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:44:52.291402+01:00",
-              "updated_at": "2024-12-11T16:44:52.291419+01:00",
+              "created_at": "2025-02-25T15:31:14.294088+01:00",
+              "updated_at": "2025-02-25T15:31:14.294094+01:00",
               "ipaddress": "2001:db8::4",
               "host": 8
             }
@@ -13091,8 +13219,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:44:52.260029+01:00",
-              "updated_at": "2024-12-11T16:44:52.260048+01:00",
+              "created_at": "2025-02-25T15:31:14.281616+01:00",
+              "updated_at": "2025-02-25T15:31:14.281623+01:00",
               "txt": "v=spf1 -all",
               "host": 8
             }
@@ -13101,13 +13229,40 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:44:52.254284+01:00",
-          "updated_at": "2024-12-11T16:44:52.254305+01:00",
+          "created_at": "2025-02-25T15:31:14.279847+01:00",
+          "updated_at": "2025-02-25T15:31:14.279855+01:00",
           "name": "somehost.example.org",
           "contact": "support@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [
+            {
+              "created_at": "2025-02-25T15:31:14.071368+01:00",
+              "updated_at": "2025-02-25T15:31:14.071377+01:00",
+              "start_ip": "2001:db8::20",
+              "end_ip": "2001:db8::30",
+              "network": 4
+            }
+          ],
+          "created_at": "2025-02-25T15:31:13.861757+01:00",
+          "updated_at": "2025-02-25T15:31:13.920126+01:00",
+          "network": "2001:db8::/64",
+          "description": "Lorem ipsum dolor sit amet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": true,
+          "reserved": 3
         }
       },
       {
@@ -20852,14 +21007,16 @@
     "output": [
       "Name:         foo.example.org",
       "Contact:      ",
-      "A_Records     IP            MAC",
-      "              10.0.0.5      aa:bb:cc:dd:ee:ff",
-      "AAAA_Records  IP            MAC",
-      "              2001:db8::5   <not set>",
+      "A_Records:",
+      "              IP         MAC                 Policy   ",
+      "              10.0.0.5   aa:bb:cc:dd:ee:ff   None     ",
+      "AAAA_Records:",
+      "              IP            MAC         Policy   ",
+      "              2001:db8::5   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:06 2024",
-      "Updated:      Wed Dec 11 16:45:06 2024"
+      "Created:      Tue Feb 25 15:31:20 2025",
+      "Updated:      Tue Feb 25 15:31:20 2025"
     ],
     "api_requests": [
       {
@@ -20871,15 +21028,15 @@
           "ipaddresses": [
             {
               "macaddress": "aa:bb:cc:dd:ee:ff",
-              "created_at": "2024-12-11T16:45:08.679831+01:00",
-              "updated_at": "2024-12-11T16:45:11.011903+01:00",
+              "created_at": "2025-02-25T15:31:21.659322+01:00",
+              "updated_at": "2025-02-25T15:31:22.632211+01:00",
               "ipaddress": "10.0.0.5",
               "host": 13
             },
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:10.531279+01:00",
-              "updated_at": "2024-12-11T16:45:10.531300+01:00",
+              "created_at": "2025-02-25T15:31:22.398017+01:00",
+              "updated_at": "2025-02-25T15:31:22.398023+01:00",
               "ipaddress": "2001:db8::5",
               "host": 13
             }
@@ -20888,8 +21045,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:06.156299+01:00",
-              "updated_at": "2024-12-11T16:45:06.156320+01:00",
+              "created_at": "2025-02-25T15:31:20.553448+01:00",
+              "updated_at": "2025-02-25T15:31:20.553454+01:00",
               "txt": "v=spf1 -all",
               "host": 13
             }
@@ -20898,13 +21055,51 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:06.137012+01:00",
-          "updated_at": "2024-12-11T16:45:06.137037+01:00",
+          "created_at": "2025-02-25T15:31:20.550602+01:00",
+          "updated_at": "2025-02-25T15:31:20.550611+01:00",
           "name": "foo.example.org",
           "contact": "",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.5",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:20.443643+01:00",
+          "updated_at": "2025-02-25T15:31:20.443654+01:00",
+          "network": "10.0.0.0/24",
+          "description": "foo",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/2001%3Adb8%3A%3A5",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:22.002727+01:00",
+          "updated_at": "2025-02-25T15:31:22.002736+01:00",
+          "network": "2001:db8::/64",
+          "description": "foo_ipv6",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -21379,12 +21574,13 @@
       "Name:         foo.example.org",
       "Contact:      hi@ho.com",
       "Comment:      meh",
-      "A_Records     IP            MAC",
-      "              10.0.0.10     11:22:33:aa:bb:cc",
+      "A_Records:",
+      "              IP          MAC                 Policy   ",
+      "              10.0.0.10   11:22:33:aa:bb:cc   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:12 2024",
-      "Updated:      Wed Dec 11 16:45:12 2024"
+      "Created:      Tue Feb 25 15:31:23 2025",
+      "Updated:      Tue Feb 25 15:31:23 2025"
     ],
     "api_requests": [
       {
@@ -21426,18 +21622,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:45:11.813653+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:23.005717+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -21454,8 +21650,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -21486,8 +21682,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:12.965204+01:00",
-              "updated_at": "2024-12-11T16:45:12.965220+01:00",
+              "created_at": "2025-02-25T15:31:23.664407+01:00",
+              "updated_at": "2025-02-25T15:31:23.664414+01:00",
               "ipaddress": "10.0.0.10",
               "host": 14
             }
@@ -21496,8 +21692,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:12.938227+01:00",
-              "updated_at": "2024-12-11T16:45:12.938240+01:00",
+              "created_at": "2025-02-25T15:31:23.651906+01:00",
+              "updated_at": "2025-02-25T15:31:23.651911+01:00",
               "txt": "v=spf1 -all",
               "host": 14
             }
@@ -21506,8 +21702,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:12.933964+01:00",
-          "updated_at": "2024-12-11T16:45:12.933979+01:00",
+          "created_at": "2025-02-25T15:31:23.649843+01:00",
+          "updated_at": "2025-02-25T15:31:23.649850+01:00",
           "name": "foo.example.org",
           "contact": "hi@ho.com",
           "ttl": null,
@@ -21542,8 +21738,8 @@
         "status": 200,
         "response": {
           "macaddress": "11:22:33:aa:bb:cc",
-          "created_at": "2024-12-11T16:45:12.965204+01:00",
-          "updated_at": "2024-12-11T16:45:13.218208+01:00",
+          "created_at": "2025-02-25T15:31:23.664407+01:00",
+          "updated_at": "2025-02-25T15:31:23.773184+01:00",
           "ipaddress": "10.0.0.10",
           "host": 14
         }
@@ -21562,8 +21758,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "11:22:33:aa:bb:cc",
-                  "created_at": "2024-12-11T16:45:12.965204+01:00",
-                  "updated_at": "2024-12-11T16:45:13.218208+01:00",
+                  "created_at": "2025-02-25T15:31:23.664407+01:00",
+                  "updated_at": "2025-02-25T15:31:23.773184+01:00",
                   "ipaddress": "10.0.0.10",
                   "host": 14
                 }
@@ -21572,8 +21768,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2024-12-11T16:45:12.938227+01:00",
-                  "updated_at": "2024-12-11T16:45:12.938240+01:00",
+                  "created_at": "2025-02-25T15:31:23.651906+01:00",
+                  "updated_at": "2025-02-25T15:31:23.651911+01:00",
                   "txt": "v=spf1 -all",
                   "host": 14
                 }
@@ -21582,8 +21778,8 @@
               "hinfo": null,
               "loc": null,
               "bacnetid": null,
-              "created_at": "2024-12-11T16:45:12.933964+01:00",
-              "updated_at": "2024-12-11T16:45:12.933979+01:00",
+              "created_at": "2025-02-25T15:31:23.649843+01:00",
+              "updated_at": "2025-02-25T15:31:23.649850+01:00",
               "name": "foo.example.org",
               "contact": "hi@ho.com",
               "ttl": null,
@@ -21591,6 +21787,25 @@
               "zone": 1
             }
           ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -21668,12 +21883,13 @@
       "Name:         foo.example.org",
       "Contact:      hi@ho.com",
       "Comment:      meh",
-      "A_Records     IP            MAC",
-      "              10.0.0.10     11:22:33:aa:bb:cc",
+      "A_Records:",
+      "              IP          MAC                 Policy   ",
+      "              10.0.0.10   11:22:33:aa:bb:cc   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:12 2024",
-      "Updated:      Wed Dec 11 16:45:12 2024"
+      "Created:      Tue Feb 25 15:31:23 2025",
+      "Updated:      Tue Feb 25 15:31:23 2025"
     ],
     "api_requests": [
       {
@@ -21685,8 +21901,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2024-12-11T16:45:12.965204+01:00",
-              "updated_at": "2024-12-11T16:45:13.218208+01:00",
+              "created_at": "2025-02-25T15:31:23.664407+01:00",
+              "updated_at": "2025-02-25T15:31:23.773184+01:00",
               "ipaddress": "10.0.0.10",
               "host": 14
             }
@@ -21695,8 +21911,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:12.938227+01:00",
-              "updated_at": "2024-12-11T16:45:12.938240+01:00",
+              "created_at": "2025-02-25T15:31:23.651906+01:00",
+              "updated_at": "2025-02-25T15:31:23.651911+01:00",
               "txt": "v=spf1 -all",
               "host": 14
             }
@@ -21705,13 +21921,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:12.933964+01:00",
-          "updated_at": "2024-12-11T16:45:12.933979+01:00",
+          "created_at": "2025-02-25T15:31:23.649843+01:00",
+          "updated_at": "2025-02-25T15:31:23.649850+01:00",
           "name": "foo.example.org",
           "contact": "hi@ho.com",
           "ttl": null,
           "comment": "meh",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -28963,12 +29198,13 @@
     "output": [
       "Name:         directok.example.org",
       "Contact:      ",
-      "A_Records     IP            MAC",
-      "              10.0.0.4      aa:bb:cc:cc:bb:aa",
+      "A_Records:",
+      "              IP         MAC                 Policy   ",
+      "              10.0.0.4   aa:bb:cc:cc:bb:aa   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:29 2024",
-      "Updated:      Wed Dec 11 16:45:29 2024"
+      "Created:      Tue Feb 25 15:31:31 2025",
+      "Updated:      Tue Feb 25 15:31:31 2025"
     ],
     "api_requests": [
       {
@@ -29010,18 +29246,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:45:29.128826+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:31.271638+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -29038,8 +29274,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -29068,8 +29304,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:29.386774+01:00",
-              "updated_at": "2024-12-11T16:45:29.386784+01:00",
+              "created_at": "2025-02-25T15:31:31.420555+01:00",
+              "updated_at": "2025-02-25T15:31:31.420627+01:00",
               "ipaddress": "10.0.0.4",
               "host": 18
             }
@@ -29078,8 +29314,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:29.367922+01:00",
-              "updated_at": "2024-12-11T16:45:29.367930+01:00",
+              "created_at": "2025-02-25T15:31:31.398752+01:00",
+              "updated_at": "2025-02-25T15:31:31.398759+01:00",
               "txt": "v=spf1 -all",
               "host": 18
             }
@@ -29088,8 +29324,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:29.365220+01:00",
-          "updated_at": "2024-12-11T16:45:29.365232+01:00",
+          "created_at": "2025-02-25T15:31:31.396561+01:00",
+          "updated_at": "2025-02-25T15:31:31.396570+01:00",
           "name": "directok.example.org",
           "contact": "",
           "ttl": null,
@@ -29124,8 +29360,8 @@
         "status": 200,
         "response": {
           "macaddress": "aa:bb:cc:cc:bb:aa",
-          "created_at": "2024-12-11T16:45:29.386774+01:00",
-          "updated_at": "2024-12-11T16:45:29.586984+01:00",
+          "created_at": "2025-02-25T15:31:31.420555+01:00",
+          "updated_at": "2025-02-25T15:31:31.531380+01:00",
           "ipaddress": "10.0.0.4",
           "host": 18
         }
@@ -29144,8 +29380,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "aa:bb:cc:cc:bb:aa",
-                  "created_at": "2024-12-11T16:45:29.386774+01:00",
-                  "updated_at": "2024-12-11T16:45:29.586984+01:00",
+                  "created_at": "2025-02-25T15:31:31.420555+01:00",
+                  "updated_at": "2025-02-25T15:31:31.531380+01:00",
                   "ipaddress": "10.0.0.4",
                   "host": 18
                 }
@@ -29154,8 +29390,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2024-12-11T16:45:29.367922+01:00",
-                  "updated_at": "2024-12-11T16:45:29.367930+01:00",
+                  "created_at": "2025-02-25T15:31:31.398752+01:00",
+                  "updated_at": "2025-02-25T15:31:31.398759+01:00",
                   "txt": "v=spf1 -all",
                   "host": 18
                 }
@@ -29164,8 +29400,8 @@
               "hinfo": null,
               "loc": null,
               "bacnetid": null,
-              "created_at": "2024-12-11T16:45:29.365220+01:00",
-              "updated_at": "2024-12-11T16:45:29.365232+01:00",
+              "created_at": "2025-02-25T15:31:31.396561+01:00",
+              "updated_at": "2025-02-25T15:31:31.396570+01:00",
               "name": "directok.example.org",
               "contact": "",
               "ttl": null,
@@ -29173,6 +29409,25 @@
               "zone": 1
             }
           ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -29369,12 +29624,13 @@
     "output": [
       "Name:         foo.example.org",
       "Contact:      foo@example.org",
-      "A_Records     IP            MAC",
-      "              10.0.0.10     <not set>",
+      "A_Records:",
+      "              IP          MAC         Policy   ",
+      "              10.0.0.10   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:30 2024",
-      "Updated:      Wed Dec 11 16:45:30 2024"
+      "Created:      Tue Feb 25 15:31:31 2025",
+      "Updated:      Tue Feb 25 15:31:31 2025"
     ],
     "api_requests": [
       {
@@ -29404,18 +29660,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:45:30.251456+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:31.901510+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -29432,8 +29688,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -29463,8 +29719,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:30.487891+01:00",
-              "updated_at": "2024-12-11T16:45:30.487904+01:00",
+              "created_at": "2025-02-25T15:31:32.012410+01:00",
+              "updated_at": "2025-02-25T15:31:32.012420+01:00",
               "ipaddress": "10.0.0.10",
               "host": 19
             }
@@ -29473,8 +29729,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:30.467551+01:00",
-              "updated_at": "2024-12-11T16:45:30.467560+01:00",
+              "created_at": "2025-02-25T15:31:32.000664+01:00",
+              "updated_at": "2025-02-25T15:31:32.000677+01:00",
               "txt": "v=spf1 -all",
               "host": 19
             }
@@ -29483,13 +29739,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:30.464508+01:00",
-          "updated_at": "2024-12-11T16:45:30.464524+01:00",
+          "created_at": "2025-02-25T15:31:31.998880+01:00",
+          "updated_at": "2025-02-25T15:31:31.998887+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -29814,12 +30089,13 @@
     "output": [
       "Name:         foo.example.org",
       "Contact:      foo@example.org",
-      "A_Records     IP            MAC",
-      "              10.0.0.10     <not set>",
+      "A_Records:",
+      "              IP          MAC         Policy   ",
+      "              10.0.0.10   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:31 2024",
-      "Updated:      Wed Dec 11 16:45:31 2024"
+      "Created:      Tue Feb 25 15:31:32 2025",
+      "Updated:      Tue Feb 25 15:31:32 2025"
     ],
     "api_requests": [
       {
@@ -29849,18 +30125,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:45:31.351370+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:32.429895+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -29877,8 +30153,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -29908,8 +30184,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:31.587990+01:00",
-              "updated_at": "2024-12-11T16:45:31.588000+01:00",
+              "created_at": "2025-02-25T15:31:32.766659+01:00",
+              "updated_at": "2025-02-25T15:31:32.766666+01:00",
               "ipaddress": "10.0.0.10",
               "host": 20
             }
@@ -29918,8 +30194,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:31.566412+01:00",
-              "updated_at": "2024-12-11T16:45:31.566424+01:00",
+              "created_at": "2025-02-25T15:31:32.738393+01:00",
+              "updated_at": "2025-02-25T15:31:32.738453+01:00",
               "txt": "v=spf1 -all",
               "host": 20
             }
@@ -29928,13 +30204,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:31.562942+01:00",
-          "updated_at": "2024-12-11T16:45:31.562956+01:00",
+          "created_at": "2025-02-25T15:31:32.734440+01:00",
+          "updated_at": "2025-02-25T15:31:32.734459+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -30300,12 +30595,13 @@
     "output": [
       "Name:         foo.example.org",
       "Contact:      foo@example.org",
-      "A_Records     IP            MAC",
-      "              10.0.0.10     <not set>",
+      "A_Records:",
+      "              IP          MAC         Policy   ",
+      "              10.0.0.10   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:32 2024",
-      "Updated:      Wed Dec 11 16:45:32 2024"
+      "Created:      Tue Feb 25 15:31:34 2025",
+      "Updated:      Tue Feb 25 15:31:34 2025"
     ],
     "api_requests": [
       {
@@ -30335,18 +30631,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:45:32.472485+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:33.815111+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -30363,8 +30659,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -30394,8 +30690,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:32.714018+01:00",
-              "updated_at": "2024-12-11T16:45:32.714035+01:00",
+              "created_at": "2025-02-25T15:31:34.062136+01:00",
+              "updated_at": "2025-02-25T15:31:34.062141+01:00",
               "ipaddress": "10.0.0.10",
               "host": 21
             }
@@ -30404,8 +30700,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:32.684424+01:00",
-              "updated_at": "2024-12-11T16:45:32.684452+01:00",
+              "created_at": "2025-02-25T15:31:34.045585+01:00",
+              "updated_at": "2025-02-25T15:31:34.045594+01:00",
               "txt": "v=spf1 -all",
               "host": 21
             }
@@ -30414,13 +30710,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:32.678898+01:00",
-          "updated_at": "2024-12-11T16:45:32.678919+01:00",
+          "created_at": "2025-02-25T15:31:34.042003+01:00",
+          "updated_at": "2025-02-25T15:31:34.042014+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -30774,12 +31089,13 @@
     "output": [
       "Name:         foo.example.org",
       "Contact:      foo@example.org",
-      "A_Records     IP            MAC",
-      "              10.0.0.10     <not set>",
+      "A_Records:",
+      "              IP          MAC         Policy   ",
+      "              10.0.0.10   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:33 2024",
-      "Updated:      Wed Dec 11 16:45:33 2024"
+      "Created:      Tue Feb 25 15:31:34 2025",
+      "Updated:      Tue Feb 25 15:31:34 2025"
     ],
     "api_requests": [
       {
@@ -30809,18 +31125,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:45:33.559899+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:34.844808+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -30837,8 +31153,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -30868,8 +31184,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:33.776179+01:00",
-              "updated_at": "2024-12-11T16:45:33.776187+01:00",
+              "created_at": "2025-02-25T15:31:34.973366+01:00",
+              "updated_at": "2025-02-25T15:31:34.973372+01:00",
               "ipaddress": "10.0.0.10",
               "host": 22
             }
@@ -30878,8 +31194,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:33.759403+01:00",
-              "updated_at": "2024-12-11T16:45:33.759413+01:00",
+              "created_at": "2025-02-25T15:31:34.961481+01:00",
+              "updated_at": "2025-02-25T15:31:34.961488+01:00",
               "txt": "v=spf1 -all",
               "host": 22
             }
@@ -30888,13 +31204,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:33.756101+01:00",
-          "updated_at": "2024-12-11T16:45:33.756113+01:00",
+          "created_at": "2025-02-25T15:31:34.959109+01:00",
+          "updated_at": "2025-02-25T15:31:34.959117+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -31306,12 +31641,13 @@
     "output": [
       "Name:         foo.example.org",
       "Contact:      foo@example.org",
-      "A_Records     IP            MAC",
-      "              10.0.0.10     <not set>",
+      "A_Records:",
+      "              IP          MAC         Policy   ",
+      "              10.0.0.10   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:34 2024",
-      "Updated:      Wed Dec 11 16:45:34 2024"
+      "Created:      Tue Feb 25 15:31:35 2025",
+      "Updated:      Tue Feb 25 15:31:35 2025"
     ],
     "api_requests": [
       {
@@ -31341,18 +31677,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:45:34.635561+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:35.597801+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -31369,8 +31705,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -31400,8 +31736,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:34.858848+01:00",
-              "updated_at": "2024-12-11T16:45:34.858857+01:00",
+              "created_at": "2025-02-25T15:31:35.721882+01:00",
+              "updated_at": "2025-02-25T15:31:35.721890+01:00",
               "ipaddress": "10.0.0.10",
               "host": 23
             }
@@ -31410,8 +31746,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:34.841296+01:00",
-              "updated_at": "2024-12-11T16:45:34.841304+01:00",
+              "created_at": "2025-02-25T15:31:35.705501+01:00",
+              "updated_at": "2025-02-25T15:31:35.705508+01:00",
               "txt": "v=spf1 -all",
               "host": 23
             }
@@ -31420,13 +31756,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:34.837222+01:00",
-          "updated_at": "2024-12-11T16:45:34.837236+01:00",
+          "created_at": "2025-02-25T15:31:35.703285+01:00",
+          "updated_at": "2025-02-25T15:31:35.703292+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
@@ -31869,12 +32224,13 @@
     "output": [
       "Name:         foo.example.org",
       "Contact:      foo@example.org",
-      "A_Records     IP            MAC",
-      "              10.0.0.10     <not set>",
+      "A_Records:",
+      "              IP          MAC         Policy   ",
+      "              10.0.0.10   <not set>   None     ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Wed Dec 11 16:45:36 2024",
-      "Updated:      Wed Dec 11 16:45:36 2024"
+      "Created:      Tue Feb 25 15:31:36 2025",
+      "Updated:      Tue Feb 25 15:31:36 2025"
     ],
     "api_requests": [
       {
@@ -31904,18 +32260,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2024-12-11T16:44:40.356452+01:00",
-                "updated_at": "2024-12-11T16:44:40.356481+01:00",
+                "created_at": "2025-02-25T15:31:07.977440+01:00",
+                "updated_at": "2025-02-25T15:31:07.977452+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2024-12-11T16:44:39.701254+01:00",
-            "updated_at": "2024-12-11T16:45:35.818010+01:00",
+            "created_at": "2025-02-25T15:31:06.817485+01:00",
+            "updated_at": "2025-02-25T15:31:36.358330+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+            "serialno_updated_at": "2025-02-25T15:31:08.112698+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -31932,8 +32288,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -31963,8 +32319,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:36.048114+01:00",
-              "updated_at": "2024-12-11T16:45:36.048123+01:00",
+              "created_at": "2025-02-25T15:31:36.481729+01:00",
+              "updated_at": "2025-02-25T15:31:36.481738+01:00",
               "ipaddress": "10.0.0.10",
               "host": 24
             }
@@ -31973,8 +32329,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:36.029619+01:00",
-              "updated_at": "2024-12-11T16:45:36.029627+01:00",
+              "created_at": "2025-02-25T15:31:36.464310+01:00",
+              "updated_at": "2025-02-25T15:31:36.464316+01:00",
               "txt": "v=spf1 -all",
               "host": 24
             }
@@ -31983,13 +32339,32 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:36.027149+01:00",
-          "updated_at": "2024-12-11T16:45:36.027158+01:00",
+          "created_at": "2025-02-25T15:31:36.461954+01:00",
+          "updated_at": "2025-02-25T15:31:36.461962+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "created_at": "2025-02-25T15:31:23.432309+01:00",
+          "updated_at": "2025-02-25T15:31:23.432319+01:00",
+          "network": "10.0.0.0/24",
+          "description": "lorem ipsum",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
         }
       },
       {
