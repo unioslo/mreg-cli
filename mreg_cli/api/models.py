@@ -8,15 +8,9 @@ from datetime import date, datetime
 from functools import cached_property
 from typing import Any, Callable, ClassVar, Iterable, Literal, Self, cast, overload
 
-from pydantic import (
-    AliasChoices,
-    BaseModel,
-    ConfigDict,
-    Field,
-    computed_field,
-    field_validator,
-)
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic import ValidationError as PydanticValidationError
+from pydantic import computed_field, field_validator
 from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
@@ -3460,7 +3454,13 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             name = self.network_community.name
             if self.network_community.global_name:
                 name += f"(Global: {self.network_community.global_name})"
-            output_manager.add_line(f"{'Community:':<{padding}}{name}")
+
+            community_from_network = ""
+            if len(self.networks()) > 1:
+                network = self.network_community.network_address
+                community_from_network = f" [{network}]"
+
+            output_manager.add_line(f"{'Community:':<{padding}}{name}{community_from_network}")
 
         self.output_networks()
         PTR_override.output_multiple(self.ptr_overrides, padding=padding)
