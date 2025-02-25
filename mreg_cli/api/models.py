@@ -1746,11 +1746,17 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             ip for ip in reserved_ips if ip not in (ipnet.network_address, ipnet.broadcast_address)
         ]
 
+        community_list: list[str] = []
+        for community in self.communities:
+            host_count = len(community.hosts)
+            community_list.append(f"{community.name} ({host_count})")
+
         fmt("Network:", self.network)
         fmt("Netmask:", ipnet.netmask)
         fmt("Description:", self.description)
         fmt("Category:", self.category)
         fmt("Network policy: ", self.policy.name if self.policy else "")
+        fmt("Communities:", ", ".join(sorted(community_list)))
         fmt("Location:", self.location)
         fmt("VLAN:", self.vlan)
         fmt("DNS delegated:", str(self.dns_delegated))
@@ -3508,17 +3514,30 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             record_type = "A" if version == 4 else "AAAA"
             output_manager.add_line(f"{record_type}_Records:")
             data: list[dict[str, str]] = []
+
+            any_ip_has_policy = any(network.policy for network, _ in networks)
+
             for network, ip in networks:
+                policy_blob = {}
+                if any_ip_has_policy:
+                    policy_blob = {"policy": network.policy.name if network.policy else ""}
+
                 d: dict[str, str] = {
                     "ip": str(ip.ipaddress),
                     "mac": ip.macaddress or "<not set>",
-                    "policy": network.policy.name if network.policy else "None",
+                    **policy_blob,
                 }
                 data.append(d)
 
+            headers = ("IP", "MAC")
+            keys = ("ip", "mac")
+            if any_ip_has_policy:
+                headers += ("Policy",)
+                keys += ("policy",)
+
             output_manager.add_formatted_table(
-                headers=("IP", "MAC", "Policy"),
-                keys=("ip", "mac", "policy"),
+                headers=headers,
+                keys=keys,
                 data=data,
                 indent=padding,
             )
