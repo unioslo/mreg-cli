@@ -2002,7 +2002,6 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     def unset_policy(self) -> Self:
         """Unset the network policy of the network.
 
-        :param policy: The new network policy.
         :returns: The updated Network object.
         """
         return self.patch({"policy": None}, validate=False)
@@ -2095,7 +2094,7 @@ class Community(FrozenModelWithTimestamps, APIMixin):
         return resp.ok if resp else False
 
     def get_hosts(self) -> list[Host]:
-        """Get the complete definitions for hosts in the community.
+        """Get a list of hosts in the community.
 
         :returns: A list of Host objects.
         """
@@ -3459,7 +3458,9 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         networks = self.networks()
 
         policies = [
-            f"{network.policy.name} [{network.network}]" if len(networks) > 1 else network.policy.name
+            f"{network.policy.name} [{network.network}]"
+            if len(networks) > 1
+            else network.policy.name
             for network in networks
             if network.policy
         ]
@@ -3472,10 +3473,16 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             community_parts: list[str] = []
             if self.communities:
                 for community in self.communities:
-                    global_name = f" (Global: {community.global_name})" if community.global_name else ""
-                    community_from_network = f" [{community.network_address}]" if len(networks) > 1 else ""
-                    community_parts.append(f"{community.name}{global_name}{community_from_network}")
-                
+                    global_name = (
+                        f" (Global: {community.global_name})" if community.global_name else ""
+                    )
+                    community_from_network = (
+                        f" [{community.network_address}]" if len(networks) > 1 else ""
+                    )
+                    community_parts.append(
+                        f"{community.name}{global_name}{community_from_network}"
+                    )
+
                 community_line += ", ".join(community_parts)
 
             output_manager.add_line(community_line)
@@ -3534,7 +3541,6 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             data: list[dict[str, str]] = []
 
             for _, ip in networks:
-
                 d: dict[str, str] = {
                     "ip": str(ip.ipaddress),
                     "mac": ip.macaddress or "<not set>",
