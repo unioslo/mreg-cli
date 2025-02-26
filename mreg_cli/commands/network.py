@@ -554,8 +554,11 @@ def policy_add(args: argparse.Namespace) -> None:
     if net.policy and net.policy.id == pol.id:
         raise InputFailure(f"Network {net.network} already has policy {pol.name!r}.")
 
+    # Switching policy requires force
     if net.policy and not force:
-        raise ForceMissing(f"Network {net.network} already has a policy assigned. Must force.")
+        raise ForceMissing(
+            f"Network {net.network} already has the policy {net.policy.name!r}. Must force."
+        )
 
     net.set_policy(pol)
     OutputManager().add_ok(f"Added network policy {pol.name!r} to {network}")
@@ -619,9 +622,9 @@ def policy_delete(args: argparse.Namespace) -> None:
     networks = Network.get_list_by_field("policy", pol.id)
 
     if networks and not force:
+        nets = ", ".join(f"{net.network!r}" for net in networks)
         raise ForceMissing(
-            f"Policy {pol.name!r} is assigned to the following networks, must force:"
-            f"{', '.join(net.network for net in networks)}"
+            f"Policy {pol.name!r} is assigned to the following networks: {nets}. Must force."
         )
 
     pol.delete()
@@ -652,12 +655,12 @@ def policy_info(args: argparse.Namespace) -> None:
 @command_registry.register_command(
     prog="policy_list",
     description="List all or a subset of policies",
-    short_desc="List communities",
+    short_desc="List policies",
     flags=[
-        Flag("-name", description="Name. Can be a regex pattern.", metavar="NAME"),
+        Flag("-name", description="Name. Can contain wildcards.", metavar="NAME"),
         Flag(
             "-description",
-            description="Description. Can be a regex pattern.",
+            description="Description. Can contain wildcards.",
             metavar="DESCRIPTION",
         ),
     ],
@@ -946,7 +949,7 @@ def community_delete(args: argparse.Namespace) -> None:
     net = Network.get_by_network_or_raise(network)
     com = net.get_community_or_raise(community)
 
-    if not force and com.get_hosts():  # or some other interface for this
+    if not force and com.get_hosts():
         raise ForceMissing(f"Community {com.name!r} has hosts. Must force.")
 
     com.delete()
@@ -983,8 +986,8 @@ def community_host_add(args: argparse.Namespace) -> None:
         for c in h.communities:
             if c.network == net.id:
                 raise ForceMissing(
-                f"Host {h.name!r} is assigned to another community in the network ({c.name!r}). Must force."
-            )
+                    f"Host {h.name!r} is assigned to another community in the network ({c.name!r}). Must force."
+                )
 
     com.add_host(h)
 
