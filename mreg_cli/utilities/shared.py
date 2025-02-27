@@ -64,21 +64,3 @@ def sizeof_fmt(num: float, suffix: str = "B"):
             return f"{num:3.1f}{unit}{suffix}"
         num /= 1024.0
     return f"{num:.1f}Yi{suffix}"
-
-
-def args_to_mapping(args: argparse.Namespace, *, filter_none: bool = False) -> dict[str, Any]:
-    """Convert argparse.Namespace to a dictionary.
-
-    Removes certain keys by default.
-
-    :param args: The argparse.Namespace object to convert.
-    :param filter_none: If True, remove keys with a value of None.
-
-    :returns: A dictionary of the argparse.Namespace object.
-    """
-    m = vars(args)
-    for k in ["func"]:  # expand with more exclusions if needed
-        m.pop(k, None)
-    if not filter_none:
-        return m
-    return {k: v for k, v in m.items() if v is not None}

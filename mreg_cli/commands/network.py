@@ -16,7 +16,6 @@ from mreg_cli.api.models import (
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import (
-    CreateError,
     DeleteError,
     EntityNotFound,
     ForceMissing,
@@ -24,8 +23,8 @@ from mreg_cli.exceptions import (
     NetworkOverlap,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag, JsonMapping, QueryParams
-from mreg_cli.utilities.shared import args_to_mapping, convert_wildcard_to_regex, string_to_int
+from mreg_cli.types import Flag, QueryParams
+from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
 command_registry = CommandRegistry()
