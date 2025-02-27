@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import argparse
 from typing import Any
 
 from mreg_cli.exceptions import InputFailure
