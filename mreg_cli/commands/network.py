@@ -593,7 +593,7 @@ def policy_create(args: argparse.Namespace) -> None:
         {
             "name": name,
             "description": description,
-            "attributes": [{"attribute": attr.id, "value": True} for attr in attrs],
+            "attributes": [{"name": attr.name, "value": True} for attr in attrs],
         }
     )
     OutputManager().add_ok(f"Created network policy {name!r}")
