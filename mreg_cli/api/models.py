@@ -2901,6 +2901,18 @@ class Location(FrozenModelWithTimestamps, WithHost, APIMixin):
         OutputManager().add_line(f"{'LOC:':<{padding}}{self.loc}")
 
 
+class HostCommmunity(FrozenModel):
+    """Model for a host's community.
+
+    Communities are associated with hosts via IP addresses.
+    """
+
+    ipaddress: int
+    """ID of the IP address associated with the community"""
+
+    community: Community
+
+
 class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     """Model for an individual host."""
 
@@ -2918,7 +2930,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     ttl: int | None = None
     comment: str
 
-    communities: list[Community] | None = None
+    communities: list[HostCommmunity] | None = None
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None
@@ -3216,6 +3228,15 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """
         return next((ip for ip in self.ipaddresses if ip.ipaddress == arg_ip), None)
 
+    def get_ip_by_id(self, ip_id: int) -> IPAddress | None:
+        """Get the IP address object for the given ID.
+
+        :param ip_id: The ID to search for.
+
+        :returns: The IP address object if found, None otherwise.
+        """
+        return next((ip for ip in self.ipaddresses if ip.id == ip_id), None)
+
     def get_ptr_override(self, ip: IP_AddressT) -> PTR_override | None:
         """Get the PTR override for the given IP address.
 
@@ -3472,15 +3493,17 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             community_line = f"{'Community:':<{padding}}"
             community_parts: list[str] = []
             if self.communities:
-                for community in self.communities:
+                for com in self.communities:
                     global_name = (
-                        f" (Global: {community.global_name})" if community.global_name else ""
+                        f" (Global: {com.community.global_name})"
+                        if com.community.global_name
+                        else ""
                     )
                     community_from_network = (
-                        f" [{community.network_address}]" if len(networks) > 1 else ""
+                        f" [{com.community.network_address}]" if len(networks) > 1 else ""
                     )
                     community_parts.append(
-                        f"{community.name}{global_name}{community_from_network}"
+                        f"{com.community.name}{global_name}{community_from_network}"
                     )
 
                 community_line += ", ".join(community_parts)

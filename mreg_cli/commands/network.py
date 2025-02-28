@@ -983,9 +983,9 @@ def community_host_add(args: argparse.Namespace) -> None:
 
     if h.communities and not force:
         for c in h.communities:
-            if c.network == net.id:
+            if c.community.network == net.id:
                 raise ForceMissing(
-                    f"Host {h.name!r} is assigned to another community in the network ({c.name!r}). Must force."
+                    f"Host {h.name!r} is assigned to another community in the network ({c.community.name!r}). Must force."
                 )
 
     com.add_host(h)
