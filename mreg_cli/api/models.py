@@ -3499,9 +3499,9 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                         if com.community.global_name
                         else ""
                     )
-                    community_from_network = (
-                        f" [{com.community.network_address}]" if len(networks) > 1 else ""
-                    )
+                    ip = self.get_ip_by_id(com.ipaddress)
+                    ipstring = f" [{ip.ipaddress}]" if ip else "Unknown"
+                    community_from_network = f" [{ipstring}]" if len(self.communities) > 1 else ""
                     community_parts.append(
                         f"{com.community.name}{global_name}{community_from_network}"
                     )
@@ -3563,16 +3563,49 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             output_manager.add_line(f"{record_type}_Records:")
             data: list[dict[str, str]] = []
 
-            for _, ip in networks:
-                d: dict[str, str] = {
-                    "ip": str(ip.ipaddress),
-                    "mac": ip.macaddress or "<not set>",
-                }
-                data.append(d)
+            headers = ("IP", "MAC")
+            keys = ("ip", "mac")
+
+            ip_to_community: dict[IPAddress, Community] = {}
+            if self.communities:
+                for com in self.communities:
+                    ip = self.get_ip_by_id(com.ipaddress)
+
+                    if ip:
+                        ip_to_community[ip] = com.community
+
+            if ip_to_community:
+                for net, ip in networks:
+                    policy = ""
+                    if net.policy:
+                        policy = net.policy.name
+                    d: dict[str, str] = {
+                        "ip": str(ip.ipaddress),
+                        "mac": ip.macaddress or "<not set>",
+                        "policy": policy,
+                        "community": "",
+                    }
+                    if ip in ip_to_community:
+                        d["community"] = ip_to_community[ip].name
+                        if ip_to_community[ip].global_name:
+                            d["community"] += f" ({ip_to_community[ip].global_name})"
+
+                    data.append(d)
+
+                headers = ("IP", "MAC", "Policy", "Community")
+                keys = ("ip", "mac", "policy", "community")
+
+            else:
+                for _, ip in networks:
+                    d: dict[str, str] = {
+                        "ip": str(ip.ipaddress),
+                        "mac": ip.macaddress or "<not set>",
+                    }
+                    data.append(d)
 
             output_manager.add_formatted_table(
-                headers=("IP", "MAC"),
-                keys=("ip", "mac"),
+                headers=headers,
+                keys=keys,
                 data=data,
                 indent=padding,
             )
