@@ -1749,7 +1749,8 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         community_list: list[str] = []
         for community in self.communities:
             host_count = len(community.hosts)
-            community_list.append(f"{community.name} ({host_count})")
+            global_name = f" ({community.global_name})" if community.global_name else ""
+            community_list.append(f"{community.name}{global_name} [{host_count}]")
 
         fmt("Network:", self.network)
         fmt("Netmask:", ipnet.netmask)
@@ -2083,6 +2084,9 @@ class Community(FrozenModelWithTimestamps, APIMixin):
         manager = OutputManager()
         manager.add_line(f"{'Name:':<{padding}} {self.name}")
         manager.add_line(f"{'Description:':<{padding}} {self.description}")
+        if self.global_name:
+            manager.add_line(f"{'Global name:':<{padding}} {self.global_name}")
+
         if show_hosts and self.hosts:
             manager.add_line("Hosts:")
             for host in self.hosts:
@@ -3475,40 +3479,6 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         if self.comment:
             output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
-
-        networks = self.networks()
-
-        policies = [
-            f"{network.policy.name} [{network.network}]"
-            if len(networks) > 1
-            else network.policy.name
-            for network in networks
-            if network.policy
-        ]
-
-        if policies:
-            output_manager.add_line(f"{'Policy:':<{padding}}{', '.join(policies)}")
-
-        if policies or self.communities:
-            community_line = f"{'Community:':<{padding}}"
-            community_parts: list[str] = []
-            if self.communities:
-                for com in self.communities:
-                    global_name = (
-                        f" (Global: {com.community.global_name})"
-                        if com.community.global_name
-                        else ""
-                    )
-                    ip = self.get_ip_by_id(com.ipaddress)
-                    ipstring = f" [{ip.ipaddress}]" if ip else "Unknown"
-                    community_from_network = f" [{ipstring}]" if len(self.communities) > 1 else ""
-                    community_parts.append(
-                        f"{com.community.name}{global_name}{community_from_network}"
-                    )
-
-                community_line += ", ".join(community_parts)
-
-            output_manager.add_line(community_line)
 
         self.output_networks()
         PTR_override.output_multiple(self.ptr_overrides, padding=padding)
