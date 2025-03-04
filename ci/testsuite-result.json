@@ -11769,7 +11769,7 @@
     "command_issued": "host remove somehost # requires force because host has 2 ip addresses",
     "ok": [],
     "warning": [
-      "somehost.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN. Must use 'force'."
+      "somehost.example.org requires force for deletion:\n  multiple ipaddresses on the same VLAN\nUse `-force` to override."
     ],
     "error": [],
     "output": [],
@@ -11783,15 +11783,15 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:44:46.560426+01:00",
-              "updated_at": "2024-12-11T16:44:46.560441+01:00",
+              "created_at": "2025-03-04T12:05:39.596631+01:00",
+              "updated_at": "2025-03-04T12:05:39.596639+01:00",
               "ipaddress": "10.0.1.4",
               "host": 4
             },
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:44:48.833137+01:00",
-              "updated_at": "2024-12-11T16:44:48.833158+01:00",
+              "created_at": "2025-03-04T12:05:40.619472+01:00",
+              "updated_at": "2025-03-04T12:05:40.619480+01:00",
               "ipaddress": "10.0.1.5",
               "host": 4
             }
@@ -11800,8 +11800,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:44:46.533402+01:00",
-              "updated_at": "2024-12-11T16:44:46.533419+01:00",
+              "created_at": "2025-03-04T12:05:39.582878+01:00",
+              "updated_at": "2025-03-04T12:05:39.582885+01:00",
               "txt": "v=spf1 -all",
               "host": 4
             }
@@ -11810,8 +11810,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:44:46.528383+01:00",
-          "updated_at": "2024-12-11T16:44:48.169499+01:00",
+          "created_at": "2025-03-04T12:05:39.580480+01:00",
+          "updated_at": "2025-03-04T12:05:40.312734+01:00",
           "name": "somehost.example.org",
           "contact": "new-support@example.org",
           "ttl": null,
@@ -11827,15 +11827,15 @@
         "response": {
           "excluded_ranges": [
             {
-              "created_at": "2024-12-11T16:44:45.955630+01:00",
-              "updated_at": "2024-12-11T16:44:45.955656+01:00",
+              "created_at": "2025-03-04T12:05:39.235121+01:00",
+              "updated_at": "2025-03-04T12:05:39.235132+01:00",
               "start_ip": "10.0.1.20",
               "end_ip": "10.0.1.30",
               "network": 3
             }
           ],
-          "created_at": "2024-12-11T16:44:45.393437+01:00",
-          "updated_at": "2024-12-11T16:44:47.698742+01:00",
+          "created_at": "2025-03-04T12:05:38.995749+01:00",
+          "updated_at": "2025-03-04T12:05:40.090503+01:00",
           "network": "10.0.1.0/24",
           "description": "Frozen but has one host",
           "vlan": 1234,
@@ -11854,15 +11854,15 @@
         "response": {
           "excluded_ranges": [
             {
-              "created_at": "2024-12-11T16:44:45.955630+01:00",
-              "updated_at": "2024-12-11T16:44:45.955656+01:00",
+              "created_at": "2025-03-04T12:05:39.235121+01:00",
+              "updated_at": "2025-03-04T12:05:39.235132+01:00",
               "start_ip": "10.0.1.20",
               "end_ip": "10.0.1.30",
               "network": 3
             }
           ],
-          "created_at": "2024-12-11T16:44:45.393437+01:00",
-          "updated_at": "2024-12-11T16:44:47.698742+01:00",
+          "created_at": "2025-03-04T12:05:38.995749+01:00",
+          "updated_at": "2025-03-04T12:05:40.090503+01:00",
           "network": "10.0.1.0/24",
           "description": "Frozen but has one host",
           "vlan": 1234,
@@ -23867,7 +23867,7 @@
     "command_issued": "host remove bar # should fail, because it has multiple addresses, must force",
     "ok": [],
     "warning": [
-      "bar.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN. Must use 'force'."
+      "bar.example.org requires force for deletion:\n  multiple ipaddresses on the same VLAN\nUse `-force` to override."
     ],
     "error": [],
     "output": [],
@@ -23881,29 +23881,29 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:15.977555+01:00",
-              "updated_at": "2024-12-11T16:45:16.676520+01:00",
+              "created_at": "2025-03-04T12:05:56.654097+01:00",
+              "updated_at": "2025-03-04T12:05:57.075386+01:00",
               "ipaddress": "10.0.0.14",
               "host": 14
             },
             {
               "macaddress": "11:22:33:44:55:66",
-              "created_at": "2024-12-11T16:45:16.291195+01:00",
-              "updated_at": "2024-12-11T16:45:16.979511+01:00",
+              "created_at": "2025-03-04T12:05:56.819452+01:00",
+              "updated_at": "2025-03-04T12:05:57.226320+01:00",
               "ipaddress": "10.0.0.15",
               "host": 14
             },
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:18.437354+01:00",
-              "updated_at": "2024-12-11T16:45:18.437376+01:00",
+              "created_at": "2025-03-04T12:05:58.011330+01:00",
+              "updated_at": "2025-03-04T12:05:58.011339+01:00",
               "ipaddress": "2001:db8::11",
               "host": 14
             },
             {
               "macaddress": "11:22:33:44:55:67",
-              "created_at": "2024-12-11T16:45:18.689074+01:00",
-              "updated_at": "2024-12-11T16:45:18.689090+01:00",
+              "created_at": "2025-03-04T12:05:58.248834+01:00",
+              "updated_at": "2025-03-04T12:05:58.248842+01:00",
               "ipaddress": "2001:db8::12",
               "host": 14
             }
@@ -23912,8 +23912,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:12.938227+01:00",
-              "updated_at": "2024-12-11T16:45:12.938240+01:00",
+              "created_at": "2025-03-04T12:05:54.783902+01:00",
+              "updated_at": "2025-03-04T12:05:54.783909+01:00",
               "txt": "v=spf1 -all",
               "host": 14
             }
@@ -23922,8 +23922,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:12.933964+01:00",
-          "updated_at": "2024-12-11T16:45:15.502403+01:00",
+          "created_at": "2025-03-04T12:05:54.781762+01:00",
+          "updated_at": "2025-03-04T12:05:56.439109+01:00",
           "name": "bar.example.org",
           "contact": "me@example.org",
           "ttl": null,
@@ -23938,8 +23938,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-03-04T12:05:54.519267+01:00",
+          "updated_at": "2025-03-04T12:05:54.519285+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -23957,8 +23957,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-03-04T12:05:54.519267+01:00",
+          "updated_at": "2025-03-04T12:05:54.519285+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -23976,8 +23976,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.555848+01:00",
-          "updated_at": "2024-12-11T16:45:12.555870+01:00",
+          "created_at": "2025-03-04T12:05:54.607327+01:00",
+          "updated_at": "2025-03-04T12:05:54.607339+01:00",
           "network": "2001:db8::/64",
           "description": "dolor sit amet",
           "vlan": null,
@@ -23995,8 +23995,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.555848+01:00",
-          "updated_at": "2024-12-11T16:45:12.555870+01:00",
+          "created_at": "2025-03-04T12:05:54.607327+01:00",
+          "updated_at": "2025-03-04T12:05:54.607339+01:00",
           "network": "2001:db8::/64",
           "description": "dolor sit amet",
           "vlan": null,
@@ -24824,7 +24824,7 @@
     "command_issued": "host remove bar # should fail, because it has a cname record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "bar.example.org requires force and override for deletion:\n  1 cnames, override with 'cname'\n    - fubar.example.org\n  multiple ipaddresses on the same VLAN. Must use 'force'."
+      "bar.example.org requires force for deletion:\n  1 cnames\n    - fubar.example.org\n  multiple ipaddresses on the same VLAN\nUse `-force` to override."
     ],
     "error": [],
     "output": [],
@@ -24838,23 +24838,23 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:15.977555+01:00",
-              "updated_at": "2024-12-11T16:45:16.676520+01:00",
+              "created_at": "2025-03-04T12:05:56.654097+01:00",
+              "updated_at": "2025-03-04T12:05:57.075386+01:00",
               "ipaddress": "10.0.0.14",
               "host": 14
             },
             {
               "macaddress": "11:22:33:44:55:66",
-              "created_at": "2024-12-11T16:45:16.291195+01:00",
-              "updated_at": "2024-12-11T16:45:16.979511+01:00",
+              "created_at": "2025-03-04T12:05:56.819452+01:00",
+              "updated_at": "2025-03-04T12:05:57.226320+01:00",
               "ipaddress": "10.0.0.15",
               "host": 14
             }
           ],
           "cnames": [
             {
-              "created_at": "2024-12-11T16:45:20.454046+01:00",
-              "updated_at": "2024-12-11T16:45:20.454066+01:00",
+              "created_at": "2025-03-04T12:05:59.528391+01:00",
+              "updated_at": "2025-03-04T12:05:59.528401+01:00",
               "name": "fubar.example.org",
               "ttl": null,
               "zone": 1,
@@ -24864,8 +24864,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:12.938227+01:00",
-              "updated_at": "2024-12-11T16:45:12.938240+01:00",
+              "created_at": "2025-03-04T12:05:54.783902+01:00",
+              "updated_at": "2025-03-04T12:05:54.783909+01:00",
               "txt": "v=spf1 -all",
               "host": 14
             }
@@ -24874,8 +24874,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:12.933964+01:00",
-          "updated_at": "2024-12-11T16:45:15.502403+01:00",
+          "created_at": "2025-03-04T12:05:54.781762+01:00",
+          "updated_at": "2025-03-04T12:05:56.439109+01:00",
           "name": "bar.example.org",
           "contact": "me@example.org",
           "ttl": null,
@@ -24890,8 +24890,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-03-04T12:05:54.519267+01:00",
+          "updated_at": "2025-03-04T12:05:54.519285+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -24909,8 +24909,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-03-04T12:05:54.519267+01:00",
+          "updated_at": "2025-03-04T12:05:54.519285+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -25835,7 +25835,7 @@
     "command_issued": "host remove baz # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
-      "baz.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN. Must use 'force'.\n  1 MX records, override with 'mx'\n    - mail.example.org (priority: 10)"
+      "baz.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN\n  1 MX records\n    - mail.example.org (priority: 10)\nUse `-force mx` to override."
     ],
     "error": [],
     "output": [],
@@ -25849,15 +25849,15 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2024-12-11T16:45:12.965204+01:00",
-              "updated_at": "2024-12-11T16:45:17.976116+01:00",
+              "created_at": "2025-03-04T12:05:54.797635+01:00",
+              "updated_at": "2025-03-04T12:05:57.736343+01:00",
               "ipaddress": "10.0.0.10",
               "host": 15
             },
             {
               "macaddress": "11:22:33:44:55:67",
-              "created_at": "2024-12-11T16:45:18.689074+01:00",
-              "updated_at": "2024-12-11T16:45:20.166005+01:00",
+              "created_at": "2025-03-04T12:05:58.248834+01:00",
+              "updated_at": "2025-03-04T12:05:59.347984+01:00",
               "ipaddress": "2001:db8::14",
               "host": 15
             }
@@ -25865,8 +25865,8 @@
           "cnames": [],
           "mxs": [
             {
-              "created_at": "2024-12-11T16:45:22.104171+01:00",
-              "updated_at": "2024-12-11T16:45:22.104192+01:00",
+              "created_at": "2025-03-04T12:06:00.404564+01:00",
+              "updated_at": "2025-03-04T12:06:00.404572+01:00",
               "priority": 10,
               "mx": "mail.example.org",
               "host": 15
@@ -25874,8 +25874,8 @@
           ],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:17.316836+01:00",
-              "updated_at": "2024-12-11T16:45:17.316858+01:00",
+              "created_at": "2025-03-04T12:05:57.381372+01:00",
+              "updated_at": "2025-03-04T12:05:57.381403+01:00",
               "txt": "v=spf1 -all",
               "host": 15
             }
@@ -25884,8 +25884,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:17.293046+01:00",
-          "updated_at": "2024-12-11T16:45:17.293070+01:00",
+          "created_at": "2025-03-04T12:05:57.377792+01:00",
+          "updated_at": "2025-03-04T12:05:57.377804+01:00",
           "name": "baz.example.org",
           "contact": "",
           "ttl": null,
@@ -25900,8 +25900,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.363738+01:00",
-          "updated_at": "2024-12-11T16:45:12.363771+01:00",
+          "created_at": "2025-03-04T12:05:54.519267+01:00",
+          "updated_at": "2025-03-04T12:05:54.519285+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -25919,8 +25919,8 @@
         "status": 200,
         "response": {
           "excluded_ranges": [],
-          "created_at": "2024-12-11T16:45:12.555848+01:00",
-          "updated_at": "2024-12-11T16:45:12.555870+01:00",
+          "created_at": "2025-03-04T12:05:54.607327+01:00",
+          "updated_at": "2025-03-04T12:05:54.607339+01:00",
           "network": "2001:db8::/64",
           "description": "dolor sit amet",
           "vlan": null,
@@ -29630,7 +29630,7 @@
     "command_issued": "host remove foo # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 MX records, override with 'mx'\n    - mail.example.org (priority: 10)"
+      "foo.example.org requires force and override for deletion:\n  1 MX records\n    - mail.example.org (priority: 10)\nUse `-force mx` to override."
     ],
     "error": [],
     "output": [],
@@ -29644,8 +29644,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:30.487891+01:00",
-              "updated_at": "2024-12-11T16:45:30.487904+01:00",
+              "created_at": "2025-03-04T11:14:06.661978+01:00",
+              "updated_at": "2025-03-04T11:14:06.661985+01:00",
               "ipaddress": "10.0.0.10",
               "host": 19
             }
@@ -29653,8 +29653,8 @@
           "cnames": [],
           "mxs": [
             {
-              "created_at": "2024-12-11T16:45:30.911540+01:00",
-              "updated_at": "2024-12-11T16:45:30.911562+01:00",
+              "created_at": "2025-03-04T11:14:06.894526+01:00",
+              "updated_at": "2025-03-04T11:14:06.894535+01:00",
               "priority": 10,
               "mx": "mail.example.org",
               "host": 19
@@ -29662,8 +29662,8 @@
           ],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:30.467551+01:00",
-              "updated_at": "2024-12-11T16:45:30.467560+01:00",
+              "created_at": "2025-03-04T11:14:06.648334+01:00",
+              "updated_at": "2025-03-04T11:14:06.648340+01:00",
               "txt": "v=spf1 -all",
               "host": 19
             }
@@ -29672,8 +29672,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:30.464508+01:00",
-          "updated_at": "2024-12-11T16:45:30.464524+01:00",
+          "created_at": "2025-03-04T11:14:06.645874+01:00",
+          "updated_at": "2025-03-04T11:14:06.645882+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -30117,7 +30117,7 @@
     "command_issued": "host remove foo # Should fail, because it has a PTR record, must force and override with 'ptr'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 PTR records, override with 'ptr'\n    - 10.0.0.11"
+      "foo.example.org requires force and override for deletion:\n  1 PTR records\n    - 10.0.0.11\nUse `-force ptr` to override."
     ],
     "error": [],
     "output": [],
@@ -30131,8 +30131,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:31.587990+01:00",
-              "updated_at": "2024-12-11T16:45:31.588000+01:00",
+              "created_at": "2025-03-04T11:14:07.270270+01:00",
+              "updated_at": "2025-03-04T11:14:07.270277+01:00",
               "ipaddress": "10.0.0.10",
               "host": 20
             }
@@ -30141,16 +30141,16 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:31.566412+01:00",
-              "updated_at": "2024-12-11T16:45:31.566424+01:00",
+              "created_at": "2025-03-04T11:14:07.253275+01:00",
+              "updated_at": "2025-03-04T11:14:07.253283+01:00",
               "txt": "v=spf1 -all",
               "host": 20
             }
           ],
           "ptr_overrides": [
             {
-              "created_at": "2024-12-11T16:45:32.083873+01:00",
-              "updated_at": "2024-12-11T16:45:32.083895+01:00",
+              "created_at": "2025-03-04T11:14:07.562144+01:00",
+              "updated_at": "2025-03-04T11:14:07.562167+01:00",
               "ipaddress": "10.0.0.11",
               "host": 20
             }
@@ -30158,8 +30158,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:31.562942+01:00",
-          "updated_at": "2024-12-11T16:45:31.562956+01:00",
+          "created_at": "2025-03-04T11:14:07.251262+01:00",
+          "updated_at": "2025-03-04T11:14:07.251270+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -30581,7 +30581,7 @@
     "command_issued": "host remove foo",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 NAPTR records, override with 'naptr'\n    - wonk"
+      "foo.example.org requires force and override for deletion:\n  1 NAPTR records\n    - wonk\nUse `-force naptr` to override."
     ],
     "error": [],
     "output": [],
@@ -30595,8 +30595,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:32.714018+01:00",
-              "updated_at": "2024-12-11T16:45:32.714035+01:00",
+              "created_at": "2025-03-04T11:14:07.911915+01:00",
+              "updated_at": "2025-03-04T11:14:07.911922+01:00",
               "ipaddress": "10.0.0.10",
               "host": 21
             }
@@ -30605,8 +30605,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:32.684424+01:00",
-              "updated_at": "2024-12-11T16:45:32.684452+01:00",
+              "created_at": "2025-03-04T11:14:07.896208+01:00",
+              "updated_at": "2025-03-04T11:14:07.896216+01:00",
               "txt": "v=spf1 -all",
               "host": 21
             }
@@ -30615,8 +30615,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:32.678898+01:00",
-          "updated_at": "2024-12-11T16:45:32.678919+01:00",
+          "created_at": "2025-03-04T11:14:07.894172+01:00",
+          "updated_at": "2025-03-04T11:14:07.894181+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -30635,8 +30635,8 @@
           "previous": null,
           "results": [
             {
-              "created_at": "2024-12-11T16:45:33.190093+01:00",
-              "updated_at": "2024-12-11T16:45:33.190107+01:00",
+              "created_at": "2025-03-04T11:14:08.137768+01:00",
+              "updated_at": "2025-03-04T11:14:08.137798+01:00",
               "preference": 16384,
               "order": 3,
               "flag": "u",
@@ -31113,7 +31113,7 @@
     "command_issued": "host remove foo # Should fail, because it has an SRV record, must force and override with 'srv'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 SRV records, override with 'srv'\n    - _sip._tcp.example.org"
+      "foo.example.org requires force and override for deletion:\n  1 SRV records\n    - _sip._tcp.example.org\nUse `-force srv` to override."
     ],
     "error": [],
     "output": [],
@@ -31127,8 +31127,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:33.776179+01:00",
-              "updated_at": "2024-12-11T16:45:33.776187+01:00",
+              "created_at": "2025-03-04T11:14:08.516920+01:00",
+              "updated_at": "2025-03-04T11:14:08.516926+01:00",
               "ipaddress": "10.0.0.10",
               "host": 22
             }
@@ -31137,8 +31137,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:33.759403+01:00",
-              "updated_at": "2024-12-11T16:45:33.759413+01:00",
+              "created_at": "2025-03-04T11:14:08.500887+01:00",
+              "updated_at": "2025-03-04T11:14:08.500895+01:00",
               "txt": "v=spf1 -all",
               "host": 22
             }
@@ -31147,8 +31147,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:33.756101+01:00",
-          "updated_at": "2024-12-11T16:45:33.756113+01:00",
+          "created_at": "2025-03-04T11:14:08.498312+01:00",
+          "updated_at": "2025-03-04T11:14:08.498320+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -31179,8 +31179,8 @@
           "previous": null,
           "results": [
             {
-              "created_at": "2024-12-11T16:45:34.272043+01:00",
-              "updated_at": "2024-12-11T16:45:34.272058+01:00",
+              "created_at": "2025-03-04T11:14:08.785693+01:00",
+              "updated_at": "2025-03-04T11:14:08.785702+01:00",
               "name": "_sip._tcp.example.org",
               "priority": 10,
               "weight": 5,
@@ -31683,7 +31683,7 @@
     "command_issued": "host remove foo # Should fail, because it has a CNAME record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 cnames, override with 'cname'\n    - fubar.example.org"
+      "foo.example.org requires force for deletion:\n  1 cnames\n    - fubar.example.org\nUse `-force` to override."
     ],
     "error": [],
     "output": [],
@@ -31697,16 +31697,16 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:34.858848+01:00",
-              "updated_at": "2024-12-11T16:45:34.858857+01:00",
+              "created_at": "2025-03-04T12:06:09.442330+01:00",
+              "updated_at": "2025-03-04T12:06:09.442339+01:00",
               "ipaddress": "10.0.0.10",
               "host": 23
             }
           ],
           "cnames": [
             {
-              "created_at": "2024-12-11T16:45:35.367441+01:00",
-              "updated_at": "2024-12-11T16:45:35.367455+01:00",
+              "created_at": "2025-03-04T12:06:09.774649+01:00",
+              "updated_at": "2025-03-04T12:06:09.774658+01:00",
               "name": "fubar.example.org",
               "ttl": null,
               "zone": 1,
@@ -31716,8 +31716,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:34.841296+01:00",
-              "updated_at": "2024-12-11T16:45:34.841304+01:00",
+              "created_at": "2025-03-04T12:06:09.416030+01:00",
+              "updated_at": "2025-03-04T12:06:09.416037+01:00",
               "txt": "v=spf1 -all",
               "host": 23
             }
@@ -31726,8 +31726,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:34.837222+01:00",
-          "updated_at": "2024-12-11T16:45:34.837236+01:00",
+          "created_at": "2025-03-04T12:06:09.412190+01:00",
+          "updated_at": "2025-03-04T12:06:09.412215+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -32734,7 +32734,7 @@
     "command_issued": "host remove foo # Should fail, because it has multiple records, must force and override with everything.",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 cnames, override with 'cname'\n    - fubar.example.org\n  1 MX records, override with 'mx'\n    - mail.example.org (priority: 10)\n  1 NAPTR records, override with 'naptr'\n    - wonk\n  1 SRV records, override with 'srv'\n    - _sip._tcp.example.org\n  1 PTR records, override with 'ptr'\n    - 10.0.0.11"
+      "foo.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\n  1 MX records\n    - mail.example.org (priority: 10)\n  1 NAPTR records\n    - wonk\n  1 SRV records\n    - _sip._tcp.example.org\n  1 PTR records\n    - 10.0.0.11\nUse `-force mx naptr ptr srv` to override."
     ],
     "error": [],
     "output": [],
@@ -32748,16 +32748,16 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2024-12-11T16:45:36.048114+01:00",
-              "updated_at": "2024-12-11T16:45:36.048123+01:00",
+              "created_at": "2025-03-04T11:14:09.901816+01:00",
+              "updated_at": "2025-03-04T11:14:09.901824+01:00",
               "ipaddress": "10.0.0.10",
               "host": 24
             }
           ],
           "cnames": [
             {
-              "created_at": "2024-12-11T16:45:37.247207+01:00",
-              "updated_at": "2024-12-11T16:45:37.247221+01:00",
+              "created_at": "2025-03-04T11:14:10.588142+01:00",
+              "updated_at": "2025-03-04T11:14:10.588149+01:00",
               "name": "fubar.example.org",
               "ttl": null,
               "zone": 1,
@@ -32766,8 +32766,8 @@
           ],
           "mxs": [
             {
-              "created_at": "2024-12-11T16:45:36.430253+01:00",
-              "updated_at": "2024-12-11T16:45:36.430266+01:00",
+              "created_at": "2025-03-04T11:14:10.123624+01:00",
+              "updated_at": "2025-03-04T11:14:10.123631+01:00",
               "priority": 10,
               "mx": "mail.example.org",
               "host": 24
@@ -32775,16 +32775,16 @@
           ],
           "txts": [
             {
-              "created_at": "2024-12-11T16:45:36.029619+01:00",
-              "updated_at": "2024-12-11T16:45:36.029627+01:00",
+              "created_at": "2025-03-04T11:14:09.889195+01:00",
+              "updated_at": "2025-03-04T11:14:09.889201+01:00",
               "txt": "v=spf1 -all",
               "host": 24
             }
           ],
           "ptr_overrides": [
             {
-              "created_at": "2024-12-11T16:45:36.648723+01:00",
-              "updated_at": "2024-12-11T16:45:36.648735+01:00",
+              "created_at": "2025-03-04T11:14:10.260694+01:00",
+              "updated_at": "2025-03-04T11:14:10.260701+01:00",
               "ipaddress": "10.0.0.11",
               "host": 24
             }
@@ -32792,8 +32792,8 @@
           "hinfo": null,
           "loc": null,
           "bacnetid": null,
-          "created_at": "2024-12-11T16:45:36.027149+01:00",
-          "updated_at": "2024-12-11T16:45:36.027158+01:00",
+          "created_at": "2025-03-04T11:14:09.886393+01:00",
+          "updated_at": "2025-03-04T11:14:09.886404+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -32812,8 +32812,8 @@
           "previous": null,
           "results": [
             {
-              "created_at": "2024-12-11T16:45:36.789752+01:00",
-              "updated_at": "2024-12-11T16:45:36.789788+01:00",
+              "created_at": "2025-03-04T11:14:10.349036+01:00",
+              "updated_at": "2025-03-04T11:14:10.349043+01:00",
               "preference": 16384,
               "order": 3,
               "flag": "u",
@@ -32836,8 +32836,8 @@
           "previous": null,
           "results": [
             {
-              "created_at": "2024-12-11T16:45:37.022008+01:00",
-              "updated_at": "2024-12-11T16:45:37.022022+01:00",
+              "created_at": "2025-03-04T11:14:10.473614+01:00",
+              "updated_at": "2025-03-04T11:14:10.473621+01:00",
               "name": "_sip._tcp.example.org",
               "priority": 10,
               "weight": 5,

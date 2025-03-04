@@ -255,9 +255,10 @@ def remove(args: argparse.Namespace) -> None:
         return False
 
     warnings: list[str] = []
+    overrides_required: set[str] = set()
     # Require force if host has any cnames.
     if host.cnames and not args.force:
-        warnings.append(f"  {len(host.cnames)} cnames, override with 'cname'")
+        warnings.append(f"  {len(host.cnames)} cnames")
         for cname in host.cnames:
             warnings.append(f"    - {cname.name}")
 
@@ -267,13 +268,10 @@ def remove(args: argparse.Namespace) -> None:
         same_vlan = len(host_vlans) == 1
 
         if same_vlan and not forced():
-            warnings.append("  multiple ipaddresses on the same VLAN. Must use 'force'.")
+            warnings.append("  multiple ipaddresses on the same VLAN")
         elif not same_vlan and not forced("ipaddresses"):
-            warnings.append(
-                "  {} ipaddresses on distinct VLANs, override with 'ipadress'".format(
-                    len(host.ipaddresses)
-                )
-            )
+            overrides_required.add("ipaddresses")
+            warnings.append("  {} ipaddresses on distinct VLANs".format(len(host.ipaddresses)))
             for vlan in host_vlans:
                 vlan = host_vlans[vlan]
                 ip_strings = [str(ip.ipaddress) for ip in vlan]
@@ -281,7 +279,8 @@ def remove(args: argparse.Namespace) -> None:
                 warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan})")
 
     if host.mxs and not forced("mx"):
-        warnings.append(f"  {len(host.mxs)} MX records, override with 'mx'")
+        overrides_required.add("mx")
+        warnings.append(f"  {len(host.mxs)} MX records")
         for mx in host.mxs:
             warnings.append(f"    - {mx.mx} (priority: {mx.priority})")
 
@@ -290,7 +289,8 @@ def remove(args: argparse.Namespace) -> None:
     naptrs = host.naptrs()
     if len(naptrs) > 0:
         if not forced("naptr"):
-            warnings.append(f"  {len(naptrs)} NAPTR records, override with 'naptr'")
+            overrides_required.add("naptr")
+            warnings.append(f"  {len(naptrs)} NAPTR records")
             for naptr in naptrs:
                 warnings.append(f"    - {naptr.replacement}")
         else:
@@ -306,7 +306,8 @@ def remove(args: argparse.Namespace) -> None:
     srvs = host.srvs()
     if len(srvs) > 0:
         if not forced("srv"):
-            warnings.append(f"  {len(srvs)} SRV records, override with 'srv'")
+            overrides_required.add("srv")
+            warnings.append(f"  {len(srvs)} SRV records")
             for srv in srvs:
                 warnings.append(f"    - {srv.name}")
         else:
@@ -321,7 +322,8 @@ def remove(args: argparse.Namespace) -> None:
     # Require force if host has any PTR records. Delete the PTR records if force
     if len(host.ptr_overrides) > 0:
         if not forced("ptr"):
-            warnings.append(f"  {len(host.ptr_overrides)} PTR records, override with 'ptr'")
+            overrides_required.add("ptr")
+            warnings.append(f"  {len(host.ptr_overrides)} PTR records")
             for ptr in host.ptr_overrides:
                 warnings.append(f"    - {ptr.ipaddress}")
         else:
@@ -335,8 +337,28 @@ def remove(args: argparse.Namespace) -> None:
 
     # Warn user and raise exception if any force requirements was found
     if warnings:
+        # Build the force command suggestion
+        force_cmd = ["-force"]
+        if overrides_required:
+            force_cmd.extend(sorted(overrides_required))
+
+        # Add the override command to warnings
+        command_suggestion = f"Use `{' '.join(force_cmd)}` to override."
+        warnings.append(command_suggestion)
+
+        # Build the error message
+        error_msg_parts = [f"{host.name} requires force"]
+        if overrides_required:
+            error_msg_parts.append("and override")
+        error_msg_parts.append("for deletion:")
+
+        # Format the complete error message
+        base_msg = " ".join(error_msg_parts)
         warn_msg = "\n".join(warnings)
-        raise ForceMissing(f"{host.name} requires force and override for deletion:\n{warn_msg}")
+        complete_error_msg = f"{base_msg}\n{warn_msg}"
+
+        # Raise the exception with the formatted message
+        raise ForceMissing(complete_error_msg)
 
     if host.delete():
         OutputManager().add_ok(f"removed {host.name}")
