@@ -240,7 +240,7 @@ class Override(str, Enum):
             short_desc="Comma separated override list, requires -force.",
             description=(
                 "Comma separated overrides for forced removal. Requires -force."
-                f"Accepted overrides: {Override.values()}"
+                f"Accepted overrides: {Override.values_str()}"
                 "Example usage: '-override cname,ipaddress,mx'"
             ),
             metavar="OVERRIDE",
