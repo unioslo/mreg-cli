@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import re
+from enum import Enum
 
 from mreg_cli.api.fields import HostName, MacAddress
 from mreg_cli.api.models import (
@@ -201,6 +202,27 @@ def add(args: argparse.Namespace) -> None:
     host.output()
 
 
+class Override(str, Enum):
+    """Override types for forced removal."""
+
+    CNAME = "cname"
+    IPADDRESS = "ipaddress"
+    MX = "mx"
+    SRV = "srv"
+    PTR = "ptr"
+    NAPTR = "naptr"
+
+    @classmethod
+    def values(cls) -> list[str]:
+        """Return a list with all available values."""
+        return list(cls)
+
+    @classmethod
+    def values_str(cls) -> str:
+        """Return a string with all available values, comma-separated, single-quoted."""
+        return ", ".join([f"'{override.value}'" for override in cls])
+
+
 @command_registry.register_command(
     prog="remove",
     description="Remove the given host.",
@@ -218,7 +240,7 @@ def add(args: argparse.Namespace) -> None:
             short_desc="Comma separated override list, requires -force.",
             description=(
                 "Comma separated overrides for forced removal. Requires -force."
-                "Accepted overrides: 'cname', 'ipadress', 'mx', 'srv', 'ptr', 'naptr'."
+                f"Accepted overrides: {Override.values()}"
                 "Example usage: '-override cname,ipaddress,mx'"
             ),
             metavar="OVERRIDE",
@@ -235,7 +257,7 @@ def remove(args: argparse.Namespace) -> None:
 
     overrides: list[str] = args.override.split(",") if args.override else []
 
-    accepted_overrides = ["cname", "ipaddress", "mx", "srv", "ptr", "naptr"]
+    accepted_overrides = Override.values()
     for override in overrides:
         if override not in accepted_overrides:
             raise InputFailure(
@@ -257,7 +279,8 @@ def remove(args: argparse.Namespace) -> None:
     warnings: list[str] = []
     overrides_required: set[str] = set()
     # Require force if host has any cnames.
-    if host.cnames and not args.force:
+    if host.cnames and not forced(Override.CNAME):
+        overrides_required.add(Override.CNAME)
         warnings.append(f"  {len(host.cnames)} cnames")
         for cname in host.cnames:
             warnings.append(f"    - {cname.name}")
@@ -269,8 +292,8 @@ def remove(args: argparse.Namespace) -> None:
 
         if same_vlan and not forced():
             warnings.append("  multiple ipaddresses on the same VLAN")
-        elif not same_vlan and not forced("ipaddresses"):
-            overrides_required.add("ipaddresses")
+        elif not same_vlan and not forced(Override.IPADDRESS):
+            overrides_required.add(Override.IPADDRESS)
             warnings.append("  {} ipaddresses on distinct VLANs".format(len(host.ipaddresses)))
             for vlan in host_vlans:
                 vlan = host_vlans[vlan]
@@ -278,8 +301,8 @@ def remove(args: argparse.Namespace) -> None:
                 ip_strings.sort()
                 warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan})")
 
-    if host.mxs and not forced("mx"):
-        overrides_required.add("mx")
+    if host.mxs and not forced(Override.MX):
+        overrides_required.add(Override.MX)
         warnings.append(f"  {len(host.mxs)} MX records")
         for mx in host.mxs:
             warnings.append(f"    - {mx.mx} (priority: {mx.priority})")
@@ -288,8 +311,8 @@ def remove(args: argparse.Namespace) -> None:
     # force
     naptrs = host.naptrs()
     if len(naptrs) > 0:
-        if not forced("naptr"):
-            overrides_required.add("naptr")
+        if not forced(Override.NAPTR):
+            overrides_required.add(Override.NAPTR)
             warnings.append(f"  {len(naptrs)} NAPTR records")
             for naptr in naptrs:
                 warnings.append(f"    - {naptr.replacement}")
@@ -305,8 +328,8 @@ def remove(args: argparse.Namespace) -> None:
     # Require force if host has any SRV records. Delete the SRV records if force
     srvs = host.srvs()
     if len(srvs) > 0:
-        if not forced("srv"):
-            overrides_required.add("srv")
+        if not forced(Override.SRV):
+            overrides_required.add(Override.SRV)
             warnings.append(f"  {len(srvs)} SRV records")
             for srv in srvs:
                 warnings.append(f"    - {srv.name}")
@@ -321,8 +344,8 @@ def remove(args: argparse.Namespace) -> None:
 
     # Require force if host has any PTR records. Delete the PTR records if force
     if len(host.ptr_overrides) > 0:
-        if not forced("ptr"):
-            overrides_required.add("ptr")
+        if not forced(Override.PTR):
+            overrides_required.add(Override.PTR)
             warnings.append(f"  {len(host.ptr_overrides)} PTR records")
             for ptr in host.ptr_overrides:
                 warnings.append(f"    - {ptr.ipaddress}")
