@@ -2104,21 +2104,27 @@ class Community(FrozenModelWithTimestamps, APIMixin):
         """
         return get_typed(self.hosts_endpoint, list[Host])
 
-    def add_host(self, host: Host) -> bool:
+    def add_host(self, host: Host, ipaddress: IP_AddressT | None = None) -> bool:
         """Add a host to the community.
 
         :param host: The host to add.
         :returns: True if the host was added, False otherwise.
         """
-        resp = post(self.hosts_endpoint, id=host.id)
+        kwargs: QueryParams = {"id": host.id}
+        if ipaddress:
+            kwargs["ipaddress"] = str(ipaddress)
+        resp = post(self.hosts_endpoint, params=None, **kwargs)
         return resp.ok if resp else False
 
-    def remove_host(self, host: Host) -> bool:
+    def remove_host(self, host: Host, ipaddress: IP_AddressT | None) -> bool:
         """Remove a host from the community.
 
         :param host: The host to remove.
         :returns: True if the host was removed, False otherwise.
         """
+        params: QueryParams = {}
+        if ipaddress:
+            params["ipaddress"] = str(ipaddress)
         resp = delete(
             Endpoint.NetworkCommunityHost.with_params(
                 self.network_address,
@@ -2944,12 +2950,18 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     ttl: int | None = None
     comment: str
 
-    communities: list[HostCommmunity] | None = None
+    communities: list[HostCommmunity] = []
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None
 
     history_resource: ClassVar[HistoryResource] = HistoryResource.Host
+
+    @field_validator("communities", mode="before")
+    @classmethod
+    def _validate_none_communities_as_empty_list(cls, v: Any) -> Any:
+        """Convert None value to empty list for communities."""
+        return v or []
 
     @field_validator("bacnetid", mode="before")
     @classmethod
@@ -3330,6 +3342,37 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             raise EntityNotFound(f"IP address {ip} not found in host {self.name}.")
 
         return self.refetch()
+
+    def get_community_or_raise(self, name: str, ip: IPAddress | None) -> Community:
+        """Get a community by name, and raise if not found.
+
+        :param name: The name of the community to search for.
+        :param ip: The IP address associated with the community.
+        :returns: The community if found.
+        :raises EntityNotFound: If the community is not found.
+        """
+        community = self.get_community(name)
+        if not community:
+            msg = f"Community {name!r}"
+            if ip:
+                msg += f" for IP address {ip}"
+            raise EntityNotFound(f"{msg} not found.")
+        return community
+
+    def get_community(self, name: str, ip: IPAddress | None = None) -> Community | None:
+        """Get a community by name.
+
+        :param name: The name of the community to search for.
+        :param ip: The IP address associated with the community.
+        :returns: The community if found, None otherwise.
+        """
+        for community in self.communities:
+            if community.community.name != name:
+                continue
+            if ip and community.ipaddress != ip.id:
+                continue
+            return community.community
+        return None
 
     def networks(self) -> dict[Network, list[IPAddress]]:
         """Return a dict of unique networks and a list of associated IP addresses for the host.
