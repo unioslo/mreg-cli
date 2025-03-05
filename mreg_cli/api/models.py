@@ -2169,6 +2169,12 @@ class NetworkPolicy(WithName):
             for attribute in self.attributes:
                 manager.add_line(f" {attribute.name}: {attribute.value}")
 
+        networks = self.networks()
+        if networks:
+            manager.add_line("Networks:")
+            for network in networks:
+                manager.add_line(f" {network.network}")
+
     def get_attribute_or_raise(self, name: str) -> NetworkPolicyAttributeValue:
         """Get a network attribute value by name, and raise if not found.
 
@@ -2243,6 +2249,10 @@ class NetworkPolicy(WithName):
             validate=False,
         )
         self.attributes = attrs
+
+    def networks(self) -> list[Network]:
+        """Get all networks using this policy."""
+        return Network.get_list_by_field("policy", self.id)
 
     def create_community(self, name: str, description: str) -> Community | None:
         """Create a new community.
