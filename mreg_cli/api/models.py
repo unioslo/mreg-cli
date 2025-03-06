@@ -2036,13 +2036,15 @@ class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
         manager.add_line(f"Description: {self.description}")
 
     @classmethod
-    def output_multiple(cls, attributes: list[Self]) -> None:
-        """Output multiple network policy attributes to the console."""
+    def output_multiple(cls, attributes: list[Self], padding: int = 20) -> None:
+        """Output multiple attributes to the console, one attribute per line.
+
+        :param attributes: List of attributes to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
         manager = OutputManager()
-        for i, attribute in enumerate(attributes, start=1):
-            attribute.output()
-            if len(attributes) != i:
-                manager.add_line("")
+        for attr in attributes:
+            manager.add_formatted_line(attr.name, f"{attr.description!r}", padding)
 
 
 class Community(FrozenModelWithTimestamps, APIMixin):

@@ -7,7 +7,6 @@ from typing import Any
 
 from mreg_cli.api.models import (
     Community,
-    Host,
     Network,
     NetworkOrIP,
     NetworkPolicy,
@@ -861,6 +860,39 @@ def policy_attribute_info(args: argparse.Namespace) -> None:
 
     attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
     attr.output()
+
+
+# TODO[rename]: network policy attribute list
+@command_registry.register_command(
+    prog="policy_attribute_list",
+    description="List all network policy attributes",
+    short_desc="List network policy attributes",
+    flags=[
+        Flag(
+            "name",
+            description="Attribute name, or part of name. Supports wildcards.",
+            metavar="FILTER",
+            default=None,
+            nargs="?",
+        )
+    ],
+)
+def policy_attribute_list(args: argparse.Namespace) -> None:
+    """List all network policy attributes.
+
+    :param args: argparse.Namespace (name)
+    """
+    name: str | None = args.name
+
+    if name:
+        attributes = NetworkPolicyAttribute.get_list_by_name_regex(name)
+    else:
+        attributes = NetworkPolicyAttribute.get_list()
+
+    if attributes:
+        NetworkPolicyAttribute.output_multiple(attributes)
+    else:
+        OutputManager().add_line("No match.")
 
 
 # TODO[rename]: network policy attribute create
