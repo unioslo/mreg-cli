@@ -924,6 +924,28 @@ def policy_attribute_remove(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Removed attribute {attr.name!r} from policy {pol.name!r}")
 
 
+@command_registry.register_command(
+    prog="policy_attribute_set_description",
+    description="Set the description of a network policy attribute",
+    short_desc="Set network policy attribute description",
+    flags=[
+        Flag("attribute", description="Attribute name", metavar="ATTRIBUTE"),
+        Flag("description", description="New description", metavar="DESCRIPTION"),
+    ],
+)
+def policy_attribute_set_description(args: argparse.Namespace) -> None:
+    """Set the description of a network policy attribute.
+
+    :param args: argparse.Namespace (attribute, description)
+    """
+    attribute: str = args.attribute
+    description: str = args.description
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+    attr.patch({"description": description})
+    OutputManager().add_ok(f"Set new description for network policy attribute {attribute!r}")
+
+
 ##########################################
 #           COMMUNITY COMMANDS           #
 ##########################################
