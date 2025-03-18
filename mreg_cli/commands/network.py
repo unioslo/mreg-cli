@@ -655,30 +655,26 @@ def policy_info(args: argparse.Namespace) -> None:
     description="List all or a subset of policies",
     short_desc="List policies",
     flags=[
-        Flag("-name", description="Name. Can contain wildcards.", metavar="NAME"),
         Flag(
-            "-description",
-            description="Description. Can contain wildcards.",
-            metavar="DESCRIPTION",
+            "name",
+            description="Policy name, or part of name. Can contain wildcards.",
+            metavar="FILTER",
+            nargs="?",
+            default=None,
         ),
     ],
 )
 def policy_list(args: argparse.Namespace) -> None:
-    """List all or a subset of policies.
+    """List all network policies by given filter.
 
-    :param args: argparse.Namespace (name, description)
+    :param args: argparse.Namespace (name)
     """
     name: str | None = args.name
-    description: str | None = args.description
 
-    params = {"name": name, "description": description}
-    query: QueryParams = {}
-    for k, v in params.items():
-        if v:
-            param, val = convert_wildcard_to_regex(k, v)
-            query[param] = val
-
-    policies = NetworkPolicy.get_by_query(query)
+    if name:
+        policies = NetworkPolicy.get_list_by_name_regex(name)
+    else:
+        policies = NetworkPolicy.get_list()
     NetworkPolicy.output_multiple(policies)
 
 
@@ -872,8 +868,8 @@ def policy_attribute_info(args: argparse.Namespace) -> None:
             "name",
             description="Attribute name, or part of name. Supports wildcards.",
             metavar="FILTER",
-            default=None,
             nargs="?",
+            default=None,
         )
     ],
 )
@@ -1036,7 +1032,7 @@ def community_info(args: argparse.Namespace) -> None:
 # TODO[rename]: network community list
 @command_registry.register_command(
     prog="community_list",
-    description="List all or a subset of communities in a network",
+    description="List all communities in a network",
     short_desc="List communities",
     flags=[
         Flag("network", description="Network", metavar="NETWORK"),
