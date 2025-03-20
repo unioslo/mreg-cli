@@ -3776,7 +3776,6 @@ class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
     groups: NameList
     hosts: NameList
     owners: NameList
-    network_communities: list[Community] = []
 
     history_resource: ClassVar[HistoryResource] = HistoryResource.Group
 
