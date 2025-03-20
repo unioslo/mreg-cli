@@ -295,7 +295,7 @@ def _request_wrapper(
         result.status_code == 500
         and (operation_type == "post" or operation_type == "patch")
         and params == {}
-        and data is not None
+        and data
     ):
         result = func(url, params={}, timeout=HTTP_TIMEOUT, data=data)
 

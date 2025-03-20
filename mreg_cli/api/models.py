@@ -1281,7 +1281,7 @@ class Role(HostPolicy, WithHistory):
             manager.add_line("No atom members")
 
     @classmethod
-    def output_multiple(cls, roles: list[Role], padding: int = 14) -> None:
+    def output_multiple(cls, roles: list[Role] | list[str], padding: int = 14) -> None:
         """Output multiple roles to the console.
 
         :param roles: List of roles to output.
@@ -1290,9 +1290,14 @@ class Role(HostPolicy, WithHistory):
         if not roles:
             return
 
-        OutputManager().add_line(
-            "{1:<{0}}{2}".format(padding, "Roles:", ", ".join([role.name for role in roles]))
-        )
+        rolenames: list[str] = []
+        for role in roles:
+            if isinstance(role, str):
+                rolenames.append(role)
+            else:
+                rolenames.append(role.name)
+
+        OutputManager().add_line("{1:<{0}}{2}".format(padding, "Roles:", ", ".join(rolenames)))
 
     @classmethod
     def output_multiple_table(cls, roles: list[Role], _padding: int = 14) -> None:
@@ -2950,6 +2955,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     bacnetid: int | None = None
     contact: str
     ttl: int | None = None
+    srvs: list[Srv] = []
+    naptrs: list[NAPTR] = []
+    sshfps: list[SSHFP] = []
+    roles: list[str] = []
+    hostgroups: list[str] = []
     comment: str
 
     communities: list[HostCommmunity] = []
@@ -3474,19 +3484,19 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         return False
 
-    def naptrs(self) -> list[NAPTR]:
+    def get_naptrs(self) -> list[NAPTR]:
         """Return a list of NAPTR records."""
         return NAPTR.get_list_by_field("host", self.id)
 
-    def srvs(self) -> list[Srv]:
+    def get_srvs(self) -> list[Srv]:
         """Return a list of SRV records."""
         return Srv.get_list_by_field("host", self.id)
 
-    def sshfps(self) -> list[SSHFP]:
+    def get_sshfps(self) -> list[SSHFP]:
         """Return a list of SSHFP records."""
         return SSHFP.get_list_by_field("host", self.id)
 
-    def roles(self) -> list[Role]:
+    def get_roles(self) -> list[Role]:
         """List all roles for the host."""
         return Role.get_list_by_field("hosts", self.id)
 
@@ -3507,7 +3517,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """
         return next((mx for mx in self.mxs if mx.has_mx_with_priority(mx_arg, priority)), None)
 
-    def hostgroups(self, traverse: bool = False) -> list[HostGroup]:
+    def get_hostgroups(self, traverse: bool = False) -> list[HostGroup]:
         """Return all hostgroups for the host.
 
         :param traverse: If True, traverse the parent groups and include them in the list.
@@ -3551,15 +3561,19 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         self.output_cnames(padding=padding)
 
         TXT.output_multiple(self.txts, padding=padding)
-        Srv.output_multiple(self.srvs(), padding=padding)
-        NAPTR.output_multiple(self.naptrs(), padding=padding)
-        SSHFP.output_multiple(self.sshfps(), padding=padding)
+        Srv.output_multiple(self.srvs, padding=padding)
+        NAPTR.output_multiple(self.naptrs, padding=padding)
+        SSHFP.output_multiple(self.sshfps, padding=padding)
 
         if self.bacnetid is not None:  # This may be zero.
             output_manager.add_line(f"{'Bacnet ID:':<{padding}}{self.bacnetid}")
 
-        Role.output_multiple(self.roles(), padding=padding)
-        HostGroup.output_multiple(self.hostgroups(traverse=traverse_hostgroups), padding=padding)
+        Role.output_multiple(self.roles, padding=padding)
+        if traverse_hostgroups:
+            hostgroups = self.get_hostgroups(traverse=True)
+        else:
+            hostgroups = self.hostgroups
+        HostGroup.output_multiple(hostgroups, padding=padding)
 
         self.output_timestamps()
 
@@ -3662,14 +3676,14 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
     def output_roles(self, _padding: int = 14) -> None:
         """Output the roles for the host."""
-        roles = self.roles()
+        roles = self.roles
         manager = OutputManager()
         if not roles:
             manager.add_line(f"Host {self.name} has no roles")
         else:
             manager.add_line(f"Roles for {self.name}:")
             for role in roles:
-                manager.add_line(f"  {role.name}")
+                manager.add_line(f"  {role}")
 
     def __str__(self) -> str:
         """Return the host name as a string."""
@@ -3785,7 +3799,7 @@ class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
 
     @classmethod
     def output_multiple(
-        cls, hostgroups: list[HostGroup], padding: int = 14, multiline: bool = False
+        cls, hostgroups: list[HostGroup] | list[str], padding: int = 14, multiline: bool = False
     ) -> None:
         """Output multiple hostgroups to the console.
 
@@ -3797,13 +3811,19 @@ class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
         if not hostgroups:
             return
 
+        groups: list[str] = []
+        for hg in hostgroups:
+            if isinstance(hg, str):
+                groups.append(hg)
+            else:
+                groups.append(hg.name)
+
         if multiline:
             manager.add_line("Groups:")
-            for group in hostgroups:
-                manager.add_line(f"  {group.name}")
+            for group in groups:
+                manager.add_line(f"  {group}")
         else:
-            groups = ", ".join(sorted([group.name for group in hostgroups]))
-            manager.add_line("{1:<{0}}{2}".format(padding, "Groups:", groups))
+            manager.add_line("{1:<{0}}{2}".format(padding, "Groups:", ", ".join(sorted(groups))))
 
     def set_description(self, description: str) -> Self:
         """Set the description for the hostgroup.
