@@ -3484,38 +3484,9 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         return False
 
-    def get_naptrs(self) -> list[NAPTR]:
-        """Return a list of NAPTR records."""
-        return NAPTR.get_list_by_field("host", self.id)
-
-    def get_srvs(self) -> list[Srv]:
-        """Return a list of SRV records."""
-        return Srv.get_list_by_field("host", self.id)
-
-    def get_sshfps(self) -> list[SSHFP]:
-        """Return a list of SSHFP records."""
-        return SSHFP.get_list_by_field("host", self.id)
-
     def get_roles(self) -> list[Role]:
         """List all roles for the host."""
         return Role.get_list_by_field("hosts", self.id)
-
-    def bacnet(self) -> BacnetID | None:
-        """Return the BacnetID for the host."""
-        if not self.bacnetid:
-            return None
-
-        return BacnetID.get_by_id(self.bacnetid)
-
-    def has_mx_with_priority(self, mx_arg: str, priority: int) -> MX | None:
-        """Check if the host has an MX record.
-
-        :param mx: The MX record to check for.
-        :param priority: The priority of the MX record.
-
-        :returns: True if the host has the MX record, False otherwise.
-        """
-        return next((mx for mx in self.mxs if mx.has_mx_with_priority(mx_arg, priority)), None)
 
     def get_hostgroups(self, traverse: bool = False) -> list[HostGroup]:
         """Return all hostgroups for the host.
@@ -3533,6 +3504,23 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 groups.extend(group.get_all_parents())
 
         return sorted(groups, key=lambda group: group.name)
+
+    def bacnet(self) -> BacnetID | None:
+        """Return the BacnetID for the host."""
+        if not self.bacnetid:
+            return None
+
+        return BacnetID.get_by_id(self.bacnetid)
+
+    def has_mx_with_priority(self, mx_arg: str, priority: int) -> MX | None:
+        """Check if the host has an MX record.
+
+        :param mx: The MX record to check for.
+        :param priority: The priority of the MX record.
+
+        :returns: True if the host has the MX record, False otherwise.
+        """
+        return next((mx for mx in self.mxs if mx.has_mx_with_priority(mx_arg, priority)), None)
 
     def output(self, names: bool = False, traverse_hostgroups: bool = False):
         """Output host information to the console with padding."""
