@@ -623,7 +623,7 @@ def unset_community(args: argparse.Namespace) -> None:
     h = Host.get_by_any_means_or_raise(host)
     ipaddr = _check_host_ip(h, ip)
     com = h.get_community_or_raise(community, ipaddr)
-    com.remove_host(h)
+    com.remove_host(h, ipaddr.ipaddress)
 
     OutputManager().add_ok(
         f"Removed host {h.name!r} (IP: {ipaddr.ipaddress}) from community {com.name!r}"
