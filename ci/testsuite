@@ -440,7 +440,7 @@ network community_list 10.0.2.0/28 -hosts
 
 ## Attempt to add host from other network to community (fails)
 network create -network 10.0.0.0/24 -desc "MediumNet"
-host add mediumhost -ip 10.0.0.0/24 -contact mediumhost@example.org
+host add mediumhost -ip 10.0.0.0/24 -macaddress 11:22:34:aa:bb:cd -contact mediumhost@example.org
 host set_community mediumhost labequipment # fails, community not found in network
 host remove mediumhost -force
 network remove 10.0.0.0/24
