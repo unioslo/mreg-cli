@@ -34146,14 +34146,20 @@
       "Attributes:",
       " foo: True",
       " bar: True",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:13 2025",
       "",
       "Name: autoconfigure",
       "Description: Automatic host configuration",
       "Attributes:",
       " baz: True",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:13 2025",
       "",
       "Name: noicmp",
       "Description: ICMP disallowed",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:13 2025",
       ""
     ],
     "api_requests": [
@@ -34180,8 +34186,8 @@
                   "value": true
                 }
               ],
-              "created_at": "2025-03-21T16:15:43.533277+01:00",
-              "updated_at": "2025-03-21T16:15:43.533287+01:00"
+              "created_at": "2025-03-21T19:22:13.233699+01:00",
+              "updated_at": "2025-03-21T19:22:13.233708+01:00"
             },
             {
               "name": "autoconfigure",
@@ -34192,15 +34198,15 @@
                   "value": true
                 }
               ],
-              "created_at": "2025-03-21T16:15:43.627182+01:00",
-              "updated_at": "2025-03-21T16:15:43.627195+01:00"
+              "created_at": "2025-03-21T19:22:13.313606+01:00",
+              "updated_at": "2025-03-21T19:22:13.313615+01:00"
             },
             {
               "name": "noicmp",
               "description": "ICMP disallowed",
               "attributes": [],
-              "created_at": "2025-03-21T16:15:43.697095+01:00",
-              "updated_at": "2025-03-21T16:15:43.697104+01:00"
+              "created_at": "2025-03-21T19:22:13.373315+01:00",
+              "updated_at": "2025-03-21T19:22:13.373328+01:00"
             }
           ]
         }
@@ -34257,7 +34263,9 @@
       "Description: Secure policy for a network",
       "Attributes:",
       " foo: True",
-      " bar: True"
+      " bar: True",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:13 2025"
     ],
     "api_requests": [
       {
@@ -34283,8 +34291,8 @@
                   "value": true
                 }
               ],
-              "created_at": "2025-03-21T16:15:43.533277+01:00",
-              "updated_at": "2025-03-21T16:15:43.533287+01:00"
+              "created_at": "2025-03-21T19:22:13.233699+01:00",
+              "updated_at": "2025-03-21T19:22:13.233708+01:00"
             }
           ]
         }
@@ -34316,7 +34324,9 @@
       "Name: autoconfigure",
       "Description: Automatic host configuration",
       "Attributes:",
-      " baz: True"
+      " baz: True",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:13 2025"
     ],
     "api_requests": [
       {
@@ -34338,8 +34348,8 @@
                   "value": true
                 }
               ],
-              "created_at": "2025-03-21T16:15:43.627182+01:00",
-              "updated_at": "2025-03-21T16:15:43.627195+01:00"
+              "created_at": "2025-03-21T19:22:13.313606+01:00",
+              "updated_at": "2025-03-21T19:22:13.313615+01:00"
             }
           ]
         }
@@ -35025,9 +35035,13 @@
       "Attributes:",
       " foo: True",
       " bar: True",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:13 2025",
       "",
       "Name: noicmp",
       "Description: ICMP disallowed",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:13 2025",
       ""
     ],
     "api_requests": [
@@ -35054,15 +35068,15 @@
                   "value": true
                 }
               ],
-              "created_at": "2025-03-21T16:15:43.533277+01:00",
-              "updated_at": "2025-03-21T16:15:43.533287+01:00"
+              "created_at": "2025-03-21T19:22:13.233699+01:00",
+              "updated_at": "2025-03-21T19:22:13.233708+01:00"
             },
             {
               "name": "noicmp",
               "description": "ICMP disallowed",
               "attributes": [],
-              "created_at": "2025-03-21T16:15:43.697095+01:00",
-              "updated_at": "2025-03-21T16:15:43.697104+01:00"
+              "created_at": "2025-03-21T19:22:13.373315+01:00",
+              "updated_at": "2025-03-21T19:22:13.373328+01:00"
             }
           ]
         }
@@ -35316,9 +35330,13 @@
       " bar: True",
       "Networks:",
       " 10.0.2.0/28",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:14 2025",
       "",
       "Name: noicmp",
       "Description: ICMP disallowed",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:13 2025",
       ""
     ],
     "api_requests": [
@@ -35345,15 +35363,15 @@
                   "value": true
                 }
               ],
-              "created_at": "2025-03-21T16:15:43.533277+01:00",
-              "updated_at": "2025-03-21T16:15:44.624721+01:00"
+              "created_at": "2025-03-21T19:22:13.233699+01:00",
+              "updated_at": "2025-03-21T19:22:14.351164+01:00"
             },
             {
               "name": "noicmp",
               "description": "ICMP disallowed",
               "attributes": [],
-              "created_at": "2025-03-21T16:15:43.697095+01:00",
-              "updated_at": "2025-03-21T16:15:43.697104+01:00"
+              "created_at": "2025-03-21T19:22:13.373315+01:00",
+              "updated_at": "2025-03-21T19:22:13.373328+01:00"
             }
           ]
         }
@@ -35383,12 +35401,12 @@
                     "value": true
                   }
                 ],
-                "created_at": "2025-03-21T16:15:43.533277+01:00",
-                "updated_at": "2025-03-21T16:15:44.624721+01:00"
+                "created_at": "2025-03-21T19:22:13.233699+01:00",
+                "updated_at": "2025-03-21T19:22:14.351164+01:00"
               },
               "communities": [],
-              "created_at": "2025-03-21T16:15:43.196305+01:00",
-              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "created_at": "2025-03-21T19:22:12.954759+01:00",
+              "updated_at": "2025-03-21T19:22:14.283369+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -35984,7 +36002,9 @@
       " bar: True",
       " baz: True",
       "Networks:",
-      " 10.0.2.0/28"
+      " 10.0.2.0/28",
+      "Created:      Fri Mar 21 19:22:13 2025",
+      "Updated:      Fri Mar 21 19:22:14 2025"
     ],
     "api_requests": [
       {
@@ -36010,8 +36030,8 @@
                   "value": true
                 }
               ],
-              "created_at": "2025-03-21T16:15:43.533277+01:00",
-              "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              "created_at": "2025-03-21T19:22:13.233699+01:00",
+              "updated_at": "2025-03-21T19:22:14.816831+01:00"
             }
           ]
         }
@@ -36041,12 +36061,12 @@
                     "value": true
                   }
                 ],
-                "created_at": "2025-03-21T16:15:43.533277+01:00",
-                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+                "created_at": "2025-03-21T19:22:13.233699+01:00",
+                "updated_at": "2025-03-21T19:22:14.816831+01:00"
               },
               "communities": [],
-              "created_at": "2025-03-21T16:15:43.196305+01:00",
-              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "created_at": "2025-03-21T19:22:12.954759+01:00",
+              "updated_at": "2025-03-21T19:22:14.283369+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -36611,11 +36631,15 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name:          guests",
-      "Description:   Guest hosts.",
+      "Name:         guests",
+      "Description:  Guest hosts.",
+      "Created:      Fri Mar 21 19:22:15 2025",
+      "Updated:      Fri Mar 21 19:22:15 2025",
       "",
-      "Name:          lab",
-      "Description:   Lab hosts.",
+      "Name:         lab",
+      "Description:  Lab hosts.",
+      "Created:      Fri Mar 21 19:22:15 2025",
+      "Updated:      Fri Mar 21 19:22:15 2025",
       ""
     ],
     "api_requests": [
@@ -36639,8 +36663,8 @@
                 "value": true
               }
             ],
-            "created_at": "2025-03-21T16:15:43.533277+01:00",
-            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+            "created_at": "2025-03-21T19:22:13.233699+01:00",
+            "updated_at": "2025-03-21T19:22:14.816831+01:00"
           },
           "communities": [
             {
@@ -36649,8 +36673,8 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.737714+01:00",
-              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+              "created_at": "2025-03-21T19:22:15.337413+01:00",
+              "updated_at": "2025-03-21T19:22:15.337422+01:00"
             },
             {
               "name": "lab",
@@ -36658,12 +36682,12 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.786884+01:00",
-              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+              "created_at": "2025-03-21T19:22:15.393645+01:00",
+              "updated_at": "2025-03-21T19:22:15.393657+01:00"
             }
           ],
-          "created_at": "2025-03-21T16:15:43.196305+01:00",
-          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "created_at": "2025-03-21T19:22:12.954759+01:00",
+          "updated_at": "2025-03-21T19:22:14.283369+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -37459,8 +37483,10 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name:          guests",
-      "Description:   Guest hosts."
+      "Name:         guests",
+      "Description:  Guest hosts.",
+      "Created:      Fri Mar 21 19:22:15 2025",
+      "Updated:      Fri Mar 21 19:22:15 2025"
     ],
     "api_requests": [
       {
@@ -37483,8 +37509,8 @@
                 "value": true
               }
             ],
-            "created_at": "2025-03-21T16:15:43.533277+01:00",
-            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+            "created_at": "2025-03-21T19:22:13.233699+01:00",
+            "updated_at": "2025-03-21T19:22:14.816831+01:00"
           },
           "communities": [
             {
@@ -37493,8 +37519,8 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.737714+01:00",
-              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+              "created_at": "2025-03-21T19:22:15.337413+01:00",
+              "updated_at": "2025-03-21T19:22:15.337422+01:00"
             },
             {
               "name": "lab",
@@ -37504,12 +37530,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.786884+01:00",
-              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+              "created_at": "2025-03-21T19:22:15.393645+01:00",
+              "updated_at": "2025-03-21T19:22:15.393657+01:00"
             }
           ],
-          "created_at": "2025-03-21T16:15:43.196305+01:00",
-          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "created_at": "2025-03-21T19:22:12.954759+01:00",
+          "updated_at": "2025-03-21T19:22:14.283369+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -37532,10 +37558,12 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name:          lab",
-      "Description:   Lab hosts.",
+      "Name:         lab",
+      "Description:  Lab hosts.",
+      "Created:      Fri Mar 21 19:22:15 2025",
+      "Updated:      Fri Mar 21 19:22:15 2025",
       "Hosts:",
-      " tinyhost.example.org"
+      "              tinyhost.example.org"
     ],
     "api_requests": [
       {
@@ -37558,8 +37586,8 @@
                 "value": true
               }
             ],
-            "created_at": "2025-03-21T16:15:43.533277+01:00",
-            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+            "created_at": "2025-03-21T19:22:13.233699+01:00",
+            "updated_at": "2025-03-21T19:22:14.816831+01:00"
           },
           "communities": [
             {
@@ -37568,8 +37596,8 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.737714+01:00",
-              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+              "created_at": "2025-03-21T19:22:15.337413+01:00",
+              "updated_at": "2025-03-21T19:22:15.337422+01:00"
             },
             {
               "name": "lab",
@@ -37579,12 +37607,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.786884+01:00",
-              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+              "created_at": "2025-03-21T19:22:15.393645+01:00",
+              "updated_at": "2025-03-21T19:22:15.393657+01:00"
             }
           ],
-          "created_at": "2025-03-21T16:15:43.196305+01:00",
-          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "created_at": "2025-03-21T19:22:12.954759+01:00",
+          "updated_at": "2025-03-21T19:22:14.283369+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -38079,10 +38107,12 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name:          labequipment",
-      "Description:   Lab equipment (expensive)",
+      "Name:         labequipment",
+      "Description:  Lab equipment (expensive)",
+      "Created:      Fri Mar 21 19:22:15 2025",
+      "Updated:      Fri Mar 21 19:22:16 2025",
       "Hosts:",
-      " tinyhost.example.org"
+      "              tinyhost.example.org"
     ],
     "api_requests": [
       {
@@ -38105,8 +38135,8 @@
                 "value": true
               }
             ],
-            "created_at": "2025-03-21T16:15:43.533277+01:00",
-            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+            "created_at": "2025-03-21T19:22:13.233699+01:00",
+            "updated_at": "2025-03-21T19:22:14.816831+01:00"
           },
           "communities": [
             {
@@ -38115,8 +38145,8 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.737714+01:00",
-              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+              "created_at": "2025-03-21T19:22:15.337413+01:00",
+              "updated_at": "2025-03-21T19:22:15.337422+01:00"
             },
             {
               "name": "labequipment",
@@ -38126,12 +38156,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.786884+01:00",
-              "updated_at": "2025-03-21T16:15:46.431292+01:00"
+              "created_at": "2025-03-21T19:22:15.393645+01:00",
+              "updated_at": "2025-03-21T19:22:16.015761+01:00"
             }
           ],
-          "created_at": "2025-03-21T16:15:43.196305+01:00",
-          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "created_at": "2025-03-21T19:22:12.954759+01:00",
+          "updated_at": "2025-03-21T19:22:14.283369+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -38587,13 +38617,17 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name:          guests",
-      "Description:   Guest hosts.",
+      "Name:         guests",
+      "Description:  Guest hosts.",
+      "Created:      Fri Mar 21 19:22:15 2025",
+      "Updated:      Fri Mar 21 19:22:15 2025",
       "",
-      "Name:          labequipment",
-      "Description:   Lab equipment (expensive)",
+      "Name:         labequipment",
+      "Description:  Lab equipment (expensive)",
+      "Created:      Fri Mar 21 19:22:15 2025",
+      "Updated:      Fri Mar 21 19:22:16 2025",
       "Hosts:",
-      " tinyhost.example.org",
+      "              tinyhost.example.org",
       ""
     ],
     "api_requests": [
@@ -38617,8 +38651,8 @@
                 "value": true
               }
             ],
-            "created_at": "2025-03-21T16:15:43.533277+01:00",
-            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+            "created_at": "2025-03-21T19:22:13.233699+01:00",
+            "updated_at": "2025-03-21T19:22:14.816831+01:00"
           },
           "communities": [
             {
@@ -38627,8 +38661,8 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.737714+01:00",
-              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+              "created_at": "2025-03-21T19:22:15.337413+01:00",
+              "updated_at": "2025-03-21T19:22:15.337422+01:00"
             },
             {
               "name": "labequipment",
@@ -38638,12 +38672,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": null,
-              "created_at": "2025-03-21T16:15:45.786884+01:00",
-              "updated_at": "2025-03-21T16:15:46.431292+01:00"
+              "created_at": "2025-03-21T19:22:15.393645+01:00",
+              "updated_at": "2025-03-21T19:22:16.015761+01:00"
             }
           ],
-          "created_at": "2025-03-21T16:15:43.196305+01:00",
-          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "created_at": "2025-03-21T19:22:12.954759+01:00",
+          "updated_at": "2025-03-21T19:22:14.283369+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -38768,10 +38802,10 @@
     "time": null
   },
   {
-    "command": "host add mediumhost -ip 10.0.0.0/24 -contact mediumhost@example.org",
+    "command": "host add mediumhost -ip 10.0.0.0/24 -macaddress 11:22:34:aa:bb:cd -contact mediumhost@example.org",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host add mediumhost -ip 10.0.0.0/24 -contact mediumhost@example.org",
+    "command_issued": "host add mediumhost -ip 10.0.0.0/24 -macaddress 11:22:34:aa:bb:cd -contact mediumhost@example.org",
     "ok": [
       "Created host mediumhost.example.org"
     ],
@@ -38781,14 +38815,26 @@
       "Name:         mediumhost.example.org",
       "Contact:      mediumhost@example.org",
       "A_Records:",
-      "              IP         MAC         ",
-      "              10.0.0.4   <not set>   ",
+      "              IP         MAC                 ",
+      "              10.0.0.4   11:22:34:aa:bb:cd   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Fri Mar 21 16:15:47 2025",
-      "Updated:      Fri Mar 21 16:15:47 2025"
+      "Created:      Fri Mar 21 19:22:16 2025",
+      "Updated:      Fri Mar 21 19:22:16 2025"
     ],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=11%3A22%3A34%3Aaa%3Abb%3Acd",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/hosts/mediumhost.example.org",
@@ -38816,18 +38862,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-03-21T16:15:20.056277+01:00",
-                "updated_at": "2025-03-21T16:15:20.056555+01:00",
+                "created_at": "2025-03-21T19:21:47.856587+01:00",
+                "updated_at": "2025-03-21T19:21:47.856598+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-03-21T16:15:19.590868+01:00",
-            "updated_at": "2025-03-21T16:15:46.615987+01:00",
+            "created_at": "2025-03-21T19:21:47.304345+01:00",
+            "updated_at": "2025-03-21T19:22:16.200719+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-03-21T16:15:20.380448+01:00",
+            "serialno_updated_at": "2025-03-21T19:21:47.945775+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -38846,8 +38892,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-03-21T16:15:46.886868+01:00",
-          "updated_at": "2025-03-21T16:15:46.886878+01:00",
+          "created_at": "2025-03-21T19:22:16.417504+01:00",
+          "updated_at": "2025-03-21T19:22:16.417513+01:00",
           "network": "10.0.0.0/24",
           "description": "MediumNet",
           "vlan": null,
@@ -38877,8 +38923,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-03-21T16:15:47.043712+01:00",
-              "updated_at": "2025-03-21T16:15:47.043719+01:00",
+              "created_at": "2025-03-21T19:22:16.587042+01:00",
+              "updated_at": "2025-03-21T19:22:16.587053+01:00",
               "ipaddress": "10.0.0.4",
               "host": 27
             }
@@ -38887,8 +38933,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-03-21T16:15:47.027836+01:00",
-              "updated_at": "2025-03-21T16:15:47.027843+01:00",
+              "created_at": "2025-03-21T19:22:16.571537+01:00",
+              "updated_at": "2025-03-21T19:22:16.571543+01:00",
               "txt": "v=spf1 -all",
               "host": 27
             }
@@ -38903,13 +38949,97 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-03-21T16:15:47.025883+01:00",
-          "updated_at": "2025-03-21T16:15:47.025890+01:00",
+          "created_at": "2025-03-21T19:22:16.569838+01:00",
+          "updated_at": "2025-03-21T19:22:16.569845+01:00",
           "name": "mediumhost.example.org",
           "contact": "mediumhost@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=11%3A22%3A34%3Aaa%3Abb%3Acd&ordering=ipaddress",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/ipaddresses/27",
+        "data": {
+          "macaddress": "11:22:34:aa:bb:cd"
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/27",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "11:22:34:aa:bb:cd",
+          "created_at": "2025-03-21T19:22:16.587042+01:00",
+          "updated_at": "2025-03-21T19:22:16.667792+01:00",
+          "ipaddress": "10.0.0.4",
+          "host": 27
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=27",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "11:22:34:aa:bb:cd",
+                  "created_at": "2025-03-21T19:22:16.587042+01:00",
+                  "updated_at": "2025-03-21T19:22:16.667792+01:00",
+                  "ipaddress": "10.0.0.4",
+                  "host": 27
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-03-21T19:22:16.571537+01:00",
+                  "updated_at": "2025-03-21T19:22:16.571543+01:00",
+                  "txt": "v=spf1 -all",
+                  "host": 27
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [],
+              "created_at": "2025-03-21T19:22:16.569838+01:00",
+              "updated_at": "2025-03-21T19:22:16.569845+01:00",
+              "name": "mediumhost.example.org",
+              "contact": "mediumhost@example.org",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
         }
       },
       {
@@ -38921,8 +39051,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-03-21T16:15:46.886868+01:00",
-          "updated_at": "2025-03-21T16:15:46.886878+01:00",
+          "created_at": "2025-03-21T19:22:16.417504+01:00",
+          "updated_at": "2025-03-21T19:22:16.417513+01:00",
           "network": "10.0.0.0/24",
           "description": "MediumNet",
           "vlan": null,
@@ -38956,9 +39086,9 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "",
-              "created_at": "2025-03-21T16:15:47.043712+01:00",
-              "updated_at": "2025-03-21T16:15:47.043719+01:00",
+              "macaddress": "11:22:34:aa:bb:cd",
+              "created_at": "2025-03-21T19:22:16.587042+01:00",
+              "updated_at": "2025-03-21T19:22:16.667792+01:00",
               "ipaddress": "10.0.0.4",
               "host": 27
             }
@@ -38967,8 +39097,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-03-21T16:15:47.027836+01:00",
-              "updated_at": "2025-03-21T16:15:47.027843+01:00",
+              "created_at": "2025-03-21T19:22:16.571537+01:00",
+              "updated_at": "2025-03-21T19:22:16.571543+01:00",
               "txt": "v=spf1 -all",
               "host": 27
             }
@@ -38983,8 +39113,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-03-21T16:15:47.025883+01:00",
-          "updated_at": "2025-03-21T16:15:47.025890+01:00",
+          "created_at": "2025-03-21T19:22:16.569838+01:00",
+          "updated_at": "2025-03-21T19:22:16.569845+01:00",
           "name": "mediumhost.example.org",
           "contact": "mediumhost@example.org",
           "ttl": null,
@@ -39001,8 +39131,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-03-21T16:15:46.886868+01:00",
-          "updated_at": "2025-03-21T16:15:46.886878+01:00",
+          "created_at": "2025-03-21T19:22:16.417504+01:00",
+          "updated_at": "2025-03-21T19:22:16.417513+01:00",
           "network": "10.0.0.0/24",
           "description": "MediumNet",
           "vlan": null,
@@ -39036,9 +39166,9 @@
         "response": {
           "ipaddresses": [
             {
-              "macaddress": "",
-              "created_at": "2025-03-21T16:15:47.043712+01:00",
-              "updated_at": "2025-03-21T16:15:47.043719+01:00",
+              "macaddress": "11:22:34:aa:bb:cd",
+              "created_at": "2025-03-21T19:22:16.587042+01:00",
+              "updated_at": "2025-03-21T19:22:16.667792+01:00",
               "ipaddress": "10.0.0.4",
               "host": 27
             }
@@ -39047,8 +39177,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-03-21T16:15:47.027836+01:00",
-              "updated_at": "2025-03-21T16:15:47.027843+01:00",
+              "created_at": "2025-03-21T19:22:16.571537+01:00",
+              "updated_at": "2025-03-21T19:22:16.571543+01:00",
               "txt": "v=spf1 -all",
               "host": 27
             }
@@ -39063,8 +39193,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-03-21T16:15:47.025883+01:00",
-          "updated_at": "2025-03-21T16:15:47.025890+01:00",
+          "created_at": "2025-03-21T19:22:16.569838+01:00",
+          "updated_at": "2025-03-21T19:22:16.569845+01:00",
           "name": "mediumhost.example.org",
           "contact": "mediumhost@example.org",
           "ttl": null,
