@@ -2286,7 +2286,7 @@ class NetworkPolicy(FrozenModelWithTimestamps, WithName):
             {"attributes": [{"name": a.name, "value": a.value} for a in attrs]},
             validate=False,
         )
-        self.attributes = attrs
+        # NOTE: can return self.refetch() here if we need to refresh the object
 
     def networks(self) -> list[Network]:
         """Get all networks using this policy."""
