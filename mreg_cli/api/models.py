@@ -2067,6 +2067,10 @@ class Community(FrozenModelWithTimestamps, APIMixin):
         """Return the endpoint for the class."""
         return Endpoint.NetworkCommunity
 
+    def endpoint_with_id(self) -> str:
+        """Return the endpoint with the community ID."""
+        return self.endpoint().with_params(self.network_address, self.id)
+
     @property
     def network_address(self) -> str:
         """Return the network object for the community."""
@@ -2099,9 +2103,26 @@ class Community(FrozenModelWithTimestamps, APIMixin):
             for host in self.hosts:
                 manager.add_line(f" {host}")
 
+    def refetch(self) -> Self:
+        """Refetch the community object."""
+        return get_typed(self.endpoint_with_id(), self.__class__)
+
+    def patch(self, fields: dict[str, Any], validate: bool = True) -> Self:  # noqa: ARG002 # validate not implemented
+        """Patch the community.
+
+        :param fields: The fields to patch.
+        :param validate: Whether to validate the response. (Not implemented)
+        :returns: The updated Community object.
+        """
+        resp = patch(self.endpoint_with_id(), **fields)
+        if not resp or not resp.ok:
+            raise PatchError(f"Failed to patch community {self.name!r}")
+        new_object = self.refetch()
+        return new_object
+
     def delete(self) -> bool:
         """Delete the community."""
-        resp = delete(self.endpoint().with_params(self.network_address, self.id))
+        resp = delete(self.endpoint_with_id())
         return resp.ok if resp else False
 
     def get_hosts(self) -> list[Host]:

@@ -1079,7 +1079,7 @@ def community_rename(args: argparse.Namespace) -> None:
 
     net = Network.get_by_network_or_raise(network)
     community = net.get_community_or_raise(oldname)
-    community.patch({"name": newname})
+    community.patch(({"name": newname}))
     OutputManager().add_ok(f"Renamed community {oldname!r} to {newname!r}")
 
 
