@@ -2039,6 +2039,7 @@ class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
         manager = OutputManager()
         manager.add_line(f"Name: {self.name}")
         manager.add_line(f"Description: {self.description}")
+        self.output_timestamps()
 
     @classmethod
     def output_multiple(cls, attributes: list[Self], padding: int = 20) -> None:
@@ -2093,15 +2094,16 @@ class Community(FrozenModelWithTimestamps, APIMixin):
     def output(self, *, padding: int = 14, show_hosts: bool = True) -> None:
         """Output the community to the console."""
         manager = OutputManager()
-        manager.add_line(f"{'Name:':<{padding}} {self.name}")
-        manager.add_line(f"{'Description:':<{padding}} {self.description}")
+        manager.add_line(f"{'Name:':<{padding}}{self.name}")
+        manager.add_line(f"{'Description:':<{padding}}{self.description}")
         if self.global_name:
-            manager.add_line(f"{'Global name:':<{padding}} {self.global_name}")
+            manager.add_line(f"{'Global name:':<{padding}}{self.global_name}")
+        self.output_timestamps()
 
         if show_hosts and self.hosts:
             manager.add_line("Hosts:")
             for host in self.hosts:
-                manager.add_line(f" {host}")
+                manager.add_line(f"{'':{padding}}{host}")
 
     def refetch(self) -> Self:
         """Refetch the community object."""
@@ -2170,7 +2172,7 @@ class NetworkPolicyAttributeValue(BaseModel):
     value: bool
 
 
-class NetworkPolicy(WithName):
+class NetworkPolicy(FrozenModelWithTimestamps, WithName):
     """Network policy used in a community."""
 
     __name_lowercase__ = True  # name is always lower case
@@ -2208,6 +2210,8 @@ class NetworkPolicy(WithName):
             manager.add_line("Networks:")
             for network in networks:
                 manager.add_line(f" {network.network}")
+
+        self.output_timestamps()
 
     def get_attribute_or_raise(self, name: str) -> NetworkPolicyAttributeValue:
         """Get a network attribute value by name, and raise if not found.
