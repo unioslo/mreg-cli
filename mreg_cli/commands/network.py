@@ -565,12 +565,18 @@ def policy_add(args: argparse.Namespace) -> None:
 # TODO[rename]: network policy create
 @command_registry.register_command(
     prog="policy_create",
-    description="Create a network policy",
+    description="Create a network policy. Separate attributes with spaces.",
     short_desc="Create a network policy",
     flags=[
         Flag("name", description="Name", metavar="NAME"),
         Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("-attributes", description="Attributes", metavar="ATTRIBUTES", nargs="+"),
+        Flag(
+            "-attribute",
+            description="Policy attribute(s). Can be specified multiple times.",
+            metavar="ATTRIBUTE",
+            action="append",
+            default=[],
+        ),
     ],
 )
 def policy_create(args: argparse.Namespace) -> None:
@@ -580,12 +586,12 @@ def policy_create(args: argparse.Namespace) -> None:
     """
     name: str = args.name
     description: str = args.description
-    attributes: list[str] = args.attributes or []
+    attribute: list[str] = args.attribute or []
 
     NetworkPolicy.get_by_name_and_raise(name)
 
     attrs: list[NetworkPolicyAttribute] = []
-    for attr in attributes:
+    for attr in attribute:
         attrs.append(NetworkPolicyAttribute.get_by_name_or_raise(attr))
 
     NetworkPolicy.create(
