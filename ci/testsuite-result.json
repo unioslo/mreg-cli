@@ -33643,6 +33643,6476 @@
     "time": null
   },
   {
+    "command": "network create -network 10.0.2.0/28 -desc \"TinyNet\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network create -network 10.0.2.0/28 -desc \"TinyNet\"",
+    "ok": [
+      "created network 10.0.2.0/28"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networks/",
+        "data": {
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "frozen": false
+        },
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:43.196315+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_attribute_create foo \"Foo attribute\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_attribute_create foo \"Foo attribute\"",
+    "ok": [
+      "Created network policy attribute 'foo'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=foo",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networkpolicyattributes/",
+        "data": {
+          "name": "foo",
+          "description": "Foo attribute"
+        },
+        "status": 201,
+        "response": {
+          "name": "foo",
+          "description": "Foo attribute",
+          "created_at": "2025-03-21T16:15:43.256009+01:00",
+          "updated_at": "2025-03-21T16:15:43.256016+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "foo",
+          "description": "Foo attribute",
+          "created_at": "2025-03-21T16:15:43.256009+01:00",
+          "updated_at": "2025-03-21T16:15:43.256016+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_attribute_create bar \"Bar attribute\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_attribute_create bar \"Bar attribute\"",
+    "ok": [
+      "Created network policy attribute 'bar'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=bar",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networkpolicyattributes/",
+        "data": {
+          "name": "bar",
+          "description": "Bar attribute"
+        },
+        "status": 201,
+        "response": {
+          "name": "bar",
+          "description": "Bar attribute",
+          "created_at": "2025-03-21T16:15:43.324192+01:00",
+          "updated_at": "2025-03-21T16:15:43.324202+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/3",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "bar",
+          "description": "Bar attribute",
+          "created_at": "2025-03-21T16:15:43.324192+01:00",
+          "updated_at": "2025-03-21T16:15:43.324202+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_attribute_create baz \"Baz attribute\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_attribute_create baz \"Baz attribute\"",
+    "ok": [
+      "Created network policy attribute 'baz'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=baz",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networkpolicyattributes/",
+        "data": {
+          "name": "baz",
+          "description": "Baz attribute"
+        },
+        "status": 201,
+        "response": {
+          "name": "baz",
+          "description": "Baz attribute",
+          "created_at": "2025-03-21T16:15:43.402037+01:00",
+          "updated_at": "2025-03-21T16:15:43.402047+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "baz",
+          "description": "Baz attribute",
+          "created_at": "2025-03-21T16:15:43.402037+01:00",
+          "updated_at": "2025-03-21T16:15:43.402047+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_create SecurePolicy \"Secure policy for a network\" -attribute foo -attribute bar",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_create SecurePolicy \"Secure policy for a network\" -attribute foo -attribute bar",
+    "ok": [
+      "Created network policy 'SecurePolicy'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=securepolicy",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=foo",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "foo",
+              "description": "Foo attribute",
+              "created_at": "2025-03-21T16:15:43.256009+01:00",
+              "updated_at": "2025-03-21T16:15:43.256016+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=bar",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "bar",
+              "description": "Bar attribute",
+              "created_at": "2025-03-21T16:15:43.324192+01:00",
+              "updated_at": "2025-03-21T16:15:43.324202+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networkpolicies/",
+        "data": {
+          "name": "SecurePolicy",
+          "description": "Secure policy for a network",
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            }
+          ]
+        },
+        "status": 201,
+        "response": {
+          "name": "securepolicy",
+          "description": "Secure policy for a network",
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:43.533287+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "securepolicy",
+          "description": "Secure policy for a network",
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:43.533287+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_create Autoconfigure \"Automatic host configuration\" -attribute baz",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_create Autoconfigure \"Automatic host configuration\" -attribute baz",
+    "ok": [
+      "Created network policy 'Autoconfigure'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=autoconfigure",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=baz",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "baz",
+              "description": "Baz attribute",
+              "created_at": "2025-03-21T16:15:43.402037+01:00",
+              "updated_at": "2025-03-21T16:15:43.402047+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networkpolicies/",
+        "data": {
+          "name": "Autoconfigure",
+          "description": "Automatic host configuration",
+          "attributes": [
+            {
+              "name": "baz",
+              "value": true
+            }
+          ]
+        },
+        "status": 201,
+        "response": {
+          "name": "autoconfigure",
+          "description": "Automatic host configuration",
+          "attributes": [
+            {
+              "name": "baz",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.627182+01:00",
+          "updated_at": "2025-03-21T16:15:43.627195+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "autoconfigure",
+          "description": "Automatic host configuration",
+          "attributes": [
+            {
+              "name": "baz",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.627182+01:00",
+          "updated_at": "2025-03-21T16:15:43.627195+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_create NoICMP \"ICMP disallowed\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_create NoICMP \"ICMP disallowed\" # no attributes",
+    "ok": [
+      "Created network policy 'NoICMP'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=noicmp",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networkpolicies/",
+        "data": {
+          "name": "NoICMP",
+          "description": "ICMP disallowed",
+          "attributes": []
+        },
+        "status": 201,
+        "response": {
+          "name": "noicmp",
+          "description": "ICMP disallowed",
+          "attributes": [],
+          "created_at": "2025-03-21T16:15:43.697095+01:00",
+          "updated_at": "2025-03-21T16:15:43.697104+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/3",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "noicmp",
+          "description": "ICMP disallowed",
+          "attributes": [],
+          "created_at": "2025-03-21T16:15:43.697095+01:00",
+          "updated_at": "2025-03-21T16:15:43.697104+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_list",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_list",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name: securepolicy",
+      "Description: Secure policy for a network",
+      "Attributes:",
+      " foo: True",
+      " bar: True",
+      "",
+      "Name: autoconfigure",
+      "Description: Automatic host configuration",
+      "Attributes:",
+      " baz: True",
+      "",
+      "Name: noicmp",
+      "Description: ICMP disallowed",
+      ""
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 3,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "securepolicy",
+              "description": "Secure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:43.533287+01:00"
+            },
+            {
+              "name": "autoconfigure",
+              "description": "Automatic host configuration",
+              "attributes": [
+                {
+                  "name": "baz",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.627182+01:00",
+              "updated_at": "2025-03-21T16:15:43.627195+01:00"
+            },
+            {
+              "name": "noicmp",
+              "description": "ICMP disallowed",
+              "attributes": [],
+              "created_at": "2025-03-21T16:15:43.697095+01:00",
+              "updated_at": "2025-03-21T16:15:43.697104+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=3",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_info SecurePolicy",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_info SecurePolicy",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name: securepolicy",
+      "Description: Secure policy for a network",
+      "Attributes:",
+      " foo: True",
+      " bar: True"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=securepolicy",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "securepolicy",
+              "description": "Secure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:43.533287+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_info Autoconfigure",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_info Autoconfigure",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name: autoconfigure",
+      "Description: Automatic host configuration",
+      "Attributes:",
+      " baz: True"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=autoconfigure",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "autoconfigure",
+              "description": "Automatic host configuration",
+              "attributes": [
+                {
+                  "name": "baz",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.627182+01:00",
+              "updated_at": "2025-03-21T16:15:43.627195+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_add 10.0.2.0/28 SecurePolicy",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_add 10.0.2.0/28 SecurePolicy",
+    "ok": [
+      "Added network policy 'securepolicy' to 10.0.2.0/28"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=securepolicy",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "securepolicy",
+              "description": "Secure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:43.533287+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:43.196315+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {
+          "policy": 1
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "securepolicy",
+                "description": "Secure policy for a network",
+                "attributes": [
+                  {
+                    "name": "foo",
+                    "value": true
+                  },
+                  {
+                    "name": "bar",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:43.533287+01:00"
+              },
+              "communities": [],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:43.988044+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_add 10.0.2.0/28 Autoconfigure",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_add 10.0.2.0/28 Autoconfigure # requires force",
+    "ok": [],
+    "warning": [
+      "Network 10.0.2.0/28 already has the policy 'securepolicy'. Must force."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=autoconfigure",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "autoconfigure",
+              "description": "Automatic host configuration",
+              "attributes": [
+                {
+                  "name": "baz",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.627182+01:00",
+              "updated_at": "2025-03-21T16:15:43.627195+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "securepolicy",
+            "description": "Secure policy for a network",
+            "attributes": [
+              {
+                "name": "foo",
+                "value": true
+              },
+              {
+                "name": "bar",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:43.533287+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:43.988044+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_add 10.0.2.0/28 Autoconfigure -force",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_add 10.0.2.0/28 Autoconfigure -force",
+    "ok": [
+      "Added network policy 'autoconfigure' to 10.0.2.0/28"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=autoconfigure",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "autoconfigure",
+              "description": "Automatic host configuration",
+              "attributes": [
+                {
+                  "name": "baz",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.627182+01:00",
+              "updated_at": "2025-03-21T16:15:43.627195+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "securepolicy",
+            "description": "Secure policy for a network",
+            "attributes": [
+              {
+                "name": "foo",
+                "value": true
+              },
+              {
+                "name": "bar",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:43.533287+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:43.988044+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {
+          "policy": 2
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "autoconfigure",
+                "description": "Automatic host configuration",
+                "attributes": [
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.627182+01:00",
+                "updated_at": "2025-03-21T16:15:43.627195+01:00"
+              },
+              "communities": [],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.128454+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network info 10.0.2.0/28",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network info 10.0.2.0/28",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Network:                 10.0.2.0/28",
+      "Netmask:                 255.255.255.240",
+      "Description:             TinyNet",
+      "Category:                ",
+      "Network policy:          autoconfigure",
+      "Communities:             ",
+      "Location:                ",
+      "VLAN:                    None",
+      "DNS delegated:           False",
+      "Frozen:                  False",
+      "IP-range:                10.0.2.0 - 10.0.2.15",
+      "Reserved host addresses: 3",
+      "                         10.0.2.0 (net)",
+      "                         10.0.2.1",
+      "                         10.0.2.2",
+      "                         10.0.2.3",
+      "                         10.0.2.15 (broadcast)",
+      "Used addresses:          0",
+      "Unused addresses:        11 (excluding reserved adr.)"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "autoconfigure",
+            "description": "Automatic host configuration",
+            "attributes": [
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.627182+01:00",
+            "updated_at": "2025-03-21T16:15:43.627195+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.128454+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.2.0",
+          "10.0.2.1",
+          "10.0.2.2",
+          "10.0.2.3",
+          "10.0.2.15"
+        ]
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/unused_count",
+        "data": {},
+        "status": 200,
+        "response": 11
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_delete Autoconfigure",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_delete Autoconfigure # requires force",
+    "ok": [],
+    "warning": [
+      "Policy 'autoconfigure' is assigned to the following networks: '10.0.2.0/28'. Must force."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=autoconfigure",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "autoconfigure",
+              "description": "Automatic host configuration",
+              "attributes": [
+                {
+                  "name": "baz",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.627182+01:00",
+              "updated_at": "2025-03-21T16:15:43.627195+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "autoconfigure",
+                "description": "Automatic host configuration",
+                "attributes": [
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.627182+01:00",
+                "updated_at": "2025-03-21T16:15:43.627195+01:00"
+              },
+              "communities": [],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.128454+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_delete Autoconfigure -force",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_delete Autoconfigure -force",
+    "ok": [
+      "Deleted network policy 'Autoconfigure'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=autoconfigure",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "autoconfigure",
+              "description": "Automatic host configuration",
+              "attributes": [
+                {
+                  "name": "baz",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.627182+01:00",
+              "updated_at": "2025-03-21T16:15:43.627195+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "autoconfigure",
+                "description": "Automatic host configuration",
+                "attributes": [
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.627182+01:00",
+                "updated_at": "2025-03-21T16:15:43.627195+01:00"
+              },
+              "communities": [],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.128454+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/networkpolicies/2",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network info 10.0.2.0/28",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network info 10.0.2.0/28",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Network:                 10.0.2.0/28",
+      "Netmask:                 255.255.255.240",
+      "Description:             TinyNet",
+      "Category:                ",
+      "Network policy:          ",
+      "Communities:             ",
+      "Location:                ",
+      "VLAN:                    None",
+      "DNS delegated:           False",
+      "Frozen:                  False",
+      "IP-range:                10.0.2.0 - 10.0.2.15",
+      "Reserved host addresses: 3",
+      "                         10.0.2.0 (net)",
+      "                         10.0.2.1",
+      "                         10.0.2.2",
+      "                         10.0.2.3",
+      "                         10.0.2.15 (broadcast)",
+      "Used addresses:          0",
+      "Unused addresses:        11 (excluding reserved adr.)"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.128454+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.2.0",
+          "10.0.2.1",
+          "10.0.2.2",
+          "10.0.2.3",
+          "10.0.2.15"
+        ]
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/unused_count",
+        "data": {},
+        "status": 200,
+        "response": 11
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_list",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_list",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name: securepolicy",
+      "Description: Secure policy for a network",
+      "Attributes:",
+      " foo: True",
+      " bar: True",
+      "",
+      "Name: noicmp",
+      "Description: ICMP disallowed",
+      ""
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 2,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "securepolicy",
+              "description": "Secure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:43.533287+01:00"
+            },
+            {
+              "name": "noicmp",
+              "description": "ICMP disallowed",
+              "attributes": [],
+              "created_at": "2025-03-21T16:15:43.697095+01:00",
+              "updated_at": "2025-03-21T16:15:43.697104+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=3",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_add 10.0.2.0/28 SecurePolicy",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_add 10.0.2.0/28 SecurePolicy",
+    "ok": [
+      "Added network policy 'securepolicy' to 10.0.2.0/28"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=securepolicy",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "securepolicy",
+              "description": "Secure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:43.533287+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.128454+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {
+          "policy": 1
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "securepolicy",
+                "description": "Secure policy for a network",
+                "attributes": [
+                  {
+                    "name": "foo",
+                    "value": true
+                  },
+                  {
+                    "name": "bar",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:43.533287+01:00"
+              },
+              "communities": [],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_rename SecurePolicy InsecurePolicy",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_rename SecurePolicy InsecurePolicy",
+    "ok": [
+      "Renamed network policy 'SecurePolicy' to 'InsecurePolicy'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=securepolicy",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "securepolicy",
+              "description": "Secure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:43.533287+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networkpolicies/1",
+        "data": {
+          "name": "insecurepolicy"
+        },
+        "status": 200,
+        "response": {
+          "name": "insecurepolicy",
+          "description": "Secure policy for a network",
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:44.624721+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "insecurepolicy",
+          "description": "Secure policy for a network",
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:44.624721+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_list",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_list",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name: insecurepolicy",
+      "Description: Secure policy for a network",
+      "Attributes:",
+      " foo: True",
+      " bar: True",
+      "Networks:",
+      " 10.0.2.0/28",
+      "",
+      "Name: noicmp",
+      "Description: ICMP disallowed",
+      ""
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 2,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "insecurepolicy",
+              "description": "Secure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:44.624721+01:00"
+            },
+            {
+              "name": "noicmp",
+              "description": "ICMP disallowed",
+              "attributes": [],
+              "created_at": "2025-03-21T16:15:43.697095+01:00",
+              "updated_at": "2025-03-21T16:15:43.697104+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Secure policy for a network",
+                "attributes": [
+                  {
+                    "name": "foo",
+                    "value": true
+                  },
+                  {
+                    "name": "bar",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:44.624721+01:00"
+              },
+              "communities": [],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=3",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network info 10.0.2.0/28",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network info 10.0.2.0/28",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Network:                 10.0.2.0/28",
+      "Netmask:                 255.255.255.240",
+      "Description:             TinyNet",
+      "Category:                ",
+      "Network policy:          insecurepolicy",
+      "Communities:             ",
+      "Location:                ",
+      "VLAN:                    None",
+      "DNS delegated:           False",
+      "Frozen:                  False",
+      "IP-range:                10.0.2.0 - 10.0.2.15",
+      "Reserved host addresses: 3",
+      "                         10.0.2.0 (net)",
+      "                         10.0.2.1",
+      "                         10.0.2.2",
+      "                         10.0.2.3",
+      "                         10.0.2.15 (broadcast)",
+      "Used addresses:          0",
+      "Unused addresses:        11 (excluding reserved adr.)"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Secure policy for a network",
+            "attributes": [
+              {
+                "name": "foo",
+                "value": true
+              },
+              {
+                "name": "bar",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:44.624721+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.2.0",
+          "10.0.2.1",
+          "10.0.2.2",
+          "10.0.2.3",
+          "10.0.2.15"
+        ]
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/unused_count",
+        "data": {},
+        "status": 200,
+        "response": 11
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_set_description InsecurePolicy \"Insecure policy for a network\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_set_description InsecurePolicy \"Insecure policy for a network\"",
+    "ok": [
+      "Set new description for network policy 'InsecurePolicy'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=insecurepolicy",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "insecurepolicy",
+              "description": "Secure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:44.624721+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networkpolicies/1",
+        "data": {
+          "description": "Insecure policy for a network"
+        },
+        "status": 200,
+        "response": {
+          "name": "insecurepolicy",
+          "description": "Insecure policy for a network",
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:44.870073+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "insecurepolicy",
+          "description": "Insecure policy for a network",
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:44.870073+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_attribute_add InsecurePolicy baz",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_attribute_add InsecurePolicy baz",
+    "ok": [
+      "Added attribute 'baz' to policy 'insecurepolicy'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=baz",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "baz",
+              "description": "Baz attribute",
+              "created_at": "2025-03-21T16:15:43.402037+01:00",
+              "updated_at": "2025-03-21T16:15:43.402047+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=insecurepolicy",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "insecurepolicy",
+              "description": "Insecure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:44.870073+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networkpolicies/1",
+        "data": {
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            },
+            {
+              "name": "baz",
+              "value": true
+            }
+          ]
+        },
+        "status": 200,
+        "response": {
+          "name": "insecurepolicy",
+          "description": "Insecure policy for a network",
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            },
+            {
+              "name": "baz",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:44.992820+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "insecurepolicy",
+          "description": "Insecure policy for a network",
+          "attributes": [
+            {
+              "name": "foo",
+              "value": true
+            },
+            {
+              "name": "bar",
+              "value": true
+            },
+            {
+              "name": "baz",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:44.992820+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_attribute_set_description baz \"Baz attribute (new)\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_attribute_set_description baz \"Baz attribute (new)\"",
+    "ok": [
+      "Set new description for network policy attribute 'baz'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=baz",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "baz",
+              "description": "Baz attribute",
+              "created_at": "2025-03-21T16:15:43.402037+01:00",
+              "updated_at": "2025-03-21T16:15:43.402047+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networkpolicyattributes/4",
+        "data": {
+          "description": "Baz attribute (new)"
+        },
+        "status": 200,
+        "response": {
+          "name": "baz",
+          "description": "Baz attribute (new)",
+          "created_at": "2025-03-21T16:15:43.402037+01:00",
+          "updated_at": "2025-03-21T16:15:45.059943+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "baz",
+          "description": "Baz attribute (new)",
+          "created_at": "2025-03-21T16:15:43.402037+01:00",
+          "updated_at": "2025-03-21T16:15:45.059943+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_attribute_list",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_attribute_list",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "isolated             'The network uses client isolation.'",
+      "foo                  'Foo attribute'",
+      "bar                  'Bar attribute'",
+      "baz                  'Baz attribute (new)'"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 4,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "isolated",
+              "description": "The network uses client isolation.",
+              "created_at": "2025-03-21T16:15:06.245728+01:00",
+              "updated_at": "2025-03-21T16:15:06.245744+01:00"
+            },
+            {
+              "name": "foo",
+              "description": "Foo attribute",
+              "created_at": "2025-03-21T16:15:43.256009+01:00",
+              "updated_at": "2025-03-21T16:15:43.256016+01:00"
+            },
+            {
+              "name": "bar",
+              "description": "Bar attribute",
+              "created_at": "2025-03-21T16:15:43.324192+01:00",
+              "updated_at": "2025-03-21T16:15:43.324202+01:00"
+            },
+            {
+              "name": "baz",
+              "description": "Baz attribute (new)",
+              "created_at": "2025-03-21T16:15:43.402037+01:00",
+              "updated_at": "2025-03-21T16:15:45.059943+01:00"
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_attribute_remove InsecurePolicy foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_attribute_remove InsecurePolicy foo",
+    "ok": [
+      "Removed attribute 'foo' from policy 'insecurepolicy'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=foo",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "foo",
+              "description": "Foo attribute",
+              "created_at": "2025-03-21T16:15:43.256009+01:00",
+              "updated_at": "2025-03-21T16:15:43.256016+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=insecurepolicy",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "insecurepolicy",
+              "description": "Insecure policy for a network",
+              "attributes": [
+                {
+                  "name": "foo",
+                  "value": true
+                },
+                {
+                  "name": "bar",
+                  "value": true
+                },
+                {
+                  "name": "baz",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:44.992820+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networkpolicies/1",
+        "data": {
+          "attributes": [
+            {
+              "name": "bar",
+              "value": true
+            },
+            {
+              "name": "baz",
+              "value": true
+            }
+          ]
+        },
+        "status": 200,
+        "response": {
+          "name": "insecurepolicy",
+          "description": "Insecure policy for a network",
+          "attributes": [
+            {
+              "name": "bar",
+              "value": true
+            },
+            {
+              "name": "baz",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:45.161468+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "insecurepolicy",
+          "description": "Insecure policy for a network",
+          "attributes": [
+            {
+              "name": "bar",
+              "value": true
+            },
+            {
+              "name": "baz",
+              "value": true
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.533277+01:00",
+          "updated_at": "2025-03-21T16:15:45.161468+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_info InsecurePolicy",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_info InsecurePolicy",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name: insecurepolicy",
+      "Description: Insecure policy for a network",
+      "Attributes:",
+      " bar: True",
+      " baz: True",
+      "Networks:",
+      " 10.0.2.0/28"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=insecurepolicy",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "insecurepolicy",
+              "description": "Insecure policy for a network",
+              "attributes": [
+                {
+                  "name": "bar",
+                  "value": true
+                },
+                {
+                  "name": "baz",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:45.161468+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=1",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_attribute_delete bar",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_attribute_delete bar # requires force (in use)",
+    "ok": [],
+    "warning": [
+      "Attribute 'bar' is used by the following policies: 'insecurepolicy'. Must force."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=bar",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "bar",
+              "description": "Bar attribute",
+              "created_at": "2025-03-21T16:15:43.324192+01:00",
+              "updated_at": "2025-03-21T16:15:43.324202+01:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?attributes=3",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "insecurepolicy",
+              "description": "Insecure policy for a network",
+              "attributes": [
+                {
+                  "name": "bar",
+                  "value": true
+                },
+                {
+                  "name": "baz",
+                  "value": true
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.533277+01:00",
+              "updated_at": "2025-03-21T16:15:45.161468+01:00"
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_attribute_delete bar -force",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_attribute_delete bar -force",
+    "ok": [
+      "Deleted network policy attribute 'bar'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicyattributes/?name=bar",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "bar",
+              "description": "Bar attribute",
+              "created_at": "2025-03-21T16:15:43.324192+01:00",
+              "updated_at": "2025-03-21T16:15:43.324202+01:00"
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host add tinyhost -ip 10.0.2.0/28 -macaddress 11:22:33:aa:bb:cc -contact tinyhost@example.org",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host add tinyhost -ip 10.0.2.0/28 -macaddress 11:22:33:aa:bb:cc -contact tinyhost@example.org",
+    "ok": [
+      "Created host tinyhost.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         tinyhost.example.org",
+      "Contact:      tinyhost@example.org",
+      "A_Records:",
+      "              IP         MAC                 ",
+      "              10.0.2.4   11:22:33:aa:bb:cc   ",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Fri Mar 21 16:15:45 2025",
+      "Updated:      Fri Mar 21 16:15:45 2025"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=11%3A22%3A33%3Aaa%3Abb%3Acc",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/tinyhost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "created_at": "2025-03-21T16:15:20.056277+01:00",
+                "updated_at": "2025-03-21T16:15:20.056555+01:00",
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "created_at": "2025-03-21T16:15:19.590868+01:00",
+            "updated_at": "2025-03-21T16:15:41.602620+01:00",
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "serialno_updated_at": "2025-03-21T16:15:20.380448+01:00",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "network": "10.0.2.0/28"
+        },
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "created_at": "2025-03-21T16:15:45.472355+01:00",
+              "updated_at": "2025-03-21T16:15:45.472364+01:00",
+              "ipaddress": "10.0.2.4",
+              "host": 25
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:45.454096+01:00",
+              "updated_at": "2025-03-21T16:15:45.454102+01:00",
+              "txt": "v=spf1 -all",
+              "host": 25
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:45.451943+01:00",
+          "updated_at": "2025-03-21T16:15:45.451950+01:00",
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?macaddress=11%3A22%3A33%3Aaa%3Abb%3Acc&ordering=ipaddress",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/ipaddresses/25",
+        "data": {
+          "macaddress": "11:22:33:aa:bb:cc"
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/25",
+        "data": {},
+        "status": 200,
+        "response": {
+          "macaddress": "11:22:33:aa:bb:cc",
+          "created_at": "2025-03-21T16:15:45.472355+01:00",
+          "updated_at": "2025-03-21T16:15:45.593196+01:00",
+          "ipaddress": "10.0.2.4",
+          "host": 25
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/?id=25",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "11:22:33:aa:bb:cc",
+                  "created_at": "2025-03-21T16:15:45.472355+01:00",
+                  "updated_at": "2025-03-21T16:15:45.593196+01:00",
+                  "ipaddress": "10.0.2.4",
+                  "host": 25
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-03-21T16:15:45.454096+01:00",
+                  "updated_at": "2025-03-21T16:15:45.454102+01:00",
+                  "txt": "v=spf1 -all",
+                  "host": 25
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [],
+              "created_at": "2025-03-21T16:15:45.451943+01:00",
+              "updated_at": "2025-03-21T16:15:45.451950+01:00",
+              "name": "tinyhost.example.org",
+              "contact": "tinyhost@example.org",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.2.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_create 10.0.2.0/28 guests \"Guest hosts.\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_create 10.0.2.0/28 guests \"Guest hosts.\"",
+    "ok": [
+      "Created community 'guests' for network 10.0.2.0/28"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/",
+        "data": {
+          "name": "guests",
+          "description": "Guest hosts."
+        },
+        "status": 201,
+        "response": {
+          "name": "guests",
+          "description": "Guest hosts.",
+          "network": 10,
+          "hosts": [],
+          "global_name": null,
+          "created_at": "2025-03-21T16:15:45.737714+01:00",
+          "updated_at": "2025-03-21T16:15:45.737723+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_create 10.0.2.0/28 lab \"Lab hosts.\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_create 10.0.2.0/28 lab \"Lab hosts.\"",
+    "ok": [
+      "Created community 'lab' for network 10.0.2.0/28"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/",
+        "data": {
+          "name": "lab",
+          "description": "Lab hosts."
+        },
+        "status": 201,
+        "response": {
+          "name": "lab",
+          "description": "Lab hosts.",
+          "network": 10,
+          "hosts": [],
+          "global_name": null,
+          "created_at": "2025-03-21T16:15:45.786884+01:00",
+          "updated_at": "2025-03-21T16:15:45.786896+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_list 10.0.2.0/28",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_list 10.0.2.0/28",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:          guests",
+      "Description:   Guest hosts.",
+      "",
+      "Name:          lab",
+      "Description:   Lab hosts.",
+      ""
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host set_community tinyhost guests",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host set_community tinyhost guests",
+    "ok": [
+      "Added host 'tinyhost.example.org' to community 'guests'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "11:22:33:aa:bb:cc",
+              "created_at": "2025-03-21T16:15:45.472355+01:00",
+              "updated_at": "2025-03-21T16:15:45.593196+01:00",
+              "ipaddress": "10.0.2.4",
+              "host": 25
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:45.454096+01:00",
+              "updated_at": "2025-03-21T16:15:45.454102+01:00",
+              "txt": "v=spf1 -all",
+              "host": 25
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:45.451943+01:00",
+          "updated_at": "2025-03-21T16:15:45.451950+01:00",
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.2.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "lab",
+                  "description": "Lab hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:45.786896+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/1/hosts/",
+        "data": {
+          "id": 25,
+          "ipaddress": "10.0.2.4"
+        },
+        "status": 201,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "11:22:33:aa:bb:cc",
+              "created_at": "2025-03-21T16:15:45.472355+01:00",
+              "updated_at": "2025-03-21T16:15:45.593196+01:00",
+              "ipaddress": "10.0.2.4",
+              "host": 25
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:45.454096+01:00",
+              "updated_at": "2025-03-21T16:15:45.454102+01:00",
+              "txt": "v=spf1 -all",
+              "host": 25
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [
+            {
+              "ipaddress": 25,
+              "community": {
+                "name": "guests",
+                "description": "Guest hosts.",
+                "network": 10,
+                "hosts": [
+                  "tinyhost.example.org"
+                ],
+                "global_name": null,
+                "created_at": "2025-03-21T16:15:45.737714+01:00",
+                "updated_at": "2025-03-21T16:15:45.737723+01:00"
+              }
+            }
+          ],
+          "created_at": "2025-03-21T16:15:45.451943+01:00",
+          "updated_at": "2025-03-21T16:15:45.451950+01:00",
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host info tinyhost",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host info tinyhost",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         tinyhost.example.org",
+      "Contact:      tinyhost@example.org",
+      "A_Records:",
+      "              IP         MAC                 Policy           Community   ",
+      "              10.0.2.4   11:22:33:aa:bb:cc   insecurepolicy   guests      ",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Fri Mar 21 16:15:45 2025",
+      "Updated:      Fri Mar 21 16:15:45 2025"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "11:22:33:aa:bb:cc",
+              "created_at": "2025-03-21T16:15:45.472355+01:00",
+              "updated_at": "2025-03-21T16:15:45.593196+01:00",
+              "ipaddress": "10.0.2.4",
+              "host": 25
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:45.454096+01:00",
+              "updated_at": "2025-03-21T16:15:45.454102+01:00",
+              "txt": "v=spf1 -all",
+              "host": 25
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [
+            {
+              "ipaddress": 25,
+              "community": {
+                "name": "guests",
+                "description": "Guest hosts.",
+                "network": 10,
+                "hosts": [
+                  "tinyhost.example.org"
+                ],
+                "global_name": null,
+                "created_at": "2025-03-21T16:15:45.737714+01:00",
+                "updated_at": "2025-03-21T16:15:45.737723+01:00"
+              }
+            }
+          ],
+          "created_at": "2025-03-21T16:15:45.451943+01:00",
+          "updated_at": "2025-03-21T16:15:45.451950+01:00",
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.2.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host set_community tinyhost lab",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host set_community tinyhost lab",
+    "ok": [
+      "Added host 'tinyhost.example.org' to community 'lab'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "11:22:33:aa:bb:cc",
+              "created_at": "2025-03-21T16:15:45.472355+01:00",
+              "updated_at": "2025-03-21T16:15:45.593196+01:00",
+              "ipaddress": "10.0.2.4",
+              "host": 25
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:45.454096+01:00",
+              "updated_at": "2025-03-21T16:15:45.454102+01:00",
+              "txt": "v=spf1 -all",
+              "host": 25
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [
+            {
+              "ipaddress": 25,
+              "community": {
+                "name": "guests",
+                "description": "Guest hosts.",
+                "network": 10,
+                "hosts": [
+                  "tinyhost.example.org"
+                ],
+                "global_name": null,
+                "created_at": "2025-03-21T16:15:45.737714+01:00",
+                "updated_at": "2025-03-21T16:15:45.737723+01:00"
+              }
+            }
+          ],
+          "created_at": "2025-03-21T16:15:45.451943+01:00",
+          "updated_at": "2025-03-21T16:15:45.451950+01:00",
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.2.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "lab",
+                  "description": "Lab hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:45.786896+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/2/hosts/",
+        "data": {
+          "id": 25,
+          "ipaddress": "10.0.2.4"
+        },
+        "status": 201,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "11:22:33:aa:bb:cc",
+              "created_at": "2025-03-21T16:15:45.472355+01:00",
+              "updated_at": "2025-03-21T16:15:45.593196+01:00",
+              "ipaddress": "10.0.2.4",
+              "host": 25
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:45.454096+01:00",
+              "updated_at": "2025-03-21T16:15:45.454102+01:00",
+              "txt": "v=spf1 -all",
+              "host": 25
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [
+            {
+              "ipaddress": 25,
+              "community": {
+                "name": "lab",
+                "description": "Lab hosts.",
+                "network": 10,
+                "hosts": [
+                  "tinyhost.example.org"
+                ],
+                "global_name": null,
+                "created_at": "2025-03-21T16:15:45.786884+01:00",
+                "updated_at": "2025-03-21T16:15:45.786896+01:00"
+              }
+            }
+          ],
+          "created_at": "2025-03-21T16:15:45.451943+01:00",
+          "updated_at": "2025-03-21T16:15:45.451950+01:00",
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host info tinyhost",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host info tinyhost",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         tinyhost.example.org",
+      "Contact:      tinyhost@example.org",
+      "A_Records:",
+      "              IP         MAC                 Policy           Community   ",
+      "              10.0.2.4   11:22:33:aa:bb:cc   insecurepolicy   lab         ",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Fri Mar 21 16:15:45 2025",
+      "Updated:      Fri Mar 21 16:15:45 2025"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "11:22:33:aa:bb:cc",
+              "created_at": "2025-03-21T16:15:45.472355+01:00",
+              "updated_at": "2025-03-21T16:15:45.593196+01:00",
+              "ipaddress": "10.0.2.4",
+              "host": 25
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:45.454096+01:00",
+              "updated_at": "2025-03-21T16:15:45.454102+01:00",
+              "txt": "v=spf1 -all",
+              "host": 25
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [
+            {
+              "ipaddress": 25,
+              "community": {
+                "name": "lab",
+                "description": "Lab hosts.",
+                "network": 10,
+                "hosts": [
+                  "tinyhost.example.org"
+                ],
+                "global_name": null,
+                "created_at": "2025-03-21T16:15:45.786884+01:00",
+                "updated_at": "2025-03-21T16:15:45.786896+01:00"
+              }
+            }
+          ],
+          "created_at": "2025-03-21T16:15:45.451943+01:00",
+          "updated_at": "2025-03-21T16:15:45.451950+01:00",
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.2.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_info 10.0.2.0/28 guests",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_info 10.0.2.0/28 guests",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:          guests",
+      "Description:   Guest hosts."
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_info 10.0.2.0/28 lab",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_info 10.0.2.0/28 lab",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:          lab",
+      "Description:   Lab hosts.",
+      "Hosts:",
+      " tinyhost.example.org"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_rename 10.0.2.0/28 lab labequipment",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_rename 10.0.2.0/28 lab labequipment",
+    "ok": [
+      "Renamed community 'lab' to 'labequipment'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:45.786896+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "lab",
+                  "description": "Lab hosts.",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:45.786896+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/2",
+        "data": {
+          "name": "labequipment"
+        },
+        "status": 200,
+        "response": {
+          "name": "labequipment",
+          "description": "Lab hosts.",
+          "network": 10,
+          "hosts": [
+            "tinyhost.example.org"
+          ],
+          "global_name": null,
+          "created_at": "2025-03-21T16:15:45.786884+01:00",
+          "updated_at": "2025-03-21T16:15:46.302270+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "labequipment",
+                  "description": "Lab hosts.",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:46.302270+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "labequipment",
+          "description": "Lab hosts.",
+          "network": 10,
+          "hosts": [
+            "tinyhost.example.org"
+          ],
+          "global_name": null,
+          "created_at": "2025-03-21T16:15:45.786884+01:00",
+          "updated_at": "2025-03-21T16:15:46.302270+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_set_description 10.0.2.0/28 labequipment \"Lab equipment (expensive)\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_set_description 10.0.2.0/28 labequipment \"Lab equipment (expensive)\"",
+    "ok": [
+      "Set new description for community 'labequipment'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "labequipment",
+              "description": "Lab hosts.",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:46.302270+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "labequipment",
+                  "description": "Lab hosts.",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:46.302270+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/2",
+        "data": {
+          "description": "Lab equipment (expensive)"
+        },
+        "status": 200,
+        "response": {
+          "name": "labequipment",
+          "description": "Lab equipment (expensive)",
+          "network": 10,
+          "hosts": [
+            "tinyhost.example.org"
+          ],
+          "global_name": null,
+          "created_at": "2025-03-21T16:15:45.786884+01:00",
+          "updated_at": "2025-03-21T16:15:46.431292+01:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "labequipment",
+                  "description": "Lab equipment (expensive)",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:46.431292+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/2",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "labequipment",
+          "description": "Lab equipment (expensive)",
+          "network": 10,
+          "hosts": [
+            "tinyhost.example.org"
+          ],
+          "global_name": null,
+          "created_at": "2025-03-21T16:15:45.786884+01:00",
+          "updated_at": "2025-03-21T16:15:46.431292+01:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_info 10.0.2.0/28 labequipment",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_info 10.0.2.0/28 labequipment",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:          labequipment",
+      "Description:   Lab equipment (expensive)",
+      "Hosts:",
+      " tinyhost.example.org"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "labequipment",
+              "description": "Lab equipment (expensive)",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:46.431292+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host add tinierhost -ip 10.0.2.0/28 -contact tinierhost@example.org",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host add tinierhost -ip 10.0.2.0/28 -contact tinierhost@example.org",
+    "ok": [
+      "Created host tinierhost.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         tinierhost.example.org",
+      "Contact:      tinierhost@example.org",
+      "A_Records:",
+      "              IP         MAC         ",
+      "              10.0.2.5   <not set>   ",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Fri Mar 21 16:15:46 2025",
+      "Updated:      Fri Mar 21 16:15:46 2025"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinierhost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/tinierhost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/tinierhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "created_at": "2025-03-21T16:15:20.056277+01:00",
+                "updated_at": "2025-03-21T16:15:20.056555+01:00",
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "created_at": "2025-03-21T16:15:19.590868+01:00",
+            "updated_at": "2025-03-21T16:15:45.592353+01:00",
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "serialno_updated_at": "2025-03-21T16:15:20.380448+01:00",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "labequipment",
+              "description": "Lab equipment (expensive)",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:46.431292+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "tinierhost.example.org",
+          "contact": "tinierhost@example.org",
+          "network": "10.0.2.0/28"
+        },
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinierhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "created_at": "2025-03-21T16:15:46.616549+01:00",
+              "updated_at": "2025-03-21T16:15:46.616555+01:00",
+              "ipaddress": "10.0.2.5",
+              "host": 26
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:46.601814+01:00",
+              "updated_at": "2025-03-21T16:15:46.601820+01:00",
+              "txt": "v=spf1 -all",
+              "host": 26
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:46.599992+01:00",
+          "updated_at": "2025-03-21T16:15:46.599998+01:00",
+          "name": "tinierhost.example.org",
+          "contact": "tinierhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.2.5",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "labequipment",
+              "description": "Lab equipment (expensive)",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:46.431292+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host set_community tinierhost guests",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host set_community tinierhost guests",
+    "ok": [],
+    "warning": [
+      "POST \"http://127.0.0.1:8000/api/v1/networks/10.0.2.0/28/communities/1/hosts/\": 406: Not Acceptable\n{\n  \"detail\": \"The IP must have a MAC address to bind it to a community.\"\n}"
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinierhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "created_at": "2025-03-21T16:15:46.616549+01:00",
+              "updated_at": "2025-03-21T16:15:46.616555+01:00",
+              "ipaddress": "10.0.2.5",
+              "host": 26
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:46.601814+01:00",
+              "updated_at": "2025-03-21T16:15:46.601820+01:00",
+              "txt": "v=spf1 -all",
+              "host": 26
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:46.599992+01:00",
+          "updated_at": "2025-03-21T16:15:46.599998+01:00",
+          "name": "tinierhost.example.org",
+          "contact": "tinierhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.2.5",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "labequipment",
+              "description": "Lab equipment (expensive)",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:46.431292+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "labequipment",
+                  "description": "Lab equipment (expensive)",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:46.431292+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/1/hosts/",
+        "data": {
+          "id": 26,
+          "ipaddress": "10.0.2.5"
+        },
+        "status": 406,
+        "response": {
+          "detail": "The IP must have a MAC address to bind it to a community."
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_list 10.0.2.0/28 -hosts",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_list 10.0.2.0/28 -hosts",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:          guests",
+      "Description:   Guest hosts.",
+      "",
+      "Name:          labequipment",
+      "Description:   Lab equipment (expensive)",
+      "Hosts:",
+      " tinyhost.example.org",
+      ""
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "labequipment",
+              "description": "Lab equipment (expensive)",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:46.431292+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network create -network 10.0.0.0/24 -desc \"MediumNet\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network create -network 10.0.0.0/24 -desc \"MediumNet\"",
+    "ok": [
+      "created network 10.0.0.0/24"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "labequipment",
+                  "description": "Lab equipment (expensive)",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:46.431292+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networks/",
+        "data": {
+          "network": "10.0.0.0/24",
+          "description": "MediumNet",
+          "frozen": false
+        },
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:46.886868+01:00",
+          "updated_at": "2025-03-21T16:15:46.886878+01:00",
+          "network": "10.0.0.0/24",
+          "description": "MediumNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host add mediumhost -ip 10.0.0.0/24 -contact mediumhost@example.org",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host add mediumhost -ip 10.0.0.0/24 -contact mediumhost@example.org",
+    "ok": [
+      "Created host mediumhost.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         mediumhost.example.org",
+      "Contact:      mediumhost@example.org",
+      "A_Records:",
+      "              IP         MAC         ",
+      "              10.0.0.4   <not set>   ",
+      "TTL:          (Default)",
+      "TXT:          v=spf1 -all",
+      "Created:      Fri Mar 21 16:15:47 2025",
+      "Updated:      Fri Mar 21 16:15:47 2025"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/mediumhost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/cnames/mediumhost.example.org",
+        "data": {},
+        "status": 404,
+        "response": {
+          "detail": "Not found."
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/zones/forward/hostname/mediumhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "zone": {
+            "nameservers": [
+              {
+                "created_at": "2025-03-21T16:15:20.056277+01:00",
+                "updated_at": "2025-03-21T16:15:20.056555+01:00",
+                "name": "ns2.example.org",
+                "ttl": null
+              }
+            ],
+            "created_at": "2025-03-21T16:15:19.590868+01:00",
+            "updated_at": "2025-03-21T16:15:46.615987+01:00",
+            "updated": true,
+            "primary_ns": "ns2.example.org",
+            "email": "hostperson@example.org",
+            "serialno_updated_at": "2025-03-21T16:15:20.380448+01:00",
+            "refresh": 360,
+            "retry": 1800,
+            "expire": 2400,
+            "soa_ttl": 1800,
+            "default_ttl": 300,
+            "name": "example.org"
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:46.886868+01:00",
+          "updated_at": "2025-03-21T16:15:46.886878+01:00",
+          "network": "10.0.0.0/24",
+          "description": "MediumNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/hosts/",
+        "data": {
+          "name": "mediumhost.example.org",
+          "contact": "mediumhost@example.org",
+          "network": "10.0.0.0/24"
+        },
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/mediumhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "created_at": "2025-03-21T16:15:47.043712+01:00",
+              "updated_at": "2025-03-21T16:15:47.043719+01:00",
+              "ipaddress": "10.0.0.4",
+              "host": 27
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:47.027836+01:00",
+              "updated_at": "2025-03-21T16:15:47.027843+01:00",
+              "txt": "v=spf1 -all",
+              "host": 27
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:47.025883+01:00",
+          "updated_at": "2025-03-21T16:15:47.025890+01:00",
+          "name": "mediumhost.example.org",
+          "contact": "mediumhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:46.886868+01:00",
+          "updated_at": "2025-03-21T16:15:46.886878+01:00",
+          "network": "10.0.0.0/24",
+          "description": "MediumNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host set_community mediumhost labequipment",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host set_community mediumhost labequipment # fails, community not found in network",
+    "ok": [],
+    "warning": [
+      "Community 'labequipment' not found."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/mediumhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "created_at": "2025-03-21T16:15:47.043712+01:00",
+              "updated_at": "2025-03-21T16:15:47.043719+01:00",
+              "ipaddress": "10.0.0.4",
+              "host": 27
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:47.027836+01:00",
+              "updated_at": "2025-03-21T16:15:47.027843+01:00",
+              "txt": "v=spf1 -all",
+              "host": 27
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:47.025883+01:00",
+          "updated_at": "2025-03-21T16:15:47.025890+01:00",
+          "name": "mediumhost.example.org",
+          "contact": "mediumhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.0.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:46.886868+01:00",
+          "updated_at": "2025-03-21T16:15:46.886878+01:00",
+          "network": "10.0.0.0/24",
+          "description": "MediumNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove mediumhost -force",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove mediumhost -force",
+    "ok": [
+      "removed mediumhost.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/mediumhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "created_at": "2025-03-21T16:15:47.043712+01:00",
+              "updated_at": "2025-03-21T16:15:47.043719+01:00",
+              "ipaddress": "10.0.0.4",
+              "host": 27
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:47.027836+01:00",
+              "updated_at": "2025-03-21T16:15:47.027843+01:00",
+              "txt": "v=spf1 -all",
+              "host": 27
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:47.025883+01:00",
+          "updated_at": "2025-03-21T16:15:47.025890+01:00",
+          "name": "mediumhost.example.org",
+          "contact": "mediumhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hosts/mediumhost.example.org",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network remove 10.0.0.0/24",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network remove 10.0.0.0/24",
+    "ok": [],
+    "warning": [
+      "Must force."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:46.886868+01:00",
+          "updated_at": "2025-03-21T16:15:46.886878+01:00",
+          "network": "10.0.0.0/24",
+          "description": "MediumNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_delete 10.0.2.0/28 labequipment",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_delete 10.0.2.0/28 labequipment # fails",
+    "ok": [],
+    "warning": [
+      "Community 'labequipment' has hosts. Must force."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "labequipment",
+              "description": "Lab equipment (expensive)",
+              "network": 10,
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:46.431292+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "labequipment",
+                  "description": "Lab equipment (expensive)",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:46.431292+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/2/hosts/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "ipaddresses": [
+                {
+                  "macaddress": "11:22:33:aa:bb:cc",
+                  "created_at": "2025-03-21T16:15:45.472355+01:00",
+                  "updated_at": "2025-03-21T16:15:45.593196+01:00",
+                  "ipaddress": "10.0.2.4",
+                  "host": 25
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-03-21T16:15:45.454096+01:00",
+                  "updated_at": "2025-03-21T16:15:45.454102+01:00",
+                  "txt": "v=spf1 -all",
+                  "host": 25
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [
+                {
+                  "ipaddress": 25,
+                  "community": {
+                    "name": "labequipment",
+                    "description": "Lab equipment (expensive)",
+                    "network": 10,
+                    "hosts": [
+                      "tinyhost.example.org"
+                    ],
+                    "global_name": null,
+                    "created_at": "2025-03-21T16:15:45.786884+01:00",
+                    "updated_at": "2025-03-21T16:15:46.431292+01:00"
+                  }
+                }
+              ],
+              "created_at": "2025-03-21T16:15:45.451943+01:00",
+              "updated_at": "2025-03-21T16:15:45.451950+01:00",
+              "name": "tinyhost.example.org",
+              "contact": "tinyhost@example.org",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host unset_community tinyhost labequipment",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host unset_community tinyhost labequipment",
+    "ok": [
+      "Removed host 'tinyhost.example.org' (IP: 10.0.2.4) from community 'labequipment'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "11:22:33:aa:bb:cc",
+              "created_at": "2025-03-21T16:15:45.472355+01:00",
+              "updated_at": "2025-03-21T16:15:45.593196+01:00",
+              "ipaddress": "10.0.2.4",
+              "host": 25
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:45.454096+01:00",
+              "updated_at": "2025-03-21T16:15:45.454102+01:00",
+              "txt": "v=spf1 -all",
+              "host": 25
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [
+            {
+              "ipaddress": 25,
+              "community": {
+                "name": "labequipment",
+                "description": "Lab equipment (expensive)",
+                "network": 10,
+                "hosts": [
+                  "tinyhost.example.org"
+                ],
+                "global_name": null,
+                "created_at": "2025-03-21T16:15:45.786884+01:00",
+                "updated_at": "2025-03-21T16:15:46.431292+01:00"
+              }
+            }
+          ],
+          "created_at": "2025-03-21T16:15:45.451943+01:00",
+          "updated_at": "2025-03-21T16:15:45.451950+01:00",
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "labequipment",
+                  "description": "Lab equipment (expensive)",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:46.431292+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/2/hosts/25",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_delete 10.0.2.0/28 labequipment",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_delete 10.0.2.0/28 labequipment",
+    "ok": [
+      "Deleted community 'labequipment'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            },
+            {
+              "name": "labequipment",
+              "description": "Lab equipment (expensive)",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.786884+01:00",
+              "updated_at": "2025-03-21T16:15:46.431292+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "labequipment",
+                  "description": "Lab equipment (expensive)",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:46.431292+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/2/hosts/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                },
+                {
+                  "name": "labequipment",
+                  "description": "Lab equipment (expensive)",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.786884+01:00",
+                  "updated_at": "2025-03-21T16:15:46.431292+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/2",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_delete 10.0.2.0/28 guests",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_delete 10.0.2.0/28 guests # fails",
+    "ok": [
+      "Deleted community 'guests'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-03-21T16:15:45.737714+01:00",
+              "updated_at": "2025-03-21T16:15:45.737723+01:00"
+            }
+          ],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/1/hosts/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "created_at": "2025-03-21T16:15:43.533277+01:00",
+                "updated_at": "2025-03-21T16:15:45.161468+01:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-03-21T16:15:45.737714+01:00",
+                  "updated_at": "2025-03-21T16:15:45.737723+01:00"
+                }
+              ],
+              "created_at": "2025-03-21T16:15:43.196305+01:00",
+              "updated_at": "2025-03-21T16:15:44.555532+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/1",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_delete 10.0.2.0/28 guests -force",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_delete 10.0.2.0/28 guests -force",
+    "ok": [],
+    "warning": [
+      "Community 'guests' not found."
+    ],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove tinyhost",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove tinyhost",
+    "ok": [
+      "removed tinyhost.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "11:22:33:aa:bb:cc",
+              "created_at": "2025-03-21T16:15:45.472355+01:00",
+              "updated_at": "2025-03-21T16:15:45.593196+01:00",
+              "ipaddress": "10.0.2.4",
+              "host": 25
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:45.454096+01:00",
+              "updated_at": "2025-03-21T16:15:45.454102+01:00",
+              "txt": "v=spf1 -all",
+              "host": 25
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:45.451943+01:00",
+          "updated_at": "2025-03-21T16:15:47.465916+01:00",
+          "name": "tinyhost.example.org",
+          "contact": "tinyhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hosts/tinyhost.example.org",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host remove tinierhost",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host remove tinierhost",
+    "ok": [
+      "removed tinierhost.example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hosts/tinierhost.example.org",
+        "data": {},
+        "status": 200,
+        "response": {
+          "ipaddresses": [
+            {
+              "macaddress": "",
+              "created_at": "2025-03-21T16:15:46.616549+01:00",
+              "updated_at": "2025-03-21T16:15:46.616555+01:00",
+              "ipaddress": "10.0.2.5",
+              "host": 26
+            }
+          ],
+          "cnames": [],
+          "mxs": [],
+          "txts": [
+            {
+              "created_at": "2025-03-21T16:15:46.601814+01:00",
+              "updated_at": "2025-03-21T16:15:46.601820+01:00",
+              "txt": "v=spf1 -all",
+              "host": 26
+            }
+          ],
+          "ptr_overrides": [],
+          "srvs": [],
+          "naptrs": [],
+          "sshfps": [],
+          "hostgroups": [],
+          "roles": [],
+          "hinfo": null,
+          "loc": null,
+          "bacnetid": null,
+          "communities": [],
+          "created_at": "2025-03-21T16:15:46.599992+01:00",
+          "updated_at": "2025-03-21T16:15:46.599998+01:00",
+          "name": "tinierhost.example.org",
+          "contact": "tinierhost@example.org",
+          "ttl": null,
+          "comment": "",
+          "zone": 1
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hosts/tinierhost.example.org",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network remove 10.0.2.0/28 -force",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network remove 10.0.2.0/28 -force",
+    "ok": [
+      "Removed network 10.0.2.0/28"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "bar",
+                "value": true
+              },
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "created_at": "2025-03-21T16:15:43.533277+01:00",
+            "updated_at": "2025-03-21T16:15:45.161468+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-03-21T16:15:43.196305+01:00",
+          "updated_at": "2025-03-21T16:15:44.555532+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "zone delete example.org",
     "command_filter": null,
     "command_filter_negate": false,
@@ -33662,18 +40132,18 @@
         "response": {
           "nameservers": [
             {
-              "created_at": "2024-12-11T16:44:40.356452+01:00",
-              "updated_at": "2024-12-11T16:44:40.356481+01:00",
+              "created_at": "2025-03-21T16:15:20.056277+01:00",
+              "updated_at": "2025-03-21T16:15:20.056555+01:00",
               "name": "ns2.example.org",
               "ttl": null
             }
           ],
-          "created_at": "2024-12-11T16:44:39.701254+01:00",
-          "updated_at": "2024-12-11T16:45:37.776064+01:00",
+          "created_at": "2025-03-21T16:15:19.590868+01:00",
+          "updated_at": "2025-03-21T16:15:47.979368+01:00",
           "updated": true,
           "primary_ns": "ns2.example.org",
           "email": "hostperson@example.org",
-          "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+          "serialno_updated_at": "2025-03-21T16:15:20.380448+01:00",
           "refresh": 360,
           "retry": 1800,
           "expire": 2400,
