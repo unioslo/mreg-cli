@@ -59,7 +59,7 @@ else
 fi
 
 # give mreg some time to create the database schema and start up
-sleep 5s
+sleep 5
 
 # create a superuser
 if docker exec -t mreg uv version >/dev/null; then
