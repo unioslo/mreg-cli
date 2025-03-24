@@ -420,11 +420,11 @@ host add tinyhost -ip 10.0.2.0/28 -macaddress 11:22:33:aa:bb:cc -contact tinyhos
 network community_create 10.0.2.0/28 guests "Guest hosts."
 network community_create 10.0.2.0/28 lab "Lab hosts."
 network community_list 10.0.2.0/28
-host set_community tinyhost guests
+network community_host_add tinyhost guests
 host info tinyhost
-host set_community tinyhost lab
+network community_host_add tinyhost lab
 host info tinyhost
-# TODO: test host set_community with specific IP address on host with multiple IPs
+# TODO: test network community_host_add with specific IP address on host with multiple IPs
 network community_info 10.0.2.0/28 guests
 network community_info 10.0.2.0/28 lab
 
@@ -435,19 +435,19 @@ network community_info 10.0.2.0/28 labequipment
 
 ## Add another host to a community before displaying communities with hosts
 host add tinierhost -ip 10.0.2.0/28 -contact tinierhost@example.org
-host set_community tinierhost guests
+network community_host_add tinierhost guests
 network community_list 10.0.2.0/28 -hosts
 
 ## Attempt to add host from other network to community (fails)
 network create -network 10.0.0.0/24 -desc "MediumNet"
 host add mediumhost -ip 10.0.0.0/24 -macaddress 11:22:34:aa:bb:cd -contact mediumhost@example.org
-host set_community mediumhost labequipment # fails, community not found in network
+network community_host_add mediumhost labequipment # fails, community not found in network
 host remove mediumhost -force
 network remove 10.0.0.0/24
 
 ## Delete community (remove host from community first)
 network community_delete 10.0.2.0/28 labequipment # fails
-host unset_community tinyhost labequipment
+network community_host_remove tinyhost labequipment
 network community_delete 10.0.2.0/28 labequipment
 
 ## Delete community with hosts (force)

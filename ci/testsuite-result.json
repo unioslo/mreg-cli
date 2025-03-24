@@ -36702,10 +36702,10 @@
     "time": null
   },
   {
-    "command": "host set_community tinyhost guests",
+    "command": "network community_host_add tinyhost guests",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host set_community tinyhost guests",
+    "command_issued": "network community_host_add tinyhost guests",
     "ok": [
       "Added host 'tinyhost.example.org' to community 'guests'"
     ],
@@ -37079,10 +37079,10 @@
     "time": null
   },
   {
-    "command": "host set_community tinyhost lab",
+    "command": "network community_host_add tinyhost lab",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host set_community tinyhost lab",
+    "command_issued": "network community_host_add tinyhost lab",
     "ok": [
       "Added host 'tinyhost.example.org' to community 'lab'"
     ],
@@ -38417,10 +38417,10 @@
     "time": null
   },
   {
-    "command": "host set_community tinierhost guests",
+    "command": "network community_host_add tinierhost guests",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host set_community tinierhost guests",
+    "command_issued": "network community_host_add tinierhost guests",
     "ok": [],
     "warning": [
       "POST \"http://127.0.0.1:8000/api/v1/networks/10.0.2.0/28/communities/1/hosts/\": 406: Not Acceptable\n{\n  \"detail\": \"The IP must have a MAC address to bind it to a community.\"\n}"
@@ -39067,10 +39067,10 @@
     "time": null
   },
   {
-    "command": "host set_community mediumhost labequipment",
+    "command": "network community_host_add mediumhost labequipment",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host set_community mediumhost labequipment # fails, community not found in network",
+    "command_issued": "network community_host_add mediumhost labequipment # fails, community not found in network",
     "ok": [],
     "warning": [
       "Community 'labequipment' not found."
@@ -39457,10 +39457,10 @@
     "time": null
   },
   {
-    "command": "host unset_community tinyhost labequipment",
+    "command": "network community_host_remove tinyhost labequipment",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host unset_community tinyhost labequipment",
+    "command_issued": "network community_host_remove tinyhost labequipment",
     "ok": [
       "Removed host 'tinyhost.example.org' (IP: 10.0.2.4) from community 'labequipment'"
     ],
