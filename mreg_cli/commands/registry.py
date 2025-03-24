@@ -31,7 +31,7 @@ class CommandRegistry:
         self,
         prog: str,
         description: str,
-        short_desc: str,
+        short_desc: str | None = None,
         flags: list[Flag] | None = None,
     ) -> Callable[[CommandFunc], CommandFunc]:
         """Register a command with the CLI.
@@ -39,11 +39,13 @@ class CommandRegistry:
         :param prog: The name of the command.
         :param description: A description of the command.
         :param short_desc: A short description of the command.
+            Defaults to the full description if omitted.
         :param flags: A list of flags for the command.
 
         Returns a decorator that registers a command with the CLI within the
         current scope.
         """
+        short_desc = short_desc or description
 
         def decorator(func: CommandFunc) -> CommandFunc:
             self._commands.append(Command(prog, description, short_desc, func, flags))
