@@ -11682,7 +11682,7 @@
     "command_issued": "host remove somehost # requires force because host has 2 ip addresses",
     "ok": [],
     "warning": [
-      "somehost.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN. Must use 'force'."
+      "somehost.example.org requires force for deletion:\n  multiple ipaddresses on the same VLAN\nUse `-force` to override."
     ],
     "error": [],
     "output": [],
@@ -23466,7 +23466,7 @@
     "command_issued": "host remove bar # should fail, because it has multiple addresses, must force",
     "ok": [],
     "warning": [
-      "bar.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN. Must use 'force'."
+      "bar.example.org requires force for deletion:\n  multiple ipaddresses on the same VLAN\nUse `-force` to override."
     ],
     "error": [],
     "output": [],
@@ -24467,7 +24467,7 @@
     "command_issued": "host remove bar # should fail, because it has a cname record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "bar.example.org requires force and override for deletion:\n  1 cnames, override with 'cname'\n    - fubar.example.org\n  multiple ipaddresses on the same VLAN. Must use 'force'."
+      "bar.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\n  multiple ipaddresses on the same VLAN\nUse `-force cname` to override."
     ],
     "error": [],
     "output": [],
@@ -25536,7 +25536,7 @@
     "command_issued": "host remove baz # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
-      "baz.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN. Must use 'force'.\n  1 MX records, override with 'mx'\n    - mail.example.org (priority: 10)"
+      "baz.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN\n  1 MX records\n    - mail.example.org (priority: 10)\nUse `-force mx` to override."
     ],
     "error": [],
     "output": [],
@@ -29229,7 +29229,7 @@
     "command_issued": "host remove foo # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 MX records, override with 'mx'\n    - mail.example.org (priority: 10)"
+      "foo.example.org requires force and override for deletion:\n  1 MX records\n    - mail.example.org (priority: 10)\nUse `-force mx` to override."
     ],
     "error": [],
     "output": [],
@@ -29658,7 +29658,7 @@
     "command_issued": "host remove foo # Should fail, because it has a PTR record, must force and override with 'ptr'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 PTR records, override with 'ptr'\n    - 10.0.0.11"
+      "foo.example.org requires force and override for deletion:\n  1 PTR records\n    - 10.0.0.11\nUse `-force ptr` to override."
     ],
     "error": [],
     "output": [],
@@ -30062,7 +30062,7 @@
     "command_issued": "host remove foo",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 NAPTR records, override with 'naptr'\n    - wonk"
+      "foo.example.org requires force and override for deletion:\n  1 NAPTR records\n    - wonk\nUse `-force naptr` to override."
     ],
     "error": [],
     "output": [],
@@ -30534,7 +30534,7 @@
     "command_issued": "host remove foo # Should fail, because it has an SRV record, must force and override with 'srv'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 SRV records, override with 'srv'\n    - _sip._tcp.example.org"
+      "foo.example.org requires force and override for deletion:\n  1 SRV records\n    - _sip._tcp.example.org\nUse `-force srv` to override."
     ],
     "error": [],
     "output": [],
@@ -31050,7 +31050,7 @@
     "command_issued": "host remove foo # Should fail, because it has a CNAME record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 cnames, override with 'cname'\n    - fubar.example.org"
+      "foo.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\nUse `-force cname` to override."
     ],
     "error": [],
     "output": [],
@@ -32133,7 +32133,7 @@
     "command_issued": "host remove foo # Should fail, because it has multiple records, must force and override with everything.",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 cnames, override with 'cname'\n    - fubar.example.org\n  1 MX records, override with 'mx'\n    - mail.example.org (priority: 10)\n  1 NAPTR records, override with 'naptr'\n    - wonk\n  1 SRV records, override with 'srv'\n    - _sip._tcp.example.org\n  1 PTR records, override with 'ptr'\n    - 10.0.0.11"
+      "foo.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\n  1 MX records\n    - mail.example.org (priority: 10)\n  1 NAPTR records\n    - wonk\n  1 SRV records\n    - _sip._tcp.example.org\n  1 PTR records\n    - 10.0.0.11\nUse `-force cname mx naptr ptr srv` to override."
     ],
     "error": [],
     "output": [],
