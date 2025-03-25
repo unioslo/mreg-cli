@@ -1170,7 +1170,7 @@ def community_host_add(args: argparse.Namespace) -> None:
         Flag("-ip", description="IP address to remove from community", metavar="IP"),
     ],
 )
-def unset_community(args: argparse.Namespace) -> None:
+def community_host_remove(args: argparse.Namespace) -> None:
     """Remove a host from a community.
 
     :param args: argparse.Namespace (network, community, host)
