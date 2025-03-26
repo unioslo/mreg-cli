@@ -411,8 +411,8 @@ def main() -> None:
     # I.e. resolved msg followed by unresolved msg with non-zero exit code
     resolved = differ.diff_resolved
     unresolved = differ.diff_unresolved
-    print_diff_summary(resolved, "Resolved diffs")
-    print_diff_summary(unresolved, "Unresolved diffs")
+    print_diff_summary(resolved, "[green italic]Resolved diffs[/]")
+    print_diff_summary(unresolved, "[red italic]Unresolved diffs[/]")
     if resolved:
         err_console.print(f"[green]Resolved {len(resolved)} diffs between {file1} and {file2}[/]")
     if unresolved:  # non-zero exit code if unresolved diffs
