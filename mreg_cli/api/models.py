@@ -2104,6 +2104,8 @@ class Community(FrozenModelWithTimestamps, APIMixin):
             manager.add_line("Hosts:")
             for host in self.hosts:
                 manager.add_line(f"{'':{padding}}{host}")
+        else:
+            manager.add_line(f"{'Hosts:':<{padding}}{len(self.hosts)}")
 
     def refetch(self) -> Self:
         """Refetch the community object."""

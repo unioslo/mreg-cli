@@ -1044,7 +1044,7 @@ def community_info(args: argparse.Namespace) -> None:
     short_desc="List communities",
     flags=[
         Flag("network", description="Network", metavar="NETWORK"),
-        Flag("-hosts", action="store_true", description="Include hosts in output."),
+        Flag("-hosts", action="store_true", description="Show names of hosts."),
     ],
 )
 def community_list(args: argparse.Namespace) -> None:

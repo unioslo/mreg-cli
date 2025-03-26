@@ -36633,13 +36633,15 @@
     "output": [
       "Name:         guests",
       "Description:  Guest hosts.",
-      "Created:      Fri Mar 21 19:22:15 2025",
-      "Updated:      Fri Mar 21 19:22:15 2025",
+      "Created:      Tue Mar 25 15:39:35 2025",
+      "Updated:      Tue Mar 25 15:39:35 2025",
+      "Hosts:        0",
       "",
       "Name:         lab",
       "Description:  Lab hosts.",
-      "Created:      Fri Mar 21 19:22:15 2025",
-      "Updated:      Fri Mar 21 19:22:15 2025",
+      "Created:      Tue Mar 25 15:39:35 2025",
+      "Updated:      Tue Mar 25 15:39:35 2025",
+      "Hosts:        0",
       ""
     ],
     "api_requests": [
@@ -36663,8 +36665,8 @@
                 "value": true
               }
             ],
-            "created_at": "2025-03-21T19:22:13.233699+01:00",
-            "updated_at": "2025-03-21T19:22:14.816831+01:00"
+            "created_at": "2025-03-25T15:39:32.702570+01:00",
+            "updated_at": "2025-03-25T15:39:34.468950+01:00"
           },
           "communities": [
             {
@@ -36673,8 +36675,8 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T19:22:15.337413+01:00",
-              "updated_at": "2025-03-21T19:22:15.337422+01:00"
+              "created_at": "2025-03-25T15:39:35.128536+01:00",
+              "updated_at": "2025-03-25T15:39:35.128555+01:00"
             },
             {
               "name": "lab",
@@ -36682,12 +36684,12 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T19:22:15.393645+01:00",
-              "updated_at": "2025-03-21T19:22:15.393657+01:00"
+              "created_at": "2025-03-25T15:39:35.175749+01:00",
+              "updated_at": "2025-03-25T15:39:35.175759+01:00"
             }
           ],
-          "created_at": "2025-03-21T19:22:12.954759+01:00",
-          "updated_at": "2025-03-21T19:22:14.283369+01:00",
+          "created_at": "2025-03-25T15:39:32.349579+01:00",
+          "updated_at": "2025-03-25T15:39:33.857970+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -37485,8 +37487,9 @@
     "output": [
       "Name:         guests",
       "Description:  Guest hosts.",
-      "Created:      Fri Mar 21 19:22:15 2025",
-      "Updated:      Fri Mar 21 19:22:15 2025"
+      "Created:      Tue Mar 25 15:50:54 2025",
+      "Updated:      Tue Mar 25 15:50:54 2025",
+      "Hosts:        0"
     ],
     "api_requests": [
       {
@@ -37509,8 +37512,8 @@
                 "value": true
               }
             ],
-            "created_at": "2025-03-21T19:22:13.233699+01:00",
-            "updated_at": "2025-03-21T19:22:14.816831+01:00"
+            "created_at": "2025-03-25T15:50:52.089454+01:00",
+            "updated_at": "2025-03-25T15:50:53.780602+01:00"
           },
           "communities": [
             {
@@ -37519,8 +37522,8 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T19:22:15.337413+01:00",
-              "updated_at": "2025-03-21T19:22:15.337422+01:00"
+              "created_at": "2025-03-25T15:50:54.290626+01:00",
+              "updated_at": "2025-03-25T15:50:54.290640+01:00"
             },
             {
               "name": "lab",
@@ -37530,12 +37533,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": null,
-              "created_at": "2025-03-21T19:22:15.393645+01:00",
-              "updated_at": "2025-03-21T19:22:15.393657+01:00"
+              "created_at": "2025-03-25T15:50:54.354432+01:00",
+              "updated_at": "2025-03-25T15:50:54.354451+01:00"
             }
           ],
-          "created_at": "2025-03-21T19:22:12.954759+01:00",
-          "updated_at": "2025-03-21T19:22:14.283369+01:00",
+          "created_at": "2025-03-25T15:50:51.760763+01:00",
+          "updated_at": "2025-03-25T15:50:53.097286+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -38619,13 +38622,14 @@
     "output": [
       "Name:         guests",
       "Description:  Guest hosts.",
-      "Created:      Fri Mar 21 19:22:15 2025",
-      "Updated:      Fri Mar 21 19:22:15 2025",
+      "Created:      Tue Mar 25 15:50:54 2025",
+      "Updated:      Tue Mar 25 15:50:54 2025",
+      "Hosts:        0",
       "",
       "Name:         labequipment",
       "Description:  Lab equipment (expensive)",
-      "Created:      Fri Mar 21 19:22:15 2025",
-      "Updated:      Fri Mar 21 19:22:16 2025",
+      "Created:      Tue Mar 25 15:50:54 2025",
+      "Updated:      Tue Mar 25 15:50:54 2025",
       "Hosts:",
       "              tinyhost.example.org",
       ""
@@ -38651,8 +38655,8 @@
                 "value": true
               }
             ],
-            "created_at": "2025-03-21T19:22:13.233699+01:00",
-            "updated_at": "2025-03-21T19:22:14.816831+01:00"
+            "created_at": "2025-03-25T15:50:52.089454+01:00",
+            "updated_at": "2025-03-25T15:50:53.780602+01:00"
           },
           "communities": [
             {
@@ -38661,8 +38665,8 @@
               "network": 10,
               "hosts": [],
               "global_name": null,
-              "created_at": "2025-03-21T19:22:15.337413+01:00",
-              "updated_at": "2025-03-21T19:22:15.337422+01:00"
+              "created_at": "2025-03-25T15:50:54.290626+01:00",
+              "updated_at": "2025-03-25T15:50:54.290640+01:00"
             },
             {
               "name": "labequipment",
@@ -38672,12 +38676,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": null,
-              "created_at": "2025-03-21T19:22:15.393645+01:00",
-              "updated_at": "2025-03-21T19:22:16.015761+01:00"
+              "created_at": "2025-03-25T15:50:54.354432+01:00",
+              "updated_at": "2025-03-25T15:50:54.993544+01:00"
             }
           ],
-          "created_at": "2025-03-21T19:22:12.954759+01:00",
-          "updated_at": "2025-03-21T19:22:14.283369+01:00",
+          "created_at": "2025-03-25T15:50:51.760763+01:00",
+          "updated_at": "2025-03-25T15:50:53.097286+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
