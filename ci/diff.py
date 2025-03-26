@@ -7,13 +7,17 @@ import re
 import sys
 import urllib.parse
 from enum import StrEnum
-from typing import Any, Generator, Iterable, NamedTuple
+from typing import Any, Generator, Iterable, Literal, NamedTuple, Self, TypeAlias, overload
 
 from rich import box
 from rich.console import Console, Group
 from rich.markup import escape
 from rich.panel import Panel
 from rich.prompt import Prompt
+from rich.table import Table
+
+ProcessedCommand: TypeAlias = dict[str, Any]
+UnprocessedCommand: TypeAlias = dict[str, Any]
 
 console = Console(soft_wrap=True, highlight=False)
 """Stdout console used to print diffs."""
@@ -77,12 +81,35 @@ def fmt_lines(lines: Iterable[str]) -> str:
 DIFF_HEADER = f"{fmt_line('-expected')}, {fmt_line('+tested')}"
 
 
-def get_diff(count: int, expected: list[str], result: list[str]) -> Group:
-    """Print a diff between two lists of strings."""
-    gen = difflib.ndiff(expected, result)
-    lines = fmt_lines(gen)
-    diff_title = f"\n[bold]#{count}[/]"
-    return Group(diff_title, DIFF_HEADER, Panel(lines, box=box.HORIZONTALS))
+class Diff(NamedTuple):
+    """A diff between two lists of strings."""
+
+    number: int
+    """The number of the diff."""
+
+    diff: list[str]
+    """The diff between the two lists of strings."""
+
+    @property
+    def renderable(self) -> Group:
+        """Console renderable for the diff."""
+        diff_lines = fmt_lines(self.diff)
+        diff_title = f"\n[bold]#{self.number}[/]"
+        return Group(diff_title, DIFF_HEADER, Panel(diff_lines, box=box.HORIZONTALS))
+
+    @classmethod
+    def from_lines(cls, number: int, expected: list[str], result: list[str]) -> Self:
+        """Print a diff between two lists of strings."""
+        lines = list(difflib.ndiff(expected, result))
+        return cls(number, lines)
+
+    def get_changed_lines(self) -> Iterable[str]:
+        """Get lines with changes (added or removed)."""
+        return (line for line in self.diff if line.startswith("+ ") or line.startswith("- "))
+
+    def get_changes(self) -> str:
+        """Get a formatted string of only the changes in the diff."""
+        return "\n".join(fmt_line(line) for line in self.get_changed_lines())
 
 
 class Choice(StrEnum):
@@ -142,7 +169,17 @@ def preprocess_json(s: str) -> str:
     return s
 
 
-def load_commands(file: str, preprocess: bool = True) -> list[dict[str, Any]]:
+@overload
+def load_commands(file: str, *, preprocess: Literal[False]) -> list[UnprocessedCommand]: ...
+
+
+@overload
+def load_commands(file: str, *, preprocess: Literal[True]) -> list[ProcessedCommand]: ...
+
+
+def load_commands(
+    file: str, *, preprocess: bool = True
+) -> list[ProcessedCommand] | list[UnprocessedCommand]:
     """Load JSON commands from a test suite log file."""
     with open(file, "r") as f:
         s = f.read()
@@ -159,8 +196,11 @@ def load_commands(file: str, preprocess: bool = True) -> list[dict[str, Any]]:
 class TestCommand(NamedTuple):
     """A single command from a test suite log."""
 
-    command: dict[str, Any]
-    original: dict[str, Any]
+    command: ProcessedCommand
+    """Processed command data, with placeholders for non-deterministic values."""
+
+    original: UnprocessedCommand
+    """Unprocessed original command data."""
 
 
 class TestSuiteResult:
@@ -168,7 +208,7 @@ class TestSuiteResult:
 
     def __init__(self, file: str) -> None:
         self.file = file
-        self.commands = load_commands(file)
+        self.commands = load_commands(file, preprocess=True)
         self.commands_original = load_commands(file, preprocess=False)
 
     def iterate(
@@ -195,6 +235,23 @@ class TestSuiteResult:
                 )
 
 
+class CommandDiff(NamedTuple):
+    """(un)resolved diff between two test suite results."""
+
+    expected: UnprocessedCommand
+    """The command that was expected."""
+
+    result: UnprocessedCommand
+    """The command that was actually run."""
+
+    diff: Diff
+    """The diff between the two commands."""
+
+    def get_command(self) -> str:
+        """Get the name of the command that was run."""
+        return self.expected.get("command", self.result.get("command", "<unknown>"))
+
+
 class CommandDiffer:
     """Diffs the results (JSON output) of commands from two files."""
 
@@ -208,8 +265,8 @@ class CommandDiffer:
         self.expected = TestSuiteResult(file1)
         self.result = TestSuiteResult(file2)
 
-        self.diff_resolved = 0
-        self.diff_unresolved = 0
+        self.diff_resolved: list[CommandDiff] = []
+        self.diff_unresolved: list[CommandDiff] = []
 
     def diff(self) -> None:
         """Diff the two files."""
@@ -232,6 +289,14 @@ class CommandDiffer:
             for line in differences:
                 err_console.print(fmt_line(line))
             raise CommandCountError(len(expected_commands), len(result_commands))
+
+    def log_unresolved_diff(self, expected: TestCommand, result: TestCommand, diff: Diff) -> None:
+        """Log an unresolved diff between two commands."""
+        self.diff_unresolved.append(CommandDiff(expected.original, result.original, diff))
+
+    def log_resolved_diff(self, expected: TestCommand, result: TestCommand, diff: Diff) -> None:
+        """Log a resolved diff between two commands."""
+        self.diff_resolved.append(CommandDiff(expected.original, result.original, diff))
 
     def diff_command_results(self) -> None:
         """Diff the contents of each command in the two files."""
@@ -257,10 +322,10 @@ class CommandDiffer:
 
             if expected_lines != result_lines:
                 diff_n += 1
-                d = get_diff(diff_n, expected_lines, result_lines)
+                d = Diff.from_lines(diff_n, expected_lines, result_lines)
                 if not self.review:
-                    self.diff_unresolved += 1
-                    console.print(d)
+                    self.log_unresolved_diff(expected, result, d)
+                    console.print(d.renderable)
                     continue  # Nothing more to do for this command
 
                 if no_all:
@@ -268,7 +333,7 @@ class CommandDiffer:
                 elif yes_all:
                     choice = Choice.YES
                 else:
-                    console.print(d)
+                    console.print(d.renderable)
                     choice = Prompt.ask(
                         f"Accept change #{diff_n}? ({Choice.as_string()})",
                         choices=list(Choice),
@@ -284,21 +349,40 @@ class CommandDiffer:
                 if choice == Choice.YES:
                     # Accept new line
                     new_testsuite_results.append(result.original)
-                    self.diff_resolved += 1
+                    self.log_resolved_diff(expected, result, d)
                 else:
                     # Keep old line
                     new_testsuite_results.append(expected.original)
-                    self.diff_unresolved += 1
+                    self.log_unresolved_diff(expected, result, d)
             else:
                 # No diff, keep old line
                 new_testsuite_results.append(expected.original)
 
         # Only write back changes if we are in review mode and there are changes
-        if self.review and self.diff_resolved > 0:
+        if self.review and len(self.diff_resolved) > 0:
             # Write accepted changes back to file1
             with open(self.file1, "w") as f:
                 json.dump(new_testsuite_results, f, indent=2)
             err_console.print(f"Wrote accepted changes back to {self.file1}")
+
+
+def print_diff_summary(diffs: list[CommandDiff], title: str) -> None:
+    """Print a summary of diffs."""
+    if diffs:
+        tbl = Table(
+            "Command",
+            "Diff",
+            title=title,
+            show_header=True,
+            show_lines=True,
+            expand=True,
+        )
+        for cmd in diffs:
+            tbl.add_row(
+                cmd.get_command(),
+                cmd.diff.get_changes(),
+            )
+        err_console.print(tbl)
 
 
 def main() -> None:
@@ -327,10 +411,14 @@ def main() -> None:
     # I.e. resolved msg followed by unresolved msg with non-zero exit code
     resolved = differ.diff_resolved
     unresolved = differ.diff_unresolved
+    print_diff_summary(resolved, "Resolved diffs")
+    print_diff_summary(unresolved, "Unresolved diffs")
     if resolved:
-        err_console.print(f"[green]Resolved {resolved} diffs between {file1} and {file2}[/]")
+        err_console.print(f"[green]Resolved {len(resolved)} diffs between {file1} and {file2}[/]")
     if unresolved:  # non-zero exit code if unresolved diffs
-        err_console.print(f"[red]{unresolved} unresolved diffs between {file1} and {file2}.[/]")
+        err_console.print(
+            f"[red]{len(unresolved)} unresolved diffs between {file1} and {file2}.[/]"
+        )
         sys.exit(1)
     if not resolved and not unresolved:  # no diffs found
         err_console.print(f"No differences found between {file1} and {file2}")
