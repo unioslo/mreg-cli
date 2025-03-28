@@ -52,6 +52,14 @@ class Endpoint(str, Enum):
     NetworksAddExcludedRanges = "/api/v1/networks/{}/excluded_ranges/"
     NetworksRemoveExcludedRanges = "/api/v1/networks/{}/excluded_ranges/{}"
 
+    # Network policies, attributes, and communities
+    NetworkCommunities = "/api/v1/networks/{}/communities/"
+    NetworkCommunity = "/api/v1/networks/{}/communities/{}"
+    NetworkCommunityHosts = "/api/v1/networks/{}/communities/{}/hosts/"
+    NetworkCommunityHost = "/api/v1/networks/{}/communities/{}/hosts/{}"
+    NetworkPolicies = "/api/v1/networkpolicies/"
+    NetworkPolicyAttributes = "/api/v1/networkpolicyattributes/"
+
     HostPolicyRoles = "/api/v1/hostpolicy/roles/"
     HostPolicyRolesAddAtom = "/api/v1/hostpolicy/roles/{}/atoms/"
     HostPolicyRolesRemoveAtom = "/api/v1/hostpolicy/roles/{}/atoms/{}"
