@@ -97,6 +97,17 @@ JsonMapping = Mapping[str, Json]
 QueryParams = MutableMapping[str, str | int | None]
 
 
+class CompletionType(StrEnum):
+    """Flag completion types.
+
+    Provides richer completions for flags.
+    """
+
+    NETWORK = "network"
+    NETWORK_POLICY = "network_policy"
+    NETWORK_POLICY_COMMUNITY = "network_policy_community"
+
+
 class Flag:
     """Class for flag information available to commands in the CLI."""
 
@@ -112,6 +123,7 @@ class Flag:
         required: bool = False,
         metavar: str | None = None,
         action: str | None = None,
+        completion_type: CompletionType | None = None,
     ):
         """Initialize a Flag object."""
         self.name = name
@@ -124,6 +136,7 @@ class Flag:
         self.required = required
         self.metavar = metavar
         self.action = action
+        self.completion_type = completion_type
 
 
 class Command(NamedTuple):

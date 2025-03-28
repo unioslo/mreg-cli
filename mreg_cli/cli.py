@@ -12,13 +12,16 @@ import os
 import shlex
 import sys
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, Protocol
+from datetime import datetime
+from functools import lru_cache
+from typing import TYPE_CHECKING, Any, Callable, Protocol
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from pydantic import ValidationError as PydanticValidationError
 
 # Import all the commands
+from mreg_cli.api.models import Network, NetworkOrIP
 from mreg_cli.commands.dhcp import DHCPCommands
 from mreg_cli.commands.group import GroupCommands
 from mreg_cli.commands.help import HelpCommands
@@ -36,8 +39,9 @@ from mreg_cli.commands.zone import ZoneCommands
 from mreg_cli.exceptions import CliError, CliExit, CliWarning, ValidationError
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import CommandFunc, Flag
+from mreg_cli.types import CommandFunc, CompletionType, Flag, IP_NetworkT
 from mreg_cli.utilities.api import create_and_set_corrolation_id, last_request_url
+from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +81,19 @@ def _create_command_group(parent: argparse.ArgumentParser) -> SubparserType:
     )
 
 
+# CompleterType = Generator[Completion, None, None]
+CompleterFunc = Callable[[str], Generator[Completion, None, None]]
+
+
+class CommandContext:
+    """Context for a command."""
+
+    def __init__(self) -> None:
+        """Initialize a CommandContext object."""
+        self.last_keypress_time: datetime | None = None
+        self.extra: dict[str, Any] = {}
+
+
 class Command(Completer):
     """Command class for the CLI.
 
@@ -99,6 +116,8 @@ class Command(Completer):
         for flag in flags:
             if flag.name.startswith("-"):
                 self.flags[flag.name.lstrip("-")] = flag
+
+        self.context = CommandContext()
 
     def add_command(
         self,
@@ -204,6 +223,7 @@ class Command(Completer):
         """
         cur = document.get_word_before_cursor()
         words = document.text.strip().split(" ")
+        self.context.last_keypress_time = datetime.now()
         yield from self.complete(cur, words)
 
     def complete(self, cur: str, words: list[str]) -> Generator[Completion | Any, Any, None]:
@@ -241,6 +261,13 @@ class Command(Completer):
 
         # If none of the above then check if some of the flags match
 
+        # Complete flag values with special completers
+        for word in words:
+            if word.startswith("-"):
+                flag = word.lstrip("-")
+                if flag in self.flags:
+                    yield from self.complete_flag(cur, flag)
+
         # If current word is empty then no flag is suggested
         if not cur:
             return
@@ -261,6 +288,34 @@ class Command(Completer):
                         start_position=-len(cur),
                     )
 
+    def check_keypress_time(self, interval: int | float) -> bool:
+        """Check if the last keypress was _not_ within the given interval.
+
+        :param interval: The interval to check.
+        """
+        if not self.context.last_keypress_time:
+            return False
+        return (datetime.now() - self.context.last_keypress_time).total_seconds() > interval
+
+    def complete_flag(self, cur: str, flag: str) -> Generator[Completion | Any, Any, None]:
+        """Generate completions for flags.
+
+        :param cur: The current word.
+        :param flag: The flag to complete.
+        """
+        if cur == flag:
+            return
+
+        if self.check_keypress_time(0.5):
+            return
+
+        flag_completers: dict[CompletionType | str, CompleterFunc] = {
+            CompletionType.NETWORK: complete_network
+        }
+        f = self.flags[flag]
+        if f.completion_type and (completer := flag_completers.get(f.completion_type)):
+            yield from completer(cur)
+
     def process_command_line(self, line: str) -> None:
         """Process a line containing a command."""
         # OutputManager is a singleton class so we
@@ -274,14 +329,46 @@ class Command(Completer):
         except (CliWarning, CliError) as exc:
             exc.print_and_log()
             return
-        # Create and set the corrolation id, using the cleaned command
-        # as the suffix. This is used to track the command in the logs
-        # on the server side.
-        create_and_set_corrolation_id(cmd)
-        # Run the command
-        cli.parse(cmd)
-        # Render the output
-        output.render()
+
+        try:
+            # Create and set the corrolation id, using the cleaned command
+            # as the suffix. This is used to track the command in the logs
+            # on the server side.
+            create_and_set_corrolation_id(cmd)
+            # Run the command
+            self.parse(cmd)
+            # Render the output
+            output.render()
+        finally:
+            # Reset context after invocation
+            # Avoids leaking state between commands
+            self.context = CommandContext()
+
+
+@lru_cache(maxsize=10)
+def complete_network(cur: str) -> Generator[Completion, None, None]:
+    """Generate completions for networks.
+
+    :param cur: The current word.
+    """
+
+    def _do_complete(network: IP_NetworkT) -> Generator[Completion, None, None]:
+        yield Completion(str(network))
+
+    # Check if argument is valid network address
+    # if not cur:
+    #     return
+    if net := NetworkOrIP.parse(cur, mode="network"):
+        yield from _do_complete(net)
+        return
+
+    # Get all networks
+    if not cur.endswith("*"):
+        cur += "*"
+    arg, val = convert_wildcard_to_regex("network", cur)
+    networks = Network.get_by_query({arg: val})
+    for n in networks:
+        yield from _do_complete(n.ip_network)
 
 
 # Top parser is the root of all the command parsers
