@@ -29,6 +29,7 @@ from mreg_cli.exceptions import (
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
+from mreg_cli.utilities.shared import name_with_domain
 
 
 def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
@@ -124,7 +125,7 @@ def _ip_move(ipaddr: str, fromhost: str, tohost: str, ipversion: IP_Version) -> 
     OutputManager().add_line(msg)
 
 
-def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version) -> None:
+def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version, force: bool = False) -> None:
     """Remove A record from host. If <name> is an alias the cname host is used.
 
     :param name: Name of the target host.
@@ -141,6 +142,15 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version) -> None:
     host_ip = host.get_ip(ip)
     if not host_ip:
         raise EntityNotFound(f"Host {host} does not have IP {ip}")
+
+    # Check if we fetched the host via a CNAME.
+    # Ensure arg name ends with configured domain
+    # (e.g. "foo" -> "foo.example.com")
+    name = name_with_domain(name)
+
+    for cname in host.cnames:
+        if not force and name == cname.name.casefold():
+            raise ForceMissing(f"{name} is a CNAME for {host.name}, must force.")
 
     if host_ip.delete():
         OutputManager().add_ok(f"Removed ipaddress {ipaddr} from {host}")
@@ -322,17 +332,21 @@ def a_move(args: argparse.Namespace) -> None:
     flags=[
         Flag("name", description="Name of the target host.", metavar="NAME"),
         Flag("ip", description="IP to remove.", metavar="IP"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 def a_remove(args: argparse.Namespace) -> None:
-    """Remove A record from host. If <name> is an alias the cname host is used.
+    """Remove A record from host.
 
-    :param args: argparse.Namespace (name, ip)
+    If <name> is a CNAME, force is required.
+
+    :param args: argparse.Namespace (name, ip, force)
     """
     name: str = args.name
     ip: str = args.ip
+    force: bool = args.force
 
-    _ip_remove(name, ip, 4)
+    _ip_remove(name, ip, 4, force)
 
 
 @command_registry.register_command(
@@ -461,19 +475,21 @@ def aaaa_move(args: argparse.Namespace) -> None:
     flags=[
         Flag("name", description="Name of the target host.", metavar="NAME"),
         Flag("ip", description="IPv6 to remove.", metavar="IPv6"),
+        Flag("-force", action="store_true", description="Enable force."),
     ],
 )
 def aaaa_remove(args: argparse.Namespace) -> None:
     """Remove AAAA record from host.
 
-    If <name> is an alias the cname host is used.
+    If <name> is a CNAME, force is required.
 
-    :param args: argparse.Namespace (name, ip)
+    :param args: argparse.Namespace (name, ip, force)
     """
     name: str = args.name
     ip: str = args.ip
+    force: bool = args.force
 
-    _ip_remove(name, ip, 6)
+    _ip_remove(name, ip, 6, force)
 
 
 @command_registry.register_command(
