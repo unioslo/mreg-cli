@@ -29,7 +29,6 @@ from mreg_cli.exceptions import (
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
-from mreg_cli.utilities.shared import name_with_domain
 
 
 def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
