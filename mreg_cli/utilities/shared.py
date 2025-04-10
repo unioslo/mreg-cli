@@ -63,20 +63,3 @@ def sizeof_fmt(num: float, suffix: str = "B"):
             return f"{num:3.1f}{unit}{suffix}"
         num /= 1024.0
     return f"{num:.1f}Yi{suffix}"
-
-
-def name_with_domain(name: str) -> str:
-    """Append the default domain to the name if missing.
-
-    Folds case of the name for consistency.
-
-    :param name: The name to convert.
-    :return: The name with the default domain appended if it was missing.
-    """
-    from mreg_cli.config import MregCliConfig
-
-    domain = MregCliConfig().get_default_domain()
-    name = name.casefold()
-    if not name.endswith(domain):
-        name = f"{name}.{domain.lstrip('.')}"
-    return name

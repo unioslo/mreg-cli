@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.fields import MacAddress
+from mreg_cli.api.fields import HostName, MacAddress
 from mreg_cli.api.models import Host, HostList, IPAddress, Network, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
@@ -146,11 +146,10 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version, force: bool = Fals
     # Check if we fetched the host via a CNAME.
     # Ensure arg name ends with configured domain
     # (e.g. "foo" -> "foo.example.com")
-    name = name_with_domain(name)
-
+    name_hostname = HostName.parse_or_raise(name)
     for cname in host.cnames:
-        if not force and name == cname.name.casefold():
-            raise ForceMissing(f"{name} is a CNAME for {host.name}, must force.")
+        if not force and name_hostname == cname.name.casefold():
+            raise ForceMissing(f"{name_hostname} is a CNAME for {host.name}, must force.")
 
     if host_ip.delete():
         OutputManager().add_ok(f"Removed ipaddress {ipaddr} from {host}")
