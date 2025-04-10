@@ -18,7 +18,7 @@ from __future__ import annotations
 import argparse
 
 from mreg_cli.api.fields import HostName, MacAddress
-from mreg_cli.api.models import Host, HostList, IPAddress, Network, NetworkOrIP
+from mreg_cli.api.models import CNAME, Host, HostList, IPAddress, Network, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     DeleteError,
@@ -131,7 +131,7 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version, force: bool = Fals
     :param ipaddr: IP to remove.
     :param ipversion: 4 or 6
     """
-    host = Host.get_by_any_means_or_raise(name)
+    host = Host.get_by_any_means_or_raise(name, inform_as_cname=False, inform_as_ptr=False)
     ip = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
     if ip.version != ipversion:
         raise InputFailure(
@@ -143,12 +143,13 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version, force: bool = Fals
         raise EntityNotFound(f"Host {host} does not have IP {ip}")
 
     # Check if we fetched the host via a CNAME.
-    # Ensure arg name ends with configured domain
-    # (e.g. "foo" -> "foo.example.com")
-    name_hostname = HostName.parse_or_raise(name)
-    for cname in host.cnames:
-        if not force and name_hostname == cname.name.casefold():
-            raise ForceMissing(f"{name_hostname} is a CNAME for {host.name}, must force.")
+    if not force and host.cnames:
+        # Ensure arg is a valid host name with a domain
+        # (e.g. "foo" -> "foo.example.com")
+        name_hostname = HostName.parse_or_raise(name)
+        cname = CNAME.get_by_field("name", name_hostname)
+        if cname:
+            raise ForceMissing(f"{cname.name} is a CNAME for {host.name}, must force.")
 
     if host_ip.delete():
         OutputManager().add_ok(f"Removed ipaddress {ipaddr} from {host}")
