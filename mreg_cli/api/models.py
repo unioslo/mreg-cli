@@ -17,6 +17,7 @@ from pydantic import (
     field_validator,
 )
 from pydantic import ValidationError as PydanticValidationError
+from requests import Response
 from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
@@ -3765,3 +3766,22 @@ class UserInfo(BaseModel):
             outputmanager.add_line(f"  {group}")
 
         UserPermission.output_multiple(self.permissions)
+
+
+class ErrorResponse(FrozenModel):
+    """DRF error response model."""
+
+    detail: str
+
+    @classmethod
+    def to_string(cls, resp: Response) -> str | None:
+        """Attempt to get the detail string from the response.
+
+        :param resp: The response object to parse.
+
+        :returns: The detail string or None if resonse cannot be parsed.
+        """
+        try:
+            return cls.model_validate_json(resp.text).detail
+        except ValidationError:
+            pass

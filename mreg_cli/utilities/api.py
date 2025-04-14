@@ -181,6 +181,8 @@ def prompt_for_password_and_try_update_token() -> None:
 
 def auth_and_update_token(username: str, password: str) -> None:
     """Perform the actual token update."""
+    from mreg_cli.api.models import ErrorResponse  # avoid circular import
+
     tokenurl = urljoin(MregCliConfig().get_url(), "/api/token-auth/")
     logger.info("Updating token for %s @ %s", username, tokenurl)
     try:
@@ -189,16 +191,18 @@ def auth_and_update_token(username: str, password: str) -> None:
         error(e)
     except requests.exceptions.ConnectionError as err:
         error(err)
+
     if not result.ok:
-        try:
-            res = result.json()
-        except json.JSONDecodeError:
-            res = result.text
-        if result.status_code == 400:
-            if "non_field_errors" in res:
-                raise LoginFailedError("Invalid username/password")
-        else:
-            raise LoginFailedError(res)
+        err_msg = ErrorResponse.to_string(result)
+        # We don't have an error response with a "detail" field
+        if not err_msg:
+            logger.error("Failed to login: %s", result.text)
+            if "non_field_errors" in result.text:
+                err_msg = "Invalid username/password"
+            else:
+                err_msg = result.text
+        raise LoginFailedError(err_msg)
+
     token = result.json()["token"]
     logger.info("Token updated for %s @ %s", username, tokenurl)
     set_session_token(token)
