@@ -196,11 +196,12 @@ def auth_and_update_token(username: str, password: str) -> None:
         err = ErrorResponse.to_string(result)
         # We don't have an error response with a "detail" field
         if not err:
-            logger.error("Failed to login: %s", result.text)
-            if "non_field_errors" in result.text:
+            body = result.text
+            logger.error("Failed to login: %s", body)
+            if "non_field_errors" in body:
                 err = "Invalid username/password"
             else:
-                err = result.text
+                err = body
         raise LoginFailedError(err)
 
     token = result.json()["token"]
