@@ -22,6 +22,7 @@ from pydantic import BaseModel, TypeAdapter, field_validator
 from requests import Response
 
 from mreg_cli.__about__ import __version__
+from mreg_cli.api.errors import parse_mreg_error_response
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     APINotOk,
@@ -189,16 +190,20 @@ def auth_and_update_token(username: str, password: str) -> None:
         error(e)
     except requests.exceptions.ConnectionError as err:
         error(err)
+
     if not result.ok:
-        try:
-            res = result.json()
-        except json.JSONDecodeError:
-            res = result.text
-        if result.status_code == 400:
-            if "non_field_errors" in res:
-                raise LoginFailedError("Invalid username/password")
+        err = parse_mreg_error_response(result)
+        if err:
+            msg = err.as_string()
         else:
-            raise LoginFailedError(res)
+            body = result.text
+            logger.error("Failed to login: %s", body)
+            if "non_field_errors" in body:
+                msg = "Invalid username/password"
+            else:
+                msg = body
+        raise LoginFailedError(msg)
+
     token = result.json()["token"]
     logger.info("Token updated for %s @ %s", username, tokenurl)
     set_session_token(token)
@@ -208,13 +213,20 @@ def auth_and_update_token(username: str, password: str) -> None:
 def result_check(result: Response, operation_type: str, url: str) -> None:
     """Check the result of a request."""
     if not result.ok:
-        message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
-        try:
-            body = result.json()
-        except ValueError:
-            pass
+        err = parse_mreg_error_response(result)
+        msg = ""
+        if err:
+            msg = err.as_string()
         else:
-            message += f"\n{json.dumps(body, indent=2)}"
+            try:
+                msg = json.dumps(json.loads(result.text), indent=2)
+            except ValueError:
+                pass
+
+        message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
+        if msg:
+            message += f"\n{msg}"
+
         raise APINotOk(message)
 
 
