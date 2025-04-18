@@ -22,6 +22,7 @@ from pydantic import BaseModel, TypeAdapter, field_validator
 from requests import Response
 
 from mreg_cli.__about__ import __version__
+from mreg_cli.api.errors import parse_mreg_error_response
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     APINotOk,
@@ -181,8 +182,6 @@ def prompt_for_password_and_try_update_token() -> None:
 
 def auth_and_update_token(username: str, password: str) -> None:
     """Perform the actual token update."""
-    from mreg_cli.api.models import ErrorResponse  # avoid circular import
-
     tokenurl = urljoin(MregCliConfig().get_url(), "/api/token-auth/")
     logger.info("Updating token for %s @ %s", username, tokenurl)
     try:
@@ -193,16 +192,19 @@ def auth_and_update_token(username: str, password: str) -> None:
         error(err)
 
     if not result.ok:
-        err = ErrorResponse.to_string(result)
+        err = parse_mreg_error_response(result)
         # We don't have an error response with a "detail" field
-        if not err:
+
+        if err:
+            msg = err.as_string()
+        else:
             body = result.text
             logger.error("Failed to login: %s", body)
             if "non_field_errors" in body:
-                err = "Invalid username/password"
+                msg = "Invalid username/password"
             else:
-                err = body
-        raise LoginFailedError(err)
+                msg = body
+        raise LoginFailedError(msg)
 
     token = result.json()["token"]
     logger.info("Token updated for %s @ %s", username, tokenurl)
@@ -213,13 +215,20 @@ def auth_and_update_token(username: str, password: str) -> None:
 def result_check(result: Response, operation_type: str, url: str) -> None:
     """Check the result of a request."""
     if not result.ok:
-        message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
-        try:
-            body = result.json()
-        except ValueError:
-            pass
+        err = parse_mreg_error_response(result)
+        msg = ""
+        if err:
+            msg = err.as_string()
         else:
-            message += f"\n{json.dumps(body, indent=2)}"
+            try:
+                msg = json.dumps(json.loads(result.text), indent=2)
+            except ValueError:
+                pass
+
+        message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
+        if msg:
+            message += f"\n{msg}"
+
         raise APINotOk(message)
 
 
