@@ -193,8 +193,6 @@ def auth_and_update_token(username: str, password: str) -> None:
 
     if not result.ok:
         err = parse_mreg_error_response(result)
-        # We don't have an error response with a "detail" field
-
         if err:
             msg = err.as_string()
         else:
