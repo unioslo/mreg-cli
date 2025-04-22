@@ -10,6 +10,15 @@ from requests import Response
 logger = logging.getLogger(__name__)
 
 
+def fmt_error_code(code: str) -> str:
+    """Format the error code.
+
+    :param code: The error code to format.
+    :returns: The formatted error code.
+    """
+    return code.replace("_", " ").title()
+
+
 class MREGError(BaseModel):
     """Details of an MREG error."""
 
@@ -24,7 +33,7 @@ class MREGError(BaseModel):
         :param messages: The list of error messages.
         :returns: A formatted error message.
         """
-        msg = f"{self.code} - {self.detail}"
+        msg = f"{fmt_error_code(self.code)} - {self.detail}"
         if self.attr:
             msg += f": {self.attr}"
         return msg
@@ -42,7 +51,7 @@ class MREGErrorResponse(BaseModel):
         :returns: A string representation of the error response.
         """
         errors = "; ".join([error.fmt_error() for error in self.errors])
-        t = self.type.replace("_", " ").title()
+        t = fmt_error_code(self.type)
         # NOTE: could result in colon followed by no errors, but it's unlikely
         return f"{t}: {errors}"
 
