@@ -151,6 +151,8 @@ def prompt_for_password_and_login(user: str, url: str, catch_exception: bool = T
     except CliError as e:
         if catch_exception:
             e.print_and_log()
+        if isinstance(e, LoginFailedError):
+            raise e
         else:
             raise LoginFailedError("Updating token failed.") from e
 
