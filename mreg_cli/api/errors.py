@@ -45,7 +45,7 @@ class MREGErrorResponse(BaseModel):
     type: str
     errors: list[MREGError] = []
 
-    def as_string(self) -> str:
+    def as_str(self) -> str:
         """Convert the error response to a string.
 
         :returns: A string representation of the error response.

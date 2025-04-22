@@ -192,7 +192,7 @@ def auth_and_update_token(username: str, password: str) -> None:
     if not result.ok:
         err = parse_mreg_error(result)
         if err:
-            msg = err.as_string()
+            msg = err.as_str()
         else:
             msg = result.text
         raise LoginFailedError(msg)
@@ -207,7 +207,7 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
     """Check the result of a request."""
     if not result.ok:
         if err := parse_mreg_error(result):
-            res_text = err.as_json_str()  # NOTE: do we want to use as_string() instead?
+            res_text = err.as_json_str()  # NOTE: do we want to use as_str() instead?
         else:
             res_text = result.text
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}\n{res_text}'
