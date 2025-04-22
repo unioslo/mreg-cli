@@ -1,0 +1,69 @@
+"""Parsing of error responses from the MREG API."""
+
+from __future__ import annotations
+
+import logging
+
+from pydantic import BaseModel, ValidationError
+from requests import Response
+
+logger = logging.getLogger(__name__)
+
+
+class MREGError(BaseModel):
+    """Details of an MREG error."""
+
+    code: str
+    detail: str
+    attr: str | None
+
+    def fmt_error(self) -> str:
+        """Format the error message.
+
+        :param field: The field name.
+        :param messages: The list of error messages.
+        :returns: A formatted error message.
+        """
+        msg = f"{self.code} - {self.detail}"
+        if self.attr:
+            msg += f": {self.attr}"
+        return msg
+
+
+class MREGErrorResponse(BaseModel):
+    """MREG error response."""
+
+    type: str
+    errors: list[MREGError] = []
+
+    def as_string(self) -> str:
+        """Convert the error response to a string.
+
+        :returns: A string representation of the error response.
+        """
+        errors = "; ".join([error.fmt_error() for error in self.errors])
+        t = self.type.replace("_", " ").title()
+        # NOTE: could result in colon followed by no errors, but it's unlikely
+        return f"{t}: {errors}"
+
+    def as_json_str(self, indent: int = 2) -> str:
+        """Convert the error response to a JSON string.
+
+        :param indent: The indentation level for the JSON string.
+        :returns: A JSON string representation of the error response.
+        """
+        return self.model_dump_json(indent=indent)
+
+
+def parse_mreg_error(resp: Response) -> MREGErrorResponse | None:
+    """Parse an MREG error response.
+
+    :param resp: The response object to parse.
+
+    :returns: A MREGErrorResponse object or None if it cannot be parsed.
+    """
+    try:
+        return MREGErrorResponse.model_validate_json(resp.text)
+    except ValidationError:
+        logger.error("Failed to parse response text '%s' from %s", resp.text, resp.url)
+    return None
