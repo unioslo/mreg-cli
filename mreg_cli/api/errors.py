@@ -51,9 +51,8 @@ class MREGErrorResponse(BaseModel):
         :returns: A string representation of the error response.
         """
         errors = "; ".join([error.fmt_error() for error in self.errors])
-        t = fmt_error_code(self.type)
         # NOTE: could result in colon followed by no errors, but it's unlikely
-        return f"{t}: {errors}"
+        return f"{fmt_error_code(self.type)}: {errors}"
 
     def as_json_str(self, indent: int = 2) -> str:
         """Convert the error response to a JSON string.
