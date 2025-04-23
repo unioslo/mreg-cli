@@ -1,4 +1,4 @@
-"""Parsing of error responses from the MREG API."""
+"""MREG API error handling."""
 
 from __future__ import annotations
 
