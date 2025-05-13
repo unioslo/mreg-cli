@@ -2183,6 +2183,7 @@ class NetworkPolicy(FrozenModelWithTimestamps, WithName):
     name: str
     description: str | None = None
     attributes: list[NetworkPolicyAttributeValue] = []
+    community_mapping_prefix: str | None = None
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -2202,6 +2203,8 @@ class NetworkPolicy(FrozenModelWithTimestamps, WithName):
         manager.add_line(f"Name: {self.name}")
         if self.description:
             manager.add_line(f"Description: {self.description}")
+        if self.community_mapping_prefix:
+            manager.add_line(f"Prefix: {self.community_mapping_prefix}")
         if self.attributes:
             manager.add_line("Attributes:")
             for attribute in self.attributes:
