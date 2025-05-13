@@ -3695,7 +3695,7 @@ class TokenInfo(BaseModel):
     created: str
     expire: str
     last_used: str | None = None
-    lifespan_left: str
+    lifespan: str
 
 
 class UserInfo(BaseModel):
@@ -3764,7 +3764,7 @@ class UserInfo(BaseModel):
             outputmanager.add_line(f"  Created: {self.token.created}")
             outputmanager.add_line(f"  Expires: {self.token.expire}")
             outputmanager.add_line(f"  Last used: {self.token.last_used or 'Never'}")
-            outputmanager.add_line(f"  Lifespan left: {self.token.lifespan_left}")
+            outputmanager.add_line(f"  Lifespan: {self.token.lifespan}")
         else:
             outputmanager.add_line("Token: None")
 
