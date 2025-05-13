@@ -82,7 +82,9 @@ class Endpoint(str, Enum):
     MetaUser = "/api/meta/user"
     MetaVersion = "/api/meta/version"
     MetaLibraries = "/api/meta/libraries"
-    MetaHeartbeat = "/api/meta/heartbeat"
+
+    HealthHeartbeat = "/api/meta/health/heartbeat"
+    HealthLDAP = "/api/meta/health/ldap"
 
     def __str__(self):
         """Prevent direct usage without parameters where needed."""
