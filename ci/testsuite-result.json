@@ -37689,6 +37689,700 @@
     "time": null
   },
   {
+    "command": "network policy_create CustomPrefix \"Custom community mapping prefix\" -prefix \"custom\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_create CustomPrefix \"Custom community mapping prefix\" -prefix \"custom\" # no attributes",
+    "ok": [
+      "Created network policy 'CustomPrefix'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=customprefix",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networkpolicies/",
+        "data": {
+          "name": "CustomPrefix",
+          "description": "Custom community mapping prefix",
+          "attributes": [],
+          "community_mapping_prefix": "custom"
+        },
+        "status": 201,
+        "response": {
+          "name": "customprefix",
+          "description": "Custom community mapping prefix",
+          "attributes": [],
+          "community_mapping_prefix": "custom",
+          "created_at": "2025-05-13T12:58:36.403379+02:00",
+          "updated_at": "2025-05-13T12:58:36.403389+02:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "customprefix",
+          "description": "Custom community mapping prefix",
+          "attributes": [],
+          "community_mapping_prefix": "custom",
+          "created_at": "2025-05-13T12:58:36.403379+02:00",
+          "updated_at": "2025-05-13T12:58:36.403389+02:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network create -network 10.0.3.0/24 -desc \"CustomPrefixNet\" -policy CustomPrefix",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network create -network 10.0.3.0/24 -desc \"CustomPrefixNet\" -policy CustomPrefix # add policy during creation",
+    "ok": [
+      "created network 10.0.3.0/24"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=customprefix",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "customprefix",
+              "description": "Custom community mapping prefix",
+              "attributes": [],
+              "community_mapping_prefix": "custom",
+              "created_at": "2025-05-13T12:58:36.403379+02:00",
+              "updated_at": "2025-05-13T12:58:36.403389+02:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "insecurepolicy",
+                "description": "Insecure policy for a network",
+                "attributes": [
+                  {
+                    "name": "bar",
+                    "value": true
+                  },
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "community_mapping_prefix": null,
+                "created_at": "2025-05-13T12:58:32.284329+02:00",
+                "updated_at": "2025-05-13T12:58:35.004330+02:00"
+              },
+              "communities": [
+                {
+                  "name": "guests",
+                  "description": "Guest hosts.",
+                  "network": 10,
+                  "hosts": [],
+                  "global_name": null,
+                  "created_at": "2025-05-13T12:58:35.746866+02:00",
+                  "updated_at": "2025-05-13T12:58:35.746877+02:00"
+                },
+                {
+                  "name": "lab",
+                  "description": "Lab hosts.",
+                  "network": 10,
+                  "hosts": [
+                    "tinyhost.example.org"
+                  ],
+                  "global_name": null,
+                  "created_at": "2025-05-13T12:58:35.810126+02:00",
+                  "updated_at": "2025-05-13T12:58:35.810138+02:00"
+                }
+              ],
+              "created_at": "2025-05-13T12:58:31.788939+02:00",
+              "updated_at": "2025-05-13T12:58:34.096872+02:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networks/",
+        "data": {
+          "network": "10.0.3.0/24",
+          "description": "CustomPrefixNet",
+          "frozen": false,
+          "policy": "4"
+        },
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.3.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-05-13T12:58:36.531300+02:00",
+          "updated_at": "2025-05-13T12:58:36.531314+02:00",
+          "network": "10.0.3.0/24",
+          "description": "CustomPrefixNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_info CustomPrefix",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_info CustomPrefix",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name: customprefix",
+      "Description: Custom community mapping prefix",
+      "Prefix: custom",
+      "Created:      Tue May 13 12:58:36 2025",
+      "Updated:      Tue May 13 12:58:36 2025"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=customprefix",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "customprefix",
+              "description": "Custom community mapping prefix",
+              "attributes": [],
+              "community_mapping_prefix": "custom",
+              "created_at": "2025-05-13T12:58:36.403379+02:00",
+              "updated_at": "2025-05-13T12:58:36.403389+02:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_create 10.0.3.0/24 foo \"Foo community\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_create 10.0.3.0/24 foo \"Foo community\"",
+    "ok": [
+      "Created community 'foo' for network 10.0.3.0/24"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.3.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-05-13T12:58:36.531300+02:00",
+          "updated_at": "2025-05-13T12:58:36.531314+02:00",
+          "network": "10.0.3.0/24",
+          "description": "CustomPrefixNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "POST",
+        "url": "/api/v1/networks/10.0.3.0/24/communities/",
+        "data": {
+          "name": "foo",
+          "description": "Foo community"
+        },
+        "status": 201,
+        "response": {
+          "name": "foo",
+          "description": "Foo community",
+          "network": 11,
+          "hosts": [],
+          "global_name": null,
+          "created_at": "2025-05-13T12:58:36.711663+02:00",
+          "updated_at": "2025-05-13T12:58:36.711678+02:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_info 10.0.3.0/24 foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_info 10.0.3.0/24 foo",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         foo",
+      "Description:  Foo community",
+      "Created:      Tue May 13 12:58:36 2025",
+      "Updated:      Tue May 13 12:58:36 2025",
+      "Hosts:        0"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.3.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [
+            {
+              "name": "foo",
+              "description": "Foo community",
+              "network": 11,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-05-13T12:58:36.711663+02:00",
+              "updated_at": "2025-05-13T12:58:36.711678+02:00"
+            }
+          ],
+          "created_at": "2025-05-13T12:58:36.531300+02:00",
+          "updated_at": "2025-05-13T12:58:36.531314+02:00",
+          "network": "10.0.3.0/24",
+          "description": "CustomPrefixNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_set_prefix CustomPrefix \"newprefix\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_set_prefix CustomPrefix \"newprefix\"",
+    "ok": [],
+    "warning": [],
+    "error": [
+      "Could not get value for commmunity_mapping_prefix in patched object."
+    ],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=customprefix",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "customprefix",
+              "description": "Custom community mapping prefix",
+              "attributes": [],
+              "community_mapping_prefix": "custom",
+              "created_at": "2025-05-13T12:58:36.403379+02:00",
+              "updated_at": "2025-05-13T12:58:36.403389+02:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networkpolicies/4",
+        "data": {
+          "commmunity_mapping_prefix": "newprefix"
+        },
+        "status": 200,
+        "response": {
+          "name": "customprefix",
+          "description": "Custom community mapping prefix",
+          "attributes": [],
+          "community_mapping_prefix": "custom",
+          "created_at": "2025-05-13T12:58:36.403379+02:00",
+          "updated_at": "2025-05-13T12:58:36.792665+02:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "customprefix",
+          "description": "Custom community mapping prefix",
+          "attributes": [],
+          "community_mapping_prefix": "custom",
+          "created_at": "2025-05-13T12:58:36.403379+02:00",
+          "updated_at": "2025-05-13T12:58:36.792665+02:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_info 10.0.3.0/24 foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_info 10.0.3.0/24 foo",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         foo",
+      "Description:  Foo community",
+      "Created:      Tue May 13 12:58:36 2025",
+      "Updated:      Tue May 13 12:58:36 2025",
+      "Hosts:        0"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.3.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [
+            {
+              "name": "foo",
+              "description": "Foo community",
+              "network": 11,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-05-13T12:58:36.711663+02:00",
+              "updated_at": "2025-05-13T12:58:36.711678+02:00"
+            }
+          ],
+          "created_at": "2025-05-13T12:58:36.531300+02:00",
+          "updated_at": "2025-05-13T12:58:36.531314+02:00",
+          "network": "10.0.3.0/24",
+          "description": "CustomPrefixNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_unset_prefix CustomPrefix",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_unset_prefix CustomPrefix",
+    "ok": [],
+    "warning": [],
+    "error": [
+      "Could not get value for commmunity_mapping_prefix in patched object."
+    ],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=customprefix",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "customprefix",
+              "description": "Custom community mapping prefix",
+              "attributes": [],
+              "community_mapping_prefix": "custom",
+              "created_at": "2025-05-13T12:58:36.403379+02:00",
+              "updated_at": "2025-05-13T12:58:36.792665+02:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networkpolicies/4",
+        "data": {
+          "commmunity_mapping_prefix": null
+        },
+        "status": 200,
+        "response": {
+          "name": "customprefix",
+          "description": "Custom community mapping prefix",
+          "attributes": [],
+          "community_mapping_prefix": "custom",
+          "created_at": "2025-05-13T12:58:36.403379+02:00",
+          "updated_at": "2025-05-13T12:58:36.896803+02:00"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "name": "customprefix",
+          "description": "Custom community mapping prefix",
+          "attributes": [],
+          "community_mapping_prefix": "custom",
+          "created_at": "2025-05-13T12:58:36.403379+02:00",
+          "updated_at": "2025-05-13T12:58:36.896803+02:00"
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network community_info 10.0.3.0/24 foo",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network community_info 10.0.3.0/24 foo",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Name:         foo",
+      "Description:  Foo community",
+      "Created:      Tue May 13 12:58:36 2025",
+      "Updated:      Tue May 13 12:58:36 2025",
+      "Hosts:        0"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.3.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [
+            {
+              "name": "foo",
+              "description": "Foo community",
+              "network": 11,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-05-13T12:58:36.711663+02:00",
+              "updated_at": "2025-05-13T12:58:36.711678+02:00"
+            }
+          ],
+          "created_at": "2025-05-13T12:58:36.531300+02:00",
+          "updated_at": "2025-05-13T12:58:36.531314+02:00",
+          "network": "10.0.3.0/24",
+          "description": "CustomPrefixNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network remove 10.0.3.0/24 -force",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network remove 10.0.3.0/24 -force",
+    "ok": [
+      "Removed network 10.0.3.0/24"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.3.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": null,
+          "communities": [
+            {
+              "name": "foo",
+              "description": "Foo community",
+              "network": 11,
+              "hosts": [],
+              "global_name": null,
+              "created_at": "2025-05-13T13:06:39.434675+02:00",
+              "updated_at": "2025-05-13T13:06:39.434690+02:00"
+            }
+          ],
+          "created_at": "2025-05-13T13:06:39.281194+02:00",
+          "updated_at": "2025-05-13T13:06:39.281205+02:00",
+          "network": "10.0.3.0/24",
+          "description": "CustomPrefixNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.3.0/24/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/networks/10.0.3.0/24",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network policy_delete CustomPrefix",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network policy_delete CustomPrefix",
+    "ok": [
+      "Deleted network policy 'CustomPrefix'"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networkpolicies/?name=customprefix",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "customprefix",
+              "description": "Custom community mapping prefix",
+              "attributes": [],
+              "community_mapping_prefix": "custom",
+              "created_at": "2025-05-13T13:06:39.172844+02:00",
+              "updated_at": "2025-05-13T13:06:39.727106+02:00"
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?policy=4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/networkpolicies/4",
+        "data": {},
+        "status": 204
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "network community_rename 10.0.2.0/28 lab labequipment",
     "command_filter": null,
     "command_filter_negate": false,
