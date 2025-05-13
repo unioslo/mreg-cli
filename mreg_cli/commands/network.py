@@ -60,6 +60,7 @@ class NetworkCommands(BaseCommand):
         Flag("-category", description="Category.", default=None, metavar="Category"),
         Flag("-location", description="Location.", default=None, metavar="LOCATION"),
         Flag("-frozen", description="Set frozen network.", action="store_true"),
+        Flag("-policy", description="Policy to apply to network", default=None, metavar="POLICY"),
     ],
 )
 def create(args: argparse.Namespace) -> None:
@@ -67,33 +68,45 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, desc, vlan, category, location, frozen)
     """
-    if args.vlan:
-        string_to_int(args.vlan, "VLAN")
-    if args.category and not is_valid_category_tag(args.category):
-        raise InputFailure("Not a valid category tag")
-    if args.location and not is_valid_location_tag(args.location):
-        raise InputFailure("Not a valid location tag")
+    network: str = args.network
+    desc: str = args.desc
+    vlan: str | None = args.vlan
+    category: str | None = args.category
+    location: str | None = args.location
+    frozen: bool = args.frozen
+    policy: str | None = args.policy
 
-    arg_network = NetworkOrIP.parse_or_raise(args.network, mode="network")
+    if vlan:
+        # Validate as int, but still pass str to API
+        string_to_int(vlan, "VLAN")
+    if category and not is_valid_category_tag(category):
+        raise InputFailure("Not a valid category tag")
+    if location and not is_valid_location_tag(location):
+        raise InputFailure("Not a valid location tag")
+    if policy:
+        policy = str(NetworkPolicy.get_by_name_or_raise(policy).id)
+
+    arg_network = NetworkOrIP.parse_or_raise(network, mode="network")
     networks = Network.get_list()
-    for network in networks:
-        if network.overlaps(arg_network):
+    for nw in networks:
+        if nw.overlaps(arg_network):
             raise NetworkOverlap(
-                f"New network {arg_network} overlaps existing network {network.network}"
+                f"New network {arg_network} overlaps existing network {nw.network}"
             )
 
     Network.create(
         {
-            "network": args.network,
-            "description": args.desc,
-            "vlan": args.vlan,
-            "category": args.category,
-            "location": args.location,
-            "frozen": args.frozen,
+            "network": network,
+            "description": desc,
+            "vlan": vlan,
+            "category": category,
+            "location": location,
+            "frozen": frozen,
+            "policy": policy,
         }
     )
 
-    OutputManager().add_ok(f"created network {args.network}")
+    OutputManager().add_ok(f"created network {network}")
 
 
 @command_registry.register_command(
