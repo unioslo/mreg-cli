@@ -243,7 +243,9 @@ def host_list(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (host, traverse-hostgroups)
     """
     host = Host.get_by_any_means_or_raise(args.host)
-    HostGroup.output_multiple(host.hostgroups(traverse=args.traverse_hostgroups), multiline=True)
+    HostGroup.output_multiple(
+        host.get_hostgroups(traverse=args.traverse_hostgroups), multiline=True
+    )
 
 
 @command_registry.register_command(
