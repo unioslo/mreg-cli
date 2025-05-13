@@ -592,6 +592,12 @@ def policy_add(args: argparse.Namespace) -> None:
             action="append",
             default=[],
         ),
+        Flag(
+            "-prefix",
+            description="Custom prefix for community names when mapped to global names.",
+            default=None,
+            metavar="PREFIX",
+        ),
     ],
 )
 def policy_create(args: argparse.Namespace) -> None:
@@ -602,6 +608,7 @@ def policy_create(args: argparse.Namespace) -> None:
     name: str = args.name
     description: str = args.description
     attribute: list[str] = args.attribute or []
+    prefix: str | None = args.prefix
 
     NetworkPolicy.get_by_name_and_raise(name)
 
@@ -614,6 +621,7 @@ def policy_create(args: argparse.Namespace) -> None:
             "name": name,
             "description": description,
             "attributes": [{"name": attr.name, "value": True} for attr in attrs],
+            "community_mapping_prefix": prefix,
         }
     )
     OutputManager().add_ok(f"Created network policy {name!r}")
