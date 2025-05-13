@@ -779,6 +779,53 @@ def policy_set_description(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Set new description for network policy {policy!r}")
 
 
+# TODO[rename]: network policy set_prefix
+@command_registry.register_command(
+    prog="policy_set_prefix",
+    description="Set the global community mapping prefix for a network policy",
+    short_desc="Set community mapping prefix",
+    flags=[
+        Flag("policy", description="Policy", metavar="POLICY"),
+        Flag("prefix", description="New prefix", metavar="PREFIX"),
+    ],
+)
+def policy_set_prefix(args: argparse.Namespace) -> None:
+    """Set the global community mapping prefix for a network policy.
+
+    :param args: argparse.Namespace (name, prefix)
+    """
+    policy: str = args.policy
+    prefix: str = args.prefix
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    pol.patch({"commmunity_mapping_prefix": prefix})
+    OutputManager().add_ok(f"Set new community mapping prefix for network policy {policy!r}")
+
+
+# TODO[rename]: network policy set_prefix
+@command_registry.register_command(
+    prog="policy_unset_prefix",
+    description=(
+        "Unset the global community mapping prefix for a network polic. "
+        "Reverts the prefix to the global default."
+    ),
+    short_desc="Unset community mapping prefix",
+    flags=[
+        Flag("policy", description="Policy", metavar="POLICY"),
+    ],
+)
+def policy_unset_prefix(args: argparse.Namespace) -> None:
+    """Unset the global community mapping prefix for a network policy.
+
+    :param args: argparse.Namespace (name, prefix)
+    """
+    policy: str = args.policy
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    pol.patch({"commmunity_mapping_prefix": None})
+    OutputManager().add_ok(f"Unset community mapping prefix for network policy {policy!r}")
+
+
 ##########################################
 #        POLICY ATTRIBUTE COMMANDS       #
 ##########################################
