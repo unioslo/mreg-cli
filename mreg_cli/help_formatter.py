@@ -27,9 +27,11 @@ class CustomHelpFormatter(argparse.HelpFormatter):
             formatted_action = "commands:\n"
 
             # Format each subcommand
+            longest_subcommand = len(max(action.choices.keys(), key=len))
+            padding = max(longest_subcommand, 20)
             for subcommand, parser in action.choices.items():
                 subcommand_help = parser.description if parser.description else ""
-                formatted_subcommand = f"  {subcommand:<20} {subcommand_help}"
+                formatted_subcommand = f"  {subcommand:<{padding}} {subcommand_help}"
                 formatted_action += formatted_subcommand + "\n"
 
             return formatted_action
