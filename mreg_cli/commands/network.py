@@ -84,7 +84,9 @@ def create(args: argparse.Namespace) -> None:
     if location and not is_valid_location_tag(location):
         raise InputFailure("Not a valid location tag")
     if policy:
-        policy = str(NetworkPolicy.get_by_name_or_raise(policy).id)
+        policy_obj = NetworkPolicy.get_by_name_or_raise(policy)
+    else:
+        policy_obj = None
 
     arg_network = NetworkOrIP.parse_or_raise(network, mode="network")
     networks = Network.get_list()
@@ -94,7 +96,7 @@ def create(args: argparse.Namespace) -> None:
                 f"New network {arg_network} overlaps existing network {nw.network}"
             )
 
-    Network.create(
+    net = Network.create(
         {
             "network": network,
             "description": desc,
@@ -102,9 +104,10 @@ def create(args: argparse.Namespace) -> None:
             "category": category,
             "location": location,
             "frozen": frozen,
-            "policy": policy,
         }
     )
+    if net and policy_obj:
+        net.set_policy(policy_obj)
 
     OutputManager().add_ok(f"created network {network}")
 
