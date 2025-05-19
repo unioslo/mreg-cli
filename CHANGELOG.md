@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Network policy commands:
+  - `network policy_add`
+  - `network policy_create`
+  - `network policy_delete`
+  - `network policy_info`
+  - `network policy_list`
+  - `network policy_rename`
+  - `network policy_remove`
+  - `network policy_set_description`
+  - `network policy_set_prefix`
+  - `network policy_unset_prefix`
+  - `network policy_attribute_add`
+  - `network policy_attribute_create`
+  - `network policy_attribute_delete`
+  - `network policy_attribute_info`
+  - `network policy_attribute_list`
+  - `network policy_attribute_remove`
+  - `network policy_attribute_set_description`
+  - `network community_create`
+  - `network community_delete`
+  - `network community_info`
+  - `network community_list`
+  - `network community_rename`
+  - `network community_set_description`
+  - `network community_host_add`
+  - `network community_host_remove`
 - `network create -policy` option for specifying the policy of the network to create.
 
 ## [1.2.4](https://github.com/unioslo/mreg-cli/releases/tag/1.2.4) - 2025-01-30
