@@ -19,6 +19,20 @@ def fmt_error_code(code: str) -> str:
     return code.replace("_", " ").title()
 
 
+# NOTE: BASE CLASS FOR MREGError:
+# We cannot use `api.abstracts.FrozenModel` as the base class here because
+# it causes an import cycle when attempting to import it from `utilities.api`,
+# as `api.abstracts` already imports `utilities.api`.
+# This could be solved by any of the following:
+#
+# 1. Inline imports of `utilities.api.get`, `utilities.api.post`, etc. in
+#    model methods in `api.abstracts`
+# 2. Moving `FrozenModel` to a separate module, free of other imports,
+#    where it can be imported from anywhere.
+# 3. Accepting that this is an internal model where it's fine that it's not immutable,
+#    and just use `BaseModel` as the base class.
+#
+# We choose option 3 for now, as it's the least invasive approach.
 class MREGError(BaseModel):
     """Details of an MREG error."""
 
