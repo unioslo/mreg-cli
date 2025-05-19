@@ -28,7 +28,6 @@ function cleanup {
 	docker ps -a | grep "mreg-" | awk '{print $1}' | xargs -r docker stop
 	docker ps -a | grep "mreg-" | awk '{print $1}' | xargs -r docker rm
 	docker images | grep "mreg-" | awk '{print $1}' | xargs -r docker rmi
-	rm -f new_testsuite_log.json
 	echo "cleanup done."
 }
 trap cleanup EXIT
@@ -81,8 +80,10 @@ if [[ -n "$GITHUB_ACTIONS" ]]; then
 	docker run --rm --tty --entrypoint bash finished-mreg-tests -c 'cd /build/ci; /root/.local/bin/uv run diff.py testsuite-result.json new_testsuite_log.json'
 	exit $?
 else
+	set +e
 	docker run -it --name finished-mreg-tests --entrypoint bash finished-mreg-tests -c 'cd /build/ci; /root/.local/bin/uv run diff.py testsuite-result.json new_testsuite_log.json --review'
 	EXITCODE=$?
+	docker cp finished-mreg-tests:/build/ci/new_testsuite_log.json .
 	docker cp finished-mreg-tests:/build/ci/testsuite-result.json .
 	exit $EXITCODE
 fi
