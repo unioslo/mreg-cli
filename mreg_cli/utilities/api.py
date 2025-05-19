@@ -6,7 +6,6 @@ And this rule is promptly broken by importing from mreg_cli.outputmanager...
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
@@ -22,6 +21,7 @@ from pydantic import BaseModel, TypeAdapter, field_validator
 from requests import Response
 
 from mreg_cli.__about__ import __version__
+from mreg_cli.api.errors import parse_mreg_error
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     APINotOk,
@@ -187,18 +187,16 @@ def auth_and_update_token(username: str, password: str) -> None:
         result = requests.post(tokenurl, {"username": username, "password": password})
     except requests.exceptions.SSLError as e:
         error(e)
-    except requests.exceptions.ConnectionError as err:
-        error(err)
+    except requests.exceptions.ConnectionError as e:
+        error(e)
     if not result.ok:
-        try:
-            res = result.json()
-        except json.JSONDecodeError:
-            res = result.text
-        if result.status_code == 400:
-            if "non_field_errors" in res:
-                raise LoginFailedError("Invalid username/password")
+        err = parse_mreg_error(result)
+        if err:
+            msg = err.as_str()
         else:
-            raise LoginFailedError(res)
+            msg = result.text
+        raise LoginFailedError(msg)
+
     token = result.json()["token"]
     logger.info("Token updated for %s @ %s", username, tokenurl)
     set_session_token(token)
@@ -208,13 +206,11 @@ def auth_and_update_token(username: str, password: str) -> None:
 def result_check(result: Response, operation_type: str, url: str) -> None:
     """Check the result of a request."""
     if not result.ok:
-        message = f'{operation_type} "{url}": {result.status_code}: {result.reason}'
-        try:
-            body = result.json()
-        except ValueError:
-            pass
+        if err := parse_mreg_error(result):
+            res_text = err.as_json_str()  # NOTE: do we want to use as_str() instead?
         else:
-            message += f"\n{json.dumps(body, indent=2)}"
+            res_text = result.text
+        message = f'{operation_type} "{url}": {result.status_code}: {result.reason}\n{res_text}'
         raise APINotOk(message)
 
 
