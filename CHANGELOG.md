@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+<!-- ## Unreleased -->
+
+## [1.3.0](https://github.com/unioslo/mreg-cli/releases/tag/1.3.0) - 2025-05-20
 
 ### Added
 
@@ -36,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `network community_host_add`
   - `network community_host_remove`
 - `network create -policy` option for specifying the policy of the network to create.
+- Error handling for DRF errors.
+- Handling of 404 errors that do not contain a JSON payload.
 
 ## [1.2.4](https://github.com/unioslo/mreg-cli/releases/tag/1.2.4) - 2025-01-30
 
