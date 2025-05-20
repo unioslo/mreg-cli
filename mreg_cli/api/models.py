@@ -4179,10 +4179,22 @@ class ServerLibraries(BaseModel):
             manager.add_line(f"{' ' * indent}{lib.name}: {lib.version}")
 
 
+class TokenInfo(BaseModel):
+    """Model for token information."""
+
+    is_valid: bool
+    created: str
+    expire: str
+    last_used: str | None = None
+    lifespan: str
+
+
 class UserInfo(BaseModel):
     """Model for the user information."""
 
     username: str
+    last_login: str | None = None
+    token: TokenInfo | None = None
     django_status: UserDjangoStatus
     mreg_status: UserMregStatus
     groups: list[str]
@@ -4235,6 +4247,17 @@ class UserInfo(BaseModel):
         """Output the user information to the console."""
         outputmanager = OutputManager()
         outputmanager.add_line(f"Username: {self.username}")
+        outputmanager.add_line(f"Last login: {self.last_login or 'Never'}")
+
+        if self.token:
+            outputmanager.add_line("Token:")
+            outputmanager.add_line(f"  Valid: {self.token.is_valid}")
+            outputmanager.add_line(f"  Created: {self.token.created}")
+            outputmanager.add_line(f"  Expires: {self.token.expire}")
+            outputmanager.add_line(f"  Last used: {self.token.last_used or 'Never'}")
+            outputmanager.add_line(f"  Lifespan: {self.token.lifespan}")
+        else:
+            outputmanager.add_line("Token: None")
 
         if django:
             outputmanager.add_line("Django roles:")
