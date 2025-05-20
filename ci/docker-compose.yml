@@ -25,6 +25,7 @@ services:
       - MREG_DB_NAME=mreg
       - MREG_DB_USER=mreg
       - MREG_DB_PASSWORD=mreg
+      - MREG_MAP_GLOBAL_COMMUNITY_NAMES=1
       - CI=yes
     healthcheck:
       test: sh -c "[ -f /var/run/gunicorn.pid ]"
