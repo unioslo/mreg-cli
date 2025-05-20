@@ -5,7 +5,15 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Network, NetworkOrIP
+from mreg_cli.api.models import (
+    Community,
+    Host,
+    IPAddress,
+    Network,
+    NetworkOrIP,
+    NetworkPolicy,
+    NetworkPolicyAttribute,
+)
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import (
@@ -52,6 +60,7 @@ class NetworkCommands(BaseCommand):
         Flag("-category", description="Category.", default=None, metavar="Category"),
         Flag("-location", description="Location.", default=None, metavar="LOCATION"),
         Flag("-frozen", description="Set frozen network.", action="store_true"),
+        Flag("-policy", description="Policy to apply to network", default=None, metavar="POLICY"),
     ],
 )
 def create(args: argparse.Namespace) -> None:
@@ -59,33 +68,48 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (network, desc, vlan, category, location, frozen)
     """
-    if args.vlan:
-        string_to_int(args.vlan, "VLAN")
-    if args.category and not is_valid_category_tag(args.category):
-        raise InputFailure("Not a valid category tag")
-    if args.location and not is_valid_location_tag(args.location):
-        raise InputFailure("Not a valid location tag")
+    network: str = args.network
+    desc: str = args.desc
+    vlan: str | None = args.vlan
+    category: str | None = args.category
+    location: str | None = args.location
+    frozen: bool = args.frozen
+    policy: str | None = args.policy
 
-    arg_network = NetworkOrIP.parse_or_raise(args.network, mode="network")
+    if vlan:
+        # Validate as int, but still pass str to API
+        string_to_int(vlan, "VLAN")
+    if category and not is_valid_category_tag(category):
+        raise InputFailure("Not a valid category tag")
+    if location and not is_valid_location_tag(location):
+        raise InputFailure("Not a valid location tag")
+    if policy:
+        policy_obj = NetworkPolicy.get_by_name_or_raise(policy)
+    else:
+        policy_obj = None
+
+    arg_network = NetworkOrIP.parse_or_raise(network, mode="network")
     networks = Network.get_list()
-    for network in networks:
-        if network.overlaps(arg_network):
+    for nw in networks:
+        if nw.overlaps(arg_network):
             raise NetworkOverlap(
-                f"New network {arg_network} overlaps existing network {network.network}"
+                f"New network {arg_network} overlaps existing network {nw.network}"
             )
 
-    Network.create(
+    net = Network.create(
         {
-            "network": args.network,
-            "description": args.desc,
-            "vlan": args.vlan,
-            "category": args.category,
-            "location": args.location,
-            "frozen": args.frozen,
+            "network": network,
+            "description": desc,
+            "vlan": vlan,
+            "category": category,
+            "location": location,
+            "frozen": frozen,
         }
     )
+    if net and policy_obj:
+        net.set_policy(policy_obj)
 
-    OutputManager().add_ok(f"created network {args.network}")
+    OutputManager().add_ok(f"created network {network}")
 
 
 @command_registry.register_command(
@@ -396,7 +420,7 @@ def set_dns_delegated(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_any_means_or_raise(args.network)
     net.set_dns_delegation(True)
-    OutputManager().add_ok(f"Set DNS delegation to 'True' for {net.network!r}")
+    OutputManager().add_ok(f"Set DNS delegation to 'True' for {net.network}")
 
 
 @command_registry.register_command(
@@ -494,7 +518,7 @@ def unset_dns_delegated(args: argparse.Namespace) -> None:
     """
     net = Network.get_by_any_means_or_raise(args.network)
     net.set_dns_delegation(False)
-    OutputManager().add_ok(f"Set DNS delegation to 'False' for {net.network!r}")
+    OutputManager().add_ok(f"Set DNS delegation to 'False' for {net.network}")
 
 
 @command_registry.register_command(
@@ -513,3 +537,724 @@ def unset_frozen(args: argparse.Namespace) -> None:
     net = Network.get_by_any_means_or_raise(args.network)
     net.set_frozen(False)
     OutputManager().add_ok(f"Updated frozen to 'False' for {net.network}")
+
+
+##########################################
+#           POLICY COMMANDS              #
+##########################################
+
+
+# TODO[rename]: network policy add
+@command_registry.register_command(
+    prog="policy_add",
+    description="Add a policy to a network",
+    short_desc="Add a policy to a network",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("policy", description="Policy name", metavar="POLICY"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def policy_add(args: argparse.Namespace) -> None:
+    """Add a policy to a network.
+
+    :param args: argparse.Namespace (name, network, force)
+    """
+    policy: str = args.policy
+    network: str = args.network
+    force: bool = args.force
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    net = Network.get_by_network_or_raise(network)
+
+    if net.policy and net.policy.id == pol.id:
+        raise InputFailure(f"Network {net.network} already has policy {pol.name!r}.")
+
+    # Switching policy requires force
+    if net.policy and not force:
+        raise ForceMissing(
+            f"Network {net.network} already has the policy {net.policy.name!r}. Must force."
+        )
+
+    net.set_policy(pol)
+    OutputManager().add_ok(f"Added network policy {pol.name!r} to {network}")
+
+
+# TODO[rename]: network policy create
+@command_registry.register_command(
+    prog="policy_create",
+    description="Create a network policy. Separate attributes with spaces.",
+    short_desc="Create a network policy",
+    flags=[
+        Flag("name", description="Name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+        Flag(
+            "-attribute",
+            description="Policy attribute(s). Can be specified multiple times.",
+            metavar="ATTRIBUTE",
+            action="append",
+            default=[],
+        ),
+        Flag(
+            "-prefix",
+            description="Custom prefix for community names when mapped to global names.",
+            default=None,
+            metavar="PREFIX",
+        ),
+    ],
+)
+def policy_create(args: argparse.Namespace) -> None:
+    """Create a network policy.
+
+    :param args: argparse.Namespace (name, description, attributes)
+    """
+    name: str = args.name
+    description: str = args.description
+    attribute: list[str] = args.attribute or []
+    prefix: str | None = args.prefix
+
+    NetworkPolicy.get_by_name_and_raise(name)
+
+    attrs: list[NetworkPolicyAttribute] = []
+    for attr in attribute:
+        attrs.append(NetworkPolicyAttribute.get_by_name_or_raise(attr))
+
+    NetworkPolicy.create(
+        {
+            "name": name,
+            "description": description,
+            "attributes": [{"name": attr.name, "value": True} for attr in attrs],
+            "community_mapping_prefix": prefix,
+        }
+    )
+    OutputManager().add_ok(f"Created network policy {name!r}")
+
+
+# TODO[rename]: network policy delete
+@command_registry.register_command(
+    prog="policy_delete",
+    description="Delete a network policy",
+    short_desc="Delete a network policy",
+    flags=[
+        Flag("name", description="Policy name", metavar="NAME"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def policy_delete(args: argparse.Namespace) -> None:
+    """Delete a network policy.
+
+    :param args: argparse.Namespace (name)
+    """
+    name: str = args.name
+    force: bool = args.force
+
+    pol = NetworkPolicy.get_by_name_or_raise(name)
+    networks = Network.get_list_by_field("policy", pol.id)
+
+    if networks and not force:
+        nets = ", ".join(f"{net.network!r}" for net in networks)
+        raise ForceMissing(
+            f"Policy {pol.name!r} is assigned to the following networks: {nets}. Must force."
+        )
+
+    pol.delete()
+    OutputManager().add_ok(f"Deleted network policy {name!r}")
+
+
+# TODO[rename]: network policy info
+@command_registry.register_command(
+    prog="policy_info",
+    description="Show information about a network policy",
+    short_desc="Show information about a network policy",
+    flags=[
+        Flag("name", description="Policy name", metavar="NAME"),
+    ],
+)
+def policy_info(args: argparse.Namespace) -> None:
+    """Show information about a network policy.
+
+    :param args: argparse.Namespace (name, attributes)
+    """
+    name: str = args.name
+
+    policy = NetworkPolicy.get_by_name_or_raise(name)
+    policy.output()
+
+
+# TODO[rename]: network policy list
+@command_registry.register_command(
+    prog="policy_list",
+    description="List all or a subset of policies",
+    short_desc="List policies",
+    flags=[
+        Flag(
+            "name",
+            description="Policy name, or part of name. Can contain wildcards.",
+            metavar="FILTER",
+            nargs="?",
+            default=None,
+        ),
+    ],
+)
+def policy_list(args: argparse.Namespace) -> None:
+    """List all network policies by given filter.
+
+    :param args: argparse.Namespace (name)
+    """
+    name: str | None = args.name
+
+    if name:
+        policies = NetworkPolicy.get_list_by_name_regex(name)
+    else:
+        policies = NetworkPolicy.get_list()
+    NetworkPolicy.output_multiple(policies)
+
+
+# TODO[rename]: network policy rename
+@command_registry.register_command(
+    prog="policy_rename",
+    description="Rename a network policy",
+    short_desc="Rename a network policy",
+    flags=[
+        Flag("oldname", description="Old policy name", metavar="OLDNAME"),
+        Flag("newname", description="New policy name", metavar="NEWNAME"),
+    ],
+)
+def policy_rename(args: argparse.Namespace) -> None:
+    """Rename a network policy.
+
+    :param args: argparse.Namespace (oldname, newname)
+    """
+    oldname: str = args.oldname
+    newname: str = args.newname
+
+    pol = NetworkPolicy.get_by_name_or_raise(oldname)
+    pol.rename(newname)
+    OutputManager().add_ok(f"Renamed network policy {oldname!r} to {newname!r}")
+
+
+# TODO[rename]: network policy remove
+@command_registry.register_command(
+    prog="policy_remove",
+    description="Remove a network's policy",
+    short_desc="Remove a network's policy",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def policy_remove(args: argparse.Namespace) -> None:
+    """Remove a policy from a network.
+
+    :param args: argparse.Namespace (network, force)
+    """
+    network: str = args.network
+
+    net = Network.get_by_network_or_raise(network)
+
+    if not net.policy:
+        raise EntityNotFound(f"Network {net.network} does not have a policy assigned.")
+
+    net.unset_policy()
+    OutputManager().add_ok(f"Removed network policy from {network}")
+
+
+# TODO[rename]: network policy set_description
+@command_registry.register_command(
+    prog="policy_set_description",
+    description="Set a description on a network policy",
+    short_desc="Set a description on a network policy",
+    flags=[
+        Flag("policy", description="Policy", metavar="POLICY"),
+        Flag("description", description="New description", metavar="DESCRIPTION"),
+    ],
+)
+def policy_set_description(args: argparse.Namespace) -> None:
+    """Set a description on a network policy.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    policy: str = args.policy
+    description: str = args.description
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    pol.patch({"description": description}, validate=False)
+    OutputManager().add_ok(f"Set new description for network policy {policy!r}")
+
+
+# TODO[rename]: network policy set_prefix
+@command_registry.register_command(
+    prog="policy_set_prefix",
+    description="Set the global community mapping prefix for a network policy",
+    short_desc="Set community mapping prefix",
+    flags=[
+        Flag("policy", description="Policy", metavar="POLICY"),
+        Flag("prefix", description="New prefix", metavar="PREFIX"),
+    ],
+)
+def policy_set_prefix(args: argparse.Namespace) -> None:
+    """Set the global community mapping prefix for a network policy.
+
+    :param args: argparse.Namespace (name, prefix)
+    """
+    policy: str = args.policy
+    prefix: str = args.prefix
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    pol.patch({"commmunity_mapping_prefix": prefix})
+    OutputManager().add_ok(f"Set new community mapping prefix for network policy {policy!r}")
+
+
+# TODO[rename]: network policy set_prefix
+@command_registry.register_command(
+    prog="policy_unset_prefix",
+    description=(
+        "Unset the global community mapping prefix for a network polic. "
+        "Reverts the prefix to the global default."
+    ),
+    short_desc="Unset community mapping prefix",
+    flags=[
+        Flag("policy", description="Policy", metavar="POLICY"),
+    ],
+)
+def policy_unset_prefix(args: argparse.Namespace) -> None:
+    """Unset the global community mapping prefix for a network policy.
+
+    :param args: argparse.Namespace (name, prefix)
+    """
+    policy: str = args.policy
+
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+    pol.patch({"commmunity_mapping_prefix": None})
+    OutputManager().add_ok(f"Unset community mapping prefix for network policy {policy!r}")
+
+
+##########################################
+#        POLICY ATTRIBUTE COMMANDS       #
+##########################################
+
+
+# TODO[rename]: network policy attribute create
+@command_registry.register_command(
+    prog="policy_attribute_add",
+    description="Add an attribute to a policy",
+    short_desc="Add attribute to policy",
+    flags=[
+        Flag("policy", description="Policy", metavar="POLICY"),
+        Flag("attribute", description="Attribute", metavar="ATTRIBUTE"),
+    ],
+)
+def policy_attribute_add(args: argparse.Namespace) -> None:
+    """Add an attribute to a policy.
+
+    :param args: argparse.Namespace (attribute, policy)
+    """
+    attribute: str = args.attribute
+    policy: str = args.policy
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+
+    if pol.get_attribute(attribute):
+        raise InputFailure(f"Policy {pol.name!r} already has attribute {attr.name!r}")
+
+    pol.add_attribute(attr, value=True)
+
+    OutputManager().add_ok(f"Added attribute {attr.name!r} to policy {pol.name!r}")
+
+
+# TODO[rename]: network policy attribute create
+@command_registry.register_command(
+    prog="policy_attribute_create",
+    description="Create a network policy attribute",
+    short_desc="Create a network policy attribute",
+    flags=[
+        Flag("name", description="Name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+    ],
+)
+def policy_attribute_create(args: argparse.Namespace) -> None:
+    """Create a new network policy attribute.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    name: str = args.name
+    description: str = args.description
+
+    NetworkPolicyAttribute.get_by_name_and_raise(name)
+
+    NetworkPolicyAttribute.create({"name": name, "description": description})
+
+    OutputManager().add_ok(f"Created network policy attribute {name!r}")
+
+
+# TODO[rename]: network policy attribute delete
+@command_registry.register_command(
+    prog="policy_attribute_delete",
+    description="Delete a network policy attribute",
+    short_desc="Delete a network policy attribute",
+    flags=[
+        Flag("attribute", description="attribute", metavar="ATTRIBUTE"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def policy_attribute_delete(args: argparse.Namespace) -> None:
+    """Delete a network policy attribute.
+
+    :param args: argparse.Namespace (attribute, force)
+    """
+    attribute: str = args.attribute
+    force: bool = args.force
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+
+    if not force and (pols := attr.get_policies()):
+        policy_names = ", ".join(f"{pol.name!r}" for pol in pols)
+        raise ForceMissing(
+            f"Attribute {attr.name!r} is used by the following policies: {policy_names}. Must force."
+        )
+
+    OutputManager().add_ok(f"Deleted network policy attribute {attribute!r}")
+
+
+# TODO[rename]: network policy attribute info
+@command_registry.register_command(
+    prog="policy_attribute_info",
+    description="Show information about a network policy attribute",
+    short_desc="Policy attribute info",
+    flags=[
+        Flag("attribute", description="Attribute", metavar="ATTRIBUTE"),
+    ],
+)
+def policy_attribute_info(args: argparse.Namespace) -> None:
+    """Show information about a network policy attribute.
+
+    :param args: argparse.Namespace (attribute)
+    """
+    attribute: str = args.attribute
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+    attr.output()
+
+
+# TODO[rename]: network policy attribute list
+@command_registry.register_command(
+    prog="policy_attribute_list",
+    description="List all network policy attributes",
+    short_desc="List network policy attributes",
+    flags=[
+        Flag(
+            "name",
+            description="Attribute name, or part of name. Supports wildcards.",
+            metavar="FILTER",
+            nargs="?",
+            default=None,
+        )
+    ],
+)
+def policy_attribute_list(args: argparse.Namespace) -> None:
+    """List all network policy attributes.
+
+    :param args: argparse.Namespace (name)
+    """
+    name: str | None = args.name
+
+    if name:
+        attributes = NetworkPolicyAttribute.get_list_by_name_regex(name)
+    else:
+        attributes = NetworkPolicyAttribute.get_list()
+
+    if attributes:
+        NetworkPolicyAttribute.output_multiple(attributes)
+    else:
+        OutputManager().add_line("No match.")
+
+
+# TODO[rename]: network policy attribute create
+@command_registry.register_command(
+    prog="policy_attribute_remove",
+    description="Remove an attribute from a policy",
+    short_desc="Remove attribute from policy",
+    flags=[
+        Flag("policy", description="Policy", metavar="POLICY"),
+        Flag("attribute", description="Attribute", metavar="ATTRIBUTE"),
+    ],
+)
+def policy_attribute_remove(args: argparse.Namespace) -> None:
+    """Remove an attribute from a policy.
+
+    :param args: argparse.Namespace (attribute, policy)
+    """
+    attribute: str = args.attribute
+    policy: str = args.policy
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+    pol = NetworkPolicy.get_by_name_or_raise(policy)
+
+    if not pol.get_attribute(attribute):
+        raise InputFailure(f"Policy {pol.name!r} does not have attribute {attr.name!r}")
+
+    pol.remove_attribute(attribute)
+
+    OutputManager().add_ok(f"Removed attribute {attr.name!r} from policy {pol.name!r}")
+
+
+@command_registry.register_command(
+    prog="policy_attribute_set_description",
+    description="Set the description of a network policy attribute",
+    short_desc="Set network policy attribute description",
+    flags=[
+        Flag("attribute", description="Attribute name", metavar="ATTRIBUTE"),
+        Flag("description", description="New description", metavar="DESCRIPTION"),
+    ],
+)
+def policy_attribute_set_description(args: argparse.Namespace) -> None:
+    """Set the description of a network policy attribute.
+
+    :param args: argparse.Namespace (attribute, description)
+    """
+    attribute: str = args.attribute
+    description: str = args.description
+
+    attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
+    attr.patch({"description": description})
+    OutputManager().add_ok(f"Set new description for network policy attribute {attribute!r}")
+
+
+##########################################
+#           COMMUNITY COMMANDS           #
+##########################################
+
+
+# TODO[rename]: network community create
+@command_registry.register_command(
+    prog="community_create",
+    description="Create a network community",
+    short_desc="Create a network community",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("name", description="Community name", metavar="NAME"),
+        Flag("description", description="Description", metavar="DESCRIPTION"),
+    ],
+)
+def community_create(args: argparse.Namespace) -> None:
+    """Create a community.
+
+    :param args: argparse.Namespace (name, description)
+    """
+    network: str = args.network
+    name: str = args.name
+    description: str = args.description
+
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community(name)
+    if com:
+        raise InputFailure(f"Community {name!r} already exists for network {network}")
+    net.create_community(name, description)
+    OutputManager().add_ok(f"Created community {name!r} for network {network}")
+
+
+# TODO[rename]: network community delete
+@command_registry.register_command(
+    prog="community_delete",
+    description="Delete a community",
+    short_desc="Delete a community",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("community", description="Community name", metavar="COMMUNITY"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def community_delete(args: argparse.Namespace) -> None:
+    """Delete a community.
+
+    :param args: argparse.Namespace (network, community, force)
+    """
+    network: str = args.network
+    community: str = args.community
+    force: bool = args.force
+
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community_or_raise(community)
+
+    if not force and com.get_hosts():
+        raise ForceMissing(f"Community {com.name!r} has hosts. Must force.")
+
+    com.delete()
+    OutputManager().add_ok(f"Deleted community {community!r}")
+
+
+# TODO[rename]: network community info
+@command_registry.register_command(
+    prog="community_info",
+    description="Show detailed information about a community",
+    short_desc="Show community info",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("community", description="Community name", metavar="COMMUNITY"),
+    ],
+)
+def community_info(args: argparse.Namespace) -> None:
+    """Show detailed information about a community.
+
+    :param args: argparse.Namespace (network, community)
+    """
+    network: str = args.network
+    community: str = args.community
+
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community_or_raise(community)
+
+    com.output()
+
+
+# TODO[rename]: network community list
+@command_registry.register_command(
+    prog="community_list",
+    description="List all communities in a network",
+    short_desc="List communities",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("-hosts", action="store_true", description="Show names of hosts."),
+    ],
+)
+def community_list(args: argparse.Namespace) -> None:
+    """List all communities in a network.
+
+    :param args: argparse.Namespace (network, hosts)
+    """
+    network: str = args.network
+    hosts: bool = args.hosts
+
+    net = Network.get_by_network_or_raise(network)
+    Community.output_multiple(net.communities, show_hosts=hosts)
+
+
+# TODO[rename]: network community rename
+@command_registry.register_command(
+    prog="community_rename",
+    description="Rename a community",
+    short_desc="Rename a community",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("oldname", description="Old name of community", metavar="OLDNAME"),
+        Flag("newname", description="New name of community", metavar="NEWNAME"),
+    ],
+)
+def community_rename(args: argparse.Namespace) -> None:
+    """Rename a community.
+
+    :param args: argparse.Namespace (network, oldname, newname)
+    """
+    network: str = args.network
+    oldname: str = args.oldname
+    newname: str = args.newname
+
+    net = Network.get_by_network_or_raise(network)
+    community = net.get_community_or_raise(oldname)
+    community.patch(({"name": newname}))
+    OutputManager().add_ok(f"Renamed community {oldname!r} to {newname!r}")
+
+
+# TODO[rename]: network community set_description
+@command_registry.register_command(
+    prog="community_set_description",
+    description="Set description for a community",
+    short_desc="Set community description",
+    flags=[
+        Flag("network", description="Network", metavar="NETWORK"),
+        Flag("community", description="Name of community", metavar="COMMUNITY"),
+        Flag("description", description="New description", metavar="DESCRIPTION"),
+    ],
+)
+def community_set_description(args: argparse.Namespace) -> None:
+    """Set description for a network community.
+
+    :param args: argparse.Namespace (network, community, description)
+    """
+    network: str = args.network
+    community: str = args.community
+    description: str = args.description
+
+    net = Network.get_by_network_or_raise(network)
+    com = net.get_community_or_raise(community)
+    com.patch({"description": description})
+    OutputManager().add_ok(f"Set new description for community {community!r}")
+
+
+def _check_host_ip(host: Host, ip: str | None) -> IPAddress:
+    """Ensure host has an IP that can be added to/removed from a community."""
+    if not host.ipaddresses:
+        raise EntityNotFound(f"Host {host.name!r} is not associated with any networks.")
+    elif not ip and len(host.ipaddresses) > 1:
+        raise InputFailure(
+            f"Host {host.name!r} is associated with multiple IP addresses. Must specify IP."
+        )
+
+    if ip:
+        ip_t = NetworkOrIP.parse_or_raise(ip, mode="ip")
+        ipaddr = host.get_ip(ip_t)
+        if not ipaddr:
+            raise EntityNotFound(f"Host {host.name!r} is not associated with IP {ip_t}")
+    else:
+        ipaddr = host.ipaddresses[0]
+
+    return ipaddr
+
+
+@command_registry.register_command(
+    prog="community_host_add",
+    description="Add host to a community",
+    short_desc="Add host to a community",
+    flags=[
+        Flag("host", description="Host to add", metavar="HOST"),
+        Flag("community", description="Community to add host to", metavar="COMMUNITY"),
+        Flag("-ip", description="Specific IP address to associate with community", metavar="IP"),
+    ],
+)
+def community_host_add(args: argparse.Namespace) -> None:
+    """Add a host to a community.
+
+    :param args: argparse.Namespace (host, community, network)
+    """
+    host: str = args.host
+    community: str = args.community
+    ip: str | None = args.ip
+
+    h = Host.get_by_any_means_or_raise(host)
+    ipaddr = _check_host_ip(h, ip)
+    net = ipaddr.network()
+    com = net.get_community_or_raise(community)
+
+    com.add_host(h, ipaddress=ipaddr.ipaddress)
+
+    OutputManager().add_ok(f"Added host {h.name!r} to community {com.name!r}")
+
+
+@command_registry.register_command(
+    prog="community_host_remove",
+    description="Remove host from a community",
+    short_desc="Remove host from a community",
+    flags=[
+        Flag("host", description="Host to remove", metavar="HOST"),
+        Flag("community", description="Community to remove host from", metavar="COMMUNITY"),
+        Flag("-ip", description="IP address to remove from community", metavar="IP"),
+    ],
+)
+def community_host_remove(args: argparse.Namespace) -> None:
+    """Remove a host from a community.
+
+    :param args: argparse.Namespace (network, community, host)
+    """
+    host: str = args.host
+    community: str = args.community
+    ip: str | None = args.ip
+
+    h = Host.get_by_any_means_or_raise(host)
+    ipaddr = _check_host_ip(h, ip)
+    com = h.get_community_or_raise(community, ipaddr)
+    com.remove_host(h, ipaddr.ipaddress)
+
+    OutputManager().add_ok(
+        f"Removed host {h.name!r} (IP: {ipaddr.ipaddress}) from community {com.name!r}"
+    )

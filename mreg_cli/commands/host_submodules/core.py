@@ -309,7 +309,7 @@ def remove(args: argparse.Namespace) -> None:
 
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
-    naptrs = host.naptrs()
+    naptrs = host.naptrs
     if len(naptrs) > 0:
         if not forced(Override.NAPTR):
             overrides_required.add(Override.NAPTR)
@@ -326,7 +326,7 @@ def remove(args: argparse.Namespace) -> None:
                 )
 
     # Require force if host has any SRV records. Delete the SRV records if force
-    srvs = host.srvs()
+    srvs = host.srvs
     if len(srvs) > 0:
         if not forced(Override.SRV):
             overrides_required.add(Override.SRV)

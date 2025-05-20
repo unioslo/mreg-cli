@@ -5,7 +5,12 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Atom, Host, HostPolicy, Role
+from mreg_cli.api.models import (
+    Atom,
+    Host,
+    HostPolicy,
+    Role,
+)
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CreateError, DeleteError, EntityAlreadyExists
@@ -327,11 +332,11 @@ def host_copy(args: argparse.Namespace) -> None:
     """
     source_name: str = args.source
     source = Host.get_by_any_means_or_raise(source_name)
-    source_roles = set(source.roles())
+    source_roles = set(source.get_roles())
 
     for destination_name in args.destination:
         destination = Host.get_by_any_means_or_raise(destination_name)
-        destination_roles = set(destination.roles())
+        destination_roles = set(destination.get_roles())
         OutputManager().add_line(f"Copying roles from from {source_name} to {destination_name}")
 
         # Check if role already exists in destination
