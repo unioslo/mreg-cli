@@ -208,6 +208,15 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
     if not result.ok:
         if err := parse_mreg_error(result):
             res_text = err.as_json_str()  # NOTE: do we want to use as_str() instead?
+        elif result.status_code == 404:
+            endpoint = url.split("/api/v1/")[-1] if "/api/v1/" in url else url
+            res_text = (
+                f"Endpoint not found: '{endpoint}'\n"
+                f"This may be because your CLI version ({__version__}) is:\n"
+                f"  - Too old: The endpoint has been removed from the server\n"
+                f"  - Too new: You're using a beta feature not yet available on the server\n"
+                f"Try updating or downgrading your mreg-cli."
+            )
         else:
             res_text = result.text
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}\n{res_text}'
