@@ -6,7 +6,7 @@ import argparse
 from typing import Any
 
 from mreg_cli.__about__ import __version__ as mreg_cli_version
-from mreg_cli.api.models import ServerLibraries, ServerVersion, UserInfo
+from mreg_cli.api.models import HealthInfo, ServerLibraries, ServerVersion, UserInfo
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.config import MregCliConfig
@@ -133,3 +133,17 @@ def whois_help(args: argparse.Namespace) -> None:
         UserInfo.fetch(ignore_errors=False, user=args.user).output(django=args.django)
     except Exception as e:
         raise CliError(f"Failed to display user info for {args.user!r}: {e}") from e
+
+
+@command_registry.register_command(
+    prog="health",
+    description="Show information about the health of the server",
+    short_desc="Show health info",
+)
+def meta_health(_: argparse.Namespace) -> None:
+    """Show information about the health of the server."""
+    try:
+        info = HealthInfo.fetch()
+        info.output()
+    except Exception as e:
+        raise CliError(f"Failed to display health info: {e}") from e
