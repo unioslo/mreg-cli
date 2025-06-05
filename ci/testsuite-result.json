@@ -9894,46 +9894,53 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/tinyhost.example.org",
+        "url": "/api/v1/hosts/?name=tinyhost.example.org",
         "data": {},
         "status": 200,
         "response": {
-          "ipaddresses": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
-              "macaddress": "",
-              "created_at": "2025-03-20T15:36:57.955525+01:00",
-              "updated_at": "2025-03-20T15:36:57.955532+01:00",
-              "ipaddress": "2001:db8::33",
-              "host": 2
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "created_at": "2025-06-05T10:29:58.005342+02:00",
+                  "updated_at": "2025-06-05T10:29:58.005373+02:00",
+                  "ipaddress": "2001:db8::33",
+                  "host": 2
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-06-05T10:29:57.979643+02:00",
+                  "updated_at": "2025-06-05T10:29:57.979650+02:00",
+                  "txt": "v=spf1 -all",
+                  "host": 2
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [],
+              "created_at": "2025-06-05T10:29:57.977661+02:00",
+              "updated_at": "2025-06-05T10:29:57.977669+02:00",
+              "name": "tinyhost.example.org",
+              "contact": "me@example.org",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
             }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "created_at": "2025-03-20T15:36:57.936502+01:00",
-              "updated_at": "2025-03-20T15:36:57.936509+01:00",
-              "txt": "v=spf1 -all",
-              "host": 2
-            }
-          ],
-          "ptr_overrides": [],
-          "srvs": [],
-          "naptrs": [],
-          "sshfps": [],
-          "hostgroups": [],
-          "roles": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "communities": [],
-          "created_at": "2025-03-20T15:36:57.934243+01:00",
-          "updated_at": "2025-03-20T15:36:57.934250+01:00",
-          "name": "tinyhost.example.org",
-          "contact": "me@example.org",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
+          ]
         }
       },
       {
@@ -9945,8 +9952,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-03-20T15:36:57.535602+01:00",
-          "updated_at": "2025-03-20T15:36:57.772556+01:00",
+          "created_at": "2025-06-05T10:29:57.377660+02:00",
+          "updated_at": "2025-06-05T10:29:57.840573+02:00",
           "network": "2001:db8::/64",
           "description": "Lorem ipsum dolor sit amet",
           "vlan": null,
@@ -9974,52 +9981,59 @@
       "              2001:db8::33   <not set>   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Thu Mar 20 15:36:57 2025",
-      "Updated:      Thu Mar 20 15:36:57 2025"
+      "Created:      Thu Jun  5 10:29:57 2025",
+      "Updated:      Thu Jun  5 10:29:57 2025"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/tinyhost.example.org",
+        "url": "/api/v1/hosts/?name=tinyhost.example.org",
         "data": {},
         "status": 200,
         "response": {
-          "ipaddresses": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
-              "macaddress": "",
-              "created_at": "2025-03-20T15:36:57.955525+01:00",
-              "updated_at": "2025-03-20T15:36:57.955532+01:00",
-              "ipaddress": "2001:db8::33",
-              "host": 2
+              "ipaddresses": [
+                {
+                  "macaddress": "",
+                  "created_at": "2025-06-05T10:29:58.005342+02:00",
+                  "updated_at": "2025-06-05T10:29:58.005373+02:00",
+                  "ipaddress": "2001:db8::33",
+                  "host": 2
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-06-05T10:29:57.979643+02:00",
+                  "updated_at": "2025-06-05T10:29:57.979650+02:00",
+                  "txt": "v=spf1 -all",
+                  "host": 2
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [],
+              "created_at": "2025-06-05T10:29:57.977661+02:00",
+              "updated_at": "2025-06-05T10:29:57.977669+02:00",
+              "name": "tinyhost.example.org",
+              "contact": "me@example.org",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
             }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "created_at": "2025-03-20T15:36:57.936502+01:00",
-              "updated_at": "2025-03-20T15:36:57.936509+01:00",
-              "txt": "v=spf1 -all",
-              "host": 2
-            }
-          ],
-          "ptr_overrides": [],
-          "srvs": [],
-          "naptrs": [],
-          "sshfps": [],
-          "hostgroups": [],
-          "roles": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "communities": [],
-          "created_at": "2025-03-20T15:36:57.934243+01:00",
-          "updated_at": "2025-03-20T15:36:57.934250+01:00",
-          "name": "tinyhost.example.org",
-          "contact": "me@example.org",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
+          ]
         }
       },
       {
@@ -10031,8 +10045,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-03-20T15:36:57.535602+01:00",
-          "updated_at": "2025-03-20T15:36:57.772556+01:00",
+          "created_at": "2025-06-05T10:29:57.377660+02:00",
+          "updated_at": "2025-06-05T10:29:57.840573+02:00",
           "network": "2001:db8::/64",
           "description": "Lorem ipsum dolor sit amet",
           "vlan": null,
@@ -17591,44 +17605,51 @@
       "Contact:      ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Thu Mar 20 15:37:05 2025",
-      "Updated:      Thu Mar 20 15:37:05 2025"
+      "Created:      Thu Jun  5 10:30:06 2025",
+      "Updated:      Thu Jun  5 10:30:06 2025"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
+        "url": "/api/v1/hosts/?name=foo.example.org",
         "data": {},
         "status": 200,
         "response": {
-          "ipaddresses": [],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
-              "created_at": "2025-03-20T15:37:05.263899+01:00",
-              "updated_at": "2025-03-20T15:37:05.263906+01:00",
-              "txt": "v=spf1 -all",
-              "host": 12
+              "ipaddresses": [],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-06-05T10:30:06.912661+02:00",
+                  "updated_at": "2025-06-05T10:30:06.912668+02:00",
+                  "txt": "v=spf1 -all",
+                  "host": 12
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [],
+              "created_at": "2025-06-05T10:30:06.910702+02:00",
+              "updated_at": "2025-06-05T10:30:06.910711+02:00",
+              "name": "foo.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
             }
-          ],
-          "ptr_overrides": [],
-          "srvs": [],
-          "naptrs": [],
-          "sshfps": [],
-          "hostgroups": [],
-          "roles": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "communities": [],
-          "created_at": "2025-03-20T15:37:05.261629+01:00",
-          "updated_at": "2025-03-20T15:37:05.261642+01:00",
-          "name": "foo.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
+          ]
         }
       }
     ],
@@ -17848,46 +17869,53 @@
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
       "Roles:        fruit",
-      "Created:      Thu Mar 20 15:37:05 2025",
-      "Updated:      Thu Mar 20 15:37:05 2025"
+      "Created:      Thu Jun  5 10:30:06 2025",
+      "Updated:      Thu Jun  5 10:30:06 2025"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
+        "url": "/api/v1/hosts/?name=foo.example.org",
         "data": {},
         "status": 200,
         "response": {
-          "ipaddresses": [],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
-              "created_at": "2025-03-20T15:37:05.263899+01:00",
-              "updated_at": "2025-03-20T15:37:05.263906+01:00",
-              "txt": "v=spf1 -all",
-              "host": 12
+              "ipaddresses": [],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-06-05T10:30:06.912661+02:00",
+                  "updated_at": "2025-06-05T10:30:06.912668+02:00",
+                  "txt": "v=spf1 -all",
+                  "host": 12
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [
+                "fruit"
+              ],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [],
+              "created_at": "2025-06-05T10:30:06.910702+02:00",
+              "updated_at": "2025-06-05T10:30:06.910711+02:00",
+              "name": "foo.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
             }
-          ],
-          "ptr_overrides": [],
-          "srvs": [],
-          "naptrs": [],
-          "sshfps": [],
-          "hostgroups": [],
-          "roles": [
-            "fruit"
-          ],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "communities": [],
-          "created_at": "2025-03-20T15:37:05.261629+01:00",
-          "updated_at": "2025-03-20T15:37:05.261642+01:00",
-          "name": "foo.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
+          ]
         }
       }
     ],
@@ -20826,59 +20854,66 @@
       "              2001:db8::5   <not set>   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Thu Mar 20 15:37:06 2025",
-      "Updated:      Thu Mar 20 15:37:06 2025"
+      "Created:      Thu Jun  5 10:30:08 2025",
+      "Updated:      Thu Jun  5 10:30:08 2025"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
+        "url": "/api/v1/hosts/?name=foo.example.org",
         "data": {},
         "status": 200,
         "response": {
-          "ipaddresses": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
-              "macaddress": "aa:bb:cc:dd:ee:ff",
-              "created_at": "2025-03-20T15:37:07.334585+01:00",
-              "updated_at": "2025-03-20T15:37:08.405563+01:00",
-              "ipaddress": "10.0.0.5",
-              "host": 13
-            },
-            {
-              "macaddress": "",
-              "created_at": "2025-03-20T15:37:08.234594+01:00",
-              "updated_at": "2025-03-20T15:37:08.234600+01:00",
-              "ipaddress": "2001:db8::5",
-              "host": 13
+              "ipaddresses": [
+                {
+                  "macaddress": "aa:bb:cc:dd:ee:ff",
+                  "created_at": "2025-06-05T10:30:10.574682+02:00",
+                  "updated_at": "2025-06-05T10:30:11.986331+02:00",
+                  "ipaddress": "10.0.0.5",
+                  "host": 13
+                },
+                {
+                  "macaddress": "",
+                  "created_at": "2025-06-05T10:30:11.735600+02:00",
+                  "updated_at": "2025-06-05T10:30:11.735608+02:00",
+                  "ipaddress": "2001:db8::5",
+                  "host": 13
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-06-05T10:30:08.819341+02:00",
+                  "updated_at": "2025-06-05T10:30:08.819372+02:00",
+                  "txt": "v=spf1 -all",
+                  "host": 13
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [],
+              "created_at": "2025-06-05T10:30:08.817094+02:00",
+              "updated_at": "2025-06-05T10:30:08.817103+02:00",
+              "name": "foo.example.org",
+              "contact": "",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
             }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "created_at": "2025-03-20T15:37:06.396618+01:00",
-              "updated_at": "2025-03-20T15:37:06.396624+01:00",
-              "txt": "v=spf1 -all",
-              "host": 13
-            }
-          ],
-          "ptr_overrides": [],
-          "srvs": [],
-          "naptrs": [],
-          "sshfps": [],
-          "hostgroups": [],
-          "roles": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "communities": [],
-          "created_at": "2025-03-20T15:37:06.394606+01:00",
-          "updated_at": "2025-03-20T15:37:06.394612+01:00",
-          "name": "foo.example.org",
-          "contact": "",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
+          ]
         }
       },
       {
@@ -20890,8 +20925,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-03-20T15:37:06.302275+01:00",
-          "updated_at": "2025-03-20T15:37:06.302284+01:00",
+          "created_at": "2025-06-05T10:30:08.658986+02:00",
+          "updated_at": "2025-06-05T10:30:08.659002+02:00",
           "network": "10.0.0.0/24",
           "description": "foo",
           "vlan": 1234,
@@ -20911,8 +20946,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-03-20T15:37:07.650384+01:00",
-          "updated_at": "2025-03-20T15:37:07.650393+01:00",
+          "created_at": "2025-06-05T10:30:11.208810+02:00",
+          "updated_at": "2025-06-05T10:30:11.208826+02:00",
           "network": "2001:db8::/64",
           "description": "foo_ipv6",
           "vlan": 1234,
@@ -21617,52 +21652,59 @@
       "              10.0.0.10   11:22:33:aa:bb:cc   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Thu Mar 20 15:37:09 2025",
-      "Updated:      Thu Mar 20 15:37:09 2025"
+      "Created:      Thu Jun  5 10:30:12 2025",
+      "Updated:      Thu Jun  5 10:30:12 2025"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/foo.example.org",
+        "url": "/api/v1/hosts/?name=foo.example.org",
         "data": {},
         "status": 200,
         "response": {
-          "ipaddresses": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
-              "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-03-20T15:37:09.046400+01:00",
-              "updated_at": "2025-03-20T15:37:09.131859+01:00",
-              "ipaddress": "10.0.0.10",
-              "host": 14
+              "ipaddresses": [
+                {
+                  "macaddress": "11:22:33:aa:bb:cc",
+                  "created_at": "2025-06-05T10:30:12.917780+02:00",
+                  "updated_at": "2025-06-05T10:30:13.066484+02:00",
+                  "ipaddress": "10.0.0.10",
+                  "host": 14
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-06-05T10:30:12.878033+02:00",
+                  "updated_at": "2025-06-05T10:30:12.878039+02:00",
+                  "txt": "v=spf1 -all",
+                  "host": 14
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [],
+              "created_at": "2025-06-05T10:30:12.874605+02:00",
+              "updated_at": "2025-06-05T10:30:12.874619+02:00",
+              "name": "foo.example.org",
+              "contact": "hi@ho.com",
+              "ttl": null,
+              "comment": "meh",
+              "zone": 1
             }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "created_at": "2025-03-20T15:37:09.032853+01:00",
-              "updated_at": "2025-03-20T15:37:09.032859+01:00",
-              "txt": "v=spf1 -all",
-              "host": 14
-            }
-          ],
-          "ptr_overrides": [],
-          "srvs": [],
-          "naptrs": [],
-          "sshfps": [],
-          "hostgroups": [],
-          "roles": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "communities": [],
-          "created_at": "2025-03-20T15:37:09.031195+01:00",
-          "updated_at": "2025-03-20T15:37:09.031202+01:00",
-          "name": "foo.example.org",
-          "contact": "hi@ho.com",
-          "ttl": null,
-          "comment": "meh",
-          "zone": 1
+          ]
         }
       },
       {
@@ -21674,8 +21716,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-03-20T15:37:08.831678+01:00",
-          "updated_at": "2025-03-20T15:37:08.831687+01:00",
+          "created_at": "2025-06-05T10:30:12.543301+02:00",
+          "updated_at": "2025-06-05T10:30:12.543316+02:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -37688,67 +37730,74 @@
       "              10.0.2.4   11:22:33:aa:bb:cc   insecurepolicy   guests (community01)   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Mon May 19 10:28:11 2025",
-      "Updated:      Mon May 19 10:28:11 2025"
+      "Created:      Thu Jun  5 10:30:31 2025",
+      "Updated:      Thu Jun  5 10:30:31 2025"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/tinyhost.example.org",
+        "url": "/api/v1/hosts/?name=tinyhost.example.org",
         "data": {},
         "status": 200,
         "response": {
-          "ipaddresses": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
-              "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-05-19T10:28:11.842359+02:00",
-              "updated_at": "2025-05-19T10:28:12.063829+02:00",
-              "ipaddress": "10.0.2.4",
-              "host": 25
+              "ipaddresses": [
+                {
+                  "macaddress": "11:22:33:aa:bb:cc",
+                  "created_at": "2025-06-05T10:30:31.489492+02:00",
+                  "updated_at": "2025-06-05T10:30:31.589274+02:00",
+                  "ipaddress": "10.0.2.4",
+                  "host": 25
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-06-05T10:30:31.454767+02:00",
+                  "updated_at": "2025-06-05T10:30:31.454774+02:00",
+                  "txt": "v=spf1 -all",
+                  "host": 25
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [
+                {
+                  "ipaddress": 25,
+                  "community": {
+                    "name": "guests",
+                    "description": "Guest hosts.",
+                    "network": 10,
+                    "hosts": [
+                      "tinyhost.example.org"
+                    ],
+                    "global_name": "community01",
+                    "created_at": "2025-06-05T10:30:31.768962+02:00",
+                    "updated_at": "2025-06-05T10:30:31.768978+02:00"
+                  }
+                }
+              ],
+              "created_at": "2025-06-05T10:30:31.451853+02:00",
+              "updated_at": "2025-06-05T10:30:31.451861+02:00",
+              "name": "tinyhost.example.org",
+              "contact": "tinyhost@example.org",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
             }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "created_at": "2025-05-19T10:28:11.808157+02:00",
-              "updated_at": "2025-05-19T10:28:11.808164+02:00",
-              "txt": "v=spf1 -all",
-              "host": 25
-            }
-          ],
-          "ptr_overrides": [],
-          "srvs": [],
-          "naptrs": [],
-          "sshfps": [],
-          "hostgroups": [],
-          "roles": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "communities": [
-            {
-              "ipaddress": 25,
-              "community": {
-                "name": "guests",
-                "description": "Guest hosts.",
-                "network": 10,
-                "hosts": [
-                  "tinyhost.example.org"
-                ],
-                "global_name": "community01",
-                "created_at": "2025-05-19T10:28:12.296707+02:00",
-                "updated_at": "2025-05-19T10:28:12.296718+02:00"
-              }
-            }
-          ],
-          "created_at": "2025-05-19T10:28:11.805452+02:00",
-          "updated_at": "2025-05-19T10:28:11.805460+02:00",
-          "name": "tinyhost.example.org",
-          "contact": "tinyhost@example.org",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
+          ]
         }
       },
       {
@@ -37772,8 +37821,8 @@
               }
             ],
             "community_mapping_prefix": null,
-            "created_at": "2025-05-19T10:28:08.859834+02:00",
-            "updated_at": "2025-05-19T10:28:11.415014+02:00"
+            "created_at": "2025-06-05T10:30:28.977608+02:00",
+            "updated_at": "2025-06-05T10:30:30.983464+02:00"
           },
           "communities": [
             {
@@ -37784,8 +37833,8 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community01",
-              "created_at": "2025-05-19T10:28:12.296707+02:00",
-              "updated_at": "2025-05-19T10:28:12.296718+02:00"
+              "created_at": "2025-06-05T10:30:31.768962+02:00",
+              "updated_at": "2025-06-05T10:30:31.768978+02:00"
             },
             {
               "name": "lab",
@@ -37793,12 +37842,12 @@
               "network": 10,
               "hosts": [],
               "global_name": "community02",
-              "created_at": "2025-05-19T10:28:12.364819+02:00",
-              "updated_at": "2025-05-19T10:28:12.364828+02:00"
+              "created_at": "2025-06-05T10:30:31.851736+02:00",
+              "updated_at": "2025-06-05T10:30:31.851748+02:00"
             }
           ],
-          "created_at": "2025-05-19T10:28:08.477801+02:00",
-          "updated_at": "2025-05-19T10:28:10.632088+02:00",
+          "created_at": "2025-06-05T10:30:28.612219+02:00",
+          "updated_at": "2025-06-05T10:30:30.359420+02:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -38087,67 +38136,74 @@
       "              10.0.2.4   11:22:33:aa:bb:cc   insecurepolicy   lab (community02)   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Mon May 19 10:28:11 2025",
-      "Updated:      Mon May 19 10:28:11 2025"
+      "Created:      Thu Jun  5 10:30:31 2025",
+      "Updated:      Thu Jun  5 10:30:31 2025"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/hosts/tinyhost.example.org",
+        "url": "/api/v1/hosts/?name=tinyhost.example.org",
         "data": {},
         "status": 200,
         "response": {
-          "ipaddresses": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
-              "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-05-19T10:28:11.842359+02:00",
-              "updated_at": "2025-05-19T10:28:12.063829+02:00",
-              "ipaddress": "10.0.2.4",
-              "host": 25
+              "ipaddresses": [
+                {
+                  "macaddress": "11:22:33:aa:bb:cc",
+                  "created_at": "2025-06-05T10:30:31.489492+02:00",
+                  "updated_at": "2025-06-05T10:30:31.589274+02:00",
+                  "ipaddress": "10.0.2.4",
+                  "host": 25
+                }
+              ],
+              "cnames": [],
+              "mxs": [],
+              "txts": [
+                {
+                  "created_at": "2025-06-05T10:30:31.454767+02:00",
+                  "updated_at": "2025-06-05T10:30:31.454774+02:00",
+                  "txt": "v=spf1 -all",
+                  "host": 25
+                }
+              ],
+              "ptr_overrides": [],
+              "srvs": [],
+              "naptrs": [],
+              "sshfps": [],
+              "hostgroups": [],
+              "roles": [],
+              "hinfo": null,
+              "loc": null,
+              "bacnetid": null,
+              "communities": [
+                {
+                  "ipaddress": 25,
+                  "community": {
+                    "name": "lab",
+                    "description": "Lab hosts.",
+                    "network": 10,
+                    "hosts": [
+                      "tinyhost.example.org"
+                    ],
+                    "global_name": "community02",
+                    "created_at": "2025-06-05T10:30:31.851736+02:00",
+                    "updated_at": "2025-06-05T10:30:31.851748+02:00"
+                  }
+                }
+              ],
+              "created_at": "2025-06-05T10:30:31.451853+02:00",
+              "updated_at": "2025-06-05T10:30:31.451861+02:00",
+              "name": "tinyhost.example.org",
+              "contact": "tinyhost@example.org",
+              "ttl": null,
+              "comment": "",
+              "zone": 1
             }
-          ],
-          "cnames": [],
-          "mxs": [],
-          "txts": [
-            {
-              "created_at": "2025-05-19T10:28:11.808157+02:00",
-              "updated_at": "2025-05-19T10:28:11.808164+02:00",
-              "txt": "v=spf1 -all",
-              "host": 25
-            }
-          ],
-          "ptr_overrides": [],
-          "srvs": [],
-          "naptrs": [],
-          "sshfps": [],
-          "hostgroups": [],
-          "roles": [],
-          "hinfo": null,
-          "loc": null,
-          "bacnetid": null,
-          "communities": [
-            {
-              "ipaddress": 25,
-              "community": {
-                "name": "lab",
-                "description": "Lab hosts.",
-                "network": 10,
-                "hosts": [
-                  "tinyhost.example.org"
-                ],
-                "global_name": "community02",
-                "created_at": "2025-05-19T10:28:12.364819+02:00",
-                "updated_at": "2025-05-19T10:28:12.364828+02:00"
-              }
-            }
-          ],
-          "created_at": "2025-05-19T10:28:11.805452+02:00",
-          "updated_at": "2025-05-19T10:28:11.805460+02:00",
-          "name": "tinyhost.example.org",
-          "contact": "tinyhost@example.org",
-          "ttl": null,
-          "comment": "",
-          "zone": 1
+          ]
         }
       },
       {
@@ -38171,8 +38227,8 @@
               }
             ],
             "community_mapping_prefix": null,
-            "created_at": "2025-05-19T10:28:08.859834+02:00",
-            "updated_at": "2025-05-19T10:28:11.415014+02:00"
+            "created_at": "2025-06-05T10:30:28.977608+02:00",
+            "updated_at": "2025-06-05T10:30:30.983464+02:00"
           },
           "communities": [
             {
@@ -38181,8 +38237,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-05-19T10:28:12.296707+02:00",
-              "updated_at": "2025-05-19T10:28:12.296718+02:00"
+              "created_at": "2025-06-05T10:30:31.768962+02:00",
+              "updated_at": "2025-06-05T10:30:31.768978+02:00"
             },
             {
               "name": "lab",
@@ -38192,12 +38248,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2025-05-19T10:28:12.364819+02:00",
-              "updated_at": "2025-05-19T10:28:12.364828+02:00"
+              "created_at": "2025-06-05T10:30:31.851736+02:00",
+              "updated_at": "2025-06-05T10:30:31.851748+02:00"
             }
           ],
-          "created_at": "2025-05-19T10:28:08.477801+02:00",
-          "updated_at": "2025-05-19T10:28:10.632088+02:00",
+          "created_at": "2025-06-05T10:30:28.612219+02:00",
+          "updated_at": "2025-06-05T10:30:30.359420+02:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
