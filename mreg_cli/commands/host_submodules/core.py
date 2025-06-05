@@ -418,7 +418,7 @@ def host_info(args: argparse.Namespace) -> None:
     direct groups.
     """
     for host in args.hosts:
-        hosts = Host.get_list_by_any_means(host, inform_as_cname=True)
+        hosts = Host.get_list_by_any_means_or_raise(host, inform_as_cname=True)
         if hosts:
             Host.output_multiple(hosts, traverse_hostgroups=args.traverse_hostgroups)
 

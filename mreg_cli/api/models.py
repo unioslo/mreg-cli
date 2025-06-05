@@ -3208,6 +3208,29 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         return host
 
     @classmethod
+    def get_list_by_any_means_or_raise(
+        cls, identifier: str | HostName, inform_as_cname: bool = True, inform_as_ptr: bool = True
+    ) -> list[Self]:
+        """Get a host by the given identifier or raise EntityNotFound.
+
+        See also `get_by_any_means`.
+
+        :param identifier: The identifier to search for.
+        :param inform_as_cname: If True, inform the user if the host is a CNAME.
+        :param inform_as_ptr: If True, inform the user if the host is a PTR override.
+
+        :raises EntityNotFound: If the host is not found.
+
+        :returns: A Host object if the host was found.
+        """
+        hosts = cls.get_list_by_any_means(
+            identifier, inform_as_cname=inform_as_cname, inform_as_ptr=inform_as_ptr
+        )
+        if not hosts:
+            raise EntityNotFound(f"Host {identifier} not found.")
+        return hosts
+
+    @classmethod
     def get_list_by_any_means(
         cls, identifier: str, inform_as_cname: bool = True, inform_as_ptr: bool = True
     ) -> list[Self]:
@@ -3244,8 +3267,8 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: A Host object if the host was found, otherwise None.
         """
-        if identifier.isdigit():
-            return cls.get_list_by_id(int(identifier))
+        if identifier.isdigit() and (host := cls.get_by_id(int(identifier))):
+            return [host]
 
         if ip := NetworkOrIP.parse(identifier, mode="ip"):
             return cls.get_list_by_ip_or_raise(ip, inform_as_ptr=inform_as_ptr)
@@ -3256,20 +3279,18 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         # Let us try to find the host by name...
         identifier = HostName.parse_or_raise(identifier)
 
-        if hosts := cls.get_list_by_field("name", identifier):
-            return hosts
+        if host := cls.get_by_field("name", identifier):
+            return [host]
 
-        cname = CNAME.get_by_field("name", identifier)
         # If we found a CNAME, get the host it points to. We're not interested in the
         # CNAME itself.
-        if cname is not None:
-            hosts = cls.get_list_by_id(cname.host)
+        if cname := CNAME.get_by_field("name", identifier):
+            host = cls.get_by_id(cname.host)
+            if host and inform_as_cname:
+                OutputManager().add_line(f"{identifier} is a CNAME for {host.name}")
+                return [host]
 
-            if hosts and inform_as_cname:
-                for host in hosts:
-                    OutputManager().add_line(f"{identifier} is a CNAME for {host.name}")
-
-        return hosts
+        return []
 
     def delete(self) -> bool:
         """Delete the host.
