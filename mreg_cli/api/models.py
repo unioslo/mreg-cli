@@ -3035,6 +3035,19 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         return hosts
 
     @classmethod
+    def get_list_by_ip_or_raise(cls, ip: IP_AddressT, inform_as_ptr: bool = True) -> list[Self]:
+        """Get a list of hosts by IP address or raise EntityNotFound.
+
+        :param ip: The IP address to search for.
+        :returns: A list of Host objects.
+        :param check_ptr: If True, check for PTR overrides as well.
+        """
+        hosts = cls.get_list_by_ip(ip, inform_as_ptr=inform_as_ptr)
+        if not hosts:
+            raise EntityNotFound(f"Host with IP address {ip} not found.")
+        return hosts
+
+    @classmethod
     def get_by_ip(cls, ip: IP_AddressT, inform_as_ptr: bool = True) -> Host | None:
         """Get a host by IP address.
 
@@ -3235,7 +3248,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             return cls.get_list_by_id(int(identifier))
 
         if ip := NetworkOrIP.parse(identifier, mode="ip"):
-            return cls.get_list_by_ip(ip, inform_as_ptr=inform_as_ptr)
+            return cls.get_list_by_ip_or_raise(ip, inform_as_ptr=inform_as_ptr)
 
         if mac := MacAddress.parse(identifier):
             return cls.get_list_by_mac_or_raise(mac)
