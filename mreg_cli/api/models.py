@@ -3263,7 +3263,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         # If we found a CNAME, get the host it points to. We're not interested in the
         # CNAME itself.
         if cname is not None:
-            host = cls.get_list_by_id(cname.host)
+            hosts = cls.get_list_by_id(cname.host)
 
             if hosts and inform_as_cname:
                 for host in hosts:
