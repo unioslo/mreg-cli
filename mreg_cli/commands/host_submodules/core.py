@@ -141,13 +141,13 @@ def add(args: argparse.Namespace) -> None:
             try:
                 network = Network.get_by_ip(ipaddr)
                 if network:
-                    if ipaddr == network.network_address:
+                    if ipaddr == network.network_address and not force:
                         raise InvalidIPAddress(
-                            f"IP {ipaddr} is a network address, not a host address"
+                            f"IP {ipaddr} is a network address, not a host address, must force"
                         )
-                    elif ipaddr == network.broadcast_address:
+                    elif ipaddr == network.broadcast_address and not force:
                         raise InvalidIPAddress(
-                            f"IP {ipaddr} is a broadcast address, not a host address"
+                            f"IP {ipaddr} is a broadcast address, not a host address, must force"
                         )
             except (EntityNotFound, APINotOk) as e:
                 if not force:
