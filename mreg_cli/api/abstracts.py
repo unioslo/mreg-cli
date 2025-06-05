@@ -180,23 +180,6 @@ class APIMixin(ABC):
         return cls.get_by_id(_id)
 
     @classmethod
-    def get_list_by_id(cls, _id: int) -> list[Self]:
-        """Get a list of objects by their ID.
-
-        :param _id: The ID of the object.
-        :returns: A list of objects if found, an empty list otherwise.
-        """
-        endpoint = cls.endpoint()
-        if endpoint.requires_search_for_id():
-            return cls.get_list_by_field("id", _id)
-
-        data = get(endpoint.with_id(_id), ok404=True)
-        if not data:
-            return []
-
-        return [cls(**item) for item in data.json()]
-
-    @classmethod
     def get_by_id(cls, _id: int) -> Self | None:
         """Get an object by its ID.
 
