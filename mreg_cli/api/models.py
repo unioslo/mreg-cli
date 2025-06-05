@@ -3019,6 +3019,22 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         return Endpoint.Hosts
 
     @classmethod
+    def get_list_by_ip(cls, ip: IP_AddressT, inform_as_ptr: bool = True) -> list[Self]:
+        """Get a list of hosts by IP address.
+
+        :param ip: The IP address to search for.
+        :param check_ptr: If True, check for PTR overrides as well.
+        :returns: A list of Host objects.
+        """
+        hosts = cls.get_list_by_field("ipaddresses__ipaddress", str(ip))
+        if not hosts:
+            hosts = cls.get_list_by_field("ptr_overrides__ipaddress", str(ip))
+            if hosts and inform_as_ptr:
+                for host in hosts:
+                    OutputManager().add_line(f"{ip} is a PTR override for {host.name}")
+        return hosts
+
+    @classmethod
     def get_by_ip(cls, ip: IP_AddressT, inform_as_ptr: bool = True) -> Host | None:
         """Get a host by IP address.
 
@@ -3069,6 +3085,27 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if not host:
             raise EntityNotFound(f"Host with MAC address {mac} not found.")
         return host
+
+    @classmethod
+    def get_list_by_mac(cls, mac: MacAddress) -> list[Self]:
+        """Get a list of host by MAC address.
+
+        :param ip: The MAC address to search for.
+        :returns: The Host object if found, None otherwise.
+        """
+        return cls.get_list_by_field("ipaddresses__macaddress", str(mac))
+
+    @classmethod
+    def get_list_by_mac_or_raise(cls, mac: MacAddress) -> list[Self]:
+        """Get a list of hosts by MAC address or raise EntityNotFound.
+
+        :param ip: The MAC address to search for.
+        :returns: The Host object if found.
+        """
+        hosts = cls.get_list_by_mac(mac)
+        if not hosts:
+            raise EntityNotFound(f"Host with MAC address {mac} not found.")
+        return hosts
 
     @classmethod
     def get_by_any_means_or_raise(
@@ -3156,6 +3193,70 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 OutputManager().add_line(f"{identifier} is a CNAME for {host.name}")
 
         return host
+
+    @classmethod
+    def get_list_by_any_means(
+        cls, identifier: str, inform_as_cname: bool = True, inform_as_ptr: bool = True
+    ) -> list[Self]:
+        """Get a host by the given identifier.
+
+        - If the identifier is numeric, it will be treated as an ID.
+        - If the identifier is an IP address, it will be treated as an IP address (v4 or v6).
+        - If the identifier is a MAC address, it will be treated as a MAC address.
+        - Otherwise, it will be treated as a hostname. If the hostname is a CNAME,
+        the host it points to will be returned.
+
+        To check if a returned host is a cname, one can do the following:
+
+        ```python
+        hostname = "host.example.com"
+        host = get_host(hostname, ok404=True)
+        if host is None:
+            print("Host not found.")
+        elif host.name != hostname:
+            print(f"{hostname} is a CNAME pointing to {host.name}")
+        else:
+            print(f"{host.name} is a host.")
+        ```
+
+        Note that get_host will perform a case-insensitive search for a fully qualified version
+        of the hostname, so the comparison above may fail.
+
+        :param identifier: The identifier to search for.
+        :param ok404: If True, don't raise a EntityNotFound if the host is not found.
+        :param inform_as_cname: If True, inform the user if the host is a CNAME.
+        :param inform_as_ptr: If True, inform the user if the host is a PTR override.
+
+        :raises EntityNotFound: If we don't find the host and `ok404` is False.
+
+        :returns: A Host object if the host was found, otherwise None.
+        """
+        if identifier.isdigit():
+            return cls.get_list_by_id(int(identifier))
+
+        if ip := NetworkOrIP.parse(identifier, mode="ip"):
+            return cls.get_list_by_ip(ip, inform_as_ptr=inform_as_ptr)
+
+        if mac := MacAddress.parse(identifier):
+            return cls.get_list_by_mac_or_raise(mac)
+
+        # Let us try to find the host by name...
+        identifier = HostName.parse_or_raise(identifier)
+
+        if hosts := cls.get_list_by_field("name", identifier):
+            return hosts
+
+        cname = CNAME.get_by_field("name", identifier)
+        # If we found a CNAME, get the host it points to. We're not interested in the
+        # CNAME itself.
+        if cname is not None:
+            host = cls.get_list_by_id(cname.host)
+
+            if hosts and inform_as_cname:
+                for host in hosts:
+                    OutputManager().add_line(f"{identifier} is a CNAME for {host.name}")
+
+        return hosts
 
     def delete(self) -> bool:
         """Delete the host.
@@ -3551,6 +3652,21 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: True if the host has the MX record, False otherwise.
         """
         return next((mx for mx in self.mxs if mx.has_mx_with_priority(mx_arg, priority)), None)
+
+    @classmethod
+    def output_multiple(
+        cls, hosts: list[Host], names: bool = False, traverse_hostgroups: bool = False
+    ):
+        """Output multiple hosts to the console.
+
+        :param hosts: List of Host objects to output.
+        :param names: If True, output the host names only.
+        :param traverse_hostgroups: If True, traverse the hostgroups and include them in the output.
+        """
+        for i, host in enumerate(hosts, start=1):
+            host.output(names=names, traverse_hostgroups=traverse_hostgroups)
+            if i != len(hosts):
+                OutputManager().add_line("")
 
     def output(self, names: bool = False, traverse_hostgroups: bool = False):
         """Output host information to the console with padding."""
