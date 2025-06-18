@@ -40,7 +40,6 @@ session.headers.update({"User-Agent": f"mreg-cli-{__version__}"})
 
 logger = logging.getLogger(__name__)
 
-HTTP_TIMEOUT = 20
 
 T = TypeVar("T")
 
@@ -281,7 +280,7 @@ def _request_wrapper(
         url,
         params=params,
         json=data or None,
-        timeout=HTTP_TIMEOUT,
+        timeout=MregCliConfig().get_http_timeout(),
     )
 
     last_request_url.set(logurl)
@@ -304,7 +303,7 @@ def _request_wrapper(
         and params == {}
         and data
     ):
-        result = func(url, params={}, timeout=HTTP_TIMEOUT, data=data)
+        result = func(url, params={}, timeout=MregCliConfig().get_http_timeout(), data=data)
 
     OutputManager().recording_request(operation_type, url, params, data, result)
 

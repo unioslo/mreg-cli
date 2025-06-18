@@ -51,6 +51,15 @@ def main():
         metavar="USER",
     )
 
+    connect_args.add_argument(
+        "-t",
+        "--timeout",
+        type=int,
+        default=config.get_http_timeout(),
+        help="HTTP request timeout in seconds (default: %(default)s)",
+        metavar="TIMEOUT",
+    )
+
     mreg_args = parser.add_argument_group("mreg settings")
     mreg_args.add_argument(
         "-d",

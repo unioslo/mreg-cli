@@ -259,6 +259,18 @@ class MregCliConfig:
             raise ValueError("No URL found in config, no defaults available!")
         return url
 
+    def get_http_timeout(self, default: int = 20) -> int:
+        """Get the HTTP timeout from the application.
+
+        :returns: HTTP timeout in seconds.
+        """
+        timeout = self.get("timeout", default)
+        try:
+            return int(timeout)
+        except ValueError:
+            logger.warning("Invalid timeout value, using default %d seconds.", default)
+            return default
+
     def _calculate_column_width(self, data: dict[str, Any], min_width: int = 8) -> int:
         """Calculate the maximum column width, ensuring a minimum width.
 
