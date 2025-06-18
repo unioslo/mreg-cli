@@ -71,6 +71,8 @@ LOGGING_FORMAT = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
 
 DEFAULT_PROMPT = "{user}@{host}"
 
+DEFAULT_HTTP_TIMEOUT = 20  # seconds
+
 
 class MregCliConfig:
     """Configuration class for the mreg-cli.
@@ -259,17 +261,19 @@ class MregCliConfig:
             raise ValueError("No URL found in config, no defaults available!")
         return url
 
-    def get_http_timeout(self, default: int = 20) -> int:
+    def get_http_timeout(self) -> int:
         """Get the HTTP timeout from the application.
 
         :returns: HTTP timeout in seconds.
         """
-        timeout = self.get("timeout", default)
+        timeout = self.get("timeout", DEFAULT_HTTP_TIMEOUT)
         try:
             return int(timeout)
         except ValueError:
-            logger.warning("Invalid timeout value, using default %d seconds.", default)
-            return default
+            logger.warning(
+                "Invalid timeout value, using default %d seconds.", DEFAULT_HTTP_TIMEOUT
+            )
+            return DEFAULT_HTTP_TIMEOUT
 
     def _calculate_column_width(self, data: dict[str, Any], min_width: int = 8) -> int:
         """Calculate the maximum column width, ensuring a minimum width.
