@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Configurable HTTP request timeout. The timeout can be set with the `--timeout` option or with the `timeout` option in the config file.
+
 ### Fixed
 
 - `host info <ip>` command not working for IP addresses associated with multiple hosts.
