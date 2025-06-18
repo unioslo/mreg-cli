@@ -180,6 +180,23 @@ class APIMixin(ABC):
         return cls.get_by_id(_id)
 
     @classmethod
+    def get_list_by_id(cls, _id: int) -> list[Self]:
+        """Get a list of objects by their ID.
+
+        :param _id: The ID of the object.
+        :returns: A list of objects if found, an empty list otherwise.
+        """
+        endpoint = cls.endpoint()
+        if endpoint.requires_search_for_id():
+            return cls.get_list_by_field("id", _id)
+
+        data = get(endpoint.with_id(_id), ok404=True)
+        if not data:
+            return []
+
+        return [cls(**item) for item in data.json()]
+
+    @classmethod
     def get_by_id(cls, _id: int) -> Self | None:
         """Get an object by its ID.
 
@@ -293,22 +310,16 @@ class APIMixin(ABC):
         return None
 
     @classmethod
-    def get_list_by_field(
-        cls, field: str, value: str | int, ordering: str | None = None, limit: int = 500
-    ) -> list[Self]:
-        """Get a list of objects by a field.
+    def get_list(cls, params: QueryParams | None = None, limit: int | None = None) -> list[Self]:
+        """Get a list of all objects.
 
-        :param field: The field to search by.
-        :param value: The value to search for.
-        :param ordering: The ordering to use when fetching the list.
+        Optionally filtered by query parameters and limited by limit.
+
+        :param params: The query parameters to filter by.
         :param limit: The maximum number of hits to allow (default 500)
 
         :returns: A list of objects if found, an empty list otherwise.
         """
-        params: QueryParams = {field: value}
-        if ordering:
-            params["ordering"] = ordering
-
         return get_typed(cls.endpoint(), list[cls], params=params, limit=limit)
 
     @classmethod
@@ -325,8 +336,23 @@ class APIMixin(ABC):
         """
         if ordering:
             query["ordering"] = ordering
+        return cls.get_list(params=query, limit=limit)
 
-        return get_typed(cls.endpoint(), list[cls], query, limit=limit)
+    @classmethod
+    def get_list_by_field(
+        cls, field: str, value: str | int, ordering: str | None = None, limit: int = 500
+    ) -> list[Self]:
+        """Get a list of objects by a field.
+
+        :param field: The field to search by.
+        :param value: The value to search for.
+        :param ordering: The ordering to use when fetching the list.
+        :param limit: The maximum number of hits to allow (default 500)
+
+        :returns: A list of objects if found, an empty list otherwise.
+        """
+        query: QueryParams = {field: value}
+        return cls.get_by_query(query=query, ordering=ordering, limit=limit)
 
     @classmethod
     def get_by_query_unique_or_raise(

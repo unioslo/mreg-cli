@@ -399,7 +399,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    naptrs = host.naptrs()
+    naptrs = host.naptrs
 
     to_delete: list[NAPTR] = []
 
@@ -440,7 +440,7 @@ def naptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    NAPTR.output_multiple(Host.get_by_any_means_or_raise(args.name).naptrs())
+    NAPTR.output_multiple(Host.get_by_any_means_or_raise(args.name).naptrs)
 
 
 @command_registry.register_command(
@@ -768,7 +768,7 @@ def sshfp_remove(args: argparse.Namespace) -> None:
             SSHFP.get_by_query_unique_or_raise({"fingerprint": args.fingerprint, "host": host.id})
         ]
     else:
-        sshfps = host.sshfps()
+        sshfps = host.sshfps
 
     if not sshfps:
         raise EntityNotFound(f"No matching SSHFP records for {host}")
@@ -795,7 +795,7 @@ def sshfp_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    sshfps = host.sshfps()
+    sshfps = host.sshfps
 
     if not sshfps:
         raise EntityNotFound(f"No SSHFP records for {host}")
