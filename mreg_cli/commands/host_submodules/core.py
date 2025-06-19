@@ -295,11 +295,10 @@ def remove(args: argparse.Namespace) -> None:
         elif not same_vlan and not forced(Override.IPADDRESS):
             overrides_required.add(Override.IPADDRESS)
             warnings.append("  {} ipaddresses on distinct VLANs".format(len(host.ipaddresses)))
-            for vlan in host_vlans:
-                vlan = host_vlans[vlan]
-                ip_strings = [str(ip.ipaddress) for ip in vlan]
+            for vlan_id, vlans in host_vlans.items():
+                ip_strings = [str(ip.ipaddress) for ip in vlans]
                 ip_strings.sort()
-                warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan})")
+                warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan_id})")
 
     if host.mxs and not forced(Override.MX):
         overrides_required.add(Override.MX)

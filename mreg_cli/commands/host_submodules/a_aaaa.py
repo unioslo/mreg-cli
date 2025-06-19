@@ -78,6 +78,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
         network = Network.get_by_network_or_raise(str(new_ip.ip_or_network))
         new_ip = network.get_first_available_ip()
     else:
+        network = Network.get_by_ip(new_ip.as_ip())
         new_ip = new_ip.as_ip()
 
     if old_ip.version != ipversion:

@@ -85,21 +85,43 @@ network unset_frozen 2001:db8::/64
 
 # Test handling of network and broadcast address arguments
 ## IPv4
+### Adding/changing A-records for an existing host
 host add somehost -contact support@example.org
 host a_add somehost 10.0.1.0 # should require force because it is a network address
 host a_add somehost 10.0.1.0 -force
 host a_remove somehost 10.0.1.0 # force not required for removal
 host a_add somehost 10.0.1.255 # force again (broadcast address)
 host a_add somehost 10.0.1.255 -force
-host a_remove somehost 10.0.1.255 # force not required for removal
+host a_change -old 10.0.1.255 -new 10.0.1.0 somehost # changing to network address, requires force
+host a_change -old 10.0.1.255 -new 10.0.1.0 somehost -force
+host remove somehost -force # cleanup
+
+### Adding A-records for a new host
+host add somehost -ip 10.0.1.0 # requires force because it is a network address
+host add somehost -ip 10.0.1.1 -force
+host remove somehost -force -override ipaddress
+host add somehost -ip 10.0.1.255 # requires force because it is a broadcast address
+host add somehost -ip 10.0.1.255 -force
+host a_remove somehost 10.0.1.255 # cleanup
 
 ## IPv6
+### Adding/changing AAAA-records for an existing host
 host aaaa_add somehost 2001:db8:: # should require force because it is a network address
 host aaaa_add somehost 2001:db8:: -force
 host aaaa_remove somehost 2001:db8:: # force not required for removal
 host aaaa_add somehost 2001:db8::ffff:ffff:ffff:ffff # force again (broadcast address)
 host aaaa_add somehost 2001:db8::ffff:ffff:ffff:ffff -force
+host aaaa_change -old 2001:db8::ffff:ffff:ffff:ffff -new 2001:db8:: somehost # changing to network address, requires force
+host aaaa_change -old 2001:db8::ffff:ffff:ffff:ffff -new 2001:db8:: somehost -force
 host aaaa_remove somehost 2001:db8::ffff:ffff:ffff:ffff # force not required for removal
+host remove somehost -force -override ipaddress# cleanup
+
+### Adding AAAA-records for a new host
+host add somehost -ip 10.0.1.0 # requires force because it is a network address
+host add somehost -ip 10.0.1.1 -force
+host remove somehost -force -override ipaddress
+host add somehost -ip 10.0.1.255 # requires force because it is a broadcast address
+host add somehost -ip 10.0.1.255 -force
 
 # Cleanup
 host remove somehost -force
