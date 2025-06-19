@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Allow `host add -force` option to use network or broadcast addresses as argument for `-ip` if the user has permission to do so.
+- Require `-force` when using network or broadcast addresses as arguments for the following commands:
+  - `host add`
+  - `host a_add`
+  - `host aaaa_add`
+  - `host a_change`
+  - `host aaaa_change`
 
 ## [1.3.0](https://github.com/unioslo/mreg-cli/releases/tag/1.3.0) - 2025-05-20
 

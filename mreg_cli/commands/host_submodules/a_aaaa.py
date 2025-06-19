@@ -42,6 +42,22 @@ def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
         raise ForceMissing(f"IP {ip} in use by {hostnames}, must force.")
 
 
+def _bail_if_ip_reserved_and_not_force(ip: IP_AddressT, network: Network | None) -> None:
+    """Check if an IP is a network or broadcast address of a network and bail if it is.
+
+    :param ip: The IP address to check.
+    :param network: The network the IP belongs to, if any.
+    """
+    if network and ip == network.broadcast_address:
+        raise ForceMissing(
+            f"IP {ip} is the broadcast address of network {network.network}, must force"
+        )
+    if network and ip == network.network_address:
+        raise ForceMissing(
+            f"IP {ip} is the network address of network {network.network}, must force"
+        )
+
+
 def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version) -> None:
     """Change A record. If <name> is an alias the cname host is used.
 
@@ -57,6 +73,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     old_ip = NetworkOrIP.parse_or_raise(old, mode="ip")
 
     new_ip = NetworkOrIP.validate(new)
+    network = None
     if new_ip.is_network():
         network = Network.get_by_network_or_raise(str(new_ip.ip_or_network))
         new_ip = network.get_first_available_ip()
@@ -80,6 +97,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
         raise EntityNotFound(f"IP {old_ip} not found")
 
     if not force:
+        _bail_if_ip_reserved_and_not_force(new_ip, network)
         _bail_if_ip_in_use_and_not_force(new_ip)
 
     ip_obj.patch(fields={"ipaddress": str(new_ip)})
@@ -181,24 +199,22 @@ def _add_ip(
         network = Network.get_by_ip(ip_or_net.as_ip())
         ip = ip_or_net.as_ip()
 
-    if not force and not network:
-        raise ForceMissing(f"Network for {ip} not found, must force")
+    if not force:
+        if not network:
+            raise ForceMissing(f"Network for {ip} not found, must force")
+        if network and network.frozen:
+            raise ForceMissing(f"Network {network.network} is frozen, must force")
+        if host.has_ip(ip):
+            raise EntityAlreadyExists(f"Host {host} already has IP {ip}")
+        if len(host.ipaddresses) > 0:
+            raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
 
-    if not force and network and network.frozen:
-        raise ForceMissing(f"Network {network.network} is frozen, must force")
-
-    if not force and host.has_ip(ip):
-        raise EntityAlreadyExists(f"Host {host} already has IP {ip}")
-
-    if not force and len(host.ipaddresses) > 0:
-        raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
+        _bail_if_ip_reserved_and_not_force(ip, network)
+        _bail_if_ip_in_use_and_not_force(ip)
 
     mac = None
     if macaddress:
         mac = MacAddress.parse_or_raise(macaddress)
-
-    if not force:
-        _bail_if_ip_in_use_and_not_force(ip)
 
     host = host.add_ip(ip, mac)  # returns the refetched host
     OutputManager().add_ok(f"Added ipaddress {ip} to {host}")
