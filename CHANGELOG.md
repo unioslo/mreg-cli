@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Configurable HTTP request timeout. The timeout can be set with the `--timeout` option or with the `timeout` option in the config file.
+
 ### Changed
 
 - Require `-force` when using network or broadcast addresses as arguments for the following commands:
@@ -15,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `host aaaa_add`
   - `host a_change`
   - `host aaaa_change`
+
+### Fixed
+
+- `host info <ip>` command not working for IP addresses associated with multiple hosts.
 
 ## [1.3.0](https://github.com/unioslo/mreg-cli/releases/tag/1.3.0) - 2025-05-20
 
