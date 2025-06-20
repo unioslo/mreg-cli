@@ -138,13 +138,9 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     if not host_ip:
         raise EntityNotFound(f"Host {host} does not have IP {old_ip}")
 
-    ip_obj = IPAddress.get(host_ip.id)
-    if not ip_obj:
-        raise EntityNotFound(f"IP {old_ip} not found")
-
     check_ip_constraints(new_ip, network, host, operation=IPOperation.CHANGE, force=force)
 
-    ip_obj.patch(fields={"ipaddress": str(new_ip)})
+    host_ip.patch(fields={"ipaddress": str(new_ip)})
 
     OutputManager().add_ok(f"changed ip {old} to {new_ip} for {host}")
 

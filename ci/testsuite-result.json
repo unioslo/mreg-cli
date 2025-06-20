@@ -14490,8 +14490,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:24.746642+02:00",
-          "updated_at": "2025-06-19T13:34:26.766637+02:00",
+          "created_at": "2025-06-20T11:43:10.897148+02:00",
+          "updated_at": "2025-06-20T11:43:12.833706+02:00",
           "network": "10.0.1.0/24",
           "description": "Frozen but has one host",
           "vlan": 1234,
@@ -14511,8 +14511,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:34:29.058501+02:00",
-              "updated_at": "2025-06-19T13:34:29.058508+02:00",
+              "created_at": "2025-06-20T11:43:15.678831+02:00",
+              "updated_at": "2025-06-20T11:43:15.678840+02:00",
               "ipaddress": "10.0.1.255",
               "host": 9
             }
@@ -14521,8 +14521,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:34:28.623521+02:00",
-              "updated_at": "2025-06-19T13:34:28.623529+02:00",
+              "created_at": "2025-06-20T11:43:14.707352+02:00",
+              "updated_at": "2025-06-20T11:43:14.707360+02:00",
               "txt": "v=spf1 -all",
               "host": 9
             }
@@ -14537,26 +14537,13 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:28.621341+02:00",
-          "updated_at": "2025-06-19T13:34:28.621348+02:00",
+          "created_at": "2025-06-20T11:43:14.704872+02:00",
+          "updated_at": "2025-06-20T11:43:14.704882+02:00",
           "name": "somehost.example.org",
           "contact": "support@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/ipaddresses/9",
-        "data": {},
-        "status": 200,
-        "response": {
-          "macaddress": "",
-          "created_at": "2025-06-19T13:34:29.058501+02:00",
-          "updated_at": "2025-06-19T13:34:29.058508+02:00",
-          "ipaddress": "10.0.1.255",
-          "host": 9
         }
       }
     ],
@@ -14583,8 +14570,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:24.746642+02:00",
-          "updated_at": "2025-06-19T13:34:26.766637+02:00",
+          "created_at": "2025-06-20T11:43:10.897148+02:00",
+          "updated_at": "2025-06-20T11:43:12.833706+02:00",
           "network": "10.0.1.0/24",
           "description": "Frozen but has one host",
           "vlan": 1234,
@@ -14604,8 +14591,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:34:29.058501+02:00",
-              "updated_at": "2025-06-19T13:34:29.058508+02:00",
+              "created_at": "2025-06-20T11:43:15.678831+02:00",
+              "updated_at": "2025-06-20T11:43:15.678840+02:00",
               "ipaddress": "10.0.1.255",
               "host": 9
             }
@@ -14614,8 +14601,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:34:28.623521+02:00",
-              "updated_at": "2025-06-19T13:34:28.623529+02:00",
+              "created_at": "2025-06-20T11:43:14.707352+02:00",
+              "updated_at": "2025-06-20T11:43:14.707360+02:00",
               "txt": "v=spf1 -all",
               "host": 9
             }
@@ -14630,26 +14617,13 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:28.621341+02:00",
-          "updated_at": "2025-06-19T13:34:28.621348+02:00",
+          "created_at": "2025-06-20T11:43:14.704872+02:00",
+          "updated_at": "2025-06-20T11:43:14.704882+02:00",
           "name": "somehost.example.org",
           "contact": "support@example.org",
           "ttl": null,
           "comment": "",
           "zone": 1
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/ipaddresses/9",
-        "data": {},
-        "status": 200,
-        "response": {
-          "macaddress": "",
-          "created_at": "2025-06-19T13:34:29.058501+02:00",
-          "updated_at": "2025-06-19T13:34:29.058508+02:00",
-          "ipaddress": "10.0.1.255",
-          "host": 9
         }
       },
       {
@@ -14667,8 +14641,8 @@
         "status": 200,
         "response": {
           "macaddress": "",
-          "created_at": "2025-06-19T13:34:29.058501+02:00",
-          "updated_at": "2025-06-19T13:34:29.305073+02:00",
+          "created_at": "2025-06-20T11:43:15.678831+02:00",
+          "updated_at": "2025-06-20T11:43:16.065860+02:00",
           "ipaddress": "10.0.1.0",
           "host": 9
         }
@@ -15970,8 +15944,8 @@
         "response": {
           "excluded_ranges": [
             {
-              "created_at": "2025-06-19T13:42:08.147979+02:00",
-              "updated_at": "2025-06-19T13:42:08.147988+02:00",
+              "created_at": "2025-06-20T11:43:13.637366+02:00",
+              "updated_at": "2025-06-20T11:43:13.637380+02:00",
               "start_ip": "2001:db8::20",
               "end_ip": "2001:db8::30",
               "network": 4
@@ -15979,8 +15953,8 @@
           ],
           "policy": null,
           "communities": [],
-          "created_at": "2025-06-19T13:42:07.836969+02:00",
-          "updated_at": "2025-06-19T13:42:08.906149+02:00",
+          "created_at": "2025-06-20T11:43:13.395028+02:00",
+          "updated_at": "2025-06-20T11:43:14.560692+02:00",
           "network": "2001:db8::/64",
           "description": "Frozen but has one host",
           "vlan": null,
@@ -16000,8 +15974,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:42:10.549776+02:00",
-              "updated_at": "2025-06-19T13:42:10.549783+02:00",
+              "created_at": "2025-06-20T11:43:17.529248+02:00",
+              "updated_at": "2025-06-20T11:43:17.529255+02:00",
               "ipaddress": "2001:db8::ffff:ffff:ffff:ffff",
               "host": 11
             }
@@ -16010,8 +15984,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:42:10.106647+02:00",
-              "updated_at": "2025-06-19T13:42:10.106653+02:00",
+              "created_at": "2025-06-20T11:43:16.941149+02:00",
+              "updated_at": "2025-06-20T11:43:16.941159+02:00",
               "txt": "v=spf1 -all",
               "host": 11
             }
@@ -16026,26 +16000,13 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:42:10.104606+02:00",
-          "updated_at": "2025-06-19T13:42:10.104613+02:00",
+          "created_at": "2025-06-20T11:43:16.931464+02:00",
+          "updated_at": "2025-06-20T11:43:16.931486+02:00",
           "name": "somehost.example.org",
           "contact": "",
           "ttl": null,
           "comment": "",
           "zone": 1
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/ipaddresses/13",
-        "data": {},
-        "status": 200,
-        "response": {
-          "macaddress": "",
-          "created_at": "2025-06-19T13:42:10.549776+02:00",
-          "updated_at": "2025-06-19T13:42:10.549783+02:00",
-          "ipaddress": "2001:db8::ffff:ffff:ffff:ffff",
-          "host": 11
         }
       }
     ],
@@ -16071,8 +16032,8 @@
         "response": {
           "excluded_ranges": [
             {
-              "created_at": "2025-06-19T13:42:08.147979+02:00",
-              "updated_at": "2025-06-19T13:42:08.147988+02:00",
+              "created_at": "2025-06-20T11:43:13.637366+02:00",
+              "updated_at": "2025-06-20T11:43:13.637380+02:00",
               "start_ip": "2001:db8::20",
               "end_ip": "2001:db8::30",
               "network": 4
@@ -16080,8 +16041,8 @@
           ],
           "policy": null,
           "communities": [],
-          "created_at": "2025-06-19T13:42:07.836969+02:00",
-          "updated_at": "2025-06-19T13:42:08.906149+02:00",
+          "created_at": "2025-06-20T11:43:13.395028+02:00",
+          "updated_at": "2025-06-20T11:43:14.560692+02:00",
           "network": "2001:db8::/64",
           "description": "Frozen but has one host",
           "vlan": null,
@@ -16101,8 +16062,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:42:10.549776+02:00",
-              "updated_at": "2025-06-19T13:42:10.549783+02:00",
+              "created_at": "2025-06-20T11:43:17.529248+02:00",
+              "updated_at": "2025-06-20T11:43:17.529255+02:00",
               "ipaddress": "2001:db8::ffff:ffff:ffff:ffff",
               "host": 11
             }
@@ -16111,8 +16072,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:42:10.106647+02:00",
-              "updated_at": "2025-06-19T13:42:10.106653+02:00",
+              "created_at": "2025-06-20T11:43:16.941149+02:00",
+              "updated_at": "2025-06-20T11:43:16.941159+02:00",
               "txt": "v=spf1 -all",
               "host": 11
             }
@@ -16127,26 +16088,13 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:42:10.104606+02:00",
-          "updated_at": "2025-06-19T13:42:10.104613+02:00",
+          "created_at": "2025-06-20T11:43:16.931464+02:00",
+          "updated_at": "2025-06-20T11:43:16.931486+02:00",
           "name": "somehost.example.org",
           "contact": "",
           "ttl": null,
           "comment": "",
           "zone": 1
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/ipaddresses/13",
-        "data": {},
-        "status": 200,
-        "response": {
-          "macaddress": "",
-          "created_at": "2025-06-19T13:42:10.549776+02:00",
-          "updated_at": "2025-06-19T13:42:10.549783+02:00",
-          "ipaddress": "2001:db8::ffff:ffff:ffff:ffff",
-          "host": 11
         }
       },
       {
@@ -16164,8 +16112,8 @@
         "status": 200,
         "response": {
           "macaddress": "",
-          "created_at": "2025-06-19T13:42:10.549776+02:00",
-          "updated_at": "2025-06-19T13:42:10.967604+02:00",
+          "created_at": "2025-06-20T11:43:17.529248+02:00",
+          "updated_at": "2025-06-20T11:43:17.743446+02:00",
           "ipaddress": "2001:db8::",
           "host": 11
         }
@@ -26112,8 +26060,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:40.603651+02:00",
-          "updated_at": "2025-06-19T13:34:40.603662+02:00",
+          "created_at": "2025-06-20T11:43:28.165542+02:00",
+          "updated_at": "2025-06-20T11:43:28.165554+02:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -26133,22 +26081,22 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-06-19T13:34:40.845381+02:00",
-              "updated_at": "2025-06-19T13:34:40.972736+02:00",
+              "created_at": "2025-06-20T11:43:28.412509+02:00",
+              "updated_at": "2025-06-20T11:43:28.495270+02:00",
               "ipaddress": "10.0.0.10",
               "host": 19
             },
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:34:42.215401+02:00",
-              "updated_at": "2025-06-19T13:34:42.215408+02:00",
+              "created_at": "2025-06-20T11:43:29.619291+02:00",
+              "updated_at": "2025-06-20T11:43:29.619299+02:00",
               "ipaddress": "10.0.0.12",
               "host": 19
             },
             {
               "macaddress": "11:22:33:44:55:66",
-              "created_at": "2025-06-19T13:34:42.350855+02:00",
-              "updated_at": "2025-06-19T13:34:42.350864+02:00",
+              "created_at": "2025-06-20T11:43:29.750216+02:00",
+              "updated_at": "2025-06-20T11:43:29.750224+02:00",
               "ipaddress": "10.0.0.13",
               "host": 19
             }
@@ -26157,8 +26105,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:34:40.828774+02:00",
-              "updated_at": "2025-06-19T13:34:40.828780+02:00",
+              "created_at": "2025-06-20T11:43:28.396092+02:00",
+              "updated_at": "2025-06-20T11:43:28.396098+02:00",
               "txt": "v=spf1 -all",
               "host": 19
             }
@@ -26173,26 +26121,13 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:40.826929+02:00",
-          "updated_at": "2025-06-19T13:34:42.001881+02:00",
+          "created_at": "2025-06-20T11:43:28.393781+02:00",
+          "updated_at": "2025-06-20T11:43:29.367767+02:00",
           "name": "bar.example.org",
           "contact": "me@example.org",
           "ttl": null,
           "comment": "This is the comment",
           "zone": 1
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/ipaddresses/22",
-        "data": {},
-        "status": 200,
-        "response": {
-          "macaddress": "",
-          "created_at": "2025-06-19T13:34:42.215401+02:00",
-          "updated_at": "2025-06-19T13:34:42.215408+02:00",
-          "ipaddress": "10.0.0.12",
-          "host": 19
         }
       },
       {
@@ -26222,8 +26157,8 @@
         "status": 200,
         "response": {
           "macaddress": "",
-          "created_at": "2025-06-19T13:34:42.215401+02:00",
-          "updated_at": "2025-06-19T13:34:42.576594+02:00",
+          "created_at": "2025-06-20T11:43:29.619291+02:00",
+          "updated_at": "2025-06-20T11:43:29.973056+02:00",
           "ipaddress": "10.0.0.14",
           "host": 19
         }
@@ -26252,8 +26187,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:40.603651+02:00",
-          "updated_at": "2025-06-19T13:34:40.603662+02:00",
+          "created_at": "2025-06-20T11:43:28.165542+02:00",
+          "updated_at": "2025-06-20T11:43:28.165554+02:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -26273,22 +26208,22 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-06-19T13:34:40.845381+02:00",
-              "updated_at": "2025-06-19T13:34:40.972736+02:00",
+              "created_at": "2025-06-20T11:43:28.412509+02:00",
+              "updated_at": "2025-06-20T11:43:28.495270+02:00",
               "ipaddress": "10.0.0.10",
               "host": 19
             },
             {
               "macaddress": "11:22:33:44:55:66",
-              "created_at": "2025-06-19T13:34:42.350855+02:00",
-              "updated_at": "2025-06-19T13:34:42.350864+02:00",
+              "created_at": "2025-06-20T11:43:29.750216+02:00",
+              "updated_at": "2025-06-20T11:43:29.750224+02:00",
               "ipaddress": "10.0.0.13",
               "host": 19
             },
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:34:42.215401+02:00",
-              "updated_at": "2025-06-19T13:34:42.576594+02:00",
+              "created_at": "2025-06-20T11:43:29.619291+02:00",
+              "updated_at": "2025-06-20T11:43:29.973056+02:00",
               "ipaddress": "10.0.0.14",
               "host": 19
             }
@@ -26297,8 +26232,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:34:40.828774+02:00",
-              "updated_at": "2025-06-19T13:34:40.828780+02:00",
+              "created_at": "2025-06-20T11:43:28.396092+02:00",
+              "updated_at": "2025-06-20T11:43:28.396098+02:00",
               "txt": "v=spf1 -all",
               "host": 19
             }
@@ -26313,26 +26248,13 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:40.826929+02:00",
-          "updated_at": "2025-06-19T13:34:42.001881+02:00",
+          "created_at": "2025-06-20T11:43:28.393781+02:00",
+          "updated_at": "2025-06-20T11:43:29.367767+02:00",
           "name": "bar.example.org",
           "contact": "me@example.org",
           "ttl": null,
           "comment": "This is the comment",
           "zone": 1
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/ipaddresses/23",
-        "data": {},
-        "status": 200,
-        "response": {
-          "macaddress": "11:22:33:44:55:66",
-          "created_at": "2025-06-19T13:34:42.350855+02:00",
-          "updated_at": "2025-06-19T13:34:42.350864+02:00",
-          "ipaddress": "10.0.0.13",
-          "host": 19
         }
       },
       {
@@ -26362,8 +26284,8 @@
         "status": 200,
         "response": {
           "macaddress": "11:22:33:44:55:66",
-          "created_at": "2025-06-19T13:34:42.350855+02:00",
-          "updated_at": "2025-06-19T13:34:42.767889+02:00",
+          "created_at": "2025-06-20T11:43:29.750216+02:00",
+          "updated_at": "2025-06-20T11:43:30.160959+02:00",
           "ipaddress": "10.0.0.15",
           "host": 19
         }
@@ -27474,8 +27396,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:40.671835+02:00",
-          "updated_at": "2025-06-19T13:34:40.671848+02:00",
+          "created_at": "2025-06-20T11:43:28.247683+02:00",
+          "updated_at": "2025-06-20T11:43:28.247699+02:00",
           "network": "2001:db8::/64",
           "description": "dolor sit amet",
           "vlan": null,
@@ -27495,29 +27417,29 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:34:42.215401+02:00",
-              "updated_at": "2025-06-19T13:34:42.576594+02:00",
+              "created_at": "2025-06-20T11:43:29.619291+02:00",
+              "updated_at": "2025-06-20T11:43:29.973056+02:00",
               "ipaddress": "10.0.0.14",
               "host": 19
             },
             {
               "macaddress": "11:22:33:44:55:66",
-              "created_at": "2025-06-19T13:34:42.350855+02:00",
-              "updated_at": "2025-06-19T13:34:42.767889+02:00",
+              "created_at": "2025-06-20T11:43:29.750216+02:00",
+              "updated_at": "2025-06-20T11:43:30.160959+02:00",
               "ipaddress": "10.0.0.15",
               "host": 19
             },
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:34:43.242724+02:00",
-              "updated_at": "2025-06-19T13:34:43.242730+02:00",
+              "created_at": "2025-06-20T11:43:31.228509+02:00",
+              "updated_at": "2025-06-20T11:43:31.228517+02:00",
               "ipaddress": "2001:db8::11",
               "host": 19
             },
             {
               "macaddress": "11:22:33:44:55:67",
-              "created_at": "2025-06-19T13:34:43.394596+02:00",
-              "updated_at": "2025-06-19T13:34:43.394603+02:00",
+              "created_at": "2025-06-20T11:43:31.368764+02:00",
+              "updated_at": "2025-06-20T11:43:31.368770+02:00",
               "ipaddress": "2001:db8::12",
               "host": 19
             }
@@ -27526,8 +27448,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:34:40.828774+02:00",
-              "updated_at": "2025-06-19T13:34:40.828780+02:00",
+              "created_at": "2025-06-20T11:43:28.396092+02:00",
+              "updated_at": "2025-06-20T11:43:28.396098+02:00",
               "txt": "v=spf1 -all",
               "host": 19
             }
@@ -27542,26 +27464,13 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:40.826929+02:00",
-          "updated_at": "2025-06-19T13:34:42.001881+02:00",
+          "created_at": "2025-06-20T11:43:28.393781+02:00",
+          "updated_at": "2025-06-20T11:43:29.367767+02:00",
           "name": "bar.example.org",
           "contact": "me@example.org",
           "ttl": null,
           "comment": "This is the comment",
           "zone": 1
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/ipaddresses/24",
-        "data": {},
-        "status": 200,
-        "response": {
-          "macaddress": "",
-          "created_at": "2025-06-19T13:34:43.242724+02:00",
-          "updated_at": "2025-06-19T13:34:43.242730+02:00",
-          "ipaddress": "2001:db8::11",
-          "host": 19
         }
       },
       {
@@ -27591,8 +27500,8 @@
         "status": 200,
         "response": {
           "macaddress": "",
-          "created_at": "2025-06-19T13:34:43.242724+02:00",
-          "updated_at": "2025-06-19T13:34:43.699948+02:00",
+          "created_at": "2025-06-20T11:43:31.228509+02:00",
+          "updated_at": "2025-06-20T11:43:32.086423+02:00",
           "ipaddress": "2001:db8::13",
           "host": 19
         }
@@ -27621,8 +27530,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:40.671835+02:00",
-          "updated_at": "2025-06-19T13:34:40.671848+02:00",
+          "created_at": "2025-06-20T11:43:28.247683+02:00",
+          "updated_at": "2025-06-20T11:43:28.247699+02:00",
           "network": "2001:db8::/64",
           "description": "dolor sit amet",
           "vlan": null,
@@ -27642,29 +27551,29 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:34:42.215401+02:00",
-              "updated_at": "2025-06-19T13:34:42.576594+02:00",
+              "created_at": "2025-06-20T11:43:29.619291+02:00",
+              "updated_at": "2025-06-20T11:43:29.973056+02:00",
               "ipaddress": "10.0.0.14",
               "host": 19
             },
             {
               "macaddress": "11:22:33:44:55:66",
-              "created_at": "2025-06-19T13:34:42.350855+02:00",
-              "updated_at": "2025-06-19T13:34:42.767889+02:00",
+              "created_at": "2025-06-20T11:43:29.750216+02:00",
+              "updated_at": "2025-06-20T11:43:30.160959+02:00",
               "ipaddress": "10.0.0.15",
               "host": 19
             },
             {
               "macaddress": "11:22:33:44:55:67",
-              "created_at": "2025-06-19T13:34:43.394596+02:00",
-              "updated_at": "2025-06-19T13:34:43.394603+02:00",
+              "created_at": "2025-06-20T11:43:31.368764+02:00",
+              "updated_at": "2025-06-20T11:43:31.368770+02:00",
               "ipaddress": "2001:db8::12",
               "host": 19
             },
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:34:43.242724+02:00",
-              "updated_at": "2025-06-19T13:34:43.699948+02:00",
+              "created_at": "2025-06-20T11:43:31.228509+02:00",
+              "updated_at": "2025-06-20T11:43:32.086423+02:00",
               "ipaddress": "2001:db8::13",
               "host": 19
             }
@@ -27673,8 +27582,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:34:40.828774+02:00",
-              "updated_at": "2025-06-19T13:34:40.828780+02:00",
+              "created_at": "2025-06-20T11:43:28.396092+02:00",
+              "updated_at": "2025-06-20T11:43:28.396098+02:00",
               "txt": "v=spf1 -all",
               "host": 19
             }
@@ -27689,26 +27598,13 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:34:40.826929+02:00",
-          "updated_at": "2025-06-19T13:34:42.001881+02:00",
+          "created_at": "2025-06-20T11:43:28.393781+02:00",
+          "updated_at": "2025-06-20T11:43:29.367767+02:00",
           "name": "bar.example.org",
           "contact": "me@example.org",
           "ttl": null,
           "comment": "This is the comment",
           "zone": 1
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/ipaddresses/25",
-        "data": {},
-        "status": 200,
-        "response": {
-          "macaddress": "11:22:33:44:55:67",
-          "created_at": "2025-06-19T13:34:43.394596+02:00",
-          "updated_at": "2025-06-19T13:34:43.394603+02:00",
-          "ipaddress": "2001:db8::12",
-          "host": 19
         }
       },
       {
@@ -27738,8 +27634,8 @@
         "status": 200,
         "response": {
           "macaddress": "11:22:33:44:55:67",
-          "created_at": "2025-06-19T13:34:43.394596+02:00",
-          "updated_at": "2025-06-19T13:34:43.943209+02:00",
+          "created_at": "2025-06-20T11:43:31.368764+02:00",
+          "updated_at": "2025-06-20T11:43:32.265497+02:00",
           "ipaddress": "2001:db8::14",
           "host": 19
         }
