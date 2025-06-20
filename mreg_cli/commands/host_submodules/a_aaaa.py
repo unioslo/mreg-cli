@@ -72,7 +72,6 @@ def check_ip_constraints(
     ip: IP_AddressT,
     network: Network | None,
     host: Host,
-    *,
     operation: IPOperation,
     force: bool,
 ) -> None:
@@ -80,11 +79,11 @@ def check_ip_constraints(
 
     Runs checks to ensure the IP is not in use or reserved.
 
-    :param force: Whether to bypass the checks.
     :param ip: The IP address to check.
     :param network: The network the IP belongs to, if any.
     :param host: The host to which the IP is being added or changed.
     :param operation: The operation being performed.
+    :param force: Whether to bypass the checks.
     """
     # Bypass checks if in force mode
     if force:
@@ -138,7 +137,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     if not host_ip:
         raise EntityNotFound(f"Host {host} does not have IP {old_ip}")
 
-    check_ip_constraints(new_ip, network, host, operation=IPOperation.CHANGE, force=force)
+    check_ip_constraints(new_ip, network, host, IPOperation.CHANGE, force)
 
     host_ip.patch(fields={"ipaddress": str(new_ip)})
 
@@ -239,7 +238,7 @@ def _ip_add(
         network = Network.get_by_ip(ip_or_net.as_ip())
         ip = ip_or_net.as_ip()
 
-    check_ip_constraints(ip, network, host, operation=IPOperation.ADD, force=force)
+    check_ip_constraints(ip, network, host, IPOperation.ADD, force)
 
     mac = None
     if macaddress:
