@@ -206,7 +206,7 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version) -> None:
         raise DeleteError(f"Failed to remove ipaddress {ipaddr} from {host}")
 
 
-def _add_ip(
+def _ip_add(
     name: str,
     ipaddr: str,
     macaddress: str | None = None,
@@ -279,7 +279,7 @@ def a_add(args: argparse.Namespace) -> None:
     macaddress: str | None = args.macaddress
     force: bool = args.force
 
-    _add_ip(name, ip, macaddress, force, 4)
+    _ip_add(name, ip, macaddress, force, 4)
 
 
 @command_registry.register_command(
@@ -423,7 +423,7 @@ def aaaa_add(args: argparse.Namespace) -> None:
     macaddress: str | None = args.macaddress
     force: bool = args.force
 
-    _add_ip(name, ip, macaddress, force, 6)
+    _ip_add(name, ip, macaddress, force, 6)
 
 
 @command_registry.register_command(
