@@ -16,9 +16,10 @@ Commands implemented:
 from __future__ import annotations
 
 import argparse
+from enum import Enum, auto
 
 from mreg_cli.api.fields import MacAddress
-from mreg_cli.api.models import Host, HostList, IPAddress, Network, NetworkOrIP
+from mreg_cli.api.models import Host, HostList, Network, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     DeleteError,
@@ -31,6 +32,15 @@ from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
 
 
+class IPOperation(Enum):
+    """Enum for IP operations."""
+
+    ADD = auto()
+    CHANGE = auto()
+    MOVE = auto()
+    REMOVE = auto()
+
+
 def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
     """Check if an IP is in use and bail if it is.
 
@@ -40,6 +50,56 @@ def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
     if hosts_using_ip:
         hostnames = ", ".join(hosts_using_ip.hostnames())
         raise ForceMissing(f"IP {ip} in use by {hostnames}, must force.")
+
+
+def _bail_if_ip_reserved_and_not_force(ip: IP_AddressT, network: Network | None) -> None:
+    """Check if an IP is a network or broadcast address of a network and bail if it is.
+
+    :param ip: The IP address to check.
+    :param network: The network the IP belongs to, if any.
+    """
+    if network and ip == network.broadcast_address:
+        raise ForceMissing(
+            f"IP {ip} is the broadcast address of network {network.network}, must force"
+        )
+    if network and ip == network.network_address:
+        raise ForceMissing(
+            f"IP {ip} is the network address of network {network.network}, must force"
+        )
+
+
+def check_ip_constraints(
+    ip: IP_AddressT,
+    network: Network | None,
+    host: Host,
+    operation: IPOperation,
+    force: bool,
+) -> None:
+    """Check if an IP address can be added or changed.
+
+    Runs checks to ensure the IP is not in use or reserved.
+
+    :param ip: The IP address to check.
+    :param network: The network the IP belongs to, if any.
+    :param host: The host to which the IP is being added or changed.
+    :param operation: The operation being performed.
+    :param force: Whether to bypass the checks.
+    """
+    # Bypass checks if in force mode
+    if force:
+        return
+
+    if not network:
+        raise ForceMissing(f"Network for {ip} not found, must force")
+    if network and network.frozen:
+        raise ForceMissing(f"Network {network.network} is frozen, must force")
+    if host.has_ip(ip):
+        raise EntityAlreadyExists(f"Host {host} already has IP {ip}")
+    if operation == IPOperation.ADD and len(host.ipaddresses) > 0:
+        raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
+
+    _bail_if_ip_reserved_and_not_force(ip, network)
+    _bail_if_ip_in_use_and_not_force(ip)
 
 
 def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version) -> None:
@@ -57,10 +117,12 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     old_ip = NetworkOrIP.parse_or_raise(old, mode="ip")
 
     new_ip = NetworkOrIP.validate(new)
+    network = None
     if new_ip.is_network():
         network = Network.get_by_network_or_raise(str(new_ip.ip_or_network))
         new_ip = network.get_first_available_ip()
     else:
+        network = Network.get_by_ip(new_ip.as_ip())
         new_ip = new_ip.as_ip()
 
     if old_ip.version != ipversion:
@@ -75,14 +137,9 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     if not host_ip:
         raise EntityNotFound(f"Host {host} does not have IP {old_ip}")
 
-    ip_obj = IPAddress.get(host_ip.id)
-    if not ip_obj:
-        raise EntityNotFound(f"IP {old_ip} not found")
+    check_ip_constraints(new_ip, network, host, IPOperation.CHANGE, force)
 
-    if not force:
-        _bail_if_ip_in_use_and_not_force(new_ip)
-
-    ip_obj.patch(fields={"ipaddress": str(new_ip)})
+    host_ip.patch(fields={"ipaddress": str(new_ip)})
 
     OutputManager().add_ok(f"changed ip {old} to {new_ip} for {host}")
 
@@ -148,7 +205,7 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version) -> None:
         raise DeleteError(f"Failed to remove ipaddress {ipaddr} from {host}")
 
 
-def _add_ip(
+def _ip_add(
     name: str,
     ipaddr: str,
     macaddress: str | None = None,
@@ -181,24 +238,11 @@ def _add_ip(
         network = Network.get_by_ip(ip_or_net.as_ip())
         ip = ip_or_net.as_ip()
 
-    if not force and not network:
-        raise ForceMissing(f"Network for {ip} not found, must force")
-
-    if not force and network and network.frozen:
-        raise ForceMissing(f"Network {network.network} is frozen, must force")
-
-    if not force and host.has_ip(ip):
-        raise EntityAlreadyExists(f"Host {host} already has IP {ip}")
-
-    if not force and len(host.ipaddresses) > 0:
-        raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
+    check_ip_constraints(ip, network, host, IPOperation.ADD, force)
 
     mac = None
     if macaddress:
         mac = MacAddress.parse_or_raise(macaddress)
-
-    if not force:
-        _bail_if_ip_in_use_and_not_force(ip)
 
     host = host.add_ip(ip, mac)  # returns the refetched host
     OutputManager().add_ok(f"Added ipaddress {ip} to {host}")
@@ -234,7 +278,7 @@ def a_add(args: argparse.Namespace) -> None:
     macaddress: str | None = args.macaddress
     force: bool = args.force
 
-    _add_ip(name, ip, macaddress, force, 4)
+    _ip_add(name, ip, macaddress, force, 4)
 
 
 @command_registry.register_command(
@@ -378,7 +422,7 @@ def aaaa_add(args: argparse.Namespace) -> None:
     macaddress: str | None = args.macaddress
     force: bool = args.force
 
-    _add_ip(name, ip, macaddress, force, 6)
+    _ip_add(name, ip, macaddress, force, 6)
 
 
 @command_registry.register_command(
