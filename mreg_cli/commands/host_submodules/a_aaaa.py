@@ -16,10 +16,10 @@ Commands implemented:
 from __future__ import annotations
 
 import argparse
-from enum import Enum
+from enum import Enum, auto
 
 from mreg_cli.api.fields import MacAddress
-from mreg_cli.api.models import Host, HostList, IPAddress, Network, NetworkOrIP
+from mreg_cli.api.models import Host, HostList, Network, NetworkOrIP
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     DeleteError,
@@ -35,10 +35,10 @@ from mreg_cli.types import Flag, IP_AddressT, IP_Version
 class IPOperation(Enum):
     """Enum for IP operations."""
 
-    ADD = "add"
-    CHANGE = "change"
-    MOVE = "move"
-    REMOVE = "remove"
+    ADD = auto()
+    CHANGE = auto()
+    MOVE = auto()
+    REMOVE = auto()
 
 
 def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
