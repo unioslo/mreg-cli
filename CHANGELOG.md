@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Require `-force` for `host {a,aaaa}_remove` if the argument is a CNAME.
 - Require `-force` when using network or broadcast addresses as arguments for the following commands:
   - `host add`
   - `host a_add`
