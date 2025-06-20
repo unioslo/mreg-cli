@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Configurable HTTP request timeout. The timeout can be set with the `--timeout` option or with the `timeout` option in the config file.
 
+### Changed
+
+- Require `-force` for `host {a,aaaa}_remove` if the argument is a CNAME.
+- Require `-force` when using network or broadcast addresses as arguments for the following commands:
+  - `host add`
+  - `host a_add`
+  - `host aaaa_add`
+  - `host a_change`
+  - `host aaaa_change`
+
 ### Fixed
 
 - `host info <ip>` command not working for IP addresses associated with multiple hosts.
