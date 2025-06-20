@@ -16,6 +16,7 @@ Commands implemented:
 from __future__ import annotations
 
 import argparse
+from enum import Enum
 
 from mreg_cli.api.fields import MacAddress
 from mreg_cli.api.models import Host, HostList, IPAddress, Network, NetworkOrIP
@@ -29,6 +30,15 @@ from mreg_cli.exceptions import (
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
+
+
+class IPOperation(Enum):
+    """Enum for IP operations."""
+
+    ADD = "add"
+    CHANGE = "change"
+    MOVE = "move"
+    REMOVE = "remove"
 
 
 def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
@@ -56,6 +66,41 @@ def _bail_if_ip_reserved_and_not_force(ip: IP_AddressT, network: Network | None)
         raise ForceMissing(
             f"IP {ip} is the network address of network {network.network}, must force"
         )
+
+
+def check_ip_constraints(
+    ip: IP_AddressT,
+    network: Network | None,
+    host: Host,
+    *,
+    operation: IPOperation,
+    force: bool,
+) -> None:
+    """Check if an IP address can be added or changed.
+
+    Runs checks to ensure the IP is not in use or reserved.
+
+    :param force: Whether to bypass the checks.
+    :param ip: The IP address to check.
+    :param network: The network the IP belongs to, if any.
+    :param host: The host to which the IP is being added or changed.
+    :param operation: The operation being performed.
+    """
+    # Bypass checks if in force mode
+    if force:
+        return
+
+    if not network:
+        raise ForceMissing(f"Network for {ip} not found, must force")
+    if network and network.frozen:
+        raise ForceMissing(f"Network {network.network} is frozen, must force")
+    if host.has_ip(ip):
+        raise EntityAlreadyExists(f"Host {host} already has IP {ip}")
+    if operation == IPOperation.ADD and len(host.ipaddresses) > 0:
+        raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
+
+    _bail_if_ip_reserved_and_not_force(ip, network)
+    _bail_if_ip_in_use_and_not_force(ip)
 
 
 def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version) -> None:
@@ -97,9 +142,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     if not ip_obj:
         raise EntityNotFound(f"IP {old_ip} not found")
 
-    if not force:
-        _bail_if_ip_reserved_and_not_force(new_ip, network)
-        _bail_if_ip_in_use_and_not_force(new_ip)
+    check_ip_constraints(new_ip, network, host, operation=IPOperation.CHANGE, force=force)
 
     ip_obj.patch(fields={"ipaddress": str(new_ip)})
 
@@ -200,18 +243,7 @@ def _add_ip(
         network = Network.get_by_ip(ip_or_net.as_ip())
         ip = ip_or_net.as_ip()
 
-    if not force:
-        if not network:
-            raise ForceMissing(f"Network for {ip} not found, must force")
-        if network and network.frozen:
-            raise ForceMissing(f"Network {network.network} is frozen, must force")
-        if host.has_ip(ip):
-            raise EntityAlreadyExists(f"Host {host} already has IP {ip}")
-        if len(host.ipaddresses) > 0:
-            raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
-
-        _bail_if_ip_reserved_and_not_force(ip, network)
-        _bail_if_ip_in_use_and_not_force(ip)
+    check_ip_constraints(ip, network, host, operation=IPOperation.ADD, force=force)
 
     mac = None
     if macaddress:
