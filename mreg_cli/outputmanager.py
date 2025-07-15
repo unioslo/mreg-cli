@@ -9,21 +9,30 @@ from __future__ import annotations
 
 import atexit
 import datetime
+import io
 import json
 import logging
 import os
 import re
-from typing import Any, Iterable, Literal, overload
+from collections.abc import Iterable, Sequence
+from typing import Any, Literal, TypeVar, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
 from pydantic import BaseModel
+from rich import markup
+from rich.console import Console
 
 from mreg_cli.errorbuilder import build_error_message
 from mreg_cli.exceptions import CliError, FileError
+from mreg_cli.tables import AggregateResult, TableRenderable
 from mreg_cli.types import Json, JsonMapping, RecordingEntry, TimeInfo
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
+
+DEFAULT_WIDTH = 120
 
 
 @overload
@@ -108,6 +117,31 @@ def urlpath(url: str, params: JsonMapping) -> str:
         return up.path
 
 
+def get_console_columns() -> int:
+    """Get the number of columns (width) of the console (if any).
+
+    Returns a default width if the console size cannot be determined.
+    """
+
+    def to_int(v: str) -> int | None:
+        try:
+            return int(v)
+        except ValueError:
+            pass
+        return None
+
+    if (w := os.environ.get("COLUMNS")) and (w_int := to_int(w)):
+        return w_int
+
+    try:
+        if width := os.get_terminal_size().columns:
+            return width
+    except OSError:  # not connected to a console
+        pass
+
+    return DEFAULT_WIDTH
+
+
 class OutputManager:
     """Manages and formats output for display.
 
@@ -137,7 +171,6 @@ class OutputManager:
 
     def clear(self) -> None:
         """Clear the object."""
-        self._output: list[str] = []
         self._filter_re: re.Pattern[str] | None = None
         self._filter_negate: bool = False
         self._command_executed: str = ""
@@ -150,6 +183,20 @@ class OutputManager:
         self._api_requests: list[dict[str, Any]] = []
 
         self._time_started: datetime.datetime = datetime.datetime.now()
+        self.console = self._get_console()
+
+    def _get_console(self) -> Console:
+        return Console(file=io.StringIO(), width=get_console_columns())
+
+    @property
+    def _output(self) -> list[str]:
+        """Return the output lines."""
+        return self.console.file.getvalue().splitlines()
+
+    @property
+    def _rich_output(self) -> str:
+        """Return the rich output as a string."""
+        return self.console.file.getvalue().splitlines()
 
     def recording_clear(self) -> None:
         """Clear the recording data."""
@@ -220,7 +267,7 @@ class OutputManager:
             "ok": self._ok,
             "warning": self._warnings,
             "error": self._errors,
-            "output": self.filtered_output(),
+            "output": self._output,
             "api_requests": self._api_requests,
             "time": time if self._record_timestamps else None,
         }
@@ -329,7 +376,12 @@ class OutputManager:
         :param line: The line to add.
         """
         logger.debug(f"Adding line: {line}")
-        self._output.append(line)
+        if self._filter_re and bool(self._filter_re.search(line)) == self._filter_negate:
+            # If we have a filter, and the line does not match the filter,
+            # we do not add it to the output.
+            logger.debug(f"Line '{line}' does not match filter '{self._filter_re.pattern}'")
+            return
+        self.console.print(markup.escape(line))
 
     def add_formatted_line(self, key: str, value: str, padding: int = 14) -> None:
         """Format and add a key-value pair as a line.
@@ -431,6 +483,90 @@ class OutputManager:
         for d in output_data:
             self.add_line(raw_format.format(*[str(d[key]) for key in keys]))
 
+    def filter_result(self, data: T) -> T | None:
+        """Filter the data to include only the keys that match the filter.
+
+        :param data: The data to filter.
+        :return: The filtered data.
+        """
+
+        filter_ = self._filter_re  # pattern to match against
+        negate = self._filter_negate  # remove matches
+
+        if not filter_:
+            return data
+
+        found = False
+        if isinstance(data, list):
+            return list(filter(None, [self.filter_result(item) for item in data]))
+        elif isinstance(data, dict):
+            for k, v in list(data.items()):
+                if isinstance(v, (str, int, float, bool, type(None))):
+                    # We found the thing we are looking for
+                    if filter_.search(str(v)):
+                        found = True
+                else:
+                    res = self.filter_result(v)
+                    if res:
+                        data[k] = res
+                        found = True
+                    else:
+                        # Remove the key if the value is empty after filtering
+                        del data[k]
+            if found == negate:
+                # If we found something that matches the filter, and we are negating,
+                # we return an empty None to indicate no match
+                return None
+            else:
+                return data
+        elif isinstance(data, str):
+            if (filter_.search(data) is None) == negate:
+                return (
+                    data.__class__()
+                )  # type narrowing on invariant (?) type, `return ""` is too narrow (apparently)
+        elif isinstance(data, (int, float, bool, type(None))):
+            # For simple types, we just return them as is
+            return data
+        return data
+
+    def add_formatted_table2(
+        self,
+        row_data: Sequence[TableRenderable] | TableRenderable,
+        indent: int = 0,
+    ) -> None:
+        """Format and add a table of data to the output.
+
+        Generates a table of data from the given headers, keys, and data. The
+        headers are used as the column headers, and the keys are used to
+        extract the data from the dicts or Pydantic models in the data list.
+        The data is formatted and added to the output.
+
+        :param headers: Column headers for the table.
+        :param keys: Keys to extract data from each item in the data list.
+        :param data: A list (or any sequence) of dictionaries or Pydantic models.
+        :param indent: The indentation level for the table in the output.
+        """
+        if isinstance(row_data, TableRenderable):
+            # If a single TableRenderable is passed, convert it to a list
+            row_data = [row_data]
+
+        if self._filter_re:
+            filtered_rows: list[TableRenderable] = []
+            for row in row_data:
+                res_dict = row.model_dump(mode="json")
+                res_dict = self.filter_result(res_dict)
+                if res_dict is None:
+                    continue
+                t = row.__class__.model_validate(res_dict)
+                filtered_rows.append(t)
+            row_data = filtered_rows
+
+        result = AggregateResult(root=row_data)
+
+        # Print table to the virtual console, then capture the output
+        table = result.as_table()
+        self.console.print(table)
+
     def filtered_output(self) -> list[str]:
         """Return the lines of output.
 
@@ -442,14 +578,15 @@ class OutputManager:
         """
         lines = self._output
         filter_re = self._filter_re
+        filter_negate = self._filter_negate
 
-        if filter_re is None:
+        if not filter_re:
             return lines
 
-        if self._filter_negate:
-            return [line for line in lines if not filter_re.search(line)]
-
-        return [line for line in lines if filter_re.search(line)]
+        if filter_negate:
+            return list(line for line in lines if not filter_re.search(line))
+        else:
+            return list(line for line in lines if filter_re.search(line))
 
     def render(self) -> None:
         """Print the output to stdout, and records it if recording is active."""
@@ -458,7 +595,7 @@ class OutputManager:
         for line in self._ok:
             print(f"OK: {line}")
 
-        for line in self.filtered_output():
+        for line in self._output:
             print(line)
 
     def __str__(self) -> str:
