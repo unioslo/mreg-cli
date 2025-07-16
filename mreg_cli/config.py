@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import configparser
+from enum import StrEnum
 import logging
 import os
 import sys
@@ -72,6 +73,25 @@ LOGGING_FORMAT = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
 DEFAULT_PROMPT = "{user}@{host}"
 
 DEFAULT_HTTP_TIMEOUT = 20  # seconds
+
+
+class OutputFormat(StrEnum):
+    """Enum for output formats."""
+
+    TEXT = "text"
+    JSON = "json"
+    RICH = "rich"
+
+    # XXX: Remove this? It ensures parity between Mreg-CLI and Zabbix-CLI
+    # when it comes to the rich/table option, but is that necessary?
+    @classmethod
+    def _missing_(cls, value: object) -> OutputFormat:
+        """Handle missing values in the enum."""
+        if value in ["table"]:
+            return cls.RICH
+        raise ValueError(
+            f"Invalid output format: {value}. Valid formats are: {', '.join(cls._member_names_)}"
+        )
 
 
 class MregCliConfig:
@@ -251,6 +271,17 @@ class MregCliConfig:
     def get_prompt(self) -> str | None:
         """Get the prompt from the application."""
         return self.get("prompt")
+
+    def get_output_format(self) -> OutputFormat:
+        """Get the output format from the application.
+
+        :returns: Output format, e.g., 'rich', 'json', 'text'.
+        """
+        try:
+            return OutputFormat(self.get("output_format", "rich").lower())
+        except ValueError as e:
+            logger.warning("%s. Using default 'rich'. ", e)
+            return OutputFormat.RICH
 
     # We handle url by itself because it's a required config option,
     # it cannot be none once options, env, and config file are parsed.

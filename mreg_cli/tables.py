@@ -8,10 +8,14 @@ from typing import Any, Sequence, TypeVar, cast, Generic
 import rich.box
 from pydantic import BaseModel, ConfigDict, Field, RootModel, model_serializer
 from pydantic.fields import ComputedFieldInfo, FieldInfo
-from rich.console import Console, RenderableType
+from rich.console import Console, Group, RenderableType
 from rich.errors import MarkupError
+from rich.padding import Padding
+from rich.style import StyleType
 from rich.table import Table
 from rich.text import Text
+
+from mreg_cli.config import OutputFormat
 
 
 logger = logging.getLogger(__name__)
@@ -74,10 +78,30 @@ def get_table(
     title: str | None = None,
     *,
     show_lines: bool = True,
-    box: rich.box.Box = rich.box.ROUNDED,
+    show_header: bool = True,
+    box: rich.box.Box | None = rich.box.ROUNDED,
+    header_style: StyleType | None = "table.header",
+    vertical: bool = False,
 ) -> Table:
     """Get a Rich table given a list of columns and rows."""
-    table = Table(title=title, box=box, show_lines=show_lines)
+    table = Table(
+        title=title,
+        box=box,
+        show_lines=show_lines,
+        show_header=show_header,
+        header_style=header_style,
+    )
+    if vertical:
+        return _get_vertical_table(table, cols, rows)
+    else:
+        return _get_horizontal_table(table, cols, rows)
+
+
+def _get_horizontal_table(
+    table: Table,
+    cols: ColsType,
+    rows: RowsType,
+) -> Table:
     for col in cols:
         table.add_column(col, overflow="fold")
     for row in rows:
@@ -86,6 +110,64 @@ def get_table(
         row = [cell if not isinstance(cell, Table) or cell.rows else "" for cell in row]
         table.add_row(*row)
     return table
+
+
+def _get_vertical_table(
+    table: Table,
+    cols: ColsType,
+    rows: RowsType,
+) -> Table:
+    """Get a Rich table with vertical columns given a list of columns and rows."""
+    longest_col_length = max(len(col) for col in cols)
+    table.add_column(style="bold", width=longest_col_length + 2)
+
+    fmt_rows: list[list[RenderableType]] = []
+    for i, header in enumerate(cols):
+        row_data: list[RenderableType] = [header]
+        for data_row in rows:
+            cell = data_row[i]
+            if isinstance(cell, Table):
+                # If the cell is a table, we want to render it as a subtable.
+                # We assume that subtables have their own rows.
+                # If they don't, we don't want to render them.
+                if cell.rows:
+                    row_data.append(Padding(cell, (2, 0, 0, 10)))
+                else:
+                    row_data.append("")
+            else:
+                row_data.append(cell)
+        fmt_rows.append(row_data)
+
+    for i in range(1, len(fmt_rows[0]) - 1):
+        # Add a column for each row item.
+        # This assumes that all rows have the same number of items.
+        # TODO: add check for this assumption
+        longest_row_length = max(len(str(row[i])) for row in fmt_rows)
+        table.add_column(width=longest_row_length + 2)
+
+    for row_data in fmt_rows:
+        table.add_row(*row_data)
+    return table
+
+
+def transform_renderable(
+    renderable: TableRenderableBase,
+    fmt: OutputFormat = OutputFormat.RICH,
+) -> RenderableType:
+    """Transform a TableRenderableBase into a Rich table or text representation.
+
+    This is used to ensure that the output format is respected.
+    """
+    if fmt == OutputFormat.RICH:
+        return renderable.as_table()
+    elif fmt == OutputFormat.TEXT:
+        return renderable.as_text(vertical=False, show_header=True)
+    else:
+        logger.warning(
+            "Unsupported output format %s for TableRenderableBase, defaulting to Rich table.",
+            fmt,
+        )
+        return renderable.as_table()
 
 
 class TableRenderableBase(BaseModel):
@@ -100,7 +182,7 @@ class TableRenderableBase(BaseModel):
     __show_lines__: bool = True
     __box__: rich.box.Box = rich.box.ROUNDED
 
-    def __cols_rows__(self) -> ColsRowsType:
+    def __cols_rows__(self, fmt: OutputFormat = OutputFormat.RICH) -> ColsRowsType:
         """Get the columns and rows for the table representation of the object.
 
         Example:
@@ -114,19 +196,45 @@ class TableRenderableBase(BaseModel):
         """
         return [], []
 
-    def as_table(self) -> Table:
-        """Get a Rich table given the rows and cols generated for the object."""
-        cols, rows = self.__cols_rows__()
+    def _get_safe_cols_rows(
+        self,
+        fmt: OutputFormat = OutputFormat.RICH,
+    ) -> ColsRowsType:
+        """Get the columns and rows for the table representation of the object.
+
+        This is a safe version of `__cols_rows__` that ensures that the
+        row contents are all safe to render.
+        """
+        cols, rows = self.__cols_rows__(fmt=fmt)
         for row in rows:
             for i, cell in enumerate(row):
                 row[i] = get_safe_renderable(cell)
+        return cols, rows
 
+    def as_table(self) -> Table:
+        """Get a Rich table given the rows and cols generated for the object."""
+        cols, rows = self._get_safe_cols_rows(fmt=OutputFormat.RICH)
         return get_table(
             cols=cols,
             rows=rows,
             title=self.__title__,
             show_lines=self.__show_lines__,
             box=self.__box__,
+        )
+
+    def as_text(self, vertical: bool = True, show_header: bool = False) -> Table:
+        """Get a 'text' representation of the object (Rich table with no lines)."""
+        """This is used for the text output format."""
+        cols, rows = self._get_safe_cols_rows(fmt=OutputFormat.TEXT)
+        return get_table(
+            cols=cols,
+            rows=rows,
+            title=self.__title__,
+            show_lines=False,  # Text representation should not have lines
+            box=None,
+            show_header=show_header,
+            header_style="bold",
+            vertical=vertical,
         )
 
 
@@ -188,7 +296,7 @@ class TableRenderable(TableRenderableBase):
                 cols.append(fmt_field_name(field_name))
         return cols
 
-    def __rows__(self) -> RowsType:
+    def __rows__(self, fmt: OutputFormat = OutputFormat.RICH) -> RowsType:
         r"""Get the rows for the table representation of the object.
 
         Only override if you want to customize the rows without
@@ -216,11 +324,11 @@ class TableRenderable(TableRenderableBase):
         }
         for field_name, value in fields.items():
             if isinstance(value, TableRenderable):
-                fields[field_name] = value.as_table()
+                fields[field_name] = transform_renderable(value, fmt=fmt)
             elif isinstance(value, BaseModel):
                 # Fall back to rendering as JSON string
                 logger.warning(
-                    "Cannot render %s as a table.",
+                    "Cannot render %s, defaulting to JSON representation.",
                     value.__class__.__name__,
                     stack_info=True,  # we want to know how we got here
                 )
@@ -235,7 +343,7 @@ class TableRenderable(TableRenderableBase):
                     # Rendering an aggregate result with mixed types is not supported
                     # and will probably break.
                     value = cast(list[TableRenderable], value)
-                    fields[field_name] = AggregateResult(root=value).as_table()
+                    fields[field_name] = transform_renderable(AggregateResult(root=value), fmt=fmt)
                 else:
                     # Other lists are rendered as newline delimited strings.
                     # The delimiter can be modified with the `JOIN_CHAR` meta-key in
@@ -246,7 +354,7 @@ class TableRenderable(TableRenderableBase):
                 fields[field_name] = str(value)
         return [list(fields.values())]  # must be a list of lists
 
-    def __cols_rows__(self) -> ColsRowsType:
+    def __cols_rows__(self, fmt: OutputFormat = OutputFormat.RICH) -> ColsRowsType:
         """Get the columns and rows for the table representation of the object.
 
         Example:
@@ -258,7 +366,7 @@ class TableRenderable(TableRenderableBase):
             (["UserID", "Username"], [["1", "admin"]])
 
         """
-        return self.__cols__(), self.__rows__()
+        return self.__cols__(), self.__rows__(fmt=fmt)
 
 
 TableRenderableT = TypeVar("TableRenderableT", bound="TableRenderable")
@@ -279,12 +387,12 @@ class AggregateResult(TableRenderableBase, Generic[TableRenderableT]):
         """Serialize the root field to a list of dictionaries."""
         return [result.model_dump() for result in self.root]
 
-    def __cols_rows__(self) -> ColsRowsType:
+    def __cols_rows__(self, fmt: OutputFormat = OutputFormat.RICH) -> ColsRowsType:
         cols: ColsType = []
         rows: RowsType = []
 
         for result in self.root:
-            c, r = result.__cols_rows__()
+            c, r = result.__cols_rows__(fmt=fmt)
             if not cols:
                 cols = c
             if r:

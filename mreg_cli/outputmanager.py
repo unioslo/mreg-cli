@@ -23,6 +23,7 @@ from pydantic import BaseModel
 from rich import markup
 from rich.console import Console
 
+from mreg_cli.config import OutputFormat, MregCliConfig
 from mreg_cli.errorbuilder import build_error_message
 from mreg_cli.exceptions import CliError, FileError
 from mreg_cli.tables import AggregateResult, TableRenderable
@@ -33,6 +34,8 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 DEFAULT_WIDTH = 120
+
+console_stdout = Console()
 
 
 @overload
@@ -187,6 +190,11 @@ class OutputManager:
 
     def _get_console(self) -> Console:
         return Console(file=io.StringIO(), width=get_console_columns())
+
+    @property
+    def format(self) -> OutputFormat:
+        conf = MregCliConfig()
+        return conf.get_output_format()
 
     @property
     def _output(self) -> list[str]:
@@ -381,7 +389,7 @@ class OutputManager:
             # we do not add it to the output.
             logger.debug(f"Line '{line}' does not match filter '{self._filter_re.pattern}'")
             return
-        self.console.print(markup.escape(line))
+        self.console.print(line)
 
     def add_formatted_line(self, key: str, value: str, padding: int = 14) -> None:
         """Format and add a key-value pair as a line.
@@ -529,7 +537,48 @@ class OutputManager:
             return data
         return data
 
-    def add_formatted_table2(
+    def add_result(self, result: TableRenderable | Sequence[TableRenderable]) -> None:
+        """Add a result to the output.
+
+        This method is a convenience method that allows adding a single
+        TableRenderable or a sequence of TableRenderables to the output.
+        It formats the data and adds it to the output.
+
+        :param result: A single TableRenderable or a sequence of TableRenderables.
+        """
+        if self.format == OutputFormat.RICH:
+            return self._render_result_table(result)
+        elif self.format == OutputFormat.TEXT:
+            return self._render_result_text(result)
+        elif self.format == OutputFormat.JSON:
+            return self._render_result_json(result)
+
+    def _render_result_text(
+        self,
+        result: Sequence[TableRenderable] | TableRenderable,
+        indent: int = 0,
+    ) -> None:
+        if isinstance(result, TableRenderable):
+            # If a single TableRenderable is passed, convert it to a list
+            result = [result]
+        for i, r in enumerate(result):
+            self._do_render_result_text(r)
+            if i < len(result) - 1:
+                # Add a blank line between results
+                self.add_line("")
+
+    def _do_render_result_text(self, result: TableRenderable) -> None:
+        # Print text to a virtual console, then capture the output
+        con = self._get_console()
+        text_table = result.as_text()
+        con.print(text_table)
+        lines = con.file.getvalue().splitlines()
+
+        # Add each line to the output console, which performs filtering
+        for line in lines:
+            self.add_line(line.lstrip())
+
+    def _render_result_table(
         self,
         row_data: Sequence[TableRenderable] | TableRenderable,
         indent: int = 0,
@@ -567,6 +616,21 @@ class OutputManager:
         table = result.as_table()
         self.console.print(table)
 
+    def _render_result_json(
+        self,
+        result: Sequence[TableRenderable] | TableRenderable,
+    ) -> None:
+        res: TableRenderable | AggregateResult[Any]
+        if isinstance(result, TableRenderable):
+            res = result
+        else:
+            res = AggregateResult(root=result)
+
+        json_data = res.model_dump(mode="json")
+        json_lines = json.dumps(json_data, indent=2).splitlines()
+        for line in json_lines:
+            self.add_line(line)
+
     def filtered_output(self) -> list[str]:
         """Return the lines of output.
 
@@ -593,10 +657,10 @@ class OutputManager:
         self.recording_output()
 
         for line in self._ok:
-            print(f"OK: {line}")
+            console_stdout.print(f"OK: {line}")
 
         for line in self._output:
-            print(line)
+            console_stdout.print(line)
 
     def __str__(self) -> str:
         """Return the formatted output as a single string."""
