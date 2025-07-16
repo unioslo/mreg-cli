@@ -389,7 +389,7 @@ class OutputManager:
             # we do not add it to the output.
             logger.debug(f"Line '{line}' does not match filter '{self._filter_re.pattern}'")
             return
-        self.console.print(line)
+        self.console.print(markup.escape(line))
 
     def add_formatted_line(self, key: str, value: str, padding: int = 14) -> None:
         """Format and add a key-value pair as a line.
