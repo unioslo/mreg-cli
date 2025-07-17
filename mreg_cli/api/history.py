@@ -121,7 +121,9 @@ class HistoryItem(BaseModel):
         """Output the history item."""
         ts = self.clean_timestamp()
         msg = self.msg(basename)
-        OutputManager().add_line(f"{ts} [{self.user}]: {self.model} {self.action}: {msg}")
+        OutputManager().add_line(
+            f"{ts} [{self.user}]: {self.model} {self.action}: {msg}", escape=True
+        )
 
     @classmethod
     def output_multiple(cls, basename: str, items: list[HistoryItem]) -> None:

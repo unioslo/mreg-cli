@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import MutableSequence
+from collections.abc import MutableSequence, Sequence
 from enum import Enum
-from typing import Any, Sequence, TypeVar, cast, Generic
+from typing import Any, Generic, TypeVar, cast
 
 import rich.box
-from pydantic import BaseModel, ConfigDict, Field, RootModel, model_serializer
+from pydantic import BaseModel, ConfigDict, Field, model_serializer
 from pydantic.fields import ComputedFieldInfo, FieldInfo
-from rich.console import Console, Group, RenderableType
+from rich.console import RenderableType
 from rich.errors import MarkupError
-from rich.padding import Padding
 from rich.style import StyleType
 from rich.table import Table
 from rich.text import Text
 
 from mreg_cli.config import OutputFormat
-
 
 logger = logging.getLogger(__name__)
 
@@ -82,14 +80,16 @@ def get_table(
     box: rich.box.Box | None = rich.box.ROUNDED,
     header_style: StyleType | None = "table.header",
     vertical: bool = False,
+    pad_edge: bool = True,
 ) -> Table:
     """Get a Rich table given a list of columns and rows."""
     table = Table(
         title=title,
         box=box,
         show_lines=show_lines,
-        show_header=show_header,
+        show_header=show_header if not vertical else False,
         header_style=header_style,
+        pad_edge=pad_edge,
     )
     if vertical:
         return _get_vertical_table(table, cols, rows)
@@ -131,7 +131,7 @@ def _get_vertical_table(
                 # We assume that subtables have their own rows.
                 # If they don't, we don't want to render them.
                 if cell.rows:
-                    row_data.append(Padding(cell, (2, 0, 0, 10)))
+                    row_data.append(cell)
                 else:
                     row_data.append("")
             else:
@@ -222,10 +222,15 @@ class TableRenderableBase(BaseModel):
             box=self.__box__,
         )
 
-    def as_text(self, vertical: bool = True, show_header: bool = False) -> Table:
+    def as_text(
+        self, vertical: bool = True, show_header: bool = False, pad_edge: bool = False
+    ) -> Table:
         """Get a 'text' representation of the object (Rich table with no lines)."""
         """This is used for the text output format."""
         cols, rows = self._get_safe_cols_rows(fmt=OutputFormat.TEXT)
+        for i, col in enumerate(cols):
+            # Uppercase column headers for text representation
+            cols[i] = col.upper()
         return get_table(
             cols=cols,
             rows=rows,
@@ -235,6 +240,7 @@ class TableRenderableBase(BaseModel):
             show_header=show_header,
             header_style="bold",
             vertical=vertical,
+            pad_edge=pad_edge,
         )
 
 
@@ -249,10 +255,8 @@ class TableRenderable(TableRenderableBase):
             return default
         # NOTE: this cast isn't super type safe, but we are expected to call this
         # method with the extra key constants defined above.
-        #
         # If need be, we can add some sort of model validator that ensures
         # all JSON schema extra keys have the correct type.
-        # But that will only happen once we actually encounter such a bug.
         return cast(T, f.json_schema_extra.get(key, default))
 
     def __all_fields__(self) -> dict[str, FieldInfo | ComputedFieldInfo]:

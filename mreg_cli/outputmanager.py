@@ -35,7 +35,15 @@ T = TypeVar("T")
 
 DEFAULT_WIDTH = 120
 
-console_stdout = Console()
+console_stdout = Console(
+    highlight=False,
+    # account for ANSI escape codes:
+    # We already set the width of the actual output in the virtual
+    # console used by OutputManager, so we must set an arbitrarily large width here,
+    # otherwise ANSI escape codes count towards the line width, which will mangle the output
+    width=1000,
+    soft_wrap=False,
+)
 
 
 @overload
@@ -189,7 +197,12 @@ class OutputManager:
         self.console = self._get_console()
 
     def _get_console(self) -> Console:
-        return Console(file=io.StringIO(), width=get_console_columns())
+        return Console(
+            file=io.StringIO(),
+            width=get_console_columns(),
+            record=True,
+            highlight=False,
+        )
 
     @property
     def format(self) -> OutputFormat:
@@ -199,12 +212,7 @@ class OutputManager:
     @property
     def _output(self) -> list[str]:
         """Return the output lines."""
-        return self.console.file.getvalue().splitlines()
-
-    @property
-    def _rich_output(self) -> str:
-        """Return the rich output as a string."""
-        return self.console.file.getvalue().splitlines()
+        return self.console.export_text(styles=True).splitlines()
 
     def recording_clear(self) -> None:
         """Clear the recording data."""
@@ -378,18 +386,20 @@ class OutputManager:
         logger.info(f"From command (filtered): {self._command_executed}")
         return self._command_executed
 
-    def add_line(self, line: str) -> None:
+    def add_line(self, line: str, *, escape: bool = False) -> None:
         """Add a line to the output.
 
         :param line: The line to add.
         """
         logger.debug(f"Adding line: {line}")
+        if escape:
+            line = markup.escape(line)
         if self._filter_re and bool(self._filter_re.search(line)) == self._filter_negate:
             # If we have a filter, and the line does not match the filter,
             # we do not add it to the output.
             logger.debug(f"Line '{line}' does not match filter '{self._filter_re.pattern}'")
             return
-        self.console.print(markup.escape(line))
+        self.console.print(line)
 
     def add_formatted_line(self, key: str, value: str, padding: int = 14) -> None:
         """Format and add a key-value pair as a line.
@@ -555,28 +565,35 @@ class OutputManager:
 
     def _render_result_text(
         self,
-        result: Sequence[TableRenderable] | TableRenderable,
+        result: Sequence[TableRenderable] | TableRenderable | AggregateResult[TableRenderable],
         indent: int = 0,
     ) -> None:
-        if isinstance(result, TableRenderable):
-            # If a single TableRenderable is passed, convert it to a list
-            result = [result]
-        for i, r in enumerate(result):
-            self._do_render_result_text(r)
-            if i < len(result) - 1:
-                # Add a blank line between results
-                self.add_line("")
+        if isinstance(result, Sequence):
+            result = AggregateResult(root=result)
 
-    def _do_render_result_text(self, result: TableRenderable) -> None:
+        # for i, r in enumerate(result):
+        #     self._do_render_result_text(r)
+        #     if i < len(result) - 1:
+        #         # Add a blank line between results
+        #         self.add_line("")
+        self._do_render_result_text(result)
+
+    def _do_render_result_text(
+        self, result: TableRenderable | AggregateResult[TableRenderable]
+    ) -> None:
         # Print text to a virtual console, then capture the output
         con = self._get_console()
-        text_table = result.as_text()
+
+        # Render a horizontal table for aggregates, vertical for single items
+        vertical = not isinstance(result, AggregateResult)
+
+        text_table = result.as_text(vertical=vertical, show_header=True)
         con.print(text_table)
         lines = con.file.getvalue().splitlines()
 
         # Add each line to the output console, which performs filtering
         for line in lines:
-            self.add_line(line.lstrip())
+            self.add_line(line)
 
     def _render_result_table(
         self,
@@ -652,15 +669,19 @@ class OutputManager:
         else:
             return list(line for line in lines if filter_re.search(line))
 
+    def _print_stdout(self, line: str) -> None:
+        """Print a line to stdout, escaping markup."""
+        console_stdout.print(line, overflow="ignore")
+
     def render(self) -> None:
         """Print the output to stdout, and records it if recording is active."""
         self.recording_output()
 
         for line in self._ok:
-            console_stdout.print(f"OK: {line}")
+            console_stdout.print(f"OK: {line}", overflow="ignore")
 
         for line in self._output:
-            console_stdout.print(line)
+            console_stdout.print(line, overflow="ignore")
 
     def __str__(self) -> str:
         """Return the formatted output as a single string."""
