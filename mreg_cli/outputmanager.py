@@ -15,15 +15,16 @@ import logging
 import os
 import re
 from collections.abc import Iterable, Sequence
-from typing import Any, Literal, TypeVar, overload
+from typing import Any, Literal, NamedTuple, TypeVar, overload
 from urllib.parse import urlencode, urlparse
 
+import jq
 import requests
 from pydantic import BaseModel
 from rich import markup
 from rich.console import Console
 
-from mreg_cli.config import OutputFormat, MregCliConfig
+from mreg_cli.config import MregCliConfig, OutputFormat
 from mreg_cli.errorbuilder import build_error_message
 from mreg_cli.exceptions import CliError, FileError
 from mreg_cli.tables import AggregateResult, TableRenderable
@@ -44,6 +45,20 @@ console_stdout = Console(
     width=1000,
     soft_wrap=False,
 )
+console_stderr = Console(
+    highlight=False,
+    # width=None,
+    soft_wrap=False,
+)
+
+
+class CommandFilter(NamedTuple):
+    """Executed command and its filter (if any)."""
+
+    command: str
+    filter_re: re.Pattern[str] | None
+    negate: bool  # only applies to regex filters
+    filter_jq: Any | None
 
 
 @overload
@@ -184,6 +199,7 @@ class OutputManager:
         """Clear the object."""
         self._filter_re: re.Pattern[str] | None = None
         self._filter_negate: bool = False
+        self._filter_jq: Any | None = None
         self._command_executed: str = ""
         self._command_issued: str = ""
 
@@ -380,9 +396,12 @@ class OutputManager:
         """
         logger.debug(f"From command: {command}")
         self._command_issued = command.rstrip()
-        self._command_executed, self._filter_re, self._filter_negate = self.get_filter(
-            remove_comments(self._command_issued)
-        )
+        flt = self.get_filter(remove_comments(self._command_issued))
+        self._filter_re = flt.filter_re
+        self._filter_negate = flt.negate
+        self._filter_jq = flt.filter_jq
+        self._command_executed = flt.command
+
         logger.info(f"From command (filtered): {self._command_executed}")
         return self._command_executed
 
@@ -434,7 +453,7 @@ class OutputManager:
 
     # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
     # don't have that type. So we use Any instead.
-    def get_filter(self, command: str) -> tuple[str, Any, bool]:
+    def get_filter(self, command: str) -> CommandFilter:
         """Return the filter for the output.
 
         Parses the command string and extracts a filter if present, taking into
@@ -447,27 +466,41 @@ class OutputManager:
         """
         negate = False
         filter_re = None
+        filter_jq = None
 
+        # JSON uses a jq filter, not a regex pattern
         if command:
             split_index = self._find_split_index(command)
+            command_issued = command
+            filter_str = command[split_index + 1 :].strip()
+            command = command[:split_index].strip()
+            if self.format == OutputFormat.JSON:
+                if split_index != -1:
+                    try:
+                        filter_jq = jq.compile(filter_str)
+                    except Exception as exc:
+                        base_msg = f"Unable to compile jq filter '{filter_str}'"
+                        msg = build_error_message(command_issued, base_msg)
+                        raise CliError(msg) from exc
+            else:
+                if split_index != -1:
+                    if filter_str.startswith("!"):
+                        negate = True
+                        filter_str = filter_str[1:].strip()
 
-            if split_index != -1:
-                command_issued = command
-                filter_str = command[split_index + 1 :].strip()
-                command = command[:split_index].strip()
+                    try:
+                        filter_re = re.compile(filter_str)
+                    except re.error as exc:
+                        base_msg = f"Unable to compile regex '{filter_str}'"
+                        msg = build_error_message(command_issued, base_msg)
+                        raise CliError(msg) from exc
 
-                if filter_str.startswith("!"):
-                    negate = True
-                    filter_str = filter_str[1:].strip()
-
-                try:
-                    filter_re = re.compile(filter_str)
-                except re.error as exc:
-                    base_msg = f"Unable to compile regex '{filter_str}'"
-                    msg = build_error_message(command_issued, base_msg)
-                    raise CliError(msg) from exc
-
-        return (command, filter_re, negate)
+        return CommandFilter(
+            command=command,
+            filter_re=filter_re,
+            negate=negate,
+            filter_jq=filter_jq,
+        )
 
     def add_formatted_table(
         self,
@@ -548,11 +581,7 @@ class OutputManager:
         return data
 
     def add_result(self, result: TableRenderable | Sequence[TableRenderable]) -> None:
-        """Add a result to the output.
-
-        This method is a convenience method that allows adding a single
-        TableRenderable or a sequence of TableRenderables to the output.
-        It formats the data and adds it to the output.
+        """Add the result of a command to the output.
 
         :param result: A single TableRenderable or a sequence of TableRenderables.
         """
@@ -571,16 +600,6 @@ class OutputManager:
         if isinstance(result, Sequence):
             result = AggregateResult(root=result)
 
-        # for i, r in enumerate(result):
-        #     self._do_render_result_text(r)
-        #     if i < len(result) - 1:
-        #         # Add a blank line between results
-        #         self.add_line("")
-        self._do_render_result_text(result)
-
-    def _do_render_result_text(
-        self, result: TableRenderable | AggregateResult[TableRenderable]
-    ) -> None:
         # Print text to a virtual console, then capture the output
         con = self._get_console()
 
@@ -644,9 +663,13 @@ class OutputManager:
             res = AggregateResult(root=result)
 
         json_data = res.model_dump(mode="json")
-        json_lines = json.dumps(json_data, indent=2).splitlines()
-        for line in json_lines:
-            self.add_line(line)
+        json_str = json.dumps(json_data, indent=2)
+        if self._filter_jq:
+            try:
+                json_str = self._filter_jq.input_text(json_str).text()
+            except Exception as exc:
+                raise CliError(f"Error applying jq filter: {exc}") from exc
+        self.console.print_json(json_str, indent=2)
 
     def filtered_output(self) -> list[str]:
         """Return the lines of output.
@@ -669,16 +692,20 @@ class OutputManager:
         else:
             return list(line for line in lines if filter_re.search(line))
 
-    def _print_stdout(self, line: str) -> None:
-        """Print a line to stdout, escaping markup."""
-        console_stdout.print(line, overflow="ignore")
+    # def _print_stdout(self, line: str) -> None:
+    #     """Print a line to stdout, escaping markup."""
+    #     console_stdout.print(line, overflow="ignore")
+
+    # def _print_stderr(self, line: str) -> None:
+    #     """Print a line to stderr, escaping markup."""
+    #     console_stderr.print(line, overflow="ignore")
 
     def render(self) -> None:
         """Print the output to stdout, and records it if recording is active."""
         self.recording_output()
 
         for line in self._ok:
-            console_stdout.print(f"OK: {line}", overflow="ignore")
+            console_stderr.print(f"OK: {line}")
 
         for line in self._output:
             console_stdout.print(line, overflow="ignore")

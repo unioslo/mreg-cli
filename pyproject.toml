@@ -47,6 +47,7 @@ dependencies = [
     "pydantic[email]>=2.7.1",
     "pydantic-extra-types>=2.1.0",
     "platformdirs>=4.3.0",
+    "jq>=1.10.0",
 ]
 dynamic = ["version"]
 
