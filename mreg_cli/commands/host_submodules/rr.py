@@ -534,15 +534,14 @@ def ptr_add(args: argparse.Namespace) -> None:
     if existing_ptrs:
         raise EntityAlreadyExists(f"{ip} already exists in a PTR record.")
 
-    if host.zone is None and not args.force:
-        raise ForceMissing(f"{host} isn't in a zone controlled by MREG, must force")
-
     network = Network.get_by_ip(ip)
-    if not network:
-        raise EntityNotFound(f"{ip} isn't in a network controlled by MREG")
-
-    if network.is_reserved_ip(ip) and not args.force:
-        raise ForceMissing("Address is reserved. Requires force")
+    if not args.force:
+        if host.zone is None:
+            raise ForceMissing(f"{host} isn't in a zone controlled by MREG, must force")
+        elif not network:
+            raise ForceMissing(f"{ip} isn't in a network controlled by MREG, must force")
+        elif network and network.is_reserved_ip(ip):
+            raise ForceMissing(f"{ip} is reserved, must force")
 
     PTR_override.create({"host": host.id, "ipaddress": str(ip)})
     OutputManager().add_ok(f"Added PTR record {ip} to {host.name}.")
