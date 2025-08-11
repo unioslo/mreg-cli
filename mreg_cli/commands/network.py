@@ -1223,7 +1223,10 @@ def community_host_add(args: argparse.Namespace) -> None:
 
     h = Host.get_by_any_means_or_raise(host)
     ipaddr = _check_host_ip(h, ip)
-    net = ipaddr.network()
+
+    if not (net := ipaddr.network()):
+        raise EntityNotFound(f"{h.name!r} is not in a network controlled by MREG.")
+
     com = net.get_community_or_raise(community)
 
     com.add_host(h, ipaddress=ipaddr.ipaddress)

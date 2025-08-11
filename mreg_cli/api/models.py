@@ -24,6 +24,7 @@ from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import HostName, MacAddress, NameList
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.exceptions import (
+    APINotOk,
     CreateError,
     DeleteError,
     EntityAlreadyExists,
@@ -2412,14 +2413,18 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         """Return True if the IP address is IPv6."""
         return self.ipaddress.version == 6
 
-    def network(self) -> Network:
+    def network(self) -> Network | None:
         """Return the network of the IP address."""
-        data = get(Endpoint.NetworksByIP.with_id(str(self.ipaddress)))
-        return Network.model_validate(data.json())
+        try:
+            return get_typed(Endpoint.NetworksByIP.with_id(str(self.ipaddress)), Network)
+        except APINotOk:
+            return None
 
     def vlan(self) -> int | None:
         """Return the VLAN of the IP address."""
-        return self.network().vlan
+        if net := self.network():
+            return net.vlan
+        return None
 
     def associate_mac(self, mac: MacAddress, force: bool = False) -> IPAddress:
         """Associate a MAC address with the IP address.
@@ -3394,11 +3399,29 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         ipv6s = self.ipv6_addresses()
 
         if len(ipv4s) == 1 and len(ipv6s) == 1:
-            vlan4 = ipv4s[0].network().vlan
-            vlan6 = ipv6s[0].network().vlan
+            ipv4_address = ipv4s[0]
+            ipv6_address = ipv6s[0]
+            network4 = ipv4_address.network()
+            network6 = ipv6_address.network()
 
-            if vlan4 == vlan6:
-                return ipv4s[0]
+            if network4 and network6:
+                if network4.vlan == network6.vlan:
+                    return ipv4s[0]
+            elif network4:  # only IPv4 is in mreg
+                logger.warning(
+                    "Host '%s' has IPv6 address not in MREG: %s",
+                    self.name,
+                    str(ipv6_address.ipaddress),
+                )
+                return ipv4_address
+            elif network6:  # only IPv6 is in mreg
+                logger.warning(
+                    "Host '%s' has IPv4 address not in MREG: %s",
+                    self.name,
+                    str(ipv4_address.ipaddress),
+                )
+                return ipv6_address
+            # falls through to raise an error
 
         raise EntityOwnershipMismatch(
             f"Host {self} has multiple IPs, cannot determine which one to use."
@@ -3554,12 +3577,33 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     def networks(self) -> dict[Network, list[IPAddress]]:
         """Return a dict of unique networks and a list of associated IP addresses for the host.
 
+        Does not return networks that are not registered in MREG.
+
         :returns: A dictionary of networks and the associated IP addresses.
         """
         ret_dict: dict[Network, list[IPAddress]] = {}
 
         for ip in self.ipaddresses:
             network = ip.network()
+            if not network:
+                # If network is not in MREG, we create a placeholder network
+                network = Network(
+                    id=0,
+                    excluded_ranges=[],
+                    network=str("0.0.0.0/24"),
+                    description="Unknown network",
+                    vlan=None,
+                    dns_delegated=False,
+                    category="",
+                    location="",
+                    frozen=False,
+                    reserved=0,
+                    policy=None,
+                    communities=[],
+                    created_at=datetime.now(),
+                    updated_at=datetime.now(),
+                )
+
             if network not in ret_dict:
                 ret_dict[network] = []
 
