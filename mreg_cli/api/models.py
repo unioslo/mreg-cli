@@ -1644,8 +1644,9 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             reserved=0,
             policy=None,
             communities=[],
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            # epoch time
+            created_at=datetime.fromtimestamp(0),
+            updated_at=datetime.fromtimestamp(0),
         )
 
     @classmethod

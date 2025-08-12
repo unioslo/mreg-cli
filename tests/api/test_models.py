@@ -165,14 +165,54 @@ def test_network_dummy_network_from_ip_v6(inp: str) -> None:
 
 def _test_network_dummy_network(inp: IPv4Address | IPv6Address, expected_version: int) -> None:
     """Helper function to test creating a dummy network from an IP address."""  # noqa: D401
-    ip = IPAddress(
+    ip = _get_mreg_ipaddress(inp)
+    network = Network.dummy_network_from_ip(ip)
+    assert isinstance(network, Network)
+    assert network.ip_network.version == expected_version
+
+    # Ensure all dummy networks for the given IP type are hashed
+    # the same and equal to each other, so that all dummy networks
+    # of a given IP version are considered the same.
+    network2 = Network.dummy_network_from_ip(ip)
+    assert network == network2
+    assert hash(network) == hash(network2)
+
+
+def _get_mreg_ipaddress(ip: IPv4Address | IPv6Address) -> IPAddress:
+    """Construct an mreg IPAddress object from an IP."""
+    return IPAddress(
         id=0,
         host=0,
         created_at=datetime.now(),
         updated_at=datetime.now(),
-        ipaddress=inp,
+        ipaddress=ip,
         # no mac
     )
-    network = Network.dummy_network_from_ip(ip)
-    assert isinstance(network, Network)
-    assert network.ip_network.version == expected_version
+
+
+def test_network_dummy_network_from_ip_identity() -> None:
+    """Test hashing of dummy networks from identical and differenet IP versions."""
+    ipv4_1 = _get_mreg_ipaddress(IPv4Address("192.168.0.1"))
+    ipv4_2 = _get_mreg_ipaddress(IPv4Address("192.168.0.2"))
+    ipv6_1 = _get_mreg_ipaddress(IPv6Address("2001:db8::1"))
+    ipv6_2 = _get_mreg_ipaddress(IPv6Address("2001:db8::2"))
+
+    network_v4_1 = Network.dummy_network_from_ip(ipv4_1)
+    network_v4_2 = Network.dummy_network_from_ip(ipv4_2)
+    network_v6_1 = Network.dummy_network_from_ip(ipv6_1)
+    network_v6_2 = Network.dummy_network_from_ip(ipv6_2)
+
+    assert network_v4_1 == network_v4_2
+    assert hash(network_v4_1) == hash(network_v4_2)
+
+    assert network_v6_1 == network_v6_2
+    assert hash(network_v6_1) == hash(network_v6_2)
+
+    assert network_v4_1 != network_v6_1
+    assert hash(network_v4_1) != hash(network_v6_1)
+
+    # Usage in dicts
+    d = {network_v4_1: "foo", network_v6_1: "bar"}
+    # Use the other two network objects to access the existing entries
+    assert d[network_v4_2] == "foo"
+    assert d[network_v6_2] == "bar"
