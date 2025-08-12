@@ -1617,6 +1617,38 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         return Endpoint.Networks
 
     @classmethod
+    def dummy_network_from_ip(cls, ip: IPAddress) -> Self:
+        """Create a Network object for an unknown network given an IP.
+
+        NOTE: Does not perform any API calls. This is purely to work around
+        the fact that MREG supports creating IP addresses for networks that
+        are not registered in MREG.
+        """
+        if ip.is_ipv4():
+            network_addr = "0.0.0.0/24"
+            description = "Unknown IPv4 network"
+        else:
+            network_addr = "::/64"
+            description = "Unknown IPv6 network"
+
+        return cls(
+            id=0,
+            excluded_ranges=[],
+            network=network_addr,
+            description=description,
+            vlan=None,
+            dns_delegated=False,
+            category="",
+            location="",
+            frozen=False,
+            reserved=0,
+            policy=None,
+            communities=[],
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+
+    @classmethod
     def get_by_any_means(cls, identifier: str) -> Self | None:
         """Get a network by the given identifier.
 
@@ -3587,22 +3619,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
             network = ip.network()
             if not network:
                 # If network is not in MREG, we create a placeholder network
-                network = Network(
-                    id=0,
-                    excluded_ranges=[],
-                    network=str("0.0.0.0/24"),
-                    description="Unknown network",
-                    vlan=None,
-                    dns_delegated=False,
-                    category="",
-                    location="",
-                    frozen=False,
-                    reserved=0,
-                    policy=None,
-                    communities=[],
-                    created_at=datetime.now(),
-                    updated_at=datetime.now(),
-                )
+                network = Network.dummy_network_from_ip(ip)
 
             if network not in ret_dict:
                 ret_dict[network] = []

@@ -6,7 +6,7 @@ from typing import Any, Callable
 
 import pytest
 
-from mreg_cli.api.models import IPNetMode, Network, NetworkOrIP
+from mreg_cli.api.models import IPAddress, IPNetMode, Network, NetworkOrIP
 from mreg_cli.exceptions import (
     InputFailure,
     InvalidIPAddress,
@@ -135,3 +135,44 @@ def test_network_ip_network(inp: str, expect: IP_NetworkT) -> None:
     assert network.ip_network == expect
     assert network.broadcast_address == expect.broadcast_address
     assert network.network_address == expect.network_address
+
+
+@pytest.mark.parametrize(
+    "inp",
+    [
+        "192.168.0.1",
+        "0.0.0.0",
+        "10.0.0.1",
+    ],
+)
+def test_network_dummy_network_from_ip_v4(inp: str) -> None:
+    """Test creating a dummy network from an IPv4 address."""
+    _test_network_dummy_network(IPv4Address(inp), expected_version=4)
+
+
+@pytest.mark.parametrize(
+    "inp",
+    [
+        "2001:db8::1",
+        "::1",
+        "fe80::1",
+    ],
+)
+def test_network_dummy_network_from_ip_v6(inp: str) -> None:
+    """Test creating a dummy network from an IPv6 address."""
+    _test_network_dummy_network(IPv6Address(inp), expected_version=6)
+
+
+def _test_network_dummy_network(inp: IPv4Address | IPv6Address, expected_version: int) -> None:
+    """Helper function to test creating a dummy network from an IP address."""  # noqa: D401
+    ip = IPAddress(
+        id=0,
+        host=0,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+        ipaddress=inp,
+        # no mac
+    )
+    network = Network.dummy_network_from_ip(ip)
+    assert isinstance(network, Network)
+    assert network.ip_network.version == expected_version
