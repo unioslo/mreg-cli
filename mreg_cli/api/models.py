@@ -3434,30 +3434,30 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if len(ipv4s) == 1 and len(ipv6s) == 1:
             ipv4_address = ipv4s[0]
             ipv6_address = ipv6s[0]
-            network4 = ipv4_address.network()
-            network6 = ipv6_address.network()
+            ipv4_network = ipv4_address.network()
+            ipv6_network = ipv6_address.network()
 
-            if network4 and network6:
-                if network4.vlan == network6.vlan:
-                    return ipv4s[0]
-            elif network4:  # only IPv4 is in mreg
+            if ipv4_network and ipv6_network:
+                if ipv4_network.vlan == ipv6_network.vlan:
+                    return ipv4_address
+            elif ipv4_network:  # only IPv4 is in mreg
                 logger.warning(
                     "Host '%s' has IPv6 address not in MREG: %s",
                     self.name,
                     str(ipv6_address.ipaddress),
                 )
                 return ipv4_address
-            elif network6:  # only IPv6 is in mreg
+            elif ipv6_network:  # only IPv6 is in mreg
                 logger.warning(
                     "Host '%s' has IPv4 address not in MREG: %s",
                     self.name,
                     str(ipv4_address.ipaddress),
                 )
                 return ipv6_address
-            # falls through to raise an error
 
+        ips = ", ".join(str(ip.ipaddress) for ip in self.ipaddresses)
         raise EntityOwnershipMismatch(
-            f"Host {self} has multiple IPs, cannot determine which one to use."
+            f"Host {self} has multiple IPs, cannot determine which one to use: {ips}."
         )
 
     def has_ptr_override(self, arg_ip: IP_AddressT) -> bool:
