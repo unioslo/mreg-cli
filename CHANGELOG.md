@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+## [1.4.2](https://github.com/unioslo/mreg-cli/releases/tag/1.4.2) - 2025-08-15
+
+### Fixed
+
+- `host info` for hosts with A(AAA)-records that point to networks not managed by MREG.
+- `network community_host_add` raising a 404 error for hosts with IPs in networks not managed by MREG.
+
 ## [1.4.1](https://github.com/unioslo/mreg-cli/releases/tag/1.4.1) - 2025-08-06
 
 ### Changed
