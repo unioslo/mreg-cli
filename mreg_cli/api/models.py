@@ -17,6 +17,7 @@ from pydantic import (
     field_validator,
 )
 from pydantic import ValidationError as PydanticValidationError
+from rich import markup
 from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimestamps
@@ -2742,7 +2743,7 @@ class NAPTR(FrozenModelWithTimestamps, WithHost, APIMixin):
                 self.order,
                 self.flag,
                 self.service,
-                self.regex or '""',
+                markup.escape(self.regex or '""'),
                 self.replacement,
             )
         )

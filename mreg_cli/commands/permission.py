@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from rich import markup
+
 from mreg_cli.api.models import Label, NetworkOrIP, Permission
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
@@ -82,7 +84,7 @@ def network_list(args: argparse.Namespace) -> None:
         perm_data["labels"] = ", ".join(row_labels)
         perm_data["range"] = str(permission.range)
         perm_data["group"] = permission.group
-        perm_data["regex"] = permission.regex
+        perm_data["regex"] = markup.escape(permission.regex)
         output.append(perm_data)
 
     OutputManager().add_formatted_table(
