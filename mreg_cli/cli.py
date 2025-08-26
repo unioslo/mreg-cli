@@ -19,6 +19,7 @@ from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from pydantic import ValidationError as PydanticValidationError
 
 # Import all the commands
+from mreg_cli.commands.cache import CacheCommands
 from mreg_cli.commands.dhcp import DHCPCommands
 from mreg_cli.commands.group import GroupCommands
 from mreg_cli.commands.help import HelpCommands
@@ -299,6 +300,7 @@ commands: list[type[BaseCommandSubclass]] = [
     LabelCommands,
     RecordingCommmands,
     LoggingCommmands,
+    CacheCommands,
     RootCommmands,
 ]
 for command in commands:
