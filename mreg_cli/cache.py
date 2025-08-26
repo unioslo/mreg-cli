@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Literal, ParamSpec, Protocol, TypeVar
+from typing import Any, Callable, Literal, ParamSpec, Protocol, TypeVar, runtime_checkable
 
 from diskcache import Cache
 
@@ -10,6 +10,7 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
+@runtime_checkable
 class CacheLike(Protocol):
     """Interface for `diskcache.Cache`-like objects."""
 
@@ -29,7 +30,7 @@ class CacheLike(Protocol):
         self,
         key: str,
         value: Any,
-        expire: float | None = None,
+        expire: int | float | None = None,
         read: bool = False,
         tag: str | None = None,
         retry: bool = False,
@@ -75,7 +76,7 @@ class NullCache:
         self,
         key: str,
         value: Any,
-        expire: float | None = None,
+        expire: int | float | None = None,
         read: bool = False,
         tag: str | None = None,
         retry: bool = False,
