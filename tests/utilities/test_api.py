@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 
 import pytest
@@ -7,8 +8,16 @@ from inline_snapshot import snapshot
 from pytest_httpserver import HTTPServer
 from werkzeug import Response
 
+from mreg_cli.cache import cache
 from mreg_cli.exceptions import MultipleEntitiesFound, ValidationError
 from mreg_cli.utilities.api import _strip_none, get_list, get_list_unique  # type: ignore
+
+
+@pytest.fixture(autouse=True)
+def clear_cache() -> Iterator[None]:
+    """Fixture that clears the mreg-cli cache between tests."""
+    yield
+    cache.clear()
 
 
 @pytest.mark.parametrize(
