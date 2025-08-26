@@ -11,7 +11,8 @@ import os
 import re
 import sys
 from contextvars import ContextVar
-from typing import Any, Literal, NoReturn, TypeVar, get_origin, overload
+from functools import wraps
+from typing import Any, Callable, Literal, NoReturn, ParamSpec, TypeVar, get_origin, overload
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -22,6 +23,7 @@ from requests import Response
 
 from mreg_cli.__about__ import __version__
 from mreg_cli.api.errors import parse_mreg_error
+from mreg_cli.cache import cache
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     APINotOk,
@@ -333,6 +335,7 @@ def get(path: str, params: QueryParams | None = ..., *, ok404: bool) -> Response
 def get(path: str, params: QueryParams | None = ...) -> Response: ...
 
 
+@cache.memoize(expire=300, tag="api")
 def get(path: str, params: QueryParams | None = None, ok404: bool = False) -> Response | None:
     """Make a standard get request."""
     if params is None:
@@ -591,6 +594,25 @@ def get_typed(
         return adapter.validate_json(resp.text)
 
 
+P = ParamSpec("P")
+
+
+def clear_cache(f: Callable[P, T]) -> Callable[P, T]:
+    """Clear the API cache after running the function."""
+
+    @wraps(f)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        result = f(*args, **kwargs)
+        try:
+            cache.evict("api")
+        except Exception as e:
+            logger.error(f"Error clearing cache: {e}")
+        return result
+
+    return wrapper
+
+
+@clear_cache
 def post(path: str, params: QueryParams | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a post request. Assumes that all kwargs are data fields."""
     if params is None:
@@ -598,6 +620,7 @@ def post(path: str, params: QueryParams | None = None, **kwargs: Any) -> Respons
     return _request_wrapper("post", path, params=params, **kwargs)
 
 
+@clear_cache
 def patch(path: str, params: QueryParams | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a patch request. Assumes that all kwargs are data fields."""
     if params is None:
@@ -605,6 +628,7 @@ def patch(path: str, params: QueryParams | None = None, **kwargs: Any) -> Respon
     return _request_wrapper("patch", path, params=params, **kwargs)
 
 
+@clear_cache
 def delete(path: str, params: QueryParams | None = None) -> Response | None:
     """Use requests to make a delete request."""
     if params is None:
