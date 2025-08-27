@@ -201,12 +201,16 @@ def cache_api_get(cache: CacheLike, config: MregCliConfig) -> None:
     import mreg_cli.utilities.api
 
     global _ORIGINAL_API_DO_GET
+    if _ORIGINAL_API_DO_GET is None:
+        _ORIGINAL_API_DO_GET = mreg_cli.utilities.api._do_get  # pyright: ignore[reportConstantRedefinition]
 
-    _ORIGINAL_API_DO_GET = mreg_cli.utilities.api._do_get  # pyright: ignore[reportConstantRedefinition]
+    # Ensure we use the original function
+    # (important if this function is called multiple times)
+    do_get = _ORIGINAL_API_DO_GET
 
     # Patch the mreg_cli.utilities.api._do_get function
     mreg_cli.utilities.api._do_get = cache.memoize(expire=config.get_cache_ttl(), tag="api")(
-        _ORIGINAL_API_DO_GET
+        do_get
     )
 
 
