@@ -1,16 +1,49 @@
 from __future__ import annotations
 
-from unittest.mock import patch
+from collections.abc import Iterator
+from unittest.mock import MagicMock, patch
 
 import diskcache
+import pytest
 from inline_snapshot import snapshot
 
-from mreg_cli.cache import CacheLike, NullCache, create_cache, get_cache_info
+import mreg_cli.cache
+from mreg_cli.cache import (
+    CacheLike,
+    NullCache,
+    _create_cache,
+    configure,
+    get_cache,
+    get_cache_info,
+)
+from mreg_cli.config import MregCliConfig
 
 
-def test_mreg_cli_cache_is_diskcache_cache() -> None:
+@pytest.fixture()
+def mock_cache_config() -> MregCliConfig:
+    """Create a mock MregCliConfig for testing."""
+    c = MagicMock(spec=MregCliConfig)
+    c.get_cache_enabled.return_value = True
+    c.get_cache_ttl.return_value = 300
+    return c
+
+
+@pytest.fixture(autouse=True)
+def configure_cache(mock_cache_config: MregCliConfig) -> Iterator[None]:
+    """Configure the global cache for testing."""
+    try:
+        configure(mock_cache_config)
+        yield
+    finally:
+        # Clear the cache and delete the global cache object
+        cache = get_cache()
+        cache.clear()
+        mreg_cli.cache._CACHE = None
+
+
+def test_mreg_cli_cache_is_diskcache_cache(mock_cache_config: MregCliConfig) -> None:
     """Ensure that create_cache returns a diskcache.Cache object."""
-    c = create_cache()
+    c = _create_cache(mock_cache_config)
     assert isinstance(c, diskcache.Cache)
 
 
@@ -21,13 +54,13 @@ def test_diskcache_cache_is_cachelike() -> None:
     assert isinstance(c, CacheLike)
 
 
-def test_diskcache_cache_init_error() -> None:
+def test_diskcache_cache_init_error(mock_cache_config: MregCliConfig) -> None:
     """Test that a diskcache.Cache() init error returns a NullCache."""
     with patch("mreg_cli.cache.Cache") as mock_cache:
         # Make Cache() raise an exception during initialization
         mock_cache.side_effect = Exception("Disk cache initialization failed")
         # Verify that the result is an instance of NullCache
-        result = create_cache()
+        result = _create_cache(mock_cache_config)
         assert isinstance(result, NullCache)
 
 
@@ -58,10 +91,22 @@ def test_nullcache_methods() -> None:
     assert cache.volume() == 0
 
 
+def test_get_cache_not_configured(mock_cache_config: MagicMock) -> None:
+    """Test that get_cache() returns a NullCache when caching is disabled."""
+    # Reset global cache and disable caching in config
+    mock_cache_config.get_cache_enabled.return_value = False
+    mreg_cli.cache._CACHE = None
+
+    configure(mock_cache_config)
+    cache = get_cache()
+    assert isinstance(cache, NullCache)
+
+
 def test_get_cache_info_noarg() -> None:
     """Test that get_cache_info() returns the expected CacheInfo given no arguments."""
     # Clear cache first
-    from mreg_cli.cache import cache
+
+    cache = get_cache()
 
     cache.clear()
 

@@ -5,9 +5,10 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.cache import cache, get_cache_info
+from mreg_cli.cache import get_cache, get_cache_info
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
+from mreg_cli.config import MregCliConfig
 from mreg_cli.outputmanager import OutputManager
 
 command_registry = CommandRegistry()
@@ -27,6 +28,7 @@ class CacheCommands(BaseCommand):
 def cache_clear(_: argparse.Namespace) -> None:
     """Clear the cache."""
     try:
+        cache = get_cache()
         b = cache.clear()
     except Exception as e:
         OutputManager().add_error(f"Failed to clear cache: {e}")
@@ -39,6 +41,11 @@ def cache_clear(_: argparse.Namespace) -> None:
 )
 def cache_info(_: argparse.Namespace) -> None:
     """Show cache information."""
+    conf = MregCliConfig()
+    if not conf.get_cache_enabled():
+        OutputManager().add_line("Caching is disabled.")
+        return
+
     try:
         info = get_cache_info()
         OutputManager().add_formatted_table(*info.as_table_args())

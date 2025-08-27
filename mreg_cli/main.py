@@ -10,6 +10,7 @@ import logging
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
 import mreg_cli.utilities.api as api
+from mreg_cli import cache
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, source
 from mreg_cli.config import MregCliConfig
@@ -154,6 +155,9 @@ def main():
     elif config.get("url") is None:
         print("mreg url not set in config or as argument")
         return
+
+    # Configure application
+    cache.configure(config)
 
     try:
         try_token_or_login(

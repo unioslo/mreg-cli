@@ -6,11 +6,20 @@ from typing import Any, Callable, Literal, ParamSpec, Protocol, Self, TypeVar, r
 from diskcache import Cache
 from pydantic import BaseModel, ByteSize, field_serializer
 
+from mreg_cli.config import MregCliConfig
+
 logger = logging.getLogger(__name__)
 
 
 P = ParamSpec("P")
 T = TypeVar("T")
+
+_CACHE: CacheLike | None = None
+"""The global cache object. Instantiated by `configure()`."""
+
+
+_ORIGINAL_API_DO_GET: Callable[..., Any] | None = None
+"""Holds the original `mreg_cli.utilities.api._do_get` function before it is memoized."""
 
 
 @runtime_checkable
@@ -120,6 +129,7 @@ class CacheInfo(BaseModel):
     size: ByteSize
     hits: int
     misses: int
+    ttl: int
     directory: str
 
     @field_serializer("size")
@@ -129,36 +139,42 @@ class CacheInfo(BaseModel):
     def as_table_args(self) -> tuple[list[str], list[str], list[Self]]:
         """Get a tuple of string arguments for table display."""
         return (
-            ["Items", "Hits", "Misses", "Size", "Directory"],
-            ["items", "hits", "misses", "size", "directory"],
+            ["Items", "Hits", "Misses", "Size", "TTL", "Directory"],
+            ["items", "hits", "misses", "size", "ttl", "directory"],
             [self],
         )
 
 
-def get_cache_info(cache_: CacheLike | None = None) -> CacheInfo:
+def get_cache_info(cache: CacheLike | None = None) -> CacheInfo:
     """Get information about the cache.
 
     Defaults to using the global `cache` object if no argument is provided.
     """
-    if cache_ is None:
-        cache_ = cache
+    if cache is None:
+        cache = get_cache()
 
     hits, misses = cache.stats()
+    conf = MregCliConfig()
 
     return CacheInfo(
         size=cache.volume(),  # pyright: ignore[reportArgumentType] # validator converts type
-        hits=hits,  # pyright: ignore[reportArgumentType]
-        misses=misses,  # pyright: ignore[reportArgumentType]
-        items=len(cache),  # pyright: ignore[reportArgumentType]
+        hits=hits,
+        misses=misses,
+        items=len(cache),
         directory=cache.directory,
+        ttl=conf.get_cache_ttl(),
     )
 
 
-def create_cache() -> Cache:
+def _create_cache(config: MregCliConfig) -> CacheLike:
     """Create the global mreg-cli cache.
 
     Falls back to a no-op cache object if the diskcache cache cannot be created.
     """
+    if not config.get_cache_enabled():
+        logger.debug("Cache is disabled in configuration, using NullCache.")
+        return NullCache()
+
     try:
         return Cache()
     except Exception as e:
@@ -166,4 +182,38 @@ def create_cache() -> Cache:
         return NullCache()
 
 
-cache = create_cache()
+def configure(config: MregCliConfig) -> None:
+    """Configure the cache."""
+    global _CACHE
+    if _CACHE is not None:
+        return
+
+    _CACHE = _create_cache(config)  # pyright: ignore[reportConstantRedefinition]
+
+    if not config.get_cache_enabled():
+        logger.debug("Cache is disabled in configuration, not configuring cache.")
+        return
+    cache_api_get(_CACHE, config)
+
+
+def cache_api_get(cache: CacheLike, config: MregCliConfig) -> None:
+    """Memoize the mreg_cli.utilities.api._do_get function."""
+    import mreg_cli.utilities.api
+
+    global _ORIGINAL_API_DO_GET
+
+    _ORIGINAL_API_DO_GET = mreg_cli.utilities.api._do_get  # pyright: ignore[reportConstantRedefinition]
+
+    # Patch the mreg_cli.utilities.api._do_get function
+    mreg_cli.utilities.api._do_get = cache.memoize(expire=config.get_cache_ttl(), tag="api")(
+        _ORIGINAL_API_DO_GET
+    )
+
+
+def get_cache() -> CacheLike:
+    """Get the global mreg-cli cache."""
+    # return a temp cache if cache is not yet configured
+    if _CACHE is None:
+        logger.debug("Cache not yet configured, returning temporary NullCache.")
+        return NullCache()
+    return _CACHE

@@ -23,7 +23,7 @@ from requests import Response
 
 from mreg_cli.__about__ import __version__
 from mreg_cli.api.errors import parse_mreg_error
-from mreg_cli.cache import cache
+from mreg_cli.cache import get_cache
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
     APINotOk,
@@ -335,9 +335,27 @@ def get(path: str, params: QueryParams | None = ..., *, ok404: bool) -> Response
 def get(path: str, params: QueryParams | None = ...) -> Response: ...
 
 
-@cache.memoize(expire=300, tag="api")
 def get(path: str, params: QueryParams | None = None, ok404: bool = False) -> Response | None:
     """Make a standard get request."""
+    return _do_get(path, params, ok404)
+
+
+def _do_get(path: str, params: QueryParams | None = None, ok404: bool = False) -> Response | None:
+    """Perform a GET request.
+
+    Separated out from get(), so that we can patch this function with a memoized version
+    without affecting other modules that do `from mreg_cli.utilities.api import get`, as
+    they would then operate on the unpatched version instead of the modified one,
+    since their `get` symbol differs from the `get` symbol in this module
+    in a scenario where `get` itself is patched _after_ it is imported elsewhere.
+
+    The caching module can modify this function instead of `get`,
+    allowing other modules to be oblivious of the caching behavior, and freely
+    import `get` into their namespaces.
+
+    Yes... Patching sucks when you have other modules that import scoped symbols
+    into their own namespace.
+    """
     if params is None:
         params = {}
     return _request_wrapper("get", path, params=params, ok404=ok404)
@@ -604,6 +622,7 @@ def clear_cache(f: Callable[P, T]) -> Callable[P, T]:
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         result = f(*args, **kwargs)
         try:
+            cache = get_cache()
             cache.evict("api")
         except Exception as e:
             logger.error(f"Error clearing cache: {e}")
