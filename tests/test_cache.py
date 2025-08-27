@@ -115,7 +115,14 @@ def test_get_cache_info_noarg() -> None:
     info.directory = "mocked_directory"
 
     assert info.model_dump(mode="json") == snapshot(
-        {"items": 0, "size": "32.0KiB", "hits": 0, "misses": 0, "directory": "mocked_directory"}
+        {
+            "items": 0,
+            "size": "32.0KiB",
+            "hits": 0,
+            "misses": 0,
+            "ttl": 300,
+            "directory": "mocked_directory",
+        }
     )
 
 
@@ -126,5 +133,12 @@ def test_get_cache_info_diskcache_cache() -> None:
     # Mock directory
     info.directory = "mocked_directory"
     assert info.model_dump(mode="json") == snapshot(
-        {"items": 0, "size": "32.0KiB", "hits": 0, "misses": 0, "directory": "mocked_directory"}
+        {
+            "items": 0,
+            "size": "32.0KiB",
+            "hits": 0,
+            "misses": 0,
+            "ttl": 300,
+            "directory": "mocked_directory",
+        }
     )
