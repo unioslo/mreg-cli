@@ -72,6 +72,25 @@ LOGGING_FORMAT = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
 DEFAULT_PROMPT = "{user}@{host}"
 
 DEFAULT_HTTP_TIMEOUT = 20  # seconds
+DEFAULT_CACHE_TTL = 300  # seconds
+
+
+def is_bool_true(value: str | bool | None) -> bool:
+    """Check if a string value is has a 'truthy' value.
+
+    NOTE: 'truthy' in the sense that it is a valid YAML-like bool value.
+    """
+    v = str(value) if value else ""
+    return v.lower() in ["true", "1", "yes", "y"]
+
+
+def as_int(value: str | int | None, default: int, name: str = "value") -> int:
+    """Convert a string value to an integer, or return the default."""
+    try:
+        return int(value)  # pyright: ignore[reportArgumentType]
+    except (ValueError, TypeError):
+        logger.warning("Invalid %s value, using default %d seconds.", name, default)
+        return default
 
 
 class MregCliConfig:
@@ -138,7 +157,7 @@ class MregCliConfig:
 
         :param argparse.Namespace args: Command line arguments.
         """
-        conf = {k: v for k, v in vars(args).items() if v}
+        conf = {k: v for k, v in vars(args).items() if v not in [None, ""]}
         self._config_cmd.update(conf)
 
     def get_config(self, reload: bool = False) -> None:
@@ -228,6 +247,19 @@ class MregCliConfig:
         logger.debug("no config file found in config paths")
         return None
 
+    def get_cache_enabled(self) -> bool:
+        """Get the cache enabled status from the application."""
+        return is_bool_true(self.get("cache", "true"))
+
+    def set_cache_enabled(self, enabled: bool) -> None:
+        """Set the cache enabled status in the application."""
+        self._config_cmd["cache"] = "true" if enabled else "false"
+
+    def get_cache_ttl(self) -> int:
+        """Get the cache TTL (time-to-live) from the application."""
+        ttl = self.get("cache_ttl", DEFAULT_CACHE_TTL)
+        return as_int(ttl, DEFAULT_CACHE_TTL, "Cache TTL")
+
     def get_default_domain(self):
         """Get the default domain from the application."""
         return self.get("domain", "uio.no")
@@ -267,13 +299,7 @@ class MregCliConfig:
         :returns: HTTP timeout in seconds.
         """
         timeout = self.get("timeout", DEFAULT_HTTP_TIMEOUT)
-        try:
-            return int(timeout)
-        except ValueError:
-            logger.warning(
-                "Invalid timeout value, using default %d seconds.", DEFAULT_HTTP_TIMEOUT
-            )
-            return DEFAULT_HTTP_TIMEOUT
+        return as_int(timeout, DEFAULT_HTTP_TIMEOUT, "HTTP Timeout")
 
     def _calculate_column_width(self, data: dict[str, Any], min_width: int = 8) -> int:
         """Calculate the maximum column width, ensuring a minimum width.

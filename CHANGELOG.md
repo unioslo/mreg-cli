@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Configurable caching of API responses. Enabled by default.
+  - Enable/disable caching (default: `true`)
+    - Config file: `cache=true|false`
+    - CLI: `--no-cache` (flag)
+  - Configure cache time-to-live (TTL) in seconds (default: `300`)
+    - Config file: `cache_ttl=<seconds>`
+    - CLI: `--cache-ttl <seconds>`
+
+## [1.4.2](https://github.com/unioslo/mreg-cli/releases/tag/1.4.2) - 2025-08-15
+
+### Fixed
+
+- `host info` for hosts with A(AAA)-records that point to networks not managed by MREG.
+- `network community_host_add` raising a 404 error for hosts with IPs in networks not managed by MREG.
+
+## [1.4.1](https://github.com/unioslo/mreg-cli/releases/tag/1.4.1) - 2025-08-06
+
+### Changed
+
+- `ptr add -force` now allows adding PTR records for IPs that are not in a network managed by MREG.
+
+## [1.4.0](https://github.com/unioslo/mreg-cli/releases/tag/1.4.0) - 2025-06-20
+
+### Added
+
 - Configurable HTTP request timeout. The timeout can be set with the `--timeout` option or with the `timeout` option in the config file.
 
 ### Changed

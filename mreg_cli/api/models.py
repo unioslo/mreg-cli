@@ -24,6 +24,7 @@ from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import HostName, MacAddress, NameList
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.exceptions import (
+    APINotOk,
     CreateError,
     DeleteError,
     EntityAlreadyExists,
@@ -1616,6 +1617,39 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         return Endpoint.Networks
 
     @classmethod
+    def dummy_network_from_ip(cls, ip: IPAddress) -> Self:
+        """Create a Network object for an unknown network given an IP.
+
+        NOTE: Does not perform any API calls. This is purely to work around
+        the fact that MREG supports creating IP addresses for networks that
+        are not registered in MREG.
+        """
+        if ip.is_ipv4():
+            network_addr = "0.0.0.0/24"
+            description = "Unknown IPv4 network"
+        else:
+            network_addr = "::/64"
+            description = "Unknown IPv6 network"
+
+        return cls(
+            id=0,
+            excluded_ranges=[],
+            network=network_addr,
+            description=description,
+            vlan=None,
+            dns_delegated=False,
+            category="",
+            location="",
+            frozen=False,
+            reserved=0,
+            policy=None,
+            communities=[],
+            # epoch time
+            created_at=datetime.fromtimestamp(0),
+            updated_at=datetime.fromtimestamp(0),
+        )
+
+    @classmethod
     def get_by_any_means(cls, identifier: str) -> Self | None:
         """Get a network by the given identifier.
 
@@ -2412,14 +2446,18 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         """Return True if the IP address is IPv6."""
         return self.ipaddress.version == 6
 
-    def network(self) -> Network:
+    def network(self) -> Network | None:
         """Return the network of the IP address."""
-        data = get(Endpoint.NetworksByIP.with_id(str(self.ipaddress)))
-        return Network.model_validate(data.json())
+        try:
+            return get_typed(Endpoint.NetworksByIP.with_id(str(self.ipaddress)), Network)
+        except APINotOk:
+            return None
 
     def vlan(self) -> int | None:
         """Return the VLAN of the IP address."""
-        return self.network().vlan
+        if net := self.network():
+            return net.vlan
+        return None
 
     def associate_mac(self, mac: MacAddress, force: bool = False) -> IPAddress:
         """Associate a MAC address with the IP address.
@@ -3394,14 +3432,32 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         ipv6s = self.ipv6_addresses()
 
         if len(ipv4s) == 1 and len(ipv6s) == 1:
-            vlan4 = ipv4s[0].network().vlan
-            vlan6 = ipv6s[0].network().vlan
+            ipv4_address = ipv4s[0]
+            ipv6_address = ipv6s[0]
+            ipv4_network = ipv4_address.network()
+            ipv6_network = ipv6_address.network()
 
-            if vlan4 == vlan6:
-                return ipv4s[0]
+            if ipv4_network and ipv6_network:
+                if ipv4_network.vlan == ipv6_network.vlan:
+                    return ipv4_address
+            elif ipv4_network:  # only IPv4 is in mreg
+                logger.warning(
+                    "Host '%s' has IPv6 address not in MREG: %s",
+                    self.name,
+                    str(ipv6_address.ipaddress),
+                )
+                return ipv4_address
+            elif ipv6_network:  # only IPv6 is in mreg
+                logger.warning(
+                    "Host '%s' has IPv4 address not in MREG: %s",
+                    self.name,
+                    str(ipv4_address.ipaddress),
+                )
+                return ipv6_address
 
+        ips = ", ".join(str(ip.ipaddress) for ip in self.ipaddresses)
         raise EntityOwnershipMismatch(
-            f"Host {self} has multiple IPs, cannot determine which one to use."
+            f"Host {self} has multiple IPs, cannot determine which one to use: {ips}."
         )
 
     def has_ptr_override(self, arg_ip: IP_AddressT) -> bool:
@@ -3554,12 +3610,18 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     def networks(self) -> dict[Network, list[IPAddress]]:
         """Return a dict of unique networks and a list of associated IP addresses for the host.
 
+        Does not return networks that are not registered in MREG.
+
         :returns: A dictionary of networks and the associated IP addresses.
         """
         ret_dict: dict[Network, list[IPAddress]] = {}
 
         for ip in self.ipaddresses:
             network = ip.network()
+            if not network:
+                # If network is not in MREG, we create a placeholder network
+                network = Network.dummy_network_from_ip(ip)
+
             if network not in ret_dict:
                 ret_dict[network] = []
 
