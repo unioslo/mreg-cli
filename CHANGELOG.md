@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Added
+
+- Configurable caching of API responses. Enabled by default.
+  - Enable/disable caching (default: `true`)
+    - Config file: `cache=true|false`
+    - CLI: `--no-cache` (flag)
+  - Configure cache time-to-live (TTL) in seconds (default: `300`)
+    - Config file: `cache_ttl=<seconds>`
+    - CLI: `--cache-ttl <seconds>`
 
 ## [1.4.2](https://github.com/unioslo/mreg-cli/releases/tag/1.4.2) - 2025-08-15
 

@@ -10,6 +10,7 @@ import logging
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 
 import mreg_cli.utilities.api as api
+from mreg_cli import cache
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, source
 from mreg_cli.config import MregCliConfig
@@ -68,12 +69,25 @@ def main():
         help="default %(metavar)s (default: %(default)s)",
         metavar="DOMAIN",
     )
-
     mreg_args.add_argument(
         "-p",
         "--prompt",
         help="default %(metavar)s), defaults to the server name if not set.",
         metavar="PROMPT",
+    )
+    mreg_args.add_argument(
+        "--no-cache",
+        dest="cache",
+        help="Disable caching of API responses.",
+        action="store_false",  # NOTE: inverted flag
+        default=True,
+    )
+    mreg_args.add_argument(
+        "--cache-ttl",
+        dest="cache_ttl",
+        help="Maximum time to live for cache entries in seconds.",
+        type=int,
+        default=300,
     )
 
     output_args = parser.add_argument_group("output settings")
@@ -154,6 +168,9 @@ def main():
     elif config.get("url") is None:
         print("mreg url not set in config or as argument")
         return
+
+    # Configure application
+    cache.configure(config)
 
     try:
         try_token_or_login(
