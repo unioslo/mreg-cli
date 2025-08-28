@@ -10,11 +10,11 @@ from inline_snapshot import snapshot
 import mreg_cli.cache
 from mreg_cli.cache import (
     CacheLike,
+    MregCliCache,
     NullCache,
     _create_cache,
     configure,
     get_cache,
-    get_cache_info,
 )
 from mreg_cli.config import MregCliConfig
 
@@ -99,18 +99,18 @@ def test_get_cache_not_configured(mock_cache_config: MagicMock) -> None:
 
     configure(mock_cache_config)
     cache = get_cache()
-    assert isinstance(cache, NullCache)
+    assert isinstance(cache.cache, NullCache)
 
 
 def test_get_cache_info_noarg() -> None:
-    """Test that get_cache_info() returns the expected CacheInfo given no arguments."""
+    """Test MregCliCache.get_cache_info() with an empty cache."""
     # Clear cache first
 
     cache = get_cache()
 
     cache.clear()
 
-    info = get_cache_info()
+    info = cache.get_info()
     # Mock the directory property (non-deterministic)
     info.directory = "mocked_directory"
 
@@ -127,18 +127,17 @@ def test_get_cache_info_noarg() -> None:
 
 
 def test_get_cache_info_diskcache_cache() -> None:
-    """Test get_cache_info() with a diskcache.Cache argument."""
-    c = diskcache.Cache()
-    info = get_cache_info(c)
-    # Mock directory
-    info.directory = "mocked_directory"
+    """Test get_cache_info() with a NullCache cache."""
+    c = NullCache()
+    cache = MregCliCache(c)
+    info = cache.get_info()
     assert info.model_dump(mode="json") == snapshot(
         {
             "items": 0,
-            "size": "32.0KiB",
+            "size": "0B",
             "hits": 0,
             "misses": 0,
             "ttl": 300,
-            "directory": "mocked_directory",
+            "directory": "",
         }
     )

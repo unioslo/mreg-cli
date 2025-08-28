@@ -250,6 +250,10 @@ class MregCliConfig:
         """Get the cache enabled status from the application."""
         return is_bool_true(self.get("cache", "true"))
 
+    def set_cache_enabled(self, enabled: bool) -> None:
+        """Set the cache enabled status in the application."""
+        self._config_cmd["cache"] = "true" if enabled else "false"
+
     def get_cache_ttl(self) -> int:
         """Get the cache TTL (time-to-live) from the application."""
         ttl = self.get("cache_ttl", DEFAULT_CACHE_TTL)

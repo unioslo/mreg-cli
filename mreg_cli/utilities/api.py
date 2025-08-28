@@ -623,7 +623,7 @@ def clear_cache(f: Callable[P, T]) -> Callable[P, T]:
         result = f(*args, **kwargs)
         try:
             cache = get_cache()
-            cache.evict("api")
+            cache.cache.evict("api")  # does not reset stats
         except Exception as e:
             logger.error(f"Error clearing cache: {e}")
         return result

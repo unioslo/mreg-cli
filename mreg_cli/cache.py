@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
+from types import ModuleType
 from typing import Any, Callable, Literal, ParamSpec, Protocol, Self, TypeVar, runtime_checkable
 
 from diskcache import Cache
@@ -14,12 +16,8 @@ logger = logging.getLogger(__name__)
 P = ParamSpec("P")
 T = TypeVar("T")
 
-_CACHE: CacheLike | None = None
+_CACHE: MregCliCache | None = None
 """The global cache object. Instantiated by `configure()`."""
-
-
-_ORIGINAL_API_DO_GET: Callable[..., Any] | None = None
-"""Holds the original `mreg_cli.utilities.api._do_get` function before it is memoized."""
 
 
 @runtime_checkable
@@ -145,27 +143,6 @@ class CacheInfo(BaseModel):
         )
 
 
-def get_cache_info(cache: CacheLike | None = None) -> CacheInfo:
-    """Get information about the cache.
-
-    Defaults to using the global `cache` object if no argument is provided.
-    """
-    if cache is None:
-        cache = get_cache()
-
-    hits, misses = cache.stats()
-    conf = MregCliConfig()
-
-    return CacheInfo(
-        size=cache.volume(),  # pyright: ignore[reportArgumentType] # validator converts type
-        hits=hits,
-        misses=misses,
-        items=len(cache),
-        directory=cache.directory,
-        ttl=conf.get_cache_ttl(),
-    )
-
-
 def _create_cache(config: MregCliConfig) -> CacheLike:
     """Create the global mreg-cli cache.
 
@@ -188,36 +165,154 @@ def configure(config: MregCliConfig) -> None:
     if _CACHE is not None:
         return
 
-    _CACHE = _create_cache(config)  # pyright: ignore[reportConstantRedefinition]
+    cache = _create_cache(config)
+    _CACHE = MregCliCache(cache)  # pyright: ignore[reportConstantRedefinition]
 
     if not config.get_cache_enabled():
         logger.debug("Cache is disabled in configuration, not configuring cache.")
         return
-    cache_api_get(_CACHE, config)
+
+    # Enable cache and patch functions
+    _CACHE.enable()
 
 
-def cache_api_get(cache: CacheLike, config: MregCliConfig) -> None:
-    """Memoize the mreg_cli.utilities.api._do_get function."""
-    import mreg_cli.utilities.api
-
-    global _ORIGINAL_API_DO_GET
-    if _ORIGINAL_API_DO_GET is None:
-        _ORIGINAL_API_DO_GET = mreg_cli.utilities.api._do_get  # pyright: ignore[reportConstantRedefinition]
-
-    # Ensure we use the original function
-    # (important if this function is called multiple times)
-    do_get = _ORIGINAL_API_DO_GET
-
-    # Patch the mreg_cli.utilities.api._do_get function
-    mreg_cli.utilities.api._do_get = cache.memoize(expire=config.get_cache_ttl(), tag="api")(
-        do_get
-    )
-
-
-def get_cache() -> CacheLike:
+def get_cache() -> MregCliCache:
     """Get the global mreg-cli cache."""
     # return a temp cache if cache is not yet configured
     if _CACHE is None:
         logger.debug("Cache not yet configured, returning temporary NullCache.")
-        return NullCache()
+        return MregCliCache(NullCache())
     return _CACHE
+
+
+@dataclass
+class MemoizedFunction:
+    """A function to be memoized."""
+
+    func: str  # full module path (i.e. `mreg_cli.foo.bar.do_expensive_thing`)
+    tag: str  # the tag to give the cached result
+
+
+@dataclass
+class StoredFunction:
+    """A function that has been stored in the cache."""
+
+    module: ModuleType
+    func: Callable[..., Any]
+
+
+TO_MEMOIZE = [
+    MemoizedFunction(func="mreg_cli.utilities.api._do_get", tag="api"),
+]
+"""List functions to memoize with a caching decorator (if enabled)."""
+
+
+class MregCliCache:
+    """Wrapper around the mreg-cli cache."""
+
+    def __init__(self, cache: CacheLike):
+        self.cache = cache
+
+        self._original: dict[str, StoredFunction] = {}
+        """Original functions, before they were patched. Keys are the full module paths + symbol names."""
+
+    def get_info(self) -> CacheInfo:
+        """Get information about the cache."""
+        hits, misses = self.cache.stats()
+        conf = MregCliConfig()
+
+        return CacheInfo(
+            size=self.cache.volume(),  # pyright: ignore[reportArgumentType] # validator converts type
+            hits=hits,
+            misses=misses,
+            items=len(self.cache),
+            directory=self.cache.directory,
+            ttl=conf.get_cache_ttl(),
+        )
+
+    def _patch_functions(self) -> None:
+        for func in TO_MEMOIZE:
+            self.memoize_function(func)
+
+    def _unpatch_functions(self) -> None:
+        for mod_path in self._original.keys():
+            self.restore_original_function(mod_path)
+
+    def enable(self) -> None:
+        """Enable caching by patching functions with memoized versions."""
+        self._patch_functions()
+        logger.info("Cache enabled")
+
+    def disable(self) -> None:
+        """Disable caching by restoring patched functions and clearing the cache."""
+        self._unpatch_functions()
+        self.clear()
+        logger.info("Cache disabled")
+
+    def clear(self) -> None:
+        """Clear the cache and reset statistics."""
+        self.cache.clear()
+        self.cache.stats(reset=True)
+
+    def load_module_and_function(
+        self, func: MemoizedFunction
+    ) -> tuple[ModuleType, Callable[..., Any]]:
+        """Load the module and function from a MemoizedFunction."""
+        try:
+            module, func_name = func.func.rsplit(".", 1)
+            mod = __import__(module, fromlist=[func_name])
+            return mod, getattr(mod, func_name)
+        except Exception as e:
+            logger.exception("Failed to load module and function: %s", e)
+            raise e
+
+    def save_original_function(
+        self, module_path: str, module: ModuleType, func: Callable[..., Any]
+    ) -> None:
+        """Save the original function before it is patched."""
+        self._original[module_path] = StoredFunction(module=module, func=func)
+
+    def load_original_function(self, module_path: str) -> StoredFunction | None:
+        """Load the original function from its pre-patch state."""
+        return self._original.get(module_path)
+
+    def restore_original_function(self, module_path: str) -> None:
+        """Restore an function to its pre-patch state."""
+        if original := self.load_original_function(module_path):
+            # Set the function back to its original state
+            try:
+                self._do_patch(original.module, original.func)
+            except Exception as e:
+                logger.exception("Failed to restore original function: %s", e)
+
+    def patch_function(self, module: ModuleType, func: Callable[..., Any]) -> None:
+        """Patch a function in a module."""
+        try:
+            self._do_patch(module, func)
+        except Exception as e:
+            logger.exception("Failed to patch function: %s", e)
+
+    def _do_patch(self, module: ModuleType, func: Callable[..., Any]) -> None:
+        """Patch a function in a module."""
+        setattr(module, func.__name__, func)
+
+    def memoize_function(self, memfunc: MemoizedFunction) -> None:
+        """Memoize a given function."""
+        from mreg_cli.config import MregCliConfig
+
+        config = MregCliConfig()
+
+        mod_path = memfunc.func
+        mod, func = self.load_module_and_function(memfunc)
+
+        original = self.load_original_function(mod_path)
+        if original is not None:
+            # Restore function to its original state before patching
+            self.restore_original_function(mod_path)
+
+        # Store a copy of the original function before patching
+        self.save_original_function(mod_path, mod, func)
+
+        self.patch_function(
+            mod, self.cache.memoize(expire=config.get_cache_ttl(), tag=memfunc.tag)(func)
+        )
