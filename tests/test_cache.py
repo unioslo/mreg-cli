@@ -103,12 +103,13 @@ def test_get_cache_not_configured(mock_cache_config: MagicMock) -> None:
 
 
 def test_get_cache_info_noarg() -> None:
-    """Test MregCliCache.get_cache_info() with an empty cache."""
+    """Test MregCliCache.get_cache_info() with the default cache."""
     # Clear cache first
 
     cache = get_cache()
 
     cache.clear()
+    assert isinstance(cache.cache, diskcache.Cache)
 
     info = cache.get_info()
     # Mock the directory property (non-deterministic)
@@ -126,7 +127,7 @@ def test_get_cache_info_noarg() -> None:
     )
 
 
-def test_get_cache_info_diskcache_cache() -> None:
+def test_get_cache_info_nullcache() -> None:
     """Test get_cache_info() with a NullCache cache."""
     c = NullCache()
     cache = MregCliCache(c)
