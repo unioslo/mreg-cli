@@ -156,7 +156,7 @@ class MregCliConfig:
 
         :param argparse.Namespace args: Command line arguments.
         """
-        conf = {k: v for k, v in vars(args).items() if v}
+        conf = {k: v for k, v in vars(args).items() if v not in [None, ""]}
         self._config_cmd.update(conf)
 
     def get_config(self, reload: bool = False) -> None:
