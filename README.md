@@ -158,6 +158,24 @@ The timeout for HTTP requests to the MREG server. The default is 20 seconds.
 timeout=20
 ```
 
+### Cache
+
+Enable/disable caching of API results. Cache is always cleared on every write request (POST, PUT, PATCH, DELETE).
+
+```ini
+[mreg]
+cache=true
+```
+
+### Cache TTL
+
+Time-to-live for cached API results, in seconds. Defaults to 300 seconds (5 minutes).
+
+```ini
+[mreg]
+cache_ttl=300
+```
+
 ### Category tags
 
 List of valid category tags for networks. Used by `network create`.
