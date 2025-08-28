@@ -10,8 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Configurable caching of API responses. Enabled by default.
-  - `cache` option to enable/disable caching.
-  - `cache_ttl` option to configure the cache time-to-live (TTL) in seconds.
+  - Enable/disable caching (default: `true`)
+    - Config file: `cache=true|false`
+    - CLI: `--no-cache` (flag)
+  - Configure cache time-to-live (TTL) in seconds (default: `300`)
+    - Config file: `cache_ttl=<seconds>`
+    - CLI: `--cache-ttl <seconds>`
 
 ## [1.4.2](https://github.com/unioslo/mreg-cli/releases/tag/1.4.2) - 2025-08-15
 

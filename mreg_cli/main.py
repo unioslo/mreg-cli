@@ -69,12 +69,25 @@ def main():
         help="default %(metavar)s (default: %(default)s)",
         metavar="DOMAIN",
     )
-
     mreg_args.add_argument(
         "-p",
         "--prompt",
         help="default %(metavar)s), defaults to the server name if not set.",
         metavar="PROMPT",
+    )
+    mreg_args.add_argument(
+        "--no-cache",
+        dest="cache",
+        help="Disable caching of API responses.",
+        action="store_false",  # NOTE: inverted flag
+        default=True,
+    )
+    mreg_args.add_argument(
+        "--cache-ttl",
+        dest="cache_ttl",
+        help="Maximum time to live for cache entries in seconds.",
+        type=int,
+        default=300,
     )
 
     output_args = parser.add_argument_group("output settings")

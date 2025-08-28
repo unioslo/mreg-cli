@@ -75,11 +75,12 @@ DEFAULT_HTTP_TIMEOUT = 20  # seconds
 DEFAULT_CACHE_TTL = 300  # seconds
 
 
-def is_bool_true(value: str | None) -> bool:
+def is_bool_true(value: str | bool | None) -> bool:
     """Check if a string value is has a 'truthy' value.
 
-    NOTE: 'truthy' in the sense that it is a valid YAML-like bool value."""
-    v = value or ""
+    NOTE: 'truthy' in the sense that it is a valid YAML-like bool value.
+    """
+    v = str(value) if value else ""
     return v.lower() in ["true", "1", "yes", "y"]
 
 
