@@ -27,9 +27,9 @@ def fmt_error_code(code: str) -> str:
 #
 # 1. Inline imports of `utilities.api.get`, `utilities.api.post`, etc. in
 #    model methods in `api.abstracts`
-# 2. Moving `FrozenModel` to a separate module, free of other imports,
+# 2. Move `FrozenModel` to a separate module, free of other imports,
 #    where it can be imported from anywhere.
-# 3. Accepting that this is an internal model where it's fine that it's not immutable,
+# 3. Accept that this is an internal model where it's fine that it's not immutable,
 #    and just use `BaseModel` as the base class.
 #
 # We choose option 3 for now, as it's the least invasive approach.

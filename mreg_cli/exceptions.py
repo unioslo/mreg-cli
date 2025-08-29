@@ -202,7 +202,7 @@ class APINotOk(CliWarning):
         """Initialize an APINotOk warning.
 
         :param message: The warning message.
-        :param response: The response object that triggered the warning.
+        :param response: The response object that triggered the exception.
         """
         super().__init__(message)
         self.response = response
