@@ -4,9 +4,20 @@ from __future__ import annotations
 
 import ipaddress
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import cached_property
-from typing import Any, Callable, ClassVar, Iterable, Literal, Self, cast, overload
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Iterable,
+    Literal,
+    Protocol,
+    Self,
+    TypeVar,
+    cast,
+    overload,
+)
 
 from pydantic import (
     AliasChoices,
@@ -59,6 +70,8 @@ from mreg_cli.utilities.shared import convert_wildcard_to_regex
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 IPNetMode = Literal["ipv4", "ipv6", "ip", "network", "networkv4", "networkv6"]
 
@@ -4309,6 +4322,29 @@ class UserPermission(BaseModel):
         )
 
 
+FetchT_co = TypeVar("FetchT_co", covariant=True)
+
+
+class Fetchable(Protocol[FetchT_co]):
+    """Interface for classes that implement a `fetch()` method.
+
+    This protocol is designed for endpoints that don't operate on resource IDs,
+    unlike standard APIMixin classes which implement `get()` with an ID parameter.
+
+    The `fetch()` method sends a GET request to the class's endpoint without
+    requiring an ID, typically for singleton resources, status endpoints, or
+    metadata endpoints that return a single object or status response rather
+    than a collection.
+
+    Since the response structure and object construction vary by endpoint type,
+    there is no general `fetch()` implementation provided by APIMixin. Each
+    implementing class must define its own `fetch()` method to handle the
+    specific response format and construct the appropriate object.
+    """
+
+    def fetch(self, *, ignore_errors: bool = True) -> FetchT_co: ...  # noqa: D102
+
+
 class ServerVersion(BaseModel):
     """Model for server version metadata."""
 
@@ -4320,7 +4356,7 @@ class ServerVersion(BaseModel):
         return Endpoint.MetaVersion
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True) -> ServerVersion:
+    def fetch(cls, *, ignore_errors: bool = True) -> ServerVersion:
         """Fetch the server version from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.
@@ -4360,7 +4396,7 @@ class ServerLibraries(BaseModel):
         return Endpoint.MetaLibraries
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True) -> ServerLibraries:
+    def fetch(cls, *, ignore_errors: bool = True) -> ServerLibraries:
         """Fetch the server libraries from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.
@@ -4418,7 +4454,7 @@ class UserInfo(BaseModel):
         return Endpoint.MetaUser
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True, user: str | None = None) -> UserInfo:
+    def fetch(cls, *, ignore_errors: bool = True, user: str | None = None) -> UserInfo:
         """Fetch the user information from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.
@@ -4491,3 +4527,93 @@ class UserInfo(BaseModel):
             outputmanager.add_line(f"  {group}")
 
         UserPermission.output_multiple(self.permissions)
+
+
+class LDAPHealth(BaseModel, APIMixin):
+    """Model for LDAP health endpoint."""
+
+    status: str
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.HealthLDAP
+
+    @classmethod
+    def fetch(cls, *, ignore_errors: bool = True) -> Self:
+        """Fetch the LDAP status from the endpoint.
+
+        :param ignore_errors: Ignore non-503 errors. 503 means LDAP is down,
+            and should not be treated as an error in the traditional sense.
+        :raises requests.APINotOk: If the response code is not 200 or 503.
+        :returns: An instance of LDAPStatus.
+        """
+        try:
+            get(cls.endpoint())
+            return cls(status="OK")
+        except APINotOk as e:
+            if ignore_errors:
+                logger.error("Failed to fetch LDAP health: %s", e)
+                if e.response.status_code == 503:
+                    return cls(status="Down")
+                else:
+                    return cls(status="Unknown")
+            raise e
+
+
+class HeartbeatHealth(BaseModel, APIMixin):
+    """Model for heartbeat health endpoint."""
+
+    uptime: int
+    start_time: int
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.HealthHeartbeat
+
+    def as_str(self) -> str:
+        """Return the uptime as a string."""
+        # If we got a negative datetime, we weren't able to fetch the heartbeat
+        return str(timedelta(seconds=self.uptime)) if self.uptime > 0 else "Unknown"
+
+    @classmethod
+    def fetch(cls, *, ignore_errors: bool = True) -> Self:
+        """Fetch the heartbeat status from the endpoint.
+
+        :param ignore_errors: Ignore HTTP errors and return dummy object with negative uptime.
+        :returns: An instance of HeartbeatHealth with the fetched data.
+        """
+        try:
+            result = get(cls.endpoint())
+            return cls.model_validate_json(result.text)
+        except Exception as e:
+            if ignore_errors:
+                logger.error("Failed to fetch heartbeat: %s", e)
+                return cls(uptime=-1, start_time=0)
+            raise e
+
+
+class HealthInfo(BaseModel):
+    """Combined information from all health endpoints."""
+
+    heartbeat: HeartbeatHealth
+    ldap: LDAPHealth
+
+    @classmethod
+    def fetch(cls) -> HealthInfo:
+        """Fetch the health information from the endpoint.
+
+        :returns: An instance of HealthInfo with the fetched data.
+        """
+        return cls(
+            heartbeat=HeartbeatHealth.fetch(),
+            ldap=LDAPHealth.fetch(),
+        )
+
+    def output(self) -> None:
+        """Output the health information to the console."""
+        manager = OutputManager()
+        manager.add_line("Health Information:")
+        manager.add_line(f"  Uptime: {self.heartbeat.as_str()}")
+        manager.add_line(f"  LDAP: {self.ldap.status}")

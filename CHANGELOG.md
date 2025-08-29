@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `help health` command for checking the health of the server. The command will display "Unknown" for fields that are not implemented on the server.
 - Configurable caching of API responses. Enabled by default.
   - Enable/disable caching (default: `true`)
     - Config file: `cache=true|false`

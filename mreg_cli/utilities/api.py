@@ -221,7 +221,7 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
         else:
             res_text = result.text
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}\n{res_text}'
-        raise APINotOk(message)
+        raise APINotOk(message, result)
 
 
 def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
