@@ -399,7 +399,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    naptrs = host.naptrs()
+    naptrs = host.naptrs
 
     to_delete: list[NAPTR] = []
 
@@ -440,7 +440,7 @@ def naptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    NAPTR.output_multiple(Host.get_by_any_means_or_raise(args.name).naptrs())
+    NAPTR.output_multiple(Host.get_by_any_means_or_raise(args.name).naptrs)
 
 
 @command_registry.register_command(
@@ -534,15 +534,14 @@ def ptr_add(args: argparse.Namespace) -> None:
     if existing_ptrs:
         raise EntityAlreadyExists(f"{ip} already exists in a PTR record.")
 
-    if host.zone is None and not args.force:
-        raise ForceMissing(f"{host} isn't in a zone controlled by MREG, must force")
-
     network = Network.get_by_ip(ip)
-    if not network:
-        raise EntityNotFound(f"{ip} isn't in a network controlled by MREG")
-
-    if network.is_reserved_ip(ip) and not args.force:
-        raise ForceMissing("Address is reserved. Requires force")
+    if not args.force:
+        if host.zone is None:
+            raise ForceMissing(f"{host} isn't in a zone controlled by MREG, must force")
+        elif not network:
+            raise ForceMissing(f"{ip} isn't in a network controlled by MREG, must force")
+        elif network and network.is_reserved_ip(ip):
+            raise ForceMissing(f"{ip} is reserved, must force")
 
     PTR_override.create({"host": host.id, "ipaddress": str(ip)})
     OutputManager().add_ok(f"Added PTR record {ip} to {host.name}.")
@@ -768,7 +767,7 @@ def sshfp_remove(args: argparse.Namespace) -> None:
             SSHFP.get_by_query_unique_or_raise({"fingerprint": args.fingerprint, "host": host.id})
         ]
     else:
-        sshfps = host.sshfps()
+        sshfps = host.sshfps
 
     if not sshfps:
         raise EntityNotFound(f"No matching SSHFP records for {host}")
@@ -795,7 +794,7 @@ def sshfp_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    sshfps = host.sshfps()
+    sshfps = host.sshfps
 
     if not sshfps:
         raise EntityNotFound(f"No SSHFP records for {host}")

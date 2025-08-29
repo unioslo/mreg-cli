@@ -141,13 +141,13 @@ def add(args: argparse.Namespace) -> None:
             try:
                 network = Network.get_by_ip(ipaddr)
                 if network:
-                    if ipaddr == network.network_address:
+                    if ipaddr == network.network_address and not force:
                         raise InvalidIPAddress(
-                            f"IP {ipaddr} is a network address, not a host address"
+                            f"IP {ipaddr} is a network address, not a host address, must force"
                         )
-                    elif ipaddr == network.broadcast_address:
+                    elif ipaddr == network.broadcast_address and not force:
                         raise InvalidIPAddress(
-                            f"IP {ipaddr} is a broadcast address, not a host address"
+                            f"IP {ipaddr} is a broadcast address, not a host address, must force"
                         )
             except (EntityNotFound, APINotOk) as e:
                 if not force:
@@ -295,11 +295,10 @@ def remove(args: argparse.Namespace) -> None:
         elif not same_vlan and not forced(Override.IPADDRESS):
             overrides_required.add(Override.IPADDRESS)
             warnings.append("  {} ipaddresses on distinct VLANs".format(len(host.ipaddresses)))
-            for vlan in host_vlans:
-                vlan = host_vlans[vlan]
-                ip_strings = [str(ip.ipaddress) for ip in vlan]
+            for vlan_id, vlans in host_vlans.items():
+                ip_strings = [str(ip.ipaddress) for ip in vlans]
                 ip_strings.sort()
-                warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan})")
+                warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan_id})")
 
     if host.mxs and not forced(Override.MX):
         overrides_required.add(Override.MX)
@@ -309,7 +308,7 @@ def remove(args: argparse.Namespace) -> None:
 
     # Require force if host has any NAPTR records. Delete the NAPTR records if
     # force
-    naptrs = host.naptrs()
+    naptrs = host.naptrs
     if len(naptrs) > 0:
         if not forced(Override.NAPTR):
             overrides_required.add(Override.NAPTR)
@@ -326,7 +325,7 @@ def remove(args: argparse.Namespace) -> None:
                 )
 
     # Require force if host has any SRV records. Delete the SRV records if force
-    srvs = host.srvs()
+    srvs = host.srvs
     if len(srvs) > 0:
         if not forced(Override.SRV):
             overrides_required.add(Override.SRV)
@@ -418,9 +417,9 @@ def host_info(args: argparse.Namespace) -> None:
     direct groups.
     """
     for host in args.hosts:
-        Host.get_by_any_means_or_raise(host, inform_as_cname=True).output(
-            traverse_hostgroups=args.traverse_hostgroups
-        )
+        hosts = Host.get_list_by_any_means_or_raise(host, inform_as_cname=True)
+        if hosts:
+            Host.output_multiple(hosts, traverse_hostgroups=args.traverse_hostgroups)
 
 
 @command_registry.register_command(

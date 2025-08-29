@@ -68,7 +68,7 @@ host add otherhost -ip 10.0.1.20 -contact support@example.org  # fails because r
 network remove_excluded_range 10.0.1.0/24 10.0.1.20 10.0.1.30
 host add otherhost -ip 10.0.1.20 -contact support@example.org  # should not need force now that net is unfrozen
 host remove otherhost
-network remove 10.0.1.0/24 -f
+
 # IPv6
 network create -network 2001:db8::/64 -desc "Lorem ipsum dolor sit amet"
 network set_frozen 2001:db8::/64
@@ -81,6 +81,51 @@ network info 2001:db8::/64
 host aaaa_add somehost 2001:db8::/64  # should require force, because the network is frozen
 host aaaa_add somehost 2001:db8::/64 -force
 host remove somehost -force
+network unset_frozen 2001:db8::/64
+
+# Test handling of network and broadcast address arguments
+## IPv4
+### Adding/changing A-records for an existing host
+host add somehost -contact support@example.org
+host a_add somehost 10.0.1.0 # should require force because it is a network address
+host a_add somehost 10.0.1.0 -force
+host a_remove somehost 10.0.1.0 # force not required for removal
+host a_add somehost 10.0.1.255 # force again (broadcast address)
+host a_add somehost 10.0.1.255 -force
+host a_change -old 10.0.1.255 -new 10.0.1.0 somehost # changing to network address, requires force
+host a_change -old 10.0.1.255 -new 10.0.1.0 somehost -force
+host remove somehost -force # cleanup
+
+### Adding A-records for a new host
+host add somehost -ip 10.0.1.0 # requires force because it is a network address
+host add somehost -ip 10.0.1.1 -force
+host remove somehost -force -override ipaddress
+host add somehost -ip 10.0.1.255 # requires force because it is a broadcast address
+host add somehost -ip 10.0.1.255 -force
+host a_remove somehost 10.0.1.255 # cleanup
+
+## IPv6
+### Adding/changing AAAA-records for an existing host
+host aaaa_add somehost 2001:db8:: # should require force because it is a network address
+host aaaa_add somehost 2001:db8:: -force
+host aaaa_remove somehost 2001:db8:: # force not required for removal
+host aaaa_add somehost 2001:db8::ffff:ffff:ffff:ffff # force again (broadcast address)
+host aaaa_add somehost 2001:db8::ffff:ffff:ffff:ffff -force
+host aaaa_change -old 2001:db8::ffff:ffff:ffff:ffff -new 2001:db8:: somehost # changing to network address, requires force
+host aaaa_change -old 2001:db8::ffff:ffff:ffff:ffff -new 2001:db8:: somehost -force
+host aaaa_remove somehost 2001:db8::ffff:ffff:ffff:ffff # force not required for removal
+host remove somehost -force -override ipaddress# cleanup
+
+### Adding AAAA-records for a new host
+host add somehost -ip 10.0.1.0 # requires force because it is a network address
+host add somehost -ip 10.0.1.1 -force
+host remove somehost -force -override ipaddress
+host add somehost -ip 10.0.1.255 # requires force because it is a broadcast address
+host add somehost -ip 10.0.1.255 -force
+
+# Cleanup
+host remove somehost -force
+network remove 10.0.1.0/24 -f
 network remove 2001:db8::/64 -f
 
 
@@ -382,6 +427,95 @@ permission network_list
 permission network_remove 192.168.0.0/16 mygroup .*
 label remove postit
 
+
+##### Tests: Network Policy
+network create -network 10.0.2.0/28 -desc "TinyNet"
+network policy_attribute_create foo "Foo attribute"
+network policy_attribute_create bar "Bar attribute"
+network policy_attribute_create baz "Baz attribute"
+network policy_create SecurePolicy "Secure policy for a network" -attribute foo -attribute bar
+network policy_create Autoconfigure "Automatic host configuration" -attribute baz
+network policy_create NoICMP "ICMP disallowed" # no attributes
+network policy_list
+network policy_info SecurePolicy
+network policy_info Autoconfigure
+network policy_add 10.0.2.0/28 SecurePolicy
+network policy_add 10.0.2.0/28 Autoconfigure # requires force
+network policy_add 10.0.2.0/28 Autoconfigure -force
+network info 10.0.2.0/28
+network policy_delete Autoconfigure # requires force
+network policy_delete Autoconfigure -force
+network info 10.0.2.0/28
+network policy_list
+network policy_add 10.0.2.0/28 SecurePolicy
+network policy_rename SecurePolicy InsecurePolicy
+network policy_list
+network info 10.0.2.0/28
+network policy_set_description InsecurePolicy "Insecure policy for a network"
+network policy_attribute_add InsecurePolicy baz
+network policy_attribute_set_description baz "Baz attribute (new)"
+network policy_attribute_list
+network policy_attribute_remove InsecurePolicy foo
+network policy_info InsecurePolicy
+network policy_attribute_delete bar # requires force (in use)
+network policy_attribute_delete bar -force
+
+# Communities
+host add tinyhost -ip 10.0.2.0/28 -macaddress 11:22:33:aa:bb:cc -contact tinyhost@example.org
+network community_create 10.0.2.0/28 guests "Guest hosts."
+network community_create 10.0.2.0/28 lab "Lab hosts."
+network community_list 10.0.2.0/28
+network community_host_add tinyhost guests
+host info tinyhost
+network community_host_add tinyhost lab
+host info tinyhost
+# TODO: test network community_host_add with specific IP address on host with multiple IPs
+network community_info 10.0.2.0/28 guests
+network community_info 10.0.2.0/28 lab
+
+# Custom communtiy mapping prefix
+network policy_create CustomPrefix "Custom community mapping prefix" -prefix "custom" # no attributes
+network create -network 10.0.3.0/24 -desc "CustomPrefixNet" -policy CustomPrefix # add policy during creation
+network policy_info CustomPrefix
+network community_create 10.0.3.0/24 foo "Foo community"
+network community_info 10.0.3.0/24 foo
+network policy_set_prefix CustomPrefix "newprefix"
+network community_info 10.0.3.0/24 foo
+network policy_unset_prefix CustomPrefix
+network community_info 10.0.3.0/24 foo
+network remove 10.0.3.0/24 -force
+network policy_delete CustomPrefix
+
+## Rename community
+network community_rename 10.0.2.0/28 lab labequipment
+network community_set_description 10.0.2.0/28 labequipment "Lab equipment (expensive)"
+network community_info 10.0.2.0/28 labequipment
+
+## Add another host to a community before displaying communities with hosts
+host add tinierhost -ip 10.0.2.0/28 -contact tinierhost@example.org
+network community_host_add tinierhost guests
+network community_list 10.0.2.0/28 -hosts
+
+## Attempt to add host from other network to community (fails)
+network create -network 10.0.0.0/24 -desc "MediumNet"
+host add mediumhost -ip 10.0.0.0/24 -macaddress 11:22:34:aa:bb:cd -contact mediumhost@example.org
+network community_host_add mediumhost labequipment # fails, community not found in network
+host remove mediumhost -force
+network remove 10.0.0.0/24
+
+## Delete community (remove host from community first)
+network community_delete 10.0.2.0/28 labequipment # fails
+network community_host_remove tinyhost labequipment
+network community_delete 10.0.2.0/28 labequipment
+
+## Delete community with hosts (force)
+network community_delete 10.0.2.0/28 guests # fails
+network community_delete 10.0.2.0/28 guests -force
+
+## Clean up community resources
+host remove tinyhost
+host remove tinierhost
+network remove 10.0.2.0/28 -force
 
 ##### Tests: Zone
 #    - Zone removal

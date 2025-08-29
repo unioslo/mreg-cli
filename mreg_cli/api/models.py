@@ -394,6 +394,14 @@ class WithName(BaseModel, APIMixin):
     __name_field__: str = "name"
     """Name of the API field that holds the object's name."""
 
+    __name_lowercase__: bool = False
+    """Lower case name in API requests."""
+
+    @classmethod
+    def _case_name(cls, name: str) -> str:
+        """Set the name case based on the class attribute."""
+        return name.lower() if cls.__name_lowercase__ else name
+
     @classmethod
     def get_by_name(cls, name: str) -> Self | None:
         """Get a resource by name.
@@ -401,7 +409,7 @@ class WithName(BaseModel, APIMixin):
         :param name: The resource name to search for.
         :returns: The resource if found.
         """
-        return cls.get_by_field(cls.__name_field__, name)
+        return cls.get_by_field(cls.__name_field__, cls._case_name(name))
 
     @classmethod
     def get_by_name_and_raise(cls, name: str) -> None:
@@ -410,7 +418,7 @@ class WithName(BaseModel, APIMixin):
         :param name: The resource name to search for.
         :raises EntityAlreadyExists: If the resource is found.
         """
-        return cls.get_by_field_and_raise(cls.__name_field__, name)
+        return cls.get_by_field_and_raise(cls.__name_field__, cls._case_name(name))
 
     @classmethod
     def get_by_name_or_raise(cls, name: str) -> Self:
@@ -420,7 +428,7 @@ class WithName(BaseModel, APIMixin):
         :returns: The resource.
         :raises EntityNotFound: If the resource is not found.
         """
-        return cls.get_by_field_or_raise(cls.__name_field__, name)
+        return cls.get_by_field_or_raise(cls.__name_field__, cls._case_name(name))
 
     @classmethod
     def get_list_by_name_regex(cls, name: str) -> list[Self]:
@@ -429,16 +437,16 @@ class WithName(BaseModel, APIMixin):
         :param name: The regex pattern for names to search for.
         :returns: A list of resource objects.
         """
-        param, value = convert_wildcard_to_regex(cls.__name_field__, name, True)
+        param, value = convert_wildcard_to_regex(cls.__name_field__, cls._case_name(name), True)
         return get_typed(cls.endpoint(), list[cls], params={param: value})
 
     def rename(self, new_name: str) -> Self:
         """Rename the resource.
 
         :param new_name: The new name to set.
-        :returns: True if the rename was successful.
+        :returns: The patched resource.
         """
-        return self.patch({self.__name_field__: new_name})
+        return self.patch({self.__name_field__: self._case_name(new_name)})
 
 
 ClassVarNotSet = object()
@@ -674,14 +682,6 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
             if delegation.comment:
                 manager.add_line(f"        Comment: {delegation.comment}")
             self.output_nameservers(delegation.nameservers, padding=padding)
-
-    @classmethod
-    def get_list(cls) -> list[Self]:
-        """Get all zones of the given zone type.
-
-        :returns: A list of all zones.
-        """
-        return get_typed(cls.endpoint(), list[cls])
 
     def ensure_delegation_in_zone(self, name: str) -> None:
         """Ensure a delegation is in the zone.
@@ -1284,7 +1284,7 @@ class Role(HostPolicy, WithHistory):
             manager.add_line("No atom members")
 
     @classmethod
-    def output_multiple(cls, roles: list[Role], padding: int = 14) -> None:
+    def output_multiple(cls, roles: list[Role] | list[str], padding: int = 14) -> None:
         """Output multiple roles to the console.
 
         :param roles: List of roles to output.
@@ -1293,9 +1293,14 @@ class Role(HostPolicy, WithHistory):
         if not roles:
             return
 
-        OutputManager().add_line(
-            "{1:<{0}}{2}".format(padding, "Roles:", ", ".join([role.name for role in roles]))
-        )
+        rolenames: list[str] = []
+        for role in roles:
+            if isinstance(role, str):
+                rolenames.append(role)
+            else:
+                rolenames.append(role.name)
+
+        OutputManager().add_line("{1:<{0}}{2}".format(padding, "Roles:", ", ".join(rolenames)))
 
     @classmethod
     def output_multiple_table(cls, roles: list[Role], _padding: int = 14) -> None:
@@ -1580,6 +1585,8 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     location: str
     frozen: bool
     reserved: int
+    policy: NetworkPolicy | None = None
+    communities: list[Community] = []
 
     def __hash__(self):
         """Return a hash of the network."""
@@ -1610,6 +1617,39 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.Networks
+
+    @classmethod
+    def dummy_network_from_ip(cls, ip: IPAddress) -> Self:
+        """Create a Network object for an unknown network given an IP.
+
+        NOTE: Does not perform any API calls. This is purely to work around
+        the fact that MREG supports creating IP addresses for networks that
+        are not registered in MREG.
+        """
+        if ip.is_ipv4():
+            network_addr = "0.0.0.0/24"
+            description = "Unknown IPv4 network"
+        else:
+            network_addr = "::/64"
+            description = "Unknown IPv6 network"
+
+        return cls(
+            id=0,
+            excluded_ranges=[],
+            network=network_addr,
+            description=description,
+            vlan=None,
+            dns_delegated=False,
+            category="",
+            location="",
+            frozen=False,
+            reserved=0,
+            policy=None,
+            communities=[],
+            # epoch time
+            created_at=datetime.fromtimestamp(0),
+            updated_at=datetime.fromtimestamp(0),
+        )
 
     @classmethod
     def get_by_any_means(cls, identifier: str) -> Self | None:
@@ -1701,13 +1741,37 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             raise EntityNotFound(f"Network {network} not found.")
         return net
 
-    @classmethod
-    def get_list(cls) -> list[Self]:
-        """Get all networks.
+    def get_community_or_raise(self, name: str) -> Community:
+        """Get a community by name, and raise if not found.
 
-        :returns: A list of all networks.
+        :param name: The name of the community to search for.
+        :returns: The community if found.
+        :raises EntityNotFound: If the community is not found.
         """
-        return get_typed(cls.endpoint(), list[cls], limit=None)
+        community = self.get_community(name)
+        if not community:
+            raise EntityNotFound(f"Community {name!r} not found.")
+        return community
+
+    def get_community(self, name: str) -> Community | None:
+        """Get a community by name.
+
+        :param name: The name of the community to search for.
+        :returns: The community if found, None otherwise.
+        """
+        for community in self.communities:
+            if community.name == name:
+                return community
+        return None
+
+    def create_community(self, name: str, description: str) -> bool:
+        """Create a community for the network."""
+        resp = post(
+            Endpoint.NetworkCommunities.with_params(self.network),
+            name=name,
+            description=description,
+        )
+        return resp.ok if resp else False
 
     def output(self, padding: int = 25) -> None:
         """Output the network to the console."""
@@ -1723,10 +1787,18 @@ class Network(FrozenModelWithTimestamps, APIMixin):
             ip for ip in reserved_ips if ip not in (ipnet.network_address, ipnet.broadcast_address)
         ]
 
+        community_list: list[str] = []
+        for community in self.communities:
+            host_count = len(community.hosts)
+            global_name = f" ({community.global_name})" if community.global_name else ""
+            community_list.append(f"{community.name}{global_name} [{host_count}]")
+
         fmt("Network:", self.network)
         fmt("Netmask:", ipnet.netmask)
         fmt("Description:", self.description)
         fmt("Category:", self.category)
+        fmt("Network policy: ", self.policy.name if self.policy else "")
+        fmt("Communities:", ", ".join(sorted(community_list)))
         fmt("Location:", self.location)
         fmt("VLAN:", self.vlan)
         fmt("DNS delegated:", str(self.dns_delegated))
@@ -1961,6 +2033,322 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         return self.patch({"vlan": vlan})
 
+    def set_policy(self, policy: NetworkPolicy) -> Self:
+        """Set the network policy of the network.
+
+        :param policy: The new network policy.
+        :returns: The updated Network object.
+        """
+        return self.patch({"policy": policy.id}, validate=False)
+
+    def unset_policy(self) -> Self:
+        """Unset the network policy of the network.
+
+        :returns: The updated Network object.
+        """
+        return self.patch({"policy": None}, validate=False)
+
+
+class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
+    """The definition of a network policy attribute.
+
+    See NetworkPolicyAttr for the representation of attributes in Policies.
+    """
+
+    __name_lowercase__ = True  # name is always lower case
+
+    id: int
+    name: str
+    description: str
+
+    def get_policies(self) -> list[NetworkPolicy]:
+        """Get all policies using this attribute."""
+        return NetworkPolicy.get_list_by_field("attributes", self.id)
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkPolicyAttributes
+
+    def output(self) -> None:
+        """Output the network policy attribute to the console."""
+        manager = OutputManager()
+        manager.add_line(f"Name: {self.name}")
+        manager.add_line(f"Description: {self.description}")
+        self.output_timestamps()
+
+    @classmethod
+    def output_multiple(cls, attributes: list[Self], padding: int = 20) -> None:
+        """Output multiple attributes to the console, one attribute per line.
+
+        :param attributes: List of attributes to output.
+        :param padding: Number of spaces for left-padding the output.
+        """
+        manager = OutputManager()
+        for attr in attributes:
+            manager.add_formatted_line(attr.name, f"{attr.description!r}", padding)
+
+
+class Community(FrozenModelWithTimestamps, APIMixin):
+    """Network community."""
+
+    id: int
+    name: str
+    description: str
+    network: int
+    hosts: list[str] = []
+    global_name: str | None = None
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkCommunity
+
+    def endpoint_with_id(self) -> str:
+        """Return the endpoint with the community ID."""
+        return self.endpoint().with_params(self.network_address, self.id)
+
+    @property
+    def network_address(self) -> str:
+        """Return the network object for the community."""
+        return Network.get_by_field_or_raise("id", str(self.network)).network
+
+    @property
+    def hosts_endpoint(self) -> str:
+        """Return the endpoint with policy and community IDs."""
+        return Endpoint.NetworkCommunityHosts.with_params(self.network_address, self.id)
+
+    @classmethod
+    def output_multiple(
+        cls, communities: list[Self], padding: int = 14, show_hosts: bool = True
+    ) -> None:
+        """Output multiple communities to the console."""
+        for community in communities:
+            community.output(padding=padding, show_hosts=show_hosts)
+            OutputManager().add_line("")  # add newline between communities
+
+    def output(self, *, padding: int = 14, show_hosts: bool = True) -> None:
+        """Output the community to the console."""
+        manager = OutputManager()
+        manager.add_line(f"{'Name:':<{padding}}{self.name}")
+        manager.add_line(f"{'Description:':<{padding}}{self.description}")
+        if self.global_name:
+            manager.add_line(f"{'Global name:':<{padding}}{self.global_name}")
+        self.output_timestamps()
+
+        if show_hosts and self.hosts:
+            manager.add_line("Hosts:")
+            for host in self.hosts:
+                manager.add_line(f"{'':{padding}}{host}")
+        else:
+            manager.add_line(f"{'Hosts:':<{padding}}{len(self.hosts)}")
+
+    def refetch(self) -> Self:
+        """Refetch the community object."""
+        return get_typed(self.endpoint_with_id(), self.__class__)
+
+    def patch(self, fields: dict[str, Any], validate: bool = True) -> Self:  # noqa: ARG002 # validate not implemented
+        """Patch the community.
+
+        :param fields: The fields to patch.
+        :param validate: Whether to validate the response. (Not implemented)
+        :returns: The updated Community object.
+        """
+        resp = patch(self.endpoint_with_id(), **fields)
+        if not resp or not resp.ok:
+            raise PatchError(f"Failed to patch community {self.name!r}")
+        new_object = self.refetch()
+        return new_object
+
+    def delete(self) -> bool:
+        """Delete the community."""
+        resp = delete(self.endpoint_with_id())
+        return resp.ok if resp else False
+
+    def get_hosts(self) -> list[Host]:
+        """Get a list of hosts in the community.
+
+        :returns: A list of Host objects.
+        """
+        return get_typed(self.hosts_endpoint, list[Host])
+
+    def add_host(self, host: Host, ipaddress: IP_AddressT | None = None) -> bool:
+        """Add a host to the community.
+
+        :param host: The host to add.
+        :returns: True if the host was added, False otherwise.
+        """
+        kwargs: QueryParams = {"id": host.id}
+        if ipaddress:
+            kwargs["ipaddress"] = str(ipaddress)
+        resp = post(self.hosts_endpoint, params=None, **kwargs)
+        return resp.ok if resp else False
+
+    def remove_host(self, host: Host, ipaddress: IP_AddressT | None) -> bool:
+        """Remove a host from the community.
+
+        :param host: The host to remove.
+        :returns: True if the host was removed, False otherwise.
+        """
+        params: QueryParams = {}
+        if ipaddress:
+            params["ipaddress"] = str(ipaddress)
+        resp = delete(
+            Endpoint.NetworkCommunityHost.with_params(
+                self.network_address,
+                self.id,
+                host.id,
+            )
+        )
+        return resp.ok if resp else False
+
+
+class NetworkPolicyAttributeValue(BaseModel):
+    """Name and value of a network policy's attribute."""
+
+    name: str
+    value: bool
+
+
+class NetworkPolicy(FrozenModelWithTimestamps, WithName):
+    """Network policy used in a community."""
+
+    __name_lowercase__ = True  # name is always lower case
+
+    id: int
+    name: str
+    description: str | None = None
+    attributes: list[NetworkPolicyAttributeValue] = []
+    community_mapping_prefix: str | None = None
+
+    @classmethod
+    def endpoint(cls) -> Endpoint:
+        """Return the endpoint for the class."""
+        return Endpoint.NetworkPolicies
+
+    @classmethod
+    def output_multiple(cls, policies: list[Self]) -> None:
+        """Output multiple network policies to the console."""
+        for policy in policies:
+            policy.output()
+            OutputManager().add_line("")  # add newline between policies
+
+    def output(self) -> None:
+        """Output the network policy to the console."""
+        manager = OutputManager()
+        manager.add_line(f"Name: {self.name}")
+        if self.description:
+            manager.add_line(f"Description: {self.description}")
+        if self.community_mapping_prefix:
+            manager.add_line(f"Prefix: {self.community_mapping_prefix}")
+        if self.attributes:
+            manager.add_line("Attributes:")
+            for attribute in self.attributes:
+                manager.add_line(f" {attribute.name}: {attribute.value}")
+
+        networks = self.networks()
+        if networks:
+            manager.add_line("Networks:")
+            for network in networks:
+                manager.add_line(f" {network.network}")
+
+        self.output_timestamps()
+
+    def get_attribute_or_raise(self, name: str) -> NetworkPolicyAttributeValue:
+        """Get a network attribute value by name, and raise if not found.
+
+        :param name: The name of the attribute to search for.
+        :returns: The attribute if found.
+        :raises EntityNotFound: If the attribute is not found.
+        """
+        attribute = self.get_attribute(name)
+        if not attribute:
+            raise EntityNotFound(f"Attribute {name!r} not found in policy.")
+        return attribute
+
+    def get_attribute(self, name: str) -> NetworkPolicyAttributeValue | None:
+        """Get a attribute by name.
+
+        :param name: The name of the attribute to search for.
+        :returns: The attribute if found, None otherwise.
+        """
+        for attribute in self.attributes:
+            if attribute.name == name:
+                return attribute
+        return None
+
+    def add_attribute(self, attribute: NetworkPolicyAttribute, value: bool = True) -> None:
+        """Add an attribute to the policy.
+
+        :param attribute: The attribute to add.
+        :param value: The value of the attribute.
+        """
+        if self.get_attribute(attribute.name):
+            raise EntityAlreadyExists(f"Attribute {attribute.name!r} already exists in policy.")
+        attrs = self.attributes.copy()
+        attrs.append(NetworkPolicyAttributeValue(name=attribute.name, value=value))
+        self._patch_attrs(attrs)
+
+    def remove_attribute(self, attribute: str) -> None:
+        """Add an attribute to the policy.
+
+        :param attribute: The attribute to add.
+        :param value: The value of the attribute.
+        """
+        attr = self.get_attribute_or_raise(attribute)
+        attrs = self.attributes.copy()
+        attrs.remove(attr)
+        self._patch_attrs(attrs)
+
+    def set_attribute_value(self, attribute: str, value: bool) -> None:
+        """Add an attribute to the policy.
+
+        :param attribute: The attribute to add.
+        :param value: The value of the attribute.
+        """
+        # Check if attribute exists
+        # NOTE: yes, we iterate over it twice here, but it's a small list
+        self.get_attribute_or_raise(attribute)
+        attrs = self.attributes.copy()
+        for a in attrs:
+            if a.name == attribute:
+                a.value = value
+                break
+        self._patch_attrs(attrs)
+
+    def _patch_attrs(self, attrs: list[NetworkPolicyAttributeValue]) -> None:
+        """Patch the attributes of the policy.
+
+        Sets the attributes on the model itself after a successful patch.
+
+        :param attrs: The new attributes.
+        """
+        self.patch(
+            {"attributes": [{"name": a.name, "value": a.value} for a in attrs]},
+            validate=False,
+        )
+        # NOTE: can return self.refetch() here if we need to refresh the object
+
+    def networks(self) -> list[Network]:
+        """Get all networks using this policy."""
+        return Network.get_list_by_field("policy", self.id)
+
+    def create_community(self, name: str, description: str) -> Community | None:
+        """Create a new community.
+
+        :param name: The name of the community.
+        :param description: The description of the community.
+        :returns: The new Community object.
+        """
+        resp = post(
+            Endpoint.NetworkCommunities.with_params(self.id),
+            name=name,
+            description=description,
+        )
+        if resp and (location := resp.headers.get("Location")):
+            return get_typed(location, Community)
+        return None
+
 
 class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
     """Represents an IP address with associated details."""
@@ -2014,14 +2402,12 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
 
         if len(ips) == 1:
             raise EntityAlreadyExists(
-                f"MAC address {mac} is already associated with IP address {ips[0].ipaddress}"
-                ", must force."
+                f"MAC address {mac} is already associated with IP address {ips[0].ipaddress}, must force."
             )
         else:
             ips_str = ", ".join([str(ip.ipaddress) for ip in ips])
             raise MultipleEntitiesFound(
-                f"MAC address {mac} is already associated with multiple IP addresses: {ips_str}"
-                ", must force."
+                f"MAC address {mac} is already associated with multiple IP addresses: {ips_str}, must force."
             )
 
     @classmethod
@@ -2062,14 +2448,18 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         """Return True if the IP address is IPv6."""
         return self.ipaddress.version == 6
 
-    def network(self) -> Network:
+    def network(self) -> Network | None:
         """Return the network of the IP address."""
-        data = get(Endpoint.NetworksByIP.with_id(str(self.ipaddress)))
-        return Network.model_validate(data.json())
+        try:
+            return get_typed(Endpoint.NetworksByIP.with_id(str(self.ipaddress)), Network)
+        except APINotOk:
+            return None
 
     def vlan(self) -> int | None:
         """Return the VLAN of the IP address."""
-        return self.network().vlan
+        if net := self.network():
+            return net.vlan
+        return None
 
     def associate_mac(self, mac: MacAddress, force: bool = False) -> IPAddress:
         """Associate a MAC address with the IP address.
@@ -2608,6 +2998,18 @@ class Location(FrozenModelWithTimestamps, WithHost, APIMixin):
         OutputManager().add_line(f"{'LOC:':<{padding}}{self.loc}")
 
 
+class HostCommmunity(FrozenModel):
+    """Model for a host's community.
+
+    Communities are associated with hosts via IP addresses.
+    """
+
+    ipaddress: int
+    """ID of the IP address associated with the community"""
+
+    community: Community
+
+
 class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     """Model for an individual host."""
 
@@ -2623,12 +3025,25 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     bacnetid: int | None = None
     contact: str
     ttl: int | None = None
+    srvs: list[Srv] = []
+    naptrs: list[NAPTR] = []
+    sshfps: list[SSHFP] = []
+    roles: list[str] = []
+    hostgroups: list[str] = []
     comment: str
+
+    communities: list[HostCommmunity] = []
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None
 
     history_resource: ClassVar[HistoryResource] = HistoryResource.Host
+
+    @field_validator("communities", mode="before")
+    @classmethod
+    def _validate_none_communities_as_empty_list(cls, v: Any) -> Any:
+        """Convert None value to empty list for communities."""
+        return v or []
 
     @field_validator("bacnetid", mode="before")
     @classmethod
@@ -2642,6 +3057,35 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     def endpoint(cls) -> Endpoint:
         """Return the endpoint for the class."""
         return Endpoint.Hosts
+
+    @classmethod
+    def get_list_by_ip(cls, ip: IP_AddressT, inform_as_ptr: bool = True) -> list[Self]:
+        """Get a list of hosts by IP address.
+
+        :param ip: The IP address to search for.
+        :param check_ptr: If True, check for PTR overrides as well.
+        :returns: A list of Host objects.
+        """
+        hosts = cls.get_list_by_field("ipaddresses__ipaddress", str(ip))
+        if not hosts:
+            hosts = cls.get_list_by_field("ptr_overrides__ipaddress", str(ip))
+            if hosts and inform_as_ptr:
+                for host in hosts:
+                    OutputManager().add_line(f"{ip} is a PTR override for {host.name}")
+        return hosts
+
+    @classmethod
+    def get_list_by_ip_or_raise(cls, ip: IP_AddressT, inform_as_ptr: bool = True) -> list[Self]:
+        """Get a list of hosts by IP address or raise EntityNotFound.
+
+        :param ip: The IP address to search for.
+        :returns: A list of Host objects.
+        :param check_ptr: If True, check for PTR overrides as well.
+        """
+        hosts = cls.get_list_by_ip(ip, inform_as_ptr=inform_as_ptr)
+        if not hosts:
+            raise EntityNotFound(f"Host with IP address {ip} not found.")
+        return hosts
 
     @classmethod
     def get_by_ip(cls, ip: IP_AddressT, inform_as_ptr: bool = True) -> Host | None:
@@ -2694,6 +3138,27 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if not host:
             raise EntityNotFound(f"Host with MAC address {mac} not found.")
         return host
+
+    @classmethod
+    def get_list_by_mac(cls, mac: MacAddress) -> list[Self]:
+        """Get a list of host by MAC address.
+
+        :param ip: The MAC address to search for.
+        :returns: The Host object if found, None otherwise.
+        """
+        return cls.get_list_by_field("ipaddresses__macaddress", str(mac))
+
+    @classmethod
+    def get_list_by_mac_or_raise(cls, mac: MacAddress) -> list[Self]:
+        """Get a list of hosts by MAC address or raise EntityNotFound.
+
+        :param ip: The MAC address to search for.
+        :returns: The Host object if found.
+        """
+        hosts = cls.get_list_by_mac(mac)
+        if not hosts:
+            raise EntityNotFound(f"Host with MAC address {mac} not found.")
+        return hosts
 
     @classmethod
     def get_by_any_means_or_raise(
@@ -2781,6 +3246,91 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
                 OutputManager().add_line(f"{identifier} is a CNAME for {host.name}")
 
         return host
+
+    @classmethod
+    def get_list_by_any_means_or_raise(
+        cls, identifier: str | HostName, inform_as_cname: bool = True, inform_as_ptr: bool = True
+    ) -> list[Self]:
+        """Get a host by the given identifier or raise EntityNotFound.
+
+        See also `get_by_any_means`.
+
+        :param identifier: The identifier to search for.
+        :param inform_as_cname: If True, inform the user if the host is a CNAME.
+        :param inform_as_ptr: If True, inform the user if the host is a PTR override.
+
+        :raises EntityNotFound: If the host is not found.
+
+        :returns: A Host object if the host was found.
+        """
+        hosts = cls.get_list_by_any_means(
+            identifier, inform_as_cname=inform_as_cname, inform_as_ptr=inform_as_ptr
+        )
+        if not hosts:
+            raise EntityNotFound(f"Host {identifier} not found.")
+        return hosts
+
+    @classmethod
+    def get_list_by_any_means(
+        cls, identifier: str, inform_as_cname: bool = True, inform_as_ptr: bool = True
+    ) -> list[Self]:
+        """Get a host by the given identifier.
+
+        - If the identifier is numeric, it will be treated as an ID.
+        - If the identifier is an IP address, it will be treated as an IP address (v4 or v6).
+        - If the identifier is a MAC address, it will be treated as a MAC address.
+        - Otherwise, it will be treated as a hostname. If the hostname is a CNAME,
+        the host it points to will be returned.
+
+        To check if a returned host is a cname, one can do the following:
+
+        ```python
+        hostname = "host.example.com"
+        host = get_host(hostname, ok404=True)
+        if host is None:
+            print("Host not found.")
+        elif host.name != hostname:
+            print(f"{hostname} is a CNAME pointing to {host.name}")
+        else:
+            print(f"{host.name} is a host.")
+        ```
+
+        Note that get_host will perform a case-insensitive search for a fully qualified version
+        of the hostname, so the comparison above may fail.
+
+        :param identifier: The identifier to search for.
+        :param ok404: If True, don't raise a EntityNotFound if the host is not found.
+        :param inform_as_cname: If True, inform the user if the host is a CNAME.
+        :param inform_as_ptr: If True, inform the user if the host is a PTR override.
+
+        :raises EntityNotFound: If we don't find the host and `ok404` is False.
+
+        :returns: A Host object if the host was found, otherwise None.
+        """
+        if identifier.isdigit() and (host := cls.get_by_id(int(identifier))):
+            return [host]
+
+        if ip := NetworkOrIP.parse(identifier, mode="ip"):
+            return cls.get_list_by_ip_or_raise(ip, inform_as_ptr=inform_as_ptr)
+
+        if mac := MacAddress.parse(identifier):
+            return cls.get_list_by_mac_or_raise(mac)
+
+        # Let us try to find the host by name...
+        identifier = HostName.parse_or_raise(identifier)
+
+        if host := cls.get_by_field("name", identifier):
+            return [host]
+
+        # If we found a CNAME, get the host it points to. We're not interested in the
+        # CNAME itself.
+        if cname := CNAME.get_by_field("name", identifier):
+            host = cls.get_by_id(cname.host)
+            if host and inform_as_cname:
+                OutputManager().add_line(f"{identifier} is a CNAME for {host.name}")
+                return [host]
+
+        return []
 
     def delete(self) -> bool:
         """Delete the host.
@@ -2884,14 +3434,32 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         ipv6s = self.ipv6_addresses()
 
         if len(ipv4s) == 1 and len(ipv6s) == 1:
-            vlan4 = ipv4s[0].network().vlan
-            vlan6 = ipv6s[0].network().vlan
+            ipv4_address = ipv4s[0]
+            ipv6_address = ipv6s[0]
+            ipv4_network = ipv4_address.network()
+            ipv6_network = ipv6_address.network()
 
-            if vlan4 == vlan6:
-                return ipv4s[0]
+            if ipv4_network and ipv6_network:
+                if ipv4_network.vlan == ipv6_network.vlan:
+                    return ipv4_address
+            elif ipv4_network:  # only IPv4 is in mreg
+                logger.warning(
+                    "Host '%s' has IPv6 address not in MREG: %s",
+                    self.name,
+                    str(ipv6_address.ipaddress),
+                )
+                return ipv4_address
+            elif ipv6_network:  # only IPv6 is in mreg
+                logger.warning(
+                    "Host '%s' has IPv4 address not in MREG: %s",
+                    self.name,
+                    str(ipv4_address.ipaddress),
+                )
+                return ipv6_address
 
+        ips = ", ".join(str(ip.ipaddress) for ip in self.ipaddresses)
         raise EntityOwnershipMismatch(
-            f"Host {self} has multiple IPs, cannot determine which one to use."
+            f"Host {self} has multiple IPs, cannot determine which one to use: {ips}."
         )
 
     def has_ptr_override(self, arg_ip: IP_AddressT) -> bool:
@@ -2921,6 +3489,15 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """
         return next((ip for ip in self.ipaddresses if ip.ipaddress == arg_ip), None)
 
+    def get_ip_by_id(self, ip_id: int) -> IPAddress | None:
+        """Get the IP address object for the given ID.
+
+        :param ip_id: The ID to search for.
+
+        :returns: The IP address object if found, None otherwise.
+        """
+        return next((ip for ip in self.ipaddresses if ip.id == ip_id), None)
+
     def get_ptr_override(self, ip: IP_AddressT) -> PTR_override | None:
         """Get the PTR override for the given IP address.
 
@@ -2930,11 +3507,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """
         return next((ptr for ptr in self.ptr_overrides if ptr.ipaddress == ip), None)
 
-    def ipv4_addresses(self):
+    def ipv4_addresses(self) -> list[IPAddress]:
         """Return a list of IPv4 addresses."""
         return [ip for ip in self.ipaddresses if ip.is_ipv4()]
 
-    def ipv6_addresses(self):
+    def ipv6_addresses(self) -> list[IPAddress]:
         """Return a list of IPv6 addresses."""
         return [ip for ip in self.ipaddresses if ip.is_ipv6()]
 
@@ -2963,9 +3540,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         if len(ipadresses) and not force:
             raise EntityOwnershipMismatch(
-                f"mac {mac} already in use by: "
-                f"{', '.join(str(ip.ipaddress) for ip in ipadresses)}. "
-                f"Use force to add {ip} -> {mac} as well."
+                f"mac {mac} already in use by: {', '.join(str(ip.ipaddress) for ip in ipadresses)}. Use force to add {ip} -> {mac} as well."
             )
 
         ip_found_in_host = False
@@ -3003,8 +3578,41 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         return self.refetch()
 
+    def get_community_or_raise(self, name: str, ip: IPAddress | None) -> Community:
+        """Get a community by name, and raise if not found.
+
+        :param name: The name of the community to search for.
+        :param ip: The IP address associated with the community.
+        :returns: The community if found.
+        :raises EntityNotFound: If the community is not found.
+        """
+        community = self.get_community(name)
+        if not community:
+            msg = f"Community {name!r}"
+            if ip:
+                msg += f" for IP address {ip}"
+            raise EntityNotFound(f"{msg} not found.")
+        return community
+
+    def get_community(self, name: str, ip: IPAddress | None = None) -> Community | None:
+        """Get a community by name.
+
+        :param name: The name of the community to search for.
+        :param ip: The IP address associated with the community.
+        :returns: The community if found, None otherwise.
+        """
+        for community in self.communities:
+            if community.community.name != name:
+                continue
+            if ip and community.ipaddress != ip.id:
+                continue
+            return community.community
+        return None
+
     def networks(self) -> dict[Network, list[IPAddress]]:
         """Return a dict of unique networks and a list of associated IP addresses for the host.
+
+        Does not return networks that are not registered in MREG.
 
         :returns: A dictionary of networks and the associated IP addresses.
         """
@@ -3012,6 +3620,10 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         for ip in self.ipaddresses:
             network = ip.network()
+            if not network:
+                # If network is not in MREG, we create a placeholder network
+                network = Network.dummy_network_from_ip(ip)
+
             if network not in ret_dict:
                 ret_dict[network] = []
 
@@ -3101,21 +3713,26 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         return False
 
-    def naptrs(self) -> list[NAPTR]:
-        """Return a list of NAPTR records."""
-        return NAPTR.get_list_by_field("host", self.id)
-
-    def srvs(self) -> list[Srv]:
-        """Return a list of SRV records."""
-        return Srv.get_list_by_field("host", self.id)
-
-    def sshfps(self) -> list[SSHFP]:
-        """Return a list of SSHFP records."""
-        return SSHFP.get_list_by_field("host", self.id)
-
-    def roles(self) -> list[Role]:
+    def get_roles(self) -> list[Role]:
         """List all roles for the host."""
         return Role.get_list_by_field("hosts", self.id)
+
+    def get_hostgroups(self, traverse: bool = False) -> list[HostGroup]:
+        """Return all hostgroups for the host.
+
+        :param traverse: If True, traverse the parent groups and include them in the list.
+
+        :returns: A list of HostGroup objects sorted by name.
+        """
+        groups: list[HostGroup] = []
+        direct = HostGroup.get_list_by_field("hosts", self.id)
+        groups.extend(direct)
+
+        if traverse:
+            for group in direct:
+                groups.extend(group.get_all_parents())
+
+        return sorted(groups, key=lambda group: group.name)
 
     def bacnet(self) -> BacnetID | None:
         """Return the BacnetID for the host."""
@@ -3134,22 +3751,20 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """
         return next((mx for mx in self.mxs if mx.has_mx_with_priority(mx_arg, priority)), None)
 
-    def hostgroups(self, traverse: bool = False) -> list[HostGroup]:
-        """Return all hostgroups for the host.
+    @classmethod
+    def output_multiple(
+        cls, hosts: list[Host], names: bool = False, traverse_hostgroups: bool = False
+    ):
+        """Output multiple hosts to the console.
 
-        :param traverse: If True, traverse the parent groups and include them in the list.
-
-        :returns: A list of HostGroup objects sorted by name.
+        :param hosts: List of Host objects to output.
+        :param names: If True, output the host names only.
+        :param traverse_hostgroups: If True, traverse the hostgroups and include them in the output.
         """
-        groups: list[HostGroup] = []
-        direct = HostGroup.get_list_by_field("hosts", self.id)
-        groups.extend(direct)
-
-        if traverse:
-            for group in direct:
-                groups.extend(group.get_all_parents())
-
-        return sorted(groups, key=lambda group: group.name)
+        for i, host in enumerate(hosts, start=1):
+            host.output(names=names, traverse_hostgroups=traverse_hostgroups)
+            if i != len(hosts):
+                OutputManager().add_line("")
 
     def output(self, names: bool = False, traverse_hostgroups: bool = False):
         """Output host information to the console with padding."""
@@ -3162,7 +3777,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         if self.comment:
             output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
 
-        self.output_ipaddresses(padding=padding, names=names)
+        self.output_networks()
         PTR_override.output_multiple(self.ptr_overrides, padding=padding)
 
         self.output_ttl(padding=padding)
@@ -3178,17 +3793,98 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         self.output_cnames(padding=padding)
 
         TXT.output_multiple(self.txts, padding=padding)
-        Srv.output_multiple(self.srvs(), padding=padding)
-        NAPTR.output_multiple(self.naptrs(), padding=padding)
-        SSHFP.output_multiple(self.sshfps(), padding=padding)
+        Srv.output_multiple(self.srvs, padding=padding)
+        NAPTR.output_multiple(self.naptrs, padding=padding)
+        SSHFP.output_multiple(self.sshfps, padding=padding)
 
         if self.bacnetid is not None:  # This may be zero.
             output_manager.add_line(f"{'Bacnet ID:':<{padding}}{self.bacnetid}")
 
-        Role.output_multiple(self.roles(), padding=padding)
-        HostGroup.output_multiple(self.hostgroups(traverse=traverse_hostgroups), padding=padding)
+        Role.output_multiple(self.roles, padding=padding)
+        if traverse_hostgroups:
+            hostgroups = self.get_hostgroups(traverse=True)
+        else:
+            hostgroups = self.hostgroups
+        HostGroup.output_multiple(hostgroups, padding=padding)
 
         self.output_timestamps()
+
+    def output_networks(self, padding: int = 14, only: Literal[4, 6, None] = None) -> None:
+        """Output all A(AAA) records along with the MAC address and network policy for the host."""
+        networks = self.networks()
+        if not networks:
+            return
+
+        output_manager = OutputManager()
+
+        v4: list[tuple[Network, IPAddress]] = []
+        v6: list[tuple[Network, IPAddress]] = []
+
+        for network, ips in networks.items():
+            for ip in ips:
+                if network.ip_network.version == 4:
+                    v4.append((network, ip))
+                elif network.ip_network.version == 6:
+                    v6.append((network, ip))
+
+        def output_a_records(networks: list[tuple[Network, IPAddress]], version: int):
+            if not networks:
+                return
+            record_type = "A" if version == 4 else "AAAA"
+            output_manager.add_line(f"{record_type}_Records:")
+            data: list[dict[str, str]] = []
+
+            headers = ("IP", "MAC")
+            keys = ("ip", "mac")
+
+            ip_to_community: dict[IPAddress, Community] = {}
+            if self.communities:
+                for com in self.communities:
+                    ip = self.get_ip_by_id(com.ipaddress)
+
+                    if ip:
+                        ip_to_community[ip] = com.community
+
+            if ip_to_community:
+                for net, ip in networks:
+                    policy = ""
+                    if net.policy:
+                        policy = net.policy.name
+                    d: dict[str, str] = {
+                        "ip": str(ip.ipaddress),
+                        "mac": ip.macaddress or "<not set>",
+                        "policy": policy,
+                        "community": "",
+                    }
+                    if ip in ip_to_community:
+                        d["community"] = ip_to_community[ip].name
+                        if ip_to_community[ip].global_name:
+                            d["community"] += f" ({ip_to_community[ip].global_name})"
+
+                    data.append(d)
+
+                headers = ("IP", "MAC", "Policy", "Community")
+                keys = ("ip", "mac", "policy", "community")
+
+            else:
+                for _, ip in networks:
+                    d: dict[str, str] = {
+                        "ip": str(ip.ipaddress),
+                        "mac": ip.macaddress or "<not set>",
+                    }
+                    data.append(d)
+
+            output_manager.add_formatted_table(
+                headers=headers,
+                keys=keys,
+                data=data,
+                indent=padding,
+            )
+
+        if only is None or only == 4:
+            output_a_records(v4, 4)
+        if only is None or only == 6:
+            output_a_records(v6, 6)
 
     def output_ipaddresses(
         self, padding: int = 14, names: bool = False, only: IP_Version | None = None
@@ -3212,14 +3908,14 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
     def output_roles(self, _padding: int = 14) -> None:
         """Output the roles for the host."""
-        roles = self.roles()
+        roles = self.roles
         manager = OutputManager()
         if not roles:
             manager.add_line(f"Host {self.name} has no roles")
         else:
             manager.add_line(f"Roles for {self.name}:")
             for role in roles:
-                manager.add_line(f"  {role.name}")
+                manager.add_line(f"  {role}")
 
     def __str__(self) -> str:
         """Return the host name as a string."""
@@ -3334,7 +4030,7 @@ class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
 
     @classmethod
     def output_multiple(
-        cls, hostgroups: list[HostGroup], padding: int = 14, multiline: bool = False
+        cls, hostgroups: list[HostGroup] | list[str], padding: int = 14, multiline: bool = False
     ) -> None:
         """Output multiple hostgroups to the console.
 
@@ -3346,13 +4042,19 @@ class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):
         if not hostgroups:
             return
 
+        groups: list[str] = []
+        for hg in hostgroups:
+            if isinstance(hg, str):
+                groups.append(hg)
+            else:
+                groups.append(hg.name)
+
         if multiline:
             manager.add_line("Groups:")
-            for group in hostgroups:
-                manager.add_line(f"  {group.name}")
+            for group in groups:
+                manager.add_line(f"  {group}")
         else:
-            groups = ", ".join(sorted([group.name for group in hostgroups]))
-            manager.add_line("{1:<{0}}{2}".format(padding, "Groups:", groups))
+            manager.add_line("{1:<{0}}{2}".format(padding, "Groups:", ", ".join(sorted(groups))))
 
     def set_description(self, description: str) -> Self:
         """Set the description for the hostgroup.
@@ -3691,10 +4393,22 @@ class ServerLibraries(BaseModel):
             manager.add_line(f"{' ' * indent}{lib.name}: {lib.version}")
 
 
+class TokenInfo(BaseModel):
+    """Model for token information."""
+
+    is_valid: bool
+    created: str
+    expire: str
+    last_used: str | None = None
+    lifespan: str
+
+
 class UserInfo(BaseModel):
     """Model for the user information."""
 
     username: str
+    last_login: str | None = None
+    token: TokenInfo | None = None
     django_status: UserDjangoStatus
     mreg_status: UserMregStatus
     groups: list[str]
@@ -3747,6 +4461,17 @@ class UserInfo(BaseModel):
         """Output the user information to the console."""
         outputmanager = OutputManager()
         outputmanager.add_line(f"Username: {self.username}")
+        outputmanager.add_line(f"Last login: {self.last_login or 'Never'}")
+
+        if self.token:
+            outputmanager.add_line("Token:")
+            outputmanager.add_line(f"  Valid: {self.token.is_valid}")
+            outputmanager.add_line(f"  Created: {self.token.created}")
+            outputmanager.add_line(f"  Expires: {self.token.expire}")
+            outputmanager.add_line(f"  Last used: {self.token.last_used or 'Never'}")
+            outputmanager.add_line(f"  Lifespan: {self.token.lifespan}")
+        else:
+            outputmanager.add_line("Token: None")
 
         if django:
             outputmanager.add_line("Django roles:")
