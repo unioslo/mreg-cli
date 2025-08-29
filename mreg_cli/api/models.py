@@ -6,7 +6,18 @@ import ipaddress
 import logging
 from datetime import date, datetime, timedelta
 from functools import cached_property
-from typing import Any, Callable, ClassVar, Iterable, Literal, Self, TypeVar, cast, overload
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Iterable,
+    Literal,
+    Protocol,
+    Self,
+    TypeVar,
+    cast,
+    overload,
+)
 
 from pydantic import (
     AliasChoices,
@@ -4311,6 +4322,29 @@ class UserPermission(BaseModel):
         )
 
 
+FetchT_co = TypeVar("FetchT_co", covariant=True)
+
+
+class Fetchable(Protocol[FetchT_co]):
+    """Interface for classes that implement a `fetch()` method.
+
+    This protocol is designed for endpoints that don't operate on resource IDs,
+    unlike standard APIMixin classes which implement `get()` with an ID parameter.
+
+    The `fetch()` method sends a GET request to the class's endpoint without
+    requiring an ID, typically for singleton resources, status endpoints, or
+    metadata endpoints that return a single object or status response rather
+    than a collection.
+
+    Since the response structure and object construction vary by endpoint type,
+    there is no general `fetch()` implementation provided by APIMixin. Each
+    implementing class must define its own `fetch()` method to handle the
+    specific response format and construct the appropriate object.
+    """
+
+    def fetch(self, *, ignore_errors: bool = True) -> FetchT_co: ...  # noqa: D102
+
+
 class ServerVersion(BaseModel):
     """Model for server version metadata."""
 
@@ -4322,7 +4356,7 @@ class ServerVersion(BaseModel):
         return Endpoint.MetaVersion
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True) -> ServerVersion:
+    def fetch(cls, *, ignore_errors: bool = True) -> ServerVersion:
         """Fetch the server version from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.
@@ -4362,7 +4396,7 @@ class ServerLibraries(BaseModel):
         return Endpoint.MetaLibraries
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True) -> ServerLibraries:
+    def fetch(cls, *, ignore_errors: bool = True) -> ServerLibraries:
         """Fetch the server libraries from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.
@@ -4420,7 +4454,7 @@ class UserInfo(BaseModel):
         return Endpoint.MetaUser
 
     @classmethod
-    def fetch(cls, ignore_errors: bool = True, user: str | None = None) -> UserInfo:
+    def fetch(cls, *, ignore_errors: bool = True, user: str | None = None) -> UserInfo:
         """Fetch the user information from the endpoint.
 
         :param ignore_errors: Whether to ignore errors.
@@ -4498,7 +4532,7 @@ class UserInfo(BaseModel):
 class LDAPHealth(BaseModel, APIMixin):
     """Model for LDAP health endpoint."""
 
-    ok: bool
+    status: str
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -4506,18 +4540,24 @@ class LDAPHealth(BaseModel, APIMixin):
         return Endpoint.HealthLDAP
 
     @classmethod
-    def fetch(cls) -> Self:
+    def fetch(cls, *, ignore_errors: bool = True) -> Self:
         """Fetch the LDAP status from the endpoint.
 
+        :param ignore_errors: Ignore non-503 errors. 503 means LDAP is down,
+            and should not be treated as an error in the traditional sense.
         :raises requests.APINotOk: If the response code is not 200 or 503.
         :returns: An instance of LDAPStatus.
         """
         try:
             get(cls.endpoint())
-            return cls(ok=True)
+            return cls(status="OK")
         except APINotOk as e:
-            if e.response.status_code == 503:
-                return cls(ok=False)
+            if ignore_errors:
+                logger.error("Failed to fetch LDAP health: %s", e)
+                if e.response.status_code == 503:
+                    return cls(status="Down")
+                else:
+                    return cls(status="Unknown")
             raise e
 
 
@@ -4532,26 +4572,33 @@ class HeartbeatHealth(BaseModel, APIMixin):
         """Return the endpoint for the class."""
         return Endpoint.HealthHeartbeat
 
-    @property
-    def uptime_str(self) -> str:
+    def as_str(self) -> str:
         """Return the uptime as a string."""
-        return str(timedelta(seconds=self.uptime))
+        # If we got a negative datetime, we weren't able to fetch the heartbeat
+        return str(timedelta(seconds=self.uptime)) if self.uptime > 0 else "Unknown"
 
     @classmethod
-    def fetch(cls) -> Self:
+    def fetch(cls, *, ignore_errors: bool = True) -> Self:
         """Fetch the heartbeat status from the endpoint.
 
+        :param ignore_errors: Ignore HTTP errors and return dummy object with negative uptime.
         :returns: An instance of HeartbeatHealth with the fetched data.
         """
-        result = get(cls.endpoint())
-        return cls.model_validate_json(result.text)
+        try:
+            result = get(cls.endpoint())
+            return cls.model_validate_json(result.text)
+        except Exception as e:
+            if ignore_errors:
+                logger.error("Failed to fetch heartbeat: %s", e)
+                return cls(uptime=-1, start_time=0)
+            raise e
 
 
 class HealthInfo(BaseModel):
     """Combined information from all health endpoints."""
 
-    heartbeat: HeartbeatHealth | None = None
-    ldap: LDAPHealth | None = None
+    heartbeat: HeartbeatHealth
+    ldap: LDAPHealth
 
     @classmethod
     def fetch(cls) -> HealthInfo:
@@ -4559,23 +4606,14 @@ class HealthInfo(BaseModel):
 
         :returns: An instance of HealthInfo with the fetched data.
         """
-
-        def try_call(callable_: Callable[[], T]) -> T | None:
-            try:
-                return callable_()
-            except Exception:
-                return None
-
         return cls(
-            heartbeat=try_call(HeartbeatHealth.fetch),
-            ldap=try_call(LDAPHealth.fetch),
+            heartbeat=HeartbeatHealth.fetch(),
+            ldap=LDAPHealth.fetch(),
         )
 
     def output(self) -> None:
         """Output the health information to the console."""
         manager = OutputManager()
         manager.add_line("Health Information:")
-        manager.add_line(f"  Uptime: {self.heartbeat.uptime_str if self.heartbeat else 'Unknown'}")
-        manager.add_line(
-            f"  LDAP: {('OK' if self.ldap.ok else 'Down') if self.ldap else 'Unknown'}"
-        )
+        manager.add_line(f"  Uptime: {self.heartbeat.as_str()}")
+        manager.add_line(f"  LDAP: {self.ldap.status}")
