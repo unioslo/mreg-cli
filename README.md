@@ -34,8 +34,55 @@ url=https://mreg.example.com:8000
 user=mreg-user
 ```
 
+An example config file can be found in [data/mreg-cli.conf](data/mreg-cli.conf).
+
 <details>
-<summary>Other options</summary>
+<summary>Config options</summary>
+
+### URL
+
+The URL of the MREG server. This is the only required option.
+
+```ini
+[mreg]
+url=https://mreg.example.com:8000
+```
+
+The URL can also be specified as a command line argument:
+
+```bash
+mreg-cli --url "https://mreg.example.com:8000"
+```
+
+### User
+
+The username to use when connecting to the MREG server. This is optional, and if not specified, the CLI will try to use the current user's username.
+
+```ini
+[mreg]
+user=mreg-user
+```
+
+The user can also be specified as a command line argument:
+
+```bash
+mreg-cli --user "mreg-user"
+```
+
+### Domain
+
+Default domain to use for hostnames. This is optional, and if not specified, the CLI will use `uio.no` as the default domain.
+
+```ini
+[mreg]
+domain=uio.no
+```
+
+The domain can also be specified as a command line argument:
+
+```bash
+mreg-cli --domain "uio.no"
+```
 
 ### Prompt
 
@@ -51,7 +98,7 @@ By default the prompt is set to `{user}@{host}`, which is equivalent to the foll
 
 ```ini
 [mreg]
-PROMPT={user}@{host}
+prompt={user}@{host}
 ```
 
 Which results in a prompt like this:
@@ -74,7 +121,7 @@ The prompt text can be disabled by setting it to no value in the config file or 
 
 ```ini
 [mreg]
-PROMPT=
+prompt=
 ```
 
 ```bash
@@ -85,6 +132,66 @@ Which results in the following prompt:
 
 ```cli
 >
+```
+
+### Log file
+
+The location of the log file. The default location is `$XDG_DATA_DIRS/mreg-cli/mreg-cli.log`, which is typically `~/.local/share/mreg-cli/mreg-cli.log`.
+
+```ini
+[mreg]
+logfile=/var/log/mreg-cli.log
+```
+
+The log file can also be specified as a command line argument:
+
+```bash
+mreg-cli --logfile "/var/log/mreg-cli.log"
+```
+
+### Timeout
+
+The timeout for HTTP requests to the MREG server. The default is 20 seconds.
+
+```ini
+[mreg]
+timeout=20
+```
+
+### Cache
+
+Enable/disable caching of API results. Cache is always cleared on every write request (POST, PUT, PATCH, DELETE).
+
+```ini
+[mreg]
+cache=true
+```
+
+### Cache TTL
+
+Time-to-live for cached API results, in seconds. Defaults to 300 seconds (5 minutes).
+
+```ini
+[mreg]
+cache_ttl=300
+```
+
+### Category tags
+
+List of valid category tags for networks. Used by `network create`.
+
+```ini
+[mreg]
+category_tags=default,production,development,test
+```
+
+### Location tags
+
+List of valid location tags for networks. Used by `network create`.
+
+```ini
+[mreg]
+location_tags=default,oslo,bergen,stavanger
 ```
 
 </details>
