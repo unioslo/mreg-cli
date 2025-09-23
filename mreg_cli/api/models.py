@@ -3009,7 +3009,7 @@ class Location(FrozenModelWithTimestamps, WithHost, APIMixin):
         OutputManager().add_line(f"{'LOC:':<{padding}}{self.loc}")
 
 
-class HostCommmunity(FrozenModel):
+class HostCommunity(FrozenModel):
     """Model for a host's community.
 
     Communities are associated with hosts via IP addresses.
@@ -3043,7 +3043,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     hostgroups: list[str] = []
     comment: str
 
-    communities: list[HostCommmunity] = []
+    communities: list[HostCommunity] = []
 
     # Note, we do not use WithZone here as this is optional and we resolve it differently.
     zone: int | None = None
