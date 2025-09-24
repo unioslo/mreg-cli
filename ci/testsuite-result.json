@@ -37658,11 +37658,11 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "network policy_set_prefix CustomPrefix \"newprefix\"",
-    "ok": [],
-    "warning": [],
-    "error": [
-      "Could not get value for commmunity_mapping_prefix in patched object."
+    "ok": [
+      "Set new community mapping prefix for network policy 'CustomPrefix'"
     ],
+    "warning": [],
+    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -37680,8 +37680,8 @@
               "description": "Custom community mapping prefix",
               "attributes": [],
               "community_mapping_prefix": "custom",
-              "created_at": "2025-05-13T12:58:36.403379+02:00",
-              "updated_at": "2025-05-13T12:58:36.403389+02:00"
+              "created_at": "2025-09-23T14:58:14.662710+02:00",
+              "updated_at": "2025-09-23T14:58:14.662719+02:00"
             }
           ]
         }
@@ -37690,16 +37690,16 @@
         "method": "PATCH",
         "url": "/api/v1/networkpolicies/4",
         "data": {
-          "commmunity_mapping_prefix": "newprefix"
+          "community_mapping_prefix": "newprefix"
         },
         "status": 200,
         "response": {
           "name": "customprefix",
           "description": "Custom community mapping prefix",
           "attributes": [],
-          "community_mapping_prefix": "custom",
-          "created_at": "2025-05-13T12:58:36.403379+02:00",
-          "updated_at": "2025-05-13T12:58:36.792665+02:00"
+          "community_mapping_prefix": "newprefix",
+          "created_at": "2025-09-23T14:58:14.662710+02:00",
+          "updated_at": "2025-09-23T14:58:15.041566+02:00"
         }
       },
       {
@@ -37711,9 +37711,9 @@
           "name": "customprefix",
           "description": "Custom community mapping prefix",
           "attributes": [],
-          "community_mapping_prefix": "custom",
-          "created_at": "2025-05-13T12:58:36.403379+02:00",
-          "updated_at": "2025-05-13T12:58:36.792665+02:00"
+          "community_mapping_prefix": "newprefix",
+          "created_at": "2025-09-23T14:58:14.662710+02:00",
+          "updated_at": "2025-09-23T14:58:15.041566+02:00"
         }
       }
     ],
@@ -37730,9 +37730,9 @@
     "output": [
       "Name:         foo",
       "Description:  Foo community",
-      "Global name:  custom01",
-      "Created:      Mon May 19 15:03:51 2025",
-      "Updated:      Mon May 19 15:03:51 2025",
+      "Global name:  newprefix01",
+      "Created:      Tue Sep 23 14:58:14 2025",
+      "Updated:      Tue Sep 23 14:58:14 2025",
       "Hosts:        0"
     ],
     "api_requests": [
@@ -37747,9 +37747,9 @@
             "name": "customprefix",
             "description": "Custom community mapping prefix",
             "attributes": [],
-            "community_mapping_prefix": "custom",
-            "created_at": "2025-05-19T15:03:51.281802+02:00",
-            "updated_at": "2025-05-19T15:03:51.716638+02:00"
+            "community_mapping_prefix": "newprefix",
+            "created_at": "2025-09-23T14:58:14.662710+02:00",
+            "updated_at": "2025-09-23T14:58:15.041566+02:00"
           },
           "communities": [
             {
@@ -37757,13 +37757,13 @@
               "description": "Foo community",
               "network": 11,
               "hosts": [],
-              "global_name": "custom01",
-              "created_at": "2025-05-19T15:03:51.631001+02:00",
-              "updated_at": "2025-05-19T15:03:51.631022+02:00"
+              "global_name": "newprefix01",
+              "created_at": "2025-09-23T14:58:14.965342+02:00",
+              "updated_at": "2025-09-23T14:58:14.965358+02:00"
             }
           ],
-          "created_at": "2025-05-19T15:03:51.389153+02:00",
-          "updated_at": "2025-05-19T15:03:51.487147+02:00",
+          "created_at": "2025-09-23T14:58:14.789842+02:00",
+          "updated_at": "2025-09-23T14:58:14.833461+02:00",
           "network": "10.0.3.0/24",
           "description": "CustomPrefixNet",
           "vlan": null,
@@ -37782,11 +37782,11 @@
     "command_filter": null,
     "command_filter_negate": false,
     "command_issued": "network policy_unset_prefix CustomPrefix",
-    "ok": [],
-    "warning": [],
-    "error": [
-      "Could not get value for commmunity_mapping_prefix in patched object."
+    "ok": [
+      "Unset community mapping prefix for network policy 'CustomPrefix'"
     ],
+    "warning": [],
+    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -37803,9 +37803,9 @@
               "name": "customprefix",
               "description": "Custom community mapping prefix",
               "attributes": [],
-              "community_mapping_prefix": "custom",
-              "created_at": "2025-05-13T12:58:36.403379+02:00",
-              "updated_at": "2025-05-13T12:58:36.792665+02:00"
+              "community_mapping_prefix": "newprefix",
+              "created_at": "2025-09-23T14:58:14.662710+02:00",
+              "updated_at": "2025-09-23T14:58:15.041566+02:00"
             }
           ]
         }
@@ -37814,16 +37814,16 @@
         "method": "PATCH",
         "url": "/api/v1/networkpolicies/4",
         "data": {
-          "commmunity_mapping_prefix": null
+          "community_mapping_prefix": null
         },
         "status": 200,
         "response": {
           "name": "customprefix",
           "description": "Custom community mapping prefix",
           "attributes": [],
-          "community_mapping_prefix": "custom",
-          "created_at": "2025-05-13T12:58:36.403379+02:00",
-          "updated_at": "2025-05-13T12:58:36.896803+02:00"
+          "community_mapping_prefix": null,
+          "created_at": "2025-09-23T14:58:14.662710+02:00",
+          "updated_at": "2025-09-23T14:58:15.135611+02:00"
         }
       },
       {
@@ -37835,9 +37835,9 @@
           "name": "customprefix",
           "description": "Custom community mapping prefix",
           "attributes": [],
-          "community_mapping_prefix": "custom",
-          "created_at": "2025-05-13T12:58:36.403379+02:00",
-          "updated_at": "2025-05-13T12:58:36.896803+02:00"
+          "community_mapping_prefix": null,
+          "created_at": "2025-09-23T14:58:14.662710+02:00",
+          "updated_at": "2025-09-23T14:58:15.135611+02:00"
         }
       }
     ],
@@ -37854,9 +37854,9 @@
     "output": [
       "Name:         foo",
       "Description:  Foo community",
-      "Global name:  custom01",
-      "Created:      Mon May 19 15:03:51 2025",
-      "Updated:      Mon May 19 15:03:51 2025",
+      "Global name:  community01",
+      "Created:      Tue Sep 23 14:58:14 2025",
+      "Updated:      Tue Sep 23 14:58:14 2025",
       "Hosts:        0"
     ],
     "api_requests": [
@@ -37871,9 +37871,9 @@
             "name": "customprefix",
             "description": "Custom community mapping prefix",
             "attributes": [],
-            "community_mapping_prefix": "custom",
-            "created_at": "2025-05-19T15:03:51.281802+02:00",
-            "updated_at": "2025-05-19T15:03:51.817521+02:00"
+            "community_mapping_prefix": null,
+            "created_at": "2025-09-23T14:58:14.662710+02:00",
+            "updated_at": "2025-09-23T14:58:15.135611+02:00"
           },
           "communities": [
             {
@@ -37881,13 +37881,13 @@
               "description": "Foo community",
               "network": 11,
               "hosts": [],
-              "global_name": "custom01",
-              "created_at": "2025-05-19T15:03:51.631001+02:00",
-              "updated_at": "2025-05-19T15:03:51.631022+02:00"
+              "global_name": "community01",
+              "created_at": "2025-09-23T14:58:14.965342+02:00",
+              "updated_at": "2025-09-23T14:58:14.965358+02:00"
             }
           ],
-          "created_at": "2025-05-19T15:03:51.389153+02:00",
-          "updated_at": "2025-05-19T15:03:51.487147+02:00",
+          "created_at": "2025-09-23T14:58:14.789842+02:00",
+          "updated_at": "2025-09-23T14:58:14.833461+02:00",
           "network": "10.0.3.0/24",
           "description": "CustomPrefixNet",
           "vlan": null,
@@ -37955,9 +37955,9 @@
               "name": "customprefix",
               "description": "Custom community mapping prefix",
               "attributes": [],
-              "community_mapping_prefix": "custom",
-              "created_at": "2025-05-13T13:06:39.172844+02:00",
-              "updated_at": "2025-05-13T13:06:39.727106+02:00"
+              "community_mapping_prefix": null,
+              "created_at": "2025-09-23T14:58:14.662710+02:00",
+              "updated_at": "2025-09-23T14:58:15.135611+02:00"
             }
           ]
         }

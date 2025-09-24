@@ -801,7 +801,7 @@ def policy_set_prefix(args: argparse.Namespace) -> None:
     prefix: str = args.prefix
 
     pol = NetworkPolicy.get_by_name_or_raise(policy)
-    pol.patch({"commmunity_mapping_prefix": prefix})
+    pol.patch({"community_mapping_prefix": prefix})
     OutputManager().add_ok(f"Set new community mapping prefix for network policy {policy!r}")
 
 
@@ -825,7 +825,7 @@ def policy_unset_prefix(args: argparse.Namespace) -> None:
     policy: str = args.policy
 
     pol = NetworkPolicy.get_by_name_or_raise(policy)
-    pol.patch({"commmunity_mapping_prefix": None})
+    pol.patch({"community_mapping_prefix": None})
     OutputManager().add_ok(f"Unset community mapping prefix for network policy {policy!r}")
 
 
