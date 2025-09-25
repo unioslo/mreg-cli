@@ -99,24 +99,22 @@ PROMPT_TEST_CASES = [
 
 
 @pytest.mark.parametrize("args, expected", PROMPT_TEST_CASES)
-def test_get_prompt_message_args(empty_config: MregCliConfig, args: dict, expected: str) -> None:
+def test_get_prompt_message_args(args: dict, expected: str) -> None:
     a = argparse.Namespace(
         prompt=args.get("prompt"),
         user=args.get("user"),
         url=args.get("url"),
         domain=args.get("domain"),
     )
-    conf = empty_config
-    conf._config_file = {}
-    conf.set_cmd_config(a)
-    assert get_prompt_message(a, conf).value == HTML(f"{expected}> ").value
+    conf = MregCliConfig()
+    conf.parse_cli_args(a)
+    assert get_prompt_message(conf).value == HTML(f"{expected}> ").value
 
 
+# NOTE: this test is pretty redundant. What is really the difference
+# between passing in the CLI args as a dict vs namespace?
 @pytest.mark.parametrize("config, expected", PROMPT_TEST_CASES)
-def test_get_prompt_message_config(
-    empty_config: MregCliConfig, config: dict, expected: str
-) -> None:
-    args = argparse.Namespace()
-    conf = empty_config
-    conf._config_file = config
-    assert get_prompt_message(args, conf).value == HTML(f"{expected}> ").value
+def test_get_prompt_message_config(config: dict, expected: str) -> None:
+    conf = MregCliConfig()
+    conf.parse_cli_args(config)
+    assert get_prompt_message(conf).value == HTML(f"{expected}> ").value

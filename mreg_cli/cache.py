@@ -72,7 +72,7 @@ class NullCache:
         tag: str | None = None,
         ignore: tuple[str, ...] = (),
     ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-        """Returns a decorator that does nothing"""
+        """Returns a decorator that does nothing."""
 
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
             return func  # Just return the original function unchanged
@@ -148,7 +148,7 @@ def _create_cache(config: MregCliConfig) -> CacheLike:
 
     Falls back to a no-op cache object if the diskcache cache cannot be created.
     """
-    if not config.get_cache_enabled():
+    if not config.cache:
         logger.debug("Cache is disabled in configuration, using NullCache.")
         return NullCache()
 
@@ -168,7 +168,7 @@ def configure(config: MregCliConfig) -> None:
     cache = _create_cache(config)
     _CACHE = MregCliCache(cache)  # pyright: ignore[reportConstantRedefinition]
 
-    if not config.get_cache_enabled():
+    if not config.cache:
         logger.debug("Cache is disabled in configuration, not configuring cache.")
         return
 
@@ -227,7 +227,7 @@ class MregCliCache:
             misses=misses,
             items=len(self.cache),
             directory=self.cache.directory,
-            ttl=conf.get_cache_ttl(),
+            ttl=conf.cache_ttl,
         )
 
     def _patch_functions(self) -> None:
@@ -298,8 +298,6 @@ class MregCliCache:
 
     def memoize_function(self, memfunc: MemoizedFunction) -> None:
         """Memoize a given function."""
-        from mreg_cli.config import MregCliConfig
-
         config = MregCliConfig()
 
         mod_path = memfunc.func
@@ -314,5 +312,5 @@ class MregCliCache:
         self.save_original_function(mod_path, mod, func)
 
         self.patch_function(
-            mod, self.cache.memoize(expire=config.get_cache_ttl(), tag=memfunc.tag)(func)
+            mod, self.cache.memoize(expire=config.cache_ttl, tag=memfunc.tag)(func)
         )

@@ -114,7 +114,7 @@ def whoami_help(args: argparse.Namespace) -> None:
         UserInfo.fetch(ignore_errors=False).output(django=args.django)
     except Exception as e:
         raise CliError(
-            f"Failed to display user info for current user {MregCliConfig().get_user()!r}: {e}"
+            f"Failed to display user info for current user {MregCliConfig().user!r}: {e}"
         ) from e
 
 
