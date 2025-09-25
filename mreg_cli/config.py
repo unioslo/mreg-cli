@@ -129,9 +129,9 @@ class IniConfigSettingsSource(InitSettingsSource, ConfigFileSourceMixin):
         vars: dict[str, Any] = {}  # noqa: A001
         for file in files:
             try:
-                file_path = to_path(file)
-            except Exception:
-                logger.warning("Skipping invalid config file path: %s", file)
+                file_path = to_path(file)  # handles failed Path.expanduser()
+            except Exception as e:
+                logger.warning("Skipping invalid config file path %s: %s", file, e)
                 continue
             if file_path.is_file():
                 vars.update(self._read_file(file_path))

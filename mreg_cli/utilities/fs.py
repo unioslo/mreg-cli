@@ -6,7 +6,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from mreg_cli.dirs import LOG_FILE_NAME
 from mreg_cli.exceptions import InputFailure
 
 logger = logging.getLogger(__name__)
@@ -21,18 +20,19 @@ def get_writable_file_or_tempfile(path: Path) -> Path:
         path.touch()
     except OSError as e:
         import tempfile  # noqa: PLC0415 # only import if we really need it
+        import time  # noqa: PLC0415
 
         # NOTE: we might not be able to write to the temp file either
-        # but in that we case we are so far outside the normal
+        # but in that case we are so far outside the normal
         # usage patterns that we should probably just fail
-        tmpdir = Path(tempfile.gettempdir()) / LOG_FILE_NAME
+        tmpfile = Path(tempfile.gettempdir()) / path.name or f"mreg-cli-temp-{int(time.time())}"
         logger.error(
-            ("Unable to create log file at %s due to: %s; falling back to temporary file at %s"),
+            "Unable to create file at %s due to: %s; falling back to temporary file at %s",
             path,
             e,
-            tmpdir,
+            tmpfile,
         )
-        return tmpdir
+        return tmpfile
     return path
 
 
