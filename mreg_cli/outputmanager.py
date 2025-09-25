@@ -11,9 +11,10 @@ import atexit
 import datetime
 import json
 import logging
-import os
 import re
-from typing import Any, Iterable, Literal, overload
+from collections.abc import Iterable
+from pathlib import Path
+from typing import Any, Literal, overload
 from urllib.parse import urlencode, urlparse
 
 import requests
@@ -155,7 +156,7 @@ class OutputManager:
         """Clear the recording data."""
         self._recorded_data: list[RecordingEntry] = []
         self._recording: bool = False
-        self._filename: str
+        self._file: Path | None = None
         self._record_timestamps: bool = True
 
     def record_timestamps(self, state: bool) -> None:
@@ -165,39 +166,37 @@ class OutputManager:
         """
         self._record_timestamps = state
 
-    def recording_start(self, filename: str) -> None:
+    def recording_start(self, file: Path) -> None:
         """Declare intent to start recording to the given filename.
 
         Note: The file will be overwritten if it exists.
 
         :param filename: The filename to record to.
         """
+        # Check that we actually have a file
+        if file.exists() and file.is_dir():
+            raise FileError(f"Recording file cannot be a directory: {file}")
+
         # Check that we can write to the file
         try:
-            with open(filename, "w") as _:
-                pass
+            file.write_text("")  # checks write access and wipes file
         except OSError as exc:
-            raise FileError(f"Unable open recording file for writing: {filename}") from exc
+            raise FileError(f"Unable open recording file for writing: {file}") from exc
 
         self._recording = True
-        self._filename = filename
+        self._file = file
 
         atexit.register(self.recording_stop)
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
 
     def recording_stop(self) -> None:
         """Stop the recording and save the recording to the file.
 
         Returns gracefully if recording is not active.
         """
-        if not self.recording_active():
+        if not self.recording_active() or not self._file:
             return
 
-        with open(self._filename, "w") as rec_file:
-            json.dump(self._recorded_data, rec_file, indent=2)
+        self._file.write_text(json.dumps(self._recorded_data, indent=2))
 
         self.recording_clear()
 
@@ -250,14 +249,14 @@ class OutputManager:
         """Return True if recording is active."""
         return self._recording
 
-    def recording_filename(self) -> str | None:
+    def recording_filename(self) -> Path | None:
         """Return the filename being recorded to.
 
         Return gracefully if recording is not active.
         """
         if not self.recording_active():
             return None
-        return self._filename
+        return self._file
 
     def recording_output(self) -> None:
         """Record the output, if recording is active."""

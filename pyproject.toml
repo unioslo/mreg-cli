@@ -48,6 +48,7 @@ dependencies = [
     "pydantic-extra-types>=2.1.0",
     "platformdirs>=4.3.0",
     "diskcache>=5.6.3",
+    "pydantic-settings>=2.10.1",
 ]
 dynamic = ["version"]
 
@@ -91,6 +92,7 @@ line_length = 99
 line-length = 99
 # Assume Python 3.11.
 target-version = "py311"
+
 
 [tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
@@ -220,7 +222,6 @@ exclude = [
     "venv",
     "migrations",
 ]
-per-file-ignores = {}
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
@@ -228,6 +229,10 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 [tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+"**/{tests,docs,tools}/*" = ["D103", "E501", "D100", "D104"]
+
 
 [tool.setuptools_scm]
 version_file = "mreg_cli/_version.py"

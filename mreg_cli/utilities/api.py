@@ -121,7 +121,7 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
 
     try:
         ret = session.get(
-            urljoin(MregCliConfig().get_url(), "/api/v1/hosts/"),
+            urljoin(url, "/api/v1/hosts/"),
             params={"page_size": 1},
             timeout=5,
         )
@@ -160,11 +160,12 @@ def prompt_for_password_and_login(user: str, url: str, catch_exception: bool = T
 
 def logout() -> None:
     """Logout from MREG."""
-    path = urljoin(MregCliConfig().get_url(), "/api/token-logout/")
+    path = urljoin(MregCliConfig().url, "/api/token-logout/")
     # Try to logout, and ignore errors
     try:
         session.post(path)
-    except requests.exceptions.ConnectionError:
+    except requests.exceptions.ConnectionError as e:
+        logger.warning("Failed to log out: %s", e)
         pass
 
 
@@ -172,7 +173,7 @@ def prompt_for_password_and_try_update_token() -> None:
     """Prompt for a password and try to update the token."""
     password = prompt("You need to re-authenticate\nEnter password: ", is_password=True)
     try:
-        user = MregCliConfig().get("user")
+        user = MregCliConfig().user
         if not user:
             raise LoginFailedError("Unable to determine username.")
         auth_and_update_token(user, password)
@@ -182,7 +183,8 @@ def prompt_for_password_and_try_update_token() -> None:
 
 def auth_and_update_token(username: str, password: str) -> None:
     """Perform the actual token update."""
-    tokenurl = urljoin(MregCliConfig().get_url(), "/api/token-auth/")
+    base_url = MregCliConfig().url
+    tokenurl = urljoin(base_url, "/api/token-auth/")
     logger.info("Updating token for %s @ %s", username, tokenurl)
     try:
         result = requests.post(tokenurl, {"username": username, "password": password})
@@ -201,7 +203,7 @@ def auth_and_update_token(username: str, password: str) -> None:
     token = result.json()["token"]
     logger.info("Token updated for %s @ %s", username, tokenurl)
     set_session_token(token)
-    TokenFile.set_entry(username, MregCliConfig().get_url(), token)
+    TokenFile.set_entry(username, base_url, token)
 
 
 def result_check(result: Response, operation_type: str, url: str) -> None:
@@ -249,7 +251,7 @@ def _request_wrapper(
     """Wrap request calls to MREG for logging and token management."""
     if params is None:
         params = {}
-    url = urljoin(MregCliConfig().get_url(), path)
+    url = urljoin(MregCliConfig().url, path)
 
     logurl = url
     if operation_type.upper() == "GET" and params:
@@ -282,7 +284,7 @@ def _request_wrapper(
         url,
         params=params,
         json=data or None,
-        timeout=MregCliConfig().get_http_timeout(),
+        timeout=MregCliConfig().http_timeout,
     )
 
     last_request_url.set(logurl)
@@ -305,7 +307,7 @@ def _request_wrapper(
         and params == {}
         and data
     ):
-        result = func(url, params={}, timeout=MregCliConfig().get_http_timeout(), data=data)
+        result = func(url, params={}, timeout=MregCliConfig().http_timeout, data=data)
 
     OutputManager().recording_request(operation_type, url, params, data, result)
 
