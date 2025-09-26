@@ -110,16 +110,16 @@ class IniConfigSettingsSource(InitSettingsSource, ConfigFileSourceMixin):
         self.paths: list[Path] = []
         """List of successfully read config file paths in chronological order."""
 
-        # Read the INI file(s) and populate the initial data
-        # NOTE: `DEFAULT_CONFIG_PATH` is in order of precedence,
-        # so we need to reverse it to read in the correct order,
-        # since we update the dict with each file read.
-        # Thus, the last file read has the highest precedence.
+        # Read INI files to populate initial configuration data.
+        # DEFAULT_CONFIG_PATH is ordered by precedence, but we need to read files
+        # in reverse order since each file read overwrites existing values
+        # in the dictionary in the order they are read. This ensures the highest
+        # precedence file is processed last and takes priority.
         self.ini_data = self._read_files(DEFAULT_CONFIG_PATH[::-1])  # reverse order
         super().__init__(settings_cls, self.ini_data)
 
-    # NOTE: implements ConfigFileSourceMixin._read_files method but with
-    # protection against failed Path.expanduser() calls
+    # Modified version of ConfigFileSourceMixin._read_files() with extra
+    # protection against Path.expanduser() failures
     @override
     def _read_files(self, files: PathType | None) -> dict[str, Any]:
         if files is None:
@@ -251,6 +251,7 @@ class MregCliConfig(BaseSettings):
         """Ensure we have a writable log file."""
         return get_writable_file_or_tempfile(v)
 
+    @override
     @classmethod
     def settings_customise_sources(
         cls,
@@ -345,12 +346,12 @@ class MregCliConfig(BaseSettings):
 
         # Print the table header
         print("Configuration Options:")
-        header_format = f"{{:<{key_width}}} {{:<{active_width}}} {{:<{cli_width}}} {{:<{env_width}}} {{:<{file_width}}}"
+        header_format = f"{{:<{key_width}}} {{:<{active_width}}} {{:<{cli_width}}} {{:<{env_width}}} {{:<{file_width}}}"  # noqa: E501
         print(header_format.format("Key", "Active", "CLI", "Env", "File"))
         print("-" * (key_width + active_width + cli_width + env_width + file_width))
 
         # Print each row
-        row_format = f"{{:<{key_width}}} {{:<{active_width}}} {{:<{cli_width}}} {{:<{env_width}}} {{:<{file_width}}}"
+        row_format = f"{{:<{key_width}}} {{:<{active_width}}} {{:<{cli_width}}} {{:<{env_width}}} {{:<{file_width}}}"  # noqa: E501
         for key in sorted(all_keys):
             # Use formatted values for active config
             active_line_val = self._fmt_config_value(states["active"].get(key, UNSET_STR))
