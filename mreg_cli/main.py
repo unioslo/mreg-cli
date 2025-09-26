@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import functools
-import getpass
 import logging
 
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
@@ -15,6 +14,7 @@ from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, source
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliException, LoginFailedError
+from mreg_cli.log import MregCliLogger
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.prompt import get_prompt_message
 from mreg_cli.types import LogLevel
@@ -39,7 +39,7 @@ def main():
     connect_args = parser.add_argument_group("connection settings")
     connect_args.add_argument(
         "--url",
-        default=config.get_url(),
+        default=config.url,
         help="use mreg server at %(metavar)s (default: %(default)s)",
         metavar="URL",
     )
@@ -47,7 +47,7 @@ def main():
     connect_args.add_argument(
         "-u",
         "--user",
-        default=config.get("user", getpass.getuser()),
+        default=config.user,
         help="authenticate as %(metavar)s (default: %(default)s)",
         metavar="USER",
     )
@@ -56,7 +56,7 @@ def main():
         "-t",
         "--timeout",
         type=int,
-        default=config.get_http_timeout(),
+        default=config.http_timeout,
         help="HTTP request timeout in seconds (default: %(default)s)",
         metavar="TIMEOUT",
     )
@@ -65,7 +65,7 @@ def main():
     mreg_args.add_argument(
         "-d",
         "--domain",
-        default=config.get("domain", config.get_default_domain()),
+        default=config.domain,
         help="default %(metavar)s (default: %(default)s)",
         metavar="DOMAIN",
     )
@@ -94,7 +94,7 @@ def main():
     output_args.add_argument(
         "-v",
         "--log-level",
-        dest="loglevel",
+        dest="log_level",
         default="INFO",
         choices=LogLevel.choices(),
         help="Log level for logging.",
@@ -102,7 +102,7 @@ def main():
     output_args.add_argument(
         "-l",
         "--logfile",
-        dest="logfile",
+        dest="log_file",
         help="write log to %(metavar)s",
         metavar="LOGFILE",
     )
@@ -144,28 +144,25 @@ def main():
     )
 
     args = parser.parse_args()
+    logger.debug(f"args: {args}")
 
     if args.version:
         print(f"mreg-cli {__version__}")
         raise SystemExit() from None
 
-    config.set_cmd_config(args)
+    config.parse_cli_args(args)
+    MregCliLogger().start_logging(config.log_file, config.log_level)
 
-    logfile = config.get_default_logfile()
-    config.start_logging(logfile, args.loglevel)
-
-    logger.debug(f"args: {args}")
-
-    if traffic_file := config.get("record_traffic"):
+    if traffic_file := config.record_traffic:
         OutputManager().recording_start(traffic_file)
 
-    if config.get("record_traffic_without_timestamps"):
+    if config.record_traffic_without_timestamps:
         OutputManager().record_timestamps(False)
 
-    if config.get("user") is None:
+    if not config.user:
         print("Username not set in config or as argument")
         return
-    elif config.get("url") is None:
+    elif not config.url:
         print("mreg url not set in config or as argument")
         return
 
@@ -174,9 +171,10 @@ def main():
 
     try:
         try_token_or_login(
-            str(config.get("user")),
-            str(config.get("url")),
-            fail_without_token=args.token_only,
+            config.user,
+            config.url,
+            # TODO: IMPORTANT!!! ADD token_only override/assignment to config
+            fail_without_token=config.token_only,
         )
     except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
         if isinstance(e, LoginFailedError):
@@ -193,7 +191,7 @@ def main():
     # some configurations of the prompt for us: the text of the prompt; the
     # completer; and other visual things.
     session: PromptSession[str] = PromptSession(
-        message=functools.partial(get_prompt_message, args, config),
+        message=functools.partial(get_prompt_message, config),
         search_ignore_case=True,
         completer=cli,
         complete_while_typing=True,
@@ -204,9 +202,10 @@ def main():
     print("Type -h for help.")
 
     # if the --source parameter was given, read commands from the source file and then exit
-    if source_file := config.get("source"):
+    if source_file := config.source:
         logger.info("Reading commands from %s", source_file)
-        for command in source([source_file], bool(config.get("verbosity")), False):
+        # TODO: add --verbose flag
+        for command in source([source_file], config.verbose, False):
             cli.process_command_line(command)
         return
 

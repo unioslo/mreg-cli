@@ -197,7 +197,8 @@ def test_name_list_basic():
 def test_name_list_with_invalid_item(caplog: pytest.LogCaptureFixture):
     """Test NameList field with an item without a name.
 
-    Should log an error and skip the item."""
+    Should log an error and skip the item.
+    """
     inp = {
         "hosts": [
             {"name": "test1", "value": 1},
