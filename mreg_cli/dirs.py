@@ -24,8 +24,7 @@ LOG_FILE_NAME = "mreg-cli.log"
 LOG_FILE_DEFAULT = LOG_DIR / LOG_FILE_NAME
 """Default log file path."""
 
-# Config file locations.
-# This needs migration to platformdirs... Without breaking historical usage.
+# Config file locations
 DEFAULT_CONFIG_PATH: tuple[Path, ...] = tuple(
     (
         CONFIG_FILE_DEFAULT,
