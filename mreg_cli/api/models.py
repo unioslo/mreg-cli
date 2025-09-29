@@ -3597,7 +3597,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: The community if found.
         :raises EntityNotFound: If the community is not found.
         """
-        community = self.get_community(name)
+        community = self.get_community(name, ip)
         if not community:
             msg = f"Community {name!r}"
             if ip:
