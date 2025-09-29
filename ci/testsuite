@@ -57,6 +57,7 @@ network set_location 10.0.1.0/24 loc1
 network set_vlan 10.0.1.0/24 1234
 network info 10.0.1.0/24
 network find -network 10.0.1.0/24 -description '*one host*' -vlan 1234 -frozen 1 -reserved 6 -dns_delegated 0 -category Yellow -location Somewhere
+network find -host somehost
 host set_contact somehost "new-support@example.org"
 host history somehost
 host a_add somehost 10.0.1.0/24  # should require force, because the network is frozen
