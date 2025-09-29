@@ -145,6 +145,11 @@ def info(args: argparse.Namespace) -> None:
             metavar="IP",
         ),
         Flag(
+            "-host",
+            short_desc="Host name",
+            metavar="HOST",
+        ),
+        Flag(
             "-network",
             description="Network address",
             metavar="NETWORK",
@@ -213,6 +218,16 @@ def find(args: argparse.Namespace) -> None:
     if ip_arg := args_dict.get("ip"):
         addr = NetworkOrIP.parse_or_raise(ip_arg, mode="ip")
         networks = [Network.get_by_ip_or_raise(addr)]
+    elif host_arg := args_dict.get("host"):
+        host = Host.get_by_any_means_or_raise(host_arg)
+        ipaddrs = IPAddress.get_list_by_field("host", host.id)
+        networks: list[Network] = []
+        for ipaddr in ipaddrs:
+            # Get the network for each IP address
+            # IP might not be in a network managed by MREG, does not raise exception.
+            net = Network.get_by_ip(ipaddr.ipaddress)
+            if net and net not in networks:
+                networks.append(net)
     else:
         params: QueryParams = {}
         param_names = [
