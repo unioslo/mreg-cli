@@ -1,20 +1,19 @@
+from __future__ import annotations
+
+import pytest
 from inline_snapshot import snapshot
 from pydantic import ValidationError as PydanticValidationError
-import pytest
+from pytest_httpserver import HTTPServer
 
 from mreg_cli.api.models import Host
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import ValidationError
-
-
-from pytest_httpserver import HTTPServer
-
 from mreg_cli.utilities.api import get
 
 
 def test_validation_error_get_host(httpserver: HTTPServer) -> None:
     """Test a validation error stemming from a GET request."""
-    MregCliConfig()._config_cmd["url"] = httpserver.url_for("/")
+    MregCliConfig().url = httpserver.url_for("/")
 
     httpserver.expect_oneshot_request("/hosts/foobar").respond_with_json(
         {

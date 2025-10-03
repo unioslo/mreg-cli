@@ -73,10 +73,10 @@ class HostName(str):
             return value
 
         config = MregCliConfig()
-        default_domain = config.get("domain")
+        domain = config.domain
         # Append domain name if in config and it does not end with it
-        if default_domain and not value.endswith(default_domain):
-            return f"{value}.{default_domain}"
+        if domain and not value.endswith(domain):
+            return f"{value}.{domain}"
         return value
 
     @classmethod
