@@ -142,6 +142,13 @@ def main():
         default=False,
         help="Only attempt token login, this will avoid interactive prompts.",
     )
+    output_args.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="Enable verbose output for certain commands.",
+    )
 
     output_args.add_argument(
         "command", metavar="command", nargs="*", help="Oneshot command to issue to the cli."
@@ -208,7 +215,6 @@ def main():
     # if the --source parameter was given, read commands from the source file and then exit
     if source_file := config.source:
         logger.info("Reading commands from %s", source_file)
-        # TODO: add --verbose flag
         for command in source([source_file], config.verbose, False):
             cli.process_command_line(command)
         return
