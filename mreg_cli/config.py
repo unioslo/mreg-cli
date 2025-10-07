@@ -271,7 +271,6 @@ class MregCliConfig(BaseSettings):
 
         Does not read from any sources.
         """
-        # NOTE: move to conftest.py? We currently don't use it in the application itself.
         cls._reset_instance()
         return cls.model_construct()
 

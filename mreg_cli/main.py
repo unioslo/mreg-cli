@@ -26,7 +26,11 @@ logger = logging.getLogger(__name__)
 def main():
     """Entry point for the mreg cli."""
     # Read config file first, to provide defaults
-    config = MregCliConfig()
+    try:
+        config = MregCliConfig()
+    except Exception as e:
+        logger.error("Failed to load config: %s", e)
+        config = MregCliConfig.get_default_config()
 
     parser = argparse.ArgumentParser(description="The MREG cli")
 
