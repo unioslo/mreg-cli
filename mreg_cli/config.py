@@ -164,8 +164,8 @@ ResolvedPath = Annotated[Path, AfterValidator(to_path)]
 class MregCliConfig(BaseSettings):
     """Configuration singleton class for the mreg-cli."""
 
-    url: str = ""
     user: str = ""
+    url: str = "https://mreg.uio.no"
     domain: str = "uio.no"
     timeout: int = 20
     prompt: str = "{user}@{host}"
