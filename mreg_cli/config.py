@@ -186,6 +186,7 @@ class MregCliConfig(BaseSettings):
         env_prefix="MREG_CLI_",
         # IMPORTANT: Validate assignment so we can override fields with CLI args
         validate_assignment=True,
+        extra="ignore",
     )
 
     # Class vars required for singleton behavior
