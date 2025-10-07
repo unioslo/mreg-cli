@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 from typing import Annotated, Any, ClassVar, Self, TypedDict
 
-from pydantic import AfterValidator, Field, field_validator
+from pydantic import AfterValidator, AliasChoices, Field, field_validator
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
@@ -179,7 +179,11 @@ class MregCliConfig(BaseSettings):
     token_only: bool = False
     source: ResolvedPath | None = None
     verbose: bool = False
-    log_file: ResolvedPath = LOG_FILE_DEFAULT
+    log_file: ResolvedPath = Field(
+        LOG_FILE_DEFAULT,
+        # New and old names both valid
+        validation_alias=AliasChoices("logfile", "log_file"),
+    )
     log_level: LogLevel = LogLevel.INFO
 
     model_config = SettingsConfigDict(
