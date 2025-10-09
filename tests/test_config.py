@@ -25,7 +25,7 @@ def test_get_default_config() -> None:
 
     assert conf_dict == snapshot(
         {
-            "url": "",
+            "url": "https://mreg.uio.no",
             "user": "",
             "domain": "uio.no",
             "timeout": 20,
