@@ -1,17 +1,8 @@
-"""Logging.
+"""Configuration management for the application.
 
-This module can be used to configure basic logging to stderr, with an optional
-filter level.
-
-When prompting for user input (verbosity, debug level), log levels can be
-translated according to a mapping:
-
-.. py:data:: LOGGING_VERBOSITY
-
-    0. :py:const:`logging.ERROR`
-    1. :py:const:`logging.WARNING`
-    2. :py:const:`logging.INFO`
-    3. :py:const:`logging.DEBUG`
+Provides a singleton configuration class that reads settings from
+multiple sources, including environment variables, command line arguments,
+and an INI configuration file.
 """
 
 from __future__ import annotations
@@ -20,286 +11,291 @@ import argparse
 import configparser
 import logging
 import os
-import sys
-import tempfile
-from typing import Any, overload
+from pathlib import Path
+from typing import Annotated, Any, ClassVar, Self, TypedDict
 
-import platformdirs
+from pydantic import AfterValidator, AliasChoices, Field, field_validator
+from pydantic.fields import FieldInfo
+from pydantic_settings import (
+    BaseSettings,
+    EnvSettingsSource,
+    InitSettingsSource,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
+from pydantic_settings.sources import ConfigFileSourceMixin
+from pydantic_settings.sources.types import PathType
+from typing_extensions import override
 
-from mreg_cli.types import DefaultType, LogLevel
+from mreg_cli.dirs import DEFAULT_CONFIG_PATH, LOG_FILE_DEFAULT
+from mreg_cli.types import LogLevel
+from mreg_cli.utilities.fs import get_writable_file_or_tempfile, to_path
 
 logger = logging.getLogger(__name__)
 
 
-# Config file locations.
-# This needs migration to platformdirs... Without breaking historical usage.
-DEFAULT_CONFIG_PATH = tuple(
-    (
-        os.path.expanduser("~/.config/mreg-cli.conf"),
-        "/etc/mreg-cli.conf",
-        os.path.join(sys.prefix, "local", "share", "mreg-cli.conf"),
-        os.path.join(sys.prefix, "share", "mreg-cli.conf"),
-        # At last, look in ../data/ in case we're developing
-        os.path.join(os.path.dirname(__file__), "..", "data", "mreg-cli.conf"),
-    )
-)
-
-data_dir = platformdirs.user_data_dir(appname="mreg-cli", appauthor="UiO")
-log_file_name = "mreg-cli.log"
-
-# Try to ensure that the data directory exists, but if it doesn't, we'll fall through and
-# eventually use a temp dir. This makes the assumption that os.access on a non-existent directory
-# will return False.
-if not os.path.exists(data_dir):
-    try:
-        os.makedirs(data_dir, exist_ok=True)
-    except Exception:
-        pass
-
-if not os.access(data_dir, os.W_OK):
-    tmp_data_dir = tempfile.mkdtemp(prefix="mreg-cli.", suffix="." + str(os.getuid()))
-    print(f"Default logging directory is not writable, using {tmp_data_dir} instead.")
-    os.makedirs(tmp_data_dir, exist_ok=True)
-    data_dir = tmp_data_dir
-
-# Set the data directory
-DATA_DIR = data_dir
-DEFAULT_LOG_FILE = os.path.join(DATA_DIR, log_file_name)
-
-# Default logging format
-LOGGING_FORMAT = "%(asctime)s - %(levelname)-8s - %(name)s - %(message)s"
-
+# Defaults
 DEFAULT_PROMPT = "{user}@{host}"
 
-DEFAULT_HTTP_TIMEOUT = 20  # seconds
-DEFAULT_CACHE_TTL = 300  # seconds
+UNSET_STR = "-"
+"""String used to represent unset values in the config table."""
 
 
-def is_bool_true(value: str | bool | None) -> bool:
-    """Check if a string value is has a 'truthy' value.
+class ConfigSourceMap(TypedDict):
+    """Mapping of config sources to their values + active config."""
 
-    NOTE: 'truthy' in the sense that it is a valid YAML-like bool value.
-    """
-    v = str(value) if value else ""
-    return v.lower() in ["true", "1", "yes", "y"]
-
-
-def as_int(value: str | int | None, default: int, name: str = "value") -> int:
-    """Convert a string value to an integer, or return the default."""
-    try:
-        return int(value)  # pyright: ignore[reportArgumentType]
-    except (ValueError, TypeError):
-        logger.warning("Invalid %s value, using default %d seconds.", name, default)
-        return default
+    cli: dict[str, Any]
+    env: dict[str, Any]
+    file: dict[str, Any]
+    active: dict[str, Any]
 
 
-class MregCliConfig:
-    """Configuration class for the mreg-cli.
+class CliSettingsSource(PydanticBaseSettingsSource):
+    """HACK: Mock source for storing command line arguments.
 
-    This is a singleton class that is used to store configuration information.
-    Configuration is loaded with the following priority:
-    1. Command line options
-    2. Environment variables (prefixed with 'MREG_')
-    3. Configuration file
+    Does not actually parse anything, just stores the args
+    and acts as a settings source for introspection purposes.
     """
 
-    _instance = None
-    _is_logging = False
-    _logfile = None
-    _config_cmd: dict[str, str]
-    _config_file: dict[str, str]
-    _config_env: dict[str, str]
+    def __init__(self, settings_cls: type[BaseSettings]):
+        """Initialize the CLI settings source."""
+        # NOTE: Declare variables _before_ any method is executed
+        self.cli_data: dict[str, Any] = {}
+        """Dictionary of command line arguments."""
 
-    def __new__(cls) -> MregCliConfig:
-        """Create a new instance of the configuration class.
+        super().__init__(settings_cls)
 
-        This ensures that only one instance of the configuration class is created.
+    @override
+    def __call__(self) -> dict[str, Any]:
+        """Return all active CLI args that differ from field defaults."""
+        active: dict[str, Any] = {}
+        for k, v in self.cli_data.items():
+            if v is None:
+                continue
+            if k in self.settings_cls.model_fields:
+                field = self.settings_cls.model_fields[k]
+                # Only include if different from default value
+                if field.default is not None and v == field.default:
+                    continue
+                elif field.default_factory is not None and v == field.default_factory():
+                    continue
+                active[k] = v
+        return active
+
+    @override
+    def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
+        # Nothing to do here. Only implement the return statement to make mypy happy
+        return None, "", False
+
+    def set_cli_args(self, args: argparse.Namespace | dict[str, Any]) -> None:
+        """Set the command line arguments to be used as a source.
+
+        :param args: Command line arguments as an argparse.Namespace or dictionary.
         """
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._config_file = {}
-            cls._instance._config_env = cls._load_env_config()
-            cls._instance._config_cmd = {}
-            cls._instance.get_config()
+        if isinstance(args, argparse.Namespace):
+            args = vars(args)
+        self.cli_data = {k: v for k, v in args.items() if v is not None}
 
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}()"
+
+
+class IniConfigSettingsSource(InitSettingsSource, ConfigFileSourceMixin):
+    """Pydantic settings source that loads variables from an INI file."""
+
+    def __init__(self, settings_cls: type[BaseSettings]):
+        """Initialize the INI config settings source."""
+        # NOTE: Declare variables _before_ any method is executed
+        self.paths: list[Path] = []
+        """List of successfully read config file paths in chronological order."""
+
+        # Read INI files to populate initial configuration data.
+        # DEFAULT_CONFIG_PATH is ordered by precedence, but we need to read files
+        # in reverse order since each file read overwrites existing values
+        # in the dictionary in the order they are read. This ensures the highest
+        # precedence file is processed last and takes priority.
+        self.ini_data = self._read_files(DEFAULT_CONFIG_PATH[::-1])  # reverse order
+        super().__init__(settings_cls, self.ini_data)
+
+    # Modified version of ConfigFileSourceMixin._read_files() with extra
+    # protection against Path.expanduser() failures
+    @override
+    def _read_files(self, files: PathType | None) -> dict[str, Any]:
+        if files is None:
+            return {}
+        if isinstance(files, (str, os.PathLike)):
+            files = [files]
+        vars: dict[str, Any] = {}  # noqa: A001
+        for file in files:
+            try:
+                file_path = to_path(file)  # handles failed Path.expanduser()
+            except Exception as e:
+                logger.warning("Skipping invalid config file path %s: %s", file, e)
+                continue
+            if file_path.is_file():
+                vars.update(self._read_file(file_path))
+        return vars
+
+    @override
+    def _read_file(self, path: Path) -> dict[str, Any]:
+        """Read from an INI file and return a dictionary of settings."""
+        try:
+            config = configparser.ConfigParser()
+            config.read(path)
+            vals = {k: v for k, v in config["mreg"].items()}
+            # no error here, assume we loaded from the file
+            self.paths.append(path)  # no duplicate checking here
+            logger.info("Loaded config file %s", path)
+            return vals
+        except Exception as e:
+            logger.error("Failed to read config file %s: %s", path, e)
+            return {}
+
+    @override
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}()"
+
+
+ResolvedPath = Annotated[Path, AfterValidator(to_path)]
+"""Path type that is user expanded (~) and resolved (absolute+symlinks) after validation."""
+
+
+class MregCliConfig(BaseSettings):
+    """Configuration singleton class for the mreg-cli."""
+
+    user: str = ""
+    url: str = "https://mreg.uio.no"
+    domain: str = "uio.no"
+    timeout: int = 20
+    prompt: str = "{user}@{host}"
+    category_tags: list[str] = []
+    location_tags: list[str] = []
+    cache: bool = True
+    cache_ttl: int = Field(default=300, ge=0)
+    http_timeout: int = Field(default=20, ge=0)
+    record_traffic: ResolvedPath | None = None
+    record_traffic_without_timestamps: bool = False
+    token_only: bool = False
+    source: ResolvedPath | None = None
+    verbose: bool = False
+    log_file: ResolvedPath = Field(
+        LOG_FILE_DEFAULT,
+        # New and old names both valid
+        validation_alias=AliasChoices("logfile", "log_file"),
+    )
+    log_level: LogLevel = LogLevel.INFO
+
+    model_config = SettingsConfigDict(
+        env_prefix="MREG_CLI_",
+        # IMPORTANT: Validate assignment so we can override fields with CLI args
+        validate_assignment=True,
+        extra="ignore",
+    )
+
+    # Class vars required for singleton behavior
+    _instance: ClassVar[Self | None] = None
+
+    _init: ClassVar[bool] = False
+    """Flag to indicate if sources should be loaded on next instantiation."""
+
+    _sources: ClassVar[tuple[PydanticBaseSettingsSource, ...]] = tuple()
+    """Settings sources that have been loaded."""
+
+    def __new__(cls, **kwargs: Any) -> Self:
+        """Create a new instance of the config or return the existing one."""
+        if cls._instance is None:
+            cls._reset_instance()  # clears state, triggers source loading
+            cls._instance = super().__new__(cls, **kwargs)
         return cls._instance
 
-    @staticmethod
-    def _load_env_config() -> dict[str, str]:
-        """Load environment variables into the configuration, filtering with 'MREGCLI_' prefix."""
-        env_prefix = "MREGCLI_"
-        return {
-            key[len(env_prefix) :].lower(): value
-            for key, value in os.environ.items()
-            if key.startswith(env_prefix)
-        }
+    def __init__(self, **kwargs: Any) -> None:
+        """Initialize the configuration instance.
 
-    @overload
-    def get(self, key: str) -> str | None: ...
-
-    @overload
-    def get(self, key: str, default: DefaultType = ...) -> str | DefaultType: ...
-
-    def get(self, key: str, default: DefaultType | None = None) -> str | DefaultType | None:
-        """Get a configuration value with priority: cmdline, env, file.
-
-        :param str key: Configuration key.
-        :param default: Default value if key is not found.
-
-        :returns: Configuration value.
+        Loads from sources on first instantiation only.
         """
-        return self._config_cmd.get(
-            key, self._config_env.get(key, self._config_file.get(key, default))
+        # Calling __init__ again causes Pydantic to reevaluate sources,
+        # thereby overwriting the values in the current instance.
+        if self._init:
+            return
+        super().__init__(**kwargs)
+        self.__class__._init = True
+
+    @classmethod
+    def _reset_instance(cls) -> None:
+        cls._instance = None
+        cls._init = False
+        cls._sources = tuple()
+
+    @field_validator("user")
+    def _user_or_getpass_getuser(cls, v: str | None) -> str:
+        """Fall back on `getpass.getuser()` if user arg is empty string."""
+        if not v:
+            import getpass  # noqa: PLC0415 # only import if we need it
+
+            return getpass.getuser()
+        return v
+
+    @field_validator("category_tags", "location_tags", mode="before")
+    def _ensure_tags_are_lists(cls, v: Any) -> list[str]:
+        # NOTE: does NOT work for env vars, since the Pydantic source
+        # parses those values inside the settings source itself.
+        if isinstance(v, str):
+            return [tag.strip() for tag in v.split(",") if tag.strip()]
+        if isinstance(v, list):
+            return [str(i) for i in v if i is not None]
+        return []
+
+    @field_validator("log_file", mode="after")
+    def _ensure_log_file_writable(cls, v: Path) -> Path:
+        """Ensure we have a writable log file."""
+        return get_writable_file_or_tempfile(v)
+
+    @override
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,  # noqa: ARG003 # unused
+        file_secret_settings: PydanticBaseSettingsSource,  # noqa: ARG003 # unused
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Parse settings from usual sources + INI file _iff_ not already initialized."""
+        # Store sources so we can introspect later
+        cls._sources = (
+            env_settings,
+            init_settings,
+            IniConfigSettingsSource(settings_cls),
         )
+        return cls._sources
 
-    def set_cmd_config(self, args: argparse.Namespace) -> None:
-        """Set command line configuration options from command args.
+    @classmethod
+    def get_default_config(cls) -> Self:
+        """Create a Config object with default values.
 
-        :param argparse.Namespace args: Command line arguments.
+        Does not read from any sources.
         """
-        conf = {k: v for k, v in vars(args).items() if v not in [None, ""]}
-        self._config_cmd.update(conf)
+        cls._reset_instance()
+        return cls.model_construct()
 
-    def get_config(self, reload: bool = False) -> None:
-        """Load the configuration file into the class.
-
-        :param bool reload: Reload the configuration from the config file.
-        """
-        if not self._config_file or reload:
-            configpath = self.get_config_file()
-            if configpath is not None:
-                cfgparser = configparser.ConfigParser()
-                cfgparser.read(configpath)
-                self._config_file = dict(cfgparser["mreg"].items())
-
-    def get_logging_level(self) -> str:
-        """Get the current logging level by name.
-
-        :returns: The logging level by name.
-        """
-        return logging.getLevelName(logging.getLogger().getEffectiveLevel())
-
-    def set_logging_level(self, level: LogLevel) -> None:
-        """Set the logging level.
-
-        :param str level: The logging level to set (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        """
-        logging.getLogger().setLevel(level)
-
-    def start_logging(
-        self, logfile: str = DEFAULT_LOG_FILE, level: str | LogLevel = "INFO"
-    ) -> None:
-        """Enable and configure logging.
-
-        :param str logfile: Path to the logfile, defaults to DEFAULT_LOG_FILE.
-        :param str level: Logging level, defaults to 'INFO'.
-        """
-        level = LogLevel(level)
-        if self._is_logging:
-            logging.shutdown()
-            self._is_logging = False
-        else:
-            try:
-                logging.basicConfig(
-                    filename=logfile,
-                    level=level.as_int(),
-                    format=LOGGING_FORMAT,
-                    datefmt="%Y-%m-%d %H:%M:%S",
-                )
-            except Exception as e:
-                print(f"Failed to set up logging: {e}")
-                return
-
-        logging.getLogger().setLevel(level)
-        self._is_logging = True
-        self._logfile = logfile
-
-    def get_logging_status(self) -> bool:
-        """Get the logging status.
-
-        :returns: True if logging is enabled, False otherwise.
-        """
-        return self._is_logging
-
-    def print_logging_status(self) -> None:
-        """Print the logging status."""
-        if self._is_logging:
-            print(f"Logging enabled to {self._logfile}")
-        else:
-            print("Logging is not enabled")
-
-    def stop_logging(self) -> None:
-        """Stop logging."""
-        logging.shutdown()
-        self._is_logging = False
-        self._logfile = None
-
-    def get_config_file(self) -> str | None:
-        """Get the first config file found in DEFAULT_CONFIG_PATH.
-
-        :returns: path to config file, or None if no config file was found
-        """
-        for path in DEFAULT_CONFIG_PATH:
-            logger.debug("looking for config in %r", os.path.abspath(path))
-            if os.path.isfile(path):
-                logger.info("found config in %r", path)
-                return path
-        logger.debug("no config file found in config paths")
-        return None
-
-    def get_cache_enabled(self) -> bool:
-        """Get the cache enabled status from the application."""
-        return is_bool_true(self.get("cache", "true"))
-
-    def set_cache_enabled(self, enabled: bool) -> None:
-        """Set the cache enabled status in the application."""
-        self._config_cmd["cache"] = "true" if enabled else "false"
-
-    def get_cache_ttl(self) -> int:
-        """Get the cache TTL (time-to-live) from the application."""
-        ttl = self.get("cache_ttl", DEFAULT_CACHE_TTL)
-        return as_int(ttl, DEFAULT_CACHE_TTL, "Cache TTL")
-
-    def get_default_domain(self):
-        """Get the default domain from the application."""
-        return self.get("domain", "uio.no")
-
-    def get_default_logfile(self):
-        """Get the default logfile from the application."""
-        return self.get("logfile", DEFAULT_LOG_FILE)
-
-    def get_location_tags(self) -> list[str]:
-        """Get the location tags from the application."""
-        return self.get("location_tags", "").split(",")
-
-    def get_category_tags(self) -> list[str]:
-        """Get the category tags from the application."""
-        return self.get("category_tags", "").split(",")
-
-    def get_user(self) -> str | None:
-        """Get the user from the application."""
-        return self.get("user")
-
-    def get_prompt(self) -> str | None:
-        """Get the prompt from the application."""
-        return self.get("prompt")
-
-    # We handle url by itself because it's a required config option,
-    # it cannot be none once options, env, and config file are parsed.
-    def get_url(self) -> str:
-        """Get the default url from the application."""
-        url = self.get("url", self.get("default_url", "https://mreg.uio.no"))
-        if not url:
-            raise ValueError("No URL found in config, no defaults available!")
-        return url
-
-    def get_http_timeout(self) -> int:
-        """Get the HTTP timeout from the application.
-
-        :returns: HTTP timeout in seconds.
-        """
-        timeout = self.get("timeout", DEFAULT_HTTP_TIMEOUT)
-        return as_int(timeout, DEFAULT_HTTP_TIMEOUT, "HTTP Timeout")
+    def parse_cli_args(self, args: argparse.Namespace | dict[str, Any]) -> None:
+        """Parse command line arguments and update the configuration."""
+        source = CliSettingsSource(MregCliConfig)
+        source.set_cli_args(args)
+        for key, value in source.cli_data.items():
+            if value is None:
+                continue  # Optional values are None by default - don't overwrite
+            if key in self.model_fields:
+                try:
+                    setattr(self, key, value)
+                except Exception as e:
+                    # TODO: show error in console as well
+                    logger.error("Failed to set config '%s': %s", key, e)
+        # HACK: add/replace CLI source so we can introspect later
+        self.__class__._sources = tuple(
+            s for s in self.__class__._sources if not isinstance(s, CliSettingsSource)
+        ) + (source,)
 
     def _calculate_column_width(self, data: dict[str, Any], min_width: int = 8) -> int:
         """Calculate the maximum column width, ensuring a minimum width.
@@ -311,26 +307,57 @@ class MregCliConfig:
         max_length = max((len(str(value)) for value in data.values()), default=0)
         return max(max_length, min_width) + 2  # Adding 2 for padding
 
+    def _fmt_config_value(self, value: Any) -> str:
+        """Format a configuration value for display."""
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, list):
+            return ", ".join(str(v) for v in value)
+        if value is None:
+            return UNSET_STR
+        return str(value)
+
     def print_config_table(self) -> None:
         """Pretty print the configuration options in a dynamic table format."""
-        all_keys = set(self._config_cmd) | set(self._config_env) | set(self._config_file)
+        all_keys = set(self.model_fields)
         key_width = max(max(len(key) for key in all_keys), 8) + 2
 
-        # Calculate column widths
-        cmd_width = self._calculate_column_width(self._config_cmd)
-        env_width = self._calculate_column_width(self._config_env)
-        file_width = self._calculate_column_width(self._config_file)
+        # Collect values from each settings source
+        states: ConfigSourceMap = {
+            "active": self.model_dump(),
+            "cli": {},
+            "env": {},
+            "file": {},
+        }
+        for source in self._sources:
+            if isinstance(source, IniConfigSettingsSource):
+                states["file"] = source()
+            elif isinstance(source, EnvSettingsSource):
+                states["env"] = source()
+            elif isinstance(source, CliSettingsSource):
+                states["cli"] = source()
+
+        # Calculate column widths depending on content
+        active_width = self._calculate_column_width(states["active"])
+        cli_width = self._calculate_column_width(states["cli"])
+        env_width = self._calculate_column_width(states["env"])
+        file_width = self._calculate_column_width(states["file"])
 
         # Print the table header
         print("Configuration Options:")
-        header_format = f"{{:<{key_width}}} {{:<{cmd_width}}} {{:<{env_width}}} {{:<{file_width}}}"
-        print(header_format.format("Key", "Active", "Envir", "File"))
-        print("-" * (key_width + cmd_width + env_width + file_width))
+        header_format = f"{{:<{key_width}}} {{:<{active_width}}} {{:<{cli_width}}} {{:<{env_width}}} {{:<{file_width}}}"  # noqa: E501
+        print(header_format.format("Key", "Active", "CLI", "Env", "File"))
+        print("-" * (key_width + active_width + cli_width + env_width + file_width))
 
         # Print each row
-        row_format = f"{{:<{key_width}}} {{:<{cmd_width}}} {{:<{env_width}}} {{:<{file_width}}}"
+        row_format = f"{{:<{key_width}}} {{:<{active_width}}} {{:<{cli_width}}} {{:<{env_width}}} {{:<{file_width}}}"  # noqa: E501
         for key in sorted(all_keys):
-            cmd_line_val = str(self._config_cmd.get(key, "-"))
-            env_var_val = str(self._config_env.get(key, "-"))
-            config_file_val = str(self._config_file.get(key, "-"))
-            print(row_format.format(key, cmd_line_val, env_var_val, config_file_val))
+            # Use formatted values for active config
+            active_line_val = self._fmt_config_value(states["active"].get(key, UNSET_STR))
+            # Use "raw" values from sources
+            cli_var_val = str(states["cli"].get(key, UNSET_STR))
+            env_var_val = str(states["env"].get(key, UNSET_STR))
+            config_file_val = str(states["file"].get(key, UNSET_STR))
+            print(
+                row_format.format(key, active_line_val, cli_var_val, env_var_val, config_file_val)
+            )

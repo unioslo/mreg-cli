@@ -74,7 +74,7 @@ def test_remove_dict_key_recursive(inp: Json, key: str, expected: Json) -> None:
 
 
 def test_none_value_handling() -> None:
-    """Test that the function handles None values appropriately"""
+    """Test that the function handles None values appropriately."""
     obj: Json = None
     remove_dict_key_recursive(obj, "any_key")  # Should not raise any exception
     assert obj is None
