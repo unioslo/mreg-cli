@@ -13,7 +13,7 @@ from mreg_cli.api.models import (
 )
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import CreateError, DeleteError, EntityAlreadyExists
+from mreg_cli.exceptions import APINotOk, CreateError, DeleteError, EntityAlreadyExists
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -312,8 +312,18 @@ def host_add(args: argparse.Namespace) -> None:
     hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
 
     for host in hosts:
-        role.add_host(host.name)
-        OutputManager().add_ok(f"Added host {host.name} to role {role_name!r}")
+        try:
+            role.add_host(host.name)
+            OutputManager().add_ok(f"Added host {host.name} to role {role_name!r}")
+        except APINotOk as e:
+            if e.response.status_code == 409:
+                OutputManager().add_line(
+                    f"Host {host.name} is already a member of role {role_name!r}"
+                )
+            else:
+                OutputManager().add_error(
+                    f"Failed to add host {host.name} to role {role_name!r}: {e}"
+                )
 
 
 @command_registry.register_command(
