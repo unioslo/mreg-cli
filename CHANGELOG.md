@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Fixed
+
+- `policy host_add` terminating prematurely when using multiple hosts and one of them is already a member of the policy.
 
 ## [1.5.1](https://github.com/unioslo/mreg-cli/releases/tag/1.5.1) - 2025-09-26
 
