@@ -184,7 +184,6 @@ def main():
         try_token_or_login(
             config.user,
             config.url,
-            # TODO: IMPORTANT!!! ADD token_only override/assignment to config
             fail_without_token=config.token_only,
         )
     except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
