@@ -10796,16 +10796,37 @@
     "time": null
   },
   {
-    "command": "host set_contact somehost \"new-support@example.org\"",
+    "command": "network find -host somehost",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "host set_contact somehost \"new-support@example.org\"",
-    "ok": [
-      "Updated contact of somehost.example.org to new-support@example.org"
-    ],
+    "command_issued": "network find -host somehost",
+    "ok": [],
     "warning": [],
     "error": [],
-    "output": [],
+    "output": [
+      "Network:                 10.0.1.0/24",
+      "Netmask:                 255.255.255.0",
+      "Description:             Frozen but has one host",
+      "Category:                cat1",
+      "Network policy:          ",
+      "Communities:             ",
+      "Location:                loc1",
+      "VLAN:                    1234",
+      "DNS delegated:           False",
+      "Frozen:                  True",
+      "IP-range:                10.0.1.0 - 10.0.1.255",
+      "Reserved host addresses: 3",
+      "                         10.0.1.0 (net)",
+      "                         10.0.1.1",
+      "                         10.0.1.2",
+      "                         10.0.1.3",
+      "                         10.0.1.255 (broadcast)",
+      "Excluded ranges:         11 ipaddresses",
+      " 10.0.1.20                 -> 10.0.1.30",
+      "Used addresses:          1",
+      "Unused addresses:        239 (excluding reserved adr.)",
+      "\nFound 1 network matching the search criteria."
+    ],
     "api_requests": [
       {
         "method": "GET",
@@ -10816,8 +10837,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-03-20T15:36:58.706620+01:00",
-              "updated_at": "2025-03-20T15:36:58.706626+01:00",
+              "created_at": "2025-09-29T10:22:16.591582+02:00",
+              "updated_at": "2025-09-29T10:22:16.591589+02:00",
               "ipaddress": "10.0.1.4",
               "host": 4
             }
@@ -10826,8 +10847,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-03-20T15:36:58.692419+01:00",
-              "updated_at": "2025-03-20T15:36:58.692425+01:00",
+              "created_at": "2025-09-29T10:22:16.576387+02:00",
+              "updated_at": "2025-09-29T10:22:16.576393+02:00",
               "txt": "v=spf1 -all",
               "host": 4
             }
@@ -10842,8 +10863,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-03-20T15:36:58.690682+01:00",
-          "updated_at": "2025-03-20T15:36:58.690689+01:00",
+          "created_at": "2025-09-29T10:22:16.574612+02:00",
+          "updated_at": "2025-09-29T10:22:16.574625+02:00",
           "name": "somehost.example.org",
           "contact": "support@example.org",
           "ttl": null,
@@ -10851,6 +10872,70 @@
           "zone": 1
         }
       },
+      {
+        "method": "GET",
+        "url": "/api/v1/ipaddresses/?host=4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "macaddress": "",
+              "created_at": "2025-09-29T10:22:16.591582+02:00",
+              "updated_at": "2025-09-29T10:22:16.591589+02:00",
+              "ipaddress": "10.0.1.4",
+              "host": 4
+            }
+          ]
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/ip/10.0.1.4",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [
+            {
+              "created_at": "2025-09-29T10:22:16.295754+02:00",
+              "updated_at": "2025-09-29T10:22:16.295764+02:00",
+              "start_ip": "10.0.1.20",
+              "end_ip": "10.0.1.30",
+              "network": 3
+            }
+          ],
+          "policy": null,
+          "communities": [],
+          "created_at": "2025-09-29T10:22:16.080810+02:00",
+          "updated_at": "2025-09-29T10:22:17.016671+02:00",
+          "network": "10.0.1.0/24",
+          "description": "Frozen but has one host",
+          "vlan": 1234,
+          "dns_delegated": false,
+          "category": "cat1",
+          "location": "loc1",
+          "frozen": true,
+          "reserved": 3
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "host set_contact somehost \"new-support@example.org\"",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "host set_contact somehost \"new-support@example.org\"",
+    "ok": [
+      "Updated contact of somehost.example.org to new-support@example.org"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
       {
         "method": "PATCH",
         "url": "/api/v1/hosts/somehost.example.org",
@@ -10873,8 +10958,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "",
-                  "created_at": "2025-03-20T15:36:58.706620+01:00",
-                  "updated_at": "2025-03-20T15:36:58.706626+01:00",
+                  "created_at": "2025-09-29T11:06:21.293101+02:00",
+                  "updated_at": "2025-09-29T11:06:21.293108+02:00",
                   "ipaddress": "10.0.1.4",
                   "host": 4
                 }
@@ -10883,8 +10968,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2025-03-20T15:36:58.692419+01:00",
-                  "updated_at": "2025-03-20T15:36:58.692425+01:00",
+                  "created_at": "2025-09-29T11:06:21.274505+02:00",
+                  "updated_at": "2025-09-29T11:06:21.274513+02:00",
                   "txt": "v=spf1 -all",
                   "host": 4
                 }
@@ -10899,8 +10984,8 @@
               "loc": null,
               "bacnetid": null,
               "communities": [],
-              "created_at": "2025-03-20T15:36:58.690682+01:00",
-              "updated_at": "2025-03-20T15:36:59.267728+01:00",
+              "created_at": "2025-09-29T11:06:21.272185+02:00",
+              "updated_at": "2025-09-29T11:06:22.159410+02:00",
               "name": "somehost.example.org",
               "contact": "new-support@example.org",
               "ttl": null,
