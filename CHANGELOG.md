@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `network find -host <hostname>` option to search for networks with IPs assigned to the given host.
+
 ### Fixed
 
 - `network community_remove_host` command not utilizing the `-ip` argument to disambiguate between networks when multiple networks have the same community name.
