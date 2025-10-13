@@ -12,6 +12,7 @@ import os
 import shlex
 import sys
 from collections.abc import Generator
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 from prompt_toolkit import HTML, document, print_formatted_text
@@ -39,6 +40,7 @@ from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
 from mreg_cli.utilities.api import create_and_set_corrolation_id, last_request_url
+from mreg_cli.utilities.fs import to_path
 
 logger = logging.getLogger(__name__)
 
@@ -307,7 +309,7 @@ for command in commands:
     command(cli).register_all_commands()
 
 
-def source(files: list[str], ignore_errors: bool, verbose: bool) -> Generator[str]:
+def source(files: list[Path], ignore_errors: bool, verbose: bool) -> Generator[str]:
     """Read commands from one or more source files and yield them.
 
     :param files: List of file paths to read commands from.
@@ -317,8 +319,7 @@ def source(files: list[str], ignore_errors: bool, verbose: bool) -> Generator[st
     :yields: Command lines from the files.
     """
     for filename in files:
-        if filename.startswith("~"):
-            filename = os.path.expanduser(filename)
+        filename = filename.expanduser()
         try:
             with open(filename) as f:
                 logger.info("Reading commands from %s", filename)
@@ -357,7 +358,8 @@ def _source(args: argparse.Namespace):
 
     :param args: The arguments passed to the command.
     """
-    for command in source(args.files, args.ignore_errors, args.verbose):
+    files = [to_path(f) for f in args.files]
+    for command in source(files, args.ignore_errors, args.verbose):
         # Process each command here as needed, similar to the main loop
         print(f"Processing command: {command}")
         cli.process_command_line(command)

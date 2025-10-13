@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Iterator
+from collections.abc import Iterator
 
 import pytest
 from pytest_httpserver import HTTPServer
@@ -11,13 +11,35 @@ from mreg_cli.utilities.api import last_request_method, last_request_url
 
 
 @pytest.fixture(autouse=True)
-def set_url_env(httpserver: HTTPServer) -> Iterator[None]:
-    """Set the config URL to the test HTTP server URL."""
-    conf = MregCliConfig()
-    pre_override_conf = conf._config_cmd.copy()  # pyright: ignore[reportPrivateUsage]
-    conf._config_cmd["url"] = httpserver.url_for("/")  # pyright: ignore[reportPrivateUsage]
+def reset_os_environ() -> Iterator[None]:
+    """Reset os.environ after each test to avoid side effects."""
+    original_environ = os.environ.copy()
     yield
-    conf._config_cmd = pre_override_conf  # pyright: ignore[reportPrivateUsage]
+    # Modify the environment in place to preserve references
+    os.environ.clear()
+    os.environ.update(original_environ)
+
+
+@pytest.fixture(autouse=True)
+def default_conf() -> Iterator[MregCliConfig]:
+    """Use the default config for tests."""
+    try:
+        conf = MregCliConfig.get_default_config()
+        # Pretend we loaded the config from a file
+        MregCliConfig._instance = conf
+        MregCliConfig._init = True
+        yield conf
+    finally:
+        MregCliConfig._reset_instance()
+
+
+@pytest.fixture(autouse=True)
+def set_url_env(httpserver: HTTPServer, default_conf: MregCliConfig) -> Iterator[None]:
+    """Set the config URL to the test HTTP server URL."""
+    pre_override_conf = default_conf.url
+    default_conf.url = httpserver.url_for("/")
+    yield
+    default_conf.url = pre_override_conf
 
 
 @pytest.fixture(autouse=True if os.environ.get("PYTEST_HTTPSERVER_STRICT") else False)
@@ -38,21 +60,10 @@ def check_assertions(httpserver: HTTPServer) -> Iterator[None]:
     httpserver.check_handler_errors()
 
 
-@pytest.fixture(autouse=True)
-def refresh_config() -> Iterator[MregCliConfig]:
-    """Delete the singleton instance after each test."""
-    conf = MregCliConfig()
-    yield conf
-    conf._instance = None
-
-
 @pytest.fixture()
-def empty_config() -> Iterator[MregCliConfig]:
-    """A config with no values set in any source."""
-    conf = MregCliConfig()
-    conf._config_cmd = {}
-    conf._config_env = {}
-    conf._config_file = {}
+def default_config() -> Iterator[MregCliConfig]:
+    """Return a default config with no values set in any source."""
+    conf = MregCliConfig.get_default_config()
     yield conf
 
 

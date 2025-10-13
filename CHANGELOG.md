@@ -5,7 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Added
+
+- Environment variable support for all config file options.
+  - Environment variables are prefixed with `MREG_CLI_` and use uppercase letters and underscores instead of lowercase letters and hyphens.
+  - For example, the `http_timeout` config file option can be set with the `MREG_CLI_HTTP_TIMEOUT` environment variable.
+  - Environment variables take precedence over config file options.
+  - All config file options and their corresponding environment vaiables:
+
+| Config  FIle                         | Env                                     |
+|----------------------------------|-----------------------------------------|
+| `url`                            | `MREG_CLI_URL`                         |
+| `user`                           | `MREG_CLI_USER`                        |
+| `domain`                        | `MREG_CLI_DOMAIN`                     |
+| `timeout`                   | `MREG_CLI_TIMEOUT`                 |
+| `prompt`                   | `MREG_CLI_PROMPT`                 |
+| `category_tags`                   | `MREG_CLI_CATEGORY_TAGS`                 |
+| `location_tags`                   | `MREG_CLI_LOCATION_TAGS`                 |
+| `cache`                           | `MREG_CLI_CACHE`                          |
+| `cache_ttl`                   | `MREG_CLI_CACHE_TTL`                 |
+| `http_timeout`                   | `MREG_CLI_HTTP_TIMEOUT`                 |
+| `record_traffic`                 | `MREG_CLI_RECORD_TRAFFIC`               |
+| `record_traffic_without_timestamps` | `MREG_CLI_RECORD_TRAFFIC_WITHOUT_TIMESTAMPS` |
+| `token_only`                     | `MREG_CLI_TOKEN_ONLY`                   |
+| `source`                         | `MREG_CLI_SOURCE`                       |
+| `verbose`                        | `MREG_CLI_VERBOSE`                      |
+| `log_file`                      | `MREG_CLI_LOG_FILE`                     |
+| `log_level`                      | `MREG_CLI_LOG_LEVEL`                    |
+
+- _New_ configuration options, previously only available as CLI options, exposed as both config file options and environment variables:
+
+| Config File                           | Env                                     |
+|----------------------------------|-----------------------------------------|
+| `http_timeout`                   | `MREG_CLI_HTTP_TIMEOUT`                 |
+| `record_traffic`                 | `MREG_CLI_RECORD_TRAFFIC`               |
+| `record_traffic_without_timestamps` | `MREG_CLI_RECORD_TRAFFIC_WITHOUT_TIMESTAMPS` |
+| `token_only`                     | `MREG_CLI_TOKEN_ONLY`                   |
+| `source`                         | `MREG_CLI_SOURCE`                       |
+| `verbose`                        | `MREG_CLI_VERBOSE`                      |
+| `log_file`\*                      | `MREG_CLI_LOG_FILE`                     |
+| `log_level`                      | `MREG_CLI_LOG_LEVEL`                    |
+
+\*: The old name `logfile` is deprecated, but remains a valid alias for this field.
+
+### Changed
+
+- Default config file location is now `$XDG_CONFIG_HOME/mreg-cli/mreg-cli.conf` (was `~/.config/mreg-cli.conf`).
+  - The old config file location remains supported for backwards compatibility, but will be removed in a future release.
+- `help configuration` now shows environment variables.
+- `logging start` no longer toggles logging on and off. Now aborts if logging is already enabled.
+- `logging stop` now aborts if logging is not enabled.
+- `logging status` now shows if logging is enabled or not.
 
 ## [1.6.0](https://github.com/unioslo/mreg-cli/releases/tag/1.6.0) - 2025-10-13
 

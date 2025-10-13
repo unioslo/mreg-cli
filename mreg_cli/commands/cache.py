@@ -43,7 +43,7 @@ def cache_clear(_: argparse.Namespace) -> None:
 def cache_info(_: argparse.Namespace) -> None:
     """Show cache information."""
     conf = MregCliConfig()
-    if not conf.get_cache_enabled():
+    if not conf.cache:
         OutputManager().add_line("Cache is disabled")
         return
 
@@ -61,13 +61,13 @@ def cache_info(_: argparse.Namespace) -> None:
 def cache_enable(_: argparse.Namespace) -> None:
     """Enable caching."""
     conf = MregCliConfig()
-    if conf.get_cache_enabled():
+    if conf.cache:
         OutputManager().add_line("Cache is already enabled")
         return
 
     cache = get_cache()
     cache.enable()
-    conf.set_cache_enabled(True)
+    conf.cache = True
     OutputManager().add_ok("Enabled cache")
 
 
@@ -77,11 +77,11 @@ def cache_enable(_: argparse.Namespace) -> None:
 def cache_disable(_: argparse.Namespace) -> None:
     """Disable caching."""
     conf = MregCliConfig()
-    if not conf.get_cache_enabled():
+    if not conf.cache:
         OutputManager().add_line("Cache is already disabled")
         return
 
     cache = get_cache()
     cache.disable()
-    conf.set_cache_enabled(False)
+    conf.cache = False
     OutputManager().add_ok("Cleared and disabled cache")

@@ -11,9 +11,9 @@ from mreg_cli.config import MregCliConfig
 
 def is_valid_location_tag(loc: str) -> bool:
     """Check if valid location tag."""
-    return loc in MregCliConfig().get_location_tags()
+    return loc in MregCliConfig().location_tags
 
 
 def is_valid_category_tag(cat: str) -> bool:
-    """Check if valid location tag."""
-    return cat in MregCliConfig().get_category_tags()
+    """Check if valid category tag."""
+    return cat in MregCliConfig().category_tags

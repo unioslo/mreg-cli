@@ -10,6 +10,7 @@ from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import InputFailure
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
+from mreg_cli.utilities.fs import to_path
 
 command_registry = CommandRegistry()
 
@@ -45,8 +46,8 @@ def start_recording(args: argparse.Namespace) -> None:
     """Start recording commands and output to the given file."""
     if not args.filename:
         raise InputFailure("No filename given.")
-
-    OutputManager().recording_start(args.filename)
+    path = to_path(args.filename)
+    OutputManager().recording_start(path)
 
 
 @command_registry.register_command(

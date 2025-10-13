@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import argparse
 import functools
 import logging
 import re
@@ -64,7 +63,7 @@ def parse_connection_string(
     return ConnectionInfo(protocol, host, domain, port)
 
 
-def get_prompt_message(args: argparse.Namespace, config: MregCliConfig) -> HTML:
+def get_prompt_message(config: MregCliConfig) -> HTML:
     """Construct a prompt message based on the CLI args and active config.
 
     :param args: CLI args parsed by argparse.
@@ -72,18 +71,17 @@ def get_prompt_message(args: argparse.Namespace, config: MregCliConfig) -> HTML:
     :returns: The prompt message as a prompt-toolkit HTML object.
     """
     manager = OutputManager()
-    args_map = vars(args)
 
     def fmt_prompt(prompt: str) -> str:
-        url = config.get_url()
+        url = config.url
         try:
             info = parse_connection_string(url)
         except Exception as e:
             logger.error("Failed to parse connection string: %s", e)
             info = ConnectionInfo("", url, None, None)
 
-        user = args_map.get("user") or config.get("user", "?")
-        domain = args_map.get("domain") or config.get_default_domain()
+        user = config.user
+        domain = config.domain
         return prompt.format(
             # Available variables for the prompt:
             user=str(user),
@@ -93,25 +91,17 @@ def get_prompt_message(args: argparse.Namespace, config: MregCliConfig) -> HTML:
             proto=info.protocol,
         )
 
-    # Try to get prompt from args -> config -> default
-    if (args_prompt := args_map.get("prompt")) is not None:
-        prompt = str(args_prompt)
-    elif (config_prompt := config.get_prompt()) is not None:
-        prompt = config_prompt
-    else:
-        prompt = DEFAULT_PROMPT
-
     # Fall back on default prompt if the prompt is invalid
     try:
-        prompt = fmt_prompt(prompt)
+        prompt = fmt_prompt(config.prompt)
     except KeyError:
-        logger.error("Invalid prompt format: %s", prompt)
+        logger.error("Invalid prompt format: %s", config.prompt)
         prompt = fmt_prompt(DEFAULT_PROMPT)
 
     prefix: list[str] = []
 
-    if manager.recording_active():
-        prefix.append(f"&gt;'{manager.recording_filename()}'")
+    if fname := manager.recording_filename():
+        prefix.append(f"&gt;'{str(fname)}'")
 
     if prefix:
         prefix_str = ",".join(prefix)

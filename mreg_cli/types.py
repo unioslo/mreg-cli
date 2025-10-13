@@ -155,7 +155,9 @@ class LogLevel(StrEnum):
         try:
             return LogLevel(value.upper())
         except (ValueError, TypeError):
-            raise ValueError(f"Invalid log level: {value}") from None
+            from mreg_cli.exceptions import InputFailure  # noqa: PLC0415
+
+            raise InputFailure(f"Invalid log level: {value}") from None
 
     @classmethod
     def choices(cls) -> list[str]:

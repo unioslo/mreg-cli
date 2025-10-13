@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import diskcache
 import pytest
@@ -20,19 +20,19 @@ from mreg_cli.config import MregCliConfig
 
 
 @pytest.fixture()
-def mock_cache_config() -> MregCliConfig:
-    """Create a mock MregCliConfig for testing."""
-    c = MagicMock(spec=MregCliConfig)
-    c.get_cache_enabled.return_value = True
-    c.get_cache_ttl.return_value = 300
-    return c
+def default_config_cache() -> MregCliConfig:
+    """Create a default config with preset cache settings."""
+    config = MregCliConfig()
+    config.cache = True
+    config.cache_ttl = 300
+    return config
 
 
 @pytest.fixture(autouse=True)
-def configure_cache(mock_cache_config: MregCliConfig) -> Iterator[None]:
+def configure_cache(default_config_cache: MregCliConfig) -> Iterator[None]:
     """Configure the global cache for testing."""
     try:
-        configure(mock_cache_config)
+        configure(default_config_cache)
         yield
     finally:
         # Clear the cache and delete the global cache object
@@ -41,9 +41,16 @@ def configure_cache(mock_cache_config: MregCliConfig) -> Iterator[None]:
         mreg_cli.cache._CACHE = None
 
 
-def test_mreg_cli_cache_is_diskcache_cache(mock_cache_config: MregCliConfig) -> None:
+@pytest.fixture(autouse=True)
+def patch_get_config(default_config_cache: MregCliConfig) -> Iterator[None]:
+    """Patch the local Config symbol to return the default config."""
+    with patch("mreg_cli.cache.MregCliConfig", return_value=default_config_cache):
+        yield
+
+
+def test_mreg_cli_cache_is_diskcache_cache(default_config_cache: MregCliConfig) -> None:
     """Ensure that create_cache returns a diskcache.Cache object."""
-    c = _create_cache(mock_cache_config)
+    c = _create_cache(default_config_cache)
     assert isinstance(c, diskcache.Cache)
 
 
@@ -54,13 +61,13 @@ def test_diskcache_cache_is_cachelike() -> None:
     assert isinstance(c, CacheLike)
 
 
-def test_diskcache_cache_init_error(mock_cache_config: MregCliConfig) -> None:
+def test_diskcache_cache_init_error(default_config_cache: MregCliConfig) -> None:
     """Test that a diskcache.Cache() init error returns a NullCache."""
     with patch("mreg_cli.cache.Cache") as mock_cache:
         # Make Cache() raise an exception during initialization
         mock_cache.side_effect = Exception("Disk cache initialization failed")
         # Verify that the result is an instance of NullCache
-        result = _create_cache(mock_cache_config)
+        result = _create_cache(default_config_cache)
         assert isinstance(result, NullCache)
 
 
@@ -91,13 +98,13 @@ def test_nullcache_methods() -> None:
     assert cache.volume() == 0
 
 
-def test_get_cache_not_configured(mock_cache_config: MagicMock) -> None:
+def test_get_cache_not_configured(default_config_cache: MregCliConfig) -> None:
     """Test that get_cache() returns a NullCache when caching is disabled."""
     # Reset global cache and disable caching in config
-    mock_cache_config.get_cache_enabled.return_value = False
+    default_config_cache.cache = False
     mreg_cli.cache._CACHE = None
 
-    configure(mock_cache_config)
+    configure(default_config_cache)
     cache = get_cache()
     assert isinstance(cache.cache, NullCache)
 
