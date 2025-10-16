@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 from dataclasses import dataclass
 from types import ModuleType
@@ -243,10 +244,11 @@ class MregCliCache:
         self._patch_functions()
         logger.info("Cache enabled")
 
-    def disable(self) -> None:
+    def disable(self, *, clear: bool = True) -> None:
         """Disable caching by restoring patched functions and clearing the cache."""
         self._unpatch_functions()
-        self.clear()
+        if clear:
+            self.clear()
         logger.info("Cache disabled")
 
     def clear(self) -> None:
@@ -314,3 +316,18 @@ class MregCliCache:
         self.patch_function(
             mod, self.cache.memoize(expire=config.cache_ttl, tag=memfunc.tag)(func)
         )
+
+
+def disable_cache(func: Callable[P, T]) -> Callable[P, T]:
+    """Disable cache for the duration of the decorated function."""
+
+    @functools.wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        cache = get_cache()
+        try:
+            cache.disable(clear=False)
+            return func(*args, **kwargs)
+        finally:
+            cache.enable()
+
+    return wrapper
