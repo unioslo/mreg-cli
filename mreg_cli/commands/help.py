@@ -7,6 +7,7 @@ from typing import Any
 
 from mreg_cli.__about__ import __version__ as mreg_cli_version
 from mreg_cli.api.models import HealthInfo, ServerLibraries, ServerVersion, UserInfo
+from mreg_cli.cache import disable_cache
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.config import MregCliConfig
@@ -91,6 +92,7 @@ def configuration_help(_: argparse.Namespace) -> None:
     description="Show versions of client and server as much as possible",
     short_desc="Show versions",
 )
+@disable_cache
 def versions_help(_: argparse.Namespace) -> None:
     """Show versions of client and server as much as possible."""
     output_manager = OutputManager()
@@ -108,6 +110,7 @@ def versions_help(_: argparse.Namespace) -> None:
         Flag("-django", action="store_true", description="Show Django internal roles"),
     ],
 )
+@disable_cache
 def whoami_help(args: argparse.Namespace) -> None:
     """Show information about the current user."""
     try:
@@ -127,6 +130,7 @@ def whoami_help(args: argparse.Namespace) -> None:
         Flag("-django", action="store_true", description="Show Django internal roles"),
     ],
 )
+@disable_cache
 def whois_help(args: argparse.Namespace) -> None:
     """Show information about a user."""
     try:
@@ -140,6 +144,7 @@ def whois_help(args: argparse.Namespace) -> None:
     description="Show information about the health of the server",
     short_desc="Show health info",
 )
+@disable_cache
 def meta_health(_: argparse.Namespace) -> None:
     """Show information about the health of the server."""
     try:
