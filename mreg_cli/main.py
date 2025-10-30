@@ -7,6 +7,8 @@ import functools
 import logging
 
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
+from rich.console import Console, Group
+from rich.panel import Panel
 
 import mreg_cli.utilities.api as api
 from mreg_cli import cache
@@ -21,6 +23,8 @@ from mreg_cli.types import LogLevel
 from mreg_cli.utilities.api import try_token_or_login
 
 logger = logging.getLogger(__name__)
+
+console = Console()
 
 
 def main():
@@ -208,9 +212,6 @@ def main():
         complete_style=CompleteStyle.MULTI_COLUMN,
     )
 
-    # Welcome text for the app
-    print("Type -h for help.")
-
     # if the --source parameter was given, read commands from the source file and then exit
     if source_file := config.source:
         logger.info("Reading commands from %s", source_file)
@@ -227,6 +228,9 @@ def main():
             print(e)
 
         raise SystemExit() from None
+
+    # Welcome text for the app in interactive mode
+    print_greeting(config)
 
     # The app runs in an infinite loop and is expected to exit using sys.exit()
     logger.debug("Entering main loop")
@@ -246,6 +250,21 @@ def main():
                     cli.process_command_line(line)
             except ValueError as e:
                 print(e)
+
+
+def print_greeting(config: MregCliConfig) -> None:
+    """Print greeting message for the CLI."""
+    logo = r"""
+ __  __ ____  _____ ____        ____ _     ___
+|  \/  |  _ \| ____/ ___|      / ___| |   |_ _|
+| |\/| | |_) |  _|| |  _ _____| |   | |    | |
+| |  | |  _ <| |__| |_| |_____| |___| |___ | |
+|_|  |_|_| \_\_____\____|      \____|_____|___|
+""".strip("\n")
+
+    if config.show_logo:
+        console.print(Panel(Group(logo, "", f"v{__version__}"), expand=False))
+    console.print("Type -h for help.")
 
 
 if __name__ == "__main__":
