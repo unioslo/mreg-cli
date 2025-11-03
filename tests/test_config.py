@@ -42,6 +42,7 @@ def test_get_default_config() -> None:
             "verbose": False,
             "log_file": "/mock/log/file.log",
             "log_level": "INFO",
+            "show_logo": True,
         }
     )
 
