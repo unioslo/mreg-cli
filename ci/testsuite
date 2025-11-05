@@ -203,14 +203,33 @@ policy host_add fruit foo
 policy list_hosts fruit
 policy host_list foo
 host info foo
+
+# `policy list_hosts -exclude` tests
+policy role_create grains "6 a day"
+policy role_create meat "3 a day"
+host add bar
+policy host_add fruit bar
+policy host_add grains bar
+policy host_add meat bar
+policy list_hosts fruit -exclude grains
+policy list_hosts fruit -exclude grains meat
+policy list_hosts fruit -exclude gra.*
+
+# Cleanup
 policy host_remove fruit foo
+policy host_remove fruit bar
+policy host_remove meat bar
+policy host_remove grains bar
 policy remove_atom fruit banana # should fail
 policy remove_atom fruit tangerine
 policy role_delete vegetables  # fails, that role doesn't exist
 policy role_history fruit
 policy role_delete fruit
+policy role_delete grains
+policy role_delete meat
 policy atom_delete tangerine
 host remove foo
+host remove bar
 
 
 ##### Tests: Network permissions
