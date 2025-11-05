@@ -1279,14 +1279,13 @@ class Role(HostPolicy, WithHistory):
 
         if exclude_roles:
             # Exclude any hosts that are found in the excluded roles
-            exclude_names = set(r.name for r in exclude_roles)
-            filtered_hosts: list[str] = []
+            excluded_hosts: set[str] = set()
             for host in hosts:
-                host_obj = Host.get_by_any_means_or_raise(host)
-                host_roles = host_obj.roles
-                if not any(host_role in exclude_names for host_role in host_roles):
-                    filtered_hosts.append(host)
-            hosts = filtered_hosts
+                for role in exclude_roles:
+                    if host in role.hosts:
+                        excluded_hosts.add(host)
+                        break
+            hosts = [host for host in hosts if host not in excluded_hosts]
 
         if hosts:
             manager.add_line("Name:")
