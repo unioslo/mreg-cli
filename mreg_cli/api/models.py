@@ -1276,7 +1276,9 @@ class Role(HostPolicy, WithHistory):
         """
         manager = OutputManager()
         hosts = self.hosts
+
         if exclude_roles:
+            # Exclude any hosts that are found in the excluded roles
             exclude_names = set(r.name for r in exclude_roles)
             filtered_hosts: list[str] = []
             for host in hosts:
