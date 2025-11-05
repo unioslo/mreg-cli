@@ -1282,7 +1282,7 @@ class Role(HostPolicy, WithHistory):
             excluded_hosts: set[str] = set()
             for host in hosts:
                 for role in exclude_roles:
-                    if host in role.hosts:
+                    if host in role.hosts:  # NOTE: CNAMEs?
                         excluded_hosts.add(host)
                         break
             hosts = [host for host in hosts if host not in excluded_hosts]
