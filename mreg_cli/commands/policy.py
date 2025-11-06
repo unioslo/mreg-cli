@@ -312,6 +312,7 @@ def host_add(args: argparse.Namespace) -> None:
     hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
 
     for host in hosts:
+        # Best-effort approach – try to assign roles to all hosts
         try:
             role.add_host(host.name)
             OutputManager().add_ok(f"Added host {host.name} to role {role_name!r}")
@@ -321,9 +322,9 @@ def host_add(args: argparse.Namespace) -> None:
                     f"Host {host.name} is already a member of role {role_name!r}"
                 )
             else:
-                OutputManager().add_error(
-                    f"Failed to add host {host.name} to role {role_name!r}: {e}"
-                )
+                msg = f"Failed to add host {host.name} to role {role_name!r}: {e}"
+                OutputManager().add_error(msg)
+                OutputManager().add_line(f"ERROR: {msg}")
 
 
 @command_registry.register_command(
