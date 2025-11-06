@@ -262,8 +262,11 @@ def list_roles(args: argparse.Namespace) -> None:
         Flag("name", description="Role name", metavar="ROLE"),
         Flag(
             "-exclude",
-            description="Exclude hosts that have these roles. Supports regular expressions.",
-            metavar="EXCLUDE",
+            description=(
+                "Exclude hosts that have these roles. "
+                "Supports regular expressions and multiple arguments."
+            ),
+            metavar="EXCLUDEROLE",
             nargs="+",
         ),
     ],
