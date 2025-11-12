@@ -611,10 +611,10 @@ def policy_add(args: argparse.Namespace) -> None:
             default=[],
         ),
         Flag(
-            "-prefix",
-            description="Custom prefix for community names when mapped to global names.",
+            "-pattern",
+            description="Custom template pattern for community names when mapped to global names.",
             default=None,
-            metavar="PREFIX",
+            metavar="PATTERN",
         ),
     ],
 )
@@ -626,7 +626,7 @@ def policy_create(args: argparse.Namespace) -> None:
     name: str = args.name
     description: str = args.description
     attribute: list[str] = args.attribute or []
-    prefix: str | None = args.prefix
+    pattern: str | None = args.pattern
 
     NetworkPolicy.get_by_name_and_raise(name)
 
@@ -639,7 +639,7 @@ def policy_create(args: argparse.Namespace) -> None:
             "name": name,
             "description": description,
             "attributes": [{"name": attr.name, "value": True} for attr in attrs],
-            "community_mapping_prefix": prefix,
+            "community_template_pattern": pattern,
         }
     )
     OutputManager().add_ok(f"Created network policy {name!r}")
@@ -797,51 +797,55 @@ def policy_set_description(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Set new description for network policy {policy!r}")
 
 
-# TODO[rename]: network policy set_prefix
+# TODO[rename]: network policy set_pattern
 @command_registry.register_command(
-    prog="policy_set_prefix",
-    description="Set the global community mapping prefix for a network policy",
-    short_desc="Set community mapping prefix",
+    prog="policy_set_pattern",
+    description="Set the global community mapping template pattern for a network policy",
+    short_desc="Set community mapping pattern",
     flags=[
         Flag("policy", description="Policy", metavar="POLICY"),
-        Flag("prefix", description="New prefix", metavar="PREFIX"),
+        Flag("pattern", description="New pattern", metavar="PATTERN"),
     ],
 )
-def policy_set_prefix(args: argparse.Namespace) -> None:
-    """Set the global community mapping prefix for a network policy.
+def policy_set_pattern(args: argparse.Namespace) -> None:
+    """Set the global community mapping templatepattern for a network policy.
 
-    :param args: argparse.Namespace (name, prefix)
+    :param args: argparse.Namespace (name, pattern)
     """
     policy: str = args.policy
-    prefix: str = args.prefix
+    pattern: str = args.pattern
 
     pol = NetworkPolicy.get_by_name_or_raise(policy)
-    pol.patch({"community_mapping_prefix": prefix})
-    OutputManager().add_ok(f"Set new community mapping prefix for network policy {policy!r}")
+    pol.patch({"community_template_pattern": pattern})
+    OutputManager().add_ok(
+        f"Set new community mapping template pattern for network policy {policy!r}"
+    )
 
 
-# TODO[rename]: network policy set_prefix
+# TODO[rename]: network policy unset_pattern
 @command_registry.register_command(
-    prog="policy_unset_prefix",
+    prog="policy_unset_pattern",
     description=(
-        "Unset the global community mapping prefix for a network polic. "
-        "Reverts the prefix to the global default."
+        "Unset the global community mapping template pattern for a network policy. "
+        "Reverts the pattern to the global default."
     ),
-    short_desc="Unset community mapping prefix",
+    short_desc="Unset community mapping template pattern",
     flags=[
         Flag("policy", description="Policy", metavar="POLICY"),
     ],
 )
-def policy_unset_prefix(args: argparse.Namespace) -> None:
-    """Unset the global community mapping prefix for a network policy.
+def policy_unset_pattern(args: argparse.Namespace) -> None:
+    """Unset the global community mapping template pattern for a network policy.
 
-    :param args: argparse.Namespace (name, prefix)
+    :param args: argparse.Namespace (name, pattern)
     """
     policy: str = args.policy
 
     pol = NetworkPolicy.get_by_name_or_raise(policy)
-    pol.patch({"community_mapping_prefix": None})
-    OutputManager().add_ok(f"Unset community mapping prefix for network policy {policy!r}")
+    pol.patch({"community_template_pattern": None})
+    OutputManager().add_ok(
+        f"Unset community mapping template pattern for network policy {policy!r}"
+    )
 
 
 ##########################################

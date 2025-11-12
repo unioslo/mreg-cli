@@ -58,6 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `logging start` no longer toggles logging on and off. Now aborts if logging is already enabled.
 - `logging stop` now aborts if logging is not enabled.
 - `logging status` now shows if logging is enabled or not.
+- `network policy_set_prefix` renamed to `network policy_set_pattern`.
+- `network policy_unset_prefix` renamed to `network policy_unset_pattern`.
 
 ## [1.6.0](https://github.com/unioslo/mreg-cli/releases/tag/1.6.0) - 2025-10-13
 
