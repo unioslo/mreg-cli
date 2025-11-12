@@ -2230,7 +2230,10 @@ class NetworkPolicy(FrozenModelWithTimestamps, WithName):
     name: str
     description: str | None = None
     attributes: list[NetworkPolicyAttributeValue] = []
-    community_template_pattern: str | None = None
+    community_template_pattern: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("community_template_pattern", "community_mapping_prefix"),
+    )
 
     @classmethod
     def endpoint(cls) -> Endpoint:
