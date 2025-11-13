@@ -26,7 +26,7 @@ from mreg_cli.api.errors import parse_mreg_error
 from mreg_cli.cache import get_cache
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
-    APINotOk,
+    APIError,
     CliError,
     LoginFailedError,
     MultipleEntitiesFound,
@@ -223,7 +223,7 @@ def result_check(result: Response, operation_type: str, url: str) -> None:
         else:
             res_text = result.text
         message = f'{operation_type} "{url}": {result.status_code}: {result.reason}\n{res_text}'
-        raise APINotOk(message, result)
+        raise APIError(message, result)
 
 
 def _strip_none(data: dict[str, Any]) -> dict[str, Any]:
