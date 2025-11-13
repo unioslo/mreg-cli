@@ -14,7 +14,7 @@ from mreg_cli.api.models import (
 )
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import APINotOk, CreateError, DeleteError, EntityAlreadyExists
+from mreg_cli.exceptions import APINotOk, CreateError, DeleteError, EntityAlreadyExists, PatchError
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -328,6 +328,7 @@ def host_add(args: argparse.Namespace) -> None:
     hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
 
     for host in hosts:
+        # Best-effort approach – try to assign roles to all hosts
         try:
             role.add_host(host.name)
             OutputManager().add_ok(f"Added host {host.name} to role {role_name!r}")
@@ -337,9 +338,10 @@ def host_add(args: argparse.Namespace) -> None:
                     f"Host {host.name} is already a member of role {role_name!r}"
                 )
             else:
-                OutputManager().add_error(
-                    f"Failed to add host {host.name} to role {role_name!r}: {e}"
+                err = PatchError.from_api_not_ok(
+                    e, f"Failed to add host {host.name} to role {role_name!r}"
                 )
+                err.print_and_log()
 
 
 @command_registry.register_command(

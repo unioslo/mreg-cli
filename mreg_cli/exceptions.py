@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import Self
 
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
@@ -55,6 +56,26 @@ class CliException(Exception):
         """Print the exception and log it."""
         self.log()
         self.print_self()
+
+    @classmethod
+    def from_api_not_ok(cls, e: APINotOk, message: str | None = None) -> Self:
+        """Create a CliError from an API error.
+
+        :param e: The original API error.
+        :param message: An optional message to prefix the original exception message.
+        :returns: The created CliError.
+        """
+        from mreg_cli.api.errors import parse_mreg_error
+
+        if (api_err := parse_mreg_error(e.response)) and api_err.errors:
+            reason = api_err.errors[0].detail
+        else:
+            reason = str(e)
+        if message:
+            message += f": {reason}"
+        else:
+            message = reason
+        return cls(message)
 
 
 class CliError(CliException):
