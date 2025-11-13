@@ -145,7 +145,7 @@ class InternalError(CliError):
 
 
 class APIError(CliWarning):
-    """Warning class for API not returning OK."""
+    """Warning class for API errors."""
 
     response: Response
 
