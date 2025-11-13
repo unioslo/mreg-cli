@@ -2243,7 +2243,10 @@ class NetworkPolicy(FrozenModelWithTimestamps, WithName):
     name: str
     description: str | None = None
     attributes: list[NetworkPolicyAttributeValue] = []
-    community_mapping_prefix: str | None = None
+    community_template_pattern: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("community_template_pattern", "community_mapping_prefix"),
+    )
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -2263,8 +2266,8 @@ class NetworkPolicy(FrozenModelWithTimestamps, WithName):
         manager.add_line(f"Name: {self.name}")
         if self.description:
             manager.add_line(f"Description: {self.description}")
-        if self.community_mapping_prefix:
-            manager.add_line(f"Prefix: {self.community_mapping_prefix}")
+        if self.community_template_pattern:
+            manager.add_line(f"Community template pattern: {self.community_template_pattern}")
         if self.attributes:
             manager.add_line("Attributes:")
             for attribute in self.attributes:

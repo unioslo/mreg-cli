@@ -37308,12 +37308,12 @@
     "time": null
   },
   {
-    "command": "network policy_create CustomPrefix \"Custom community mapping prefix\" -prefix \"custom\"",
+    "command": "network policy_create CustomPattern \"Custom community mapping template pattern\" -pattern \"custom\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_create CustomPrefix \"Custom community mapping prefix\" -prefix \"custom\" # no attributes",
+    "command_issued": "network policy_create CustomPattern \"Custom community mapping template pattern\" -pattern \"custom\" # no attributes",
     "ok": [
-      "Created network policy 'CustomPrefix'"
+      "Created network policy 'CustomPattern'"
     ],
     "warning": [],
     "error": [],
@@ -37335,7 +37335,7 @@
         "method": "POST",
         "url": "/api/v1/networkpolicies/",
         "data": {
-          "name": "CustomPrefix",
+          "name": "CustomPattern",
           "description": "Custom community mapping prefix",
           "attributes": [],
           "community_mapping_prefix": "custom"
@@ -37368,10 +37368,10 @@
     "time": null
   },
   {
-    "command": "network create -network 10.0.3.0/24 -desc \"CustomPrefixNet\" -policy CustomPrefix",
+    "command": "network create -network 10.0.3.0/24 -desc \"CustomPatternNet\" -policy CustomPattern",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network create -network 10.0.3.0/24 -desc \"CustomPrefixNet\" -policy CustomPrefix # add policy during creation",
+    "command_issued": "network create -network 10.0.3.0/24 -desc \"CustomPatternNet\" -policy CustomPattern # add policy during creation",
     "ok": [
       "created network 10.0.3.0/24"
     ],
@@ -37470,7 +37470,7 @@
         "url": "/api/v1/networks/",
         "data": {
           "network": "10.0.3.0/24",
-          "description": "CustomPrefixNet",
+          "description": "CustomPatternNet",
           "frozen": false
         },
         "status": 201
@@ -37487,7 +37487,7 @@
           "created_at": "2025-05-19T15:03:51.389153+02:00",
           "updated_at": "2025-05-19T15:03:51.389163+02:00",
           "network": "10.0.3.0/24",
-          "description": "CustomPrefixNet",
+          "description": "CustomPatternNet",
           "vlan": null,
           "dns_delegated": false,
           "category": "",
@@ -37528,7 +37528,7 @@
               "created_at": "2025-05-19T15:03:51.389153+02:00",
               "updated_at": "2025-05-19T15:03:51.487147+02:00",
               "network": "10.0.3.0/24",
-              "description": "CustomPrefixNet",
+              "description": "CustomPatternNet",
               "vlan": null,
               "dns_delegated": false,
               "category": "",
@@ -37543,10 +37543,10 @@
     "time": null
   },
   {
-    "command": "network policy_info CustomPrefix",
+    "command": "network policy_info CustomPattern",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_info CustomPrefix",
+    "command_issued": "network policy_info CustomPattern",
     "ok": [],
     "warning": [],
     "error": [],
@@ -37605,7 +37605,7 @@
               "created_at": "2025-05-19T15:03:51.389153+02:00",
               "updated_at": "2025-05-19T15:03:51.487147+02:00",
               "network": "10.0.3.0/24",
-              "description": "CustomPrefixNet",
+              "description": "CustomPatternNet",
               "vlan": null,
               "dns_delegated": false,
               "category": "",
@@ -37650,7 +37650,7 @@
           "created_at": "2025-05-19T15:03:51.389153+02:00",
           "updated_at": "2025-05-19T15:03:51.487147+02:00",
           "network": "10.0.3.0/24",
-          "description": "CustomPrefixNet",
+          "description": "CustomPatternNet",
           "vlan": null,
           "dns_delegated": false,
           "category": "",
@@ -37726,7 +37726,7 @@
           "created_at": "2025-05-19T15:03:51.389153+02:00",
           "updated_at": "2025-05-19T15:03:51.487147+02:00",
           "network": "10.0.3.0/24",
-          "description": "CustomPrefixNet",
+          "description": "CustomPatternNet",
           "vlan": null,
           "dns_delegated": false,
           "category": "",
@@ -37739,12 +37739,12 @@
     "time": null
   },
   {
-    "command": "network policy_set_prefix CustomPrefix \"newprefix\"",
+    "command": "network policy_set_pattern CustomPattern \"newpattern\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_set_prefix CustomPrefix \"newprefix\"",
+    "command_issued": "network policy_set_pattern CustomPattern \"newpattern\"",
     "ok": [
-      "Set new community mapping prefix for network policy 'CustomPrefix'"
+      "Set new community mapping prefix for network policy 'CustomPattern'"
     ],
     "warning": [],
     "error": [],
@@ -37775,14 +37775,14 @@
         "method": "PATCH",
         "url": "/api/v1/networkpolicies/4",
         "data": {
-          "community_mapping_prefix": "newprefix"
+          "community_mapping_prefix": "newpattern"
         },
         "status": 200,
         "response": {
           "name": "customprefix",
           "description": "Custom community mapping prefix",
           "attributes": [],
-          "community_mapping_prefix": "newprefix",
+          "community_mapping_prefix": "newpattern",
           "created_at": "2025-09-23T14:58:14.662710+02:00",
           "updated_at": "2025-09-23T14:58:15.041566+02:00"
         }
@@ -37796,7 +37796,7 @@
           "name": "customprefix",
           "description": "Custom community mapping prefix",
           "attributes": [],
-          "community_mapping_prefix": "newprefix",
+          "community_mapping_prefix": "newpattern",
           "created_at": "2025-09-23T14:58:14.662710+02:00",
           "updated_at": "2025-09-23T14:58:15.041566+02:00"
         }
@@ -37815,7 +37815,7 @@
     "output": [
       "Name:         foo",
       "Description:  Foo community",
-      "Global name:  newprefix01",
+      "Global name:  newpattern01",
       "Created:      Tue Sep 23 14:58:14 2025",
       "Updated:      Tue Sep 23 14:58:14 2025",
       "Hosts:        0"
@@ -37832,7 +37832,7 @@
             "name": "customprefix",
             "description": "Custom community mapping prefix",
             "attributes": [],
-            "community_mapping_prefix": "newprefix",
+            "community_mapping_prefix": "newpattern",
             "created_at": "2025-09-23T14:58:14.662710+02:00",
             "updated_at": "2025-09-23T14:58:15.041566+02:00"
           },
@@ -37842,7 +37842,7 @@
               "description": "Foo community",
               "network": 11,
               "hosts": [],
-              "global_name": "newprefix01",
+              "global_name": "newpattern01",
               "created_at": "2025-09-23T14:58:14.965342+02:00",
               "updated_at": "2025-09-23T14:58:14.965358+02:00"
             }
@@ -37850,7 +37850,7 @@
           "created_at": "2025-09-23T14:58:14.789842+02:00",
           "updated_at": "2025-09-23T14:58:14.833461+02:00",
           "network": "10.0.3.0/24",
-          "description": "CustomPrefixNet",
+          "description": "CustomPatternNet",
           "vlan": null,
           "dns_delegated": false,
           "category": "",
@@ -37863,12 +37863,12 @@
     "time": null
   },
   {
-    "command": "network policy_unset_prefix CustomPrefix",
+    "command": "network policy_unset_pattern CustomPattern",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_unset_prefix CustomPrefix",
+    "command_issued": "network policy_unset_pattern CustomPattern",
     "ok": [
-      "Unset community mapping prefix for network policy 'CustomPrefix'"
+      "Unset community mapping prefix for network policy 'CustomPattern'"
     ],
     "warning": [],
     "error": [],
@@ -37888,7 +37888,7 @@
               "name": "customprefix",
               "description": "Custom community mapping prefix",
               "attributes": [],
-              "community_mapping_prefix": "newprefix",
+              "community_mapping_prefix": "newpattern",
               "created_at": "2025-09-23T14:58:14.662710+02:00",
               "updated_at": "2025-09-23T14:58:15.041566+02:00"
             }
@@ -37974,7 +37974,7 @@
           "created_at": "2025-09-23T14:58:14.789842+02:00",
           "updated_at": "2025-09-23T14:58:14.833461+02:00",
           "network": "10.0.3.0/24",
-          "description": "CustomPrefixNet",
+          "description": "CustomPatternNet",
           "vlan": null,
           "dns_delegated": false,
           "category": "",
@@ -38015,12 +38015,12 @@
     "time": null
   },
   {
-    "command": "network policy_delete CustomPrefix",
+    "command": "network policy_delete CustomPattern",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_delete CustomPrefix",
+    "command_issued": "network policy_delete CustomPattern",
     "ok": [
-      "Deleted network policy 'CustomPrefix'"
+      "Deleted network policy 'CustomPattern'"
     ],
     "warning": [],
     "error": [],
