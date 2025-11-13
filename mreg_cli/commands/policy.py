@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import itertools
 from typing import Any
 
 from mreg_cli.api.models import (
@@ -259,6 +260,15 @@ def list_roles(args: argparse.Namespace) -> None:
     short_desc="List hosts which use the given role",
     flags=[
         Flag("name", description="Role name", metavar="ROLE"),
+        Flag(
+            "-exclude",
+            description=(
+                "Exclude hosts that have these roles. "
+                "Supports regular expressions and multiple arguments."
+            ),
+            metavar="EXCLUDEROLE",
+            nargs="+",
+        ),
     ],
 )
 def list_hosts(args: argparse.Namespace) -> None:
@@ -267,9 +277,15 @@ def list_hosts(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     name: str = args.name
+    exclude: list[str] = args.exclude if args.exclude else []
 
     role = Role.get_by_name_or_raise(name)
-    role.output_hosts()
+
+    exclude_roles = list(
+        itertools.chain.from_iterable(Role.get_list_by_name_regex(r) for r in exclude)
+    )
+
+    role.output_hosts(exclude_roles=exclude_roles)
 
 
 @command_registry.register_command(

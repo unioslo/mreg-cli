@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `policy list_hosts -exclude EXCLUDEROLE [EXCLUDEROLE ...]` option to exclude hosts that have the given role(s) when listing hosts with a role. Supports multiple arguments and regular expressions.
 - Environment variable support for all config file options.
   - Environment variables are prefixed with `MREG_CLI_` and use uppercase letters and underscores instead of lowercase letters and hyphens.
   - For example, the `http_timeout` config file option can be set with the `MREG_CLI_HTTP_TIMEOUT` environment variable.
