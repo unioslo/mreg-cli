@@ -194,15 +194,6 @@ List of valid location tags for networks. Used by `network create`.
 location_tags=default,oslo,bergen,stavanger
 ```
 
-### Show logo
-
-Show ASCII art logo on startup. Enabled by default.
-
-```ini
-[mreg]
-show_logo=true
-```
-
 </details>
 
 ## General usage

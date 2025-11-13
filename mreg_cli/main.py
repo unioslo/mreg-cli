@@ -254,17 +254,18 @@ def main():
 
 def print_greeting(config: MregCliConfig) -> None:
     """Print greeting message for the CLI."""
-    logo = r"""
- __  __ ____  _____ ____        ____ _     ___
-|  \/  |  _ \| ____/ ___|      / ___| |   |_ _|
-| |\/| | |_) |  _|| |  _ _____| |   | |    | |
-| |  | |  _ <| |__| |_| |_____| |___| |___ | |
-|_|  |_|_| \_\_____\____|      \____|_____|___|
-""".strip("\n")
-
-    if config.show_logo:
-        console.print(Panel(Group(logo, "", f"v{__version__}"), expand=False))
-    console.print("Type -h for help.")
+    panel = Panel(
+        Group(
+            "Welcome to mreg-cli",
+            "[dim i]Type -h for help, <Ctrl-D> or 'exit' to quit.[/]",
+            "",
+            "version: " + __version__,
+        ),
+        expand=False,
+        padding=(0, 2),
+    )
+    console.print(panel)
+    console.print()  # blank line
 
 
 if __name__ == "__main__":

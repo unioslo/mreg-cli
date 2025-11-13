@@ -185,7 +185,6 @@ class MregCliConfig(BaseSettings):
         validation_alias=AliasChoices("logfile", "log_file"),
     )
     log_level: LogLevel = LogLevel.INFO
-    show_logo: bool = True
 
     model_config = SettingsConfigDict(
         env_prefix="MREG_CLI_",
