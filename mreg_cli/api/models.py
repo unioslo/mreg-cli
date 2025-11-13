@@ -1268,15 +1268,28 @@ class Role(HostPolicy, WithHistory):
         for label in labels:
             output_manager.add_formatted_line("", label.name, padding)
 
-    def output_hosts(self, _padding: int = 14) -> None:
+    def output_hosts(self, _padding: int = 14, exclude_roles: list[Role] | None = None) -> None:
         """Output the hosts that use the role.
 
         :param padding: Number of spaces for left-padding the output.
+        :param exclude_roles: List of other roles to exclude hosts with.
         """
         manager = OutputManager()
-        if self.hosts:
+        hosts = self.hosts
+
+        if exclude_roles:
+            # Exclude any hosts that are found in the excluded roles
+            excluded_hosts: set[str] = set()
+            for host in hosts:
+                for role in exclude_roles:
+                    if host in role.hosts:
+                        excluded_hosts.add(host)
+                        break
+            hosts = [host for host in hosts if host not in excluded_hosts]
+
+        if hosts:
             manager.add_line("Name:")
-            for host in self.hosts:
+            for host in hosts:
                 manager.add_line(f" {host}")
         else:
             manager.add_line("No host uses this role")

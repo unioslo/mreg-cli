@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import itertools
 from typing import Any
 
 from mreg_cli.api.models import (
@@ -13,7 +14,7 @@ from mreg_cli.api.models import (
 )
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import APINotOk, CreateError, DeleteError, EntityAlreadyExists
+from mreg_cli.exceptions import APINotOk, CreateError, DeleteError, EntityAlreadyExists, PatchError
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -259,6 +260,15 @@ def list_roles(args: argparse.Namespace) -> None:
     short_desc="List hosts which use the given role",
     flags=[
         Flag("name", description="Role name", metavar="ROLE"),
+        Flag(
+            "-exclude",
+            description=(
+                "Exclude hosts that have these roles. "
+                "Supports regular expressions and multiple arguments."
+            ),
+            metavar="EXCLUDEROLE",
+            nargs="+",
+        ),
     ],
 )
 def list_hosts(args: argparse.Namespace) -> None:
@@ -267,9 +277,15 @@ def list_hosts(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     name: str = args.name
+    exclude: list[str] = args.exclude if args.exclude else []
 
     role = Role.get_by_name_or_raise(name)
-    role.output_hosts()
+
+    exclude_roles = list(
+        itertools.chain.from_iterable(Role.get_list_by_name_regex(r) for r in exclude)
+    )
+
+    role.output_hosts(exclude_roles=exclude_roles)
 
 
 @command_registry.register_command(
@@ -312,6 +328,7 @@ def host_add(args: argparse.Namespace) -> None:
     hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
 
     for host in hosts:
+        # Best-effort approach – try to assign roles to all hosts
         try:
             role.add_host(host.name)
             OutputManager().add_ok(f"Added host {host.name} to role {role_name!r}")
@@ -321,9 +338,10 @@ def host_add(args: argparse.Namespace) -> None:
                     f"Host {host.name} is already a member of role {role_name!r}"
                 )
             else:
-                OutputManager().add_error(
-                    f"Failed to add host {host.name} to role {role_name!r}: {e}"
+                err = PatchError.from_api_not_ok(
+                    e, f"Failed to add host {host.name} to role {role_name!r}"
                 )
+                err.print_and_log()
 
 
 @command_registry.register_command(
