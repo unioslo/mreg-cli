@@ -28,7 +28,7 @@ from mreg_cli.api.models import (
 )
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    APINotOk,
+    APIError,
     CreateError,
     DeleteError,
     EntityAlreadyExists,
@@ -149,7 +149,7 @@ def add(args: argparse.Namespace) -> None:
                         raise InvalidIPAddress(
                             f"IP {ipaddr} is a broadcast address, not a host address, must force"
                         )
-            except (EntityNotFound, APINotOk) as e:
+            except (EntityNotFound, APIError) as e:
                 if not force:
                     raise ForceMissing(f"IP {ipaddr} is not in a network, must force") from e
             data["ipaddress"] = str(network_or_ip)

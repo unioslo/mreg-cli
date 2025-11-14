@@ -35,7 +35,7 @@ from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import HostName, MacAddress, NameList
 from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.exceptions import (
-    APINotOk,
+    APIError,
     CreateError,
     DeleteError,
     EntityAlreadyExists,
@@ -1012,11 +1012,11 @@ class ForwardZone(Zone, WithName, APIMixin):
         :param hostname: The hostname to search for.
         :returns: The zone if found, None otherwise.
         """
-        data = get(Endpoint.ForwardZoneForHost.with_id(hostname), ok404=True)
-        if not data:
+        resp = get(Endpoint.ForwardZoneForHost.with_id(hostname), ok404=True)
+        if not resp:
             return None
 
-        zoneblob = data.json()
+        zoneblob = resp.json()
 
         if "delegate" in zoneblob:
             return ForwardZoneDelegation.model_validate(zoneblob)
@@ -1027,7 +1027,7 @@ class ForwardZone(Zone, WithName, APIMixin):
         if "delegation" in zoneblob:
             return ForwardZoneDelegation.model_validate(zoneblob["delegation"])
 
-        raise UnexpectedDataError(f"Unexpected response from server: {zoneblob}")
+        raise UnexpectedDataError(f"Unexpected response from server: {zoneblob}", resp)
 
 
 class ReverseZone(Zone, WithName, APIMixin):
@@ -2476,7 +2476,7 @@ class IPAddress(FrozenModelWithTimestamps, WithHost, APIMixin):
         """Return the network of the IP address."""
         try:
             return get_typed(Endpoint.NetworksByIP.with_id(str(self.ipaddress)), Network)
-        except APINotOk:
+        except APIError:
             return None
 
     def vlan(self) -> int | None:
@@ -4558,13 +4558,13 @@ class LDAPHealth(BaseModel, APIMixin):
 
         :param ignore_errors: Ignore non-503 errors. 503 means LDAP is down,
             and should not be treated as an error in the traditional sense.
-        :raises requests.APINotOk: If the response code is not 200 or 503.
+        :raises requests.APIError: If the response code is not 200 or 503.
         :returns: An instance of LDAPStatus.
         """
         try:
             get(cls.endpoint())
             return cls(status="OK")
-        except APINotOk as e:
+        except APIError as e:
             if ignore_errors:
                 logger.error("Failed to fetch LDAP health: %s", e)
                 if e.response.status_code == 503:
