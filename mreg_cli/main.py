@@ -166,8 +166,7 @@ def main():
         raise SystemExit() from None
 
     config.parse_cli_args(args)
-    if config.log_file is not None:
-        MregCliLogger().start_logging(config.log_file, config.log_level)
+    MregCliLogger().start_logging(config.log_file, config.log_level)
 
     if traffic_file := config.record_traffic:
         OutputManager().recording_start(traffic_file)

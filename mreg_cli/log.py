@@ -23,6 +23,10 @@ class LoggingStatus(NamedTuple):
     file: Path | None
     level: LogLevel
 
+    def as_str(self) -> str:
+        """Get a string representation of the logging status."""
+        return f"{self.level} > {self.file or 'stderr'}" if self.enabled else "disabled"
+
 
 class MregCliLogger:
     """Singleton that manages logging state."""
@@ -44,7 +48,10 @@ class MregCliLogger:
         return LoggingStatus(self._is_logging, self._file, self._level)
 
     def start_logging(
-        self, logfile: Path, level: LogLevel | str = LogLevel.INFO, fmt: str = LOGGING_FORMAT
+        self,
+        logfile: Path | None,
+        level: LogLevel | str = LogLevel.INFO,
+        fmt: str = LOGGING_FORMAT,
     ) -> None:
         """Start logging to the specified file. Disables logging if already enabled."""
         level = LogLevel(level)

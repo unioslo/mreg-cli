@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 from typing import Any
 
 from mreg_cli.commands.base import BaseCommand
@@ -66,13 +67,9 @@ def start_logging(args: argparse.Namespace) -> None:
     status = log.status
     # Abort if already logging with same params
     if status.enabled and status.file == log_file and status.level == level:
-        raise InputFailure(f"Logging already enabled: {level} > {log_file}")
-
-    if log_file is None:
-        raise InputFailure("No log file specified or configured.")
-
+        raise InputFailure(f"Logging already enabled: {status.as_str()}")
     log.start_logging(log_file, level)
-    OutputManager().add_line(f"Logging started: {level} > {log_file}")
+    OutputManager().add_line(f"Logging started: {status.as_str()}")
 
 
 @command_registry.register_command(
@@ -84,7 +81,7 @@ def stop_logging(_: argparse.Namespace):
     """Stop logging."""
     log = MregCliLogger()
     if not log.status.enabled:
-        raise InputFailure("Logging is not enabled.")
+        raise InputFailure("Logging is already disabled.")
 
     log.stop_logging()
     OutputManager().add_line("Logging stopped.")
@@ -109,12 +106,12 @@ def set_logging_level(args: argparse.Namespace) -> None:
     config = MregCliConfig()
     log = MregCliLogger()
 
-    # Determine logging params
-    log_file = log.status.file or config.log_file  # fallback should never be reachable...
-    level = LogLevel(args.level)
-    if not log.status.enabled or not log_file:
+    if not log.status.enabled:
         raise InputFailure("Logging is not enabled, cannot set level.")
 
+    # Determine logging params
+    log_file = log.status.file or config.log_file
+    level = LogLevel(args.level)
     log.start_logging(log_file, level)
 
 
@@ -129,10 +126,12 @@ def logging_status(_: argparse.Namespace):
 
     status = MregCliLogger().status
     log_file = status.file or conf.log_file  # fallback should never be reachable...
-    level = status.level
 
-    if not status.enabled or log_file is None:
+    if not status.enabled:
         raise InputFailure("Logging is disabled.")
+    elif not log_file:
+        OutputManager().add_line(status.as_str())
+        return
 
     lines_in_logfile = 0
     try:
@@ -143,4 +142,4 @@ def logging_status(_: argparse.Namespace):
 
     filesize = sizeof_fmt(log_file.stat().st_size)
 
-    OutputManager().add_line(f"{level} > {log_file} ({lines_in_logfile} lines, {filesize})")
+    OutputManager().add_line(f"{status.as_str()} ({lines_in_logfile} lines, {filesize})")
