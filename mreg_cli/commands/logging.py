@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 from typing import Any
 
 from mreg_cli.commands.base import BaseCommand
@@ -66,10 +67,9 @@ def start_logging(args: argparse.Namespace) -> None:
     status = log.status
     # Abort if already logging with same params
     if status.enabled and status.file == log_file and status.level == level:
-        raise InputFailure(f"Logging already enabled: {level} > {log_file}")
-
+        raise InputFailure(f"Logging already enabled: {status.as_str()}")
     log.start_logging(log_file, level)
-    OutputManager().add_line(f"Logging started: {level} > {log_file}")
+    OutputManager().add_line(f"Logging started: {status.as_str()}")
 
 
 @command_registry.register_command(
@@ -81,7 +81,7 @@ def stop_logging(_: argparse.Namespace):
     """Stop logging."""
     log = MregCliLogger()
     if not log.status.enabled:
-        raise InputFailure("Logging is not enabled.")
+        raise InputFailure("Logging is already disabled.")
 
     log.stop_logging()
     OutputManager().add_line("Logging stopped.")
@@ -110,7 +110,7 @@ def set_logging_level(args: argparse.Namespace) -> None:
         raise InputFailure("Logging is not enabled, cannot set level.")
 
     # Determine logging params
-    log_file = log.status.file or config.log_file  # fallback should never be reachable...
+    log_file = log.status.file or config.log_file
     level = LogLevel(args.level)
     log.start_logging(log_file, level)
 
@@ -125,19 +125,21 @@ def logging_status(_: argparse.Namespace):
     conf = MregCliConfig()
 
     status = MregCliLogger().status
+    log_file = status.file or conf.log_file  # fallback should never be reachable...
+
     if not status.enabled:
         raise InputFailure("Logging is disabled.")
-
-    level = status.level
-    file = status.file or conf.log_file  # fallback should never be reachable...
+    elif not log_file:
+        OutputManager().add_line(status.as_str())
+        return
 
     lines_in_logfile = 0
     try:
-        with open(file) as f:
+        with open(log_file) as f:
             lines_in_logfile = sum(1 for _ in f)
     except OSError as e:
-        raise FileError(f"Unable to read log file {file}: {e}") from e
+        raise FileError(f"Unable to read log file {log_file}: {e}") from e
 
-    filesize = sizeof_fmt(file.stat().st_size)
+    filesize = sizeof_fmt(log_file.stat().st_size)
 
-    OutputManager().add_line(f"{level} > {file} ({lines_in_logfile} lines, {filesize})")
+    OutputManager().add_line(f"{status.as_str()} ({lines_in_logfile} lines, {filesize})")

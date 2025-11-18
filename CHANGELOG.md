@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+## [1.7.3](https://github.com/unioslo/mreg-cli/releases/tag/1.7.3) - 2025-11-18
+
+### Changed
+
+- No longer requires a writable log file to start the application. In extreme cases where no writable log file directory can be found, logging will be disabled.
+
+### Fixed
+
+- Temporary file creation failing due to non-unique filename in `/tmp` directory. Now creates a unique temporary directory for the temporary file.
+
 ## [1.7.2](https://github.com/unioslo/mreg-cli/releases/tag/1.7.2) - 2025-11-17
 
 ### Fixed
