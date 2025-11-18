@@ -13,16 +13,6 @@ from mreg_cli.exceptions import InputFailure
 logger = logging.getLogger(__name__)
 
 
-def check_writable(path: Path) -> None:
-    """Check if the given path is writable.
-
-    HACKY: Tests write access on file by opening in append mode.
-    """
-    # Check write privileges without overwriting existing content
-    with path.open("a"):
-        pass
-
-
 def get_writable_file_or_tempfile(path: Path) -> Path:
     """Ensure a writable file path exists, creating it if necessary, or fall back to a temporary file.
 
@@ -59,6 +49,16 @@ def get_writable_file_or_tempfile(path: Path) -> Path:
         logger.warning("Using temporary file at %s", tmpfile)
         return tmpfile
     return path
+
+
+def check_writable(path: Path) -> None:
+    """Check if the given path is writable.
+
+    HACKY: Tests write access on file by opening in append mode.
+    """
+    # Check write privileges without overwriting existing content
+    with path.open("a"):
+        pass
 
 
 @functools.cache
