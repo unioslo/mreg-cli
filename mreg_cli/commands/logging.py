@@ -68,6 +68,9 @@ def start_logging(args: argparse.Namespace) -> None:
     if status.enabled and status.file == log_file and status.level == level:
         raise InputFailure(f"Logging already enabled: {level} > {log_file}")
 
+    if log_file is None:
+        raise InputFailure("No log file specified or configured.")
+
     log.start_logging(log_file, level)
     OutputManager().add_line(f"Logging started: {level} > {log_file}")
 
@@ -106,12 +109,12 @@ def set_logging_level(args: argparse.Namespace) -> None:
     config = MregCliConfig()
     log = MregCliLogger()
 
-    if not log.status.enabled:
-        raise InputFailure("Logging is not enabled, cannot set level.")
-
     # Determine logging params
     log_file = log.status.file or config.log_file  # fallback should never be reachable...
     level = LogLevel(args.level)
+    if not log.status.enabled or not log_file:
+        raise InputFailure("Logging is not enabled, cannot set level.")
+
     log.start_logging(log_file, level)
 
 
@@ -125,19 +128,19 @@ def logging_status(_: argparse.Namespace):
     conf = MregCliConfig()
 
     status = MregCliLogger().status
-    if not status.enabled:
-        raise InputFailure("Logging is disabled.")
-
+    log_file = status.file or conf.log_file  # fallback should never be reachable...
     level = status.level
-    file = status.file or conf.log_file  # fallback should never be reachable...
+
+    if not status.enabled or log_file is None:
+        raise InputFailure("Logging is disabled.")
 
     lines_in_logfile = 0
     try:
-        with open(file) as f:
+        with open(log_file) as f:
             lines_in_logfile = sum(1 for _ in f)
     except OSError as e:
-        raise FileError(f"Unable to read log file {file}: {e}") from e
+        raise FileError(f"Unable to read log file {log_file}: {e}") from e
 
-    filesize = sizeof_fmt(file.stat().st_size)
+    filesize = sizeof_fmt(log_file.stat().st_size)
 
-    OutputManager().add_line(f"{level} > {file} ({lines_in_logfile} lines, {filesize})")
+    OutputManager().add_line(f"{level} > {log_file} ({lines_in_logfile} lines, {filesize})")
