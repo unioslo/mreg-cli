@@ -18,6 +18,7 @@ def check_writable(path: Path) -> None:
 
     HACKY: Tests write access on file by opening in append mode.
     """
+    # Check write privileges without overwriting existing content
     with path.open("a"):
         pass
 
@@ -32,7 +33,6 @@ def get_writable_file_or_tempfile(path: Path) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists() and path.is_dir():
             raise IsADirectoryError(f"Path {path} is a directory, not a file")
-        # Check write privileges without overwriting existing content
         if path.exists():
             check_writable(path)
         else:
