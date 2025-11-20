@@ -216,44 +216,42 @@ def root_is_writable() -> bool:
 
 
 @pytest.mark.skipif(root_is_writable(), reason="Root directory is writable")
-def test_config_fallback_tempdir() -> None:
+@pytest.mark.parametrize(
+    "path,field",
+    [
+        pytest.param(Path("/cli.log"), "log_file", id="log_file"),
+        pytest.param(Path("/cli_history.txt"), "history_file", id="history_file"),
+    ],
+)
+def test_config_fallback_tempdir(path: Path, field: str) -> None:
     """Test that the config falls back to temp dir if file creation fails for some fields."""
-    # TODO/NOTE: Can we improve this test so we automatically test these fields?
-    # Determine based on the validator or something?
-
-    log_file = Path("/cli.log")
-    history_file = Path("/cli_history.txt")
-
+    kwargs = {field: path}
     MregCliConfig._reset_instance()  # trigger reload
     # Patch the default search paths to avoid reading from fs
     with unittest.mock.patch(
         "mreg_cli.config.DEFAULT_CONFIG_PATH",
         tuple(),
     ):
-        config = MregCliConfig(
-            log_file=log_file,
-            history_file=history_file,
-        )
-        # Check that the parent directories were created
-        assert log_file.parent.exists() and log_file.parent.is_dir()
-        assert history_file.parent.exists() and history_file.parent.is_dir()
+        # Create config with unwritable file path
+        config = MregCliConfig(**kwargs)
+        config_field = getattr(config, field)
+
+        # Check that the temp parent directories were created
+        assert config_field is not None
+        assert config_field.parent.exists() and config_field.parent.is_dir()
 
         # Validated successfully and temp files are used
         # NOTE: we should only get None if the temp file creation also fails
-        assert config.log_file is not None
-        assert config.history_file is not None
+        assert config_field is not None
 
         # Check that the file paths are _not_ the original paths (root dir)
-        assert config.log_file != log_file
-        assert config.history_file != history_file
+        assert config_field != path
 
         # Files should exist
-        assert config.log_file.exists()
-        assert config.history_file.exists()
+        assert config_field.exists()
 
         # Files should be writable
-        assert os.access(config.log_file, os.W_OK)
-        assert os.access(config.history_file, os.W_OK)
+        assert os.access(config_field, os.W_OK)
 
 
 def test_resolvedpath_type() -> None:
