@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+### Added
+
+- Persistent command history.
+  - History is stored in a file, configurable with the `history_file` config option. Defaults to `$XDG_DATA_HOME/mreg-cli/history`.
+  - History can be enabled/disabled with the `history` config option.
+  - History can be cleared with the new `help clear_history` command.
+
 ## [1.7.3](https://github.com/unioslo/mreg-cli/releases/tag/1.7.3) - 2025-11-18
 
 ### Changed
