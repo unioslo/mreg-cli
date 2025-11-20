@@ -31,22 +31,28 @@ def test_logging_start(tmp_path: Path) -> None:
     assert logfile.read_text().count("\n") == snapshot(5)
 
 
-def test_logging_singleton(tmp_path: Path) -> None:
+def test_mregclilogger_singleton(tmp_path: Path) -> None:
     """Ensure that MregCliLogger behaves as a singleton."""
     logfile = tmp_path / "singleton.log"
 
-    # Do some setup on the first instance
+    # 2 loggers
     logger = MregCliLogger()
+    logger2 = MregCliLogger()
+
+    # Do some setup on the first instance
     logger.stop_logging()
     logger.start_logging(logfile, "INFO")
 
-    logger2 = MregCliLogger()
-
+    # Ensure both instances + new calls are the same object
     assert logger is logger2
+    assert logger is MregCliLogger()
+
+    # Status should be the same
     assert logger.status == logger2.status
 
 
-def test_logging_status_as_str_stderr() -> None:
+def test_mregclilogger_status_as_str_stderr() -> None:
+    """Test logging status when logging to stderr."""
     logger = MregCliLogger()
     logger.stop_logging()
     logger.start_logging(None, "INFO")
@@ -54,7 +60,7 @@ def test_logging_status_as_str_stderr() -> None:
     assert status.as_str() == snapshot("INFO > stderr")
 
 
-def test_logging_status_as_str_file(tmp_path: Path) -> None:
+def test_mregclilogger_status_as_str_file(tmp_path: Path) -> None:
     logfile = tmp_path / "test.log"
 
     logger = MregCliLogger()
@@ -62,14 +68,18 @@ def test_logging_status_as_str_file(tmp_path: Path) -> None:
 
     # Actually start logging to the real temp file
     logger.start_logging(logfile, "INFO")
-    # But override the file in the logger object to make it deterministic
-    logger._file = Path("/path/to/logfile.log")
 
+    # Test output with actual temp file path (random pytest dir)
     status = logger.status
-    assert status.as_str() == snapshot("INFO > /path/to/logfile.log")
+    assert status.as_str().startswith("INFO > /")
+
+    # Deterministic output with overriden file path
+    logger._file = Path("/path/to/logfile.log")
+    assert logger.status.as_str() == snapshot("INFO > /path/to/logfile.log")
 
 
-def test_logging_status_as_str_disabled() -> None:
+def test_mregclilogger_status_as_str_disabled() -> None:
+    """Test logging status when logging is disabled."""
     logger = MregCliLogger()
     logger.stop_logging()
     status = logger.status
