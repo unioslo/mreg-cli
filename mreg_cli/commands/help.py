@@ -88,6 +88,24 @@ def configuration_help(_: argparse.Namespace) -> None:
 
 
 @command_registry.register_command(
+    prog="clear_history",
+    description="Clear command history",
+)
+def clear_history(_: argparse.Namespace) -> None:
+    """Clear the persistent command history."""
+    conf = MregCliConfig()
+    if not conf.history_file:
+        raise CliError("No command history file configured, cannot clear history.")
+
+    try:
+        conf.history_file.write_text("")
+    except Exception as e:
+        raise CliError(f"Failed to clear command history file at {conf.history_file}: {e}") from e
+
+    OutputManager().add_line("Cleared command history.")
+
+
+@command_registry.register_command(
     prog="versions",
     description="Show versions of client and server as much as possible",
     short_desc="Show versions",

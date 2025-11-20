@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
+from prompt_toolkit.history import FileHistory
 from pydantic import ValidationError as PydanticValidationError
 
 # Import all the commands
@@ -33,6 +34,7 @@ from mreg_cli.commands.policy import PolicyCommands
 from mreg_cli.commands.recording import RecordingCommmands
 from mreg_cli.commands.root import RootCommmands
 from mreg_cli.commands.zone import ZoneCommands
+from mreg_cli.config import MregCliConfig
 
 # Import other mreg_cli modules
 from mreg_cli.exceptions import CliError, CliExit, CliWarning, ValidationError
@@ -57,6 +59,14 @@ if TYPE_CHECKING:
     class BaseCommandSubclass(Protocol):  # noqa: D101 (undocumented-public-class)
         def __init__(self, cli: Command) -> None: ...  # noqa: D107 (undocumented-public-init)
         def register_all_commands(self) -> None: ...  # noqa: D102 (undocumented-public-method)
+
+
+def get_cli_history(config: MregCliConfig) -> FileHistory | None:
+    """Get a file history object for the CLI if configured."""
+    if config.history and config.history_file:
+        # Field validator in config ensures file exists and is writable
+        return FileHistory(str(config.history_file))
+    return None
 
 
 def _create_command_group(parent: argparse.ArgumentParser) -> SubparserType:
