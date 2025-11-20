@@ -247,9 +247,13 @@ def test_config_fallback_tempdir() -> None:
         assert config.log_file != log_file
         assert config.history_file != history_file
 
-        # Files should exist and be writable
-        assert config.log_file.exists() and os.access(config.log_file, os.W_OK)
-        assert config.history_file.exists() and os.access(config.history_file, os.W_OK)
+        # Files should exist
+        assert config.log_file.exists()
+        assert config.history_file.exists()
+
+        # Files should be writable
+        assert os.access(config.log_file, os.W_OK)
+        assert os.access(config.history_file, os.W_OK)
 
 
 def test_resolvedpath_type() -> None:
