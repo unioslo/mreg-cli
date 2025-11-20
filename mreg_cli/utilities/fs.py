@@ -55,13 +55,8 @@ def get_writable_file_or_tempfile(path: Path) -> Path:
 
 
 def check_writable(path: Path) -> None:
-    """Check if the given path is writable.
-
-    HACKY: Tests write access on file by opening in append mode.
-    """
-    # Check write privileges without overwriting existing content
-    with path.open("a"):
-        pass
+    """Check if user has write access to the given path."""
+    os.access(path, os.W_OK)
 
 
 @functools.cache
