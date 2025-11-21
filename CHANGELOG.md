@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Added
+
+- `network set_max_communities <network> <max_communities>` command to set the maximum number of communities allowed on a network.
+- `network unset_max_communities <network>` command to unset the maximum number of communities allowed on a network.
 
 ## [1.7.3](https://github.com/unioslo/mreg-cli/releases/tag/1.7.3) - 2025-11-18
 
