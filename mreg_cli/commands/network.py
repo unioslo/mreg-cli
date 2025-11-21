@@ -17,7 +17,7 @@ from mreg_cli.api.models import (
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import (
-    APINotOk,
+    APIError,
     DeleteError,
     EntityNotFound,
     ForceMissing,
@@ -562,7 +562,7 @@ def set_max_communities(args: argparse.Namespace) -> None:
         )
     try:
         net.set_max_communities(max_coms)
-    except APINotOk as e:
+    except APIError as e:
         raise InputFailure(f"Failed to set max communities: {e}") from e
     OutputManager().add_ok(f"Set max communities to {max_coms} for {net.network}")
 
@@ -627,7 +627,7 @@ def unset_max_communities(args: argparse.Namespace) -> None:
 
     try:
         net.unset_max_communities()
-    except APINotOk as e:
+    except APIError as e:
         raise InputFailure(f"Failed to unset max communities: {e}") from e
     OutputManager().add_ok(f"Unset max communities for {net.network}")
 
