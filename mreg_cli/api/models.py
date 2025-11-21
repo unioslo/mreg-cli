@@ -1611,6 +1611,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     reserved: int
     policy: NetworkPolicy | None = None
     communities: list[Community] = []
+    max_communities: int | None = None
 
     def __hash__(self):
         """Return a hash of the network."""
@@ -1823,6 +1824,8 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         fmt("Category:", self.category)
         fmt("Network policy: ", self.policy.name if self.policy else "")
         fmt("Communities:", ", ".join(sorted(community_list)))
+        if self.max_communities is not None:
+            fmt("Max communities:", self.max_communities)
         fmt("Location:", self.location)
         fmt("VLAN:", self.vlan)
         fmt("DNS delegated:", str(self.dns_delegated))
@@ -2065,12 +2068,27 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         return self.patch({"policy": policy.id}, validate=False)
 
+    def set_max_communities(self, max_communities: int) -> Self:
+        """Set the maximum number of communities for the network.
+
+        :param max_communities: The new maximum number of communities.
+        :returns: The updated Network object.
+        """
+        return self.patch({"max_communities": max_communities}, validate=False)
+
     def unset_policy(self) -> Self:
         """Unset the network policy of the network.
 
         :returns: The updated Network object.
         """
         return self.patch({"policy": None}, validate=False)
+
+    def unset_max_communities(self) -> Self:
+        """Unset the maximum number of communities for the network.
+
+        :returns: The updated Network object.
+        """
+        return self.patch({"max_communities": None}, validate=False)
 
 
 class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):
@@ -2243,7 +2261,10 @@ class NetworkPolicy(FrozenModelWithTimestamps, WithName):
     name: str
     description: str | None = None
     attributes: list[NetworkPolicyAttributeValue] = []
-    community_mapping_prefix: str | None = None
+    community_template_pattern: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("community_template_pattern", "community_mapping_prefix"),
+    )
 
     @classmethod
     def endpoint(cls) -> Endpoint:
@@ -2263,8 +2284,8 @@ class NetworkPolicy(FrozenModelWithTimestamps, WithName):
         manager.add_line(f"Name: {self.name}")
         if self.description:
             manager.add_line(f"Description: {self.description}")
-        if self.community_mapping_prefix:
-            manager.add_line(f"Prefix: {self.community_mapping_prefix}")
+        if self.community_template_pattern:
+            manager.add_line(f"Community template pattern: {self.community_template_pattern}")
         if self.attributes:
             manager.add_line("Attributes:")
             for attribute in self.attributes:
