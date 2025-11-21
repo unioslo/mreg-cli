@@ -1811,6 +1811,8 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         fmt("Category:", self.category)
         fmt("Network policy: ", self.policy.name if self.policy else "")
         fmt("Communities:", ", ".join(sorted(community_list)))
+        if self.max_communities is not None:
+            fmt("Max communities:", self.max_communities)
         fmt("Location:", self.location)
         fmt("VLAN:", self.vlan)
         fmt("DNS delegated:", str(self.dns_delegated))
