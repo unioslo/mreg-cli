@@ -1598,6 +1598,7 @@ class Network(FrozenModelWithTimestamps, APIMixin):
     reserved: int
     policy: NetworkPolicy | None = None
     communities: list[Community] = []
+    max_communities: int | None = None
 
     def __hash__(self):
         """Return a hash of the network."""
