@@ -17,6 +17,7 @@ from mreg_cli.api.models import (
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import (
+    APINotOk,
     DeleteError,
     EntityNotFound,
     ForceMissing,
@@ -519,6 +520,54 @@ def set_vlan(args: argparse.Namespace) -> None:
 
 
 @command_registry.register_command(
+    prog="set_max_communities",  # <network> <max_communities>
+    description="Set the maximum number of communities for the network",
+    short_desc="Set max communities for network",
+    flags=[
+        Flag("network", description="Network.", metavar="NETWORK"),
+        Flag(
+            "max_communities",
+            description="Max communities.",
+            flag_type=int,
+            metavar="MAX_COMMUNITIES",
+        ),
+    ],
+)
+def set_max_communities(args: argparse.Namespace) -> None:
+    """Set the maximum number of communities for the network.
+
+    :param args: argparse.Namespace (network, max_communities)
+    """
+    max_coms: int = args.max_communities
+    if max_coms < 0:
+        raise InputFailure("Number of communities must be a non-negative integer")
+
+    net = Network.get_by_any_means_or_raise(args.network)
+
+    # Max communities requires a policy
+    if not net.policy:
+        raise InputFailure(f"Network {net.network} has no policy assigned.")
+
+    # No change
+    if net.max_communities is not None and max_coms == net.max_communities:
+        raise InputFailure(f"Network {net.network} already has max communities set to {max_coms}.")
+
+    # Cannot set to less than current number of communities
+    if len(net.communities) > max_coms:
+        raise InputFailure(
+            (
+                f"Network {net.network} already has {len(net.communities)} communities, "
+                f"which is more than the requested max of {max_coms}."
+            )
+        )
+    try:
+        net.set_max_communities(max_coms)
+    except APINotOk as e:
+        raise InputFailure(f"Failed to set max communities: {e}") from e
+    OutputManager().add_ok(f"Set max communities to {max_coms} for {net.network}")
+
+
+@command_registry.register_command(
     prog="unset_dns_delegated",
     description="Set that DNS-administration is not being handled elsewhere.",
     short_desc="Set that DNS-administration is not being handled elsewhere.",
@@ -552,6 +601,35 @@ def unset_frozen(args: argparse.Namespace) -> None:
     net = Network.get_by_any_means_or_raise(args.network)
     net.set_frozen(False)
     OutputManager().add_ok(f"Updated frozen to 'False' for {net.network}")
+
+
+@command_registry.register_command(
+    prog="unset_max_communities",  # <network>
+    description=(
+        "Unset the maximum number of communities for the network. "
+        "Resets the the limit to the global maximum."
+    ),
+    short_desc="Unset max communities for network",
+    flags=[
+        Flag("network", description="Network.", metavar="NETWORK"),
+    ],
+)
+def unset_max_communities(args: argparse.Namespace) -> None:
+    """Unset the maximum number of communities for the network.
+
+    :param args: argparse.Namespace (network)
+    """
+    net = Network.get_by_any_means_or_raise(args.network)
+
+    # No change
+    if net.max_communities is None:
+        raise InputFailure(f"Network {net.network} already has no community limit.")
+
+    try:
+        net.unset_max_communities()
+    except APINotOk as e:
+        raise InputFailure(f"Failed to unset max communities: {e}") from e
+    OutputManager().add_ok(f"Unset max communities for {net.network}")
 
 
 ##########################################

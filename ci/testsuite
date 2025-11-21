@@ -443,6 +443,9 @@ network policy_info Autoconfigure
 network policy_add 10.0.2.0/28 SecurePolicy
 network policy_add 10.0.2.0/28 Autoconfigure # requires force
 network policy_add 10.0.2.0/28 Autoconfigure -force
+network set_max_communities 10.0.2.0/28 5
+network info 10.0.2.0/28
+network unset_max_communities 10.0.2.0/28
 network info 10.0.2.0/28
 network policy_delete Autoconfigure # requires force
 network policy_delete Autoconfigure -force

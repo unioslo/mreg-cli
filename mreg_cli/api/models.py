@@ -2055,12 +2055,27 @@ class Network(FrozenModelWithTimestamps, APIMixin):
         """
         return self.patch({"policy": policy.id}, validate=False)
 
+    def set_max_communities(self, max_communities: int) -> Self:
+        """Set the maximum number of communities for the network.
+
+        :param max_communities: The new maximum number of communities.
+        :returns: The updated Network object.
+        """
+        return self.patch({"max_communities": max_communities}, validate=False)
+
     def unset_policy(self) -> Self:
         """Unset the network policy of the network.
 
         :returns: The updated Network object.
         """
         return self.patch({"policy": None}, validate=False)
+
+    def unset_max_communities(self) -> Self:
+        """Unset the maximum number of communities for the network.
+
+        :returns: The updated Network object.
+        """
+        return self.patch({"max_communities": None}, validate=False)
 
 
 class NetworkPolicyAttribute(FrozenModelWithTimestamps, WithName):

@@ -34729,6 +34729,263 @@
     "time": null
   },
   {
+    "command": "network set_max_communities 10.0.2.0/28 5",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network set_max_communities 10.0.2.0/28 5",
+    "ok": [
+      "Set max communities to 5 for 10.0.2.0/28"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "autoconfigure",
+            "description": "Automatic host configuration",
+            "attributes": [
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "community_template_pattern": null,
+            "created_at": "2025-11-21T15:44:44.106316+01:00",
+            "updated_at": "2025-11-21T15:44:44.106327+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-11-21T15:44:43.663527+01:00",
+          "updated_at": "2025-11-21T15:44:44.615350+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3,
+          "max_communities": null
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {
+          "max_communities": 5
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "autoconfigure",
+                "description": "Automatic host configuration",
+                "attributes": [
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "community_template_pattern": null,
+                "created_at": "2025-11-21T15:44:44.106316+01:00",
+                "updated_at": "2025-11-21T15:44:44.106327+01:00"
+              },
+              "communities": [],
+              "created_at": "2025-11-21T15:44:43.663527+01:00",
+              "updated_at": "2025-11-21T15:44:44.744399+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3,
+              "max_communities": 5
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network info 10.0.2.0/28",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network info 10.0.2.0/28",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Network:                 10.0.2.0/28",
+      "Netmask:                 255.255.255.240",
+      "Description:             TinyNet",
+      "Category:                ",
+      "Network policy:          autoconfigure",
+      "Communities:             ",
+      "Max communities:         5",
+      "Location:                ",
+      "VLAN:                    None",
+      "DNS delegated:           False",
+      "Frozen:                  False",
+      "IP-range:                10.0.2.0 - 10.0.2.15",
+      "Reserved host addresses: 3",
+      "                         10.0.2.0 (net)",
+      "                         10.0.2.1",
+      "                         10.0.2.2",
+      "                         10.0.2.3",
+      "                         10.0.2.15 (broadcast)",
+      "Used addresses:          0",
+      "Unused addresses:        11 (excluding reserved adr.)"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "autoconfigure",
+            "description": "Automatic host configuration",
+            "attributes": [
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "community_template_pattern": null,
+            "created_at": "2025-11-21T15:44:44.106316+01:00",
+            "updated_at": "2025-11-21T15:44:44.106327+01:00"
+          },
+          "communities": [],
+          "created_at": "2025-11-21T15:44:43.663527+01:00",
+          "updated_at": "2025-11-21T15:44:44.744399+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3,
+          "max_communities": 5
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/reserved_list",
+        "data": {},
+        "status": 200,
+        "response": [
+          "10.0.2.0",
+          "10.0.2.1",
+          "10.0.2.2",
+          "10.0.2.3",
+          "10.0.2.15"
+        ]
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/used_count",
+        "data": {},
+        "status": 200,
+        "response": 0
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/unused_count",
+        "data": {},
+        "status": 200,
+        "response": 11
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "network unset_max_communities 10.0.2.0/28",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "network unset_max_communities 10.0.2.0/28",
+    "ok": [
+      "Unset max communities for 10.0.2.0/28"
+    ],
+    "warning": [],
+    "error": [],
+    "output": [],
+    "api_requests": [
+      {
+        "method": "PATCH",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {
+          "max_communities": null
+        },
+        "status": 204
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/?id=10",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "excluded_ranges": [],
+              "policy": {
+                "name": "autoconfigure",
+                "description": "Automatic host configuration",
+                "attributes": [
+                  {
+                    "name": "baz",
+                    "value": true
+                  }
+                ],
+                "community_template_pattern": null,
+                "created_at": "2025-11-21T15:44:44.106316+01:00",
+                "updated_at": "2025-11-21T15:44:44.106327+01:00"
+              },
+              "communities": [],
+              "created_at": "2025-11-21T15:44:43.663527+01:00",
+              "updated_at": "2025-11-21T15:44:44.911307+01:00",
+              "network": "10.0.2.0/28",
+              "description": "TinyNet",
+              "vlan": null,
+              "dns_delegated": false,
+              "category": "",
+              "location": "",
+              "frozen": false,
+              "reserved": 3,
+              "max_communities": null
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "network info 10.0.2.0/28",
     "command_filter": null,
     "command_filter_negate": false,
