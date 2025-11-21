@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import functools
 from pathlib import Path
 from typing import Any
 
@@ -12,36 +14,63 @@ logger = logging.getLogger(__name__)
 
 
 def get_writable_file_or_tempfile(path: Path) -> Path:
-    """Ensure a file path exists and is writable, otherwise return a temporary file."""
+    """Ensure a writable file path exists, creating it if necessary, or fall back to a temporary file.
+
+    :param path: The desired file path.
+    :returns: The original path if writable, otherwise a temporary file path.
+    """
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         if path.exists() and path.is_dir():
             raise IsADirectoryError(f"Path {path} is a directory, not a file")
-        # Check write privileges without overwriting existing content
         if path.exists():
-            # Test write access on existing file by opening in append mode
-            with path.open("a"):
-                pass
+            check_writable(path)
         else:
-            # Create new file if it doesn't exist
-            path.touch()
+            # Create new file if it doesn't exist (very defensively)
+            path.touch(exist_ok=True)
     except OSError as e:
-        import tempfile  # noqa: PLC0415 # only import if we really need it
         import time  # noqa: PLC0415
 
-        # NOTE: we might not be able to write to the temp file either
-        # but in that case we are so far outside the normal
-        # usage patterns that we should probably just fail
-        tmpfile = Path(tempfile.gettempdir()) / path.name or f"mreg-cli-temp-{int(time.time())}"
         logger.error(
-            "Unable to create file at %s due to: %s; falling back to temporary file at %s",
+            "Unable to create file at %s: %s",
             path,
             e,
-            tmpfile,
         )
-        tmpfile.touch()
+
+        filename = path.name or f"mreg-cli-temp-{int(time.time())}"
+        # NOTE: Not really a temporary dir, since we never delete it!
+        tempdir = get_temp_dir()
+        tmpfile = tempdir / filename
+        try:
+            tmpfile.touch(exist_ok=True)
+            check_writable(tmpfile)
+        except Exception as tmp_err:
+            raise OSError(f"Unable to create temporary file at {tmpfile}: {tmp_err}") from tmp_err
+        logger.warning("Using temporary file at %s", tmpfile)
         return tmpfile
     return path
+
+
+def check_writable(path: Path) -> None:
+    """Check if the given path is writable.
+
+    HACKY: Tests write access on file by opening in append mode.
+    """
+    # Check write privileges without overwriting existing content
+    with path.open("a"):
+        pass
+
+
+@functools.cache
+def get_temp_dir() -> Path:
+    """Get a temporary directory for use by the CLI.
+
+    Always returns the same directory for the lifetime of the process.
+    """
+    import tempfile  # noqa: PLC0415
+
+    temp_dir = tempfile.mkdtemp(prefix="mreg-cli.", suffix="." + str(os.getuid()))
+    return Path(temp_dir)
 
 
 def to_path(value: Any) -> Path:

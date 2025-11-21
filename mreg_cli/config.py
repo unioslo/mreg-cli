@@ -157,7 +157,14 @@ class IniConfigSettingsSource(InitSettingsSource, ConfigFileSourceMixin):
         return f"{self.__class__.__name__}()"
 
 
-ResolvedPath = Annotated[Path, AfterValidator(to_path)]
+def to_path_optional(value: Any) -> Path | None:
+    """Convert a value to a Path object with expanded user and resolved symlinks, or None."""
+    if value is None:
+        return None
+    return to_path(value)
+
+
+ResolvedPath = Annotated[Path, AfterValidator(to_path_optional)]
 """Path type that is user expanded (~) and resolved (absolute+symlinks) after validation."""
 
 
@@ -179,7 +186,7 @@ class MregCliConfig(BaseSettings):
     token_only: bool = False
     source: ResolvedPath | None = None
     verbose: bool = False
-    log_file: ResolvedPath = Field(
+    log_file: ResolvedPath | None = Field(
         LOG_FILE_DEFAULT,
         # New and old names both valid
         validation_alias=AliasChoices("logfile", "log_file"),
@@ -247,9 +254,13 @@ class MregCliConfig(BaseSettings):
         return []
 
     @field_validator("log_file", mode="after")
-    def _ensure_log_file_writable(cls, v: Path) -> Path:
+    def _ensure_log_file_writable(cls, v: Path) -> Path | None:
         """Ensure we have a writable log file."""
-        return get_writable_file_or_tempfile(v)
+        try:
+            return get_writable_file_or_tempfile(v)
+        except OSError as e:
+            logger.error(str(e))
+            return None
 
     @override
     @classmethod

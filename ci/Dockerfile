@@ -2,6 +2,9 @@
 FROM ubuntu:latest
 ARG python_version=3.12
 
+# Disable dev dependencies to ensure parity with pypi package installs
+ENV UV_NO_DEV=1
+
 RUN apt-get -qq update
 RUN apt-get -y install curl git >/dev/null
 RUN curl -LsSf https://astral.sh/uv/0.5.6/install.sh | sh

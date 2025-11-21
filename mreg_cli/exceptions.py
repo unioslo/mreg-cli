@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import Self
 
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
@@ -55,6 +56,26 @@ class CliException(Exception):
         """Print the exception and log it."""
         self.log()
         self.print_self()
+
+    @classmethod
+    def from_api_error(cls, e: APIError, message: str | None = None) -> Self:
+        """Create a CliError from an API error.
+
+        :param e: The original API error.
+        :param message: An optional message to prefix the original exception message.
+        :returns: The created CliError.
+        """
+        from mreg_cli.api.errors import parse_mreg_error
+
+        if (api_err := parse_mreg_error(e.response)) and api_err.errors:
+            reason = api_err.as_str()
+        else:
+            reason = str(e)
+        if message:
+            message += f": {reason}"
+        else:
+            message = reason
+        return cls(message)
 
 
 class CliError(CliException):
@@ -123,10 +144,19 @@ class InternalError(CliError):
     pass
 
 
-class APIError(CliError):
-    """Error class for API errors."""
+class APIError(CliWarning):
+    """Warning class for API errors."""
 
-    pass
+    response: Response
+
+    def __init__(self, message: str, response: Response):
+        """Initialize an APIError warning.
+
+        :param message: The warning message.
+        :param response: The response object that triggered the exception.
+        """
+        super().__init__(message)
+        self.response = response
 
 
 class UnexpectedDataError(APIError):
@@ -191,21 +221,6 @@ class FileError(CliError):
     """Error class for file errors."""
 
     pass
-
-
-class APINotOk(CliWarning):
-    """Warning class for API not returning OK."""
-
-    response: Response
-
-    def __init__(self, message: str, response: Response):
-        """Initialize an APINotOk warning.
-
-        :param message: The warning message.
-        :param response: The response object that triggered the exception.
-        """
-        super().__init__(message)
-        self.response = response
 
 
 class TooManyResults(CliWarning):

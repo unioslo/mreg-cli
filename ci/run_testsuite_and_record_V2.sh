@@ -76,12 +76,14 @@ docker run --name mreg-cli --network host --tty mreg-cli
 docker commit mreg-cli finished-mreg-tests # because inside is the file new_testsuite_log.json which we want to look at
 
 # show a detailed diff (and review if running locally)
+# Override UV_NO_DEV to ensure we install dev dependencies for the diff script
+DIFF_CMD="UV_NO_DEV=0 /root/.local/bin/uv run diff.py"
 if [[ -n "$GITHUB_ACTIONS" ]]; then
-	docker run --rm --tty --entrypoint bash finished-mreg-tests -c 'cd /build/ci; /root/.local/bin/uv run diff.py testsuite-result.json new_testsuite_log.json'
+	docker run --rm --tty --entrypoint bash finished-mreg-tests -c "cd /build/ci; $DIFF_CMD testsuite-result.json new_testsuite_log.json"
 	exit $?
 else
 	set +e
-	docker run -it --name finished-mreg-tests --entrypoint bash finished-mreg-tests -c 'cd /build/ci; /root/.local/bin/uv run diff.py testsuite-result.json new_testsuite_log.json --review'
+	docker run -it --name finished-mreg-tests --entrypoint bash finished-mreg-tests -c "cd /build/ci; $DIFF_CMD testsuite-result.json new_testsuite_log.json --review"
 	EXITCODE=$?
 	docker cp finished-mreg-tests:/build/ci/new_testsuite_log.json .
 	docker cp finished-mreg-tests:/build/ci/testsuite-result.json .
