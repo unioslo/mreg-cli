@@ -27,7 +27,7 @@ from pydantic_settings.sources import ConfigFileSourceMixin
 from pydantic_settings.sources.types import PathType
 from typing_extensions import override
 
-from mreg_cli.dirs import DEFAULT_CONFIG_PATH, LOG_FILE_DEFAULT
+from mreg_cli.dirs import DEFAULT_CONFIG_PATH, HISTORY_FILE_DEFAULT, LOG_FILE_DEFAULT
 from mreg_cli.types import LogLevel
 from mreg_cli.utilities.fs import get_writable_file_or_tempfile, to_path
 
@@ -192,6 +192,8 @@ class MregCliConfig(BaseSettings):
         validation_alias=AliasChoices("logfile", "log_file"),
     )
     log_level: LogLevel = LogLevel.INFO
+    history_file: ResolvedPath | None = Field(HISTORY_FILE_DEFAULT)
+    history: bool = True
 
     model_config = SettingsConfigDict(
         env_prefix="MREG_CLI_",
@@ -213,7 +215,7 @@ class MregCliConfig(BaseSettings):
         """Create a new instance of the config or return the existing one."""
         if cls._instance is None:
             cls._reset_instance()  # clears state, triggers source loading
-            cls._instance = super().__new__(cls, **kwargs)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self, **kwargs: Any) -> None:
@@ -253,9 +255,9 @@ class MregCliConfig(BaseSettings):
             return [str(i) for i in v if i is not None]
         return []
 
-    @field_validator("log_file", mode="after")
+    @field_validator("log_file", "history_file", mode="after")
     def _ensure_log_file_writable(cls, v: Path) -> Path | None:
-        """Ensure we have a writable log file."""
+        """Ensure files are writable, otherwise use a temp dir."""
         try:
             return get_writable_file_or_tempfile(v)
         except OSError as e:
