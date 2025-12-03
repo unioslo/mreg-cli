@@ -16,7 +16,9 @@ from __future__ import annotations
 import argparse
 import re
 from enum import Enum
-from typing import Self, override
+from typing import Self
+
+from typing_extensions import override
 
 from mreg_cli.api.fields import HostName, MacAddress
 from mreg_cli.api.models import (
