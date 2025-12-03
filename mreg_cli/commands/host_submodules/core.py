@@ -239,8 +239,10 @@ class Override(str, Enum):
             "-override",
             short_desc="Comma separated override list, requires -force.",
             description=(
-                "Comma separated overrides for forced removal. Requires -force."
-                f"Accepted overrides: {Override.values_str()}"
+                "Confirm force deletion of dependent records. "
+                "Overrides signify requestor is aware of the dependent records and "
+                "understands that they will be deleted alongside the host. "
+                f"Accepted overrides: {Override.values_str()}. "
                 "Example usage: '-override cname,ipaddress,mx'"
             ),
             metavar="OVERRIDE",
@@ -359,13 +361,13 @@ def remove(args: argparse.Namespace) -> None:
 
     # Warn user and raise exception if any force requirements was found
     if warnings:
-        # Build the force command suggestion
-        force_cmd = ["-force"]
+        # Build the override command suggestion
+        override_cmd = ["-override"]
         if overrides_required:
-            force_cmd.extend(sorted(overrides_required))
+            override_cmd.extend(sorted(overrides_required))
 
         # Add the override command to warnings
-        command_suggestion = f"Use `{' '.join(force_cmd)}` to override."
+        command_suggestion = f"Use `{' '.join(override_cmd)}` to override."
         warnings.append(command_suggestion)
 
         # Build the error message
