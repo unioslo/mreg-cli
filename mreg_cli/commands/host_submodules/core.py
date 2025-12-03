@@ -220,7 +220,7 @@ class Override(str, Enum):
     def _missing_(cls, value: object) -> Self | None:
         if isinstance(value, str):
             val = value.lower().strip()
-            if val in cls:
+            if val in cls.values():
                 return cls(val)
         return None
 
@@ -240,12 +240,17 @@ class Override(str, Enum):
             ) from e
 
     @classmethod
+    def values(cls) -> list[str]:
+        """Return a list of all available values."""
+        return [override.value for override in cls]
+
+    @classmethod
     def values_str(cls) -> str:
         """Return a string with all available values, comma-separated, single-quoted.
 
         Used in help and error messages.
         """
-        return ", ".join([f"'{override.value}'" for override in cls])
+        return ", ".join([f"'{val}'" for val in cls.values()])
 
     @classmethod
     def parse_overrides(cls, overrides: str) -> list[Override]:
