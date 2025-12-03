@@ -443,6 +443,9 @@ network policy_info Autoconfigure
 network policy_add 10.0.2.0/28 SecurePolicy
 network policy_add 10.0.2.0/28 Autoconfigure # requires force
 network policy_add 10.0.2.0/28 Autoconfigure -force
+network set_max_communities 10.0.2.0/28 5
+network info 10.0.2.0/28
+network unset_max_communities 10.0.2.0/28
 network info 10.0.2.0/28
 network policy_delete Autoconfigure # requires force
 network policy_delete Autoconfigure -force
@@ -474,18 +477,18 @@ host info tinyhost
 network community_info 10.0.2.0/28 guests
 network community_info 10.0.2.0/28 lab
 
-# Custom communtiy mapping prefix
-network policy_create CustomPrefix "Custom community mapping prefix" -prefix "custom" # no attributes
-network create -network 10.0.3.0/24 -desc "CustomPrefixNet" -policy CustomPrefix # add policy during creation
-network policy_info CustomPrefix
+# Custom community mapping template pattern
+network policy_create CustomPattern "Custom community mapping template pattern" -pattern "custom" # no attributes
+network create -network 10.0.3.0/24 -desc "CustomPatternNet" -policy CustomPattern # add policy during creation
+network policy_info CustomPattern
 network community_create 10.0.3.0/24 foo "Foo community"
 network community_info 10.0.3.0/24 foo
-network policy_set_prefix CustomPrefix "newprefix"
+network policy_set_pattern CustomPattern "newpattern"
 network community_info 10.0.3.0/24 foo
-network policy_unset_prefix CustomPrefix
+network policy_unset_pattern CustomPattern
 network community_info 10.0.3.0/24 foo
 network remove 10.0.3.0/24 -force
-network policy_delete CustomPrefix
+network policy_delete CustomPattern
 
 ## Rename community
 network community_rename 10.0.2.0/28 lab labequipment
