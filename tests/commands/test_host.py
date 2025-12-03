@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import pytest
+from inline_snapshot import snapshot
 
 from mreg_cli.commands.host_submodules.core import Override
 from mreg_cli.exceptions import InputFailure
@@ -12,16 +15,13 @@ def test_override_members_are_strings() -> None:
         assert member == member.value
 
 
-def test_override_values() -> None:
-    """Ensure Override values are evaluated as strings, and can be compared with strings."""
-    values = Override.values()
-    for value in values:
-        assert isinstance(value, str)
-
-    # String literals, members and values are all comparable
-    assert "cname" in values
-    assert Override.CNAME in values
-    assert Override.CNAME.value in values
+def test_override_as_list() -> None:
+    """Test comparison when turned into a list."""
+    members = list(Override)
+    # String literals, members and values are all comparable to list items
+    assert "cname" in members
+    assert Override.CNAME in members
+    assert Override.CNAME.value in members
 
 
 def test_override_from_string() -> None:
@@ -45,3 +45,8 @@ def test_override_from_string() -> None:
     for invalid in invalid_strings:
         with pytest.raises(InputFailure):
             Override.from_string(invalid)
+
+
+def test_override_values_str() -> None:
+    """Snapshot test for Override.values_str()."""
+    assert Override.values_str() == snapshot("'cname', 'ipaddress', 'mx', 'srv', 'ptr', 'naptr'")

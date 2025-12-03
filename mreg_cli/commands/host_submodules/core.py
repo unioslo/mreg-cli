@@ -240,13 +240,11 @@ class Override(str, Enum):
             ) from e
 
     @classmethod
-    def values(cls) -> list[str]:
-        """Return a list with all available values."""
-        return list(cls)
-
-    @classmethod
     def values_str(cls) -> str:
-        """Return a string with all available values, comma-separated, single-quoted."""
+        """Return a string with all available values, comma-separated, single-quoted.
+
+        Used in help and error messages.
+        """
         return ", ".join([f"'{override.value}'" for override in cls])
 
     @classmethod
