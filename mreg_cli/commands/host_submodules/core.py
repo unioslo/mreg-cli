@@ -362,12 +362,13 @@ def remove(args: argparse.Namespace) -> None:
     # Warn user and raise exception if any force requirements was found
     if warnings:
         # Build the override command suggestion
-        override_cmd = ["-override"]
+        flags = ["-force"]
         if overrides_required:
-            override_cmd.extend(sorted(overrides_required))
+            flags.append("-override")
+            flags.append(",".join(sorted(overrides_required)))
 
         # Add the override command to warnings
-        command_suggestion = f"Use `{' '.join(override_cmd)}` to override."
+        command_suggestion = f"Use `{' '.join(flags)}` to override."
         warnings.append(command_suggestion)
 
         # Build the error message
