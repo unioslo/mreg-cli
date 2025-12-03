@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Persistent command history.
+  - History is stored in a file, configurable with the `history_file` config option. Defaults to `$XDG_DATA_HOME/mreg-cli/history`.
+  - History can be enabled/disabled with the `history` config option.
+  - History can be cleared with the new `help clear_history` command.
 - `network set_max_communities <network> <max_communities>` command to set the maximum number of communities allowed on a network.
 - `network unset_max_communities <network>` command to unset the maximum number of communities allowed on a network.
 

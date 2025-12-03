@@ -19,6 +19,10 @@ CONFIG_FILE_NAME = "mreg-cli.conf"
 CONFIG_FILE_DEFAULT = CONFIG_DIR / CONFIG_FILE_NAME
 """Default config file path."""
 
+DATA_DIR = _pdirs.user_data_path
+HISTORY_FILE_DEFAULT = DATA_DIR / "history"
+"""Default history file path."""
+
 LOG_DIR = _pdirs.user_log_path
 LOG_FILE_NAME = "mreg-cli.log"
 LOG_FILE_DEFAULT = LOG_DIR / LOG_FILE_NAME

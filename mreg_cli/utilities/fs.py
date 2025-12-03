@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 import os
-import functools
 from pathlib import Path
 from typing import Any
 
@@ -13,8 +13,11 @@ from mreg_cli.exceptions import InputFailure
 logger = logging.getLogger(__name__)
 
 
+# FIXME: this function currently does TOO MUCH
 def get_writable_file_or_tempfile(path: Path) -> Path:
     """Ensure a writable file path exists, creating it if necessary, or fall back to a temporary file.
+
+    Creates parent directories as needed.
 
     :param path: The desired file path.
     :returns: The original path if writable, otherwise a temporary file path.
@@ -52,13 +55,8 @@ def get_writable_file_or_tempfile(path: Path) -> Path:
 
 
 def check_writable(path: Path) -> None:
-    """Check if the given path is writable.
-
-    HACKY: Tests write access on file by opening in append mode.
-    """
-    # Check write privileges without overwriting existing content
-    with path.open("a"):
-        pass
+    """Check if user has write access to the given path."""
+    os.access(path, os.W_OK)
 
 
 @functools.cache

@@ -176,6 +176,26 @@ Time-to-live for cached API results, in seconds. Defaults to 300 seconds (5 minu
 cache_ttl=300
 ```
 
+### History
+
+Enable/disable command history. Enabled by default.
+
+```ini
+[mreg]
+history=true
+```
+
+### History file
+
+Location of the command history file. Defaults to `$XDG_DATA_DIRS/mreg-cli/history`, which is typically `~/.local/share/mreg-cli/history`.
+
+```ini
+[mreg]
+history_file=/path/to/history/file
+```
+
+<!-- Stuff that really shouldn't be in the config found below: -->
+
 ### Category tags
 
 List of valid category tags for networks. Used by `network create`.
