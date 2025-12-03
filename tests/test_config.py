@@ -247,6 +247,9 @@ def test_config_fallback_tempdir(path: Path, field: str) -> None:
         # Check that the file paths are _not_ the original paths (root dir)
         assert config_field != path
 
+        # Filename should be the same
+        assert config_field.name == path.name
+
         # Files should exist
         assert config_field.exists()
 
