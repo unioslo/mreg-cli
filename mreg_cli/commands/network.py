@@ -560,10 +560,7 @@ def set_max_communities(args: argparse.Namespace) -> None:
                 f"which is more than the requested max of {max_coms}."
             )
         )
-    try:
-        net.set_max_communities(max_coms)
-    except APIError as e:
-        raise InputFailure(f"Failed to set max communities: {e}") from e
+    net.set_max_communities(max_coms)
     OutputManager().add_ok(f"Set max communities to {max_coms} for {net.network}")
 
 
@@ -625,10 +622,7 @@ def unset_max_communities(args: argparse.Namespace) -> None:
     if net.max_communities is None:
         raise InputFailure(f"Network {net.network} already has no community limit.")
 
-    try:
-        net.unset_max_communities()
-    except APIError as e:
-        raise InputFailure(f"Failed to unset max communities: {e}") from e
+    net.unset_max_communities()
     OutputManager().add_ok(f"Unset max communities for {net.network}")
 
 
