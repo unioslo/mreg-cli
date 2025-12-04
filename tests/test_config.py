@@ -20,8 +20,9 @@ def test_get_default_config() -> None:
     # as well as testing serialization.
     conf_dict = conf.model_dump(mode="json")
 
-    # Mock log file location
+    # Mock certain file locations
     conf_dict["log_file"] = "/mock/log/file.log"
+    conf_dict["history_file"] = "/mock/history/file.history"
 
     assert conf_dict == snapshot(
         {
@@ -42,6 +43,8 @@ def test_get_default_config() -> None:
             "verbose": False,
             "log_file": "/mock/log/file.log",
             "log_level": "INFO",
+            "history_file": "/mock/history/file.history",
+            "history": True,
         }
     )
 
@@ -175,6 +178,83 @@ def test_config_read_from_env() -> None:
         assert config.location_tags == snapshot(["loc1", "loc2", "loc3"])
         assert config.cache == snapshot(False)
         assert config.cache_ttl == snapshot(250)
+
+
+def test_config_make_parent_dirs(tmp_path: Path) -> None:
+    """Test that the config creates parent directories for log and history files."""
+    log_file = tmp_path / "logs" / "cli.log"
+    history_file = tmp_path / "history" / "cli_history.txt"
+
+    MregCliConfig._reset_instance()  # trigger reload
+    # Patch the default search paths to avoid reading from fs
+    with unittest.mock.patch(
+        "mreg_cli.config.DEFAULT_CONFIG_PATH",
+        tuple(),
+    ):
+        config = MregCliConfig(
+            log_file=log_file,
+            history_file=history_file,
+        )
+        # Check that the parent directories were created
+        assert log_file.parent.exists() and log_file.parent.is_dir()
+        assert history_file.parent.exists() and history_file.parent.is_dir()
+        # Check that the file paths are correct
+        assert config.log_file == log_file
+        assert config.history_file == history_file
+
+
+def root_is_writable() -> bool:
+    """Check if the root directory is writable (used for testing)."""
+    try:
+        test_path = Path("/test_write_permission_check.tmp")
+        with open(test_path, "w") as f:
+            f.write("test")
+        test_path.unlink()
+        return True
+    except OSError:
+        return False
+
+
+@pytest.mark.skipif(root_is_writable(), reason="Root directory is writable")
+@pytest.mark.parametrize(
+    "path,field",
+    [
+        pytest.param(Path("/cli.log"), "log_file", id="log_file"),
+        pytest.param(Path("/cli_history.txt"), "history_file", id="history_file"),
+    ],
+)
+def test_config_fallback_tempdir(path: Path, field: str) -> None:
+    """Test that the config falls back to temp dir if file creation fails for some fields."""
+    kwargs = {field: path}
+    MregCliConfig._reset_instance()  # trigger reload
+    # Patch the default search paths to avoid reading from fs
+    with unittest.mock.patch(
+        "mreg_cli.config.DEFAULT_CONFIG_PATH",
+        tuple(),
+    ):
+        # Create config with unwritable file path
+        config = MregCliConfig(**kwargs)
+        config_field = getattr(config, field)
+
+        # Check that the temp parent directories were created
+        assert config_field is not None
+        assert config_field.parent.exists() and config_field.parent.is_dir()
+
+        # Validated successfully and temp files are used
+        # NOTE: we should only get None if the temp file creation also fails
+        assert config_field is not None
+
+        # Check that the file paths are _not_ the original paths (root dir)
+        assert config_field != path
+
+        # Filename should be the same
+        assert config_field.name == path.name
+
+        # Files should exist
+        assert config_field.exists()
+
+        # Files should be writable
+        assert os.access(config_field, os.W_OK)
 
 
 def test_resolvedpath_type() -> None:
