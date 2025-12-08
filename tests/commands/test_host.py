@@ -24,6 +24,19 @@ def test_override_as_list() -> None:
     assert Override.CNAME.value in members
 
 
+def test_override_values() -> None:
+    """Test that values from Override.values() are strings and valid Override members."""
+    for val in Override.values():
+        assert isinstance(val, str)
+        assert Override(val) == val  # str comparison
+        assert Override(val) == Override.from_string(val)  # alternate constructor
+
+
+def test_override_values_str() -> None:
+    """Snapshot test for Override.values_str()."""
+    assert Override.values_str() == snapshot("'cname', 'ipaddress', 'mx', 'srv', 'ptr', 'naptr'")
+
+
 def test_override_from_string() -> None:
     """Ensure Override can be created from strings."""
     for override in list(Override):
@@ -46,16 +59,3 @@ def test_override_from_string() -> None:
         with pytest.raises(InputFailure) as exc_info:
             Override.from_string(invalid)
         assert "Invalid override" in str(exc_info.value)
-
-
-def test_override_values() -> None:
-    """Snapshot test for Override.values_str()."""
-    for val in Override.values():
-        assert isinstance(val, str)
-        assert Override(val) == val  # str comparison
-        assert Override(val) == Override.from_string(val)  # alternate constructor
-
-
-def test_override_values_str() -> None:
-    """Snapshot test for Override.values_str()."""
-    assert Override.values_str() == snapshot("'cname', 'ipaddress', 'mx', 'srv', 'ptr', 'naptr'")
