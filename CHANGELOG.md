@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `network policy_set_prefix` to `network policy_set_pattern`.
 - Renamed `network policy_unset_prefix` to `network policy_unset_pattern`.
 
+### Fixed
+
+- `logging start` showing "disabled" instead of the actual logging status."
+
 ## [1.7.3](https://github.com/unioslo/mreg-cli/releases/tag/1.7.3) - 2025-11-18
 
 ### Changed
