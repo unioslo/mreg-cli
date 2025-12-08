@@ -13,7 +13,7 @@ from rich.panel import Panel
 import mreg_cli.utilities.api as api
 from mreg_cli import cache
 from mreg_cli.__about__ import __version__
-from mreg_cli.cli import cli, source
+from mreg_cli.cli import cli, get_cli_history, source
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliException, LoginFailedError
 from mreg_cli.log import MregCliLogger
@@ -210,6 +210,7 @@ def main():
         completer=cli,
         complete_while_typing=True,
         complete_style=CompleteStyle.MULTI_COLUMN,
+        history=get_cli_history(config),
     )
 
     # if the --source parameter was given, read commands from the source file and then exit

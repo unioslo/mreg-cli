@@ -67,8 +67,9 @@ def start_logging(args: argparse.Namespace) -> None:
     # Abort if already logging with same params
     if status.enabled and status.file == log_file and status.level == level:
         raise InputFailure(f"Logging already enabled: {status.as_str()}")
+
     log.start_logging(log_file, level)
-    OutputManager().add_line(f"Logging started: {status.as_str()}")
+    OutputManager().add_line(f"Logging started: {log.status.as_str()}")
 
 
 @command_registry.register_command(
