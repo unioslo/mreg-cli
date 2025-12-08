@@ -84,3 +84,21 @@ def test_mregclilogger_status_as_str_disabled() -> None:
     logger.stop_logging()
     status = logger.status
     assert status.as_str() == snapshot("disabled")
+
+
+def test_log_handlers_multiple_restarts(tmp_path: Path) -> None:
+    """Test that handlers are flushed when starting logging multiple times."""
+    logger = MregCliLogger()
+    logger.stop_logging()
+
+    # Start logging first time
+    logger.start_logging(tmp_path / "test.log.1", "INFO")
+    handlers_after_first_start = logging.getLogger().handlers.copy()
+
+    # Start logging second time
+    logger.start_logging(tmp_path / "test.log.2", "INFO")
+    handlers_after_second_start = logging.getLogger().handlers.copy()
+
+    # Should have the same number of handlers, but different instances
+    assert len(handlers_after_first_start) == len(handlers_after_second_start)
+    assert handlers_after_first_start != handlers_after_second_start

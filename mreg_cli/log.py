@@ -78,6 +78,5 @@ class MregCliLogger:
     def stop_logging(self) -> None:
         """Stop logging."""
         logging.shutdown()
-        logging.getLogger().handlers.clear()
         self._is_logging = False
         self._file = None
