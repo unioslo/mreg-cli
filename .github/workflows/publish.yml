@@ -111,27 +111,11 @@ jobs:
           path: dist/${{ env.BINARY_NAME }}
           if-no-files-found: error
 
-  publish_pypi:
-    name: Publish PyPI release
-    needs:
-      - build_pypi
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: pypi_artifacts
-          path: dist
-
-      - name: Push build artifacts to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-
   publish_github:
     name: Publish GitHub release
     needs:
+      - build_pypi
       - build_pyinstaller
-      - publish_pypi
     runs-on: ubuntu-latest
 
     steps:
@@ -199,3 +183,22 @@ jobs:
             ```
           draft: false
           prerelease: false
+
+  # GitHub releases can be republished, but PyPI uploads are permanent.
+  # Ensure all steps succeed before publishing to PyPI.
+  publish_pypi:
+    name: Publish PyPI release
+    needs:
+      - build_pypi # redundant but explicit
+      - publish_github
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pypi_artifacts
+          path: dist
+
+      - name: Push build artifacts to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
