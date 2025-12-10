@@ -13,4 +13,4 @@ RUN /root/.local/bin/uv python install ${python_version}
 COPY . /build
 RUN cd /build; /root/.local/bin/uv sync -q
 
-CMD cd /build/ci; /root/.local/bin/uv run bash -c 'echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_testsuite_log.json --record-without-timestamps -v ERROR >/dev/null'
+CMD cd /build/ci; /root/.local/bin/uv run bash -c 'echo "test" | mreg-cli -u test -d example.org --url http://127.0.0.1:8000 --source testsuite --record new_testsuite_log.json --record-without-timestamps -v ERROR >/dev/null' 2>/dev/null
