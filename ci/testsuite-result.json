@@ -25846,7 +25846,7 @@
     "command_issued": "host remove bar # should fail, because it has a cname record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "bar.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\n  multiple ipaddresses on the same VLAN\nUse `-force cname` to override."
+      "bar.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\n  multiple ipaddresses on the same VLAN\nUse `-force -override cname` to override."
     ],
     "error": [],
     "output": [],
@@ -25860,8 +25860,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-11-21T13:43:57.866664+01:00",
-          "updated_at": "2025-11-21T13:43:57.866676+01:00",
+          "created_at": "2025-12-03T13:44:43.360753+01:00",
+          "updated_at": "2025-12-03T13:44:43.360763+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -25882,8 +25882,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-11-21T13:43:57.866664+01:00",
-          "updated_at": "2025-11-21T13:43:57.866676+01:00",
+          "created_at": "2025-12-03T13:44:43.360753+01:00",
+          "updated_at": "2025-12-03T13:44:43.360763+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -26617,7 +26617,7 @@
     "command_issued": "host remove baz # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
-      "baz.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN\n  1 MX records\n    - mail.example.org (priority: 10)\nUse `-force mx` to override."
+      "baz.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN\n  1 MX records\n    - mail.example.org (priority: 10)\nUse `-force -override mx` to override."
     ],
     "error": [],
     "output": [],
@@ -26631,8 +26631,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-11-21T13:43:57.866664+01:00",
-          "updated_at": "2025-11-21T13:43:57.866676+01:00",
+          "created_at": "2025-12-03T13:44:43.360753+01:00",
+          "updated_at": "2025-12-03T13:44:43.360763+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -26653,8 +26653,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-11-21T13:43:57.952836+01:00",
-          "updated_at": "2025-11-21T13:43:57.952852+01:00",
+          "created_at": "2025-12-03T13:44:43.439716+01:00",
+          "updated_at": "2025-12-03T13:44:43.439728+01:00",
           "network": "2001:db8::/64",
           "description": "dolor sit amet",
           "vlan": null,
@@ -29833,7 +29833,7 @@
     "command_issued": "host remove foo # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 MX records\n    - mail.example.org (priority: 10)\nUse `-force mx` to override."
+      "foo.example.org requires force and override for deletion:\n  1 MX records\n    - mail.example.org (priority: 10)\nUse `-force -override mx` to override."
     ],
     "error": [],
     "output": [],
@@ -29847,8 +29847,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:09:18.752804+02:00",
-              "updated_at": "2025-06-19T13:09:18.752813+02:00",
+              "created_at": "2025-12-03T13:44:49.968236+01:00",
+              "updated_at": "2025-12-03T13:44:49.968242+01:00",
               "ipaddress": "10.0.0.10",
               "host": 24
             }
@@ -29856,8 +29856,8 @@
           "cnames": [],
           "mxs": [
             {
-              "created_at": "2025-06-19T13:09:18.884373+02:00",
-              "updated_at": "2025-06-19T13:09:18.884384+02:00",
+              "created_at": "2025-12-03T13:44:50.076970+01:00",
+              "updated_at": "2025-12-03T13:44:50.076978+01:00",
               "priority": 10,
               "mx": "mail.example.org",
               "host": 24
@@ -29865,8 +29865,8 @@
           ],
           "txts": [
             {
-              "created_at": "2025-06-19T13:09:18.714858+02:00",
-              "updated_at": "2025-06-19T13:09:18.714865+02:00",
+              "created_at": "2025-12-03T13:44:49.949091+01:00",
+              "updated_at": "2025-12-03T13:44:49.949096+01:00",
               "txt": "v=spf1 -all",
               "host": 24
             }
@@ -29881,8 +29881,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:09:18.711816+02:00",
-          "updated_at": "2025-06-19T13:09:18.711843+02:00",
+          "created_at": "2025-12-03T13:44:49.947160+01:00",
+          "updated_at": "2025-12-03T13:44:49.947172+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -30227,7 +30227,7 @@
     "command_issued": "host remove foo # Should fail, because it has a PTR record, must force and override with 'ptr'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 PTR records\n    - 10.0.0.11\nUse `-force ptr` to override."
+      "foo.example.org requires force and override for deletion:\n  1 PTR records\n    - 10.0.0.11\nUse `-force -override ptr` to override."
     ],
     "error": [],
     "output": [],
@@ -30241,8 +30241,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:09:19.182163+02:00",
-              "updated_at": "2025-06-19T13:09:19.182175+02:00",
+              "created_at": "2025-12-03T13:44:50.398136+01:00",
+              "updated_at": "2025-12-03T13:44:50.398142+01:00",
               "ipaddress": "10.0.0.10",
               "host": 25
             }
@@ -30251,16 +30251,16 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:09:19.124521+02:00",
-              "updated_at": "2025-06-19T13:09:19.124527+02:00",
+              "created_at": "2025-12-03T13:44:50.379310+01:00",
+              "updated_at": "2025-12-03T13:44:50.379317+01:00",
               "txt": "v=spf1 -all",
               "host": 25
             }
           ],
           "ptr_overrides": [
             {
-              "created_at": "2025-06-19T13:09:19.598259+02:00",
-              "updated_at": "2025-06-19T13:09:19.598267+02:00",
+              "created_at": "2025-12-03T13:44:50.615255+01:00",
+              "updated_at": "2025-12-03T13:44:50.615262+01:00",
               "ipaddress": "10.0.0.11",
               "host": 25
             }
@@ -30274,8 +30274,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:09:19.122473+02:00",
-          "updated_at": "2025-06-19T13:09:19.122481+02:00",
+          "created_at": "2025-12-03T13:44:50.376916+01:00",
+          "updated_at": "2025-12-03T13:44:50.376923+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -30596,7 +30596,7 @@
     "command_issued": "host remove foo",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 NAPTR records\n    - wonk\nUse `-force naptr` to override."
+      "foo.example.org requires force and override for deletion:\n  1 NAPTR records\n    - wonk\nUse `-force -override naptr` to override."
     ],
     "error": [],
     "output": [],
@@ -30610,8 +30610,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:09:19.904349+02:00",
-              "updated_at": "2025-06-19T13:09:19.904368+02:00",
+              "created_at": "2025-12-03T13:44:50.948376+01:00",
+              "updated_at": "2025-12-03T13:44:50.948385+01:00",
               "ipaddress": "10.0.0.10",
               "host": 26
             }
@@ -30620,8 +30620,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:09:19.880837+02:00",
-              "updated_at": "2025-06-19T13:09:19.880845+02:00",
+              "created_at": "2025-12-03T13:44:50.927262+01:00",
+              "updated_at": "2025-12-03T13:44:50.927270+01:00",
               "txt": "v=spf1 -all",
               "host": 26
             }
@@ -30630,8 +30630,8 @@
           "srvs": [],
           "naptrs": [
             {
-              "created_at": "2025-06-19T13:09:20.143803+02:00",
-              "updated_at": "2025-06-19T13:09:20.143814+02:00",
+              "created_at": "2025-12-03T13:44:51.276675+01:00",
+              "updated_at": "2025-12-03T13:44:51.276699+01:00",
               "preference": 16384,
               "order": 3,
               "flag": "u",
@@ -30648,8 +30648,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:09:19.878789+02:00",
-          "updated_at": "2025-06-19T13:09:19.878799+02:00",
+          "created_at": "2025-12-03T13:44:50.924322+01:00",
+          "updated_at": "2025-12-03T13:44:50.924334+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -31028,7 +31028,7 @@
     "command_issued": "host remove foo # Should fail, because it has an SRV record, must force and override with 'srv'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 SRV records\n    - _sip._tcp.example.org\nUse `-force srv` to override."
+      "foo.example.org requires force and override for deletion:\n  1 SRV records\n    - _sip._tcp.example.org\nUse `-force -override srv` to override."
     ],
     "error": [],
     "output": [],
@@ -31042,8 +31042,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:09:20.455468+02:00",
-              "updated_at": "2025-06-19T13:09:20.455475+02:00",
+              "created_at": "2025-12-03T13:44:51.846202+01:00",
+              "updated_at": "2025-12-03T13:44:51.846252+01:00",
               "ipaddress": "10.0.0.10",
               "host": 27
             }
@@ -31052,8 +31052,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:09:20.437537+02:00",
-              "updated_at": "2025-06-19T13:09:20.437544+02:00",
+              "created_at": "2025-12-03T13:44:51.780407+01:00",
+              "updated_at": "2025-12-03T13:44:51.780413+01:00",
               "txt": "v=spf1 -all",
               "host": 27
             }
@@ -31061,8 +31061,8 @@
           "ptr_overrides": [],
           "srvs": [
             {
-              "created_at": "2025-06-19T13:09:20.637233+02:00",
-              "updated_at": "2025-06-19T13:09:20.637240+02:00",
+              "created_at": "2025-12-03T13:44:52.226110+01:00",
+              "updated_at": "2025-12-03T13:44:52.226118+01:00",
               "name": "_sip._tcp.example.org",
               "priority": 10,
               "weight": 5,
@@ -31080,8 +31080,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:09:20.435581+02:00",
-          "updated_at": "2025-06-19T13:09:20.435588+02:00",
+          "created_at": "2025-12-03T13:44:51.776623+01:00",
+          "updated_at": "2025-12-03T13:44:51.776632+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -31518,7 +31518,7 @@
     "command_issued": "host remove foo # Should fail, because it has a CNAME record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\nUse `-force cname` to override."
+      "foo.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\nUse `-force -override cname` to override."
     ],
     "error": [],
     "output": [],
@@ -32525,7 +32525,7 @@
     "command_issued": "host remove foo # Should fail, because it has multiple records, must force and override with everything.",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\n  1 MX records\n    - mail.example.org (priority: 10)\n  1 NAPTR records\n    - wonk\n  1 SRV records\n    - _sip._tcp.example.org\n  1 PTR records\n    - 10.0.0.11\nUse `-force cname mx naptr ptr srv` to override."
+      "foo.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\n  1 MX records\n    - mail.example.org (priority: 10)\n  1 NAPTR records\n    - wonk\n  1 SRV records\n    - _sip._tcp.example.org\n  1 PTR records\n    - 10.0.0.11\nUse `-force -override cname,mx,naptr,ptr,srv` to override."
     ],
     "error": [],
     "output": [],

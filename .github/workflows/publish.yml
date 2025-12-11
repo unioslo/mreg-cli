@@ -3,7 +3,7 @@ name: build mreg-cli
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+*'
+      - "[0-9]+.[0-9]+.[0-9]+*"
 
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
@@ -18,12 +18,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs#determining-when-to-use-contexts
       - name: Exit if not on master branch
         if: ${{ github.ref == 'refs/heads/master' }}
         run: exit -1
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v2
 
@@ -49,7 +49,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-          - macos-13 # only non-large x86 macOS runner image available
+          - macos-15-intel # only non-large x86 macOS runner image available
           - macos-latest
         include:
           - os: ubuntu-latest
@@ -57,12 +57,12 @@ jobs:
             container: redhat/ubi8:latest
           - os: windows-latest
             platform: win-x86_64
-          - os: macos-13
+          - os: macos-15-intel
             platform: macos-x86_64
           - os: macos-latest
             platform: macos-arm64
         python-version:
-          - '3.12'
+          - "3.12"
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
 
@@ -73,12 +73,12 @@ jobs:
 
       - name: Ensure git is available
         run: git --version
-      
+
       - uses: actions/checkout@v4
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v2
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
@@ -87,7 +87,7 @@ jobs:
 
       - name: Run PyInstaller with Tox
         run: uv run tox
-      
+
       - name: Set platform binary names
         shell: bash
         run: |
@@ -104,34 +104,18 @@ jobs:
       - name: Rename binary
         shell: bash
         run: mv "${{ env.SOURCE_NAME }}" "dist/${{ env.BINARY_NAME }}"
-      
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BINARY_NAME }}
           path: dist/${{ env.BINARY_NAME }}
           if-no-files-found: error
-          
-  publish_pypi:
-    name: Publish PyPI release
-    needs:
-      - build_pypi
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: pypi_artifacts
-          path: dist
 
-      - name: Push build artifacts to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-  
   publish_github:
     name: Publish GitHub release
     needs:
+      - build_pypi
       - build_pyinstaller
-      - publish_pypi
     runs-on: ubuntu-latest
 
     steps:
@@ -141,7 +125,7 @@ jobs:
           pattern: mreg-cli-*
           path: dist
           merge-multiple: true
-    
+
       - name: Download wheel and source distributions
         uses: actions/download-artifact@v4
         with:
@@ -163,16 +147,16 @@ jobs:
           files: dist/*
           body: |
             Release ${{ github.ref_name }}
-            
+
             ## Binary Downloads
-            
+
             Platform | Architecture | Download
             ---------|--------------|----------
             Linux | x86_64 | [mreg-cli-${{ github.ref_name }}-linux-x86_64](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/mreg-cli-${{ github.ref_name }}-linux-x86_64)
             Windows | x86_64 | [mreg-cli-${{ github.ref_name }}-win-x86_64.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/mreg-cli-${{ github.ref_name }}-win-x86_64.exe)
             macOS | x86_64 | [mreg-cli-${{ github.ref_name }}-macos-x86_64](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/mreg-cli-${{ github.ref_name }}-macos-x86_64)
             macOS | ARM64 | [mreg-cli-${{ github.ref_name }}-macos-arm64](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/mreg-cli-${{ github.ref_name }}-macos-arm64)
-            
+
             ## PyPI Package
 
             ### uv
@@ -192,10 +176,59 @@ jobs:
             ```bash
             pip install mreg-cli==${{ github.ref_name }}
             ```
-            
+
             ## SHA256 Checksums
             ```
             ${{ steps.sha.outputs.checksums }}
             ```
           draft: false
           prerelease: false
+
+  # GitHub releases can be republished, but PyPI uploads are permanent.
+  # Ensure all steps succeed before publishing to PyPI.
+  publish_pypi:
+    name: Publish PyPI release
+    needs:
+      - build_pypi # redundant but explicit
+      - publish_github
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pypi_artifacts
+          path: dist
+
+      - name: Push build artifacts to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  rollback_on_failure:
+    name: Rollback on publish failure
+    if: ${{ always() && (needs.publish_github.result == 'failure' || needs.publish_pypi.result == 'failure') }}
+    needs:
+      - publish_github
+      - publish_pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rollback GitHub release and tag
+        if: ${{ needs.publish_github.result == 'success' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Deleting GitHub release..."
+          gh release delete ${{ github.ref_name }} --repo ${{ github.repository }} --yes || true
+
+          echo "Deleting git tag..."
+          git push --delete origin "refs/tags/${{ github.ref_name }}" || true
+      - name: Rollback notification
+        run: |
+          echo "::notice::Rolling back release ${{ github.ref_name }} due to publish failure"
+          echo "GitHub release status: ${{ needs.publish_github.result }}"
+          echo "PyPI publish status: ${{ needs.publish_pypi.result }}"

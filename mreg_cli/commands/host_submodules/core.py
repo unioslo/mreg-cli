@@ -16,6 +16,9 @@ from __future__ import annotations
 import argparse
 import re
 from enum import Enum
+from typing import Self
+
+from typing_extensions import override
 
 from mreg_cli.api.fields import HostName, MacAddress
 from mreg_cli.api.models import (
@@ -203,7 +206,7 @@ def add(args: argparse.Namespace) -> None:
 
 
 class Override(str, Enum):
-    """Override types for forced removal."""
+    """Override types for forced host removal."""
 
     CNAME = "cname"
     IPADDRESS = "ipaddress"
@@ -213,14 +216,54 @@ class Override(str, Enum):
     NAPTR = "naptr"
 
     @classmethod
+    @override
+    def _missing_(cls, value: object) -> Self | None:
+        if isinstance(value, str):
+            val = value.lower().strip()
+            if val in cls.values():
+                return cls(val)
+        return None
+
+    @classmethod
+    def from_string(cls, s: str) -> Override:
+        """Return the Override enum member matching the given string.
+
+        :param s: The string representation of the override.
+        :returns: The corresponding Override enum member.
+        :raises ValueError: If the string does not match any Override member.
+        """
+        try:
+            return cls(s)
+        except ValueError as e:
+            raise InputFailure(
+                f"Invalid override: {s}. Accepted overrides: {cls.values_str()}"
+            ) from e
+
+    @classmethod
     def values(cls) -> list[str]:
-        """Return a list with all available values."""
-        return list(cls)
+        """Return a list of all available values."""
+        return [override.value for override in cls]
 
     @classmethod
     def values_str(cls) -> str:
-        """Return a string with all available values, comma-separated, single-quoted."""
-        return ", ".join([f"'{override.value}'" for override in cls])
+        """Return a string with all available values, comma-separated, single-quoted.
+
+        Used in help and error messages.
+        """
+        return ", ".join([f"'{val}'" for val in cls.values()])
+
+    @classmethod
+    def parse_overrides(cls, overrides: str) -> list[Override]:
+        """Split a comma-separated string of overrides into a list of strings.
+
+        :param overrides: Comma-separated string of overrides.
+        :returns: List of override strings.
+        """
+        return [
+            cls.from_string(override.strip())
+            for override in overrides.split(",")
+            if override.strip()
+        ]
 
 
 @command_registry.register_command(
@@ -239,8 +282,10 @@ class Override(str, Enum):
             "-override",
             short_desc="Comma separated override list, requires -force.",
             description=(
-                "Comma separated overrides for forced removal. Requires -force."
-                f"Accepted overrides: {Override.values_str()}"
+                "Confirm force deletion of dependent records. "
+                "Overrides signify requestor is aware of the dependent records and "
+                "understands that they will be deleted alongside the host. "
+                f"Accepted overrides: {Override.values_str()}. "
                 "Example usage: '-override cname,ipaddress,mx'"
             ),
             metavar="OVERRIDE",
@@ -255,16 +300,10 @@ def remove(args: argparse.Namespace) -> None:
     hostname = args.name
     host = Host.get_by_any_means_or_raise(hostname, inform_as_cname=True)
 
-    overrides: list[str] = args.override.split(",") if args.override else []
+    override_arg = args.override or ""
+    overrides: list[Override] = Override.parse_overrides(override_arg)
 
-    accepted_overrides = Override.values()
-    for override in overrides:
-        if override not in accepted_overrides:
-            raise InputFailure(
-                f"Invalid override: {override}. Accepted overrides: {accepted_overrides}"
-            )
-
-    def forced(override_required: str | None = None) -> bool:
+    def forced(override_required: Override | None = None) -> bool:
         # If we require an override, check if it's in the list of provided overrides.
         if override_required:
             return override_required in overrides
@@ -277,7 +316,8 @@ def remove(args: argparse.Namespace) -> None:
         return False
 
     warnings: list[str] = []
-    overrides_required: set[str] = set()
+    overrides_required: set[Override] = set()
+
     # Require force if host has any cnames.
     if host.cnames and not forced(Override.CNAME):
         overrides_required.add(Override.CNAME)
@@ -359,13 +399,14 @@ def remove(args: argparse.Namespace) -> None:
 
     # Warn user and raise exception if any force requirements was found
     if warnings:
-        # Build the force command suggestion
-        force_cmd = ["-force"]
+        # Build the override command suggestion
+        flags = ["-force"]
         if overrides_required:
-            force_cmd.extend(sorted(overrides_required))
+            flags.append("-override")
+            flags.append(",".join(sorted(overrides_required)))
 
         # Add the override command to warnings
-        command_suggestion = f"Use `{' '.join(force_cmd)}` to override."
+        command_suggestion = f"Use `{' '.join(flags)}` to override."
         warnings.append(command_suggestion)
 
         # Build the error message

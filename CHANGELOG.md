@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+<!-- ## Unreleased -->
+
+## [1.8.0](https://github.com/unioslo/mreg-cli/releases/tag/1.8.0) - 2025-12-09
 
 ### Added
 
@@ -23,7 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `logging start` showing "disabled" instead of the actual logging status."
+- `logging start` showing "disabled" instead of the actual logging status.
+- `host remove` error message suggesting incorrect option and syntax when `-override` is required.
 
 ## [1.7.3](https://github.com/unioslo/mreg-cli/releases/tag/1.7.3) - 2025-11-18
 
