@@ -639,16 +639,19 @@ def unset_contact(args: argparse.Namespace) -> None:
     force: bool = args.force
 
     host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+    if not host.contact_emails:
+        raise DeleteError(f"Host {host.name} has no contacts to remove.")
+
     if len(host.contact_emails) > 1 and not force:
         raise ForceMissing(
             f"Host {host.name} has multiple contacts, must use -force to remove all contacts."
         )
 
-    updated_host = host.unset_contacts()
-    if not updated_host:
+    updated = host.clear_contacts()
+    if not updated.removed:
         raise PatchError(f"Failed to update contact of {host.name}")
 
-    OutputManager().add_ok(f"Removed all contact emails from {host}")
+    OutputManager().add_ok(f"Removed contact from {host}: {', '.join(updated.removed)}")
 
 
 @command_registry.register_command(
@@ -669,18 +672,13 @@ def add_contact(args: argparse.Namespace) -> None:
     contact: list[str] = args.contact
 
     host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+    updated = host.add_contacts(contact)
 
-    # Add to existing contacts and remove duplicates
-    new_contacts = host.contact_emails.copy()
-    new_contacts.extend(contact)
-    new_contacts = list(set(new_contacts))
+    if not updated.added:
+        # TODO: add not_found warning?
+        raise PatchError(f"Host already has the given contacts: {', '.join(contact)}")
 
-    updated_host = host.set_contacts(new_contacts)
-
-    if not updated_host:
-        raise PatchError(f"Failed to update contact of {host.name}")
-
-    OutputManager().add_ok(f"Updated contact of {host} to {', '.join(new_contacts)}")
+    OutputManager().add_ok(f"Updated contact of {host} to {', '.join(contact)}")
 
 
 @command_registry.register_command(
@@ -700,25 +698,19 @@ def remove_contact(args: argparse.Namespace) -> None:
     name: str = args.name
     contact: list[str] = args.contact
 
+    if not contact:
+        raise InputFailure("At least one contact must be specified.")
+
     host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
 
-    # Remove contacts not in the existing contacts + casefold
-    to_remove = [c.casefold() for c in contact if c in host.contact_emails]
+    updated = host.remove_contacts(contact)
+    if not updated.removed:
+        if updated.not_found:
+            not_found = ", ".join(updated.not_found)
+            raise PatchError(f"Host does not have the given contacts: {not_found}")
+        raise PatchError(f"Failed to remove contacts from {host.name}")
 
-    if not to_remove:
-        raise InputFailure(f"No matching contacts found to remove on host {host.name}")
-
-    new_contacts = [
-        existing_contact
-        for existing_contact in [c.casefold() for c in host.contact_emails]
-        if existing_contact.casefold() not in to_remove
-    ]
-
-    updated_host = host.set_contacts(new_contacts)
-    if not updated_host:
-        raise PatchError(f"Failed to update contact of {host.name}")
-
-    OutputManager().add_ok(f"Removed contact {', '.join(to_remove)} from {host}")
+    OutputManager().add_ok(f"Removed contact {', '.join(updated.removed)} from {host}")
 
 
 @command_registry.register_command(

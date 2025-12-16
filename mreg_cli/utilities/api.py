@@ -650,8 +650,8 @@ def patch(path: str, params: QueryParams | None = None, **kwargs: Any) -> Respon
 
 
 @clear_cache
-def delete(path: str, params: QueryParams | None = None) -> Response | None:
+def delete(path: str, params: QueryParams | None = None, **kwargs: Any) -> Response | None:
     """Use requests to make a delete request."""
     if params is None:
         params = {}
-    return _request_wrapper("delete", path, params=params)
+    return _request_wrapper("delete", path, params=params, **kwargs)

@@ -55,7 +55,14 @@ from mreg_cli.exceptions import (
     ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams
+from mreg_cli.types import (
+    IP_AddressT,
+    IP_NetworkT,
+    IP_Version,
+    QueryParams,
+    get_type_adapter,
+    get_type_adapter,
+)
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -3055,6 +3062,15 @@ class HostCommunity(FrozenModel):
     community: Community
 
 
+class HostContactModification(FrozenModel):
+    """Model for host contact email modifications."""
+
+    added: list[str] = Field(default_factory=list)
+    already_exists: list[str] = Field(default_factory=list)
+    removed: list[str] = Field(default_factory=list)
+    not_found: list[str] = Field(default_factory=list)
+
+
 class ContactEmail(FrozenModelWithTimestamps):
     """Model for a host's contact email."""
 
@@ -3431,7 +3447,50 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: A new Host object fetched from the API with the updated contact.
         """
+        # Uses non-atomic host update via PATCH to set the contacts list.
         return self.patch(fields={"contact_emails": contacts})
+
+    def add_contacts(self, contacts: list[str]) -> HostContactModification:
+        """Add contact(s) to the host.
+
+        :param contacts: The contact(s) to set. Should be a valid email, but we leave it to the
+                        server to validate the data.
+
+        :returns: A HostContactModification object with the result of the operation.
+        """
+        # Uses atomic endpoint for contact updates
+        endpoint = Endpoint.HostsContacts.with_params(self.name)
+        resp = post(endpoint, emails=contacts)
+        if not resp:
+            raise CreateError(f"Failed to add contacts to host {self.name}.")
+        adapter = get_type_adapter(HostContactModification)
+        return adapter.validate_json(resp.text)
+
+    def clear_contacts(self) -> HostContactModification:
+        """Clear all contacts for a host.
+
+        :returns: A HostContactModification object with the result of the operation.
+        """
+        endpoint = Endpoint.HostsContacts.with_params(self.name)
+        resp = delete(endpoint)
+        if not resp:
+            raise DeleteError(f"Failed to remove contacts from host {self.name}.")
+        adapter = get_type_adapter(HostContactModification)
+        return adapter.validate_json(resp.text)
+
+    def remove_contacts(self, contacts: list[str]) -> HostContactModification:
+        """Set the contact(s) for the host.
+
+        :param contacts: The contact(s) to remove.
+
+        :returns: A HostContactModification object with the result of the operation.
+        """
+        endpoint = Endpoint.HostsContacts.with_params(self.name)
+        resp = delete(endpoint, emails=contacts)
+        if not resp:
+            raise DeleteError(f"Failed to remove contacts from host {self.name}.")
+        adapter = get_type_adapter(HostContactModification)
+        return adapter.validate_json(resp.text)
 
     def unset_contacts(self) -> Host:
         """Set the contact(s) for the host.
