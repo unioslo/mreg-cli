@@ -103,7 +103,7 @@ class HistoryItem(BaseModel):
                 msg = self.data["current_data"]["ipaddress"] + ", "
             changes: list[str] = []
             for key, newval in self.data["update"].items():
-                oldval = self.data["current_data"][key] or "not set"
+                oldval = self.data["current_data"].get(key) or "not set"
                 newval = newval or "not set"
                 changes.append(f"{key}: {oldval} -> {newval}")
             msg += ",".join(changes)
