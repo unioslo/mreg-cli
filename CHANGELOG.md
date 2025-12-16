@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Added
+
+- `host add_contact <host> <contact> [<contact> ...]` command to add one or more contacts to a host.
+- `host remove_contact <host> <contact> [<contact> ...]` command to remove one or more contacts from a host.
+- `host unset_contact <host> [-force]` command to remove all contacts from a host.
+
+### Changed
+
+- `host set_contact <host> <contact> [<contact> ...]` command now accepts multiple contacts to set at once, replacing all existing contacts.
 
 ## [1.8.0](https://github.com/unioslo/mreg-cli/releases/tag/1.8.0) - 2025-12-09
 

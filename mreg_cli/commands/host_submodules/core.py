@@ -597,11 +597,11 @@ def set_comment(args: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="set_contact",
-    description="Set contact for host. If <name> is an alias the cname host is updated.",
+    description="Set contact emails for host. Replaces existing contacts. If <name> is an alias the cname host is updated.",
     short_desc="Set contact.",
     flags=[
         Flag("name", description="Name of the target host.", metavar="NAME"),
-        Flag("contact", description="Mail address of the contact.", metavar="CONTACT"),
+        Flag("contact", description="Mail address of the contact.", nargs="+", metavar="CONTACT"),
     ],
 )
 def set_contact(args: argparse.Namespace) -> None:
@@ -609,13 +609,116 @@ def set_contact(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, contact)
     """
-    host = Host.get_by_any_means_or_raise(args.name, inform_as_cname=True)
-    updated_host = host.set_contact(args.contact)
+    name: str = args.name
+    contact: list[str] = args.contact
+
+    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+    updated_host = host.set_contacts(contact)
 
     if not updated_host:
         raise PatchError(f"Failed to update contact of {host.name}")
 
-    OutputManager().add_ok(f"Updated contact of {host} to {args.contact}")
+    OutputManager().add_ok(f"Updated contact of {host} to {contact}")
+
+
+@command_registry.register_command(
+    prog="unset_contact",
+    description="Remove all contact emails for host. If <name> is an alias the cname host is updated.",
+    short_desc="Unset contact.",
+    flags=[
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def unset_contact(args: argparse.Namespace) -> None:
+    """Set contact for host. If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, contact)
+    """
+    name: str = args.name
+    force: bool = args.force
+
+    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+    if len(host.contact_emails) > 1 and not force:
+        raise ForceMissing(
+            f"Host {host.name} has multiple contacts, must use -force to remove all contacts."
+        )
+
+    updated_host = host.unset_contacts()
+    if not updated_host:
+        raise PatchError(f"Failed to update contact of {host.name}")
+
+    OutputManager().add_ok(f"Removed all contact emails from {host}")
+
+
+@command_registry.register_command(
+    prog="add_contact",
+    description="Add contact email for host. If <name> is an alias the cname host is updated.",
+    short_desc="Add contact.",
+    flags=[
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("contact", description="Mail address of the contact.", nargs="+", metavar="CONTACT"),
+    ],
+)
+def add_contact(args: argparse.Namespace) -> None:
+    """Add contact for host. If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, contact)
+    """
+    name: str = args.name
+    contact: list[str] = args.contact
+
+    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+
+    # Add to existing contacts and remove duplicates
+    new_contacts = host.contact_emails.copy()
+    new_contacts.extend(contact)
+    new_contacts = list(set(new_contacts))
+
+    updated_host = host.set_contacts(new_contacts)
+
+    if not updated_host:
+        raise PatchError(f"Failed to update contact of {host.name}")
+
+    OutputManager().add_ok(f"Updated contact of {host} to {', '.join(new_contacts)}")
+
+
+@command_registry.register_command(
+    prog="remove_contact",
+    description="Remove contact email for host. If <name> is an alias the cname host is updated.",
+    short_desc="Remove contact.",
+    flags=[
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("contact", description="Mail address of the contact.", nargs="+", metavar="CONTACT"),
+    ],
+)
+def remove_contact(args: argparse.Namespace) -> None:
+    """Remove contact for host. If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, contact)
+    """
+    name: str = args.name
+    contact: list[str] = args.contact
+
+    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+
+    # Remove contacts not in the existing contacts + casefold
+    to_remove = [c.casefold() for c in contact if c in host.contact_emails]
+
+    if not to_remove:
+        raise InputFailure(f"No matching contacts found to remove on host {host.name}")
+
+    new_contacts = [
+        existing_contact
+        for existing_contact in [c.casefold() for c in host.contact_emails]
+        if existing_contact.casefold() not in to_remove
+    ]
+
+    updated_host = host.set_contacts(new_contacts)
+    if not updated_host:
+        raise PatchError(f"Failed to update contact of {host.name}")
+
+    OutputManager().add_ok(f"Removed contact {', '.join(to_remove)} from {host}")
 
 
 @command_registry.register_command(
