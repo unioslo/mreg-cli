@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `host set_contact <host> <contact> [<contact> ...]` command now accepts multiple contacts to set at once, replacing all existing contacts.
+- `host add -contact` option now accepts multiple arguments.
 
 ## [1.8.0](https://github.com/unioslo/mreg-cli/releases/tag/1.8.0) - 2025-12-09
 

@@ -68,13 +68,15 @@ from mreg_cli.utilities.shared import convert_wildcard_to_regex
             ),
             metavar="IP/NET",
         ),
-        Flag(
-            "-contact",
-            short_desc="Contact mail for the host",
-            description="Contact mail for the host",
-        ),
         Flag("-comment", short_desc="A comment.", description="A comment."),
         Flag("-macaddress", description="Mac address", metavar="MACADDRESS"),
+        Flag(
+            "-contact",
+            short_desc="Contact mail(s) for the host",
+            description="Contact mail(s) for the host",
+            nargs="+",
+            metavar="CONTACT",
+        ),
         Flag("-force", action="store_true", description="Enable force."),
     ],
 )
@@ -97,6 +99,7 @@ def add(args: argparse.Namespace) -> None:
     network_or_ip: str = args.ip
     macaddress: str | None = args.macaddress
     force: bool = args.force
+    contact: list[str] = args.contact
 
     if macaddress is not None:
         macaddress = MacAddress.parse_or_raise(macaddress)
@@ -120,7 +123,7 @@ def add(args: argparse.Namespace) -> None:
 
     data: JsonMapping = {
         "name": hname,
-        "contact": args.contact or None,
+        "contact_emails": contact,
         "comment": args.comment or None,
     }
 
