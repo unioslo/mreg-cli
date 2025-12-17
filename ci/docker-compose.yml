@@ -13,7 +13,7 @@ services:
        start_period: 5s
 
   mreg:
-    image: ghcr.io/unioslo/mreg:master
+    image: ${MREG_IMAGE:-ghcr.io/unioslo/mreg:master}
     container_name: mreg
     depends_on:
       postgres:

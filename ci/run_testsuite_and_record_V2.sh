@@ -42,8 +42,18 @@ if [ ! -z "$1" ]; then
 fi
 echo "Python version $PYTHON_VERSION"
 
+# get mreg image from argument
+MREG_IMAGE="ghcr.io/unioslo/mreg:master"
+if [ ! -z "$2" ]; then
+	MREG_IMAGE=$2
+fi
+echo "MREG image $MREG_IMAGE"
+
 # build a container image for mreg-cli
 docker build -f Dockerfile -t mreg-cli --build-arg python_version=$PYTHON_VERSION ..
+
+# export image for docker-compose
+export MREG_IMAGE
 
 # start mreg+postgres in containers
 if [[ -n "$GITHUB_ACTIONS" ]]; then

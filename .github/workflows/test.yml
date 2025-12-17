@@ -1,4 +1,12 @@
-on: [push, pull_request]
+on: 
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      mreg_image:
+        description: 'MREG Docker image to use for testing'
+        required: false
+        default: 'ghcr.io/unioslo/mreg:master'
 
 env:
   UV_FROZEN: 1
@@ -22,7 +30,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Test and compare api calls
-        run: ci/run_testsuite_and_record_V2.sh ${{ matrix.python-version }}
+        run: ci/run_testsuite_and_record_V2.sh ${{ matrix.python-version }} ${{ github.event.inputs.mreg_image || 'ghcr.io/unioslo/mreg:master' }}
 
   tox:
     name: tox
