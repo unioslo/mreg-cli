@@ -42,11 +42,18 @@ if [ ! -z "$1" ]; then
 fi
 echo "Python version $PYTHON_VERSION"
 
-# get mreg image from argument and export if provided
+# get mreg image in order of argument > environment variable > default
 if [ -n "$2" ]; then
 	MREG_IMAGE=$2
-	echo "MREG image $MREG_IMAGE"
-	export MREG_IMAGE
+elif [ -z "$MREG_IMAGE" ]; then
+	MREG_IMAGE="ghcr.io/unioslo/mreg:master"
+fi
+export MREG_IMAGE
+
+if [[ -n "$GITHUB_ACTIONS" ]]; then
+	echo "::notice::Using MREG image: $MREG_IMAGE"
+else
+	echo "Using MREG image: $MREG_IMAGE"
 fi
 
 # build a container image for mreg-cli

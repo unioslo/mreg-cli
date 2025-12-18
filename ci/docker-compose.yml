@@ -13,7 +13,7 @@ services:
        start_period: 5s
 
   mreg:
-    image: ${MREG_IMAGE:-ghcr.io/unioslo/mreg:master}
+    image: ${MREG_IMAGE:?MREG_IMAGE environment variable not set}
     container_name: mreg
     depends_on:
       postgres:
