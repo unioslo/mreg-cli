@@ -621,7 +621,7 @@ def set_contact(args: argparse.Namespace) -> None:
     if not updated_host:
         raise PatchError(f"Failed to update contact of {host.name}")
 
-    OutputManager().add_ok(f"Updated contact of {host} to {contact}")
+    OutputManager().add_ok(f"Set contact of {host} to {', '.join(contact)}")
 
 
 @command_registry.register_command(
