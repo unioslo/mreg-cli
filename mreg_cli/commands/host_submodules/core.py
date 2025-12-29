@@ -123,7 +123,7 @@ def add(args: argparse.Namespace) -> None:
 
     data: JsonMapping = {
         "name": hname,
-        "contact_emails": contact,
+        "contacts": contact,
         "comment": args.comment or None,
     }
 
@@ -642,10 +642,10 @@ def unset_contact(args: argparse.Namespace) -> None:
     force: bool = args.force
 
     host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
-    if not host.contact_emails:
+    if not host.contacts:
         raise DeleteError(f"Host {host.name} has no contacts to remove.")
 
-    if len(host.contact_emails) > 1 and not force:
+    if len(host.contacts) > 1 and not force:
         raise ForceMissing(
             f"Host {host.name} has multiple contacts, must use -force to remove all contacts."
         )

@@ -61,7 +61,6 @@ from mreg_cli.types import (
     IP_Version,
     QueryParams,
     get_type_adapter,
-    get_type_adapter,
 )
 from mreg_cli.utilities.api import (
     delete,
@@ -3448,7 +3447,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         :returns: A new Host object fetched from the API with the updated contact.
         """
         # Uses non-atomic host update via PATCH to set the contacts list.
-        return self.patch(fields={"contact_emails": contacts})
+        return self.patch(fields={"contacts": contacts}, validate=False)
 
     def add_contacts(self, contacts: list[str]) -> HostContactModification:
         """Add contact(s) to the host.
@@ -3479,7 +3478,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         return adapter.validate_json(resp.text)
 
     def remove_contacts(self, contacts: list[str]) -> HostContactModification:
-        """Set the contact(s) for the host.
+        """Remove the given contacts from the host.
 
         :param contacts: The contact(s) to remove.
 
@@ -3500,7 +3499,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         :returns: A new Host object fetched from the API with the updated contact.
         """
-        return self.patch(fields={"contact_emails": []})
+        return self.patch(fields={"contacts": []})
 
     def add_ip(self, ip: IP_AddressT, mac: MacAddress | None = None) -> Host:
         """Add an IP address to the host.
