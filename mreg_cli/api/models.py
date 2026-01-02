@@ -34,6 +34,7 @@ from mreg_cli.api.abstracts import APIMixin, FrozenModel, FrozenModelWithTimesta
 from mreg_cli.api.endpoints import Endpoint
 from mreg_cli.api.fields import HostName, MacAddress, NameList
 from mreg_cli.api.history import HistoryItem, HistoryResource
+from mreg_cli.choices import CommunitySortOrder
 from mreg_cli.exceptions import (
     APIError,
     CreateError,
@@ -2162,9 +2163,21 @@ class Community(FrozenModelWithTimestamps, APIMixin):
 
     @classmethod
     def output_multiple(
-        cls, communities: list[Self], padding: int = 14, show_hosts: bool = True
+        cls,
+        communities: list[Self],
+        padding: int = 14,
+        show_hosts: bool = True,
+        sort: CommunitySortOrder = CommunitySortOrder.NAME,
     ) -> None:
         """Output multiple communities to the console."""
+
+        def sort_key(community: Community) -> Any:
+            if sort == CommunitySortOrder.NAME:
+                return community.name
+            elif sort == CommunitySortOrder.GLOBAL_NAME:
+                return community.global_name or ""
+
+        communities = sorted(communities, key=sort_key)
         for community in communities:
             community.output(padding=padding, show_hosts=show_hosts)
             OutputManager().add_line("")  # add newline between communities
