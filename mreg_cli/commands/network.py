@@ -1005,6 +1005,7 @@ def policy_attribute_delete(args: argparse.Namespace) -> None:
             f"Attribute {attr.name!r} is used by the following policies: {policy_names}. Must force."
         )
 
+    attr.delete()
     OutputManager().add_ok(f"Deleted network policy attribute {attribute!r}")
 
 
