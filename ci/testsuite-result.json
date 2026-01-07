@@ -11010,7 +11010,7 @@
     "command_filter_negate": false,
     "command_issued": "host set_contact somehost \"new-support@example.org\"",
     "ok": [
-      "Updated contact of somehost.example.org to ['new-support@example.org']"
+      "Set contact of somehost.example.org to new-support@example.org"
     ],
     "warning": [],
     "error": [],
@@ -11040,8 +11040,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "",
-                  "created_at": "2025-12-20T12:44:58.594141+01:00",
-                  "updated_at": "2025-12-20T12:44:58.594149+01:00",
+                  "created_at": "2026-01-07T11:00:54.688845+01:00",
+                  "updated_at": "2026-01-07T11:00:54.688851+01:00",
                   "ipaddress": "10.0.1.4",
                   "host": 4
                 }
@@ -11050,8 +11050,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2025-12-20T12:44:58.573322+01:00",
-                  "updated_at": "2025-12-20T12:44:58.573327+01:00",
+                  "created_at": "2026-01-07T11:00:54.668026+01:00",
+                  "updated_at": "2026-01-07T11:00:54.668033+01:00",
                   "txt": "v=spf1 -all",
                   "host": 4
                 }
@@ -11069,12 +11069,12 @@
               "contacts": [
                 {
                   "email": "new-support@example.org",
-                  "created_at": "2025-12-20T12:44:59.174702+01:00",
-                  "updated_at": "2025-12-20T12:44:59.174714+01:00"
+                  "created_at": "2026-01-07T11:00:55.324057+01:00",
+                  "updated_at": "2026-01-07T11:00:55.324067+01:00"
                 }
               ],
-              "created_at": "2025-12-20T12:44:58.571317+01:00",
-              "updated_at": "2025-12-20T12:44:59.186285+01:00",
+              "created_at": "2026-01-07T11:00:54.666120+01:00",
+              "updated_at": "2026-01-07T11:00:55.320710+01:00",
               "name": "somehost.example.org",
               "ttl": null,
               "comment": "",
@@ -23796,7 +23796,7 @@
     "command_filter_negate": false,
     "command_issued": "host set_contact bar me@example.org",
     "ok": [
-      "Updated contact of bar.example.org to ['me@example.org']"
+      "Set contact of bar.example.org to me@example.org"
     ],
     "warning": [],
     "error": [],
@@ -23826,8 +23826,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "11:22:33:aa:bb:cc",
-                  "created_at": "2025-12-29T11:43:01.161059+01:00",
-                  "updated_at": "2025-12-29T11:43:01.251980+01:00",
+                  "created_at": "2026-01-07T11:01:10.026774+01:00",
+                  "updated_at": "2026-01-07T11:01:10.254006+01:00",
                   "ipaddress": "10.0.0.10",
                   "host": 19
                 }
@@ -23836,8 +23836,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2025-12-29T11:43:01.140611+01:00",
-                  "updated_at": "2025-12-29T11:43:01.140616+01:00",
+                  "created_at": "2026-01-07T11:01:09.865581+01:00",
+                  "updated_at": "2026-01-07T11:01:09.865592+01:00",
                   "txt": "v=spf1 -all",
                   "host": 19
                 }
@@ -23855,12 +23855,12 @@
               "contacts": [
                 {
                   "email": "me@example.org",
-                  "created_at": "2025-12-29T11:43:02.176177+01:00",
-                  "updated_at": "2025-12-29T11:43:02.176184+01:00"
+                  "created_at": "2026-01-07T11:01:11.700613+01:00",
+                  "updated_at": "2026-01-07T11:01:11.700625+01:00"
                 }
               ],
-              "created_at": "2025-12-29T11:43:01.138833+01:00",
-              "updated_at": "2025-12-29T11:43:02.172998+01:00",
+              "created_at": "2026-01-07T11:01:09.857927+01:00",
+              "updated_at": "2026-01-07T11:01:11.694474+01:00",
               "name": "bar.example.org",
               "ttl": null,
               "comment": "This is the comment",
