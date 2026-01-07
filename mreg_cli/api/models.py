@@ -56,7 +56,13 @@ from mreg_cli.exceptions import (
     ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams
+from mreg_cli.types import (
+    IP_AddressT,
+    IP_NetworkT,
+    IP_Version,
+    QueryParams,
+    get_type_adapter,
+)
 from mreg_cli.utilities.api import (
     delete,
     get,
@@ -3068,6 +3074,22 @@ class HostCommunity(FrozenModel):
     community: Community
 
 
+class HostContactModification(FrozenModel):
+    """Model for host contact email modifications."""
+
+    added: list[str] = Field(default_factory=list)
+    already_exists: list[str] = Field(default_factory=list)
+    removed: list[str] = Field(default_factory=list)
+    not_found: list[str] = Field(default_factory=list)
+
+
+class ContactEmail(FrozenModelWithTimestamps):
+    """Model for a host's contact email."""
+
+    id: int
+    email: str
+
+
 class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     """Model for an individual host."""
 
@@ -3081,7 +3103,6 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     hinfo: HInfo | None = None
     loc: Location | None = None
     bacnetid: int | None = None
-    contact: str
     ttl: int | None = None
     srvs: list[Srv] = []
     naptrs: list[NAPTR] = []
@@ -3089,6 +3110,8 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     roles: list[str] = []
     hostgroups: list[str] = []
     comment: str
+    contacts: list[ContactEmail] = []
+    contact: str | None = Field(default=None, deprecated=True)
 
     communities: list[HostCommunity] = []
 
@@ -3096,6 +3119,11 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
     zone: int | None = None
 
     history_resource: ClassVar[HistoryResource] = HistoryResource.Host
+
+    @property
+    def contact_emails(self) -> list[str]:
+        """A list of contact email addresses for the host."""
+        return [contact.email for contact in self.contacts]
 
     @field_validator("communities", mode="before")
     @classmethod
@@ -3423,15 +3451,68 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
         """
         return self.patch(fields={"comment": comment})
 
-    def set_contact(self, contact: str) -> Host:
-        """Set the contact for the host.
+    def set_contacts(self, contacts: list[str]) -> Host:
+        """Set the contact(s) for the host.
 
         :param contact: The contact to set. Should be a valid email, but we leave it to the
                         server to validate the data.
 
         :returns: A new Host object fetched from the API with the updated contact.
         """
-        return self.patch(fields={"contact": contact})
+        # Uses non-atomic host update via PATCH to set the contacts list.
+        return self.patch(fields={"contacts": contacts}, validate=False)
+
+    def add_contacts(self, contacts: list[str]) -> HostContactModification:
+        """Add contact(s) to the host.
+
+        :param contacts: The contact(s) to set. Should be a valid email, but we leave it to the
+                        server to validate the data.
+
+        :returns: A HostContactModification object with the result of the operation.
+        """
+        # Uses atomic endpoint for contact updates
+        endpoint = Endpoint.HostsContacts.with_params(self.name)
+        resp = post(endpoint, emails=contacts)
+        if not resp:
+            raise CreateError(f"Failed to add contacts to host {self.name}.")
+        adapter = get_type_adapter(HostContactModification)
+        return adapter.validate_json(resp.text)
+
+    def clear_contacts(self) -> HostContactModification:
+        """Clear all contacts for a host.
+
+        :returns: A HostContactModification object with the result of the operation.
+        """
+        endpoint = Endpoint.HostsContacts.with_params(self.name)
+        resp = delete(endpoint)
+        if not resp:
+            raise DeleteError(f"Failed to remove contacts from host {self.name}.")
+        adapter = get_type_adapter(HostContactModification)
+        return adapter.validate_json(resp.text)
+
+    def remove_contacts(self, contacts: list[str]) -> HostContactModification:
+        """Remove the given contacts from the host.
+
+        :param contacts: The contact(s) to remove.
+
+        :returns: A HostContactModification object with the result of the operation.
+        """
+        endpoint = Endpoint.HostsContacts.with_params(self.name)
+        resp = delete(endpoint, emails=contacts)
+        if not resp:
+            raise DeleteError(f"Failed to remove contacts from host {self.name}.")
+        adapter = get_type_adapter(HostContactModification)
+        return adapter.validate_json(resp.text)
+
+    def unset_contacts(self) -> Host:
+        """Set the contact(s) for the host.
+
+        :param contact: The contact to set. Should be a valid email, but we leave it to the
+                        server to validate the data.
+
+        :returns: A new Host object fetched from the API with the updated contact.
+        """
+        return self.patch(fields={"contacts": []})
 
     def add_ip(self, ip: IP_AddressT, mac: MacAddress | None = None) -> Host:
         """Add an IP address to the host.
@@ -3830,7 +3911,7 @@ class Host(FrozenModelWithTimestamps, WithTTL, WithHistory, APIMixin):
 
         output_manager = OutputManager()
         output_manager.add_line(f"{'Name:':<{padding}}{self.name}")
-        output_manager.add_line(f"{'Contact:':<{padding}}{self.contact}")
+        output_manager.add_line(f"{'Contact:':<{padding}}{', '.join(self.contact_emails)}")
 
         if self.comment:
             output_manager.add_line(f"{'Comment:':<{padding}}{self.comment}")
@@ -4056,7 +4137,7 @@ class HostList(FrozenModel):
         max_name = max_contact = 20
         for i in self.results:
             max_name = max(max_name, len(str(i.name)))
-            max_contact = max(max_contact, len(i.contact))
+            max_contact = max(max_contact, max((len(c) for c in i.contact_emails), default=0))
 
         def _format(name: str, contact: str, comment: str) -> None:
             OutputManager().add_line(
@@ -4065,7 +4146,7 @@ class HostList(FrozenModel):
 
         _format("Name", "Contact", "Comment")
         for i in self.results:
-            _format(str(i.name), i.contact, i.comment)
+            _format(str(i.name), ", ".join(i.contact_emails), i.comment)
 
 
 class HostGroup(FrozenModelWithTimestamps, WithName, WithHistory, APIMixin):

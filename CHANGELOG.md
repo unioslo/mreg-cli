@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- New option `network community_list -sort <name|global>` to sort communities by name or global name (defaults to name).
+- `host add_contact <host> <contact> [<contact> ...]` command to add one or more contacts to a host.
+- `host remove_contact <host> <contact> [<contact> ...]` command to remove one or more contacts from a host.
+- `host unset_contact <host> [-force]` command to remove all contacts from a host.
+- `network community_list -sort <name|global>` option to sort communities by name or global name (defaults to name).
+
+### Changed
+
+- `host set_contact <host> <contact> [<contact> ...]` command now accepts multiple contacts to set at once, replacing all existing contacts.
+- `host add -contact` option now accepts multiple arguments.
 
 ## [1.8.2](https://github.com/unioslo/mreg-cli/releases/tag/1.8.2) - 2026-01-06
 
