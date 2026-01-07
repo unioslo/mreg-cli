@@ -14,6 +14,7 @@ from mreg_cli.api.models import (
     NetworkPolicy,
     NetworkPolicyAttribute,
 )
+from mreg_cli.choices import CommunitySortOrder
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import (
@@ -1207,7 +1208,14 @@ def community_info(args: argparse.Namespace) -> None:
     short_desc="List communities",
     flags=[
         Flag("network", description="Network", metavar="NETWORK"),
-        Flag("-hosts", action="store_true", description="Show names of hosts."),
+        Flag("-hosts", action="store_true", description="Show hosts in each community."),
+        Flag(
+            "-sort",
+            description="Sorting order",
+            choices=list(CommunitySortOrder),
+            default=CommunitySortOrder.NAME,
+            metavar=CommunitySortOrder.metavar(),
+        ),
     ],
 )
 def community_list(args: argparse.Namespace) -> None:
@@ -1217,9 +1225,10 @@ def community_list(args: argparse.Namespace) -> None:
     """
     network: str = args.network
     hosts: bool = args.hosts
+    sort: CommunitySortOrder = CommunitySortOrder(args.sort)
 
     net = Network.get_by_network_or_raise(network)
-    Community.output_multiple(net.communities, show_hosts=hosts)
+    Community.output_multiple(net.communities, show_hosts=hosts, sort=sort)
 
 
 # TODO[rename]: network community rename

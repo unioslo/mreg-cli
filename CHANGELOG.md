@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `host add_contact <host> <contact> [<contact> ...]` command to add one or more contacts to a host.
 - `host remove_contact <host> <contact> [<contact> ...]` command to remove one or more contacts from a host.
 - `host unset_contact <host> [-force]` command to remove all contacts from a host.
+- `network community_list -sort <name|global>` option to sort communities by name or global name (defaults to name).
 
 ### Changed
 
