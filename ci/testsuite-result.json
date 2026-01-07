@@ -37116,7 +37116,14 @@
     "warning": [],
     "error": [],
     "output": [],
-    "api_requests": [],
+    "api_requests": [
+      {
+        "method": "DELETE",
+        "url": "/api/v1/networkpolicyattributes/3",
+        "data": {},
+        "status": 204
+      }
+    ],
     "time": null
   },
   {
@@ -37137,8 +37144,8 @@
       "              10.0.2.4   11:22:33:aa:bb:cc   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Sat Dec 20 12:45:24 2025",
-      "Updated:      Sat Dec 20 12:45:24 2025"
+      "Created:      Tue Jan  6 11:18:38 2026",
+      "Updated:      Tue Jan  6 11:18:38 2026"
     ],
     "api_requests": [
       {
@@ -37194,18 +37201,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-12-20T12:44:56.292305+01:00",
-                "updated_at": "2025-12-20T12:44:56.292318+01:00",
+                "created_at": "2026-01-06T11:18:02.748004+01:00",
+                "updated_at": "2026-01-06T11:18:02.748108+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-12-20T12:44:56.003483+01:00",
-            "updated_at": "2025-12-20T12:45:20.805552+01:00",
+            "created_at": "2026-01-06T11:18:01.732722+01:00",
+            "updated_at": "2026-01-06T11:18:33.120641+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-12-20T12:44:56.349179+01:00",
+            "serialno_updated_at": "2026-01-06T11:18:02.981369+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -37227,21 +37234,17 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-12-20T12:45:22.745930+01:00",
-            "updated_at": "2025-12-20T12:45:24.505562+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [],
-          "created_at": "2025-12-20T12:45:22.411879+01:00",
-          "updated_at": "2025-12-20T12:45:23.874246+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -37274,8 +37277,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-12-20T12:45:24.799197+01:00",
-              "updated_at": "2025-12-20T12:45:24.799203+01:00",
+              "created_at": "2026-01-06T11:18:38.834038+01:00",
+              "updated_at": "2026-01-06T11:18:38.834045+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -37284,8 +37287,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-12-20T12:45:24.776611+01:00",
-              "updated_at": "2025-12-20T12:45:24.776617+01:00",
+              "created_at": "2026-01-06T11:18:38.812713+01:00",
+              "updated_at": "2026-01-06T11:18:38.812721+01:00",
               "txt": "v=spf1 -all",
               "host": 30
             }
@@ -37343,8 +37346,8 @@
         "status": 200,
         "response": {
           "macaddress": "11:22:33:aa:bb:cc",
-          "created_at": "2025-12-20T12:45:24.799197+01:00",
-          "updated_at": "2025-12-20T12:45:24.888322+01:00",
+          "created_at": "2026-01-06T11:18:38.834038+01:00",
+          "updated_at": "2026-01-06T11:18:38.929856+01:00",
           "ipaddress": "10.0.2.4",
           "host": 30
         }
@@ -37363,8 +37366,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "11:22:33:aa:bb:cc",
-                  "created_at": "2025-12-20T12:45:24.799197+01:00",
-                  "updated_at": "2025-12-20T12:45:24.888322+01:00",
+                  "created_at": "2026-01-06T11:18:38.834038+01:00",
+                  "updated_at": "2026-01-06T11:18:38.929856+01:00",
                   "ipaddress": "10.0.2.4",
                   "host": 30
                 }
@@ -37373,8 +37376,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2025-12-20T12:45:24.776611+01:00",
-                  "updated_at": "2025-12-20T12:45:24.776617+01:00",
+                  "created_at": "2026-01-06T11:18:38.812713+01:00",
+                  "updated_at": "2026-01-06T11:18:38.812721+01:00",
                   "txt": "v=spf1 -all",
                   "host": 30
                 }
@@ -37419,21 +37422,17 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-12-20T12:45:22.745930+01:00",
-            "updated_at": "2025-12-20T12:45:24.505562+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [],
-          "created_at": "2025-12-20T12:45:22.411879+01:00",
-          "updated_at": "2025-12-20T12:45:23.874246+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -37472,21 +37471,17 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -37512,8 +37507,8 @@
           "network": 10,
           "hosts": [],
           "global_name": "community01",
-          "created_at": "2025-11-21T13:44:17.008205+01:00",
-          "updated_at": "2025-11-21T13:44:17.008220+01:00"
+          "created_at": "2026-01-06T11:18:39.096410+01:00",
+          "updated_at": "2026-01-06T11:18:39.096424+01:00"
         }
       }
     ],
@@ -37543,17 +37538,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -37562,12 +37553,12 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-11-21T13:44:17.008205+01:00",
-              "updated_at": "2025-11-21T13:44:17.008220+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             }
           ],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -37593,8 +37584,8 @@
           "network": 10,
           "hosts": [],
           "global_name": "community02",
-          "created_at": "2025-11-21T13:44:17.122077+01:00",
-          "updated_at": "2025-11-21T13:44:17.122096+01:00"
+          "created_at": "2026-01-06T11:18:39.222299+01:00",
+          "updated_at": "2026-01-06T11:18:39.222314+01:00"
         }
       }
     ],
@@ -37612,15 +37603,15 @@
       "Name:         guests",
       "Description:  Guest hosts.",
       "Global name:  community01",
-      "Created:      Fri Nov 21 13:44:17 2025",
-      "Updated:      Fri Nov 21 13:44:17 2025",
+      "Created:      Tue Jan  6 11:18:39 2026",
+      "Updated:      Tue Jan  6 11:18:39 2026",
       "Hosts:        0",
       "",
       "Name:         lab",
       "Description:  Lab hosts.",
       "Global name:  community02",
-      "Created:      Fri Nov 21 13:44:17 2025",
-      "Updated:      Fri Nov 21 13:44:17 2025",
+      "Created:      Tue Jan  6 11:18:39 2026",
+      "Updated:      Tue Jan  6 11:18:39 2026",
       "Hosts:        0",
       ""
     ],
@@ -37637,17 +37628,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -37656,8 +37643,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-11-21T13:44:17.008205+01:00",
-              "updated_at": "2025-11-21T13:44:17.008220+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             },
             {
               "name": "lab",
@@ -37665,12 +37652,12 @@
               "network": 10,
               "hosts": [],
               "global_name": "community02",
-              "created_at": "2025-11-21T13:44:17.122077+01:00",
-              "updated_at": "2025-11-21T13:44:17.122096+01:00"
+              "created_at": "2026-01-06T11:18:39.222299+01:00",
+              "updated_at": "2026-01-06T11:18:39.222314+01:00"
             }
           ],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -37706,8 +37693,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-12-18T11:57:55.442237+01:00",
-              "updated_at": "2025-12-18T11:57:55.531359+01:00",
+              "created_at": "2026-01-06T11:18:38.834038+01:00",
+              "updated_at": "2026-01-06T11:18:38.929856+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -37716,8 +37703,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-12-18T11:57:55.422966+01:00",
-              "updated_at": "2025-12-18T11:57:55.422972+01:00",
+              "created_at": "2026-01-06T11:18:38.812713+01:00",
+              "updated_at": "2026-01-06T11:18:38.812721+01:00",
               "txt": "v=spf1 -all",
               "host": 30
             }
@@ -37760,17 +37747,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-12-18T11:57:53.334586+01:00",
-            "updated_at": "2025-12-18T11:57:55.166139+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -37779,8 +37762,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-12-18T11:57:55.676394+01:00",
-              "updated_at": "2025-12-18T11:57:55.676402+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             },
             {
               "name": "lab",
@@ -37788,12 +37771,12 @@
               "network": 10,
               "hosts": [],
               "global_name": "community02",
-              "created_at": "2025-12-18T11:57:55.724589+01:00",
-              "updated_at": "2025-12-18T11:57:55.724598+01:00"
+              "created_at": "2026-01-06T11:18:39.222299+01:00",
+              "updated_at": "2026-01-06T11:18:39.222314+01:00"
             }
           ],
-          "created_at": "2025-12-18T11:57:52.757525+01:00",
-          "updated_at": "2025-12-18T11:57:54.592984+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -37822,17 +37805,13 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
                 ],
                 "community_template_pattern": null,
-                "created_at": "2025-12-18T11:57:53.334586+01:00",
-                "updated_at": "2025-12-18T11:57:55.166139+01:00"
+                "created_at": "2026-01-06T11:18:36.027535+01:00",
+                "updated_at": "2026-01-06T11:18:38.444850+01:00"
               },
               "communities": [
                 {
@@ -37850,12 +37829,12 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community02",
-                  "created_at": "2025-12-18T11:57:55.724589+01:00",
-                  "updated_at": "2025-12-18T11:57:55.724598+01:00"
+                  "created_at": "2026-01-06T11:18:39.222299+01:00",
+                  "updated_at": "2026-01-06T11:18:39.222314+01:00"
                 }
               ],
-              "created_at": "2025-12-18T11:57:52.757525+01:00",
-              "updated_at": "2025-12-18T11:57:54.592984+01:00",
+              "created_at": "2026-01-06T11:18:35.632035+01:00",
+              "updated_at": "2026-01-06T11:18:37.621965+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -37881,8 +37860,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-12-18T11:57:55.442237+01:00",
-              "updated_at": "2025-12-18T11:57:55.531359+01:00",
+              "created_at": "2026-01-06T11:18:38.834038+01:00",
+              "updated_at": "2026-01-06T11:18:38.929856+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -37917,8 +37896,8 @@
                   "tinyhost.example.org"
                 ],
                 "global_name": "community01",
-                "created_at": "2025-12-18T11:57:55.676394+01:00",
-                "updated_at": "2025-12-18T11:57:55.676402+01:00"
+                "created_at": "2026-01-06T11:18:39.096410+01:00",
+                "updated_at": "2026-01-06T11:18:39.096424+01:00"
               }
             }
           ],
@@ -37957,8 +37936,8 @@
       "              10.0.2.4   11:22:33:aa:bb:cc   insecurepolicy   guests (community01)   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Thu Dec 18 11:57:55 2025",
-      "Updated:      Thu Dec 18 11:57:55 2025"
+      "Created:      Tue Jan  6 11:18:38 2026",
+      "Updated:      Tue Jan  6 11:18:38 2026"
     ],
     "api_requests": [
       {
@@ -37970,8 +37949,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-12-18T11:57:55.442237+01:00",
-              "updated_at": "2025-12-18T11:57:55.531359+01:00",
+              "created_at": "2026-01-06T11:18:38.834038+01:00",
+              "updated_at": "2026-01-06T11:18:38.929856+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -37980,8 +37959,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-12-18T11:57:55.422966+01:00",
-              "updated_at": "2025-12-18T11:57:55.422972+01:00",
+              "created_at": "2026-01-06T11:18:38.812713+01:00",
+              "updated_at": "2026-01-06T11:18:38.812721+01:00",
               "txt": "v=spf1 -all",
               "host": 30
             }
@@ -38006,8 +37985,8 @@
                   "tinyhost.example.org"
                 ],
                 "global_name": "community01",
-                "created_at": "2025-12-18T11:57:55.676394+01:00",
-                "updated_at": "2025-12-18T11:57:55.676402+01:00"
+                "created_at": "2026-01-06T11:18:39.096410+01:00",
+                "updated_at": "2026-01-06T11:18:39.096424+01:00"
               }
             }
           ],
@@ -38039,17 +38018,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-12-18T11:57:53.334586+01:00",
-            "updated_at": "2025-12-18T11:57:55.166139+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -38060,8 +38035,8 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community01",
-              "created_at": "2025-12-18T11:57:55.676394+01:00",
-              "updated_at": "2025-12-18T11:57:55.676402+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             },
             {
               "name": "lab",
@@ -38069,12 +38044,12 @@
               "network": 10,
               "hosts": [],
               "global_name": "community02",
-              "created_at": "2025-12-18T11:57:55.724589+01:00",
-              "updated_at": "2025-12-18T11:57:55.724598+01:00"
+              "created_at": "2026-01-06T11:18:39.222299+01:00",
+              "updated_at": "2026-01-06T11:18:39.222314+01:00"
             }
           ],
-          "created_at": "2025-12-18T11:57:52.757525+01:00",
-          "updated_at": "2025-12-18T11:57:54.592984+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -38118,17 +38093,13 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
                 ],
                 "community_template_pattern": null,
-                "created_at": "2025-12-18T11:57:53.334586+01:00",
-                "updated_at": "2025-12-18T11:57:55.166139+01:00"
+                "created_at": "2026-01-06T11:18:36.027535+01:00",
+                "updated_at": "2026-01-06T11:18:38.444850+01:00"
               },
               "communities": [
                 {
@@ -38139,8 +38110,8 @@
                     "tinyhost.example.org"
                   ],
                   "global_name": "community01",
-                  "created_at": "2025-12-18T11:57:55.676394+01:00",
-                  "updated_at": "2025-12-18T11:57:55.676402+01:00"
+                  "created_at": "2026-01-06T11:18:39.096410+01:00",
+                  "updated_at": "2026-01-06T11:18:39.096424+01:00"
                 },
                 {
                   "name": "lab",
@@ -38148,12 +38119,12 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community02",
-                  "created_at": "2025-12-18T11:57:55.724589+01:00",
-                  "updated_at": "2025-12-18T11:57:55.724598+01:00"
+                  "created_at": "2026-01-06T11:18:39.222299+01:00",
+                  "updated_at": "2026-01-06T11:18:39.222314+01:00"
                 }
               ],
-              "created_at": "2025-12-18T11:57:52.757525+01:00",
-              "updated_at": "2025-12-18T11:57:54.592984+01:00",
+              "created_at": "2026-01-06T11:18:35.632035+01:00",
+              "updated_at": "2026-01-06T11:18:37.621965+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -38179,8 +38150,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-12-18T11:57:55.442237+01:00",
-              "updated_at": "2025-12-18T11:57:55.531359+01:00",
+              "created_at": "2026-01-06T11:18:38.834038+01:00",
+              "updated_at": "2026-01-06T11:18:38.929856+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -38189,8 +38160,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-12-18T11:57:55.422966+01:00",
-              "updated_at": "2025-12-18T11:57:55.422972+01:00",
+              "created_at": "2026-01-06T11:18:38.812713+01:00",
+              "updated_at": "2026-01-06T11:18:38.812721+01:00",
               "txt": "v=spf1 -all",
               "host": 30
             }
@@ -38255,8 +38226,8 @@
       "              10.0.2.4   11:22:33:aa:bb:cc   insecurepolicy   lab (community02)   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Thu Dec 18 11:57:55 2025",
-      "Updated:      Thu Dec 18 11:57:55 2025"
+      "Created:      Tue Jan  6 11:18:38 2026",
+      "Updated:      Tue Jan  6 11:18:38 2026"
     ],
     "api_requests": [
       {
@@ -38268,8 +38239,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-12-18T11:57:55.442237+01:00",
-              "updated_at": "2025-12-18T11:57:55.531359+01:00",
+              "created_at": "2026-01-06T11:18:38.834038+01:00",
+              "updated_at": "2026-01-06T11:18:38.929856+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -38337,10 +38308,6 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
@@ -38399,8 +38366,8 @@
       "Name:         guests",
       "Description:  Guest hosts.",
       "Global name:  community01",
-      "Created:      Fri Nov 21 13:44:17 2025",
-      "Updated:      Fri Nov 21 13:44:17 2025",
+      "Created:      Tue Jan  6 11:18:39 2026",
+      "Updated:      Tue Jan  6 11:18:39 2026",
       "Hosts:        0"
     ],
     "api_requests": [
@@ -38416,17 +38383,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -38435,8 +38398,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-11-21T13:44:17.008205+01:00",
-              "updated_at": "2025-11-21T13:44:17.008220+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             },
             {
               "name": "lab",
@@ -38446,12 +38409,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2025-11-21T13:44:17.122077+01:00",
-              "updated_at": "2025-11-21T13:44:17.122096+01:00"
+              "created_at": "2026-01-06T11:18:39.222299+01:00",
+              "updated_at": "2026-01-06T11:18:39.222314+01:00"
             }
           ],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -38573,8 +38536,8 @@
               "description": "Custom community mapping template pattern",
               "attributes": [],
               "community_template_pattern": "custom",
-              "created_at": "2025-11-21T13:44:18.377579+01:00",
-              "updated_at": "2025-11-21T13:44:18.377593+01:00"
+              "created_at": "2026-01-06T11:18:39.818833+01:00",
+              "updated_at": "2026-01-06T11:18:39.818849+01:00"
             }
           ]
         }
@@ -38596,17 +38559,13 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
                 ],
                 "community_template_pattern": null,
-                "created_at": "2025-11-21T13:44:14.236126+01:00",
-                "updated_at": "2025-11-21T13:44:16.319554+01:00"
+                "created_at": "2026-01-06T11:18:36.027535+01:00",
+                "updated_at": "2026-01-06T11:18:38.444850+01:00"
               },
               "communities": [
                 {
@@ -38615,8 +38574,8 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community01",
-                  "created_at": "2025-11-21T13:44:17.008205+01:00",
-                  "updated_at": "2025-11-21T13:44:17.008220+01:00"
+                  "created_at": "2026-01-06T11:18:39.096410+01:00",
+                  "updated_at": "2026-01-06T11:18:39.096424+01:00"
                 },
                 {
                   "name": "lab",
@@ -38626,12 +38585,12 @@
                     "tinyhost.example.org"
                   ],
                   "global_name": "community02",
-                  "created_at": "2025-11-21T13:44:17.122077+01:00",
-                  "updated_at": "2025-11-21T13:44:17.122096+01:00"
+                  "created_at": "2026-01-06T11:18:39.222299+01:00",
+                  "updated_at": "2026-01-06T11:18:39.222314+01:00"
                 }
               ],
-              "created_at": "2025-11-21T13:44:13.773697+01:00",
-              "updated_at": "2025-11-21T13:44:15.596661+01:00",
+              "created_at": "2026-01-06T11:18:35.632035+01:00",
+              "updated_at": "2026-01-06T11:18:37.621965+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -38664,8 +38623,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-11-21T13:44:18.655897+01:00",
-          "updated_at": "2025-11-21T13:44:18.655941+01:00",
+          "created_at": "2026-01-06T11:18:39.966101+01:00",
+          "updated_at": "2026-01-06T11:18:39.966125+01:00",
           "network": "10.0.3.0/24",
           "description": "CustomPatternNet",
           "vlan": null,
@@ -38702,12 +38661,12 @@
                 "description": "Custom community mapping template pattern",
                 "attributes": [],
                 "community_template_pattern": "custom",
-                "created_at": "2025-11-21T13:44:18.377579+01:00",
-                "updated_at": "2025-11-21T13:44:18.377593+01:00"
+                "created_at": "2026-01-06T11:18:39.818833+01:00",
+                "updated_at": "2026-01-06T11:18:39.818849+01:00"
               },
               "communities": [],
-              "created_at": "2025-11-21T13:44:18.655897+01:00",
-              "updated_at": "2025-11-21T13:44:18.733577+01:00",
+              "created_at": "2026-01-06T11:18:39.966101+01:00",
+              "updated_at": "2026-01-06T11:18:40.033162+01:00",
               "network": "10.0.3.0/24",
               "description": "CustomPatternNet",
               "vlan": null,
@@ -39279,17 +39238,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -39298,8 +39253,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-11-21T13:44:17.008205+01:00",
-              "updated_at": "2025-11-21T13:44:17.008220+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             },
             {
               "name": "lab",
@@ -39309,12 +39264,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2025-11-21T13:44:17.122077+01:00",
-              "updated_at": "2025-11-21T13:44:17.122096+01:00"
+              "created_at": "2026-01-06T11:18:39.222299+01:00",
+              "updated_at": "2026-01-06T11:18:39.222314+01:00"
             }
           ],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -39343,17 +39298,13 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
                 ],
                 "community_template_pattern": null,
-                "created_at": "2025-11-21T13:44:14.236126+01:00",
-                "updated_at": "2025-11-21T13:44:16.319554+01:00"
+                "created_at": "2026-01-06T11:18:36.027535+01:00",
+                "updated_at": "2026-01-06T11:18:38.444850+01:00"
               },
               "communities": [
                 {
@@ -39362,8 +39313,8 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community01",
-                  "created_at": "2025-11-21T13:44:17.008205+01:00",
-                  "updated_at": "2025-11-21T13:44:17.008220+01:00"
+                  "created_at": "2026-01-06T11:18:39.096410+01:00",
+                  "updated_at": "2026-01-06T11:18:39.096424+01:00"
                 },
                 {
                   "name": "lab",
@@ -39373,12 +39324,12 @@
                     "tinyhost.example.org"
                   ],
                   "global_name": "community02",
-                  "created_at": "2025-11-21T13:44:17.122077+01:00",
-                  "updated_at": "2025-11-21T13:44:17.122096+01:00"
+                  "created_at": "2026-01-06T11:18:39.222299+01:00",
+                  "updated_at": "2026-01-06T11:18:39.222314+01:00"
                 }
               ],
-              "created_at": "2025-11-21T13:44:13.773697+01:00",
-              "updated_at": "2025-11-21T13:44:15.596661+01:00",
+              "created_at": "2026-01-06T11:18:35.632035+01:00",
+              "updated_at": "2026-01-06T11:18:37.621965+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -39407,8 +39358,8 @@
             "tinyhost.example.org"
           ],
           "global_name": "community02",
-          "created_at": "2025-11-21T13:44:17.122077+01:00",
-          "updated_at": "2025-11-21T13:44:20.110543+01:00"
+          "created_at": "2026-01-06T11:18:39.222299+01:00",
+          "updated_at": "2026-01-06T11:18:40.708690+01:00"
         }
       },
       {
@@ -39428,17 +39379,13 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
                 ],
                 "community_template_pattern": null,
-                "created_at": "2025-11-21T13:44:14.236126+01:00",
-                "updated_at": "2025-11-21T13:44:16.319554+01:00"
+                "created_at": "2026-01-06T11:18:36.027535+01:00",
+                "updated_at": "2026-01-06T11:18:38.444850+01:00"
               },
               "communities": [
                 {
@@ -39447,8 +39394,8 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community01",
-                  "created_at": "2025-11-21T13:44:17.008205+01:00",
-                  "updated_at": "2025-11-21T13:44:17.008220+01:00"
+                  "created_at": "2026-01-06T11:18:39.096410+01:00",
+                  "updated_at": "2026-01-06T11:18:39.096424+01:00"
                 },
                 {
                   "name": "labequipment",
@@ -39458,12 +39405,12 @@
                     "tinyhost.example.org"
                   ],
                   "global_name": "community02",
-                  "created_at": "2025-11-21T13:44:17.122077+01:00",
-                  "updated_at": "2025-11-21T13:44:20.110543+01:00"
+                  "created_at": "2026-01-06T11:18:39.222299+01:00",
+                  "updated_at": "2026-01-06T11:18:40.708690+01:00"
                 }
               ],
-              "created_at": "2025-11-21T13:44:13.773697+01:00",
-              "updated_at": "2025-11-21T13:44:15.596661+01:00",
+              "created_at": "2026-01-06T11:18:35.632035+01:00",
+              "updated_at": "2026-01-06T11:18:37.621965+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -39490,8 +39437,8 @@
             "tinyhost.example.org"
           ],
           "global_name": "community02",
-          "created_at": "2025-11-21T13:44:17.122077+01:00",
-          "updated_at": "2025-11-21T13:44:20.110543+01:00"
+          "created_at": "2026-01-06T11:18:39.222299+01:00",
+          "updated_at": "2026-01-06T11:18:40.708690+01:00"
         }
       }
     ],
@@ -39521,17 +39468,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -39540,8 +39483,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-11-21T13:44:17.008205+01:00",
-              "updated_at": "2025-11-21T13:44:17.008220+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             },
             {
               "name": "labequipment",
@@ -39551,12 +39494,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2025-11-21T13:44:17.122077+01:00",
-              "updated_at": "2025-11-21T13:44:20.110543+01:00"
+              "created_at": "2026-01-06T11:18:39.222299+01:00",
+              "updated_at": "2026-01-06T11:18:40.708690+01:00"
             }
           ],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -39583,8 +39526,8 @@
             "tinyhost.example.org"
           ],
           "global_name": "community02",
-          "created_at": "2025-11-21T13:44:17.122077+01:00",
-          "updated_at": "2025-11-21T13:44:20.335056+01:00"
+          "created_at": "2026-01-06T11:18:39.222299+01:00",
+          "updated_at": "2026-01-06T11:18:40.828796+01:00"
         }
       },
       {
@@ -39604,17 +39547,13 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
                 ],
                 "community_template_pattern": null,
-                "created_at": "2025-11-21T13:44:14.236126+01:00",
-                "updated_at": "2025-11-21T13:44:16.319554+01:00"
+                "created_at": "2026-01-06T11:18:36.027535+01:00",
+                "updated_at": "2026-01-06T11:18:38.444850+01:00"
               },
               "communities": [
                 {
@@ -39623,8 +39562,8 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community01",
-                  "created_at": "2025-11-21T13:44:17.008205+01:00",
-                  "updated_at": "2025-11-21T13:44:17.008220+01:00"
+                  "created_at": "2026-01-06T11:18:39.096410+01:00",
+                  "updated_at": "2026-01-06T11:18:39.096424+01:00"
                 },
                 {
                   "name": "labequipment",
@@ -39634,12 +39573,12 @@
                     "tinyhost.example.org"
                   ],
                   "global_name": "community02",
-                  "created_at": "2025-11-21T13:44:17.122077+01:00",
-                  "updated_at": "2025-11-21T13:44:20.335056+01:00"
+                  "created_at": "2026-01-06T11:18:39.222299+01:00",
+                  "updated_at": "2026-01-06T11:18:40.828796+01:00"
                 }
               ],
-              "created_at": "2025-11-21T13:44:13.773697+01:00",
-              "updated_at": "2025-11-21T13:44:15.596661+01:00",
+              "created_at": "2026-01-06T11:18:35.632035+01:00",
+              "updated_at": "2026-01-06T11:18:37.621965+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -39666,8 +39605,8 @@
             "tinyhost.example.org"
           ],
           "global_name": "community02",
-          "created_at": "2025-11-21T13:44:17.122077+01:00",
-          "updated_at": "2025-11-21T13:44:20.335056+01:00"
+          "created_at": "2026-01-06T11:18:39.222299+01:00",
+          "updated_at": "2026-01-06T11:18:40.828796+01:00"
         }
       }
     ],
@@ -39685,8 +39624,8 @@
       "Name:         labequipment",
       "Description:  Lab equipment (expensive)",
       "Global name:  community02",
-      "Created:      Fri Nov 21 13:44:17 2025",
-      "Updated:      Fri Nov 21 13:44:20 2025",
+      "Created:      Tue Jan  6 11:18:39 2026",
+      "Updated:      Tue Jan  6 11:18:40 2026",
       "Hosts:",
       "              tinyhost.example.org"
     ],
@@ -39703,17 +39642,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -39722,8 +39657,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-11-21T13:44:17.008205+01:00",
-              "updated_at": "2025-11-21T13:44:17.008220+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             },
             {
               "name": "labequipment",
@@ -39733,12 +39668,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2025-11-21T13:44:17.122077+01:00",
-              "updated_at": "2025-11-21T13:44:20.335056+01:00"
+              "created_at": "2026-01-06T11:18:39.222299+01:00",
+              "updated_at": "2026-01-06T11:18:40.828796+01:00"
             }
           ],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -39912,10 +39847,6 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
@@ -40042,10 +39973,6 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
@@ -40125,15 +40052,15 @@
       "Name:         guests",
       "Description:  Guest hosts.",
       "Global name:  community01",
-      "Created:      Fri Nov 21 13:44:17 2025",
-      "Updated:      Fri Nov 21 13:44:17 2025",
+      "Created:      Tue Jan  6 11:18:39 2026",
+      "Updated:      Tue Jan  6 11:18:39 2026",
       "Hosts:        0",
       "",
       "Name:         labequipment",
       "Description:  Lab equipment (expensive)",
       "Global name:  community02",
-      "Created:      Fri Nov 21 13:44:17 2025",
-      "Updated:      Fri Nov 21 13:44:20 2025",
+      "Created:      Tue Jan  6 11:18:39 2026",
+      "Updated:      Tue Jan  6 11:18:40 2026",
       "Hosts:",
       "              tinyhost.example.org",
       ""
@@ -40151,17 +40078,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -40170,8 +40093,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-11-21T13:44:17.008205+01:00",
-              "updated_at": "2025-11-21T13:44:17.008220+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             },
             {
               "name": "labequipment",
@@ -40181,12 +40104,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2025-11-21T13:44:17.122077+01:00",
-              "updated_at": "2025-11-21T13:44:20.335056+01:00"
+              "created_at": "2026-01-06T11:18:39.222299+01:00",
+              "updated_at": "2026-01-06T11:18:40.828796+01:00"
             }
           ],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -40230,17 +40153,13 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
                 ],
                 "community_template_pattern": null,
-                "created_at": "2025-11-21T13:44:14.236126+01:00",
-                "updated_at": "2025-11-21T13:44:16.319554+01:00"
+                "created_at": "2026-01-06T11:18:36.027535+01:00",
+                "updated_at": "2026-01-06T11:18:38.444850+01:00"
               },
               "communities": [
                 {
@@ -40249,8 +40168,8 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community01",
-                  "created_at": "2025-11-21T13:44:17.008205+01:00",
-                  "updated_at": "2025-11-21T13:44:17.008220+01:00"
+                  "created_at": "2026-01-06T11:18:39.096410+01:00",
+                  "updated_at": "2026-01-06T11:18:39.096424+01:00"
                 },
                 {
                   "name": "labequipment",
@@ -40260,12 +40179,12 @@
                     "tinyhost.example.org"
                   ],
                   "global_name": "community02",
-                  "created_at": "2025-11-21T13:44:17.122077+01:00",
-                  "updated_at": "2025-11-21T13:44:20.335056+01:00"
+                  "created_at": "2026-01-06T11:18:39.222299+01:00",
+                  "updated_at": "2026-01-06T11:18:40.828796+01:00"
                 }
               ],
-              "created_at": "2025-11-21T13:44:13.773697+01:00",
-              "updated_at": "2025-11-21T13:44:15.596661+01:00",
+              "created_at": "2026-01-06T11:18:35.632035+01:00",
+              "updated_at": "2026-01-06T11:18:37.621965+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -40298,8 +40217,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-11-21T13:44:20.952313+01:00",
-          "updated_at": "2025-11-21T13:44:20.952328+01:00",
+          "created_at": "2026-01-06T11:18:41.321575+01:00",
+          "updated_at": "2026-01-06T11:18:41.321592+01:00",
           "network": "10.0.0.0/24",
           "description": "MediumNet",
           "vlan": null,
@@ -40766,10 +40685,6 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
@@ -40829,10 +40744,6 @@
                 "name": "insecurepolicy",
                 "description": "Insecure policy for a network",
                 "attributes": [
-                  {
-                    "name": "bar",
-                    "value": true
-                  },
                   {
                     "name": "baz",
                     "value": true
@@ -41066,17 +40977,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -41085,8 +40992,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-11-21T13:44:17.008205+01:00",
-              "updated_at": "2025-11-21T13:44:17.008220+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             },
             {
               "name": "labequipment",
@@ -41094,12 +41001,12 @@
               "network": 10,
               "hosts": [],
               "global_name": "community02",
-              "created_at": "2025-11-21T13:44:17.122077+01:00",
-              "updated_at": "2025-11-21T13:44:20.335056+01:00"
+              "created_at": "2026-01-06T11:18:39.222299+01:00",
+              "updated_at": "2026-01-06T11:18:40.828796+01:00"
             }
           ],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -41128,17 +41035,13 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
                 ],
                 "community_template_pattern": null,
-                "created_at": "2025-11-21T13:44:14.236126+01:00",
-                "updated_at": "2025-11-21T13:44:16.319554+01:00"
+                "created_at": "2026-01-06T11:18:36.027535+01:00",
+                "updated_at": "2026-01-06T11:18:38.444850+01:00"
               },
               "communities": [
                 {
@@ -41147,8 +41050,8 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community01",
-                  "created_at": "2025-11-21T13:44:17.008205+01:00",
-                  "updated_at": "2025-11-21T13:44:17.008220+01:00"
+                  "created_at": "2026-01-06T11:18:39.096410+01:00",
+                  "updated_at": "2026-01-06T11:18:39.096424+01:00"
                 },
                 {
                   "name": "labequipment",
@@ -41156,12 +41059,12 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community02",
-                  "created_at": "2025-11-21T13:44:17.122077+01:00",
-                  "updated_at": "2025-11-21T13:44:20.335056+01:00"
+                  "created_at": "2026-01-06T11:18:39.222299+01:00",
+                  "updated_at": "2026-01-06T11:18:40.828796+01:00"
                 }
               ],
-              "created_at": "2025-11-21T13:44:13.773697+01:00",
-              "updated_at": "2025-11-21T13:44:15.596661+01:00",
+              "created_at": "2026-01-06T11:18:35.632035+01:00",
+              "updated_at": "2026-01-06T11:18:37.621965+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -41220,17 +41123,13 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [
             {
@@ -41239,12 +41138,12 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2025-11-21T13:44:17.008205+01:00",
-              "updated_at": "2025-11-21T13:44:17.008220+01:00"
+              "created_at": "2026-01-06T11:18:39.096410+01:00",
+              "updated_at": "2026-01-06T11:18:39.096424+01:00"
             }
           ],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -41273,17 +41172,13 @@
                 "description": "Insecure policy for a network",
                 "attributes": [
                   {
-                    "name": "bar",
-                    "value": true
-                  },
-                  {
                     "name": "baz",
                     "value": true
                   }
                 ],
                 "community_template_pattern": null,
-                "created_at": "2025-11-21T13:44:14.236126+01:00",
-                "updated_at": "2025-11-21T13:44:16.319554+01:00"
+                "created_at": "2026-01-06T11:18:36.027535+01:00",
+                "updated_at": "2026-01-06T11:18:38.444850+01:00"
               },
               "communities": [
                 {
@@ -41292,12 +41187,12 @@
                   "network": 10,
                   "hosts": [],
                   "global_name": "community01",
-                  "created_at": "2025-11-21T13:44:17.008205+01:00",
-                  "updated_at": "2025-11-21T13:44:17.008220+01:00"
+                  "created_at": "2026-01-06T11:18:39.096410+01:00",
+                  "updated_at": "2026-01-06T11:18:39.096424+01:00"
                 }
               ],
-              "created_at": "2025-11-21T13:44:13.773697+01:00",
-              "updated_at": "2025-11-21T13:44:15.596661+01:00",
+              "created_at": "2026-01-06T11:18:35.632035+01:00",
+              "updated_at": "2026-01-06T11:18:37.621965+01:00",
               "network": "10.0.2.0/28",
               "description": "TinyNet",
               "vlan": null,
@@ -41356,21 +41251,17 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -41553,21 +41444,17 @@
             "description": "Insecure policy for a network",
             "attributes": [
               {
-                "name": "bar",
-                "value": true
-              },
-              {
                 "name": "baz",
                 "value": true
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2025-11-21T13:44:14.236126+01:00",
-            "updated_at": "2025-11-21T13:44:16.319554+01:00"
+            "created_at": "2026-01-06T11:18:36.027535+01:00",
+            "updated_at": "2026-01-06T11:18:38.444850+01:00"
           },
           "communities": [],
-          "created_at": "2025-11-21T13:44:13.773697+01:00",
-          "updated_at": "2025-11-21T13:44:15.596661+01:00",
+          "created_at": "2026-01-06T11:18:35.632035+01:00",
+          "updated_at": "2026-01-06T11:18:37.621965+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
