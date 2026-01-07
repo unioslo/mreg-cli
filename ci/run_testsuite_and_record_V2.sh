@@ -61,11 +61,6 @@ docker build -f Dockerfile -t mreg-cli --build-arg python_version=$PYTHON_VERSIO
 
 # start mreg+postgres in containers
 if [[ -n "$GITHUB_ACTIONS" ]]; then
-	if [[ "$PODMAN" == "1" ]]; then
-		docker compose $GH_PARAMS pull >/dev/null 2>&1
-	else
-		docker compose $GH_PARAMS pull --quiet
-	fi
 	docker compose $GH_PARAMS up -d
 else
 	docker compose up -d
