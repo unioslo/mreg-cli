@@ -1,4 +1,11 @@
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      mreg_image:
+        description: "MREG Docker image to use for testing"
+        required: false
 
 env:
   UV_FROZEN: 1
@@ -12,9 +19,9 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         python-version:
-          - '3.11'
-          - '3.12'
-          - '3.13'
+          - "3.11"
+          - "3.12"
+          - "3.13"
     env:
       # Disable colors and formatting in Rich console output
       TERM: dumb
@@ -22,7 +29,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Test and compare api calls
-        run: ci/run_testsuite_and_record_V2.sh ${{ matrix.python-version }}
+        run: ci/run_testsuite_and_record_V2.sh ${{ matrix.python-version }} ${{ github.event.inputs.mreg_image }}
 
   tox:
     name: tox
@@ -51,8 +58,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DavidAnson/markdownlint-cli2-action@v18
         with:
-          config: '.markdownlint.json'
-          globs: '**/*.md'
+          config: ".markdownlint.json"
+          globs: "**/*.md"
 
   unit:
     name: Unit tests
@@ -63,7 +70,7 @@ jobs:
         python-version:
           - "3.11"
           - "3.12"
-          - '3.13'
+          - "3.13"
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
