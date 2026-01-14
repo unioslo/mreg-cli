@@ -6,6 +6,7 @@ import argparse
 import functools
 import logging
 
+from mreg_api import MregClient
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -180,6 +181,15 @@ def main():
     elif not config.url:
         print("mreg url not set in config or as argument")
         return
+
+    # Configure client
+    MregClient(
+        url=config.url,
+        domain=config.domain,
+        timeout=config.http_timeout,
+        cache=config.cache,
+        cache_ttl=config.cache_ttl,
+    )
 
     # Configure application
     cache.configure(config)

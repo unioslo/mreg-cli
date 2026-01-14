@@ -50,6 +50,7 @@ dependencies = [
     "diskcache>=5.6.3",
     "pydantic-settings>=2.10.1",
     "rich>=13.9.4",
+    "mreg-api",
 ]
 dynamic = ["version"]
 
@@ -236,3 +237,6 @@ max-complexity = 10
 
 [tool.setuptools_scm]
 version_file = "mreg_cli/_version.py"
+
+[tool.uv.sources]
+mreg-api = { git = "ssh://git@github.com/unioslo/mreg-api" }

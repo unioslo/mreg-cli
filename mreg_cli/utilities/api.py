@@ -16,7 +16,10 @@ from typing import Any, Callable, Literal, NoReturn, ParamSpec, TypeVar, get_ori
 from urllib.parse import urljoin
 from uuid import uuid4
 
+import httpx
+import mreg_api
 import requests
+from mreg_api import MregClient
 from prompt_toolkit import prompt
 from pydantic import BaseModel, TypeAdapter, field_validator
 from requests import Response
@@ -116,22 +119,22 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
     :returns: Nothing.
     """
     token = TokenFile.get_entry(user, url)
-    if token:
-        set_session_token(token.token)
+    client = MregClient()
 
-    try:
-        ret = session.get(
-            urljoin(url, "/api/v1/hosts/"),
-            params={"page_size": 1},
-            timeout=5,
-        )
-    except requests.exceptions.ConnectionError as e:
-        error(f"Could not connect to {url}: {e}")
-
-    if ret.status_code == 401:
-        if fail_without_token:
-            raise SystemExit("Token only login failed.")
-        prompt_for_password_and_login(user, url, catch_exception=False)
+    if token and token.token:
+        try:
+            client.set_token(token.token)
+            client.test_connection()
+            logger.info("Using stored token for %s @ %s", user, url)
+            return
+        except httpx.HTTPError as e:
+            error(f"Could not connect to {url}: {e}")
+        except APIError as e:
+            logger.info("Stored token for %s @ %s is invalid", user, url)
+            if e.response and e.response.status_code == 401:
+                if fail_without_token:
+                    raise SystemExit("Token only login failed.")
+                prompt_for_password_and_login(user, url, catch_exception=False)
 
 
 def prompt_for_password_and_login(user: str, url: str, catch_exception: bool = True) -> None:
@@ -183,27 +186,27 @@ def prompt_for_password_and_try_update_token() -> None:
 
 def auth_and_update_token(username: str, password: str) -> None:
     """Perform the actual token update."""
+    client = MregClient()
+
     base_url = MregCliConfig().url
     tokenurl = urljoin(base_url, "/api/token-auth/")
     logger.info("Updating token for %s @ %s", username, tokenurl)
     try:
-        result = requests.post(tokenurl, {"username": username, "password": password})
-    except requests.exceptions.SSLError as e:
+        token = client.login(username, password)
+    except httpx.HTTPError as e:
         error(e)
-    except requests.exceptions.ConnectionError as e:
-        error(e)
-    if not result.ok:
-        err = parse_mreg_error(result)
-        if err:
-            msg = err.as_str()
-        else:
-            msg = result.text
-        raise LoginFailedError(msg)
-
-    token = result.json()["token"]
-    logger.info("Token updated for %s @ %s", username, tokenurl)
-    set_session_token(token)
-    TokenFile.set_entry(username, base_url, token)
+    except mreg_api.exceptions.LoginFailedError as e:
+        raise LoginFailedError(str(e)) from e
+    # if not result.ok:
+    #     err = parse_mreg_error(result)
+    #     if err:
+    #         msg = err.as_str()
+    #     else:
+    #         msg = result.text
+    #     raise LoginFailedError(msg)
+    else:
+        TokenFile.set_entry(username, base_url, token)
+        logger.info("Token updated for %s @ %s", username, tokenurl)
 
 
 def result_check(result: Response, operation_type: str, url: str) -> None:

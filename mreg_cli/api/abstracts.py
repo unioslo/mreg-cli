@@ -142,6 +142,38 @@ class FrozenModelWithTimestamps(FrozenModel):
         output_manager.add_line(f"{'Updated:':<{padding}}{self.updated_at:%c}")
 
 
+class TTLMixin:
+    """Mixin to add TTL output functionality."""
+
+    def output_ttl(self, label: str = "TTL", field: str = "ttl", padding: int = 14) -> None:
+        """Output a TTL value.
+
+        :param padding: Number of spaces for left-padding the output.
+        :param field: The field to output (defaults to 'ttl')
+        """
+        if not hasattr(self, field):
+            raise InternalError(f"Outputting TTL field {field} failed, field not found in object.")
+
+        ttl_value = getattr(self, field)
+        label = f"{label.removesuffix(':')}:"
+        OutputManager().add_line("{1:<{0}}{2}".format(padding, label, ttl_value or "(Default)"))
+
+
+class TimestampMixin(BaseModel):
+    """Mixin to add timestamp output functionality."""
+
+    # NOTE: we assume the model actually defines its own fields for these,
+    #       but we define them here for type checking purposes.
+    created_at: datetime
+    updated_at: datetime
+
+    def output_timestamps(self, padding: int = 14) -> None:
+        """Output the created and updated timestamps to the console."""
+        output_manager = OutputManager()
+        output_manager.add_line(f"{'Created:':<{padding}}{self.created_at:%c}")
+        output_manager.add_line(f"{'Updated:':<{padding}}{self.updated_at:%c}")
+
+
 class APIMixin(ABC):
     """A mixin for API-related methods."""
 
