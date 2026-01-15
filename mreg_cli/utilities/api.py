@@ -124,16 +124,17 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
     if token and token.token:
         try:
             client.set_token(token.token)
-            client.test_connection()
+            client.test_auth()
             logger.info("Using stored token for %s @ %s", user, url)
             return
-        except httpx.HTTPError as e:
+        except httpx.RequestError as e:
             error(f"Could not connect to {url}: {e}")
-        except APIError as e:
+        except mreg_api.exceptions.InvalidAuthTokenError as e:
+            client.unset_token()  # NOTE: might be redundant
             logger.info("Stored token for %s @ %s is invalid", user, url)
             if e.response and e.response.status_code == 401:
                 if fail_without_token:
-                    raise SystemExit("Token only login failed.")
+                    raise SystemExit("Token only login failed.") from None
                 prompt_for_password_and_login(user, url, catch_exception=False)
 
 
