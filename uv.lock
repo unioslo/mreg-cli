@@ -1,10 +1,6 @@
 version = 1
 revision = 3
 requires-python = ">=3.11"
-resolution-markers = [
-    "python_full_version < '3.13'",
-    "python_full_version >= '3.13'",
-]
 
 [[package]]
 name = "altgraph"
@@ -354,8 +350,8 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.1.dev18+g31dc3b162"
-source = { git = "ssh://git@github.com/unioslo/mreg-api#31dc3b162bf10181994d908595c5f540d9549ca5" }
+version = "0.1.dev24+g47df00ca0"
+source = { git = "https://github.com/unioslo/mreg-api#47df00ca0dca819fbe58adc6cd27cbfbf822e79b" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },
@@ -411,7 +407,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "diskcache", specifier = ">=5.6.3" },
-    { name = "mreg-api", git = "ssh://git@github.com/unioslo/mreg-api" },
+    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.7.1" },

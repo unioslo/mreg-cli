@@ -239,4 +239,4 @@ max-complexity = 10
 version_file = "mreg_cli/_version.py"
 
 [tool.uv.sources]
-mreg-api = { git = "ssh://git@github.com/unioslo/mreg-api" }
+mreg-api = { git = "https://github.com/unioslo/mreg-api" }
