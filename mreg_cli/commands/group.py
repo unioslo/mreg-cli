@@ -11,6 +11,7 @@ from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CreateError, DeleteError, EntityNotFound, ForceMissing
 from mreg_cli.output.group import output_hostgroup, output_hostgroup_members, output_hostgroups
+from mreg_cli.output.history import output_hostgroup_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -327,5 +328,5 @@ def history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    hg = HostGroup.get_by_name_or_raise(args.name)
-    output_hostgroup_history(hg)
+    name: str = args.name
+    output_hostgroup_history(name)

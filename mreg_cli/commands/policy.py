@@ -24,6 +24,7 @@ from mreg_cli.output import (
     output_role_hosts,
     output_roles_table,
 )
+from mreg_cli.output.history import output_atom_history, output_role_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -538,8 +539,7 @@ def atom_history(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     name: str = args.name
-    atom = Atom.get_by_name_or_raise(name)
-    output_atom_history(atom)
+    output_atom_history(name)
 
 
 @command_registry.register_command(
@@ -557,5 +557,4 @@ def role_history(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
-    role = Role.get_by_name_or_raise(name)
-    output_role_history(role)
+    output_role_history(name)
