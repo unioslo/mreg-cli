@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable
+from typing import Iterable
+
+from mreg_api.models import HealthInfo, ServerLibraries, ServerVersion, UserInfo, UserPermission
 
 from mreg_cli.outputmanager import OutputManager
-
-if TYPE_CHECKING:
-    import mreg_api.models
-
-    from mreg_cli.api.models import ServerLibraries, UserInfo, UserPermission
 
 
 def output_user_info(user: UserInfo, django: bool = False) -> None:
@@ -77,7 +74,7 @@ def output_user_permissions(permissions: Iterable[UserPermission]) -> None:
     )
 
 
-def output_server_version(version: mreg_api.models.ServerVersion) -> None:
+def output_server_version(version: ServerVersion) -> None:
     """Output server version.
 
     :param version: ServerVersion to output.
@@ -101,7 +98,7 @@ def output_server_libraries(libraries: ServerLibraries, indent: int = 4) -> None
         manager.add_line(f"{' ' * indent}{lib.name}: {lib.version}")
 
 
-def output_health_info(health: mreg_api.models.HealthInfo) -> None:
+def output_health_info(health: HealthInfo) -> None:
     """Output health information.
 
     :param health: HealthInfo to output.
