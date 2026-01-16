@@ -3,32 +3,32 @@
 from __future__ import annotations
 
 import ipaddress
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import Any, Sequence
+
+from mreg_api.models import (
+    Community,
+    ExcludedRange,
+    Network,
+    NetworkOrIP,
+    NetworkPolicy,
+    NetworkPolicyAttribute,
+)
 
 from mreg_cli.choices import CommunitySortOrder
 from mreg_cli.output.base import output_timestamps
 from mreg_cli.outputmanager import OutputManager
-
-if TYPE_CHECKING:
-    import mreg_api.models
-
-    from mreg_cli.api.models import NetworkOrIP
-
 
 # -----------------------------------------------------------------------------
 # Network output functions
 # -----------------------------------------------------------------------------
 
 
-def output_network(network: mreg_api.models.Network, padding: int = 25) -> None:
+def output_network(network: Network, padding: int = 25) -> None:
     """Output a single network.
 
     :param network: Network to output.
     :param padding: Number of spaces for left-padding the labels.
     """
-    # Import here to avoid circular imports
-    from mreg_cli.api.models import NetworkOrIP
-
     manager = OutputManager()
 
     def fmt(label: str, value: Any) -> None:
@@ -77,7 +77,7 @@ def output_network(network: mreg_api.models.Network, padding: int = 25) -> None:
 
 
 def output_networks(
-    networks: Sequence[mreg_api.models.Network],
+    networks: Sequence[Network],
     padding: int = 25,
 ) -> None:
     """Output multiple networks.
@@ -91,7 +91,7 @@ def output_networks(
             OutputManager().add_line("")
 
 
-def output_network_unused_addresses(network: mreg_api.models.Network, padding: int = 25) -> None:
+def output_network_unused_addresses(network: Network, padding: int = 25) -> None:
     """Output the unused addresses of a network.
 
     :param network: Network whose unused addresses to output.
@@ -108,7 +108,7 @@ def output_network_unused_addresses(network: mreg_api.models.Network, padding: i
         manager.add_line(f"{str(ip):<{padding}}")
 
 
-def output_network_used_addresses(network: mreg_api.models.Network, padding: int = 46) -> None:
+def output_network_used_addresses(network: Network, padding: int = 46) -> None:
     """Output the used addresses and their corresponding hosts.
 
     :param network: Network whose used addresses to output.
@@ -136,7 +136,7 @@ def output_network_used_addresses(network: mreg_api.models.Network, padding: int
 
 
 def output_network_excluded_ranges(
-    excluded_ranges: Sequence[mreg_api.models.ExcludedRange],
+    excluded_ranges: Sequence[ExcludedRange],
     padding: int = 32,
 ) -> None:
     """Output the excluded ranges of a network.
@@ -158,7 +158,7 @@ def output_network_excluded_ranges(
 
 
 def output_community(
-    community: mreg_api.models.Community,
+    community: Community,
     padding: int = 14,
     show_hosts: bool = True,
 ) -> None:
@@ -184,7 +184,7 @@ def output_community(
 
 
 def output_communities(
-    communities: Sequence[mreg_api.models.Community],
+    communities: Sequence[Community],
     padding: int = 14,
     show_hosts: bool = True,
     sort: CommunitySortOrder = CommunitySortOrder.NAME,
@@ -197,7 +197,7 @@ def output_communities(
     :param sort: Sort order for communities.
     """
 
-    def sort_key(community: mreg_api.models.Community) -> Any:
+    def sort_key(community: Community) -> Any:
         if sort == CommunitySortOrder.NAME:
             return community.name
         elif sort == CommunitySortOrder.GLOBAL_NAME:
@@ -215,7 +215,7 @@ def output_communities(
 # -----------------------------------------------------------------------------
 
 
-def output_network_policy(policy: mreg_api.models.NetworkPolicy) -> None:
+def output_network_policy(policy: NetworkPolicy) -> None:
     """Output a network policy.
 
     :param policy: NetworkPolicy to output.
@@ -240,7 +240,7 @@ def output_network_policy(policy: mreg_api.models.NetworkPolicy) -> None:
     output_timestamps(policy)
 
 
-def output_network_policies(policies: Sequence[mreg_api.models.NetworkPolicy]) -> None:
+def output_network_policies(policies: Sequence[NetworkPolicy]) -> None:
     """Output multiple network policies.
 
     :param policies: List of NetworkPolicy objects to output.
@@ -250,7 +250,7 @@ def output_network_policies(policies: Sequence[mreg_api.models.NetworkPolicy]) -
         OutputManager().add_line("")  # add newline between policies
 
 
-def output_network_policy_attribute(attribute: mreg_api.models.NetworkPolicyAttribute) -> None:
+def output_network_policy_attribute(attribute: NetworkPolicyAttribute) -> None:
     """Output a network policy attribute.
 
     :param attribute: NetworkPolicyAttribute object to output.
@@ -263,7 +263,7 @@ def output_network_policy_attribute(attribute: mreg_api.models.NetworkPolicyAttr
 
 
 def output_network_policy_attributes(
-    attributes: Sequence[mreg_api.models.NetworkPolicyAttribute],
+    attributes: Sequence[NetworkPolicyAttribute],
     padding: int = 20,
 ) -> None:
     """Output network policy attributes.
