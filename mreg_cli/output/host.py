@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, Sequence
 
-from mreg_cli.api.endpoints import Endpoint
+from mreg_api import MregClient
+from mreg_api.endpoints import Endpoint
+from mreg_api.models import Community, Host, IPAddress, Network
+
 from mreg_cli.exceptions import EntityNotFound
 from mreg_cli.output.base import output_timestamps, output_ttl
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_Version
-from mreg_cli.utilities.api import get_list_in
 
 if TYPE_CHECKING:
     import mreg_api.models
@@ -131,7 +133,6 @@ def output_host_networks(
     :param only: If 4, only output IPv4; if 6, only output IPv6.
     """
     # Import here to avoid circular imports
-    from mreg_cli.api.models import Community, IPAddress, Network
 
     networks = host.networks()
     if not networks:
@@ -558,12 +559,12 @@ def output_srvs(srvs: Sequence[mreg_api.models.Srv], padding: int = 14) -> None:
         return
 
     # Import here to avoid circular imports
-    from mreg_cli.api.models import Host
 
     host_ids = {srv.host for srv in srvs}
 
     # FIXME: refactor to not require Endpoint! API library should handle this
-    host_data = get_list_in(Endpoint.Hosts, "id", list(host_ids))
+    # Surely we can use some variant of `Host.get_list_by_id`?
+    host_data = MregClient().get_list_in(Endpoint.Hosts, "id", list(host_ids))
     hosts = [Host.model_validate(host) for host in host_data]
 
     host_id_name_map = {host.id: str(host.name) for host in hosts}
