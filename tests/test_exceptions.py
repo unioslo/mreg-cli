@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pytest
 from inline_snapshot import snapshot
+from mreg_api.models import Host
 from pydantic import ValidationError as PydanticValidationError
 from pytest_httpserver import HTTPServer
 
-from mreg_cli.api.models import Host
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import ValidationError
 from mreg_cli.utilities.api import get
