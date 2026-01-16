@@ -15,6 +15,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
+import mreg_api
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from prompt_toolkit.history import FileHistory
@@ -41,7 +42,11 @@ from mreg_cli.exceptions import CliError, CliExit, CliWarning, ValidationError
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
-from mreg_cli.utilities.api import create_and_set_corrolation_id, last_request_url
+from mreg_cli.utilities.api import (
+    create_and_set_corrolation_id,
+    last_request_url,
+    prompt_for_password_and_try_update_token,
+)
 from mreg_cli.utilities.fs import to_path
 
 logger = logging.getLogger(__name__)
@@ -163,7 +168,7 @@ class Command(Completer):
         self.children[prog] = new_cmd
         return new_cmd
 
-    def parse(self, command: str) -> None:
+    def parse(self, command: str, interactive: bool = True, retry: bool = False) -> None:
         """Parse and execute a command."""
         logger.debug(f"Parsing command: {command}")
         args = shlex.split(command, comments=True)
@@ -186,6 +191,18 @@ class Command(Completer):
         except (CliWarning, CliError) as exc:
             exc.print_and_log()
 
+        # Request went through, but API returned an error
+        except mreg_api.exceptions.APIError as exc:
+            # Retry command after re-authenticating if we got a 401 Unauthorized
+            if exc.response and exc.response.status_code == 401 and interactive and not retry:
+                prompt_for_password_and_try_update_token()
+                self.parse(command, interactive=interactive, retry=True)
+            else:
+                CliWarning(str(exc)).print_and_log()
+
+        except mreg_api.exceptions.MregApiBaseError as exc:
+            CliWarning(str(exc)).print_and_log()
+
         except CliExit:
             # If we have active recordings going on, save them before exiting
             OutputManager().recording_stop()
@@ -196,6 +213,7 @@ class Command(Completer):
             # code.
             self.last_errno = 0
         finally:
+            self.record_responses()
             # Unset URL after we have finished processing the command
             # so that validation errors that happen before a new request
             # is made don't show a URL.
@@ -274,7 +292,14 @@ class Command(Completer):
                         start_position=-len(cur),
                     )
 
-    def process_command_line(self, line: str) -> None:
+    def record_responses(self) -> None:
+        """Record API responses for the last executed command."""
+        output = OutputManager()
+        client = mreg_api.MregClient()
+        for response in reversed(client.history):
+            output.recording_request2(response)
+
+    def process_command_line(self, line: str, *, interactive: bool = True) -> None:
         """Process a line containing a command."""
         # OutputManager is a singleton class so we
         # need to clear it before each command.
@@ -292,7 +317,7 @@ class Command(Completer):
         # on the server side.
         create_and_set_corrolation_id(cmd)
         # Run the command
-        cli.parse(cmd)
+        cli.parse(cmd, interactive=interactive)
         # Render the output
         output.render()
 

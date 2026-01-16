@@ -122,20 +122,25 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
     client = MregClient()
 
     if token and token.token:
-        try:
-            client.set_token(token.token)
-            client.test_auth()
-            logger.info("Using stored token for %s @ %s", user, url)
-            return
-        except httpx.RequestError as e:
-            error(f"Could not connect to {url}: {e}")
-        except mreg_api.exceptions.InvalidAuthTokenError as e:
-            client.unset_token()  # NOTE: might be redundant
-            logger.info("Stored token for %s @ %s is invalid", user, url)
-            if e.response and e.response.status_code == 401:
-                if fail_without_token:
-                    raise SystemExit("Token only login failed.") from None
-                prompt_for_password_and_login(user, url, catch_exception=False)
+        client.set_token(token.token)
+
+    try:
+        client.test_auth()
+        logger.info("Using stored token for %s @ %s", user, url)
+    except httpx.RequestError as e:
+        error(f"Could not connect to {url}: {e}")
+    except mreg_api.exceptions.InvalidAuthTokenError as e:
+        client.unset_token()  # NOTE: might be redundant
+        logger.info("Stored token for %s @ %s is invalid", user, url)
+        if not e.response:
+            raise e
+        if e.response and e.response.status_code == 401:
+            if fail_without_token:
+                raise SystemExit("Token only login failed.") from None
+            prompt_for_password_and_login(user, url, catch_exception=False)
+        return
+    else:
+        return
 
 
 def prompt_for_password_and_login(user: str, url: str, catch_exception: bool = True) -> None:
@@ -183,6 +188,7 @@ def prompt_for_password_and_try_update_token() -> None:
         auth_and_update_token(user, password)
     except CliError as e:
         e.print_and_log()
+        raise e  # FIXME: remove if redundant
 
 
 def auth_and_update_token(username: str, password: str) -> None:
@@ -195,7 +201,7 @@ def auth_and_update_token(username: str, password: str) -> None:
     try:
         token = client.login(username, password)
     except httpx.HTTPError as e:
-        error(e)
+        raise CliError(str(e)) from e
     except mreg_api.exceptions.LoginFailedError as e:
         raise LoginFailedError(str(e)) from e
     # if not result.ok:
