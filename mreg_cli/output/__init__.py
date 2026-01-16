@@ -61,13 +61,15 @@ from mreg_cli.output.meta import (
 from mreg_cli.output.network import (
     output_communities,
     output_community,
-    output_excluded_ranges,
     output_network,
+    output_network_excluded_ranges,
+    output_network_policies,
     output_network_policy,
+    output_network_policy_attribute,
     output_network_policy_attributes,
+    output_network_unused_addresses,
+    output_network_used_addresses,
     output_networks,
-    output_unused_addresses,
-    output_used_addresses,
 )
 from mreg_cli.output.policy import (
     output_atom,
@@ -128,12 +130,14 @@ __all__ = [
     # Network
     "output_network",
     "output_networks",
-    "output_unused_addresses",
-    "output_used_addresses",
-    "output_excluded_ranges",
+    "output_network_unused_addresses",
+    "output_network_used_addresses",
+    "output_network_excluded_ranges",
     "output_community",
     "output_communities",
     "output_network_policy",
+    "output_network_policies",
+    "output_network_policy_attribute",
     "output_network_policy_attributes",
     # Policy
     "output_role",

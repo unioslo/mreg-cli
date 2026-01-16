@@ -71,7 +71,7 @@ def output_network(network: mreg_api.models.Network, padding: int = 25) -> None:
         for ex_range in network.excluded_ranges:
             excluded_ips += ex_range.excluded_ips()
         fmt("Excluded ranges:", f"{excluded_ips} ipaddresses")
-        output_excluded_ranges(network.excluded_ranges, padding=padding)
+        output_network_excluded_ranges(network.excluded_ranges, padding=padding)
     fmt("Used addresses:", network.get_used_count())
     fmt("Unused addresses:", f"{network.get_unused_count()} (excluding reserved adr.)")
 
@@ -91,7 +91,7 @@ def output_networks(
             OutputManager().add_line("")
 
 
-def output_unused_addresses(network: mreg_api.models.Network, padding: int = 25) -> None:
+def output_network_unused_addresses(network: mreg_api.models.Network, padding: int = 25) -> None:
     """Output the unused addresses of a network.
 
     :param network: Network whose unused addresses to output.
@@ -108,7 +108,7 @@ def output_unused_addresses(network: mreg_api.models.Network, padding: int = 25)
         manager.add_line(f"{str(ip):<{padding}}")
 
 
-def output_used_addresses(network: mreg_api.models.Network, padding: int = 46) -> None:
+def output_network_used_addresses(network: mreg_api.models.Network, padding: int = 46) -> None:
     """Output the used addresses and their corresponding hosts.
 
     :param network: Network whose used addresses to output.
@@ -135,7 +135,7 @@ def output_used_addresses(network: mreg_api.models.Network, padding: int = 46) -
             manager.add_line(msg)
 
 
-def output_excluded_ranges(
+def output_network_excluded_ranges(
     excluded_ranges: Sequence[mreg_api.models.ExcludedRange],
     padding: int = 32,
 ) -> None:
@@ -248,6 +248,18 @@ def output_network_policies(policies: Sequence[mreg_api.models.NetworkPolicy]) -
     for policy in policies:
         output_network_policy(policy)
         OutputManager().add_line("")  # add newline between policies
+
+
+def output_network_policy_attribute(attribute: mreg_api.models.NetworkPolicyAttribute) -> None:
+    """Output a network policy attribute.
+
+    :param attribute: NetworkPolicyAttribute object to output.
+    :param padding: Number of spaces for left-padding the output.
+    """
+    manager = OutputManager()
+    manager.add_line(f"Name: {attribute.name}")
+    manager.add_line(f"Description: {attribute.description}")
+    output_timestamps(attribute)
 
 
 def output_network_policy_attributes(
