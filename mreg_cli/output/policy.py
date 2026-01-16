@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from collections.abc import Sequence
 
+from mreg_api.models import Atom, Label, Permission, Role
 from pydantic import BaseModel
 
 from mreg_cli.output.base import output_timestamps
 from mreg_cli.outputmanager import OutputManager
-
-if TYPE_CHECKING:
-    import mreg_api.models
-
 
 # -----------------------------------------------------------------------------
 # Host Policy (role or atom) output functions
@@ -19,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def output_host_policy(
-    host_policy: mreg_api.models.Role | mreg_api.models.Atom,
+    host_policy: Role | Atom,
     padding: int = 14,
 ) -> None:
     """Output a host policy (role or atom).
@@ -27,7 +24,7 @@ def output_host_policy(
     :param host_policy: Host policy to output.
     :param padding: Number of spaces for left-padding the output.
     """
-    if isinstance(host_policy, mreg_api.models.Role):
+    if isinstance(host_policy, Role):
         output_role(host_policy, padding)
     else:
         output_atom(host_policy, padding)
@@ -38,7 +35,7 @@ def output_host_policy(
 # -----------------------------------------------------------------------------
 
 
-def output_role(role: mreg_api.models.Role, padding: int = 14) -> None:
+def output_role(role: Role, padding: int = 14) -> None:
     """Output a role.
 
     :param role: Role to output.
@@ -59,7 +56,7 @@ def output_role(role: mreg_api.models.Role, padding: int = 14) -> None:
 
 
 def output_roles(
-    roles: Sequence[mreg_api.models.Role] | Sequence[str],
+    roles: Sequence[Role] | Sequence[str],
     padding: int = 14,
 ) -> None:
     """Output multiple roles as a single line.
@@ -80,7 +77,7 @@ def output_roles(
     OutputManager().add_line(f"{'Roles:':<{padding}}{', '.join(rolenames)}")
 
 
-def output_roles_table(roles: Sequence[mreg_api.models.Role], padding: int = 14) -> None:
+def output_roles_table(roles: Sequence[Role], padding: int = 14) -> None:
     """Output multiple roles in a table format.
 
     :param roles: List of roles to output.
@@ -114,9 +111,9 @@ def output_roles_table(roles: Sequence[mreg_api.models.Role], padding: int = 14)
 
 
 def output_role_hosts(
-    role: mreg_api.models.Role,
+    role: Role,
     padding: int = 14,
-    exclude_roles: Sequence[mreg_api.models.Role] | None = None,
+    exclude_roles: Sequence[Role] | None = None,
 ) -> None:
     """Output the hosts that use a role.
 
@@ -145,7 +142,7 @@ def output_role_hosts(
         manager.add_line("No host uses this role")
 
 
-def output_role_atoms(role: mreg_api.models.Role, padding: int = 14) -> None:
+def output_role_atoms(role: Role, padding: int = 14) -> None:
     """Output the atoms that are members of a role.
 
     :param role: Role whose atoms to output.
@@ -165,7 +162,7 @@ def output_role_atoms(role: mreg_api.models.Role, padding: int = 14) -> None:
 # -----------------------------------------------------------------------------
 
 
-def output_atom(atom: mreg_api.models.Atom, padding: int = 14) -> None:
+def output_atom(atom: Atom, padding: int = 14) -> None:
     """Output an atom.
 
     :param atom: Atom to output.
@@ -181,7 +178,7 @@ def output_atom(atom: mreg_api.models.Atom, padding: int = 14) -> None:
         manager.add_formatted_line("", role, padding)
 
 
-def output_atoms(atoms: Sequence[mreg_api.models.Atom], padding: int = 14) -> None:
+def output_atoms(atoms: Sequence[Atom], padding: int = 14) -> None:
     """Output multiple atoms as a single line.
 
     :param atoms: List of atoms to output.
@@ -193,7 +190,7 @@ def output_atoms(atoms: Sequence[mreg_api.models.Atom], padding: int = 14) -> No
     OutputManager().add_line(f"{'Atoms:':<{padding}}{', '.join([atom.name for atom in atoms])}")
 
 
-def output_atoms_lines(atoms: Sequence[mreg_api.models.Atom], padding: int = 20) -> None:
+def output_atoms_lines(atoms: Sequence[Atom], padding: int = 20) -> None:
     """Output multiple atoms, one per line.
 
     :param atoms: List of atoms to output.
@@ -209,7 +206,7 @@ def output_atoms_lines(atoms: Sequence[mreg_api.models.Atom], padding: int = 20)
 # -----------------------------------------------------------------------------
 
 
-def output_label(label: mreg_api.models.Label, padding: int = 14) -> None:
+def output_label(label: Label, padding: int = 14) -> None:
     """Output a label.
 
     :param label: Label to output.
@@ -224,14 +221,14 @@ def output_label(label: mreg_api.models.Label, padding: int = 14) -> None:
     manager.add_line(f"{'Description:':<{padding}}{label.description}")
     manager.add_line("Roles with this label:")
 
-    roles = mreg_api.models.Role.get_list_by_field("labels", label.id)
+    roles = Role.get_list_by_field("labels", label.id)
     if roles:
         for role in roles:
             manager.add_line(f"{'':<{short_padding}}{role.name}")
     else:
         manager.add_line(f"{'None':<{short_padding}}")
 
-    permission_list = mreg_api.models.Permission.get_list_by_field("labels", label.id)
+    permission_list = Permission.get_list_by_field("labels", label.id)
 
     manager.add_line("Permissions with this label:")
     if permission_list:
@@ -245,7 +242,7 @@ def output_label(label: mreg_api.models.Label, padding: int = 14) -> None:
 # -----------------------------------------------------------------------------
 
 
-def output_permission(permission: mreg_api.models.Permission, indent: int = 4) -> None:
+def output_permission(permission: Permission, indent: int = 4) -> None:
     """Output a single permission.
 
     :param permission: Permission to output.
@@ -256,7 +253,7 @@ def output_permission(permission: mreg_api.models.Permission, indent: int = 4) -
 
 
 def output_permissions(
-    permissions: Sequence[mreg_api.models.Permission],
+    permissions: Sequence[Permission],
     indent: int = 4,
 ) -> None:
     """Output multiple permissions.
