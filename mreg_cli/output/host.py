@@ -554,6 +554,7 @@ def output_srvs(srvs: Sequence[mreg_api.models.Srv], padding: int = 14) -> None:
 
     host_ids = {srv.host for srv in srvs}
 
+    # FIXME: refactor to not require Endpoint! API library should handle this
     host_data = get_list_in(Endpoint.Hosts, "id", list(host_ids))
     hosts = [Host.model_validate(host) for host in host_data]
 
