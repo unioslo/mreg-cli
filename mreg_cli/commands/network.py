@@ -144,7 +144,7 @@ def info(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (networks)
     """
     networks = [Network.get_by_any_means_or_raise(net) for net in args.networks]
-    Network.output_multiple(networks)
+    output_networks(networks)
 
 
 @command_registry.register_command(
