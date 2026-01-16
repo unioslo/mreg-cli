@@ -5,10 +5,12 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Host, HostGroup
+from mreg_api.models import Host, HostGroup
+
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CreateError, DeleteError, EntityNotFound, ForceMissing
+from mreg_cli.output.group import output_hostgroup, output_hostgroup_members, output_hostgroups
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -59,7 +61,8 @@ def info(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     for name in args.name:
-        HostGroup.get_by_name_or_raise(name).output()
+        hg = HostGroup.get_by_name_or_raise(name)
+        output_hostgroup(hg)
 
 
 @command_registry.register_command(
@@ -97,7 +100,7 @@ def group_list(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, expand)
     """
     group = HostGroup.get_by_name_or_raise(args.name)
-    group.output_members(expand=args.expand)
+    output_hostgroup_members(group, expand=args.expand)
 
 
 @command_registry.register_command(
@@ -243,9 +246,8 @@ def host_list(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (host, traverse-hostgroups)
     """
     host = Host.get_by_any_means_or_raise(args.host)
-    HostGroup.output_multiple(
-        host.get_hostgroups(traverse=args.traverse_hostgroups), multiline=True
-    )
+    hostgroups = host.get_hostgroups(traverse=args.traverse_hostgroups)
+    output_hostgroups(hostgroups, multiline=True)
 
 
 @command_registry.register_command(
@@ -325,4 +327,5 @@ def history(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    HostGroup.output_history(args.name)
+    hg = HostGroup.get_by_name_or_raise(args.name)
+    output_hostgroup_history(hg)
