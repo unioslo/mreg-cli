@@ -32,8 +32,8 @@ def output_host(
     :param traverse_hostgroups: If True, traverse hostgroups and include them.
     """
     # Import here to avoid circular imports
-    from mreg_cli.output.group import output_hostgroups
-    from mreg_cli.output.policy import output_roles
+    from mreg_cli.output.group import output_hostgroups  # noqa: PLC0415
+    from mreg_cli.output.policy import output_roles  # noqa: PLC0415
 
     padding = 14
 
