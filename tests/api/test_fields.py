@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 from inline_snapshot import snapshot
+from mreg_api.models.fields import HostName, MacAddress, NameList
 from pydantic import BaseModel, ValidationError
 
-from mreg_cli.api.fields import HostName, MacAddress, NameList
 from mreg_cli.exceptions import InputFailure
 
 
@@ -35,6 +35,7 @@ from mreg_cli.exceptions import InputFailure
     ],
 )
 def test_valid_hostname(hostname: str) -> None:
+    HostName.domain = "example.com"  # Set domain for wildcard validation
     res = HostName.parse_or_raise(hostname)
     assert res
 
@@ -215,7 +216,7 @@ def test_name_list_with_invalid_item(caplog: pytest.LogCaptureFixture):
     assert m.model_dump(mode="json") == snapshot({"hosts": ["test1", "test3"]})
 
     assert caplog.record_tuples == snapshot(
-        [("mreg_cli.api.fields", 40, "No 'name' key in {'value': 2}")]
+        [("mreg_api.models.fields", 40, "No 'name' key in {'value': 2}")]
     )
 
 

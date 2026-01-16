@@ -2,18 +2,21 @@ from __future__ import annotations
 
 import pytest
 from inline_snapshot import snapshot
+from mreg_api import MregClient
 from mreg_api.models import Host
+from mreg_api.models.fields import HostName
 from pydantic import ValidationError as PydanticValidationError
 from pytest_httpserver import HTTPServer
 
-from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import ValidationError
-from mreg_cli.utilities.api import get
 
 
 def test_validation_error_get_host(httpserver: HTTPServer) -> None:
     """Test a validation error stemming from a GET request."""
-    MregCliConfig().url = httpserver.url_for("/")
+    if MregClient._instances:  # pyright: ignore[reportPrivateUsage]
+        MregClient.reset_instance()
+    client = MregClient(url=httpserver.url_for("/"))
+    HostName.domain = "example.com"
 
     httpserver.expect_oneshot_request("/hosts/foobar").respond_with_json(
         {
@@ -44,7 +47,7 @@ def test_validation_error_get_host(httpserver: HTTPServer) -> None:
             "zone": 5,
         }
     )
-    resp = get("/hosts/foobar")
+    resp = client.get("/hosts/foobar")
     with pytest.raises(PydanticValidationError) as exc_info:
         Host.model_validate_json(resp.text)
 
@@ -75,14 +78,13 @@ def test_validation_error_no_request(caplog, capsys) -> None:
     with pytest.raises(PydanticValidationError) as exc_info:
         Host.model_validate({"name": "test"})  # Missing required fields
 
-    assert exc_info.value.error_count() == snapshot(6)
+    assert exc_info.value.error_count() == snapshot(5)
     assert [repr(err) for err in exc_info.value.errors(include_url=False)] == snapshot(
         [
             "{'type': 'missing', 'loc': ('created_at',), 'msg': 'Field required', 'input': {'name': 'test'}}",
             "{'type': 'missing', 'loc': ('updated_at',), 'msg': 'Field required', 'input': {'name': 'test'}}",
             "{'type': 'missing', 'loc': ('id',), 'msg': 'Field required', 'input': {'name': 'test'}}",
             "{'type': 'missing', 'loc': ('ipaddresses',), 'msg': 'Field required', 'input': {'name': 'test'}}",
-            "{'type': 'missing', 'loc': ('contact',), 'msg': 'Field required', 'input': {'name': 'test'}}",
             "{'type': 'missing', 'loc': ('comment',), 'msg': 'Field required', 'input': {'name': 'test'}}",
         ]
     )
@@ -103,9 +105,6 @@ Failed to validate Host
     Reason: Field required
 
     Field: ipaddresses
-    Reason: Field required
-
-    Field: contact
     Reason: Field required
 
     Field: comment
@@ -137,9 +136,6 @@ Failed to validate Host
     Field: ipaddresses
     Reason: Field required
 
-    Field: contact
-    Reason: Field required
-
     Field: comment
     Reason: Field required\
 """,
@@ -163,9 +159,6 @@ ERROR: Failed to validate Host\r
     Reason: Field required\r
 \r
     Field: ipaddresses\r
-    Reason: Field required\r
-\r
-    Field: contact\r
     Reason: Field required\r
 \r
     Field: comment\r

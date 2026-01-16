@@ -4,10 +4,10 @@ import os
 from collections.abc import Iterator
 
 import pytest
+from mreg_api.client import last_request_method, last_request_url
 from pytest_httpserver import HTTPServer
 
 from mreg_cli.config import MregCliConfig
-from mreg_cli.utilities.api import last_request_method, last_request_url
 
 
 @pytest.fixture(autouse=True)
