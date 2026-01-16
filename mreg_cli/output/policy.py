@@ -14,6 +14,26 @@ if TYPE_CHECKING:
 
 
 # -----------------------------------------------------------------------------
+# Host Policy (role or atom) output functions
+# -----------------------------------------------------------------------------
+
+
+def output_host_policy(
+    host_policy: mreg_api.models.Role | mreg_api.models.Atom,
+    padding: int = 14,
+) -> None:
+    """Output a host policy (role or atom).
+
+    :param host_policy: Host policy to output.
+    :param padding: Number of spaces for left-padding the output.
+    """
+    if isinstance(host_policy, mreg_api.models.Role):
+        output_role(host_policy, padding)
+    else:
+        output_atom(host_policy, padding)
+
+
+# -----------------------------------------------------------------------------
 # Role output functions
 # -----------------------------------------------------------------------------
 

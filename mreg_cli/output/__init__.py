@@ -75,6 +75,7 @@ from mreg_cli.output.policy import (
     output_atom,
     output_atoms,
     output_atoms_lines,
+    output_host_policy,
     output_label,
     output_permission,
     output_permissions,
@@ -140,6 +141,7 @@ __all__ = [
     "output_network_policy_attribute",
     "output_network_policy_attributes",
     # Policy
+    "output_host_policy",
     "output_role",
     "output_roles",
     "output_roles_table",
