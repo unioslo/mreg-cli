@@ -15,7 +15,7 @@ from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
 from pydantic import ValidationError as PydanticValidationError
-from requests import Response
+from httpx import Response
 
 logger = logging.getLogger(__name__)
 
@@ -65,9 +65,9 @@ class CliException(Exception):
         :param message: An optional message to prefix the original exception message.
         :returns: The created CliError.
         """
-        from mreg_cli.api.errors import parse_mreg_error
+        from mreg_api.exceptions import parse_mreg_error
 
-        if (api_err := parse_mreg_error(e.response)) and api_err.errors:
+        if e.response and (api_err := parse_mreg_error(e.response)) and api_err.errors:
             reason = api_err.as_str()
         else:
             reason = str(e)

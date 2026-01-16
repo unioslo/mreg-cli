@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 import mreg_api
+from mreg_api.client import last_request_url
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from prompt_toolkit.history import FileHistory
@@ -42,11 +43,7 @@ from mreg_cli.exceptions import CliError, CliExit, CliWarning, ValidationError
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
-from mreg_cli.utilities.api import (
-    create_and_set_corrolation_id,
-    last_request_url,
-    prompt_for_password_and_try_update_token,
-)
+from mreg_cli.utilities.api import prompt_for_password_and_try_update_token
 from mreg_cli.utilities.fs import to_path
 
 logger = logging.getLogger(__name__)
@@ -315,7 +312,7 @@ class Command(Completer):
         # Create and set the corrolation id, using the cleaned command
         # as the suffix. This is used to track the command in the logs
         # on the server side.
-        create_and_set_corrolation_id(cmd)
+        mreg_api.MregClient().set_correlation_id(cmd)
         # Run the command
         cli.parse(cmd, interactive=interactive)
         # Render the output

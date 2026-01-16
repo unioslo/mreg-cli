@@ -20,12 +20,12 @@ import httpx
 import mreg_api
 import requests
 from mreg_api import MregClient
+from mreg_api.exceptions import parse_mreg_error
 from prompt_toolkit import prompt
 from pydantic import BaseModel, TypeAdapter, field_validator
 from requests import Response
 
 from mreg_cli.__about__ import __version__
-from mreg_cli.api.errors import parse_mreg_error
 from mreg_cli.cache import get_cache
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import (
