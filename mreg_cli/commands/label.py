@@ -5,10 +5,12 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Label
+from mreg_api.models import Label
+
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import EntityNotFound, InputFailure
+from mreg_cli.output.policy import output_label
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -95,7 +97,8 @@ def label_info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    Label.get_by_name_or_raise(args.name).output()
+    label = Label.get_by_name_or_raise(args.name)
+    output_label(label)
 
 
 @command_registry.register_command(
