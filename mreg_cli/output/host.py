@@ -270,6 +270,14 @@ def output_host_roles(host: mreg_api.models.Host, padding: int = 14) -> None:
             manager.add_line(f"  {role}")
 
 
+def output_host_ttl(host: mreg_api.models.Host) -> None:
+    """Output the TTL value for a host.
+
+    :param host: Host whose TTL to output.
+    """
+    output_ttl(host, label="TTL", field="ttl")
+
+
 # -----------------------------------------------------------------------------
 # IP Address output functions
 # -----------------------------------------------------------------------------

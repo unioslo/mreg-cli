@@ -19,12 +19,6 @@ class HasTimestamps(Protocol):
     updated_at: datetime
 
 
-class HasTTL(Protocol):
-    """Protocol for objects with TTL field."""
-
-    ttl: int | None
-
-
 def output_timestamps(
     obj: HasTimestamps,
     padding: int = 14,
@@ -49,7 +43,10 @@ def output_ttl(
     field: str = "ttl",
     padding: int = 14,
 ) -> None:
-    """Output a TTL value.
+    """Output a TTL value from an object.
+
+    Different resources have different names for their TTL field(s), so
+    this we cannot pass a generic HasTTL protocol object here.
 
     :param obj: Object with a TTL field.
     :param label: Label to display for the TTL.
