@@ -4,79 +4,47 @@ from __future__ import annotations
 
 import ipaddress
 import logging
-from datetime import date, datetime, timedelta
-from functools import cached_property
 from typing import (
     Any,
     Callable,
-    ClassVar,
     Iterable,
     Literal,
-    Protocol,
     Self,
     Sequence,
     TypeVar,
     cast,
     overload,
+    override,
 )
 
+import mreg_api.models
 from pydantic import (
-    AliasChoices,
     BaseModel,
-    ConfigDict,
-    Field,
     computed_field,
     field_validator,
 )
 from pydantic import ValidationError as PydanticValidationError
-from typing_extensions import Unpack
 
 from mreg_cli.api.abstracts import (
-    APIMixin,
-    FrozenModel,
-    FrozenModelWithTimestamps,
-    TTLMixin,
     TimestampMixin,
+    TTLMixin,
 )
 from mreg_cli.api.endpoints import Endpoint
-from mreg_cli.api.fields import HostName, MacAddress, NameList
-from mreg_cli.api.history import HistoryItem, HistoryResource
 from mreg_cli.choices import CommunitySortOrder
 from mreg_cli.exceptions import (
-    APIError,
-    CreateError,
-    DeleteError,
-    EntityAlreadyExists,
     EntityNotFound,
-    EntityOwnershipMismatch,
-    ForceMissing,
     InputFailure,
-    InternalError,
     InvalidIPAddress,
     InvalidIPv4Address,
     InvalidIPv6Address,
     InvalidNetwork,
-    IPNetworkWarning,
-    MultipleEntitiesFound,
-    PatchError,
-    UnexpectedDataError,
-    ValidationError,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version, QueryParams
+from mreg_cli.types import IP_AddressT, IP_NetworkT, IP_Version
 from mreg_cli.utilities.api import (
-    delete,
     get,
-    get_item_by_key_value,
     get_list_in,
-    get_list_unique,
-    get_typed,
-    patch,
-    post,
 )
-from mreg_cli.utilities.shared import convert_wildcard_to_regex
-from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
-import mreg_api.models
 
 logger = logging.getLogger(__name__)
 
@@ -290,257 +258,15 @@ class NetworkOrIP(BaseModel):
         return self.is_ipv4_network() or self.is_ipv6_network()
 
 
-class WithHost(BaseModel):
-    """Model for an object that has a host element."""
-
-    host: int
-
-    def resolve_host(self) -> Host | None:
-        """Resolve the host ID to a Host object.
-
-        Notes
-        -----
-            - This method will call the API to resolve the host ID to a Host object.
-            - This assumes that there is a host attribute in the object.
-
-        """
-        data = get_item_by_key_value(Endpoint.Hosts, "id", str(self.host))
-
-        if not data:
-            return None
-
-        return Host.model_validate(data)
-
-
-class WithZone(BaseModel, APIMixin):
-    """Model for an object that has a zone element."""
-
-    zone: int
-
-    def resolve_zone(self) -> ForwardZone | None:
-        """Resolve the zone ID to a (Forward)Zone object.
-
-        Notes
-        -----
-            - This method will call the API to resolve the zone ID to a Zone object.
-            - This assumes that there is a zone attribute in the object.
-
-        """
-        data = get_item_by_key_value(Endpoint.ForwardZones, "id", str(self.zone))
-
-        if not data:
-            return None
-
-        return ForwardZone.model_validate(data)
-
-
-class WithTTL(BaseModel, APIMixin):
-    """Model for an object that needs to work with TTL values."""
-
-    _ttl_nullable: ClassVar[bool] = True
-    """TTL field(s) of model are nullable."""
-
-    @property
-    def MAX_TTL(self) -> int:
-        """Return the maximum TTL value."""
-        return 68400
-
-    @property
-    def MIN_TTL(self) -> int:
-        """Return the minimum TTL value."""
-        return 300
-
-    def output_ttl(self, label: str = "TTL", field: str = "ttl", padding: int = 14) -> None:
-        """Output a TTL value.
-
-        :param padding: Number of spaces for left-padding the output.
-        :param field: The field to output (defaults to 'ttl')
-        """
-        if not hasattr(self, field):
-            raise InternalError(f"Outputting TTL field {field} failed, field not found in object.")
-
-        ttl_value = getattr(self, field)
-        label = f"{label.removesuffix(':')}:"
-        OutputManager().add_line("{1:<{0}}{2}".format(padding, label, ttl_value or "(Default)"))
-
-    def set_ttl(self, ttl: str | int | None, field: str | None = None) -> Self:
-        """Set a new TTL for the object and returns the updated object.
-
-        Updates the `ttl` field of the object unless a different field name
-        is specified.
-
-        :param ttl: The TTL value to set. Can be an integer, "default", or None.
-        :param field: The field to set the TTL value in.
-        :raises InputFailure: If the TTL value is outside the bounds.
-        :returns: The updated object.
-        """
-        # NOTE: could add some sort of validation that model has `field`
-        ttl_field = field or "ttl"
-
-        # str args can either be numeric or "default"
-        # Turn it into an int or None
-        if isinstance(ttl, str):
-            if self._ttl_nullable and ttl == "default":
-                ttl = None
-            else:
-                try:
-                    ttl = int(ttl)
-                except ValueError as e:
-                    raise InputFailure(f"Invalid TTL value: {ttl}") from e
-
-        if isinstance(ttl, int):
-            ttl = self.valid_numeric_ttl(ttl)
-
-        return self.patch({ttl_field: ttl})
-
-    def valid_numeric_ttl(self, ttl: int) -> int:
-        """Return a valid TTL value.
-
-        Valid TTL values are: 300 - 68400.
-
-        :param ttl: The TTL target to set.
-        :raises InputFailure: If the TTL value is outside the bounds.
-        :returns: A valid TTL vale
-        """
-        if ttl < self.MIN_TTL or ttl > self.MAX_TTL:
-            raise InputFailure(f"Invalid TTL value: {ttl} ({self.MIN_TTL}->{self.MAX_TTL})")
-
-        return ttl
-
-
-class WithName(BaseModel, APIMixin):
-    """Mixin type for an object that has a name element."""
-
-    __name_field__: str = "name"
-    """Name of the API field that holds the object's name."""
-
-    __name_lowercase__: bool = False
-    """Lower case name in API requests."""
-
-    @classmethod
-    def _case_name(cls, name: str) -> str:
-        """Set the name case based on the class attribute."""
-        return name.lower() if cls.__name_lowercase__ else name
-
-    @classmethod
-    def get_by_name(cls, name: str) -> Self | None:
-        """Get a resource by name.
-
-        :param name: The resource name to search for.
-        :returns: The resource if found.
-        """
-        return cls.get_by_field(cls.__name_field__, cls._case_name(name))
-
-    @classmethod
-    def get_by_name_and_raise(cls, name: str) -> None:
-        """Get a resource by name, raising EntityAlreadyExists if found.
-
-        :param name: The resource name to search for.
-        :raises EntityAlreadyExists: If the resource is found.
-        """
-        return cls.get_by_field_and_raise(cls.__name_field__, cls._case_name(name))
-
-    @classmethod
-    def get_by_name_or_raise(cls, name: str) -> Self:
-        """Get a resource by name, raising EntityNotFound if not found.
-
-        :param name: The resource name to search for.
-        :returns: The resource.
-        :raises EntityNotFound: If the resource is not found.
-        """
-        return cls.get_by_field_or_raise(cls.__name_field__, cls._case_name(name))
-
-    @classmethod
-    def get_list_by_name_regex(cls, name: str) -> list[Self]:
-        """Get multiple resources by a name regex.
-
-        :param name: The regex pattern for names to search for.
-        :returns: A list of resource objects.
-        """
-        param, value = convert_wildcard_to_regex(cls.__name_field__, cls._case_name(name), True)
-        return get_typed(cls.endpoint(), list[cls], params={param: value})
-
-    def rename(self, new_name: str) -> Self:
-        """Rename the resource.
-
-        :param new_name: The new name to set.
-        :returns: The patched resource.
-        """
-        return self.patch({self.__name_field__: self._case_name(new_name)})
-
-
-ClassVarNotSet = object()
-
-
-def AbstractClassVar() -> Any:
-    """Hack to implement an abstract class variable on a Pydantic model."""
-    return ClassVarNotSet
-
-
-class WithHistory(BaseModel, APIMixin):
-    """Resource that supports history lookups.
-
-    Subclasses must implement the `history_resource` class variable.
-    """
-
-    history_resource: ClassVar[HistoryResource] = AbstractClassVar()
-
-    def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]):
-        """Ensure that subclasses implement the history_resource class var."""
-        # NOTE: Only works for Pydantic model subclasses!
-        for attr in cls.__class_vars__:
-            if getattr(cls, attr) == ClassVarNotSet:
-                raise NotImplementedError(
-                    f"Subclass {cls.__name__} must implement abstract class var `{attr}`."
-                )
-        return super().__init_subclass__(**kwargs)
-
-    @classmethod
-    def get_history(cls, name: str) -> list[HistoryItem]:
-        """Get the history for the object."""
-        return HistoryItem.get(name, cls.history_resource)
-
-    @classmethod
-    def output_history(cls, name: str) -> None:
-        """Output the history for the object."""
-        history = cls.get_history(name)
-        HistoryItem.output_multiple(name, history)
-
-
-class NameServer(FrozenModelWithTimestamps, WithTTL):
+class NameServer(mreg_api.models.NameServer):
     """Model for representing a nameserver within a DNS zone."""
 
     id: int  # noqa: A003
     name: str
 
-    @classmethod
-    def endpoint(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.Nameservers
 
-
-class Permission(FrozenModelWithTimestamps, APIMixin):
+class Permission(mreg_api.models.Permission):
     """Model for a permission object."""
-
-    id: int  # noqa: A003
-    group: str
-    range: IP_NetworkT  # noqa: A003
-    regex: str
-    labels: list[int]
-
-    @field_validator("range", mode="before")
-    @classmethod
-    def validate_ip_or_network(cls, value: Any) -> IP_NetworkT:
-        """Validate and convert the input to a network."""
-        try:
-            return ipaddress.ip_network(value)
-        except ValueError as e:
-            raise InputFailure(f"Invalid input for network: {value}") from e
-
-    @classmethod
-    def endpoint(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.PermissionNetgroupRegex
 
     @classmethod
     def output_multiple(cls, permissions: list[Permission], indent: int = 4) -> None:
@@ -555,83 +281,11 @@ class Permission(FrozenModelWithTimestamps, APIMixin):
             indent=indent,
         )
 
-    def add_label(self, label_name: str) -> Self:
-        """Add a label to the permission.
 
-        :param label_name: The name of the label to add.
-        :returns: The updated Permission object.
-        """
-        label = Label.get_by_name_or_raise(label_name)
-        if label.id in self.labels:
-            raise EntityAlreadyExists(f"The permission already has the label {label_name!r}")
-
-        label_ids = self.labels.copy()
-        label_ids.append(label.id)
-        return self.patch({"labels": label_ids})
-
-    def remove_label(self, label_name: str) -> Self:
-        """Remove a label from the permission.
-
-        :param label_name: The name of the label to remove.
-        :returns: The updated Permission object.
-        """
-        label = Label.get_by_name_or_raise(label_name)
-        if label.id not in self.labels:
-            raise EntityNotFound(f"The permission does not have the label {label_name!r}")
-
-        label_ids = self.labels.copy()
-        label_ids.remove(label.id)
-        return self.patch({"labels": label_ids})
-
-
-def is_reverse_zone_name(name: str) -> bool:
-    """Determine if a zone is a reverse zone by its name.
-
-    :param name: The name of the zone.
-    :returns: True if the zone is a reverse zone.
-    """
-    return name.endswith(".arpa")
-
-
-class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
+class Zone(mreg_api.models.Zone, TTLMixin):
     """Model representing a DNS zone with various attributes and related nameservers."""
 
-    id: int  # noqa: A003
     nameservers: list[NameServer]
-    updated: bool
-    primary_ns: str
-    email: str
-    serialno: int
-    serialno_updated_at: datetime
-    refresh: int
-    retry: int
-    expire: int
-    soa_ttl: int
-    default_ttl: int
-    name: str
-
-    # Specify that TTL fields are NOT nullable for Zone objects
-    _ttl_nullable: ClassVar[bool] = False
-
-    def is_delegated(self) -> bool:
-        """Return True if the zone is delegated."""
-        return False
-
-    def is_reverse(self) -> bool:
-        """Return True if the zone is a reverse zone."""
-        return is_reverse_zone_name(self.name)
-
-    # Default to forward zone endpoints for the base class
-    # This can be overridden in the subclasses
-    @classmethod
-    def endpoint(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.ForwardZones
-
-    @classmethod
-    def endpoint_nameservers(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.ForwardZonesNameservers
 
     def output(self, padding: int = 20) -> None:
         """Output the zone to the console."""
@@ -652,17 +306,36 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
         self.output_ttl("Default TTL", "default_ttl", padding)
 
     @classmethod
+    @override
+    def get_zone(cls, name: str) -> ForwardZone | ReverseZone | None:
+        zone = super().get_zone(name)
+        if zone is None:
+            return zone
+        if isinstance(zone, mreg_api.models.ForwardZone):
+            return ForwardZone.model_validate(zone, from_attributes=True)
+        else:
+            return ReverseZone.model_validate(zone, from_attributes=True)
+
+    @classmethod
+    @override
+    def get_zone_or_raise(cls, name: str) -> ForwardZone | ReverseZone:
+        zone = cls.get_zone(name)
+        if not zone:
+            raise EntityNotFound(f"Zone with name '{name}' not found.")
+        return zone
+
+    @classmethod
     def output_zones(cls, forward: bool, reverse: bool) -> None:
         """Output all zones of the given type(s)."""
         # Determine types of zones to list
-        zones_types: list[type[Zone]] = []
+        zones_types: list[type[ForwardZone | ReverseZone]] = []
         if forward:
             zones_types.append(ForwardZone)
         if reverse:
             zones_types.append(ReverseZone)
 
         # Fetch all zones of the given type(s)
-        zones: list[Zone] = []
+        zones: list[ForwardZone | ReverseZone] = []
         for zone_type in zones_types:
             zones.extend(zone_type.get_list())
 
@@ -692,6 +365,8 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
     def output_delegations(self, padding: int = 20) -> None:
         """Output the delegations of the zone."""
         delegations = self.get_delegations()
+        delegations = [Delegation.model_validate(d, from_attributes=True) for d in delegations]
+
         manager = OutputManager()
         if not delegations:
             manager.add_line(f"No delegations for {self.name}.")
@@ -703,425 +378,30 @@ class Zone(FrozenModelWithTimestamps, WithTTL, APIMixin):
                 manager.add_line(f"        Comment: {delegation.comment}")
             self.output_nameservers(delegation.nameservers, padding=padding)
 
-    def ensure_delegation_in_zone(self, name: str) -> None:
-        """Ensure a delegation is in the zone.
 
-        :param name: The name of the delegation to check.
-        :returns: True if the delegation is in the zone.
-        """
-        if not name.endswith(f".{self.name}"):
-            raise InputFailure(f"Delegation '{name}' is not in '{self.name}'")
-
-    @classmethod
-    def type_by_name(cls, name: str) -> type[ForwardZone | ReverseZone]:
-        """Determine the zone type based on the name.
-
-        :param name: The name of the zone.
-        :returns: The zone type.
-        """
-        if is_reverse_zone_name(name):
-            return ReverseZone
-        return ForwardZone
-
-    @classmethod
-    def verify_nameservers(cls, nameservers: list[str], force: bool = False) -> None:
-        """Verify that nameservers are in mreg and have A-records."""
-        if not nameservers:
-            raise InputFailure("At least one nameserver is required")
-
-        errors: list[str] = []
-        for nameserver in nameservers:
-            try:
-                host = Host.get_by_any_means_or_raise(nameserver)
-            except EntityNotFound:
-                if not force:
-                    errors.append(f"{nameserver} is not in mreg, must force")
-            else:
-                if host.zone is None:
-                    if not host.ipaddresses and not force:
-                        errors.append(f"{nameserver} has no A-record/glue, must force")
-        if errors:
-            raise ForceMissing("\n".join(errors))
-
-    @classmethod
-    def create_zone(
-        cls,
-        name: str,
-        email: str,
-        primary_ns: list[str],
-        force: bool,
-    ) -> ForwardZone | ReverseZone | None:
-        """Create a forward or reverse zone based on zone name.
-
-        :param name: The name of the zone to create.
-        :param email: The email address for the zone.
-        :param primary_ns: The primary nameserver for the zone.
-        :returns: The created zone object.
-        """
-        cls.verify_nameservers(primary_ns, force=force)
-        zone_t = cls.type_by_name(name)
-        zone_t.get_zone_and_raise(name)
-        return zone_t.create({"name": name, "email": email, "primary_ns": primary_ns})
-
-    @classmethod
-    def get_zone(cls, name: str) -> ForwardZone | ReverseZone | None:
-        """Get a zone by name.
-
-        :param name: The name of the zone to get.
-        :returns: The zone object.
-        """
-        zone_t = cls.type_by_name(name)
-        return zone_t.get_by_name(name)
-
-    @classmethod
-    def get_zone_or_raise(cls, name: str) -> ForwardZone | ReverseZone:
-        """Get a zone by name, and raise if not found.
-
-        :param name: The name of the zone to get.
-        :returns: The zone object.
-        """
-        zone_t = cls.type_by_name(name)
-        return zone_t.get_by_name_or_raise(name)
-
-    @classmethod
-    def get_zone_and_raise(cls, name: str) -> None:
-        """Get a zone by name, and raise if found.
-
-        :param name: The name of the zone to get.
-        """
-        zone_t = cls.type_by_name(name)
-        return zone_t.get_by_name_and_raise(name)
-
-    def get_subzones(self) -> list[Self]:
-        """Get subzones of the zone, excluding self.
-
-        :returns: A list of subzones.
-        """
-        zones = self.get_list_by_field("name__endswith", f".{self.name}")
-        return [zone for zone in zones if zone.name != self.name]
-
-    def ensure_deletable(self) -> None:
-        """Ensure the zone can be deleted. Raises exception if not.
-
-        :raises DeleteError: If zone has entries or subzones.
-        """
-        # XXX: Not a fool proof check, as e.g. SRVs are not hosts. (yet.. ?)
-        hosts = Host.get_list_by_field("zone", self.id)
-        if hosts:
-            raise DeleteError(f"Zone has {len(hosts)} registered entries. Can not delete.")
-
-        zones = self.get_subzones()
-        if zones:
-            names = ", ".join(zone.name for zone in zones)
-            raise DeleteError(f"Zone has registered subzones: '{names}'. Can not delete")
-
-    def delete_zone(self, force: bool) -> bool:
-        """Delete the zone.
-
-        :param force: Whether to force the deletion.
-        :returns: True if the deletion was successful.
-        """
-        if not force:
-            self.ensure_deletable()
-        return self.delete()
-
-    def update_soa(
-        self,
-        primary_ns: str | None = None,
-        email: str | None = None,
-        serialno: int | None = None,
-        refresh: int | None = None,
-        retry: int | None = None,
-        expire: int | None = None,
-        soa_ttl: int | None = None,
-    ) -> Self:
-        """Update SOA (Start of Authority) record for the zone.
-
-        :param primary_ns: The primary nameserver for the zone.
-        :param email: The email address for the zone.
-        :param serialno: The serial number for the zone.
-        :param refresh: The refresh interval for the zone.
-        :param retry: The retry interval for the zone.
-        :param expire: The expire interval for the zone.
-        :param soa_ttl: The TTL for the zone.
-        """
-        params: QueryParams = {
-            "primary_ns": primary_ns,
-            "email": email,
-            "serialno": serialno,
-            "refresh": refresh,
-            "retry": retry,
-            "expire": expire,
-            "soa_ttl": self.valid_numeric_ttl(soa_ttl) if soa_ttl is not None else None,
-        }
-        params = {k: v for k, v in params.items() if v is not None}
-        if not params:
-            raise InputFailure("No parameters to update")
-        return self.patch(params)
-
-    def create_delegation(
-        self,
-        delegation: str,
-        nameservers: list[str],
-        comment: str,
-        force: bool = False,
-        fetch_after_create: bool = True,
-    ) -> Delegation | None:
-        """Create a delegation for the zone.
-
-        :param delegation: The name of the delegation.
-        :param nameservers: The nameservers for the delegation.
-        :param comment: A comment for the delegation.
-        :param force: Force creation if ns/zone doesn't exist.
-        :returns: The created delegation object.
-        """
-        self.ensure_delegation_in_zone(delegation)
-        self.verify_nameservers(nameservers, force=force)
-
-        if not force:
-            # Ensure delegated zone exists and is same type as parent zone
-            delegated_zone = Zone.get_zone(delegation)
-            if not delegated_zone:
-                raise InputFailure(f"Zone {delegation!r} does not exist. Must force.")
-            if delegated_zone.is_reverse() != self.is_reverse():
-                raise InputFailure(
-                    f"Delegation '{delegation}' is not a {self.__class__.__name__} zone"
-                )
-
-        self.get_delegation_and_raise(delegation)
-
-        cls = Delegation.type_by_zone(self)
-        resp = post(
-            cls.endpoint().with_params(self.name),
-            name=delegation,
-            nameservers=nameservers,
-            comment=comment,
-        )
-        if not resp or not resp.ok:
-            raise CreateError(f"Failed to create delegation {delegation!r} in zone {self.name!r}")
-
-        if fetch_after_create:
-            return self.get_delegation_or_raise(delegation)
-        return None
-
-    def get_delegation(self, name: str) -> ForwardZoneDelegation | ReverseZoneDelegation | None:
-        """Get a delegation for the zone by name.
-
-        :param name: The name of the delegation to get.
-        :returns: The delegation object if found.
-        """
-        self.ensure_delegation_in_zone(name)
-        cls = Delegation.type_by_zone(self)
-        resp = get(cls.endpoint_with_id(self, name), ok404=True)
-        if not resp:
-            return None
-        return cls.model_validate_json(resp.text)
-
-    def get_delegation_or_raise(self, name: str) -> ForwardZoneDelegation | ReverseZoneDelegation:
-        """Get a delegation for the zone by name, raising EntityNotFound if not found.
-
-        :param zone: The zone to search in.
-        :param name: The name of the delegation to get.
-        :returns: The delegation object.
-        :raises EntityNotFound: If the delegation is not found.
-        """
-        delegation = self.get_delegation(name)
-        if not delegation:
-            raise EntityNotFound(f"Could not find delegation {name!r} in zone {name!r}")
-        return delegation
-
-    def get_delegation_and_raise(self, name: str) -> None:
-        """Get a delegation for the zone by name, raising EntityAlreadyExists if found.
-
-        :param zone: The zone to search in.
-        :param name: The name of the delegation to get.
-        :raises EntityAlreadyExists: If the delegation is found.
-        """
-        delegation = self.get_delegation(name)
-        if delegation:
-            raise EntityAlreadyExists(
-                f"Zone {self.name!r} already has a delegation named {name!r}"
-            )
-
-    def get_delegations(self) -> list[ForwardZoneDelegation | ReverseZoneDelegation]:
-        """Get all delegations for a zone.
-
-        :param zone: The zone to search in.
-        :param name: The name of the delegation to get.
-        :returns: The delegation object.
-        """
-        cls = Delegation.type_by_zone(self)
-        return get_typed(cls.endpoint().with_params(self.name), list[cls])
-
-    def delete_delegation(self, name: str) -> bool:
-        """Delete a delegation from the zone.
-
-        :param delegation: The name of the delegation.
-        :returns: True if the deletion was successful.
-        """
-        # Check if delegation exists
-        self.ensure_delegation_in_zone(name)  # check name
-        delegation = self.get_delegation_or_raise(name)
-        resp = delete(delegation.endpoint_with_id(self, name))
-        return resp.ok if resp else False
-
-    def set_delegation_comment(self, name: str, comment: str) -> None:
-        """Set the comment for a delegation.
-
-        :param name: The name of the delegation.
-        :param comment: The comment to set.
-        """
-        delegation = self.get_delegation_or_raise(name)
-        resp = patch(delegation.endpoint_with_id(self, delegation.name), comment=comment)
-        if not resp or not resp.ok:
-            raise PatchError(f"Failed to update comment for delegation {delegation.name!r}")
-
-    def set_default_ttl(self, ttl: int) -> Self:
-        """Set the default TTL for the zone.
-
-        :param ttl: The TTL to set.
-        """
-        return self.set_ttl(ttl, "default_ttl")
-
-    def update_nameservers(self, nameservers: list[str], force: bool = False) -> None:
-        """Update the nameservers of the zone.
-
-        :param nameservers: The new nameservers for the zone.
-        :param force: Whether to force the update.
-        :returns: True if the update was successful.
-        """
-        self.verify_nameservers(nameservers, force=force)
-        path = self.endpoint_nameservers().with_params(self.name)
-        resp = patch(path, primary_ns=nameservers)
-        if not resp or not resp.ok:
-            raise PatchError(
-                f"Failed to update nameservers for {self.__class__.__name__} {self.name!r}"
-            )
-
-
-class ForwardZone(Zone, WithName, APIMixin):
+class ForwardZone(mreg_api.models.ForwardZone, Zone):
     """A forward zone."""
 
-    @classmethod
-    def endpoint(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.ForwardZones
 
-    @classmethod
-    def endpoint_nameservers(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.ForwardZonesNameservers
-
-    @classmethod
-    def get_from_hostname(cls, hostname: HostName) -> ForwardZoneDelegation | ForwardZone | None:
-        """Get the zone from a hostname.
-
-        Note: This method may return either a ForwardZoneDelegation or a ForwardZone object.
-
-        :param hostname: The hostname to search for.
-        :returns: The zone if found, None otherwise.
-        """
-        resp = get(Endpoint.ForwardZoneForHost.with_id(hostname), ok404=True)
-        if not resp:
-            return None
-
-        zoneblob = resp.json()
-
-        if "delegate" in zoneblob:
-            return ForwardZoneDelegation.model_validate(zoneblob)
-
-        if "zone" in zoneblob:
-            return ForwardZone.model_validate(zoneblob["zone"])
-
-        if "delegation" in zoneblob:
-            return ForwardZoneDelegation.model_validate(zoneblob["delegation"])
-
-        raise UnexpectedDataError(f"Unexpected response from server: {zoneblob}", resp)
-
-
-class ReverseZone(Zone, WithName, APIMixin):
+class ReverseZone(mreg_api.models.ReverseZone, Zone):
     """A reverse zone."""
 
-    @classmethod
-    def endpoint(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.ReverseZones
 
-    @classmethod
-    def endpoint_nameservers(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.ReverseZonesNameservers
-
-
-class Delegation(FrozenModelWithTimestamps, WithZone):
+class Delegation(mreg_api.models.Delegation):
     """A delegated zone."""
 
-    id: int  # noqa: A003
     nameservers: list[NameServer]
-    name: str
-    comment: str | None = None
-
-    # NOTE: Delegations are created through zone objects!
-    # Call Zone.create_delegation() on an existing zone to create one.
-    # We do not implement APIMixin here, since we cannot determine
-    # the path and type of a delegation to create without information
-    # about the zone in which to create it.
-
-    @classmethod
-    def endpoint(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.ForwardZonesDelegations
-
-    @classmethod
-    def endpoint_with_id(cls, zone: Zone, name: str) -> str:
-        """Return the path to a delegation in a specific zone."""
-        if cls.is_reverse():
-            endpoint = Endpoint.ReverseZonesDelegationsZone
-        else:
-            endpoint = Endpoint.ForwardZonesDelegationsZone
-        return endpoint.with_params(zone.name, name)
-
-    def is_delegated(self) -> bool:
-        """Return True if the zone is delegated."""
-        return True
-
-    @classmethod
-    def is_reverse(cls) -> bool:
-        """Return True if the delegation is for a reverse zone."""
-        return False
-
-    @classmethod
-    def type_by_zone(cls, zone: Zone) -> type[ForwardZoneDelegation | ReverseZoneDelegation]:
-        """Get the delegation type for a zone."""
-        if zone.is_reverse():
-            return ReverseZoneDelegation
-        return ForwardZoneDelegation
 
 
-class ForwardZoneDelegation(Delegation, APIMixin):
+class ForwardZoneDelegation(Delegation):
     """A forward zone delegation."""
 
-    @classmethod
-    def endpoint(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.ForwardZonesDelegations
 
-
-class ReverseZoneDelegation(Delegation, APIMixin):
+class ReverseZoneDelegation(Delegation):
     """A reverse zone delegation."""
 
-    @classmethod
-    def endpoint(cls) -> Endpoint:
-        """Return the endpoint for the class."""
-        return Endpoint.ReverseZonesDelegations
 
-    @classmethod
-    def is_reverse(cls) -> bool:
-        """Return True if the delegation is for a reverse zone."""
-        return True
-
-
-class HostPolicy(TimestampMixin):
+class HostPolicy(mreg_api.models.HostPolicy):
     """Base model for Host Policy objects.
 
     Note:
@@ -1131,6 +411,7 @@ class HostPolicy(TimestampMixin):
 
     This model has a custom validator to validate and convert the `create_date`
     field to a datetime object with the expected `created_at` name.
+
     """
 
     name: str
@@ -1152,6 +433,25 @@ class HostPolicy(TimestampMixin):
         output_manager.add_line(f"{'Name:':<{padding}}{self.name}")
         self.output_timestamps(padding=padding)
         output_manager.add_line(f"{'Description:':<{padding}}{self.description}")
+
+    @classmethod
+    @override
+    def get_role_or_atom(cls, name: str) -> Atom | Role | None:
+        role_or_atom = super().get_role_or_atom(name)
+        if not role_or_atom:
+            return role_or_atom
+        if isinstance(role_or_atom, mreg_api.models.Role):
+            return Role.model_validate(role_or_atom, from_attributes=True)
+        else:
+            return Atom.model_validate(role_or_atom, from_attributes=True)
+
+    @classmethod
+    @override
+    def get_role_or_atom_or_raise(cls, name: str) -> Atom | Role:
+        role_or_atom = cls.get_role_or_atom(name)
+        if not role_or_atom:
+            raise EntityNotFound(f"Role or atom with name '{name}' not found.")
+        return role_or_atom
 
 
 class Role(mreg_api.models.Role):
@@ -1650,7 +950,7 @@ class TXT(mreg_api.models.TXT):
         OutputManager().add_line(f"{'TXT:':<{padding}}{self.txt}")
 
     @classmethod
-    def output_multiple(cls, txts: Sequence[mreg_api.models.TXT], padding: int = 14) -> None:
+    def output_multiple(cls, txts: Sequence[TXT], padding: int = 14) -> None:
         """Output multiple TXT records to the console.
 
         :param txts: List of TXT records to output.
@@ -1960,7 +1260,7 @@ class Host(mreg_api.models.Host, TimestampMixin, TTLMixin):
         Role.output_multiple(self.roles, padding=padding)
         if traverse_hostgroups:
             hostgroups = self.get_hostgroups(traverse=True)
-            hostgroups = [HostGroup.model_validate(hg) for hg in hostgroups]
+            hostgroups = [HostGroup.model_validate(hg, from_attributes=True) for hg in hostgroups]
         else:
             hostgroups = self.hostgroups
         HostGroup.output_multiple(hostgroups, padding=padding)
@@ -1979,9 +1279,9 @@ class Host(mreg_api.models.Host, TimestampMixin, TTLMixin):
         v6: list[tuple[Network, IPAddress]] = []
 
         for network, ips in networks.items():
-            network = Network.model_validate(network)
+            network = Network.model_validate(network, from_attributes=True)
             for ip in ips:
-                ip = IPAddress.model_validate(ip)
+                ip = IPAddress.model_validate(ip, from_attributes=True)
                 if network.ip_network.version == 4:
                     v4.append((network, ip))
                 elif network.ip_network.version == 6:
@@ -2001,9 +1301,12 @@ class Host(mreg_api.models.Host, TimestampMixin, TTLMixin):
             if self.communities:
                 for com in self.communities:
                     ip = self.get_ip_by_id(com.ipaddress)
+                    ip = IPAddress.model_validate(ip, from_attributes=True)
 
                     if ip:
-                        ip_to_community[ip] = com.community
+                        ip_to_community[ip] = Community.model_validate(
+                            com.community, from_attributes=True
+                        )
 
             if ip_to_community:
                 for net, ip in networks:
