@@ -1,29 +1,10 @@
-# Refactoring: Separating Presentation from Data Models
+# mreg-cli Architecture
 
-## Background
+## Overview
 
-The API code from this project was extracted and moved to a separate package called `mreg_api`. To minimize code changes, classes in `mreg_cli` were modified to inherit from corresponding `mreg_api` classes. This inheritance-based approach has several problems:
+This CLI uses `mreg_api` for data models and API operations, with presentation logic handled by standalone output functions in `mreg_cli.output`.
 
-1. **Return type confusion**: Class methods like `Zone.get_zone()` return `mreg_api` instances, but `mreg_cli` needs instances with output methods.
-
-2. **Field override burden**: Composed fields (e.g., `Zone.nameservers`) must be redefined in every subclass to use `mreg_cli` types instead of `mreg_api` types.
-
-3. **Mixin antipatterns**: `TimestampMixin` is defined as a `BaseModel` with duplicate datetime fields just to satisfy type checking.
-
-4. **Type ambiguity**: It's unclear whether code returns `mreg_api` or `mreg_cli` instances without careful inspection.
-
-## Solution: Standalone Output Functions
-
-The chosen solution separates presentation logic from data models entirely:
-
-- **Data/API operations**: Use `mreg_api.models` directly
-- **Presentation/Output**: Use standalone functions in `mreg_cli.output`
-
-This eliminates the need for `mreg_cli` model subclasses in most cases.
-
-## Target Module Structure
-
-After the refactoring is complete, `mreg_cli/api/` should be removed entirely. Commands will use `mreg_api.models` directly for data operations.
+### Module Structure
 
 ```text
 mreg_cli/
@@ -43,34 +24,9 @@ mreg_cli/
 └── outputmanager.py      # Low-level output formatting
 ```
 
-## Migration Status
-
-### Completed
-
-- [x] Created `mreg_cli/output/` package with all output functions
-- [x] Functions typed to accept `mreg_api.models` types
-- [x] Extracted output logic from model classes to standalone functions
-
-### Pending
-
-- [ ] Update command handlers to use `mreg_cli.output` functions
-- [ ] Update command handlers to use `mreg_api.models` directly
-- [ ] Remove `mreg_cli/api/` module entirely
-
 ## Usage Examples
 
-### Before (inheritance-based)
-
-```python
-# mreg_cli/commands/zone.py
-from mreg_cli.api.models import Zone
-
-def zone_info(args):
-    zone = Zone.get_zone_or_raise(args.name)
-    zone.output()  # Method on model
-```
-
-### After (standalone functions)
+Commands use `mreg_api.models` for data operations and `mreg_cli.output` for presentation:
 
 ```python
 # mreg_cli/commands/zone.py
@@ -82,7 +38,8 @@ def zone_info(args):
     output_zone(zone)  # Standalone function
 ```
 
-## Output Function Reference
+<details>
+<summary><strong>Output Function Reference</strong></summary>
 
 ### Zone (`mreg_cli.output.zone`)
 
@@ -152,10 +109,32 @@ def zone_info(args):
 - `output_timestamps(obj, padding=14)` - Created/updated timestamps
 - `output_ttl(obj, label="TTL", field="ttl", padding=14)` - TTL value
 
+</details>
+
 ## Known Issues
 
 1. **Circular imports**: Some functions use local imports to avoid circular dependencies between output modules.
 
 2. **Type protocol mismatches**: `Role` and `Atom` have `created_at` as computed properties rather than direct fields, causing protocol mismatches with `HasTimestamps`.
 
-3. **Temporary model imports**: Some functions still import from `mreg_cli.api.models` for model validation during the transition period.
+## Future Work
+
+### Exception Handling
+
+There is significant overlap between exceptions defined in `mreg_cli` and `mreg_api`. The `mreg_cli` exceptions were designed expecting API methods to raise exceptions derived from `CliWarning` or `CliError`, which provide methods like:
+
+- `escape()` - Escape special characters for output
+- `formatted_exception()` - Format exception for display
+- `log()` - Log the exception
+- `print_self()` - Print to output
+- `print_and_log()` - Combined print and log
+
+Now that API methods live in `mreg_api`, the exceptions raised do not derive from these CLI base classes and lack these methods. This needs to be resolved by either:
+
+1. Catching `mreg_api` exceptions and wrapping them in CLI exceptions
+2. Defining a common exception interface between the packages
+3. Moving exception handling logic out of exception classes
+
+### Caching
+
+The cache code was copied to `mreg_api` but has not been implemented in that module. Implementing caching should be the **last priority** once the final API design of both packages is clear.
