@@ -5,8 +5,8 @@ from ipaddress import IPv4Address, IPv4Network, IPv6Address, IPv6Network
 from typing import Any, Callable
 
 import pytest
+from mreg_api.models import IPAddress, IPNetMode, Network, NetworkOrIP
 
-from mreg_cli.api.models import IPAddress, IPNetMode, Network, NetworkOrIP
 from mreg_cli.exceptions import (
     InputFailure,
     InvalidIPAddress,

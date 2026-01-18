@@ -183,7 +183,7 @@ def main():
         return
 
     # Configure client
-    MregClient(
+    client = MregClient(
         url=config.url,
         domain=config.domain,
         timeout=config.http_timeout,
@@ -207,8 +207,12 @@ def main():
             print(e)
         raise SystemExit() from None
 
+    if not client.get_token():
+        logger.error("No valid token after login, exiting")
+        raise SystemExit("No valid token after login.") from None
+
     if args.show_token:
-        print(api.get_session_token() or "Token not found.")
+        print(client.get_token() or "Token not found.")
         raise SystemExit() from None
 
     # session is a PromptSession object from prompt_toolkit which handles
@@ -227,7 +231,7 @@ def main():
     if source_file := config.source:
         logger.info("Reading commands from %s", source_file)
         for command in source([source_file], config.verbose, False):
-            cli.process_command_line(command)
+            cli.process_command_line(command, interactive=False)
         return
 
     # Check if we got a oneshot command. If so, execute it and exit.

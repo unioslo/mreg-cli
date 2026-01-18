@@ -6,15 +6,25 @@ import argparse
 import itertools
 from typing import Any
 
-from mreg_cli.api.models import (
+from mreg_api.models import (
     Atom,
     Host,
     HostPolicy,
     Role,
 )
+
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import APIError, CreateError, DeleteError, EntityAlreadyExists, PatchError
+from mreg_cli.output import (
+    output_atoms_lines,
+    output_host_policy,
+    output_host_roles,
+    output_role_atoms,
+    output_role_hosts,
+    output_roles_table,
+)
+from mreg_cli.output.history import output_atom_history, output_role_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -199,7 +209,7 @@ def info(args: argparse.Namespace) -> None:
     names: list[str] = args.name
     for name in names:
         role_or_atom = HostPolicy.get_role_or_atom_or_raise(name)
-        role_or_atom.output()
+        output_host_policy(role_or_atom)
 
 
 @command_registry.register_command(
@@ -223,7 +233,7 @@ def list_atoms(args: argparse.Namespace) -> None:
 
     atoms = Atom.get_list_by_name_regex(name)
     if atoms:
-        Atom.output_multiple_lines(atoms)
+        output_atoms_lines(atoms)
     else:
         OutputManager().add_line("No match")
 
@@ -251,7 +261,7 @@ def list_roles(args: argparse.Namespace) -> None:
     if not roles:
         OutputManager().add_line("No match")
         return
-    Role.output_multiple_table(roles)
+    output_roles_table(roles)
 
 
 @command_registry.register_command(
@@ -284,8 +294,7 @@ def list_hosts(args: argparse.Namespace) -> None:
     exclude_roles = list(
         itertools.chain.from_iterable(Role.get_list_by_name_regex(r) for r in exclude)
     )
-
-    role.output_hosts(exclude_roles=exclude_roles)
+    output_role_hosts(role, exclude_roles=exclude_roles)
 
 
 @command_registry.register_command(
@@ -304,7 +313,7 @@ def list_members(args: argparse.Namespace) -> None:
     name: str = args.name
 
     role = Role.get_by_name_or_raise(name)
-    role.output_atoms()
+    output_role_atoms(role)
 
 
 @command_registry.register_command(
@@ -394,7 +403,7 @@ def host_list(args: argparse.Namespace) -> None:
 
     for name in hosts:
         host = Host.get_by_any_means_or_raise(name)
-        host.output_roles()
+        output_host_roles(host)
 
 
 @command_registry.register_command(
@@ -530,8 +539,7 @@ def atom_history(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     name: str = args.name
-
-    Atom.output_history(name)
+    output_atom_history(name)
 
 
 @command_registry.register_command(
@@ -549,4 +557,4 @@ def role_history(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
-    Role.output_history(name)
+    output_role_history(name)
