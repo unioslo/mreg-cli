@@ -347,10 +347,16 @@ def host_add(args: argparse.Namespace) -> None:
                     f"Host {host.name} is already a member of role {role_name!r}"
                 )
             else:
-                err = PatchError.from_api_error(
-                    e, f"Failed to add host {host.name} to role {role_name!r}"
+                from mreg_cli.exception_handler import (  # noqa: PLC0415
+                    create_exception_from_api_error,
+                    handle_exception,
                 )
-                err.print_and_log()
+
+                # NOTE: this is _only_ used here. Can we provide a different API for this?
+                err = create_exception_from_api_error(
+                    PatchError, e, f"Failed to add host {host.name} to role {role_name!r}"
+                )
+                handle_exception(err)
 
 
 @command_registry.register_command(

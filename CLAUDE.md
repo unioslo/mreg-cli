@@ -21,6 +21,8 @@ mreg_cli/
 ├── commands/             # Command handlers (use mreg_api.models + mreg_cli.output)
 │   └── ...
 │
+├── exceptions.py         # CLI exception classes (data only, no methods)
+├── exception_handler.py  # Standalone exception handling functions
 └── outputmanager.py      # Low-level output formatting
 ```
 
@@ -117,23 +119,77 @@ def zone_info(args):
 
 2. **Type protocol mismatches**: `Role` and `Atom` have `created_at` as computed properties rather than direct fields, causing protocol mismatches with `HasTimestamps`.
 
+## Exception Handling
+
+Exception handling uses standalone functions in `mreg_cli.exception_handler`, following the same pattern as `mreg_cli.output`. This allows uniform handling of exceptions from both `mreg_cli` and `mreg_api`.
+
+### Exception Classes
+
+Exception classes in `mreg_cli.exceptions` are pure data containers with no output methods:
+
+```text
+CliException (base)
+├── CliError (non-recoverable errors, displayed in red)
+│   ├── CreateError, PatchError, DeleteError, GetError
+│   ├── InternalError, FileError, ValidationError, LoginFailedError
+└── CliWarning (recoverable, displayed in italics)
+    ├── APIError (has response attribute), UnexpectedDataError
+    ├── EntityNotFound, EntityAlreadyExists, MultipleEntitiesFound
+    ├── TooManyResults, NoHistoryFound, ForceMissing
+    └── IPNetworkWarning and subclasses
+```
+
+### Handler Functions (`mreg_cli.exception_handler`)
+
+| Function | Purpose |
+|----------|---------|
+| `handle_exception(exc)` | Main entry point - logs and prints an exception |
+| `is_error(exc)` | Returns True if exception is non-recoverable (CliError or mreg_api equivalents) |
+| `format_exception(exc)` | Returns HTML-formatted string for prompt_toolkit |
+| `log_exception(exc)` | Logs to logger and OutputManager |
+| `print_exception(exc)` | Prints formatted exception to stdout |
+| `create_exception_from_api_error(exc_class, api_error, message)` | Creates CLI exception from API error with context |
+| `handle_pydantic_validation_error(exc)` | Converts and handles Pydantic ValidationError |
+
+### Usage Example
+
+```python
+from mreg_cli.exception_handler import handle_exception, create_exception_from_api_error
+from mreg_cli.exceptions import PatchError
+
+try:
+    some_api_operation()
+except mreg_api.exceptions.APIError as e:
+    # Option 1: Handle directly
+    handle_exception(e)
+
+    # Option 2: Create a more specific error with context
+    err = create_exception_from_api_error(PatchError, e, "Failed to update host")
+    handle_exception(err)
+```
+
+#### Regarding `create_exception_from_api_error`
+
+In `mreg_cli/commands/policy.py`, we use `create_exception_from_api_error` to wrap API errors with additional context before handling them. This is a clumsy pattern:
+
+```python
+err = create_exception_from_api_error(
+    PatchError, e, f"Failed to add host {host.name} to role {role_name!r}"
+)
+handle_exception(err)
+```
+
+The function is _only_ used there.
+
+It would be better to have a way to use the exception printing and logging functionality without bootstrapping a new exception. This could be a future improvement.
+
+### Exception Handling Locations
+
+- `mreg_cli/cli.py` - Main command parsing catches and handles exceptions
+- `mreg_cli/main.py` - Entry point handles login and REPL exceptions
+- `mreg_cli/utilities/api.py` - Authentication-related exception handling
+
 ## Future Work
-
-### Exception Handling
-
-There is significant overlap between exceptions defined in `mreg_cli` and `mreg_api`. The `mreg_cli` exceptions were designed expecting API methods to raise exceptions derived from `CliWarning` or `CliError`, which provide methods like:
-
-- `escape()` - Escape special characters for output
-- `formatted_exception()` - Format exception for display
-- `log()` - Log the exception
-- `print_self()` - Print to output
-- `print_and_log()` - Combined print and log
-
-Now that API methods live in `mreg_api`, the exceptions raised do not derive from these CLI base classes and lack these methods. This needs to be resolved by either:
-
-1. Catching `mreg_api` exceptions and wrapping them in CLI exceptions
-2. Defining a common exception interface between the packages
-3. Moving exception handling logic out of exception classes
 
 ### Caching
 

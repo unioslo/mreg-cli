@@ -160,7 +160,9 @@ def prompt_for_password_and_login(user: str, url: str, catch_exception: bool = T
         auth_and_update_token(user, password)
     except CliError as e:
         if catch_exception:
-            e.print_and_log()
+            from mreg_cli.exception_handler import handle_exception  # noqa: PLC0415
+
+            handle_exception(e)
         if isinstance(e, LoginFailedError):
             raise e
         else:
@@ -187,7 +189,9 @@ def prompt_for_password_and_try_update_token() -> None:
             raise LoginFailedError("Unable to determine username.")
         auth_and_update_token(user, password)
     except CliError as e:
-        e.print_and_log()
+        from mreg_cli.exception_handler import handle_exception  # noqa: PLC0415
+
+        handle_exception(e)
         raise e  # FIXME: remove if redundant
 
 

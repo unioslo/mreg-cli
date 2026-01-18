@@ -8,6 +8,7 @@ from mreg_api.models.fields import HostName
 from pydantic import ValidationError as PydanticValidationError
 from pytest_httpserver import HTTPServer
 
+from mreg_cli.exception_handler import handle_exception
 from mreg_cli.exceptions import ValidationError
 
 
@@ -112,13 +113,13 @@ Failed to validate Host
 """
     )
 
-    # Call method and check output
-    validationerror.print_and_log()
+    # Call function and check output
+    handle_exception(validationerror)
 
     assert caplog.record_tuples == snapshot(
         [
             (
-                "mreg_cli.exceptions",
+                "mreg_cli.exception_handler",
                 40,
                 """\
 Failed to validate Host

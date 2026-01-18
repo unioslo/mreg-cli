@@ -39,7 +39,8 @@ from mreg_cli.commands.zone import ZoneCommands
 from mreg_cli.config import MregCliConfig
 
 # Import other mreg_cli modules
-from mreg_cli.exceptions import CliError, CliExit, CliWarning, ValidationError
+from mreg_cli.exception_handler import handle_exception, handle_pydantic_validation_error
+from mreg_cli.exceptions import CliError, CliExit, CliWarning
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
@@ -183,10 +184,10 @@ class Command(Completer):
             self.last_errno = e.code
 
         except PydanticValidationError as exc:
-            ValidationError.from_pydantic(exc).print_and_log()
+            handle_pydantic_validation_error(exc)
 
         except (CliWarning, CliError) as exc:
-            exc.print_and_log()
+            handle_exception(exc)
 
         # Request went through, but API returned an error
         except mreg_api.exceptions.APIError as exc:
@@ -195,10 +196,10 @@ class Command(Completer):
                 prompt_for_password_and_try_update_token()
                 self.parse(command, interactive=interactive, retry=True)
             else:
-                CliWarning(str(exc)).print_and_log()
+                handle_exception(exc)
 
         except mreg_api.exceptions.MregApiBaseError as exc:
-            CliWarning(str(exc)).print_and_log()
+            handle_exception(exc)
 
         except CliExit:
             # If we have active recordings going on, save them before exiting
@@ -293,8 +294,9 @@ class Command(Completer):
         """Record API responses for the last executed command."""
         output = OutputManager()
         client = mreg_api.MregClient()
-        for response in reversed(client.history):
+        for response in client.get_client_history():
             output.recording_request2(response)
+        client.clear_client_history()
 
     def process_command_line(self, line: str, *, interactive: bool = True) -> None:
         """Process a line containing a command."""
@@ -307,7 +309,7 @@ class Command(Completer):
         try:
             cmd = output.from_command(line)
         except (CliWarning, CliError) as exc:
-            exc.print_and_log()
+            handle_exception(exc)
             return
         # Create and set the corrolation id, using the cleaned command
         # as the suffix. This is used to track the command in the logs

@@ -11,11 +11,11 @@ from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from rich.console import Console, Group
 from rich.panel import Panel
 
-import mreg_cli.utilities.api as api
 from mreg_cli import cache
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, get_cli_history, source
 from mreg_cli.config import MregCliConfig
+from mreg_cli.exception_handler import handle_exception
 from mreg_cli.exceptions import CliException, LoginFailedError
 from mreg_cli.log import MregCliLogger
 from mreg_cli.outputmanager import OutputManager
@@ -202,7 +202,7 @@ def main():
         )
     except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
         if isinstance(e, LoginFailedError):
-            e.print_and_log()
+            handle_exception(e)
         else:
             print(e)
         raise SystemExit() from None
@@ -257,7 +257,7 @@ def main():
         except EOFError:
             raise SystemExit() from None
         except CliException as e:
-            e.print_and_log()
+            handle_exception(e)
             raise SystemExit() from None
         else:
             try:

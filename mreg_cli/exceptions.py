@@ -1,23 +1,13 @@
 """Custom exceptions for mreg_cli.
 
-Note that Cli exceptions offer a print_self() method that prints the exception
-with appropriate formatting. This is useful for printing exceptions in the
-context of a CLI command.
+Exception handling (formatting, logging, printing) is done via standalone
+functions in mreg_cli.exception_handler.
 """
 
 from __future__ import annotations
 
-import logging
-import sys
-from typing import Self
-
-from prompt_toolkit import print_formatted_text
-from prompt_toolkit.formatted_text import HTML
-from prompt_toolkit.formatted_text.html import html_escape
-from pydantic import ValidationError as PydanticValidationError
 from httpx import Response
-
-logger = logging.getLogger(__name__)
+from pydantic import ValidationError as PydanticValidationError
 
 
 class CliExit(Exception):
@@ -29,53 +19,7 @@ class CliExit(Exception):
 class CliException(Exception):
     """Base exception class for the CLI."""
 
-    def escape(self) -> str:
-        """Get an HTML-escaped string representation of the exception."""
-        return html_escape(str(self))
-
-    def formatted_exception(self) -> str:
-        """Return a formatted string representation of the exception.
-
-        :returns: Formatted string for the exception message.
-        """
-        # NOTE: override this in subclasses to provide custom formatting.
-        return self.escape()
-
-    def log(self):
-        """Log the exception."""
-        from mreg_cli.outputmanager import OutputManager
-
-        logger.error(str(self))
-        OutputManager().add_error(str(self))
-
-    def print_self(self):
-        """Print the exception with appropriate formatting."""
-        print_formatted_text(HTML(self.formatted_exception()), file=sys.stdout)
-
-    def print_and_log(self):
-        """Print the exception and log it."""
-        self.log()
-        self.print_self()
-
-    @classmethod
-    def from_api_error(cls, e: APIError, message: str | None = None) -> Self:
-        """Create a CliError from an API error.
-
-        :param e: The original API error.
-        :param message: An optional message to prefix the original exception message.
-        :returns: The created CliError.
-        """
-        from mreg_api.exceptions import parse_mreg_error
-
-        if e.response and (api_err := parse_mreg_error(e.response)) and api_err.errors:
-            reason = api_err.as_str()
-        else:
-            reason = str(e)
-        if message:
-            message += f": {reason}"
-        else:
-            message = reason
-        return cls(message)
+    pass
 
 
 class CliError(CliException):
@@ -85,12 +29,7 @@ class CliError(CliException):
     the user cannot be expected to resolve.
     """
 
-    def formatted_exception(self) -> str:
-        """Return a string formatted with HTML red tag for the error message.
-
-        :returns: Formatted error message.
-        """
-        return f"<ansired>ERROR: {self.escape()}</ansired>"
+    pass
 
 
 class CliWarning(CliException):
@@ -99,19 +38,7 @@ class CliWarning(CliException):
     Warnings should be recoverable by changing the user input.
     """
 
-    def log(self):
-        """Log the exception."""
-        from mreg_cli.outputmanager import OutputManager
-
-        logger.warning(str(self))
-        OutputManager().add_warning(str(self))
-
-    def formatted_exception(self) -> str:
-        """Return a string formatted with HTML italic tag for the warning message.
-
-        :returns: Formatted warning message.
-        """
-        return f"<i>{self.escape()}</i>"
+    pass
 
 
 class CreateError(CliError):
@@ -172,6 +99,7 @@ class ValidationError(CliError):
         """Initialize a ValidationError.
 
         :param message: The error message.
+        :param pydantic_error: The original Pydantic ValidationError, if any.
         """
         super().__init__(message)
         self.pydantic_error = pydantic_error
@@ -183,7 +111,7 @@ class ValidationError(CliError):
         :param e: The Pydantic ValidationError.
         :returns: The created ValidationError.
         """
-        from mreg_cli.utilities.api import last_request_method, last_request_url
+        from mreg_api.client import last_request_method, last_request_url  # noqa: PLC0415
 
         # Display a title containing the HTTP method and URL if available
         method = last_request_method.get()
@@ -201,20 +129,13 @@ class ValidationError(CliError):
         errors: list[str] = []
         for err in exc_errors:
             errlines: list[str] = [
-                f"Field: {', '.join(str(l) for l in err['loc'])}",  # noqa: E741
+                f"Field: {', '.join(str(loc) for loc in err['loc'])}",
                 f"Reason: {err['msg']}",
             ]
             errors.append("\n".join(f"    {line}" for line in errlines))
 
         err_msg = f"{msg}\n  Input: {inp}\n  Errors:\n" + "\n\n".join(errors)
         return cls(err_msg, e)
-
-    def log(self):
-        """Log the exception with traceback."""
-        from mreg_cli.outputmanager import OutputManager
-
-        logger.exception(str(self), stack_info=True, exc_info=self)
-        OutputManager().add_error(str(self))
 
 
 class FileError(CliError):
@@ -302,7 +223,7 @@ class InvalidNetwork(IPNetworkWarning):
 
 
 class NetworkOverlap(IPNetworkWarning):
-    """Warning class for a networkthat overlaps with another network."""
+    """Warning class for a network that overlaps with another network."""
 
     pass
 
@@ -310,9 +231,4 @@ class NetworkOverlap(IPNetworkWarning):
 class LoginFailedError(CliError):
     """Error class for login failure."""
 
-    def formatted_exception(self) -> str:
-        """Return a string formatted with 'Login failed:' prefixing the error message.
-
-        :returns: Formatted error message.
-        """
-        return f"Login failed: {self.escape()}"
+    pass

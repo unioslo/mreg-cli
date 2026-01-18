@@ -309,7 +309,7 @@ class OutputManager:
             return
         ret_dict: dict[str, Any] = {
             "method": record.method,
-            "url": record.url,
+            "url": record.path,
             "data": record.data or record.json,
             "status": record.status,
         }
