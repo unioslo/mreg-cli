@@ -310,7 +310,7 @@ class OutputManager:
         ret_dict: dict[str, Any] = {
             "method": record.method,
             "url": record.path,
-            "data": record.data or record.json,
+            "data": record.json or record.data or {},
             "status": record.status,
         }
         try:
