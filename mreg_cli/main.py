@@ -15,7 +15,7 @@ from mreg_cli import cache
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, get_cli_history, source
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exception_handler import handle_exception
+from mreg_cli.exceptions import handle_exception
 from mreg_cli.exceptions import CliException, LoginFailedError
 from mreg_cli.log import MregCliLogger
 from mreg_cli.outputmanager import OutputManager

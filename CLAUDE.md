@@ -21,8 +21,7 @@ mreg_cli/
 ├── commands/             # Command handlers (use mreg_api.models + mreg_cli.output)
 │   └── ...
 │
-├── exceptions.py         # CLI exception classes (data only, no methods)
-├── exception_handler.py  # Standalone exception handling functions
+├── exceptions.py         # CLI exception classes and handling functions
 └── outputmanager.py      # Low-level output formatting
 ```
 
@@ -121,7 +120,8 @@ def zone_info(args):
 
 ## Exception Handling
 
-Exception handling uses standalone functions in `mreg_cli.exception_handler`, following the same pattern as `mreg_cli.output`. This allows uniform handling of exceptions from both `mreg_cli` and `mreg_api`.
+Exception handling uses standalone functions in `mreg_cli.exceptions`.
+This allows uniform handling of exceptions from both `mreg_cli` and `mreg_api`.
 
 ### Exception Classes
 
@@ -138,17 +138,6 @@ CliException (base)
     ├── TooManyResults, NoHistoryFound, ForceMissing
     └── IPNetworkWarning and subclasses
 ```
-
-### Handler Functions (`mreg_cli.exception_handler`)
-
-| Function | Purpose |
-|----------|---------|
-| `handle_exception(exc)` | Main entry point - logs and prints an exception |
-| `is_error(exc)` | Returns True if exception is non-recoverable (CliError or mreg_api equivalents) |
-| `format_exception(exc)` | Returns HTML-formatted string for prompt_toolkit |
-| `log_exception(exc)` | Logs to logger and OutputManager |
-| `print_exception(exc)` | Prints formatted exception to stdout |
-| `handle_pydantic_validation_error(exc)` | Converts and handles Pydantic ValidationError |
 
 ### Exception Handling Locations
 

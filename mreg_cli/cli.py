@@ -39,8 +39,7 @@ from mreg_cli.commands.zone import ZoneCommands
 from mreg_cli.config import MregCliConfig
 
 # Import other mreg_cli modules
-from mreg_cli.exception_handler import handle_exception
-from mreg_cli.exceptions import CliError, CliExit, CliWarning
+from mreg_cli.exceptions import CliError, CliExit, CliWarning, handle_exception
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag

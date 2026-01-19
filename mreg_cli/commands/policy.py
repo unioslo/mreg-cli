@@ -16,7 +16,7 @@ from mreg_api.models import (
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exception_handler import handle_exception
+from mreg_cli.exceptions import handle_exception
 from mreg_cli.output import (
     output_atoms_lines,
     output_host_policy,
