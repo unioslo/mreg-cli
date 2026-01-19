@@ -173,4 +173,4 @@ def cname_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    output_cnames(host.cnames)
+    output_cnames(host.cnames, host=host)
