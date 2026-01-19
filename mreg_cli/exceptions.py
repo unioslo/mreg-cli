@@ -7,6 +7,7 @@ functions in mreg_cli.exception_handler.
 from __future__ import annotations
 
 from httpx import Response
+from mreg_api.client import last_request_method, last_request_url
 from pydantic import ValidationError as PydanticValidationError
 
 
@@ -111,8 +112,6 @@ class ValidationError(CliError):
         :param e: The Pydantic ValidationError.
         :returns: The created ValidationError.
         """
-        from mreg_api.client import last_request_method, last_request_url  # noqa: PLC0415
-
         # Display a title containing the HTTP method and URL if available
         method = last_request_method.get()
         url = last_request_url.get()
