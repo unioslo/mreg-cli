@@ -13,22 +13,20 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
 import mreg_api.exceptions
+from httpx import Response
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
+from pydantic import ValidationError as PydanticValidationError
 
-if TYPE_CHECKING:
-    from httpx import Response
-    from pydantic import ValidationError as PydanticValidationError
-
-    from mreg_cli.exceptions import CliException, ValidationError
+from mreg_cli.exceptions import CliError, LoginFailedError, ValidationError
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T", bound="CliException")
+T = TypeVar("T", bound=Exception)
 
 
 def is_error(exc: Exception) -> bool:
@@ -40,7 +38,6 @@ def is_error(exc: Exception) -> bool:
     :param exc: The exception to classify.
     :returns: True if the exception should be treated as an error.
     """
-    from mreg_cli.exceptions import CliError  # noqa: PLC0415
 
     # mreg_cli errors
     if isinstance(exc, CliError):
@@ -50,8 +47,8 @@ def is_error(exc: Exception) -> bool:
     if isinstance(
         exc,
         (
+            mreg_api.exceptions.DeleteError,
             mreg_api.exceptions.InternalError,
-            mreg_api.exceptions.FileError,
             mreg_api.exceptions.MregValidationError,
         ),
     ):
@@ -60,17 +57,20 @@ def is_error(exc: Exception) -> bool:
     return False
 
 
-def format_exception(exc: Exception) -> str:
+def format_exception(exc: Exception, *, json: bool = True) -> str:
     """Format an exception for terminal display with HTML markup.
 
     Errors are formatted with red text, warnings with italics.
 
     :param exc: The exception to format.
+    :param json: Whether to format mreg_api exceptions with JSON details.
     :returns: HTML-formatted string for display with prompt_toolkit.
     """
-    from mreg_cli.exceptions import LoginFailedError  # noqa: PLC0415
-
-    msg = html_escape(str(exc))
+    if isinstance(exc, mreg_api.exceptions.APIError):
+        msg = exc.formatted_message(json=json)
+    else:
+        msg = str(exc)
+    msg = html_escape(msg)
 
     # Special case for LoginFailedError
     # TODO: add mapping or field in exception classes for special cases
@@ -84,6 +84,15 @@ def format_exception(exc: Exception) -> str:
         return f"<i>{msg}</i>"
 
 
+def transform_exception(exc: Exception) -> Exception:
+    """Transform an exception into an appropriate mreg_cli exception."""
+    if isinstance(exc, PydanticValidationError):
+        return ValidationError.from_pydantic(exc)
+    # TODO: add more transformations as needed.
+    #       Consider mapping/registry if it grows too large
+    return exc
+
+
 def log_exception(exc: Exception) -> None:
     """Log an exception to logger and OutputManager.
 
@@ -91,10 +100,9 @@ def log_exception(exc: Exception) -> None:
 
     :param exc: The exception to log.
     """
-    from mreg_cli.exceptions import ValidationError  # noqa: PLC0415
     from mreg_cli.outputmanager import OutputManager  # noqa: PLC0415
 
-    msg = str(exc)
+    msg = str(exc)  # TODO: consider using formatted message?
     om = OutputManager()
 
     # ValidationError gets special logging with traceback
@@ -124,13 +132,14 @@ def handle_exception(exc: Exception) -> None:
 
     :param exc: The exception to handle.
     """
+    exc = transform_exception(exc)
     log_exception(exc)
     print_exception(exc)
 
 
 def create_exception_from_api_error(
     exc_class: type[T],
-    api_error: Exception,
+    api_error: mreg_api.exceptions.APIError,
     message: str | None = None,
 ) -> T:
     """Create a CLI exception from an API error.
@@ -139,7 +148,7 @@ def create_exception_from_api_error(
     a new exception with a descriptive message.
 
     :param exc_class: The CLI exception class to create.
-    :param api_error: The original API error (mreg_cli.APIError or mreg_api.APIError).
+    :param api_error: The original API error (mreg_api.exceptions.APIError).
     :param message: An optional message to prefix the error details.
     :returns: The created exception.
     """
@@ -163,39 +172,39 @@ def create_exception_from_api_error(
     return exc_class(full_message)
 
 
-def create_validation_error_from_pydantic(exc: PydanticValidationError) -> ValidationError:
-    """Create a CLI ValidationError from a Pydantic ValidationError.
+# def create_validation_error_from_pydantic(exc: PydanticValidationError) -> ValidationError:
+#     """Create a CLI ValidationError from a Pydantic ValidationError.
 
-    :param exc: The Pydantic ValidationError.
-    :returns: The created ValidationError.
-    """
-    from mreg_api.client import last_request_method, last_request_url  # noqa: PLC0415, I001
+#     :param exc: The Pydantic ValidationError.
+#     :returns: The created ValidationError.
+#     """
+#     from mreg_api.client import last_request_method, last_request_url  # noqa: PLC0415, I001
 
-    from mreg_cli.exceptions import ValidationError  # noqa: PLC0415
+#     from mreg_cli.exceptions import ValidationError  # noqa: PLC0415
 
-    # Display a title containing the HTTP method and URL if available
-    method = last_request_method.get()
-    url = last_request_url.get()
-    msg = f"Failed to validate {exc.title}"
-    if url and method:
-        msg += f" response from {method.upper()} {url}"
+#     # Display a title containing the HTTP method and URL if available
+#     method = last_request_method.get()
+#     url = last_request_url.get()
+#     msg = f"Failed to validate {exc.title}"
+#     if url and method:
+#         msg += f" response from {method.upper()} {url}"
 
-    exc_errors = exc.errors()
+#     exc_errors = exc.errors()
 
-    # Show the input used to instantiate the model if available
-    inp = exc_errors[0]["input"] if exc_errors else ""
+#     # Show the input used to instantiate the model if available
+#     inp = exc_errors[0]["input"] if exc_errors else ""
 
-    # Show field and reason for each error
-    errors: list[str] = []
-    for err in exc_errors:
-        errlines: list[str] = [
-            f"Field: {', '.join(str(loc) for loc in err['loc'])}",
-            f"Reason: {err['msg']}",
-        ]
-        errors.append("\n".join(f"    {line}" for line in errlines))
+#     # Show field and reason for each error
+#     errors: list[str] = []
+#     for err in exc_errors:
+#         errlines: list[str] = [
+#             f"Field: {', '.join(str(loc) for loc in err['loc'])}",
+#             f"Reason: {err['msg']}",
+#         ]
+#         errors.append("\n".join(f"    {line}" for line in errlines))
 
-    err_msg = f"{msg}\n  Input: {inp}\n  Errors:\n" + "\n\n".join(errors)
-    return ValidationError(err_msg, exc)
+#     err_msg = f"{msg}\n  Input: {inp}\n  Errors:\n" + "\n\n".join(errors)
+#     return ValidationError(err_msg, exc)
 
 
 def handle_pydantic_validation_error(exc: PydanticValidationError) -> None:
@@ -203,4 +212,4 @@ def handle_pydantic_validation_error(exc: PydanticValidationError) -> None:
 
     :param exc: The Pydantic ValidationError to handle.
     """
-    handle_exception(create_validation_error_from_pydantic(exc))
+    handle_exception(ValidationError.from_pydantic(exc))
