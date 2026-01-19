@@ -148,40 +148,7 @@ CliException (base)
 | `format_exception(exc)` | Returns HTML-formatted string for prompt_toolkit |
 | `log_exception(exc)` | Logs to logger and OutputManager |
 | `print_exception(exc)` | Prints formatted exception to stdout |
-| `create_exception_from_api_error(exc_class, api_error, message)` | Creates CLI exception from API error with context |
 | `handle_pydantic_validation_error(exc)` | Converts and handles Pydantic ValidationError |
-
-### Usage Example
-
-```python
-from mreg_cli.exception_handler import handle_exception, create_exception_from_api_error
-from mreg_cli.exceptions import PatchError
-
-try:
-    some_api_operation()
-except mreg_api.exceptions.APIError as e:
-    # Option 1: Handle directly
-    handle_exception(e)
-
-    # Option 2: Create a more specific error with context
-    err = create_exception_from_api_error(PatchError, e, "Failed to update host")
-    handle_exception(err)
-```
-
-#### Regarding `create_exception_from_api_error`
-
-In `mreg_cli/commands/policy.py`, we use `create_exception_from_api_error` to wrap API errors with additional context before handling them. This is a clumsy pattern:
-
-```python
-err = create_exception_from_api_error(
-    PatchError, e, f"Failed to add host {host.name} to role {role_name!r}"
-)
-handle_exception(err)
-```
-
-The function is _only_ used there.
-
-It would be better to have a way to use the exception printing and logging functionality without bootstrapping a new exception. This could be a future improvement.
 
 ### Exception Handling Locations
 

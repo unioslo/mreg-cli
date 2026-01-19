@@ -39,7 +39,7 @@ from mreg_cli.commands.zone import ZoneCommands
 from mreg_cli.config import MregCliConfig
 
 # Import other mreg_cli modules
-from mreg_cli.exception_handler import handle_exception, handle_pydantic_validation_error
+from mreg_cli.exception_handler import handle_exception
 from mreg_cli.exceptions import CliError, CliExit, CliWarning
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
@@ -184,7 +184,7 @@ class Command(Completer):
             self.last_errno = e.code
 
         except PydanticValidationError as exc:
-            handle_pydantic_validation_error(exc)
+            handle_exception(exc)
 
         except (CliWarning, CliError) as exc:
             handle_exception(exc)
@@ -198,6 +198,7 @@ class Command(Completer):
             else:
                 handle_exception(exc)
 
+        # Other errors from mreg_api
         except mreg_api.exceptions.MregApiBaseError as exc:
             handle_exception(exc)
 

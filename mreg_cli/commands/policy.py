@@ -6,6 +6,7 @@ import argparse
 import itertools
 from typing import Any
 
+from mreg_api.exceptions import APIError, DeleteError, EntityAlreadyExists, PostError
 from mreg_api.models import (
     Atom,
     Host,
@@ -15,7 +16,7 @@ from mreg_api.models import (
 
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import APIError, CreateError, DeleteError, EntityAlreadyExists, PatchError
+from mreg_cli.exception_handler import handle_exception
 from mreg_cli.output import (
     output_atoms_lines,
     output_host_policy,
@@ -166,7 +167,7 @@ def add_atom(args: argparse.Namespace) -> None:
     if role.add_atom(atom_name):
         OutputManager().add_ok(f"Added atom {atom_name!r} to role {role_name!r}")
     else:
-        raise CreateError(f"Failed to add atom {atom_name!r} to role {role_name!r}")
+        raise PostError(f"Failed to add atom {atom_name!r} to role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -342,21 +343,13 @@ def host_add(args: argparse.Namespace) -> None:
             role.add_host(host.name)
             OutputManager().add_ok(f"Added host {host.name} to role {role_name!r}")
         except APIError as e:
-            if e.response.status_code == 409:
+            if e.response and e.response.status_code == 409:
                 OutputManager().add_line(
                     f"Host {host.name} is already a member of role {role_name!r}"
                 )
             else:
-                from mreg_cli.exception_handler import (  # noqa: PLC0415
-                    create_exception_from_api_error,
-                    handle_exception,
-                )
-
-                # NOTE: this is _only_ used here. Can we provide a different API for this?
-                err = create_exception_from_api_error(
-                    PatchError, e, f"Failed to add host {host.name} to role {role_name!r}"
-                )
-                handle_exception(err)
+                # Print and log exception, but continue iterating
+                handle_exception(e)
 
 
 @command_registry.register_command(
