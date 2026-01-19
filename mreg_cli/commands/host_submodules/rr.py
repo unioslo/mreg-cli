@@ -67,7 +67,6 @@ from mreg_cli.exceptions import (
     InputFailure,
     PatchError,
 )
-from mreg_cli.output.base import output_ttl
 from mreg_cli.output.host import (
     output_hinfo,
     output_host_ttl,

@@ -33,7 +33,6 @@ def output_host(
     :param names: If True, output the host names only.
     :param traverse_hostgroups: If True, traverse hostgroups and include them.
     """
-    # Import here to avoid circular imports
     from mreg_cli.output.group import output_hostgroups  # noqa: PLC0415
     from mreg_cli.output.policy import output_roles  # noqa: PLC0415
 
@@ -132,8 +131,6 @@ def output_host_networks(
     :param padding: Number of spaces for left-padding the output.
     :param only: If 4, only output IPv4; if 6, only output IPv6.
     """
-    # Import here to avoid circular imports
-
     networks = host.networks()
     if not networks:
         return
@@ -297,7 +294,6 @@ def output_ipaddress(
     :param len_names: Width for the names column.
     :param names: If True, resolve and display host names.
     """
-    # Import here to avoid circular imports
     import mreg_api.models
 
     ip_str = str(ip.ipaddress)
@@ -557,8 +553,6 @@ def output_srvs(srvs: Sequence[mreg_api.models.Srv], padding: int = 14) -> None:
     """
     if not srvs:
         return
-
-    # Import here to avoid circular imports
 
     host_ids = {srv.host for srv in srvs}
 

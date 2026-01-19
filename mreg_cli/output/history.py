@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from typing import ClassVar, Protocol
 
+from mreg_api.models import Atom, Host, HostGroup, Role
 from mreg_api.models.history import HistoryItem, HistoryResource
-from mreg_api.models import Atom, Role, Host, Permission, HostGroup
 
 from mreg_cli.exceptions import InternalError
 from mreg_cli.outputmanager import OutputManager

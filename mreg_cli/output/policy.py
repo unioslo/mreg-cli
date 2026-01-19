@@ -212,9 +212,6 @@ def output_label(label: Label, padding: int = 14) -> None:
     :param label: Label to output.
     :param padding: Number of spaces for left-padding the output.
     """
-    # Import here to avoid circular imports
-    import mreg_api.models
-
     short_padding = 4
     manager = OutputManager()
     manager.add_line(f"{'Name:':<{padding}}{label.name}")
