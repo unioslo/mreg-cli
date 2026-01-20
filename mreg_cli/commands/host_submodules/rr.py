@@ -621,8 +621,8 @@ def srv_add(args: argparse.Namespace) -> None:
         "priority": args.priority,
         "weight": args.weight,
         "port": args.port,
-        "host": host.id,
         "ttl": args.ttl,
+        "host": host.id,
     }
 
     existing_srv = Srv.get_by_query_unique(data)
