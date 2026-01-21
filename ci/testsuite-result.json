@@ -27552,15 +27552,15 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2025-06-19T13:09:09.968166+02:00",
-              "updated_at": "2025-06-19T13:09:12.300460+02:00",
+              "created_at": "2026-01-21T16:13:04.326820+01:00",
+              "updated_at": "2026-01-21T16:13:06.618569+01:00",
               "ipaddress": "10.0.0.10",
               "host": 20
             },
             {
               "macaddress": "11:22:33:44:55:67",
-              "created_at": "2025-06-19T13:09:12.648868+02:00",
-              "updated_at": "2025-06-19T13:09:13.288692+02:00",
+              "created_at": "2026-01-21T16:13:06.931652+01:00",
+              "updated_at": "2026-01-21T16:13:07.564421+01:00",
               "ipaddress": "2001:db8::14",
               "host": 20
             }
@@ -27569,8 +27569,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:09:12.150069+02:00",
-              "updated_at": "2025-06-19T13:09:12.150078+02:00",
+              "created_at": "2026-01-21T16:13:06.460044+01:00",
+              "updated_at": "2026-01-21T16:13:06.460050+01:00",
               "txt": "v=spf1 -all",
               "host": 20
             }
@@ -27585,8 +27585,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:09:12.147666+02:00",
-          "updated_at": "2025-06-19T13:09:12.147677+02:00",
+          "created_at": "2026-01-21T16:13:06.458260+01:00",
+          "updated_at": "2026-01-21T16:13:06.458268+01:00",
           "name": "baz.example.org",
           "contact": "",
           "ttl": null,
@@ -27603,18 +27603,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-06-19T13:08:49.394396+02:00",
-                "updated_at": "2025-06-19T13:08:49.394408+02:00",
+                "created_at": "2026-01-21T16:12:47.064969+01:00",
+                "updated_at": "2026-01-21T16:12:47.064985+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-06-19T13:08:48.992266+02:00",
-            "updated_at": "2025-06-19T13:09:15.460033+02:00",
+            "created_at": "2026-01-21T16:12:46.601861+01:00",
+            "updated_at": "2026-01-21T16:13:09.218173+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-06-19T13:08:49.869830+02:00",
+            "serialno_updated_at": "2026-01-21T16:12:47.143749+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -27633,18 +27633,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-06-19T13:08:49.394396+02:00",
-                "updated_at": "2025-06-19T13:08:49.394408+02:00",
+                "created_at": "2026-01-21T16:12:47.064969+01:00",
+                "updated_at": "2026-01-21T16:12:47.064985+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-06-19T13:08:48.992266+02:00",
-            "updated_at": "2025-06-19T13:09:15.460033+02:00",
+            "created_at": "2026-01-21T16:12:46.601861+01:00",
+            "updated_at": "2026-01-21T16:13:09.218173+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-06-19T13:08:49.869830+02:00",
+            "serialno_updated_at": "2026-01-21T16:12:47.143749+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -27656,7 +27656,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?name=whatever.example.org&priority=1&weight=1&port=80&host=20&ttl=None",
+        "url": "/api/v1/srvs/?name=whatever.example.org&priority=1&weight=1&port=80&ttl=&host=20",
         "data": {},
         "status": 200,
         "response": {
@@ -27712,18 +27712,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-08-26T11:56:35.781651+02:00",
-                "updated_at": "2025-08-26T11:56:35.781663+02:00",
+                "created_at": "2026-01-21T16:12:47.064969+01:00",
+                "updated_at": "2026-01-21T16:12:47.064985+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-08-26T11:56:35.478972+02:00",
-            "updated_at": "2025-08-26T11:57:00.621893+02:00",
+            "created_at": "2026-01-21T16:12:46.601861+01:00",
+            "updated_at": "2026-01-21T16:13:09.218173+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-08-26T11:56:36.090230+02:00",
+            "serialno_updated_at": "2026-01-21T16:12:47.143749+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -27735,7 +27735,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&host=20&ttl=None",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&ttl=&host=20",
         "data": {},
         "status": 200,
         "response": {
@@ -27757,8 +27757,8 @@
         },
         "status": 201,
         "response": {
-          "created_at": "2025-08-26T11:57:00.848637+02:00",
-          "updated_at": "2025-08-26T11:57:00.848645+02:00",
+          "created_at": "2026-01-21T16:13:09.563514+01:00",
+          "updated_at": "2026-01-21T16:13:09.563521+01:00",
           "name": "_sip._tcp.example.org",
           "priority": 10,
           "weight": 5,
@@ -30888,8 +30888,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:09:20.455468+02:00",
-              "updated_at": "2025-06-19T13:09:20.455475+02:00",
+              "created_at": "2026-01-21T16:13:13.177910+01:00",
+              "updated_at": "2026-01-21T16:13:13.177917+01:00",
               "ipaddress": "10.0.0.10",
               "host": 27
             }
@@ -30898,8 +30898,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2025-06-19T13:09:20.437537+02:00",
-              "updated_at": "2025-06-19T13:09:20.437544+02:00",
+              "created_at": "2026-01-21T16:13:13.150563+01:00",
+              "updated_at": "2026-01-21T16:13:13.150571+01:00",
               "txt": "v=spf1 -all",
               "host": 27
             }
@@ -30914,8 +30914,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:09:20.435581+02:00",
-          "updated_at": "2025-06-19T13:09:20.435588+02:00",
+          "created_at": "2026-01-21T16:13:13.147618+01:00",
+          "updated_at": "2026-01-21T16:13:13.147631+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -30932,18 +30932,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-06-19T13:08:49.394396+02:00",
-                "updated_at": "2025-06-19T13:08:49.394408+02:00",
+                "created_at": "2026-01-21T16:12:47.064969+01:00",
+                "updated_at": "2026-01-21T16:12:47.064985+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-06-19T13:08:48.992266+02:00",
-            "updated_at": "2025-06-19T13:09:20.454825+02:00",
+            "created_at": "2026-01-21T16:12:46.601861+01:00",
+            "updated_at": "2026-01-21T16:13:13.176917+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-06-19T13:08:49.869830+02:00",
+            "serialno_updated_at": "2026-01-21T16:12:47.143749+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -30962,18 +30962,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-06-19T13:08:49.394396+02:00",
-                "updated_at": "2025-06-19T13:08:49.394408+02:00",
+                "created_at": "2026-01-21T16:12:47.064969+01:00",
+                "updated_at": "2026-01-21T16:12:47.064985+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-06-19T13:08:48.992266+02:00",
-            "updated_at": "2025-06-19T13:09:20.454825+02:00",
+            "created_at": "2026-01-21T16:12:46.601861+01:00",
+            "updated_at": "2026-01-21T16:13:13.176917+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-06-19T13:08:49.869830+02:00",
+            "serialno_updated_at": "2026-01-21T16:12:47.143749+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -30985,7 +30985,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&host=27&ttl=None",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&ttl=&host=27",
         "data": {},
         "status": 200,
         "response": {
@@ -31007,8 +31007,8 @@
         },
         "status": 201,
         "response": {
-          "created_at": "2025-06-19T13:09:20.637233+02:00",
-          "updated_at": "2025-06-19T13:09:20.637240+02:00",
+          "created_at": "2026-01-21T16:13:13.390585+01:00",
+          "updated_at": "2026-01-21T16:13:13.390592+01:00",
           "name": "_sip._tcp.example.org",
           "priority": 10,
           "weight": 5,
@@ -32068,8 +32068,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2025-06-19T13:09:21.423104+02:00",
-              "updated_at": "2025-06-19T13:09:21.423114+02:00",
+              "created_at": "2026-01-21T16:13:14.043400+01:00",
+              "updated_at": "2026-01-21T16:13:14.043406+01:00",
               "ipaddress": "10.0.0.10",
               "host": 29
             }
@@ -32077,8 +32077,8 @@
           "cnames": [],
           "mxs": [
             {
-              "created_at": "2025-06-19T13:09:21.529516+02:00",
-              "updated_at": "2025-06-19T13:09:21.529525+02:00",
+              "created_at": "2026-01-21T16:13:14.154750+01:00",
+              "updated_at": "2026-01-21T16:13:14.154757+01:00",
               "priority": 10,
               "mx": "mail.example.org",
               "host": 29
@@ -32086,16 +32086,16 @@
           ],
           "txts": [
             {
-              "created_at": "2025-06-19T13:09:21.402387+02:00",
-              "updated_at": "2025-06-19T13:09:21.402394+02:00",
+              "created_at": "2026-01-21T16:13:14.028301+01:00",
+              "updated_at": "2026-01-21T16:13:14.028307+01:00",
               "txt": "v=spf1 -all",
               "host": 29
             }
           ],
           "ptr_overrides": [
             {
-              "created_at": "2025-06-19T13:09:21.681379+02:00",
-              "updated_at": "2025-06-19T13:09:21.681387+02:00",
+              "created_at": "2026-01-21T16:13:14.305185+01:00",
+              "updated_at": "2026-01-21T16:13:14.305192+01:00",
               "ipaddress": "10.0.0.11",
               "host": 29
             }
@@ -32103,8 +32103,8 @@
           "srvs": [],
           "naptrs": [
             {
-              "created_at": "2025-06-19T13:09:21.991643+02:00",
-              "updated_at": "2025-06-19T13:09:21.991651+02:00",
+              "created_at": "2026-01-21T16:13:14.386273+01:00",
+              "updated_at": "2026-01-21T16:13:14.386280+01:00",
               "preference": 16384,
               "order": 3,
               "flag": "u",
@@ -32121,8 +32121,8 @@
           "loc": null,
           "bacnetid": null,
           "communities": [],
-          "created_at": "2025-06-19T13:09:21.400433+02:00",
-          "updated_at": "2025-06-19T13:09:21.400440+02:00",
+          "created_at": "2026-01-21T16:13:14.026635+01:00",
+          "updated_at": "2026-01-21T16:13:14.026642+01:00",
           "name": "foo.example.org",
           "contact": "foo@example.org",
           "ttl": null,
@@ -32139,18 +32139,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-06-19T13:08:49.394396+02:00",
-                "updated_at": "2025-06-19T13:08:49.394408+02:00",
+                "created_at": "2026-01-21T16:12:47.064969+01:00",
+                "updated_at": "2026-01-21T16:12:47.064985+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-06-19T13:08:48.992266+02:00",
-            "updated_at": "2025-06-19T13:09:21.990588+02:00",
+            "created_at": "2026-01-21T16:12:46.601861+01:00",
+            "updated_at": "2026-01-21T16:13:14.385423+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-06-19T13:08:49.869830+02:00",
+            "serialno_updated_at": "2026-01-21T16:12:47.143749+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -32169,18 +32169,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-06-19T13:08:49.394396+02:00",
-                "updated_at": "2025-06-19T13:08:49.394408+02:00",
+                "created_at": "2026-01-21T16:12:47.064969+01:00",
+                "updated_at": "2026-01-21T16:12:47.064985+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-06-19T13:08:48.992266+02:00",
-            "updated_at": "2025-06-19T13:09:21.990588+02:00",
+            "created_at": "2026-01-21T16:12:46.601861+01:00",
+            "updated_at": "2026-01-21T16:13:14.385423+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-06-19T13:08:49.869830+02:00",
+            "serialno_updated_at": "2026-01-21T16:12:47.143749+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -32192,7 +32192,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&host=29&ttl=None",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&ttl=&host=29",
         "data": {},
         "status": 200,
         "response": {
@@ -32214,8 +32214,8 @@
         },
         "status": 201,
         "response": {
-          "created_at": "2025-06-19T13:09:22.144577+02:00",
-          "updated_at": "2025-06-19T13:09:22.144585+02:00",
+          "created_at": "2026-01-21T16:13:14.514797+01:00",
+          "updated_at": "2026-01-21T16:13:14.514804+01:00",
           "name": "_sip._tcp.example.org",
           "priority": 10,
           "weight": 5,
