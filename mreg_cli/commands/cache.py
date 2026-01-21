@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.cache import get_cache
+from mreg_api import MregClient
+from mreg_api.exceptions import CacheError
+
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError
+from mreg_cli.output.cache import output_cache_info
 from mreg_cli.outputmanager import OutputManager
 
 command_registry = CommandRegistry()
@@ -29,12 +31,12 @@ class CacheCommands(BaseCommand):
 def cache_clear(_: argparse.Namespace) -> None:
     """Clear the cache."""
     try:
-        cache = get_cache()
-        b = cache.clear()
-    except Exception as e:
+        client = MregClient()
+        items_removed = client.clear_cache()
+        OutputManager().add_ok(f"Cleared cache, {items_removed} items removed")
+    except CacheError as e:
         OutputManager().add_error(f"Failed to clear cache: {e}")
         return
-    OutputManager().add_ok(f"Cleared cache, {b} items removed")
 
 
 @command_registry.register_command(
@@ -42,15 +44,16 @@ def cache_clear(_: argparse.Namespace) -> None:
 )
 def cache_info(_: argparse.Namespace) -> None:
     """Show cache information."""
-    conf = MregCliConfig()
-    if not conf.cache:
-        OutputManager().add_line("Cache is disabled")
+    client = MregClient()
+    if not client.is_cache_enabled:
+        OutputManager().add_line("Cache is disabled.")
         return
 
-    cache = get_cache()
     try:
-        info = cache.get_info()
-        OutputManager().add_formatted_table(*info.as_table_args())
+        info = client.get_cache_info()
+        if not info:
+            raise Exception("No cache data available")
+        output_cache_info(info)
     except Exception as e:
         raise CliError(f"Failed to retrieve cache info: {e}") from e
 
@@ -60,14 +63,11 @@ def cache_info(_: argparse.Namespace) -> None:
 )
 def cache_enable(_: argparse.Namespace) -> None:
     """Enable caching."""
-    conf = MregCliConfig()
-    if conf.cache:
+    client = MregClient()
+    if client.is_cache_enabled:
         OutputManager().add_line("Cache is already enabled")
         return
-
-    cache = get_cache()
-    cache.enable()
-    conf.cache = True
+    client.enable_cache()
     OutputManager().add_ok("Enabled cache")
 
 
@@ -76,12 +76,9 @@ def cache_enable(_: argparse.Namespace) -> None:
 )
 def cache_disable(_: argparse.Namespace) -> None:
     """Disable caching."""
-    conf = MregCliConfig()
-    if not conf.cache:
+    client = MregClient()
+    if not client.is_cache_enabled:
         OutputManager().add_line("Cache is already disabled")
         return
-
-    cache = get_cache()
-    cache.disable()
-    conf.cache = False
+    client.disable_cache(clear=True)
     OutputManager().add_ok("Cleared and disabled cache")

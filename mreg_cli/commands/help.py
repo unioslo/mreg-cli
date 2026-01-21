@@ -8,7 +8,6 @@ from typing import Any
 from mreg_api.models import HealthInfo, ServerLibraries, ServerVersion, UserInfo
 
 from mreg_cli.__about__ import __version__ as mreg_cli_version
-from mreg_cli.cache import disable_cache
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.config import MregCliConfig
@@ -21,6 +20,7 @@ from mreg_cli.output.meta import (
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
+from mreg_cli.utilities.api import disable_cache
 
 command_registry = CommandRegistry()
 

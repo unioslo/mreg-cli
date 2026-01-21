@@ -6,12 +6,11 @@ import argparse
 import functools
 import logging
 
-from mreg_api import MregClient
+from mreg_api import CacheConfig, MregClient
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from rich.console import Console, Group
 from rich.panel import Panel
 
-from mreg_cli import cache
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, get_cli_history, source
 from mreg_cli.config import MregCliConfig
@@ -186,12 +185,12 @@ def main():
         url=config.url,
         domain=config.domain,
         timeout=config.http_timeout,
-        cache=config.cache,
-        cache_ttl=config.cache_ttl,
+        cache=CacheConfig(
+            enabled=config.cache,
+            ttl=config.cache_ttl,
+            # other cache settings from config should go here
+        ),
     )
-
-    # Configure application
-    cache.configure(config)
 
     try:
         try_token_or_login(
