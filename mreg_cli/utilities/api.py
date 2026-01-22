@@ -82,18 +82,17 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
         if e.response and e.response.status_code == 401:
             if fail_without_token:
                 raise SystemExit("Token only login failed.") from None
-            prompt_for_password_and_login(user, url, catch_exception=False)
+            prompt_for_password_and_login(user, url)
         return
     else:
         return
 
 
-def prompt_for_password_and_login(user: str, url: str, catch_exception: bool = True) -> None:
+def prompt_for_password_and_login(user: str, url: str) -> None:
     """Login to MREG.
 
     :param user: Username to login with.
     :param url: URL to MREG.
-    :param catch_exception: If True, login errors are caught, otherwise they are passed on.
 
     :raises LoginFailedError: If login fails and catch_exception is False.
 
@@ -104,10 +103,6 @@ def prompt_for_password_and_login(user: str, url: str, catch_exception: bool = T
     try:
         auth_and_update_token(user, password)
     except CliError as e:
-        if catch_exception:
-            from mreg_cli.exceptions import handle_exception  # noqa: PLC0415
-
-            handle_exception(e)
         if isinstance(e, LoginFailedError):
             raise e
         else:
@@ -123,10 +118,7 @@ def prompt_for_password_and_try_update_token() -> None:
             raise LoginFailedError("Unable to determine username.")
         auth_and_update_token(user, password)
     except CliError as e:
-        from mreg_cli.exceptions import handle_exception  # noqa: PLC0415
-
-        handle_exception(e)
-        raise e  # FIXME: remove if redundant
+        raise e
 
 
 def auth_and_update_token(username: str, password: str) -> None:
@@ -139,16 +131,9 @@ def auth_and_update_token(username: str, password: str) -> None:
     try:
         token = client.login(username, password)
     except httpx.HTTPError as e:
-        raise CliError(str(e)) from e
+        raise CliError(str(e)) from e  # should be unreachable
     except mreg_api.exceptions.LoginFailedError as e:
-        raise LoginFailedError(str(e)) from e
-    # if not result.ok:
-    #     err = parse_mreg_error(result)
-    #     if err:
-    #         msg = err.as_str()
-    #     else:
-    #         msg = result.text
-    #     raise LoginFailedError(msg)
+        raise LoginFailedError(e.details) from e
     else:
         TokenFile.set_entry(username, base_url, token)
         logger.info("Token updated for %s @ %s", username, tokenurl)
