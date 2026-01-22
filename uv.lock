@@ -350,8 +350,8 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.1.dev74+g8fabc1e70"
-source = { git = "https://github.com/unioslo/mreg-api#8fabc1e705ba378889d92be014e6c43b401a2a2f" }
+version = "0.1.dev79+ga860d8932"
+source = { git = "https://github.com/unioslo/mreg-api#a860d8932d14db8d820816a4904d90189a8e91c2" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },

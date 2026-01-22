@@ -295,7 +295,7 @@ class Command(Completer):
         output = OutputManager()
         client = mreg_api.MregClient()
         for response in client.get_client_history():
-            output.recording_request2(response)
+            output.recording_request(response)
         client.clear_client_history()
 
     def process_command_line(self, line: str, *, interactive: bool = True) -> None:
