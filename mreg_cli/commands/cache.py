@@ -45,7 +45,7 @@ def cache_clear(_: argparse.Namespace) -> None:
 def cache_info(_: argparse.Namespace) -> None:
     """Show cache information."""
     client = MregClient()
-    if not client.is_cache_enabled:
+    if not client.cache.is_enabled:
         OutputManager().add_line("Cache is disabled.")
         return
 
@@ -64,7 +64,7 @@ def cache_info(_: argparse.Namespace) -> None:
 def cache_enable(_: argparse.Namespace) -> None:
     """Enable caching."""
     client = MregClient()
-    if client.is_cache_enabled:
+    if client.cache.is_enabled:
         OutputManager().add_line("Cache is already enabled")
         return
     client.enable_cache()
@@ -77,7 +77,7 @@ def cache_enable(_: argparse.Namespace) -> None:
 def cache_disable(_: argparse.Namespace) -> None:
     """Disable caching."""
     client = MregClient()
-    if not client.is_cache_enabled:
+    if not client.cache.is_enabled:
         OutputManager().add_line("Cache is already disabled")
         return
     client.disable_cache(clear=True)

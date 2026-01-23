@@ -186,7 +186,7 @@ def main():
         domain=config.domain,
         timeout=config.http_timeout,
         cache=CacheConfig(
-            enabled=config.cache,
+            enable=config.cache,
             ttl=config.cache_ttl,
             # other cache settings from config should go here
         ),
