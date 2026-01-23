@@ -1,3 +1,5 @@
+"""Cache output functions."""
+
 from __future__ import annotations
 
 from mreg_api.cache import CacheInfo

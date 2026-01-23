@@ -2,20 +2,33 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 from mreg_api import MregClient
 from mreg_api.endpoints import Endpoint
-from mreg_api.models import Community, Host, IPAddress, Network
+from mreg_api.models import (
+    CNAME,
+    MX,
+    NAPTR,
+    SSHFP,
+    TXT,
+    BacnetID,
+    Community,
+    HInfo,
+    Host,
+    HostList,
+    IPAddress,
+    Location,
+    Network,
+    PTR_override,
+    Srv,
+)
 
 from mreg_cli.exceptions import EntityNotFound
 from mreg_cli.output.base import output_timestamps, output_ttl
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import IP_Version
-
-if TYPE_CHECKING:
-    import mreg_api.models
-
 
 # -----------------------------------------------------------------------------
 # Host output functions
@@ -23,7 +36,7 @@ if TYPE_CHECKING:
 
 
 def output_host(
-    host: mreg_api.models.Host,
+    host: Host,
     names: bool = False,
     traverse_hostgroups: bool = False,
 ) -> None:
@@ -80,7 +93,7 @@ def output_host(
 
 
 def output_hosts(
-    hosts: Sequence[mreg_api.models.Host],
+    hosts: Sequence[Host],
     names: bool = False,
     traverse_hostgroups: bool = False,
 ) -> None:
@@ -96,7 +109,7 @@ def output_hosts(
             OutputManager().add_line("")
 
 
-def output_hostlist(hostlist: mreg_api.models.HostList) -> None:
+def output_hostlist(hostlist: HostList) -> None:
     """Output a list of hosts to the console.
 
     :param hostlist: HostList object containing hosts to output.
@@ -121,7 +134,7 @@ def output_hostlist(hostlist: mreg_api.models.HostList) -> None:
 
 
 def output_host_networks(
-    host: mreg_api.models.Host,
+    host: Host,
     padding: int = 14,
     only: Literal[4, 6] | None = None,
 ) -> None:
@@ -137,8 +150,8 @@ def output_host_networks(
 
     manager = OutputManager()
 
-    v4: list[tuple[mreg_api.models.Network, mreg_api.models.IPAddress]] = []
-    v6: list[tuple[mreg_api.models.Network, mreg_api.models.IPAddress]] = []
+    v4: list[tuple[Network, IPAddress]] = []
+    v6: list[tuple[Network, IPAddress]] = []
 
     for network, ips in networks.items():
         network = Network.model_validate(network, from_attributes=True)
@@ -150,7 +163,7 @@ def output_host_networks(
                 v6.append((network, ip))
 
     def output_a_records(
-        nets: list[tuple[mreg_api.models.Network, mreg_api.models.IPAddress]],
+        nets: list[tuple[Network, IPAddress]],
         version: int,
     ) -> None:
         if not nets:
@@ -162,7 +175,7 @@ def output_host_networks(
         headers: tuple[str, ...] = ("IP", "MAC")
         keys: tuple[str, ...] = ("ip", "mac")
 
-        ip_to_community: dict[mreg_api.models.IPAddress, mreg_api.models.Community] = {}
+        ip_to_community: dict[IPAddress, Community] = {}
         if host.communities:
             for com in host.communities:
                 ip = host.get_ip_by_id(com.ipaddress)
@@ -216,7 +229,7 @@ def output_host_networks(
 
 
 def output_host_ipaddresses(
-    host: mreg_api.models.Host,
+    host: Host,
     padding: int = 14,
     names: bool = False,
     only: IP_Version | None = None,
@@ -241,7 +254,7 @@ def output_host_ipaddresses(
         output_ipaddresses(host.ipaddresses, padding=padding, names=names)
 
 
-def output_host_cnames(host: mreg_api.models.Host, padding: int = 14) -> None:
+def output_host_cnames(host: Host, padding: int = 14) -> None:
     """Output the CNAME records for a host.
 
     :param host: Host whose CNAMEs to output.
@@ -252,7 +265,7 @@ def output_host_cnames(host: mreg_api.models.Host, padding: int = 14) -> None:
     output_cnames(host.cnames, host=host, padding=padding)
 
 
-def output_host_roles(host: mreg_api.models.Host, padding: int = 14) -> None:
+def output_host_roles(host: Host, padding: int = 14) -> None:
     """Output the roles for a host.
 
     :param host: Host whose roles to output.
@@ -268,7 +281,7 @@ def output_host_roles(host: mreg_api.models.Host, padding: int = 14) -> None:
             manager.add_line(f"  {role}")
 
 
-def output_host_ttl(host: mreg_api.models.Host) -> None:
+def output_host_ttl(host: Host) -> None:
     """Output the TTL value for a host.
 
     :param host: Host whose TTL to output.
@@ -282,7 +295,7 @@ def output_host_ttl(host: mreg_api.models.Host) -> None:
 
 
 def output_ipaddress(
-    ip: mreg_api.models.IPAddress,
+    ip: IPAddress,
     len_ip: int,
     len_names: int,
     names: bool = False,
@@ -294,21 +307,19 @@ def output_ipaddress(
     :param len_names: Width for the names column.
     :param names: If True, resolve and display host names.
     """
-    import mreg_api.models
-
     ip_str = str(ip.ipaddress)
     mac = ip.macaddress if ip.macaddress else "<not set>"
 
     name = ""
     if names:
-        host = mreg_api.models.Host.get_by_id(ip.host)
+        host = Host.get_by_id(ip.host)
         name = host.name if host else "<Not found>"
 
     OutputManager().add_line(f"{name:<{len_names}}{ip_str:<{len_ip}}{mac}")
 
 
 def output_ipaddresses(
-    ips: Sequence[mreg_api.models.IPAddress],
+    ips: Sequence[IPAddress],
     padding: int = 14,
     names: bool = False,
 ) -> None:
@@ -349,7 +360,7 @@ def output_ipaddresses(
 # -----------------------------------------------------------------------------
 
 
-def output_hinfo(hinfo: mreg_api.models.HInfo, padding: int = 14) -> None:
+def output_hinfo(hinfo: HInfo, padding: int = 14) -> None:
     """Output a HINFO record.
 
     :param hinfo: HInfo to output.
@@ -364,8 +375,8 @@ def output_hinfo(hinfo: mreg_api.models.HInfo, padding: int = 14) -> None:
 
 
 def output_cname(
-    cname: mreg_api.models.CNAME,
-    host: mreg_api.models.Host | None = None,
+    cname: CNAME,
+    host: Host | None = None,
     padding: int = 14,
 ) -> None:
     """Output a CNAME record.
@@ -384,8 +395,8 @@ def output_cname(
 
 
 def output_cnames(
-    cnames: Sequence[mreg_api.models.CNAME],
-    host: mreg_api.models.Host | None = None,
+    cnames: Sequence[CNAME],
+    host: Host | None = None,
     padding: int = 14,
 ) -> None:
     """Output multiple CNAME records.
@@ -403,7 +414,7 @@ def output_cnames(
 # -----------------------------------------------------------------------------
 
 
-def output_txt(txt: mreg_api.models.TXT, padding: int = 14) -> None:
+def output_txt(txt: TXT, padding: int = 14) -> None:
     """Output a TXT record.
 
     :param txt: TXT record to output.
@@ -412,7 +423,7 @@ def output_txt(txt: mreg_api.models.TXT, padding: int = 14) -> None:
     OutputManager().add_line(f"{'TXT:':<{padding}}{txt.txt}")
 
 
-def output_txts(txts: Sequence[mreg_api.models.TXT], padding: int = 14) -> None:
+def output_txts(txts: Sequence[TXT], padding: int = 14) -> None:
     """Output multiple TXT records.
 
     :param txts: List of TXT records to output.
@@ -427,7 +438,7 @@ def output_txts(txts: Sequence[mreg_api.models.TXT], padding: int = 14) -> None:
 # -----------------------------------------------------------------------------
 
 
-def output_mx(mx: mreg_api.models.MX, padding: int = 14) -> None:
+def output_mx(mx: MX, padding: int = 14) -> None:
     """Output an MX record.
 
     :param mx: MX record to output.
@@ -437,7 +448,7 @@ def output_mx(mx: mreg_api.models.MX, padding: int = 14) -> None:
     OutputManager().add_line(f"{'':<{padding}}{mx.priority:>{len_pri}} {mx.mx}")
 
 
-def output_mxs(mxs: Sequence[mreg_api.models.MX], padding: int = 14) -> None:
+def output_mxs(mxs: Sequence[MX], padding: int = 14) -> None:
     """Output multiple MX records.
 
     :param mxs: List of MX records to output.
@@ -469,7 +480,7 @@ def naptr_headers() -> list[str]:
     ]
 
 
-def output_naptr(naptr: mreg_api.models.NAPTR, padding: int = 14) -> None:
+def output_naptr(naptr: NAPTR, padding: int = 14) -> None:
     """Output a NAPTR record.
 
     :param naptr: NAPTR record to output.
@@ -489,7 +500,7 @@ def output_naptr(naptr: mreg_api.models.NAPTR, padding: int = 14) -> None:
     )
 
 
-def output_naptrs(naptrs: Sequence[mreg_api.models.NAPTR], padding: int = 14) -> None:
+def output_naptrs(naptrs: Sequence[NAPTR], padding: int = 14) -> None:
     """Output multiple NAPTR records.
 
     :param naptrs: List of NAPTR records to output.
@@ -512,7 +523,7 @@ def output_naptrs(naptrs: Sequence[mreg_api.models.NAPTR], padding: int = 14) ->
 
 
 def output_srv(
-    srv: mreg_api.models.Srv,
+    srv: Srv,
     padding: int = 14,
     host_id_name_map: dict[int, str] | None = None,
 ) -> None:
@@ -545,7 +556,7 @@ def output_srv(
     )
 
 
-def output_srvs(srvs: Sequence[mreg_api.models.Srv], padding: int = 14) -> None:
+def output_srvs(srvs: Sequence[Srv], padding: int = 14) -> None:
     """Output multiple SRV records.
 
     :param srvs: List of SRV records to output.
@@ -579,7 +590,7 @@ def output_srvs(srvs: Sequence[mreg_api.models.Srv], padding: int = 14) -> None:
 # -----------------------------------------------------------------------------
 
 
-def output_ptr_override(ptr: mreg_api.models.PTR_override, padding: int = 14) -> None:
+def output_ptr_override(ptr: PTR_override, padding: int = 14) -> None:
     """Output a PTR override record.
 
     :param ptr: PTR override to output.
@@ -591,7 +602,7 @@ def output_ptr_override(ptr: mreg_api.models.PTR_override, padding: int = 14) ->
 
 
 def output_ptr_overrides(
-    ptrs: Sequence[mreg_api.models.PTR_override],
+    ptrs: Sequence[PTR_override],
     padding: int = 14,
 ) -> None:
     """Output multiple PTR override records.
@@ -616,7 +627,7 @@ def sshfp_headers() -> list[str]:
     return ["SSHFPs:", "Algorithm", "Hash Type", "Fingerprint"]
 
 
-def output_sshfp(sshfp: mreg_api.models.SSHFP, padding: int = 14) -> None:
+def output_sshfp(sshfp: SSHFP, padding: int = 14) -> None:
     """Output an SSHFP record.
 
     :param sshfp: SSHFP record to output.
@@ -628,7 +639,7 @@ def output_sshfp(sshfp: mreg_api.models.SSHFP, padding: int = 14) -> None:
     )
 
 
-def output_sshfps(sshfps: Sequence[mreg_api.models.SSHFP], padding: int = 14) -> None:
+def output_sshfps(sshfps: Sequence[SSHFP], padding: int = 14) -> None:
     """Output multiple SSHFP records.
 
     :param sshfps: List of SSHFP records to output.
@@ -650,7 +661,7 @@ def output_sshfps(sshfps: Sequence[mreg_api.models.SSHFP], padding: int = 14) ->
 # -----------------------------------------------------------------------------
 
 
-def output_bacnetids(bacnetids: Sequence[mreg_api.models.BacnetID]) -> None:
+def output_bacnetids(bacnetids: Sequence[BacnetID]) -> None:
     """Output multiple Bacnet ID records.
 
     :param bacnetids: List of Bacnet IDs to output.
@@ -666,7 +677,7 @@ def output_bacnetids(bacnetids: Sequence[mreg_api.models.BacnetID]) -> None:
 # -----------------------------------------------------------------------------
 
 
-def output_location(loc: mreg_api.models.Location, padding: int = 14) -> None:
+def output_location(loc: Location, padding: int = 14) -> None:
     """Output a LOC record.
 
     :param loc: Location to output.

@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from collections.abc import Sequence
+
+from mreg_api.models import HostGroup
 
 from mreg_cli.output.base import output_timestamps
 from mreg_cli.outputmanager import OutputManager
 
-if TYPE_CHECKING:
-    import mreg_api.models
 
-
-def output_hostgroup(hostgroup: mreg_api.models.HostGroup, padding: int = 14) -> None:
+def output_hostgroup(hostgroup: HostGroup, padding: int = 14) -> None:
     """Output a hostgroup.
 
     :param hostgroup: HostGroup to output.
@@ -45,7 +44,7 @@ def output_hostgroup(hostgroup: mreg_api.models.HostGroup, padding: int = 14) ->
 
 
 def output_hostgroups(
-    hostgroups: Sequence[mreg_api.models.HostGroup] | Sequence[str],
+    hostgroups: Sequence[HostGroup] | Sequence[str],
     padding: int = 14,
     multiline: bool = False,
 ) -> None:
@@ -75,7 +74,7 @@ def output_hostgroups(
 
 
 def output_hostgroup_members(
-    hostgroup: mreg_api.models.HostGroup,
+    hostgroup: HostGroup,
     expand: bool = False,
 ) -> None:
     """Output the members of a hostgroup.
@@ -89,7 +88,7 @@ def output_hostgroup_members(
         _output_members(hostgroup)
 
 
-def _output_members(hostgroup: mreg_api.models.HostGroup) -> None:
+def _output_members(hostgroup: HostGroup) -> None:
     """Output the members of a hostgroup (not expanded).
 
     :param hostgroup: HostGroup whose members to output.
@@ -104,7 +103,7 @@ def _output_members(hostgroup: mreg_api.models.HostGroup) -> None:
         manager.add_formatted_line("host", host)
 
 
-def _output_members_expanded(hostgroup: mreg_api.models.HostGroup) -> None:
+def _output_members_expanded(hostgroup: HostGroup) -> None:
     """Output the members of a hostgroup (expanded).
 
     :param hostgroup: HostGroup whose members to output.

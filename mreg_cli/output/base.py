@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import Any, Protocol
 
 from mreg_cli.exceptions import InternalError
 from mreg_cli.outputmanager import OutputManager
-
-if TYPE_CHECKING:
-    pass
 
 
 class HasTimestamps(Protocol):

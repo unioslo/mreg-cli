@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from collections.abc import Sequence
+
+from mreg_api.models import ForwardZone, NameServer, ReverseZone, Zone
 
 from mreg_cli.output.base import output_ttl
 from mreg_cli.outputmanager import OutputManager
 
-if TYPE_CHECKING:
-    import mreg_api.models
 
-
-def output_zone(zone: mreg_api.models.Zone, padding: int = 20) -> None:
+def output_zone(zone: Zone, padding: int = 20) -> None:
     """Output a single zone.
 
     :param zone: Zone to output.
@@ -35,7 +34,7 @@ def output_zone(zone: mreg_api.models.Zone, padding: int = 20) -> None:
 
 
 def output_zones(
-    zones: Sequence[mreg_api.models.ForwardZone | mreg_api.models.ReverseZone],
+    zones: Sequence[ForwardZone | ReverseZone],
 ) -> None:
     """Output a list of zones.
 
@@ -52,7 +51,7 @@ def output_zones(
 
 
 def output_nameservers(
-    nameservers: Sequence[mreg_api.models.NameServer],
+    nameservers: Sequence[NameServer],
     padding: int = 20,
 ) -> None:
     """Output nameservers for a zone.
@@ -71,7 +70,7 @@ def output_nameservers(
         fmt_ns("", ns.name, "<not set>")
 
 
-def output_delegations(zone: mreg_api.models.Zone, padding: int = 20) -> None:
+def output_delegations(zone: Zone, padding: int = 20) -> None:
     """Output the delegations of a zone.
 
     :param zone: Zone whose delegations to output.
