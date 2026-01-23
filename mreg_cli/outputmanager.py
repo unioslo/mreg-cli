@@ -18,7 +18,6 @@ from typing import Any, Literal, overload
 from urllib.parse import urlencode, urlparse
 
 import httpx
-import requests
 from mreg_api.client import RequestRecord
 from pydantic import BaseModel
 
