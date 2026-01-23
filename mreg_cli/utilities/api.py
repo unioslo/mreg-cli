@@ -8,9 +8,7 @@ from __future__ import annotations
 
 import functools
 import logging
-import os
-import sys
-from typing import Callable, NoReturn, ParamSpec, TypeVar
+from typing import Callable, ParamSpec, TypeVar
 from urllib.parse import urljoin
 
 import httpx
@@ -45,12 +43,6 @@ def disable_cache(func: Callable[P, T]) -> Callable[P, T]:
     return wrapper
 
 
-def error(msg: str | Exception, code: int = os.EX_UNAVAILABLE) -> NoReturn:
-    """Print an error message and exits with the given code."""
-    print(f"ERROR: {msg}", file=sys.stderr)
-    sys.exit(code)
-
-
 def try_token_or_login(user: str, url: str, fail_without_token: bool = False) -> None:
     """Check for a valid token or interactively log in to MREG.
 
@@ -73,19 +65,18 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
         client.test_auth()
         logger.info("Using stored token for %s @ %s", user, url)
     except httpx.RequestError as e:
-        error(f"Could not connect to {url}: {e}")
+        raise SystemExit(f"Could not connect to {url}: {e}") from None
     except mreg_api.exceptions.InvalidAuthTokenError as e:
         client.unset_token()  # NOTE: might be redundant
         logger.info("Stored token for %s @ %s is invalid", user, url)
-        if not e.response:
+        if not e.response:  # Invalid auth should always have a response
             raise e
-        if e.response and e.response.status_code == 401:
+        if e.response.status_code == 401:
             if fail_without_token:
                 raise SystemExit("Token only login failed.") from None
-            prompt_for_password_and_login(user, url)
-        return
-    else:
-        return
+            return prompt_for_password_and_login(user, url)
+        # NOTE: should be unreachable if server works like we expect it to:
+        raise SystemExit("Failed to authenticate.") from e
 
 
 def prompt_for_password_and_login(user: str, url: str) -> None:
