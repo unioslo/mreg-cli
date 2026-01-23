@@ -39,7 +39,7 @@ def disable_cache(func: Callable[P, T]) -> Callable[P, T]:
 
     @functools.wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        with MregClient().cache_disabled():
+        with MregClient().caching(enable=False):
             return func(*args, **kwargs)
 
     return wrapper
