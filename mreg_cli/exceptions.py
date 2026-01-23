@@ -175,12 +175,6 @@ class EntityAlreadyExists(CliWarning):
     pass
 
 
-class MultipleEntitiesFound(CliWarning):
-    """Warning class for multiple entities found."""
-
-    pass
-
-
 class EntityOwnershipMismatch(CliWarning):
     """Warning class for an entity that already exists but owned by someone else."""
 
@@ -333,10 +327,10 @@ class ExceptionHandler:
         exc = self.exception
         msg = html_escape(self.message)
 
-        # Special case for LoginFailedError
-        # TODO: add mapping or field in exception classes for special cases
-        if isinstance(exc, (LoginFailedError, mreg_api.exceptions.LoginFailedError)):
-            return f"Login failed: {msg}"
+        # # Special case for LoginFailedError
+        # # TODO: add mapping or field in exception classes for special cases
+        # if isinstance(exc, (LoginFailedError, mreg_api.exceptions.LoginFailedError)):
+        #     return f"Login failed: {msg}"
 
         # Classify by severity
         if self.is_error:
