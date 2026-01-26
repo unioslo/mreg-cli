@@ -235,11 +235,10 @@ class LoginFailedError(CliError):
     pass
 
 
-_MREG_API_WARNING_EXCEPTIONS = (
+_MREG_API_ERROR_EXCEPTIONS = (
     mreg_api.exceptions.LoginFailedError,
     mreg_api.exceptions.EntityNotFound,
     mreg_api.exceptions.EntityAlreadyExists,
-    mreg_api.exceptions.InputFailure,
 )
 
 
@@ -252,7 +251,7 @@ def is_error(exc: Exception) -> bool:
         return False
 
     # mreg_api exceptions that should be treated as errors
-    if isinstance(exc, _MREG_API_WARNING_EXCEPTIONS):
+    if isinstance(exc, _MREG_API_ERROR_EXCEPTIONS):
         return True
 
     return False
