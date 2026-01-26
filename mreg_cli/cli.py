@@ -20,7 +20,6 @@ from mreg_api.client import last_request_url
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from prompt_toolkit.history import FileHistory
-from pydantic import ValidationError as PydanticValidationError
 
 # Import all the commands
 from mreg_cli.commands.cache import CacheCommands
@@ -175,37 +174,25 @@ class Command(Completer):
             # If the command has a callback function, call it.
             if hasattr(parsed_args, "func") and parsed_args.func:
                 parsed_args.func(parsed_args)
-
+        # Unexpected system exit from argparse
         except SystemExit as e:
             # This is a super-hacky workaround to implement a REPL app using
             # argparse; Argparse calls sys.exit when it detects an error or
             # after it prints a help msg.
             self.last_errno = e.code
-
-        except PydanticValidationError as exc:
-            handle_exception(exc)
-
-        except (CliWarning, CliError) as exc:
-            handle_exception(exc)
-
-        # Request went through, but API returned an error
-        except mreg_api.exceptions.APIError as exc:
-            # Retry command after re-authenticating if we got a 401 Unauthorized
-            if exc.response and exc.response.status_code == 401 and interactive and not retry:
-                prompt_for_password_and_try_update_token()
-                self.parse(command, interactive=interactive, retry=True)
-            else:
-                handle_exception(exc)
-
-        # Other errors from mreg_api
-        except mreg_api.exceptions.MregApiBaseError as exc:
-            handle_exception(exc)
-
+        # Catch our own exit exception
         except CliExit:
             # If we have active recordings going on, save them before exiting
             OutputManager().recording_stop()
             sys.exit(0)
-
+        except Exception as exc:
+            if isinstance(exc, mreg_api.exceptions.APIError):
+                # Retry command after re-authenticating if we got a 401 Unauthorized
+                if exc.response and exc.response.status_code == 401 and interactive and not retry:
+                    prompt_for_password_and_try_update_token()
+                    self.parse(command, interactive=interactive, retry=True)
+                    return  # skip error handling if successful
+            handle_exception(exc)
         else:
             # If no exception occurred make sure errno isn't set to an error
             # code.
