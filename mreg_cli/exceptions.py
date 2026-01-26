@@ -8,11 +8,10 @@ from typing import TypeVar
 
 import mreg_api.exceptions
 from httpx import Response
-from mreg_api.client import last_request_method, last_request_url
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
-from pydantic import ValidationError as PydanticValidationError
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -99,50 +98,6 @@ class UnexpectedDataError(APIError):
     """Error class for unexpected API data."""
 
     pass
-
-
-class ValidationError(CliError):
-    """Error class for validation failures."""
-
-    def __init__(self, message: str, pydantic_error: PydanticValidationError | None = None):
-        """Initialize a ValidationError.
-
-        :param message: The error message.
-        :param pydantic_error: The original Pydantic ValidationError, if any.
-        """
-        super().__init__(message)
-        self.pydantic_error = pydantic_error
-
-    @classmethod
-    def from_pydantic(cls, e: PydanticValidationError) -> ValidationError:
-        """Create a ValidationError from a Pydantic ValidationError.
-
-        :param e: The Pydantic ValidationError.
-        :returns: The created ValidationError.
-        """
-        # Display a title containing the HTTP method and URL if available
-        method = last_request_method.get()
-        url = last_request_url.get()
-        msg = f"Failed to validate {e.title}"
-        if url and method:
-            msg += f" response from {method.upper()} {url}"
-
-        exc_errors = e.errors()
-
-        # Show the input used to instantiate the model if available
-        inp = exc_errors[0]["input"] if exc_errors else ""
-
-        # Show field and reason for each error
-        errors: list[str] = []
-        for err in exc_errors:
-            errlines: list[str] = [
-                f"Field: {', '.join(str(loc) for loc in err['loc'])}",
-                f"Reason: {err['msg']}",
-            ]
-            errors.append("\n".join(f"    {line}" for line in errlines))
-
-        err_msg = f"{msg}\n  Input: {inp}\n  Errors:\n" + "\n\n".join(errors)
-        return cls(err_msg, e)
 
 
 class FileError(CliError):
@@ -266,6 +221,8 @@ def get_exception_message(exc: Exception, *, json: bool = True) -> str:
     """
     if isinstance(exc, mreg_api.exceptions.APIError):
         return exc.formatted_message(json=json)
+    elif isinstance(exc, ValidationError):
+        mreg_api.exceptions.MregValidationError.from_pydantic(exc)
     return str(exc)
 
 
@@ -306,8 +263,8 @@ class ExceptionHandler:
 
     def _transform_exception(self, exc: Exception) -> Exception:
         """Transform an exception into an appropriate mreg_cli exception if needed."""
-        if isinstance(exc, PydanticValidationError):
-            return ValidationError.from_pydantic(exc)
+        if isinstance(exc, ValidationError):
+            return mreg_api.exceptions.MregValidationError.from_pydantic(exc)
         # TODO: add more transformations as needed.
         #       Consider mapping/registry if it grows too large
         return exc
