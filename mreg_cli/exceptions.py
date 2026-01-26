@@ -235,11 +235,12 @@ class LoginFailedError(CliError):
     pass
 
 
-"""Exception handling for mreg_cli.
-
-This module provides the ExceptionHandler class to format, log, and print
-exceptions from both mreg_cli and mreg_api.
-"""
+_MREG_API_WARNING_EXCEPTIONS = (
+    mreg_api.exceptions.LoginFailedError,
+    mreg_api.exceptions.EntityNotFound,
+    mreg_api.exceptions.EntityAlreadyExists,
+    mreg_api.exceptions.InputFailure,
+)
 
 
 def is_error(exc: Exception) -> bool:
@@ -251,14 +252,7 @@ def is_error(exc: Exception) -> bool:
         return False
 
     # mreg_api exceptions that should be treated as errors
-    if isinstance(
-        exc,
-        (
-            mreg_api.exceptions.DeleteError,
-            mreg_api.exceptions.InternalError,
-            mreg_api.exceptions.MregValidationError,
-        ),
-    ):
+    if isinstance(exc, _MREG_API_WARNING_EXCEPTIONS):
         return True
 
     return False
