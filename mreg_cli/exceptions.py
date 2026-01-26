@@ -367,4 +367,6 @@ def handle_exception(exc: Exception) -> None:
 
     :param exc: The exception to handle.
     """
+    # TODO: add JSON toggle via config here
+    # possibly via verbosity level/debug flag
     ExceptionHandler(exc).handle()
