@@ -236,9 +236,9 @@ class LoginFailedError(CliError):
 
 
 _MREG_API_ERROR_EXCEPTIONS = (
-    mreg_api.exceptions.LoginFailedError,
-    mreg_api.exceptions.EntityNotFound,
-    mreg_api.exceptions.EntityAlreadyExists,
+    mreg_api.exceptions.DeleteError,
+    mreg_api.exceptions.InternalError,
+    mreg_api.exceptions.MregValidationError,
 )
 
 
