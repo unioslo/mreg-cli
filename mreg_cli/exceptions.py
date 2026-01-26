@@ -324,13 +324,7 @@ class ExceptionHandler:
 
         Errors are formatted with red text, warnings with italics.
         """
-        exc = self.exception
         msg = html_escape(self.message)
-
-        # # Special case for LoginFailedError
-        # # TODO: add mapping or field in exception classes for special cases
-        # if isinstance(exc, (LoginFailedError, mreg_api.exceptions.LoginFailedError)):
-        #     return f"Login failed: {msg}"
 
         # Classify by severity
         if self.is_error:
