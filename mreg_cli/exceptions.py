@@ -94,28 +94,11 @@ class APIError(CliWarning):
         self.response = response
 
 
-class UnexpectedDataError(APIError):
-    """Error class for unexpected API data."""
-
-    pass
-
-
 class FileError(CliError):
     """Error class for file errors."""
 
     pass
 
-
-class TooManyResults(CliWarning):
-    """Warning class for too many results."""
-
-    pass
-
-
-class NoHistoryFound(CliWarning):
-    """Warning class for no history found."""
-
-    pass
 
 
 class EntityNotFound(CliWarning):
