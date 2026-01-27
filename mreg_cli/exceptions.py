@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections.abc import Generator
+from contextlib import contextmanager
 from typing import TypeVar
 
 import mreg_api.exceptions
@@ -320,3 +322,16 @@ def handle_exception(exc: Exception) -> None:
     # TODO: add JSON toggle via config here
     # possibly via verbosity level/debug flag
     ExceptionHandler(exc).handle()
+
+
+@contextmanager
+def handle_exceptions(json: bool = True) -> Generator[None, None, None]:
+    """Context manager to handle exceptions using ExceptionHandler and exit.
+
+    :param json: Whether to include JSON details for mreg_api exceptions.
+    """
+    try:
+        yield
+    except Exception as exc:
+        ExceptionHandler(exc, json=json).handle()
+        sys.exit(1)
