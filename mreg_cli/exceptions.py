@@ -23,13 +23,9 @@ T = TypeVar("T", bound=Exception)
 class CliExit(Exception):
     """Exception used to exit the CLI."""
 
-    pass
-
 
 class CliException(Exception):
     """Base exception class for the CLI."""
-
-    pass
 
 
 class CliError(CliException):
@@ -39,8 +35,6 @@ class CliError(CliException):
     the user cannot be expected to resolve.
     """
 
-    pass
-
 
 class CliWarning(CliException):
     """Exception class for CLI warnings.
@@ -48,37 +42,25 @@ class CliWarning(CliException):
     Warnings should be recoverable by changing the user input.
     """
 
-    pass
-
 
 class CreateError(CliError):
     """Error class for failed creation."""
-
-    pass
 
 
 class PatchError(CliError):
     """Error class for failed patching."""
 
-    pass
-
 
 class DeleteError(CliError):
     """Error class for failed deletion."""
-
-    pass
 
 
 class GetError(CliError):
     """Error class for failed retrieval."""
 
-    pass
-
 
 class InternalError(CliError):
     """Error class for internal errors."""
-
-    pass
 
 
 class APIError(CliWarning):
@@ -99,8 +81,6 @@ class APIError(CliWarning):
 class FileError(CliError):
     """Error class for file errors."""
 
-    pass
-
 
 ### Begin mreg_api wrappers ###
 
@@ -114,61 +94,41 @@ class FileError(CliError):
 class EntityNotFound(mreg_api.exceptions.EntityNotFound):
     """Warning class for an entity that was not found."""
 
-    pass
-
 
 class EntityAlreadyExists(mreg_api.exceptions.EntityAlreadyExists):
     """Warning class for an entity that already exists."""
-
-    pass
 
 
 class EntityOwnershipMismatch(mreg_api.exceptions.EntityOwnershipMismatch):
     """Warning class for an entity that already exists but owned by someone else."""
 
-    pass
-
 
 class InputFailure(mreg_api.exceptions.InputFailure):
     """Warning class for input failure."""
-
-    pass
 
 
 class ForceMissing(mreg_api.exceptions.ForceMissing):
     """Warning class for missing force flag."""
 
-    pass
-
 
 class IPNetworkWarning(mreg_api.exceptions.IPNetworkError):
     """Warning class for IP network/address warnings."""
-
-    pass
 
 
 class InvalidIPAddress(mreg_api.exceptions.InvalidIPAddress):
     """Warning class for an entity that is not an IP address."""
 
-    pass
-
 
 class InvalidIPv4Address(mreg_api.exceptions.InvalidIPv4Address):
     """Warning class for an entity that is not an IPv4 address."""
-
-    pass
 
 
 class InvalidIPv6Address(mreg_api.exceptions.InvalidIPv6Address):
     """Warning class for an entity that is not an IPv6 address."""
 
-    pass
-
 
 class InvalidNetwork(mreg_api.exceptions.InvalidNetwork):
     """Warning class for an entity that is not a network."""
-
-    pass
 
 
 ### End mreg_api wrappers ###
@@ -177,13 +137,9 @@ class InvalidNetwork(mreg_api.exceptions.InvalidNetwork):
 class NetworkOverlap(IPNetworkWarning):
     """Warning class for a network that overlaps with another network."""
 
-    pass
-
 
 class LoginFailedError(CliError):
     """Error class for login failure."""
-
-    pass
 
 
 _MREG_API_ERROR_EXCEPTIONS = (
