@@ -100,65 +100,76 @@ class FileError(CliError):
     pass
 
 
+### Begin mreg_api wrappers ###
 
-class EntityNotFound(CliWarning):
+# NOTE: These exceptions currently just wrap mreg_api exceptions,
+#       since we historically used them directly in the CLI.
+#       In the future, we should consider if we want to rename
+#       them to avoid confusion with mreg_api exceptions.
+#       Inheriting from mreg_api allows us to catch them as before.
+
+
+class EntityNotFound(mreg_api.exceptions.EntityNotFound):
     """Warning class for an entity that was not found."""
 
     pass
 
 
-class EntityAlreadyExists(CliWarning):
+class EntityAlreadyExists(mreg_api.exceptions.EntityAlreadyExists):
     """Warning class for an entity that already exists."""
 
     pass
 
 
-class EntityOwnershipMismatch(CliWarning):
+class EntityOwnershipMismatch(mreg_api.exceptions.EntityOwnershipMismatch):
     """Warning class for an entity that already exists but owned by someone else."""
 
     pass
 
 
-class InputFailure(CliWarning, ValueError):
+class InputFailure(mreg_api.exceptions.InputFailure):
     """Warning class for input failure."""
 
     pass
 
 
-class ForceMissing(CliWarning):
+class ForceMissing(mreg_api.exceptions.ForceMissing):
     """Warning class for missing force flag."""
 
     pass
 
 
-class IPNetworkWarning(ValueError, CliWarning):
+class IPNetworkWarning(mreg_api.exceptions.IPNetworkError):
     """Warning class for IP network/address warnings."""
 
     pass
 
 
-class InvalidIPAddress(IPNetworkWarning):
+class InvalidIPAddress(mreg_api.exceptions.InvalidIPAddress):
     """Warning class for an entity that is not an IP address."""
 
     pass
 
 
-class InvalidIPv4Address(IPNetworkWarning):
+class InvalidIPv4Address(mreg_api.exceptions.InvalidIPv4Address):
     """Warning class for an entity that is not an IPv4 address."""
 
     pass
 
 
-class InvalidIPv6Address(IPNetworkWarning):
+class InvalidIPv6Address(mreg_api.exceptions.InvalidIPv6Address):
     """Warning class for an entity that is not an IPv6 address."""
 
     pass
 
 
-class InvalidNetwork(IPNetworkWarning):
+class InvalidNetwork(mreg_api.exceptions.InvalidNetwork):
     """Warning class for an entity that is not a network."""
 
     pass
+
+
+### End mreg_api wrappers ###
 
 
 class NetworkOverlap(IPNetworkWarning):
