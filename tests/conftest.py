@@ -3,12 +3,13 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 
-from mreg_api import MregClient
 import pytest
+from mreg_api import MregClient
 from mreg_api.client import last_request_method, last_request_url
 from pytest_httpserver import HTTPServer
 
 from mreg_cli.config import MregCliConfig
+from mreg_cli.outputmanager import OutputManager
 
 
 @pytest.fixture(autouse=True)
@@ -78,10 +79,20 @@ def reset_context_vars() -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
-def reset_context_mreg_client() -> Iterator[None]:
-    """Reset the context MregClient after each test."""
+def reset_mreg_client() -> Iterator[None]:
+    """Reset the MregClient after each test."""
     yield
     try:
         MregClient.reset_instance()
+    except KeyError:
+        pass
+
+
+@pytest.fixture(autouse=True)
+def reset_outputmanager() -> Iterator[None]:
+    """Reset the OutputManager after each test."""
+    yield
+    try:
+        OutputManager().clear()
     except KeyError:
         pass
