@@ -15,10 +15,11 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
+import mreg_api
+from mreg_api.client import last_request_url
 from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from prompt_toolkit.history import FileHistory
-from pydantic import ValidationError as PydanticValidationError
 
 # Import all the commands
 from mreg_cli.commands.cache import CacheCommands
@@ -37,11 +38,11 @@ from mreg_cli.commands.zone import ZoneCommands
 from mreg_cli.config import MregCliConfig
 
 # Import other mreg_cli modules
-from mreg_cli.exceptions import CliError, CliExit, CliWarning, ValidationError
+from mreg_cli.exceptions import CliError, CliExit, CliWarning, handle_exception, handle_exceptions
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
-from mreg_cli.utilities.api import create_and_set_corrolation_id, last_request_url
+from mreg_cli.utilities.api import prompt_for_password_and_try_update_token
 from mreg_cli.utilities.fs import to_path
 
 logger = logging.getLogger(__name__)
@@ -163,7 +164,7 @@ class Command(Completer):
         self.children[prog] = new_cmd
         return new_cmd
 
-    def parse(self, command: str) -> None:
+    def parse(self, command: str, interactive: bool = True, retry: bool = False) -> None:
         """Parse and execute a command."""
         logger.debug(f"Parsing command: {command}")
         args = shlex.split(command, comments=True)
@@ -173,29 +174,30 @@ class Command(Completer):
             # If the command has a callback function, call it.
             if hasattr(parsed_args, "func") and parsed_args.func:
                 parsed_args.func(parsed_args)
-
+        # Unexpected system exit from argparse
         except SystemExit as e:
             # This is a super-hacky workaround to implement a REPL app using
             # argparse; Argparse calls sys.exit when it detects an error or
             # after it prints a help msg.
             self.last_errno = e.code
-
-        except PydanticValidationError as exc:
-            ValidationError.from_pydantic(exc).print_and_log()
-
-        except (CliWarning, CliError) as exc:
-            exc.print_and_log()
-
+        # Catch our own exit exception
         except CliExit:
             # If we have active recordings going on, save them before exiting
             OutputManager().recording_stop()
             sys.exit(0)
-
+        except Exception as exc:
+            if isinstance(exc, mreg_api.exceptions.APIError):
+                # Retry command after re-authenticating if we got a 401 Unauthorized
+                if exc.response and exc.response.status_code == 401 and interactive and not retry:
+                    with handle_exceptions(json=False):
+                        prompt_for_password_and_try_update_token()
+                    return self.parse(command, interactive=interactive, retry=True)
+            handle_exception(exc)
         else:
-            # If no exception occurred make sure errno isn't set to an error
-            # code.
+            # Clear last errno on success
             self.last_errno = 0
         finally:
+            self.record_responses()
             # Unset URL after we have finished processing the command
             # so that validation errors that happen before a new request
             # is made don't show a URL.
@@ -274,7 +276,15 @@ class Command(Completer):
                         start_position=-len(cur),
                     )
 
-    def process_command_line(self, line: str) -> None:
+    def record_responses(self) -> None:
+        """Record API responses for the last executed command."""
+        output = OutputManager()
+        client = mreg_api.MregClient()
+        for response in client.get_client_history():
+            output.recording_request(response)
+        client.clear_client_history()
+
+    def process_command_line(self, line: str, *, interactive: bool = True) -> None:
         """Process a line containing a command."""
         # OutputManager is a singleton class so we
         # need to clear it before each command.
@@ -285,14 +295,14 @@ class Command(Completer):
         try:
             cmd = output.from_command(line)
         except (CliWarning, CliError) as exc:
-            exc.print_and_log()
+            handle_exception(exc)
             return
         # Create and set the corrolation id, using the cleaned command
         # as the suffix. This is used to track the command in the logs
         # on the server side.
-        create_and_set_corrolation_id(cmd)
+        mreg_api.MregClient().set_correlation_id(cmd)
         # Run the command
-        cli.parse(cmd)
+        cli.parse(cmd, interactive=interactive)
         # Render the output
         output.render()
 

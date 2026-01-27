@@ -1,81 +1,31 @@
-"""Custom exceptions for mreg_cli.
-
-Note that Cli exceptions offer a print_self() method that prints the exception
-with appropriate formatting. This is useful for printing exceptions in the
-context of a CLI command.
-"""
+"""Custom exceptions and exception handling for mreg_cli."""
 
 from __future__ import annotations
 
 import logging
 import sys
-from typing import Self
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import TypeVar
 
+import mreg_api.exceptions
+from httpx import Response
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
-from pydantic import ValidationError as PydanticValidationError
-from requests import Response
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T", bound=Exception)
 
 
 class CliExit(Exception):
     """Exception used to exit the CLI."""
 
-    pass
-
 
 class CliException(Exception):
     """Base exception class for the CLI."""
-
-    def escape(self) -> str:
-        """Get an HTML-escaped string representation of the exception."""
-        return html_escape(str(self))
-
-    def formatted_exception(self) -> str:
-        """Return a formatted string representation of the exception.
-
-        :returns: Formatted string for the exception message.
-        """
-        # NOTE: override this in subclasses to provide custom formatting.
-        return self.escape()
-
-    def log(self):
-        """Log the exception."""
-        from mreg_cli.outputmanager import OutputManager
-
-        logger.error(str(self))
-        OutputManager().add_error(str(self))
-
-    def print_self(self):
-        """Print the exception with appropriate formatting."""
-        print_formatted_text(HTML(self.formatted_exception()), file=sys.stdout)
-
-    def print_and_log(self):
-        """Print the exception and log it."""
-        self.log()
-        self.print_self()
-
-    @classmethod
-    def from_api_error(cls, e: APIError, message: str | None = None) -> Self:
-        """Create a CliError from an API error.
-
-        :param e: The original API error.
-        :param message: An optional message to prefix the original exception message.
-        :returns: The created CliError.
-        """
-        from mreg_cli.api.errors import parse_mreg_error
-
-        if (api_err := parse_mreg_error(e.response)) and api_err.errors:
-            reason = api_err.as_str()
-        else:
-            reason = str(e)
-        if message:
-            message += f": {reason}"
-        else:
-            message = reason
-        return cls(message)
 
 
 class CliError(CliException):
@@ -85,13 +35,6 @@ class CliError(CliException):
     the user cannot be expected to resolve.
     """
 
-    def formatted_exception(self) -> str:
-        """Return a string formatted with HTML red tag for the error message.
-
-        :returns: Formatted error message.
-        """
-        return f"<ansired>ERROR: {self.escape()}</ansired>"
-
 
 class CliWarning(CliException):
     """Exception class for CLI warnings.
@@ -99,49 +42,25 @@ class CliWarning(CliException):
     Warnings should be recoverable by changing the user input.
     """
 
-    def log(self):
-        """Log the exception."""
-        from mreg_cli.outputmanager import OutputManager
-
-        logger.warning(str(self))
-        OutputManager().add_warning(str(self))
-
-    def formatted_exception(self) -> str:
-        """Return a string formatted with HTML italic tag for the warning message.
-
-        :returns: Formatted warning message.
-        """
-        return f"<i>{self.escape()}</i>"
-
 
 class CreateError(CliError):
     """Error class for failed creation."""
-
-    pass
 
 
 class PatchError(CliError):
     """Error class for failed patching."""
 
-    pass
-
 
 class DeleteError(CliError):
     """Error class for failed deletion."""
-
-    pass
 
 
 class GetError(CliError):
     """Error class for failed retrieval."""
 
-    pass
-
 
 class InternalError(CliError):
     """Error class for internal errors."""
-
-    pass
 
 
 class APIError(CliWarning):
@@ -159,160 +78,216 @@ class APIError(CliWarning):
         self.response = response
 
 
-class UnexpectedDataError(APIError):
-    """Error class for unexpected API data."""
-
-    pass
-
-
-class ValidationError(CliError):
-    """Error class for validation failures."""
-
-    def __init__(self, message: str, pydantic_error: PydanticValidationError | None = None):
-        """Initialize a ValidationError.
-
-        :param message: The error message.
-        """
-        super().__init__(message)
-        self.pydantic_error = pydantic_error
-
-    @classmethod
-    def from_pydantic(cls, e: PydanticValidationError) -> ValidationError:
-        """Create a ValidationError from a Pydantic ValidationError.
-
-        :param e: The Pydantic ValidationError.
-        :returns: The created ValidationError.
-        """
-        from mreg_cli.utilities.api import last_request_method, last_request_url
-
-        # Display a title containing the HTTP method and URL if available
-        method = last_request_method.get()
-        url = last_request_url.get()
-        msg = f"Failed to validate {e.title}"
-        if url and method:
-            msg += f" response from {method.upper()} {url}"
-
-        exc_errors = e.errors()
-
-        # Show the input used to instantiate the model if available
-        inp = exc_errors[0]["input"] if exc_errors else ""
-
-        # Show field and reason for each error
-        errors: list[str] = []
-        for err in exc_errors:
-            errlines: list[str] = [
-                f"Field: {', '.join(str(l) for l in err['loc'])}",  # noqa: E741
-                f"Reason: {err['msg']}",
-            ]
-            errors.append("\n".join(f"    {line}" for line in errlines))
-
-        err_msg = f"{msg}\n  Input: {inp}\n  Errors:\n" + "\n\n".join(errors)
-        return cls(err_msg, e)
-
-    def log(self):
-        """Log the exception with traceback."""
-        from mreg_cli.outputmanager import OutputManager
-
-        logger.exception(str(self), stack_info=True, exc_info=self)
-        OutputManager().add_error(str(self))
-
-
 class FileError(CliError):
     """Error class for file errors."""
 
-    pass
+
+### Begin mreg_api wrappers ###
+
+# NOTE: These exceptions currently just wrap mreg_api exceptions,
+#       since we historically used them directly in the CLI.
+#       In the future, we should consider if we want to rename
+#       them to avoid confusion with mreg_api exceptions.
+#       Inheriting from mreg_api allows us to catch them as before.
 
 
-class TooManyResults(CliWarning):
-    """Warning class for too many results."""
-
-    pass
-
-
-class NoHistoryFound(CliWarning):
-    """Warning class for no history found."""
-
-    pass
-
-
-class EntityNotFound(CliWarning):
+class EntityNotFound(mreg_api.exceptions.EntityNotFound):
     """Warning class for an entity that was not found."""
 
-    pass
 
-
-class EntityAlreadyExists(CliWarning):
+class EntityAlreadyExists(mreg_api.exceptions.EntityAlreadyExists):
     """Warning class for an entity that already exists."""
 
-    pass
 
-
-class MultipleEntitiesFound(CliWarning):
-    """Warning class for multiple entities found."""
-
-    pass
-
-
-class EntityOwnershipMismatch(CliWarning):
+class EntityOwnershipMismatch(mreg_api.exceptions.EntityOwnershipMismatch):
     """Warning class for an entity that already exists but owned by someone else."""
 
-    pass
 
-
-class InputFailure(CliWarning, ValueError):
+class InputFailure(mreg_api.exceptions.InputFailure):
     """Warning class for input failure."""
 
-    pass
 
-
-class ForceMissing(CliWarning):
+class ForceMissing(mreg_api.exceptions.ForceMissing):
     """Warning class for missing force flag."""
 
-    pass
 
-
-class IPNetworkWarning(ValueError, CliWarning):
+class IPNetworkWarning(mreg_api.exceptions.IPNetworkError):
     """Warning class for IP network/address warnings."""
 
-    pass
 
-
-class InvalidIPAddress(IPNetworkWarning):
+class InvalidIPAddress(mreg_api.exceptions.InvalidIPAddress):
     """Warning class for an entity that is not an IP address."""
 
-    pass
 
-
-class InvalidIPv4Address(IPNetworkWarning):
+class InvalidIPv4Address(mreg_api.exceptions.InvalidIPv4Address):
     """Warning class for an entity that is not an IPv4 address."""
 
-    pass
 
-
-class InvalidIPv6Address(IPNetworkWarning):
+class InvalidIPv6Address(mreg_api.exceptions.InvalidIPv6Address):
     """Warning class for an entity that is not an IPv6 address."""
 
-    pass
 
-
-class InvalidNetwork(IPNetworkWarning):
+class InvalidNetwork(mreg_api.exceptions.InvalidNetwork):
     """Warning class for an entity that is not a network."""
 
-    pass
+
+### End mreg_api wrappers ###
 
 
 class NetworkOverlap(IPNetworkWarning):
-    """Warning class for a networkthat overlaps with another network."""
-
-    pass
+    """Warning class for a network that overlaps with another network."""
 
 
 class LoginFailedError(CliError):
     """Error class for login failure."""
 
-    def formatted_exception(self) -> str:
-        """Return a string formatted with 'Login failed:' prefixing the error message.
 
-        :returns: Formatted error message.
+_MREG_API_ERROR_EXCEPTIONS = (
+    mreg_api.exceptions.DeleteError,
+    mreg_api.exceptions.InternalError,
+    mreg_api.exceptions.MregValidationError,
+)
+
+
+def is_error(exc: Exception) -> bool:
+    """Determine if an exception should produce an error or warning."""
+    # mreg_cli errors
+    if isinstance(exc, CliError):
+        return True
+    elif isinstance(exc, CliWarning):
+        return False
+
+    # mreg_api exceptions that should be treated as errors
+    if isinstance(exc, _MREG_API_ERROR_EXCEPTIONS):
+        return True
+
+    return False
+
+
+def get_exception_message(exc: Exception, *, json: bool = True) -> str:
+    """Get the plain text message from an exception.
+
+    :param exc: The exception to get the message from.
+    :param json: Whether to include JSON details for mreg_api exceptions.
+    :returns: The plain text message.
+    """
+    if isinstance(exc, mreg_api.exceptions.APIError):
+        return exc.formatted_message(json=json)
+    elif isinstance(exc, ValidationError):
+        mreg_api.exceptions.MregValidationError.from_pydantic(exc)
+    return str(exc)
+
+
+class ExceptionHandler:
+    """Handler for exceptions from mreg_cli and mreg_api.
+
+    This class takes an exception, transforms it if necessary, and precomputes
+    formatted messages for display. It provides methods to log and print the
+    exception with appropriate styling.
+
+    Attributes:
+        exception: The (possibly transformed) exception being handled.
+        original_exception: The original exception before any transformation.
+        is_error: True if the exception is non-recoverable (displayed in red).
+        is_validation_error: True if the exception is a ValidationError.
+        message: The plain text message from the exception.
+        formatted_message: HTML-formatted message for prompt_toolkit display.
+
+    """
+
+    def __init__(self, exc: Exception, *, json: bool = True) -> None:
+        """Initialize the handler with an exception.
+
+        :param exc: The exception to handle.
+        :param json: Whether to include JSON details for mreg_api exceptions.
         """
-        return f"Login failed: {self.escape()}"
+        self.original_exception = exc
+        self.exception = self._transform_exception(exc)
+        self._json = json
+
+        # Precompute flags
+        self.is_error = is_error(self.exception)
+        self.is_validation_error = isinstance(self.exception, ValidationError)
+
+        # Precompute messages
+        self.message = get_exception_message(self.exception, json=self._json)
+        self.formatted_message = self.get_formatted_message()
+
+    def _transform_exception(self, exc: Exception) -> Exception:
+        """Transform an exception into an appropriate mreg_cli exception if needed."""
+        if isinstance(exc, ValidationError):
+            return mreg_api.exceptions.MregValidationError.from_pydantic(exc)
+        # TODO: add more transformations as needed.
+        #       Consider mapping/registry if it grows too large
+        return exc
+
+    def get_formatted_message(self) -> str:
+        """Get the HTML-formatted message for prompt_toolkit display.
+
+        Errors are formatted with red text, warnings with italics.
+        """
+        msg = html_escape(self.message)
+
+        # Classify by severity
+        if self.is_error:
+            return f"<ansired>ERROR: {msg}</ansired>"
+        else:
+            return f"<i>{msg}</i>"
+
+    def log(self) -> None:
+        """Log the exception to logger and OutputManager.
+
+        Errors are logged at ERROR level, warnings at WARNING level.
+        ValidationErrors get special logging with traceback.
+        """
+        from mreg_cli.outputmanager import OutputManager  # noqa: PLC0415
+
+        om = OutputManager()
+
+        # ValidationError gets special logging with traceback
+        if self.is_validation_error:
+            logger.exception(self.message, stack_info=True, exc_info=self.exception)
+            om.add_error(self.message)
+        elif self.is_error:
+            logger.error(self.message)
+            om.add_error(self.message)
+        else:
+            logger.warning(self.message)
+            om.add_warning(self.message)
+
+    def print(self) -> None:
+        """Print the exception with appropriate formatting."""
+        print_formatted_text(HTML(self.formatted_message), file=sys.stdout)
+
+    def handle(self) -> None:
+        """Log and print the exception.
+
+        This is the main entry point for complete exception handling.
+        """
+        self.log()
+        self.print()
+
+
+def handle_exception(exc: Exception) -> None:
+    """Log and print an exception with appropriate formatting.
+
+    This is the main entry point for exception handling.
+
+    :param exc: The exception to handle.
+    """
+    # TODO: add JSON toggle via config here
+    # possibly via verbosity level/debug flag
+    ExceptionHandler(exc).handle()
+
+
+@contextmanager
+def handle_exceptions(json: bool = True) -> Generator[None, None, None]:
+    """Context manager to handle exceptions using ExceptionHandler and exit.
+
+    :param json: Whether to include JSON details for mreg_api exceptions.
+    """
+    try:
+        yield
+    except Exception as exc:
+        ExceptionHandler(exc, json=json).handle()
+        sys.exit(1)
