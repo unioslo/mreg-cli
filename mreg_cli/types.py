@@ -47,7 +47,7 @@ class RecordingEntry(TypedDict):
     time: TimeInfo | None
 
 
-IP_Version: TypeAlias = mreg_api.types.IP_Version
+IP_Version: TypeAlias = Literal[4, 6]
 IP_AddressT = mreg_api.types.IP_AddressT
 IP_NetworkT = mreg_api.types.IP_NetworkT
 
