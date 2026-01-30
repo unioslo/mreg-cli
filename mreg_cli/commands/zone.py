@@ -5,14 +5,30 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Zone
+from mreg_api.models import ForwardZone, ReverseZone, Zone
+
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import DeleteError, InputFailure
+from mreg_cli.output import output_delegations, output_zone, output_zones
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
 command_registry = CommandRegistry()
+
+
+def _output_zones_by_type(forward: bool, reverse: bool) -> None:
+    """Fetch and output zones of the given type(s).
+
+    :param forward: Whether to list forward zones.
+    :param reverse: Whether to list reverse zones.
+    """
+    zones: list[ForwardZone | ReverseZone] = []
+    if forward:
+        zones.extend(ForwardZone.get_list())
+    if reverse:
+        zones.extend(ReverseZone.get_list())
+    output_zones(zones)
 
 
 class ZoneCommands(BaseCommand):
@@ -126,7 +142,7 @@ def info(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone)
     """
     zone = Zone.get_zone_or_raise(args.zone)
-    zone.output()
+    output_zone(zone)
 
 
 @command_registry.register_command(
@@ -155,7 +171,7 @@ def zone_list(args: argparse.Namespace) -> None:
     """
     if not (args.forward or args.reverse):
         raise InputFailure("Add either -forward or -reverse as argument")
-    Zone.output_zones(args.forward, args.reverse)
+    _output_zones_by_type(args.forward, args.reverse)
 
 
 @command_registry.register_command(
@@ -172,7 +188,7 @@ def zone_delegation_list(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone)
     """
     zone = Zone.get_zone_or_raise(args.zone)
-    zone.output_delegations()
+    output_delegations(zone)
 
 
 @command_registry.register_command(

@@ -5,10 +5,11 @@ from __future__ import annotations
 import argparse
 from typing import Any, NoReturn
 
+from mreg_api import MregClient
+
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CliExit
-from mreg_cli.utilities.api import logout as _force_logout
 
 command_registry = CommandRegistry(root=True)
 
@@ -54,5 +55,5 @@ def exit_mreg_cli(_: argparse.Namespace) -> NoReturn:
 )
 def logout(_: argparse.Namespace):
     """Log out from mreg and exit. Will delete token."""
-    _force_logout()
+    MregClient().logout()
     raise CliExit

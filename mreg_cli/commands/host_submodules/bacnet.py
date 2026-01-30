@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.models import BacnetID, Host
+from mreg_api.models import BacnetID, Host
+
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
@@ -21,6 +22,7 @@ from mreg_cli.exceptions import (
     EntityOwnershipMismatch,
     InputFailure,
 )
+from mreg_cli.output import output_bacnetids
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -123,4 +125,4 @@ def bacnetid_list(args: argparse.Namespace) -> None:
     if not bacnetids:
         raise EntityNotFound("No BACnet IDs found in the specified range.")
 
-    BacnetID.output_multiple(bacnetids)
+    output_bacnetids(bacnetids)

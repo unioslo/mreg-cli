@@ -5,15 +5,22 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from mreg_api.models import HealthInfo, ServerLibraries, ServerVersion, UserInfo
+
 from mreg_cli.__about__ import __version__ as mreg_cli_version
-from mreg_cli.api.models import HealthInfo, ServerLibraries, ServerVersion, UserInfo
-from mreg_cli.cache import disable_cache
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError
+from mreg_cli.output.meta import (
+    output_health_info,
+    output_server_libraries,
+    output_server_version,
+    output_user_info,
+)
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
+from mreg_cli.utilities.api import disable_cache
 
 command_registry = CommandRegistry()
 
@@ -116,8 +123,11 @@ def versions_help(_: argparse.Namespace) -> None:
     output_manager = OutputManager()
     output_manager.add_line(f"mreg-cli: {mreg_cli_version}")
 
-    ServerVersion.fetch().output()
-    ServerLibraries.fetch().output()
+    server_version = ServerVersion.fetch()
+    output_server_version(server_version)
+
+    server_libs = ServerLibraries.fetch()
+    output_server_libraries(server_libs)
 
 
 @command_registry.register_command(
@@ -131,8 +141,10 @@ def versions_help(_: argparse.Namespace) -> None:
 @disable_cache
 def whoami_help(args: argparse.Namespace) -> None:
     """Show information about the current user."""
+    django: bool = args.django
     try:
-        UserInfo.fetch(ignore_errors=False).output(django=args.django)
+        user_info = UserInfo.fetch(ignore_errors=False)
+        output_user_info(user_info, django=django)
     except Exception as e:
         raise CliError(
             f"Failed to display user info for current user {MregCliConfig().user!r}: {e}"
@@ -151,8 +163,12 @@ def whoami_help(args: argparse.Namespace) -> None:
 @disable_cache
 def whois_help(args: argparse.Namespace) -> None:
     """Show information about a user."""
+    user: str = args.user
+    django: bool = args.django
+
     try:
-        UserInfo.fetch(ignore_errors=False, user=args.user).output(django=args.django)
+        user_info = UserInfo.fetch(ignore_errors=False, user=user)
+        output_user_info(user_info, django=django)
     except Exception as e:
         raise CliError(f"Failed to display user info for {args.user!r}: {e}") from e
 
@@ -167,6 +183,6 @@ def meta_health(_: argparse.Namespace) -> None:
     """Show information about the health of the server."""
     try:
         info = HealthInfo.fetch()
-        info.output()
+        output_health_info(info)
     except Exception as e:
         raise CliError(f"Failed to display health info: {e}") from e

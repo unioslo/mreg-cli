@@ -18,8 +18,9 @@ from __future__ import annotations
 import argparse
 from enum import Enum, auto
 
-from mreg_cli.api.fields import HostName, MacAddress
-from mreg_cli.api.models import CNAME, Host, HostList, Network, NetworkOrIP
+from mreg_api.models import CNAME, Host, HostList, Network, NetworkOrIP
+from mreg_api.models.fields import HostName, MacAddress
+
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     DeleteError,
@@ -28,6 +29,7 @@ from mreg_cli.exceptions import (
     ForceMissing,
     InputFailure,
 )
+from mreg_cli.output import output_host_ipaddresses
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
 
@@ -406,8 +408,8 @@ def a_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     name: str = args.name
-
-    Host.get_by_any_means_or_raise(name).output_ipaddresses(only=4)
+    host = Host.get_by_any_means_or_raise(name)
+    output_host_ipaddresses(host, only=4)
 
 
 @command_registry.register_command(
@@ -552,4 +554,5 @@ def aaaa_show(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
-    Host.get_by_any_means_or_raise(name).output_ipaddresses(only=6)
+    host = Host.get_by_any_means_or_raise(name)
+    output_host_ipaddresses(host, only=6)

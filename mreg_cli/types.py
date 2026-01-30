@@ -3,34 +3,23 @@
 from __future__ import annotations
 
 import argparse
-import ipaddress
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from enum import StrEnum
 from functools import lru_cache
 from typing import (
-    Annotated,
     Any,
     Literal,
-    Mapping,
-    MutableMapping,
     NamedTuple,
-    Sequence,
     TypeAlias,
     TypedDict,
     TypeVar,
-    Union,
 )
 
+import mreg_api.types
 from pydantic import (
     TypeAdapter,
-    ValidationError,
-    ValidationInfo,
-    ValidatorFunctionWrapHandler,
-    WrapValidator,
 )
-from pydantic_core import PydanticCustomError
-from typing_extensions import TypeAliasType
 
 CommandFunc = Callable[[argparse.Namespace], None]
 
@@ -59,42 +48,17 @@ class RecordingEntry(TypedDict):
 
 
 IP_Version: TypeAlias = Literal[4, 6]
-IP_AddressT = ipaddress.IPv4Address | ipaddress.IPv6Address
-IP_NetworkT = ipaddress.IPv4Network | ipaddress.IPv6Network
-
-IP_networkTV = TypeVar("IP_networkTV", ipaddress.IPv4Network, ipaddress.IPv6Network)
-
+IP_AddressT = mreg_api.types.IP_AddressT
+IP_NetworkT = mreg_api.types.IP_NetworkT
 
 # https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
 NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
 NargsType = int | NargsStr
 
 
-# Source: https://docs.pydantic.dev/2.7/concepts/types/#named-recursive-types
-def json_custom_error_validator(
-    value: Any, handler: ValidatorFunctionWrapHandler, _info: ValidationInfo
-) -> Any:
-    """Simplify the error message to avoid a gross error stemming from
-    exhaustive checking of all union options.
-    """  # noqa: D205
-    try:
-        return handler(value)
-    except ValidationError:
-        raise PydanticCustomError(
-            "invalid_json",
-            "Input is not valid json",
-        ) from None
-
-
-Json = TypeAliasType(
-    "Json",
-    Annotated[
-        Union[Mapping[str, "Json"], Sequence["Json"], str, int, float, bool, None],
-        WrapValidator(json_custom_error_validator),
-    ],
-)
-JsonMapping = Mapping[str, Json]
-QueryParams = MutableMapping[str, str | int | None]
+Json = mreg_api.types.Json
+JsonMapping = mreg_api.types.JsonMapping
+QueryParams = mreg_api.types.QueryParams
 
 
 class Flag:
