@@ -11096,10 +11096,10 @@
     "warning": [],
     "error": [],
     "output": [
-      "2025-03-20 15:36:58 [system-signals]: Txt create: txt = 'v=spf1 -all'",
-      "2025-03-20 15:36:58 [test]: Host create: name = 'somehost.example.org', contact = 'support@example.org'",
-      "2025-03-20 15:36:58 [test]: Ipaddress create: ipaddress = '10.0.1.4'",
-      "2025-03-20 15:36:59 [test]: Host update: contact: support@example.org -> new-support@example.org"
+      "2026-02-03 14:07:01 [system-signals]: Txt create: txt = 'v=spf1 -all'",
+      "2026-02-03 14:07:02 [test]: Host create: name = 'somehost.example.org'",
+      "2026-02-03 14:07:02 [test]: Ipaddress create: ipaddress = '10.0.1.4'",
+      "2026-02-03 14:07:02 [test]: Host update: "
     ],
     "api_requests": [
       {
@@ -11113,7 +11113,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2025-03-20T15:36:58.692928+01:00",
+              "timestamp": "2026-02-03T14:07:01.946553+01:00",
               "user": "system-signals",
               "resource": "host",
               "name": "somehost.example.org",
@@ -11125,17 +11125,17 @@
               }
             },
             {
-              "timestamp": "2025-03-20T15:36:58.701239+01:00",
+              "timestamp": "2026-02-03T14:07:02.051773+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
               "model_id": 4,
               "model": "Host",
               "action": "create",
-              "data": "{\"name\": \"somehost.example.org\", \"contact\": \"support@example.org\"}"
+              "data": "{\"name\": \"somehost.example.org\"}"
             },
             {
-              "timestamp": "2025-03-20T15:36:58.707191+01:00",
+              "timestamp": "2026-02-03T14:07:02.071994+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -11145,14 +11145,14 @@
               "data": "{\"ipaddress\": \"10.0.1.4\"}"
             },
             {
-              "timestamp": "2025-03-20T15:36:59.273131+01:00",
+              "timestamp": "2026-02-03T14:07:02.948882+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
               "model_id": 4,
               "model": "Host",
               "action": "update",
-              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2025-03-20T15:36:58.706620+01:00\", \"updated_at\": \"2025-03-20T15:36:58.706626+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2025-03-20T15:36:58.692419+01:00\", \"updated_at\": \"2025-03-20T15:36:58.692425+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"srvs\": [], \"naptrs\": [], \"sshfps\": [], \"hostgroups\": [], \"roles\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"communities\": [], \"created_at\": \"2025-03-20T15:36:58.690682+01:00\", \"updated_at\": \"2025-03-20T15:36:58.690689+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
+              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2026-02-03T14:07:02.070545+01:00\", \"updated_at\": \"2026-02-03T14:07:02.070564+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2026-02-03T14:07:01.945577+01:00\", \"updated_at\": \"2026-02-03T14:07:01.945591+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"srvs\": [], \"naptrs\": [], \"sshfps\": [], \"hostgroups\": [], \"roles\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"communities\": [], \"contacts\": [{\"id\": 4, \"email\": \"support@example.org\", \"created_at\": \"2026-02-03T14:07:01.953738+01:00\", \"updated_at\": \"2026-02-03T14:07:01.953755+01:00\"}], \"created_at\": \"2026-02-03T14:07:01.940737+01:00\", \"updated_at\": \"2026-02-03T14:07:01.940750+01:00\", \"name\": \"somehost.example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1, \"contact\": \"support@example.org\"}, \"update\": {}}"
             }
           ]
         }
@@ -11168,7 +11168,7 @@
           "previous": null,
           "results": [
             {
-              "timestamp": "2025-03-20T15:36:58.692928+01:00",
+              "timestamp": "2026-02-03T14:07:01.946553+01:00",
               "user": "system-signals",
               "resource": "host",
               "name": "somehost.example.org",
@@ -11180,17 +11180,17 @@
               }
             },
             {
-              "timestamp": "2025-03-20T15:36:58.701239+01:00",
+              "timestamp": "2026-02-03T14:07:02.051773+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
               "model_id": 4,
               "model": "Host",
               "action": "create",
-              "data": "{\"name\": \"somehost.example.org\", \"contact\": \"support@example.org\"}"
+              "data": "{\"name\": \"somehost.example.org\"}"
             },
             {
-              "timestamp": "2025-03-20T15:36:58.707191+01:00",
+              "timestamp": "2026-02-03T14:07:02.071994+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
@@ -11200,14 +11200,14 @@
               "data": "{\"ipaddress\": \"10.0.1.4\"}"
             },
             {
-              "timestamp": "2025-03-20T15:36:59.273131+01:00",
+              "timestamp": "2026-02-03T14:07:02.948882+01:00",
               "user": "test",
               "resource": "host",
               "name": "somehost.example.org",
               "model_id": 4,
               "model": "Host",
               "action": "update",
-              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2025-03-20T15:36:58.706620+01:00\", \"updated_at\": \"2025-03-20T15:36:58.706626+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2025-03-20T15:36:58.692419+01:00\", \"updated_at\": \"2025-03-20T15:36:58.692425+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"srvs\": [], \"naptrs\": [], \"sshfps\": [], \"hostgroups\": [], \"roles\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"communities\": [], \"created_at\": \"2025-03-20T15:36:58.690682+01:00\", \"updated_at\": \"2025-03-20T15:36:58.690689+01:00\", \"name\": \"somehost.example.org\", \"contact\": \"support@example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1}, \"update\": {\"contact\": \"new-support@example.org\"}}"
+              "data": "{\"current_data\": {\"id\": 4, \"ipaddresses\": [{\"id\": 3, \"macaddress\": \"\", \"created_at\": \"2026-02-03T14:07:02.070545+01:00\", \"updated_at\": \"2026-02-03T14:07:02.070564+01:00\", \"ipaddress\": \"10.0.1.4\", \"host\": 4}], \"cnames\": [], \"mxs\": [], \"txts\": [{\"id\": 4, \"created_at\": \"2026-02-03T14:07:01.945577+01:00\", \"updated_at\": \"2026-02-03T14:07:01.945591+01:00\", \"txt\": \"v=spf1 -all\", \"host\": 4}], \"ptr_overrides\": [], \"srvs\": [], \"naptrs\": [], \"sshfps\": [], \"hostgroups\": [], \"roles\": [], \"hinfo\": null, \"loc\": null, \"bacnetid\": null, \"communities\": [], \"contacts\": [{\"id\": 4, \"email\": \"support@example.org\", \"created_at\": \"2026-02-03T14:07:01.953738+01:00\", \"updated_at\": \"2026-02-03T14:07:01.953755+01:00\"}], \"created_at\": \"2026-02-03T14:07:01.940737+01:00\", \"updated_at\": \"2026-02-03T14:07:01.940750+01:00\", \"name\": \"somehost.example.org\", \"ttl\": null, \"comment\": \"\", \"zone\": 1, \"contact\": \"support@example.org\"}, \"update\": {}}"
             }
           ]
         }
