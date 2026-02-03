@@ -10,7 +10,6 @@ from urllib.parse import quote, urljoin
 class Endpoint(str, Enum):
     """API endpoints."""
 
-    Hosts = "/api/v1/hosts/"
     Ipaddresses = "/api/v1/ipaddresses/"
     Naptrs = "/api/v1/naptrs/"
     Srvs = "/api/v1/srvs/"
@@ -25,6 +24,9 @@ class Endpoint(str, Enum):
     Mxs = "/api/v1/mxs/"
     NAPTRs = "/api/v1/naptrs/"
     Nameservers = "/api/v1/nameservers/"
+
+    Hosts = "/api/v1/hosts/"
+    HostsContacts = "/api/v1/hosts/{}/contacts/"
 
     HostGroups = "/api/v1/hostgroups/"
     HostGroupsAddHostGroups = "/api/v1/hostgroups/{}/groups/"
