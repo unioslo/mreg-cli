@@ -75,14 +75,13 @@ def test_validation_error_no_request(caplog, capsys) -> None:
     with pytest.raises(PydanticValidationError) as exc_info:
         Host.model_validate({"name": "test"})  # Missing required fields
 
-    assert exc_info.value.error_count() == snapshot(6)
+    assert exc_info.value.error_count() == snapshot(5)
     assert [repr(err) for err in exc_info.value.errors(include_url=False)] == snapshot(
         [
             "{'type': 'missing', 'loc': ('created_at',), 'msg': 'Field required', 'input': {'name': 'test'}}",
             "{'type': 'missing', 'loc': ('updated_at',), 'msg': 'Field required', 'input': {'name': 'test'}}",
             "{'type': 'missing', 'loc': ('id',), 'msg': 'Field required', 'input': {'name': 'test'}}",
             "{'type': 'missing', 'loc': ('ipaddresses',), 'msg': 'Field required', 'input': {'name': 'test'}}",
-            "{'type': 'missing', 'loc': ('contact',), 'msg': 'Field required', 'input': {'name': 'test'}}",
             "{'type': 'missing', 'loc': ('comment',), 'msg': 'Field required', 'input': {'name': 'test'}}",
         ]
     )
@@ -103,9 +102,6 @@ Failed to validate Host
     Reason: Field required
 
     Field: ipaddresses
-    Reason: Field required
-
-    Field: contact
     Reason: Field required
 
     Field: comment
@@ -137,9 +133,6 @@ Failed to validate Host
     Field: ipaddresses
     Reason: Field required
 
-    Field: contact
-    Reason: Field required
-
     Field: comment
     Reason: Field required\
 """,
@@ -163,9 +156,6 @@ ERROR: Failed to validate Host\r
     Reason: Field required\r
 \r
     Field: ipaddresses\r
-    Reason: Field required\r
-\r
-    Field: contact\r
     Reason: Field required\r
 \r
     Field: comment\r
