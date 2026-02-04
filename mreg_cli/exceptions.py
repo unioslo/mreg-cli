@@ -9,7 +9,6 @@ from contextlib import contextmanager
 from typing import TypeVar
 
 import mreg_api.exceptions
-from httpx import Response
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
@@ -43,39 +42,28 @@ class CliWarning(CliException):
     """
 
 
-class CreateError(CliError):
+class CreateError(mreg_api.exceptions.PostError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """Error class for failed creation."""
 
 
-class PatchError(CliError):
+class PatchError(mreg_api.exceptions.PatchError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """Error class for failed patching."""
 
 
-class DeleteError(CliError):
+class DeleteError(mreg_api.exceptions.DeleteError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """Error class for failed deletion."""
 
 
-class GetError(CliError):
+class GetError(mreg_api.exceptions.GetError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
     """Error class for failed retrieval."""
 
 
-class InternalError(CliError):
+class InternalError(mreg_api.exceptions.InternalError, CliError):
     """Error class for internal errors."""
 
 
-class APIError(CliWarning):
-    """Warning class for API errors."""
-
-    response: Response
-
-    def __init__(self, message: str, response: Response):
-        """Initialize an APIError warning.
-
-        :param message: The warning message.
-        :param response: The response object that triggered the exception.
-        """
-        super().__init__(message)
-        self.response = response
+class APIError(mreg_api.exceptions.APIError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+    """Error class for API errors."""
 
 
 class FileError(CliError):
@@ -142,6 +130,11 @@ class LoginFailedError(CliError):
     """Error class for login failure."""
 
 
+# FIXME: Inconsistent handling of HTTP errors in the original CLI implementation
+#        DELETE errors were considered errors, while other HTTP methods were
+#        considered warnings. They should all be considered errors.
+#        This merely makes it more confusing, as we inherit from the original
+#        mreg_api exceptions for our own `GetError`, `CreateError`, etc.
 _MREG_API_ERROR_EXCEPTIONS = (
     mreg_api.exceptions.DeleteError,
     mreg_api.exceptions.InternalError,
