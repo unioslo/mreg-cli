@@ -49,7 +49,6 @@ class RecordingEntry(TypedDict):
 
 IP_Version: TypeAlias = Literal[4, 6]
 IP_AddressT = mreg_api.types.IP_AddressT
-IP_NetworkT = mreg_api.types.IP_NetworkT
 
 # https://github.com/python/typeshed/blob/16933b838eef7be92ee02f66b87aa1a7532cee63/stdlib/argparse.pyi#L40-L43
 NargsStr = Literal["?", "*", "+", "...", "A...", "==SUPPRESS=="]
