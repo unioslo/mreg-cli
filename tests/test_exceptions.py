@@ -1,116 +1,114 @@
 from __future__ import annotations
 
+import mreg_api.exceptions
 import pytest
+from _pytest.mark.structures import ParameterSet
 from inline_snapshot import snapshot
+from mreg_api.models import Host
 from pydantic import ValidationError as PydanticValidationError
-from pytest_httpserver import HTTPServer
 
-from mreg_cli.api.models import Host
-from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import ValidationError
-from mreg_cli.utilities.api import get
+from mreg_cli.exceptions import _MREG_API_ERROR_EXCEPTIONS, CliError, CliWarning, handle_exception
+from tests.utils import normalize_line_endings
 
 
-def test_validation_error_get_host(httpserver: HTTPServer) -> None:
-    """Test a validation error stemming from a GET request."""
-    MregCliConfig().url = httpserver.url_for("/")
-
-    httpserver.expect_oneshot_request("/hosts/foobar").respond_with_json(
-        {
-            "created_at": "2022-06-16T09:15:40.775601+02:00",
-            "updated_at": "2024-01-26T10:23:06.631486+01:00",
-            "id": 76036,
-            "name": "_.--host123_example.com",  # invalid name
-            "ipaddresses": [
-                {
-                    "host": 76036,
-                    "created_at": "2022-06-16T09:47:43.761478+02:00",
-                    "updated_at": "2022-06-16T12:20:40.722808+02:00",
-                    "id": 78492,
-                    "macaddress": "e4:54:e8:80:73:73",
-                    "ipaddress": "192.168.0.1",
-                }
-            ],
-            "cnames": [],
-            "mxs": [],
-            "txts": [],
-            "ptr_overrides": [],
-            "hinfo": None,
-            "loc": None,
-            "bacnetid": None,
-            "contact": "user@example.com",
-            "ttl": None,
-            "comment": "",
-            "zone": 5,
-        }
-    )
-    resp = get("/hosts/foobar")
-    with pytest.raises(PydanticValidationError) as exc_info:
-        Host.model_validate_json(resp.text)
-
-    assert exc_info.value.error_count() == snapshot(1)
-    assert [repr(err) for err in exc_info.value.errors(include_url=False)] == snapshot(
-        [
-            "{'type': 'value_error', 'loc': ('name',), 'msg': 'Value error, Invalid input for hostname: _.--host123_example.com', 'input': '_.--host123_example.com', 'ctx': {'error': InputFailure('Invalid input for hostname: _.--host123_example.com')}}"
-        ]
-    )
-
-    validationerror = ValidationError.from_pydantic(exc_info.value)
-
-    # port-number is non-determinstic, so we need to replace that before comparing
-    err = validationerror.args[0].replace(f":{httpserver.port}", ":12345")
-    assert err == snapshot(
-        """\
-Failed to validate Host response from GET http://localhost:12345/hosts/foobar
-  Input: _.--host123_example.com
-  Errors:
-    Field: name
-    Reason: Value error, Invalid input for hostname: _.--host123_example.com\
-"""
-    )
+def _get_warning_exceptions() -> list[ParameterSet]:
+    """Get the list of mreg_api exception types that should be treated as warnings."""
+    params: list[ParameterSet] = []
+    for obj in mreg_api.exceptions.__dict__.values():
+        if (
+            isinstance(obj, type)
+            and issubclass(obj, mreg_api.exceptions.APIError)
+            and obj not in _MREG_API_ERROR_EXCEPTIONS
+        ):
+            params.append(
+                pytest.param(
+                    obj,
+                    id=obj.__name__,
+                )
+            )
+    return params
 
 
-def test_validation_error_no_request(caplog, capsys) -> None:
-    """Test a validation error that did not originate from an API request."""
+def _get_error_exceptions() -> list[ParameterSet]:
+    """Get the list of mreg_api exception types that should be treated as errors."""
+    params: list[ParameterSet] = []
+    for obj in _MREG_API_ERROR_EXCEPTIONS:
+        params.append(
+            pytest.param(
+                obj,
+                id=obj.__name__,
+            )
+        )
+    return params
+
+
+@pytest.mark.parametrize(
+    "exc_type",
+    [
+        pytest.param(
+            CliWarning,
+            id="CliWarning",
+        ),
+        *_get_warning_exceptions(),
+    ],
+)
+def test_handle_exception_warning(
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+    exc_type: type[Exception],
+) -> None:
+    """Test handling of various exceptions as warnings."""
+    exc_instance = exc_type("Test warning message")
+
+    # Call function and check output
+    handle_exception(exc_instance)
+
+    assert caplog.record_tuples == snapshot([("mreg_cli.exceptions", 30, "Test warning message")])
+
+    out, err = capsys.readouterr()
+    out = normalize_line_endings(out)
+    assert out == snapshot("Test warning message\n")
+    assert err == ""
+
+
+@pytest.mark.parametrize(
+    "exc_type",
+    [
+        pytest.param(
+            CliError,
+            id="CliError",
+        ),
+        *_get_error_exceptions(),
+    ],
+)
+def test_handle_exception_error(
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+    exc_type: type[Exception],
+) -> None:
+    """Test handling of various exceptions as errors."""
+    exc_instance = exc_type("Test error message")
+
+    # Call function and check output
+    handle_exception(exc_instance)
+
+    assert caplog.record_tuples == snapshot([("mreg_cli.exceptions", 40, "Test error message")])
+
+    out, err = capsys.readouterr()
+    out = normalize_line_endings(out)
+    assert out == snapshot("ERROR: Test error message\n")
+    assert err == ""
+
+
+def test_handle_exception_pydantic(
+    caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Test handling of Pydantic ValidationError."""
     with pytest.raises(PydanticValidationError) as exc_info:
         Host.model_validate({"name": "test"})  # Missing required fields
 
-    assert exc_info.value.error_count() == snapshot(5)
-    assert [repr(err) for err in exc_info.value.errors(include_url=False)] == snapshot(
-        [
-            "{'type': 'missing', 'loc': ('created_at',), 'msg': 'Field required', 'input': {'name': 'test'}}",
-            "{'type': 'missing', 'loc': ('updated_at',), 'msg': 'Field required', 'input': {'name': 'test'}}",
-            "{'type': 'missing', 'loc': ('id',), 'msg': 'Field required', 'input': {'name': 'test'}}",
-            "{'type': 'missing', 'loc': ('ipaddresses',), 'msg': 'Field required', 'input': {'name': 'test'}}",
-            "{'type': 'missing', 'loc': ('comment',), 'msg': 'Field required', 'input': {'name': 'test'}}",
-        ]
-    )
-
-    validationerror = ValidationError.from_pydantic(exc_info.value)
-    assert validationerror.args[0] == snapshot(
-        """\
-Failed to validate Host
-  Input: {'name': 'test'}
-  Errors:
-    Field: created_at
-    Reason: Field required
-
-    Field: updated_at
-    Reason: Field required
-
-    Field: id
-    Reason: Field required
-
-    Field: ipaddresses
-    Reason: Field required
-
-    Field: comment
-    Reason: Field required\
-"""
-    )
-
-    # Call method and check output
-    validationerror.print_and_log()
+    # Call function and check output
+    handle_exception(exc_info.value)
 
     assert caplog.record_tuples == snapshot(
         [
@@ -141,24 +139,26 @@ Failed to validate Host
     )
 
     out, err = capsys.readouterr()
+    out = normalize_line_endings(out)
     assert out == snapshot(
         """\
-ERROR: Failed to validate Host\r
-  Input: {'name': 'test'}\r
-  Errors:\r
-    Field: created_at\r
-    Reason: Field required\r
-\r
-    Field: updated_at\r
-    Reason: Field required\r
-\r
-    Field: id\r
-    Reason: Field required\r
-\r
-    Field: ipaddresses\r
-    Reason: Field required\r
-\r
-    Field: comment\r
-    Reason: Field required\r
+ERROR: Failed to validate Host
+  Input: {'name': 'test'}
+  Errors:
+    Field: created_at
+    Reason: Field required
+
+    Field: updated_at
+    Reason: Field required
+
+    Field: id
+    Reason: Field required
+
+    Field: ipaddresses
+    Reason: Field required
+
+    Field: comment
+    Reason: Field required
 """
     )
+    assert err == ""

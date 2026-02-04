@@ -7,9 +7,6 @@ on:
         description: "MREG Docker image to use for testing"
         required: false
 
-env:
-  UV_FROZEN: 1
-
 name: CI
 jobs:
   test:

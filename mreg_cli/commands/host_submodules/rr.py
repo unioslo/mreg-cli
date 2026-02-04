@@ -41,8 +41,7 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.fields import HostName
-from mreg_cli.api.models import (
+from mreg_api.models import (
     MX,
     NAPTR,
     SSHFP,
@@ -56,6 +55,8 @@ from mreg_cli.api.models import (
     PTR_override,
     Srv,
 )
+from mreg_api.models.fields import HostName
+
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
@@ -65,6 +66,17 @@ from mreg_cli.exceptions import (
     ForceMissing,
     InputFailure,
     PatchError,
+)
+from mreg_cli.output.host import (
+    output_hinfo,
+    output_host_ttl,
+    output_location,
+    output_mxs,
+    output_naptrs,
+    output_ptr_override,
+    output_srvs,
+    output_sshfps,
+    output_txts,
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, QueryParams
@@ -147,7 +159,7 @@ def hinfo_show(args: argparse.Namespace) -> None:
 
     hinfo = HInfo.get_by_field("host", host.id)
     if hinfo:
-        hinfo.output()
+        output_hinfo(hinfo)
     else:
         OutputManager().add_line(f"No hinfo for {host.name}")
 
@@ -226,7 +238,7 @@ def loc_show(args: argparse.Namespace) -> None:
     if not host.loc:
         raise EntityNotFound(f"No loc for {host.name}")
 
-    host.loc.output()
+    output_location(host.loc)
 
 
 @command_registry.register_command(
@@ -295,7 +307,8 @@ def mx_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    MX.output_multiple(Host.get_by_any_means_or_raise(args.name).mxs)
+    host = Host.get_by_any_means_or_raise(args.name)
+    output_mxs(host.mxs)
 
 
 @command_registry.register_command(
@@ -415,7 +428,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
 
     if len(to_delete) > 1 and not args.force:
         OutputManager().add_line("Found multiple matching NAPTR records:")
-        NAPTR.output_multiple(to_delete)
+        output_naptrs(to_delete)
         raise ForceMissing("Use --force to delete all matching records.")
 
     # This should ideally be done in a transaction, but the API doesn't support it.
@@ -440,7 +453,8 @@ def naptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    NAPTR.output_multiple(Host.get_by_any_means_or_raise(args.name).naptrs)
+    host = Host.get_by_any_means_or_raise(args.name)
+    output_naptrs(host.naptrs)
 
 
 @command_registry.register_command(
@@ -567,7 +581,7 @@ def ptr_show(args: argparse.Namespace) -> None:
 
     for ptr in host.ptr_overrides:
         if ip == ptr.ipaddress:
-            ptr.output()
+            output_ptr_override(ptr)
 
 
 @command_registry.register_command(
@@ -607,8 +621,8 @@ def srv_add(args: argparse.Namespace) -> None:
         "priority": args.priority,
         "weight": args.weight,
         "port": args.port,
-        "host": host.id,
         "ttl": args.ttl,
+        "host": host.id,
     }
 
     existing_srv = Srv.get_by_query_unique(data)
@@ -700,7 +714,7 @@ def srv_show(args: argparse.Namespace) -> None:
     if len(srvs) == 0:
         raise EntityNotFound(f"No SRV records for {sname}")
 
-    Srv.output_multiple(srvs)
+    output_srvs(srvs)
 
 
 @command_registry.register_command(
@@ -799,7 +813,7 @@ def sshfp_show(args: argparse.Namespace) -> None:
     if not sshfps:
         raise EntityNotFound(f"No SSHFP records for {host}")
 
-    SSHFP.output_multiple(sshfps)
+    output_sshfps(sshfps)
 
 
 @command_registry.register_command(
@@ -874,7 +888,8 @@ def ttl_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    Host.get_by_any_means_or_raise(args.name).output_ttl()
+    host = Host.get_by_any_means_or_raise(args.name)
+    output_host_ttl(host)
 
 
 @command_registry.register_command(
@@ -958,4 +973,4 @@ def txt_show(args: argparse.Namespace) -> None:
     if not txts:
         raise EntityNotFound(f"No TXT records for {host}")
 
-    TXT.output_multiple(txts, padding=5)
+    output_txts(host.txts, padding=5)

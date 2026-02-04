@@ -28129,7 +28129,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?name=whatever.example.org&priority=1&weight=1&port=80&host=20&ttl=None",
+        "url": "/api/v1/srvs/?name=whatever.example.org&priority=1&weight=1&port=80&ttl=&host=20",
         "data": {},
         "status": 200,
         "response": {
@@ -28185,18 +28185,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2025-08-26T11:56:35.781651+02:00",
-                "updated_at": "2025-08-26T11:56:35.781663+02:00",
+                "created_at": "2026-01-21T16:12:47.064969+01:00",
+                "updated_at": "2026-01-21T16:12:47.064985+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2025-08-26T11:56:35.478972+02:00",
-            "updated_at": "2025-08-26T11:57:00.621893+02:00",
+            "created_at": "2026-01-21T16:12:46.601861+01:00",
+            "updated_at": "2026-01-21T16:13:09.218173+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2025-08-26T11:56:36.090230+02:00",
+            "serialno_updated_at": "2026-01-21T16:12:47.143749+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -28208,7 +28208,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&host=20&ttl=None",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&ttl=&host=20",
         "data": {},
         "status": 200,
         "response": {
@@ -28230,8 +28230,8 @@
         },
         "status": 201,
         "response": {
-          "created_at": "2025-08-26T11:57:00.848637+02:00",
-          "updated_at": "2025-08-26T11:57:00.848645+02:00",
+          "created_at": "2026-01-21T16:13:09.563514+01:00",
+          "updated_at": "2026-01-21T16:13:09.563521+01:00",
           "name": "_sip._tcp.example.org",
           "priority": 10,
           "weight": 5,
@@ -31615,7 +31615,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&host=27&ttl=None",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&ttl=&host=27",
         "data": {},
         "status": 200,
         "response": {
@@ -32889,7 +32889,7 @@
       },
       {
         "method": "GET",
-        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&host=29&ttl=None",
+        "url": "/api/v1/srvs/?name=_sip._tcp.example.org&priority=10&weight=5&port=3456&ttl=&host=29",
         "data": {},
         "status": 200,
         "response": {
