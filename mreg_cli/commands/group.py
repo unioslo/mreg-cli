@@ -63,6 +63,30 @@ def info(args: argparse.Namespace) -> None:
 
 
 @command_registry.register_command(
+    prog="find",
+    description="List host groups matching a name filter",
+    short_desc="Find host groups",
+    flags=[
+        Flag(
+            "name",
+            description="Group name, or part of name. You can use * as a wildcard.",
+            metavar="FILTER",
+        ),
+    ],
+)
+def find(args: argparse.Namespace) -> None:
+    """Find host groups by name.
+
+    :param args: argparse.Namespace (name)
+    """
+    groups = HostGroup.get_list_by_name_regex(args.name)
+    if not groups:
+        raise EntityNotFound("No host groups matching the query were found.")
+
+    HostGroup.output_multiple(groups, multiline=True)
+
+
+@command_registry.register_command(
     prog="rename",
     description="Rename a group",
     short_desc="Rename a group",
