@@ -27138,7 +27138,7 @@
     "command_filter_negate": false,
     "command_issued": "host mx_remove baz 10 mail.example.org",
     "ok": [
-      "deleted MX from baz.example.org."
+      "Deleted MX mail.example.org with priority 10 from baz.example.org."
     ],
     "warning": [],
     "error": [],
@@ -27155,8 +27155,8 @@
           "previous": null,
           "results": [
             {
-              "created_at": "2025-08-26T11:56:59.513810+02:00",
-              "updated_at": "2025-08-26T11:56:59.513816+02:00",
+              "created_at": "2026-03-03T12:51:00.856131+01:00",
+              "updated_at": "2026-03-03T12:51:00.856139+01:00",
               "priority": 10,
               "mx": "mail.example.org",
               "host": 20

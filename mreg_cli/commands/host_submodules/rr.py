@@ -56,6 +56,7 @@ from mreg_api.models import (
     Srv,
 )
 from mreg_api.models.fields import HostName
+from prompt_toolkit.output import Output
 
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
@@ -258,11 +259,13 @@ def mx_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, mx)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
-    if host.has_mx_with_priority(args.priority, args.mx):
-        raise EntityAlreadyExists(f"{host} already has that MX defined.")
+    mx: str = args.mx
+    priority: int = args.priority
+    name: str = args.name
 
-    MX.create({"host": host.id, "priority": args.priority, "mx": args.mx})
+    host = Host.get_by_any_means_or_raise(name)
+    host.add_mx(mx, priority)
+
     OutputManager().add_ok(f"Added MX record to {host.name}.")
 
 
@@ -281,17 +284,15 @@ def mx_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, mx)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
-    mx = MX.get_by_all(host.id, args.mx, args.priority)
-    if not mx:
-        raise EntityNotFound(
-            f"{host} has no MX record with priority {args.priority} and mail exhange {args.mx}"
-        )
+    name: str = args.name
+    mx_arg: str = args.mx
+    priority: int = args.priority
 
-    if mx.delete():
-        OutputManager().add_ok(f"deleted MX from {host.name}.")
-    else:
-        raise DeleteError(f"Failed to remove MX for {host}")
+    host = Host.get_by_any_means_or_raise(name)
+    host.remove_mx(mx_arg, priority, refetch=False)
+
+    for note in host.get_notes():
+        OutputManager().add_ok(note)
 
 
 @command_registry.register_command(
