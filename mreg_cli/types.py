@@ -117,7 +117,7 @@ class LogLevel(StrEnum):
         """Case-insensitive lookup when normal lookup fails."""
         try:
             return LogLevel(value.upper())
-        except (ValueError, TypeError):
+        except Exception:
             from mreg_cli.exceptions import InputFailure  # noqa: PLC0415
 
             raise InputFailure(f"Invalid log level: {value}") from None
