@@ -289,7 +289,7 @@ def mx_remove(args: argparse.Namespace) -> None:
     priority: int = args.priority
 
     host = Host.get_by_any_means_or_raise(name)
-    host.remove_mx(mx_arg, priority, refetch=False)
+    host.remove_mx(mx_arg, priority)
 
     for note in host.get_notes():
         OutputManager().add_ok(note)
