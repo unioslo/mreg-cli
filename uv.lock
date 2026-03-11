@@ -350,12 +350,11 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.1.2.dev30+g791de891f"
-source = { git = "https://github.com/unioslo/mreg-api#791de891f9dbce02e8ab45a3f7aadc6ddcb0f06c" }
+version = "0.1.2.dev34+ge8bcbaca0"
+source = { git = "https://github.com/unioslo/mreg-api#e8bcbaca0e9495039efc538a1a6ef0b05167109b" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },
-    { name = "platformdirs" },
     { name = "pydantic" },
     { name = "pydantic-extra-types" },
     { name = "pydantic-settings" },
