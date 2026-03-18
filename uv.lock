@@ -350,8 +350,8 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.1.2.dev34+ge8bcbaca0"
-source = { git = "https://github.com/unioslo/mreg-api#e8bcbaca0e9495039efc538a1a6ef0b05167109b" }
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },
@@ -359,6 +359,10 @@ dependencies = [
     { name = "pydantic-extra-types" },
     { name = "pydantic-settings" },
     { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2d/5a/d8ae6da060d854c781316a23f72f3bbf4ed3c0772ddc0c5a931b706b4819/mreg_api-0.1.2.tar.gz", hash = "sha256:8b5e01652deebb7134c6c3c72ce81e62ee97392a6f9aaf4cab59cc10edda552f", size = 148862, upload-time = "2026-03-18T14:20:57.591Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/86/0d/755dec387bff9ece87014d00ce6d1bcb8646a18cd730078dd20f376ae586/mreg_api-0.1.2-py3-none-any.whl", hash = "sha256:158d7ccc5918b6fd2c55da59c3e27c929ca3a2d3fb95c94dbe07cfc1e494d68f", size = 81965, upload-time = "2026-03-18T14:20:56.469Z" },
 ]
 
 [[package]]
@@ -406,7 +410,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "diskcache", specifier = ">=5.6.3" },
-    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api" },
+    { name = "mreg-api", specifier = ">=0.1.2" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.7.1" },
