@@ -180,7 +180,7 @@ def main():
         print("mreg url not set in config or as argument")
         return
 
-    # Configure client
+    # Initialize MregClient singleton with config settings
     client = MregClient(
         url=config.url,
         domain=config.domain,

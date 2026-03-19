@@ -76,7 +76,8 @@ class FileError(CliError):
 #       since we historically used them directly in the CLI.
 #       In the future, we should consider if we want to rename
 #       them to avoid confusion with mreg_api exceptions.
-#       Inheriting from mreg_api allows us to catch them as before.
+#       Inheriting from mreg_api allows us to catch them like we did before
+#       we moved API code to mreg_api.
 
 
 class EntityNotFound(mreg_api.exceptions.EntityNotFound):
@@ -131,7 +132,7 @@ class LoginFailedError(CliError):
 
 
 # FIXME: Inconsistent handling of HTTP errors in the original CLI implementation
-#        DELETE errors were considered errors, while other HTTP methods were
+#        DELETE errors were considered errors, while other HTTP errors were
 #        considered warnings. They should all be considered errors.
 #        This merely makes it more confusing, as we inherit from the original
 #        mreg_api exceptions for our own `GetError`, `CreateError`, etc.
