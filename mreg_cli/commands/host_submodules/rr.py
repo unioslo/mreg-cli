@@ -291,9 +291,6 @@ def mx_remove(args: argparse.Namespace) -> None:
     host = Host.get_by_any_means_or_raise(name)
     host.remove_mx(mx_arg, priority)
 
-    for note in host.get_notes():
-        OutputManager().add_ok(note)
-
 
 @command_registry.register_command(
     prog="mx_show",
