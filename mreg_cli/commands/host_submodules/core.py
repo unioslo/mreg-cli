@@ -16,15 +16,18 @@ from __future__ import annotations
 import argparse
 import re
 from enum import Enum
-from typing import Self
+from typing import Self, assert_never
 
 from mreg_api.models import (
+    NAPTR,
     ForwardZone,
     Host,
     HostList,
     IPAddress,
     Network,
     NetworkOrIP,
+    PTR_override,
+    Srv,
 )
 from mreg_api.models.fields import HostName, MacAddress
 from typing_extensions import override
@@ -271,6 +274,23 @@ class Override(str, Enum):
         ]
 
 
+def get_record_identifier(record: NAPTR | PTR_override | Srv) -> str:
+    """Get a human readable identifier for a record.
+
+    :param record: The record to get the identifier for.
+    :returns: A human readable identifier for the record.
+    """
+    match record:
+        case NAPTR():
+            return record.replacement
+        case PTR_override():
+            return str(record.ipaddress)
+        case Srv():
+            return record.name
+        case _:
+            assert_never(record)
+
+
 @command_registry.register_command(
     prog="remove",
     description="Remove the given host.",
@@ -360,14 +380,6 @@ def remove(args: argparse.Namespace) -> None:
             warnings.append(f"  {len(naptrs)} NAPTR records")
             for naptr in naptrs:
                 warnings.append(f"    - {naptr.replacement}")
-        else:
-            for naptr in naptrs:
-                OutputManager().add_ok(
-                    "deleted NAPTR record {} when removing {}".format(
-                        naptr.replacement,
-                        host.name,
-                    )
-                )
 
     # Require force if host has any SRV records. Delete the SRV records if force
     srvs = host.srvs
@@ -377,14 +389,6 @@ def remove(args: argparse.Namespace) -> None:
             warnings.append(f"  {len(srvs)} SRV records")
             for srv in srvs:
                 warnings.append(f"    - {srv.name}")
-        else:
-            for srv in srvs:
-                OutputManager().add_ok(
-                    "deleted SRV record {} when removing {}".format(
-                        srv.name,
-                        host.name,
-                    )
-                )
 
     # Require force if host has any PTR records. Delete the PTR records if force
     if len(host.ptr_overrides) > 0:
@@ -393,14 +397,6 @@ def remove(args: argparse.Namespace) -> None:
             warnings.append(f"  {len(host.ptr_overrides)} PTR records")
             for ptr in host.ptr_overrides:
                 warnings.append(f"    - {ptr.ipaddress}")
-        else:
-            for ptr in host.ptr_overrides:
-                OutputManager().add_ok(
-                    "deleted PTR record {} when removing {}".format(
-                        ptr.ipaddress,
-                        host.name,
-                    )
-                )
 
     # Warn user and raise exception if any force requirements was found
     if warnings:
@@ -428,10 +424,23 @@ def remove(args: argparse.Namespace) -> None:
         # Raise the exception with the formatted message
         raise ForceMissing(complete_error_msg)
 
-    if host.delete():
-        OutputManager().add_ok(f"removed {host.name}")
-    else:
+    # Delete the host and any associated records
+    if not host.delete():
         raise DeleteError(f"failed to remove {host.name}")
+
+    for record_name, record in [
+        ("NAPTR", host.naptrs),
+        ("SRV", host.srvs),
+        ("PTR", host.ptr_overrides),
+    ]:
+        for rec in record:
+            OutputManager().add_ok(
+                (
+                    f"deleted {record_name} record "
+                    f"{get_record_identifier(rec)} when removing {host.name}"
+                )
+            )
+    OutputManager().add_ok(f"removed {host.name}")
 
 
 @command_registry.register_command(
