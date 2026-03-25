@@ -7,6 +7,7 @@ import functools
 import logging
 
 from mreg_api import CacheConfig, MregClient
+from mreg_api.events import Event, EventKind, EventLevel
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -191,6 +192,7 @@ def main():
             # other cache settings from config should go here
         ),
     )
+    client.events.subscribe(mreg_client_event_hook)
 
     try:
         try_token_or_login(
@@ -279,6 +281,17 @@ def print_greeting(config: MregCliConfig) -> None:
     )
     console.print(panel)
     console.print()  # blank line
+
+
+def mreg_client_event_hook(event: Event) -> None:
+    """Event hook for MregClient to record events in the OutputManager."""
+    om = OutputManager()
+    if event.level >= EventLevel.WARNING:
+        om.add_warning(event.message)
+    elif event.kind == EventKind.MUTATION:
+        om.add_ok(event.message)
+    else:
+        om.add_line(event.message)
 
 
 if __name__ == "__main__":

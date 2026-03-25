@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Now uses `mreg-api` package for all API interactions. All API code has been stripped out of `mreg-cli`.
+
 ### Fixed
 
 - `host remove` printing success messages for associated record removal when host deletion failed and no records were actually deleted.
