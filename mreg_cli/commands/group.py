@@ -87,7 +87,7 @@ def find(args: argparse.Namespace) -> None:
     if not groups:
         raise EntityNotFound("No host groups matching the query were found.")
 
-    HostGroup.output_multiple(groups, multiline=True)
+    output_hostgroups(groups, multiline=True)
 
 
 @command_registry.register_command(
