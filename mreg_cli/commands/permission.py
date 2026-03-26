@@ -5,7 +5,8 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import Label, NetworkOrIP, Permission
+from mreg_api.models import Label, NetworkOrIP, Permission
+
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import DeleteError, EntityNotFound
@@ -62,7 +63,7 @@ def network_list(args: argparse.Namespace) -> None:
             permnet = permission.range
             if permnet.version != argnetwork.version:
                 continue  # no warning if the networks are not comparable
-            if argnetwork.supernet_of(permnet):  # type: ignore # guaranteed to be the same version
+            if argnetwork.supernet_of(permnet):  # pyright: ignore[reportArgumentType] # guaranteed to be the same version
                 permission_list.append(permission)
     else:
         permission_list = permissions

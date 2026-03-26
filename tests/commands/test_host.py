@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import datetime
+from ipaddress import IPv4Address, IPv6Address
+
 import pytest
 from inline_snapshot import snapshot
+from mreg_api.models import NAPTR, PTR_override, Srv
 
-from mreg_cli.commands.host_submodules.core import Override
+from mreg_cli.commands.host_submodules.core import Override, get_record_identifier
 from mreg_cli.exceptions import InputFailure
 
 
@@ -59,3 +63,62 @@ def test_override_from_string() -> None:
         with pytest.raises(InputFailure) as exc_info:
             Override.from_string(invalid)
         assert "Invalid override" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "record,expected",
+    [
+        (
+            NAPTR(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                preference=1,
+                order=1,
+                replacement="naptr.example.com",
+            ),
+            "naptr.example.com",
+        ),
+        pytest.param(
+            PTR_override(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                ipaddress=IPv4Address("192.168.0.1"),
+            ),
+            "192.168.0.1",
+            id="PTR_override (IPv4)",
+        ),
+        pytest.param(
+            PTR_override(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                ipaddress=IPv6Address("2001:db8::1"),
+            ),
+            "2001:db8::1",
+            id="PTR_override (IPv6)",
+        ),
+        pytest.param(
+            Srv(
+                zone=1,
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                name="srv.example.com",
+                priority=1,
+                weight=1,
+                port=80,
+                ttl=3600,
+            ),
+            "srv.example.com",
+        ),
+    ],
+)
+def test_get_record_identifier(record: NAPTR | PTR_override | Srv, expected: str) -> None:
+    """Test get_record_identifier with different record types."""
+    assert get_record_identifier(record) == expected
