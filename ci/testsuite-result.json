@@ -16965,6 +16965,115 @@
     "time": null
   },
   {
+    "command": "group find *group",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "group find *group",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Groups:",
+      "  mygroup",
+      "  yourgroup"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?name__regex=group%24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 2,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "parent": [],
+              "groups": [
+                {
+                  "name": "yourgroup"
+                }
+              ],
+              "hosts": [
+                {
+                  "name": "testhost1.example.org"
+                }
+              ],
+              "owners": [
+                {
+                  "name": "myself"
+                }
+              ],
+              "created_at": "2026-03-26T14:30:44.891537+01:00",
+              "updated_at": "2026-03-26T14:30:45.712027+01:00",
+              "name": "mygroup",
+              "description": "This describes the group"
+            },
+            {
+              "parent": [
+                {
+                  "name": "mygroup"
+                }
+              ],
+              "groups": [],
+              "hosts": [],
+              "owners": [],
+              "created_at": "2026-03-26T14:30:45.659129+01:00",
+              "updated_at": "2026-03-26T14:30:45.659143+01:00",
+              "name": "yourgroup",
+              "description": "meh"
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
+    "command": "group find your",
+    "command_filter": null,
+    "command_filter_negate": false,
+    "command_issued": "group find your",
+    "ok": [],
+    "warning": [],
+    "error": [],
+    "output": [
+      "Groups:",
+      "  yourgroup"
+    ],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/hostgroups/?name__regex=.%2Ayour.%2A",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "parent": [
+                {
+                  "name": "mygroup"
+                }
+              ],
+              "groups": [],
+              "hosts": [],
+              "owners": [],
+              "created_at": "2026-03-26T14:30:45.659129+01:00",
+              "updated_at": "2026-03-26T14:30:45.659143+01:00",
+              "name": "yourgroup",
+              "description": "meh"
+            }
+          ]
+        }
+      }
+    ],
+    "time": null
+  },
+  {
     "command": "group group_remove mygroup yourgroup",
     "command_filter": null,
     "command_filter_negate": false,

@@ -147,6 +147,8 @@ group history mygroup
 group create yourgroup "meh"
 group group_add mygroup yourgroup
 group info mygroup
+group find *group
+group find your
 group group_remove mygroup yourgroup
 group owner_add mygroup anotherowner
 group owner_remove mygroup myself
