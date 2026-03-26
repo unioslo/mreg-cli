@@ -6,16 +6,16 @@ import argparse
 import functools
 import logging
 
+from mreg_api import CacheConfig, MregClient
+from mreg_api.events import Event, EventKind, EventLevel
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from rich.console import Console, Group
 from rich.panel import Panel
 
-import mreg_cli.utilities.api as api
-from mreg_cli import cache
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, get_cli_history, source
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import CliException, LoginFailedError
+from mreg_cli.exceptions import CliException, LoginFailedError, handle_exception
 from mreg_cli.log import MregCliLogger
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.prompt import get_prompt_message
@@ -181,8 +181,18 @@ def main():
         print("mreg url not set in config or as argument")
         return
 
-    # Configure application
-    cache.configure(config)
+    # Initialize MregClient singleton with config settings
+    client = MregClient(
+        url=config.url,
+        domain=config.domain,
+        timeout=config.http_timeout,
+        cache=CacheConfig(
+            enable=config.cache,
+            ttl=config.cache_ttl,
+            # other cache settings from config should go here
+        ),
+    )
+    client.events.subscribe(mreg_client_event_hook)
 
     try:
         try_token_or_login(
@@ -192,13 +202,17 @@ def main():
         )
     except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
         if isinstance(e, LoginFailedError):
-            e.print_and_log()
+            handle_exception(e)
         else:
             print(e)
         raise SystemExit() from None
 
+    if not client.get_token():
+        logger.error("No valid token after login, exiting")
+        raise SystemExit("No valid token after login.") from None
+
     if args.show_token:
-        print(api.get_session_token() or "Token not found.")
+        print(client.get_token() or "Token not found.")
         raise SystemExit() from None
 
     # session is a PromptSession object from prompt_toolkit which handles
@@ -217,7 +231,7 @@ def main():
     if source_file := config.source:
         logger.info("Reading commands from %s", source_file)
         for command in source([source_file], config.verbose, False):
-            cli.process_command_line(command)
+            cli.process_command_line(command, interactive=False)
         return
 
     # Check if we got a oneshot command. If so, execute it and exit.
@@ -243,7 +257,7 @@ def main():
         except EOFError:
             raise SystemExit() from None
         except CliException as e:
-            e.print_and_log()
+            handle_exception(e)
             raise SystemExit() from None
         else:
             try:
@@ -267,6 +281,17 @@ def print_greeting(config: MregCliConfig) -> None:
     )
     console.print(panel)
     console.print()  # blank line
+
+
+def mreg_client_event_hook(event: Event) -> None:
+    """Event hook for MregClient to record events in the OutputManager."""
+    om = OutputManager()
+    if event.level >= EventLevel.WARNING:
+        om.add_warning(event.message)
+    elif event.kind == EventKind.MUTATION:
+        om.add_ok(event.message)
+    else:
+        om.add_line(event.message)
 
 
 if __name__ == "__main__":
