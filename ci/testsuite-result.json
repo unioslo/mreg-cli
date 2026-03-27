@@ -26410,7 +26410,7 @@
     "command_issued": "host remove bar # should fail, because it has a cname record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "bar.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\n  multiple ipaddresses on the same VLAN\nUse `-force -override cname` to override."
+      "bar.example.org requires force and override for deletion:\n  1 CNAME records\n    - fubar.example.org\n  multiple ipaddresses on the same VLAN\nUse `-force -override cname` to override."
     ],
     "error": [],
     "output": [],
@@ -26424,8 +26424,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-12-03T13:44:43.360753+01:00",
-          "updated_at": "2025-12-03T13:44:43.360763+01:00",
+          "created_at": "2026-03-27T11:43:07.055968+01:00",
+          "updated_at": "2026-03-27T11:43:07.055977+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -26446,8 +26446,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-12-03T13:44:43.360753+01:00",
-          "updated_at": "2025-12-03T13:44:43.360763+01:00",
+          "created_at": "2026-03-27T11:43:07.055968+01:00",
+          "updated_at": "2026-03-27T11:43:07.055977+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -27189,7 +27189,7 @@
     "command_issued": "host remove baz # Should fail, because it has an MX record, must force and override with 'mx'",
     "ok": [],
     "warning": [
-      "baz.example.org requires force and override for deletion:\n  multiple ipaddresses on the same VLAN\n  1 MX records\n    - mail.example.org (priority: 10)\nUse `-force -override mx` to override."
+      "baz.example.org requires force and override for deletion:\n  1 MX records\n    - mail.example.org (priority: 10)\n  multiple ipaddresses on the same VLAN\nUse `-force -override mx` to override."
     ],
     "error": [],
     "output": [],
@@ -27203,8 +27203,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-12-03T13:44:43.360753+01:00",
-          "updated_at": "2025-12-03T13:44:43.360763+01:00",
+          "created_at": "2026-03-27T11:43:07.055968+01:00",
+          "updated_at": "2026-03-27T11:43:07.055977+01:00",
           "network": "10.0.0.0/24",
           "description": "lorem ipsum",
           "vlan": null,
@@ -27225,8 +27225,8 @@
           "excluded_ranges": [],
           "policy": null,
           "communities": [],
-          "created_at": "2025-12-03T13:44:43.439716+01:00",
-          "updated_at": "2025-12-03T13:44:43.439728+01:00",
+          "created_at": "2026-03-27T11:43:07.091223+01:00",
+          "updated_at": "2026-03-27T11:43:07.091237+01:00",
           "network": "2001:db8::/64",
           "description": "dolor sit amet",
           "vlan": null,
@@ -30576,6 +30576,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -force -override mx",
     "ok": [
+      "deleted MX record mail.example.org (priority: 10) when removing foo.example.org",
       "removed foo.example.org"
     ],
     "warning": [],
@@ -32287,7 +32288,7 @@
     "command_issued": "host remove foo # Should fail, because it has a CNAME record, must force and override with 'cname'",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\nUse `-force -override cname` to override."
+      "foo.example.org requires force and override for deletion:\n  1 CNAME records\n    - fubar.example.org\nUse `-force -override cname` to override."
     ],
     "error": [],
     "output": [],
@@ -32300,6 +32301,7 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -force -override cname",
     "ok": [
+      "deleted CNAME record fubar.example.org when removing foo.example.org",
       "removed foo.example.org"
     ],
     "warning": [],
@@ -33345,7 +33347,7 @@
     "command_issued": "host remove foo # Should fail, because it has multiple records, must force and override with everything.",
     "ok": [],
     "warning": [
-      "foo.example.org requires force and override for deletion:\n  1 cnames\n    - fubar.example.org\n  1 MX records\n    - mail.example.org (priority: 10)\n  1 NAPTR records\n    - wonk\n  1 SRV records\n    - _sip._tcp.example.org\n  1 PTR records\n    - 10.0.0.11\nUse `-force -override cname,mx,naptr,ptr,srv` to override."
+      "foo.example.org requires force and override for deletion:\n  1 CNAME records\n    - fubar.example.org\n  1 MX records\n    - mail.example.org (priority: 10)\n  1 SRV records\n    - _sip._tcp.example.org\n  1 PTR records\n    - 10.0.0.11\n  1 NAPTR records\n    - wonk\nUse `-force -override cname,mx,naptr,ptr,srv` to override."
     ],
     "error": [],
     "output": [],
@@ -33358,9 +33360,11 @@
     "command_filter_negate": false,
     "command_issued": "host remove foo -force -override mx,ptr,naptr,srv,cname",
     "ok": [
-      "deleted NAPTR record wonk when removing foo.example.org",
+      "deleted CNAME record fubar.example.org when removing foo.example.org",
+      "deleted MX record mail.example.org (priority: 10) when removing foo.example.org",
       "deleted SRV record _sip._tcp.example.org when removing foo.example.org",
       "deleted PTR record 10.0.0.11 when removing foo.example.org",
+      "deleted NAPTR record wonk when removing foo.example.org",
       "removed foo.example.org"
     ],
     "warning": [],

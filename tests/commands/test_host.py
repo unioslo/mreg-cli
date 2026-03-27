@@ -5,7 +5,7 @@ from ipaddress import IPv4Address, IPv6Address
 
 import pytest
 from inline_snapshot import snapshot
-from mreg_api.models import NAPTR, PTR_override, Srv
+from mreg_api.models import CNAME, MX, NAPTR, SSHFP, PTR_override, Srv
 
 from mreg_cli.commands.host_submodules.core import Override, get_record_identifier
 from mreg_cli.exceptions import InputFailure
@@ -117,8 +117,48 @@ def test_override_from_string() -> None:
             ),
             "srv.example.com",
         ),
+        pytest.param(
+            CNAME(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                name="alias.example.com",  # pyright: ignore[reportArgumentType]
+            ),
+            "alias.example.com",
+        ),
+        pytest.param(
+            MX(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                mx="mail.example.com",
+                priority=10,
+            ),
+            "mail.example.com (priority: 10)",
+        ),
     ],
 )
-def test_get_record_identifier(record: NAPTR | PTR_override | Srv, expected: str) -> None:
+def test_get_record_identifier(
+    record: NAPTR | PTR_override | Srv | CNAME | MX, expected: str
+) -> None:
     """Test get_record_identifier with different record types."""
     assert get_record_identifier(record) == expected
+
+
+def test_get_record_identifier_unknown() -> None:
+    """Test get_record_identifier repr() fallback with an unhandled record type."""
+    record = SSHFP(
+        host=123,
+        created_at=datetime.datetime(2026, 1, 1),
+        updated_at=datetime.datetime(2026, 1, 1),
+        id=1,
+        algorithm=1,
+        hash_type=2,
+        fingerprint="abc123",
+        ttl=3600,
+    )
+    assert get_record_identifier(record) == snapshot(  # pyright: ignore[reportArgumentType]
+        "SSHFP(host=123, created_at=datetime.datetime(2026, 1, 1, 0, 0), updated_at=datetime.datetime(2026, 1, 1, 0, 0), id=1, algorithm=1, hash_type=2, fingerprint='abc123', ttl=3600)"
+    )
