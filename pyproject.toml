@@ -63,7 +63,6 @@ mreg-cli = "mreg_cli.main:main"
 dev = [
     "pytest",
     "inline-snapshot",
-    "pytest-httpserver",
     "ruff",
     "tox-uv",
     "setuptools",
