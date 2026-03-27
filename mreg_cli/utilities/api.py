@@ -13,17 +13,12 @@ from urllib.parse import urljoin
 
 import httpx
 import mreg_api
-import requests
 from mreg_api import MregClient
 from prompt_toolkit import prompt
 
-from mreg_cli.__about__ import __version__
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError, LoginFailedError
 from mreg_cli.tokenfile import TokenFile
-
-session = requests.Session()
-session.headers.update({"User-Agent": f"mreg-cli-{__version__}"})
 
 logger = logging.getLogger(__name__)
 
