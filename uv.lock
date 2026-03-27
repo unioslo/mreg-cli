@@ -330,7 +330,6 @@ wheels = [
 name = "mreg-cli"
 source = { editable = "." }
 dependencies = [
-    { name = "diskcache" },
     { name = "mreg-api" },
     { name = "platformdirs" },
     { name = "prompt-toolkit" },
@@ -369,7 +368,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "diskcache", specifier = ">=5.6.3" },
     { name = "mreg-api", specifier = ">=0.1.5" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
