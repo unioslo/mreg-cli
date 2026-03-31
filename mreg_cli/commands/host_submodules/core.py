@@ -16,9 +16,11 @@ from __future__ import annotations
 import argparse
 import re
 from enum import Enum
-from typing import Self, assert_never
+from typing import Any, Generic, NamedTuple, Self, TypeVar
 
 from mreg_api.models import (
+    CNAME,
+    MX,
     NAPTR,
     ForwardZone,
     Host,
@@ -274,21 +276,34 @@ class Override(str, Enum):
         ]
 
 
-def get_record_identifier(record: NAPTR | PTR_override | Srv) -> str:
+def get_record_identifier(record: CNAME | MX | NAPTR | PTR_override | Srv) -> str:
     """Get a human readable identifier for a record.
 
     :param record: The record to get the identifier for.
     :returns: A human readable identifier for the record.
     """
     match record:
-        case NAPTR():
-            return record.replacement
+        case CNAME() | Srv():
+            return record.name
         case PTR_override():
             return str(record.ipaddress)
-        case Srv():
-            return record.name
+        case NAPTR():
+            return record.replacement
+        case MX():
+            return f"{record.mx} (priority: {record.priority})"
         case _:
-            assert_never(record)
+            return repr(record)  # pyright: ignore[reportUnreachable] # for safety
+
+
+T = TypeVar("T")
+
+
+class OverrideRequired(NamedTuple, Generic[T]):
+    """Check for overrides required for a specific host record type."""
+
+    override: Override
+    name: str
+    items: list[T]
 
 
 @command_registry.register_command(
@@ -340,15 +355,25 @@ def remove(args: argparse.Namespace) -> None:
         # And the fallback is "no".
         return False
 
+    override_checks: list[OverrideRequired[Any]] = [
+        OverrideRequired(Override.CNAME, "CNAME", host.cnames),
+        OverrideRequired(Override.MX, "MX", host.mxs),
+        OverrideRequired(Override.SRV, "SRV", host.srvs),
+        OverrideRequired(Override.PTR, "PTR", host.ptr_overrides),
+        OverrideRequired(Override.NAPTR, "NAPTR", host.naptrs),
+    ]
+
+    # Determine required overrides and build warning message
+    # if force and override requirements are not met
     warnings: list[str] = []
     overrides_required: set[Override] = set()
-
-    # Require force if host has any cnames.
-    if host.cnames and not forced(Override.CNAME):
-        overrides_required.add(Override.CNAME)
-        warnings.append(f"  {len(host.cnames)} cnames")
-        for cname in host.cnames:
-            warnings.append(f"    - {cname.name}")
+    for check in override_checks:
+        if check.items and not forced(check.override):
+            overrides_required.add(check.override)
+            warnings.append(f"  {len(check.items)} {check.name} records")
+            for item in check.items:
+                value = get_record_identifier(item)
+                warnings.append(f"    - {value}")
 
     # Require force if host has multiple A/AAAA records and they are not in the same VLAN.
     if len(host.ipaddresses) > 1:
@@ -364,39 +389,6 @@ def remove(args: argparse.Namespace) -> None:
                 ip_strings = [str(ip.ipaddress) for ip in vlans]
                 ip_strings.sort()
                 warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan_id})")
-
-    if host.mxs and not forced(Override.MX):
-        overrides_required.add(Override.MX)
-        warnings.append(f"  {len(host.mxs)} MX records")
-        for mx in host.mxs:
-            warnings.append(f"    - {mx.mx} (priority: {mx.priority})")
-
-    # Require force if host has any NAPTR records. Delete the NAPTR records if
-    # force
-    naptrs = host.naptrs
-    if len(naptrs) > 0:
-        if not forced(Override.NAPTR):
-            overrides_required.add(Override.NAPTR)
-            warnings.append(f"  {len(naptrs)} NAPTR records")
-            for naptr in naptrs:
-                warnings.append(f"    - {naptr.replacement}")
-
-    # Require force if host has any SRV records. Delete the SRV records if force
-    srvs = host.srvs
-    if len(srvs) > 0:
-        if not forced(Override.SRV):
-            overrides_required.add(Override.SRV)
-            warnings.append(f"  {len(srvs)} SRV records")
-            for srv in srvs:
-                warnings.append(f"    - {srv.name}")
-
-    # Require force if host has any PTR records. Delete the PTR records if force
-    if len(host.ptr_overrides) > 0:
-        if not forced(Override.PTR):
-            overrides_required.add(Override.PTR)
-            warnings.append(f"  {len(host.ptr_overrides)} PTR records")
-            for ptr in host.ptr_overrides:
-                warnings.append(f"    - {ptr.ipaddress}")
 
     # Warn user and raise exception if any force requirements was found
     if warnings:
@@ -428,16 +420,13 @@ def remove(args: argparse.Namespace) -> None:
     if not host.delete():
         raise DeleteError(f"failed to remove {host.name}")
 
-    for record_name, record in [
-        ("NAPTR", host.naptrs),
-        ("SRV", host.srvs),
-        ("PTR", host.ptr_overrides),
-    ]:
-        for rec in record:
+    # Print messages for associated records that were deleted
+    for check in override_checks:
+        for item in check.items:
             OutputManager().add_ok(
                 (
-                    f"deleted {record_name} record "
-                    f"{get_record_identifier(rec)} when removing {host.name}"
+                    f"deleted {check.name} record "
+                    f"{get_record_identifier(item)} when removing {host.name}"
                 )
             )
     OutputManager().add_ok(f"removed {host.name}")
