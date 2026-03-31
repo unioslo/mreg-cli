@@ -31,7 +31,6 @@ from mreg_api.models import (
     PTR_override,
     Srv,
 )
-from mreg_api.models.abstracts import FrozenModel
 from mreg_api.models.fields import HostName, MacAddress
 from typing_extensions import override
 
