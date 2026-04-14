@@ -88,9 +88,3 @@ def output_host_history(name: str) -> None:
 def output_hostgroup_history(name: str) -> None:
     """Output the history for a hostgroup."""
     output_history(name, HostGroup)
-
-
-# NOTE: NYI? Permission does not have a history_resource field
-# def output_permission_history(name: str) -> None:
-#     """Output the history for a permission."""
-#     output_history(name, Permission)
