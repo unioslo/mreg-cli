@@ -79,6 +79,9 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
+      - name: Add repo directory to git safe.directory
+        run: git config --global --add safe.directory /__w/mreg-cli/mreg-cli
+
       - name: Install build dependencies
         run: uv sync --group ci
 
