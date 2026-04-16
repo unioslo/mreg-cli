@@ -48,7 +48,7 @@ dependencies = [
     "platformdirs>=4.3.0",
     "pydantic-settings>=2.10.1",
     "rich>=13.9.4",
-    "mreg-api>=0.1.5",
+    "mreg-api>=0.2.0,<0.3.0",      # prevent breaking changes in pre-1.0.0 minor versions
 ]
 dynamic = ["version"]
 

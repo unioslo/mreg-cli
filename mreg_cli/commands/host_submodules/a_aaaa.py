@@ -141,7 +141,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
 
     check_ip_constraints(new_ip, network, host, IPOperation.CHANGE, force)
 
-    host_ip.patch(fields={"ipaddress": str(new_ip)})
+    host_ip.patch(data={"ipaddress": str(new_ip)})
 
     OutputManager().add_ok(f"changed ip {old} to {new_ip} for {host}")
 
@@ -171,13 +171,13 @@ def _ip_move(ipaddr: str, fromhost: str, tohost: str, ipversion: IP_Version) -> 
 
     msg = ""
     if host_ip:
-        host_ip.patch(fields={"host": to_host.id})
+        host_ip.patch(data={"host": to_host.id})
         msg = f"Moved ipaddress {ipaddr}"
     else:
         msg += "No ipaddresses matched. "
 
     if ptr:
-        ptr.patch(fields={"host": to_host.id})
+        ptr.patch(data={"host": to_host.id})
         msg += "Moved PTR override."
 
     OutputManager().add_line(msg)
