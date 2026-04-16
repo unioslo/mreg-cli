@@ -41,7 +41,7 @@ def create(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, description)
     """
     HostGroup.get_by_field_and_raise("name", args.name)
-    newgroup = HostGroup.create(params={"name": args.name, "description": args.description})
+    newgroup = HostGroup.create(data={"name": args.name, "description": args.description})
     if not newgroup:
         raise CreateError("Failed to create new group '{args.name}'")
 

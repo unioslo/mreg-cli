@@ -117,7 +117,7 @@ def network_add(args: argparse.Namespace) -> None:
     }
 
     Permission.get_by_query_unique_and_raise(query)
-    Permission.create(params=query)
+    Permission.create(data=query)
     OutputManager().add_ok(f"Added permission to {args.range}")
 
 

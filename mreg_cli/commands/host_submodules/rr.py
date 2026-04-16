@@ -363,7 +363,7 @@ def naptr_add(args: argparse.Namespace) -> None:
     existing_naptr = NAPTR.get_by_query_unique(params)
     if existing_naptr:
         raise EntityAlreadyExists(f"{host} already has that NAPTR defined.")
-    NAPTR.create(params=params)
+    NAPTR.create(data=params)
     OutputManager().add_ok(f"Added NAPTR record to {host.name}.")
 
 

@@ -66,7 +66,7 @@ def cname_add(args: argparse.Namespace) -> None:
     if not zone:
         raise EntityNotFound(f"Could not find a zone for the alias {alias}.")
 
-    CNAME.create(params={"host": str(host.id), "name": alias})
+    CNAME.create(data={"host": str(host.id), "name": alias})
     cname = CNAME.get_by_host_and_name(host.name, alias)
 
     if cname:
