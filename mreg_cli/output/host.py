@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from mreg_api import MregClient
 from mreg_api.endpoints import Endpoint
@@ -118,19 +118,42 @@ def output_hostlist(hostlist: HostList) -> None:
     if not hostlist.results:
         raise EntityNotFound("No hosts found.")
 
-    max_name = max_contact = 20
-    for i in hostlist.results:
-        max_name = max(max_name, len(str(i.name)))
-        max_contact = max(max_contact, max((len(c) for c in i.contact_emails), default=0))
+    max_name = max_contacts = max_ips = 20
 
-    def _format(name: str, contact: str, comment: str) -> None:
+    class HostOutput(NamedTuple):
+        name: str
+        contacts: str
+        comment: str
+        ips: str
+
+    hosts = [
+        HostOutput(
+            name=str(i.name),
+            contacts=", ".join(i.contact_emails),
+            comment=i.comment or "",
+            ips=", ".join(str(ip.ipaddress) for ip in i.ipaddresses),
+        )
+        for i in hostlist.results
+    ]
+    max_name = max(max_name, max(len(host.name) for host in hosts))
+    max_contacts = max(max_contacts, max(len(host.contacts) for host in hosts))
+    max_ips = max(max_ips, max(len(host.ips) for host in hosts))
+
+    def _format(name: str, contact: str, ips: str, comment: str) -> None:
         OutputManager().add_line(
-            "{0:<{1}} {2:<{3}} {4}".format(name, max_name, contact, max_contact, comment)
+            "{0:<{1}} {2:<{3}} {4:<{5}} {6}".format(
+                name, max_name, contact, max_contacts, ips, max_ips, comment
+            )
         )
 
-    _format("Name", "Contact", "Comment")
-    for i in hostlist.results:
-        _format(str(i.name), ", ".join(i.contact_emails), i.comment)
+    _format("Name", "Contact", "IP", "Comment")
+    for host in hosts:
+        _format(
+            name=host.name,
+            contact=host.contacts,
+            ips=host.ips,
+            comment=host.comment,
+        )
 
 
 def output_host_networks(
