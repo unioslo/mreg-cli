@@ -42,7 +42,6 @@ from __future__ import annotations
 import argparse
 
 from mreg_api.models import (
-    MX,
     NAPTR,
     SSHFP,
     TXT,
@@ -56,7 +55,6 @@ from mreg_api.models import (
     Srv,
 )
 from mreg_api.models.fields import HostName
-from prompt_toolkit.output import Output
 
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
@@ -67,6 +65,7 @@ from mreg_cli.exceptions import (
     ForceMissing,
     InputFailure,
     PatchError,
+    handle_exception,
 )
 from mreg_cli.output.host import (
     output_hinfo,
@@ -457,11 +456,13 @@ def naptr_remove(args: argparse.Namespace) -> None:
 
     # This should ideally be done in a transaction, but the API doesn't support it.
     # Right now we may end up in a situation where some records are deleted and some are not.
+    # Best-effort lets us delete as many as possible at the very least.
     for naptr in to_delete:
-        if naptr.delete():
+        try:
+            naptr.delete()
             OutputManager().add_ok(f"Deleted NAPTR record from {host.name}.")
-        else:
-            raise DeleteError(f"Failed to remove NAPTR for {host}")
+        except Exception as e:
+            handle_exception(e)
 
 
 @command_registry.register_command(
