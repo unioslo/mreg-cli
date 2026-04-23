@@ -418,8 +418,9 @@ def naptr_remove(args: argparse.Namespace) -> None:
         for attribute in ("preference", "order", "flag", "service", "regex", "replacement"):
             if getattr(args, attribute) and getattr(naptr, attribute) != getattr(args, attribute):
                 break
-
-        to_delete.append(naptr)
+        else:
+            # did not break, all attributes match
+            to_delete.append(naptr)
 
     if not to_delete:
         raise EntityNotFound(f"No matching NAPTR record found for {host}")
