@@ -1,8 +1,11 @@
-import argparse
+from __future__ import annotations
+
 import datetime
-from mreg_api.models import NAPTR
-from mreg_cli.commands.host_submodules.rr import naptrs_from_args
+
 import pytest
+from mreg_api.models import NAPTR
+
+from mreg_cli.commands.host_submodules.rr import filter_naptrs
 
 _created_at = datetime.datetime(2024, 1, 1, 0, 0, 0)
 _updated_at = datetime.datetime(2025, 1, 1, 0, 0, 0)
@@ -91,17 +94,27 @@ naptrs = [_naptr1, _naptr2, _naptr3, _naptr4, _naptr5, _naptr6]
 
 
 @pytest.mark.parametrize(
-    "inp,expected",
+    "preference,order,flag,service,regex,replacement,expected",
     [
-        (argparse.Namespace(preference=10), [_naptr1, _naptr2, _naptr3]),
-        (argparse.Namespace(order=20), [_naptr1, _naptr2, _naptr5]),
-        (argparse.Namespace(flag="U"), [_naptr1, _naptr2, _naptr4]),
-        (argparse.Namespace(service="SIP+D2U"), [_naptr1, _naptr2, _naptr5]),
-        (argparse.Namespace(regex=""), [_naptr1, _naptr3, _naptr4]),
-        (argparse.Namespace(preference=10, order=20), [_naptr1, _naptr2]),
-        (argparse.Namespace(flag="U", service="E2U+SIP"), [_naptr4]),
-        (argparse.Namespace(regex="!^.*$!sip:info@example.com!"), [_naptr2, _naptr5]),
+        (10, 20, "U", "SIP+D2U", "", "naptr1.example.com", [_naptr1]),
+        (10, 20, "U", "SIP+D2U", "!^.*$!sip:info@example.com!", "naptr2.example.com", [_naptr2]),
+        (10, 30, "S", "E2U+SIP", "", "naptr3.example.com", [_naptr3]),
+        (20, 10, "U", "E2U+SIP", "", "naptr4.example.com", [_naptr4]),
+        (20, 20, "S", "SIP+D2U", "!^.*$!sip:info@example.com!", "naptr5.example.com", [_naptr5]),
+        (30, 10, None, None, None, "naptr6.example.com", [_naptr6]),
+        (10, 20, "U", "SIP+D2U", "", "naptr-nonexistent.example.com", []),
+        (99, 20, "U", "SIP+D2U", "", "naptr1.example.com", []),
     ],
 )
-def test_naptrs_from_args(inp: argparse.Namespace, expected: list[NAPTR]) -> None:
-    assert naptrs_from_args(naptrs, inp) == expected
+def test_filter_naptrs(
+    preference: int,
+    order: int,
+    flag: str | None,
+    service: str | None,
+    regex: str | None,
+    replacement: str,
+    expected: list[NAPTR],
+) -> None:
+    assert (
+        filter_naptrs(naptrs, preference, order, flag, service, regex, replacement) == expected
+    )
