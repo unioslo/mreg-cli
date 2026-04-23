@@ -375,20 +375,19 @@ def filter_naptrs(
     regex: str | None,
     replacement: str,
 ) -> list[NAPTR]:
-    """Filter NAPTRs by exact match on all fields."""
+    """Filter NAPTRs, matching on all required fields and any optional fields that are provided."""
     return [
         naptr
         for naptr in naptrs
         if (
-            # NOTE: these comparisons assume NAPTRs will never have None values,
-            #       as None cannot be represented with the current naptr_remove flags.
-            #       Is the model wrong, or are our filtering assumptions wrong?
             naptr.preference == preference
             and naptr.order == order
-            and naptr.flag == flag
-            and naptr.service == service
-            and naptr.regex == regex
             and naptr.replacement == replacement
+            # These 3 fields can be blank, and we need to
+            # know if we should filter on them or not based on user input
+            and (flag is None or naptr.flag == flag)
+            and (service is None or naptr.service == service)
+            and (regex is None or naptr.regex == regex)
         )
     ]
 
@@ -418,15 +417,15 @@ def filter_naptrs(
             required=True,
             metavar="ORDER",
         ),
-        Flag("-flag", description="NAPTR flag.", required=True, metavar="FLAG"),
-        Flag("-service", description="NAPTR service.", required=True, metavar="SERVICE"),
-        Flag("-regex", description="NAPTR regexp.", required=True, metavar="REGEXP"),
         Flag(
             "-replacement",
             description="NAPTR replacement.",
             required=True,
             metavar="REPLACEMENT",
         ),
+        Flag("-flag", description="NAPTR flag.", default=None, metavar="FLAG"),
+        Flag("-service", description="NAPTR service.", default=None, metavar="SERVICE"),
+        Flag("-regex", description="NAPTR regexp.", default=None, metavar="REGEXP"),
         Flag("-force", action="store_true", description="Force deletion for multiple records."),
     ],
 )
