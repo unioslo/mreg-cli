@@ -367,6 +367,19 @@ def naptr_add(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Added NAPTR record to {host.name}.")
 
 
+def naptrs_from_args(naptrs: list[NAPTR], args: argparse.Namespace) -> list[NAPTR]:
+    """Filter naptrs based on provided args."""
+    attrs = ("preference", "order", "flag", "service", "regex", "replacement")
+    active_args = [attr for attr in attrs if getattr(args, attr, None) is not None]
+
+    def naptr_matches(naptr: NAPTR) -> bool:
+        return all(
+            getattr(args, attribute) == getattr(naptr, attribute) for attribute in active_args
+        )
+
+    return [naptr for naptr in naptrs if naptr_matches(naptr)]
+
+
 @command_registry.register_command(
     prog="naptr_remove",
     description="Remove matching NAPTR records from a host.",
@@ -410,17 +423,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    naptrs = host.naptrs
-
-    to_delete: list[NAPTR] = []
-
-    for naptr in naptrs:
-        for attribute in ("preference", "order", "flag", "service", "regex", "replacement"):
-            if getattr(args, attribute) and getattr(naptr, attribute) != getattr(args, attribute):
-                break
-        else:
-            # did not break, all attributes match
-            to_delete.append(naptr)
+    to_delete = naptrs_from_args(host.naptrs, args)
 
     if not to_delete:
         raise EntityNotFound(f"No matching NAPTR record found for {host}")
