@@ -42,7 +42,6 @@ from __future__ import annotations
 import argparse
 
 from mreg_api.models import (
-    MX,
     NAPTR,
     SSHFP,
     TXT,
@@ -56,7 +55,6 @@ from mreg_api.models import (
     Srv,
 )
 from mreg_api.models.fields import HostName
-from prompt_toolkit.output import Output
 
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
