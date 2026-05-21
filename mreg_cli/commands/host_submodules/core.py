@@ -126,11 +126,7 @@ def add(args: argparse.Namespace) -> None:
     if "*" in hname and not force:
         raise ForceMissing("Wildcards must be forced.")
 
-    data: JsonMapping = {
-        "name": hname,
-        "contacts": contact,
-        "comment": args.comment or None,
-    }
+    data = _host_create_payload(hname, contact, args.comment)
 
     if network_or_ip:
         autodetect = False
@@ -211,6 +207,17 @@ def add(args: argparse.Namespace) -> None:
                 )
 
     output_host(host)
+
+
+def _host_create_payload(hname: HostName, contact: list[str], comment: str | None) -> JsonMapping:
+    """Build the API payload for creating a host."""
+    data: JsonMapping = {
+        "name": hname,
+        "comment": comment or None,
+    }
+    if contact:
+        data["contacts"] = contact
+    return data
 
 
 class Override(str, Enum):

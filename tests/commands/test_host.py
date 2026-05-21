@@ -6,9 +6,14 @@ from ipaddress import IPv4Address, IPv6Address
 import pytest
 from inline_snapshot import snapshot
 from mreg_api.models import NAPTR, PTR_override, Srv
+from mreg_api.models.fields import HostName
 
 from mreg_cli.cli import _top_parser
-from mreg_cli.commands.host_submodules.core import Override, get_record_identifier
+from mreg_cli.commands.host_submodules.core import (
+    Override,
+    _host_create_payload,
+    get_record_identifier,
+)
 from mreg_cli.exceptions import InputFailure
 
 
@@ -159,3 +164,28 @@ def test_host_add_contact_rejects_multiple_values_per_flag() -> None:
         _top_parser.parse_args(
             ["host", "add", "foo.example.org", "-contact", "foo@example.org", "bar@example.org"]
         )
+
+
+def test_host_add_payload_omits_empty_contacts() -> None:
+    """Empty contacts should not be sent in the host create payload."""
+    payload = _host_create_payload(HostName("foo.example.org"), [], None)
+
+    assert payload == {
+        "name": "foo.example.org",
+        "comment": None,
+    }
+
+
+def test_host_add_payload_includes_supplied_contacts() -> None:
+    """Supplied contacts should be sent in the host create payload."""
+    payload = _host_create_payload(
+        HostName("foo.example.org"),
+        ["foo@example.org", "bar@example.org"],
+        None,
+    )
+
+    assert payload == {
+        "name": "foo.example.org",
+        "comment": None,
+        "contacts": ["foo@example.org", "bar@example.org"],
+    }
