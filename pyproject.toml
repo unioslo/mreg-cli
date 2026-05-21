@@ -124,9 +124,6 @@ ignore = [
     # D213 (Multi-line docstring summary should start at the second line) is incompatible with
     # D212 (Multi-line docstring summary should start at the first line). We ignore D213.
     "D213",
-    # ANN101 (Missing type annotation for `self` in method) is infered.
-    "ANN101",
-
     # Rules disabled due to using ruff as a formatter. Most of these rules
     # will thus be enforced by the formatter.
     # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules

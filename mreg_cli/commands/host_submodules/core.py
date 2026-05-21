@@ -612,7 +612,10 @@ def set_comment(args: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="set_contact",
-    description="Set contact emails for host. Replaces existing contacts. If <name> is an alias the cname host is updated.",
+    description=(
+        "Set contact emails for host. Replaces existing contacts. "
+        "If <name> is an alias the cname host is updated."
+    ),
     short_desc="Set contact.",
     flags=[
         Flag("name", description="Name of the target host.", metavar="NAME"),
@@ -638,7 +641,9 @@ def set_contact(args: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="unset_contact",
-    description="Remove all contact emails for host. If <name> is an alias the cname host is updated.",
+    description=(
+        "Remove all contact emails for host. If <name> is an alias the cname host is updated."
+    ),
     short_desc="Unset contact.",
     flags=[
         Flag("name", description="Name of the target host.", metavar="NAME"),

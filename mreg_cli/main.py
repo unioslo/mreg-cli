@@ -269,6 +269,7 @@ def main():
 
 def print_greeting(config: MregCliConfig) -> None:
     """Print greeting message for the CLI."""
+    _ = config
     panel = Panel(
         Group(
             "Welcome to mreg-cli",
