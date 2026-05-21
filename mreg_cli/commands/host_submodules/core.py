@@ -48,7 +48,7 @@ from mreg_cli.exceptions import (
 from mreg_cli.output import output_host, output_hostlist, output_hosts
 from mreg_cli.output.history import output_host_history
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag, JsonMapping, QueryParams
+from mreg_cli.types import Flag, Json, JsonMapping, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 
@@ -211,12 +211,14 @@ def add(args: argparse.Namespace) -> None:
 
 def _host_create_payload(hname: HostName, contact: list[str], comment: str | None) -> JsonMapping:
     """Build the API payload for creating a host."""
-    data: JsonMapping = {
+    # Note: The JSON test results relies on the order of these keys to produce consistent diffs.
+    data: dict[str, Json] = {
         "name": hname,
-        "comment": comment or None,
     }
     if contact:
         data["contacts"] = contact
+    data["comment"] = comment or None
+
     return data
 
 
