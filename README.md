@@ -221,10 +221,10 @@ location_tags=default,oslo,bergen,stavanger
 Commands in `mreg-cli` take on the form of a fairly standard command line interface:
 
 ```sh
-host add myhost.example.com 192.168.1.1 me@example.con -hinfo Linux -comment "My host"
+host add myhost.example.com -ip 192.168.1.1 -contact me@example.com -comment "My host"
 ```
 
-Here we are using the `host add` command to add a new host. The command takes a number of arguments, which are positional. The arguments in this case is a name and an ip address, followed by a contact and some optional arguments. The optional arguments are specified with a flag, followed by the value. The optional arguments can be specified in any order, but the positional arguments must be specified in the order they are defined in the command.
+Here we are using the `host add` command to add a new host. The command takes the hostname as a positional argument, while IP address, contact, and comment are specified with flags. Multiple contacts can be added by repeating `-contact`.
 
 ### Filtering
 
@@ -262,9 +262,8 @@ As an example, you may add a host to a network unknown to mreg, or a frozen netw
 ### Host
 
 ```cli
-   host add <name> <ip/net> <contact> [-hinfo <hinfo>] [-comment <comment>]
-       Add a new host with the given name, ip or subnet and contact. hinfo and comment
-       are optional.
+   host add <name> [-ip <ip/net>] [-contact <contact>]... [-comment <comment>]
+       Add a new host with the given name, optional ip or subnet, contact(s), and comment.
 ```
 
 !!!note

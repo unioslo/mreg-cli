@@ -267,12 +267,12 @@ class Command(Completer):
             return
 
         # complete flags which aren't already used
-        for name in self.flags:
-            if ("-" + name) not in words:
+        for name, flag in self.flags.items():
+            if flag.action == "append" or ("-" + name) not in words:
                 if name.startswith(cur):
                     yield Completion(
                         name,
-                        display_meta=self.flags[name].short_desc,
+                        display_meta=flag.short_desc,
                         start_position=-len(cur),
                     )
 

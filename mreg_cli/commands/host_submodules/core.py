@@ -79,7 +79,7 @@ from mreg_cli.utilities.shared import convert_wildcard_to_regex
             "-contact",
             short_desc="Contact mail(s) for the host",
             description="Contact mail(s) for the host",
-            nargs="+",
+            action="append",
             metavar="CONTACT",
         ),
         Flag("-force", action="store_true", description="Enable force."),
@@ -104,7 +104,7 @@ def add(args: argparse.Namespace) -> None:
     network_or_ip: str = args.ip
     macaddress: str | None = args.macaddress
     force: bool = args.force
-    contact: list[str] = args.contact
+    contact: list[str] = args.contact or []
 
     if macaddress is not None:
         macaddress = MacAddress.parse_or_raise(macaddress)
