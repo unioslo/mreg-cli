@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `host find` now shows IP address(es) for each host.
+- `host add -contact` is now repeatable, with one contact per flag, so options can be placed before or after the hostname.
 
 ## [1.9.0](https://github.com/unioslo/mreg-cli/releases/tag/1.9.0) - 2026-04-14
 
