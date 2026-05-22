@@ -48,7 +48,7 @@ from mreg_cli.exceptions import (
 from mreg_cli.output import output_host, output_hostlist, output_hosts
 from mreg_cli.output.history import output_host_history
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag, JsonMapping, QueryParams
+from mreg_cli.types import Flag, Json, JsonMapping, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 
@@ -79,7 +79,7 @@ from mreg_cli.utilities.shared import convert_wildcard_to_regex
             "-contact",
             short_desc="Contact mail(s) for the host",
             description="Contact mail(s) for the host",
-            nargs="+",
+            action="append",
             metavar="CONTACT",
         ),
         Flag("-force", action="store_true", description="Enable force."),
@@ -104,7 +104,7 @@ def add(args: argparse.Namespace) -> None:
     network_or_ip: str = args.ip
     macaddress: str | None = args.macaddress
     force: bool = args.force
-    contact: list[str] = args.contact
+    contact: list[str] = args.contact or []
 
     if macaddress is not None:
         macaddress = MacAddress.parse_or_raise(macaddress)
@@ -126,11 +126,7 @@ def add(args: argparse.Namespace) -> None:
     if "*" in hname and not force:
         raise ForceMissing("Wildcards must be forced.")
 
-    data: JsonMapping = {
-        "name": hname,
-        "contacts": contact,
-        "comment": args.comment or None,
-    }
+    data = _host_create_payload(hname, contact, args.comment)
 
     if network_or_ip:
         autodetect = False
@@ -211,6 +207,19 @@ def add(args: argparse.Namespace) -> None:
                 )
 
     output_host(host)
+
+
+def _host_create_payload(hname: HostName, contact: list[str], comment: str | None) -> JsonMapping:
+    """Build the API payload for creating a host."""
+    # Note: The JSON test results relies on the order of these keys to produce consistent diffs.
+    data: dict[str, Json] = {
+        "name": hname,
+    }
+    if contact:
+        data["contacts"] = contact
+    data["comment"] = comment or None
+
+    return data
 
 
 class Override(str, Enum):
@@ -612,7 +621,10 @@ def set_comment(args: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="set_contact",
-    description="Set contact emails for host. Replaces existing contacts. If <name> is an alias the cname host is updated.",
+    description=(
+        "Set contact emails for host. Replaces existing contacts. "
+        "If <name> is an alias the cname host is updated."
+    ),
     short_desc="Set contact.",
     flags=[
         Flag("name", description="Name of the target host.", metavar="NAME"),
@@ -638,7 +650,9 @@ def set_contact(args: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="unset_contact",
-    description="Remove all contact emails for host. If <name> is an alias the cname host is updated.",
+    description=(
+        "Remove all contact emails for host. If <name> is an alias the cname host is updated."
+    ),
     short_desc="Unset contact.",
     flags=[
         Flag("name", description="Name of the target host.", metavar="NAME"),
