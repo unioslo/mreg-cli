@@ -65,6 +65,7 @@ class MregCliLogger:
                 level=level.as_int(),
                 format=fmt,
                 datefmt="%Y-%m-%d %H:%M:%S",
+                force=True,
             )
         except Exception as e:
             print(f"Failed to set up logging: {e}", file=sys.stderr)
