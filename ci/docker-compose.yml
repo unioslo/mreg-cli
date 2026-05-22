@@ -32,7 +32,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-      start_period: 5s
+      start_period: 30s
 
   # The purpose of the dummy container is to depend on the mreg container,
   # so the "docker compose" command won't return until mreg is up and running.
