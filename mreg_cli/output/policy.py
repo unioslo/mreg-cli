@@ -83,6 +83,7 @@ def output_roles_table(roles: Sequence[Role], padding: int = 14) -> None:
     :param roles: List of roles to output.
     :param padding: Number of spaces for left-padding the output.
     """
+    _ = padding
     if not roles:
         return
 
@@ -121,6 +122,7 @@ def output_role_hosts(
     :param padding: Number of spaces for left-padding the output.
     :param exclude_roles: List of other roles to exclude hosts with.
     """
+    _ = padding
     manager = OutputManager()
     hosts = list(role.hosts)
 
@@ -148,6 +150,7 @@ def output_role_atoms(role: Role, padding: int = 14) -> None:
     :param role: Role whose atoms to output.
     :param padding: Number of spaces for left-padding the output.
     """
+    _ = padding
     manager = OutputManager()
     if role.atoms:
         manager.add_line("Name:")

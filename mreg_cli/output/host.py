@@ -46,6 +46,7 @@ def output_host(
     :param names: If True, output the host names only.
     :param traverse_hostgroups: If True, traverse hostgroups and include them.
     """
+    _ = names
     from mreg_cli.output.group import output_hostgroups  # noqa: PLC0415
     from mreg_cli.output.policy import output_roles  # noqa: PLC0415
 
@@ -294,6 +295,7 @@ def output_host_roles(host: Host, padding: int = 14) -> None:
     :param host: Host whose roles to output.
     :param padding: Number of spaces for left-padding the output.
     """
+    _ = padding
     roles = host.roles
     manager = OutputManager()
     if not roles:
