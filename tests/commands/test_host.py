@@ -1,9 +1,19 @@
 from __future__ import annotations
 
+import datetime
+from ipaddress import IPv4Address, IPv6Address
+
 import pytest
 from inline_snapshot import snapshot
+from mreg_api.models import CNAME, MX, NAPTR, SSHFP, PTR_override, Srv
+from mreg_api.models.fields import HostName
 
-from mreg_cli.commands.host_submodules.core import Override
+from mreg_cli.cli import _top_parser
+from mreg_cli.commands.host_submodules.core import (
+    Override,
+    _host_create_payload,
+    get_record_identifier,
+)
 from mreg_cli.exceptions import InputFailure
 
 
@@ -59,3 +69,166 @@ def test_override_from_string() -> None:
         with pytest.raises(InputFailure) as exc_info:
             Override.from_string(invalid)
         assert "Invalid override" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "record,expected",
+    [
+        (
+            NAPTR(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                preference=1,
+                order=1,
+                replacement="naptr.example.com",
+                flag="U",
+                service="SIP+D2U",
+                regex="",
+            ),
+            "naptr.example.com",
+        ),
+        pytest.param(
+            PTR_override(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                ipaddress=IPv4Address("192.168.0.1"),
+            ),
+            "192.168.0.1",
+            id="PTR_override (IPv4)",
+        ),
+        pytest.param(
+            PTR_override(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                ipaddress=IPv6Address("2001:db8::1"),
+            ),
+            "2001:db8::1",
+            id="PTR_override (IPv6)",
+        ),
+        pytest.param(
+            Srv(
+                zone=1,
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                name="srv.example.com",
+                priority=1,
+                weight=1,
+                port=80,
+                ttl=3600,
+            ),
+            "srv.example.com",
+        ),
+        pytest.param(
+            CNAME(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                name="alias.example.com",  # pyright: ignore[reportArgumentType]
+            ),
+            "alias.example.com",
+        ),
+        pytest.param(
+            MX(
+                host=123,
+                created_at=datetime.datetime(2026, 1, 1),
+                updated_at=datetime.datetime(2026, 1, 1),
+                id=1,
+                mx="mail.example.com",
+                priority=10,
+            ),
+            "mail.example.com (priority: 10)",
+        ),
+    ],
+)
+def test_get_record_identifier(
+    record: NAPTR | PTR_override | Srv | CNAME | MX, expected: str
+) -> None:
+    """Test get_record_identifier with different record types."""
+    assert get_record_identifier(record) == expected
+
+
+def test_get_record_identifier_unknown() -> None:
+    """Test get_record_identifier repr() fallback with an unhandled record type."""
+    record = SSHFP(
+        host=123,
+        created_at=datetime.datetime(2026, 1, 1),
+        updated_at=datetime.datetime(2026, 1, 1),
+        id=1,
+        algorithm=1,
+        hash_type=2,
+        fingerprint="abc123",
+        ttl=3600,
+    )
+    assert get_record_identifier(record) == snapshot(  # pyright: ignore[reportArgumentType]
+        "SSHFP(host=123, created_at=datetime.datetime(2026, 1, 1, 0, 0), updated_at=datetime.datetime(2026, 1, 1, 0, 0), id=1, algorithm=1, hash_type=2, fingerprint='abc123', ttl=3600)"
+    )
+
+
+def test_host_add_contact_before_hostname() -> None:
+    """Ensure -contact does not consume a following hostname."""
+    parsed = _top_parser.parse_args(
+        ["host", "add", "-contact", "foo@example.org", "foo.example.org"]
+    )
+
+    assert parsed.name == "foo.example.org"
+    assert parsed.contact == ["foo@example.org"]
+
+
+def test_host_add_contact_is_repeatable() -> None:
+    """Ensure multiple contacts are passed as repeated -contact flags."""
+    parsed = _top_parser.parse_args(
+        [
+            "host",
+            "add",
+            "-contact",
+            "foo@example.org",
+            "-contact",
+            "bar@example.org",
+            "foo.example.org",
+        ]
+    )
+
+    assert parsed.name == "foo.example.org"
+    assert parsed.contact == ["foo@example.org", "bar@example.org"]
+
+
+def test_host_add_contact_rejects_multiple_values_per_flag() -> None:
+    """The repeatable -contact option accepts one contact per flag."""
+    with pytest.raises(SystemExit):
+        _top_parser.parse_args(
+            ["host", "add", "foo.example.org", "-contact", "foo@example.org", "bar@example.org"]
+        )
+
+
+def test_host_add_payload_omits_empty_contacts() -> None:
+    """Empty contacts should not be sent in the host create payload."""
+    payload = _host_create_payload(HostName("foo.example.org"), [], None)
+
+    assert payload == {
+        "name": "foo.example.org",
+        "comment": None,
+    }
+
+
+def test_host_add_payload_includes_supplied_contacts() -> None:
+    """Supplied contacts should be sent in the host create payload."""
+    payload = _host_create_payload(
+        HostName("foo.example.org"),
+        ["foo@example.org", "bar@example.org"],
+        None,
+    )
+
+    assert payload == {
+        "name": "foo.example.org",
+        "comment": None,
+        "contacts": ["foo@example.org", "bar@example.org"],
+    }

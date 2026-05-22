@@ -147,6 +147,8 @@ group history mygroup
 group create yourgroup "meh"
 group group_add mygroup yourgroup
 group info mygroup
+group find *group
+group find your
 group group_remove mygroup yourgroup
 group owner_add mygroup anotherowner
 group owner_remove mygroup myself
@@ -313,6 +315,11 @@ host mx_remove baz 10 mail.example.org
 host naptr_add -name baz -preference 16384 -order 3 -flag u -service "SIP" -regex "[abc]+" -replacement "wonk"
 host naptr_show baz
 host naptr_remove -name baz -preference 16384 -order 3 -flag u -service "sip" -regex "[abc]+" -replacement "wonk"
+## Add 2 nearly identical records with different services
+host naptr_add -name baz -preference 101 -order 4 -flag s -service http+I2R -regex "" -replacement .
+host naptr_add -name baz -preference 101 -order 4 -flag s -service ftp+I2R -regex "" -replacement .
+host naptr_remove -name baz -preference 101 -order 4 -replacement . # fails, too many matches
+host naptr_remove -name baz -preference 101 -order 4 -replacement . -force
 # PTR
 host ptr_add 10.0.0.20 baz.example.org
 host ptr_show 10.0.0.20

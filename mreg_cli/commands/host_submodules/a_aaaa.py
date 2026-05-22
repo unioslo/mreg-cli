@@ -18,8 +18,9 @@ from __future__ import annotations
 import argparse
 from enum import Enum, auto
 
-from mreg_cli.api.fields import HostName, MacAddress
-from mreg_cli.api.models import CNAME, Host, HostList, Network, NetworkOrIP
+from mreg_api.models import CNAME, Host, HostList, Network, NetworkOrIP
+from mreg_api.models.fields import HostName, MacAddress
+
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     DeleteError,
@@ -28,6 +29,7 @@ from mreg_cli.exceptions import (
     ForceMissing,
     InputFailure,
 )
+from mreg_cli.output import output_host_ipaddresses
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
 
@@ -139,7 +141,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
 
     check_ip_constraints(new_ip, network, host, IPOperation.CHANGE, force)
 
-    host_ip.patch(fields={"ipaddress": str(new_ip)})
+    host_ip.patch(data={"ipaddress": str(new_ip)})
 
     OutputManager().add_ok(f"changed ip {old} to {new_ip} for {host}")
 
@@ -169,13 +171,13 @@ def _ip_move(ipaddr: str, fromhost: str, tohost: str, ipversion: IP_Version) -> 
 
     msg = ""
     if host_ip:
-        host_ip.patch(fields={"host": to_host.id})
+        host_ip.patch(data={"host": to_host.id})
         msg = f"Moved ipaddress {ipaddr}"
     else:
         msg += "No ipaddresses matched. "
 
     if ptr:
-        ptr.patch(fields={"host": to_host.id})
+        ptr.patch(data={"host": to_host.id})
         msg += "Moved PTR override."
 
     OutputManager().add_line(msg)
@@ -406,8 +408,8 @@ def a_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     name: str = args.name
-
-    Host.get_by_any_means_or_raise(name).output_ipaddresses(only=4)
+    host = Host.get_by_any_means_or_raise(name)
+    output_host_ipaddresses(host, only=4)
 
 
 @command_registry.register_command(
@@ -552,4 +554,5 @@ def aaaa_show(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
-    Host.get_by_any_means_or_raise(name).output_ipaddresses(only=6)
+    host = Host.get_by_any_means_or_raise(name)
+    output_host_ipaddresses(host, only=6)

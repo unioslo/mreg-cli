@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from typing import Any
 
 import pytest
 from prompt_toolkit import HTML
@@ -99,7 +100,7 @@ PROMPT_TEST_CASES = [
 
 
 @pytest.mark.parametrize("args, expected", PROMPT_TEST_CASES)
-def test_get_prompt_message_args(args: dict, expected: str) -> None:
+def test_get_prompt_message_args(args: dict[str, Any], expected: str) -> None:
     a = argparse.Namespace(
         prompt=args.get("prompt"),
         user=args.get("user"),
@@ -114,7 +115,7 @@ def test_get_prompt_message_args(args: dict, expected: str) -> None:
 # NOTE: this test is pretty redundant. What is really the difference
 # between passing in the CLI args as a dict vs namespace?
 @pytest.mark.parametrize("config, expected", PROMPT_TEST_CASES)
-def test_get_prompt_message_config(config: dict, expected: str) -> None:
+def test_get_prompt_message_config(config: dict[str, Any], expected: str) -> None:
     conf = MregCliConfig()
     conf.parse_cli_args(config)
     assert get_prompt_message(conf).value == HTML(f"{expected}> ").value

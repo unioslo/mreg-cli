@@ -16,19 +16,24 @@ from __future__ import annotations
 import argparse
 import re
 from enum import Enum
-from typing import Self
+from typing import Any, Generic, NamedTuple, Self, TypeVar
 
-from typing_extensions import override
-
-from mreg_cli.api.fields import HostName, MacAddress
-from mreg_cli.api.models import (
+from mreg_api.models import (
+    CNAME,
+    MX,
+    NAPTR,
     ForwardZone,
     Host,
     HostList,
     IPAddress,
     Network,
     NetworkOrIP,
+    PTR_override,
+    Srv,
 )
+from mreg_api.models.fields import HostName, MacAddress
+from typing_extensions import override
+
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     APIError,
@@ -42,8 +47,10 @@ from mreg_cli.exceptions import (
     InvalidIPAddress,
     PatchError,
 )
+from mreg_cli.output import output_host, output_hostlist, output_hosts
+from mreg_cli.output.history import output_host_history
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag, JsonMapping, QueryParams
+from mreg_cli.types import Flag, Json, JsonMapping, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 
@@ -68,13 +75,15 @@ from mreg_cli.utilities.shared import convert_wildcard_to_regex
             ),
             metavar="IP/NET",
         ),
-        Flag(
-            "-contact",
-            short_desc="Contact mail for the host",
-            description="Contact mail for the host",
-        ),
         Flag("-comment", short_desc="A comment.", description="A comment."),
         Flag("-macaddress", description="Mac address", metavar="MACADDRESS"),
+        Flag(
+            "-contact",
+            short_desc="Contact mail(s) for the host",
+            description="Contact mail(s) for the host",
+            action="append",
+            metavar="CONTACT",
+        ),
         Flag("-force", action="store_true", description="Enable force."),
     ],
 )
@@ -97,6 +106,7 @@ def add(args: argparse.Namespace) -> None:
     network_or_ip: str = args.ip
     macaddress: str | None = args.macaddress
     force: bool = args.force
+    contact: list[str] = args.contact or []
 
     if macaddress is not None:
         macaddress = MacAddress.parse_or_raise(macaddress)
@@ -118,11 +128,7 @@ def add(args: argparse.Namespace) -> None:
     if "*" in hname and not force:
         raise ForceMissing("Wildcards must be forced.")
 
-    data: JsonMapping = {
-        "name": hname,
-        "contact": args.contact or None,
-        "comment": args.comment or None,
-    }
+    data = _host_create_payload(hname, contact, args.comment)
 
     if network_or_ip:
         autodetect = False
@@ -202,7 +208,20 @@ def add(args: argparse.Namespace) -> None:
                     "Failed to associate MAC address to IP, multiple IP addresses after creation."
                 )
 
-    host.output()
+    output_host(host)
+
+
+def _host_create_payload(hname: HostName, contact: list[str], comment: str | None) -> JsonMapping:
+    """Build the API payload for creating a host."""
+    # Note: The JSON test results relies on the order of these keys to produce consistent diffs.
+    data: dict[str, Json] = {
+        "name": hname,
+    }
+    if contact:
+        data["contacts"] = contact
+    data["comment"] = comment or None
+
+    return data
 
 
 class Override(str, Enum):
@@ -266,6 +285,36 @@ class Override(str, Enum):
         ]
 
 
+def get_record_identifier(record: CNAME | MX | NAPTR | PTR_override | Srv) -> str:
+    """Get a human readable identifier for a record.
+
+    :param record: The record to get the identifier for.
+    :returns: A human readable identifier for the record.
+    """
+    match record:
+        case CNAME() | Srv():
+            return record.name
+        case PTR_override():
+            return str(record.ipaddress)
+        case NAPTR():
+            return record.replacement
+        case MX():
+            return f"{record.mx} (priority: {record.priority})"
+        case _:
+            return repr(record)  # pyright: ignore[reportUnreachable] # for safety
+
+
+T = TypeVar("T")
+
+
+class OverrideRequired(NamedTuple, Generic[T]):
+    """Check for overrides required for a specific host record type."""
+
+    override: Override
+    name: str
+    items: list[T]
+
+
 @command_registry.register_command(
     prog="remove",
     description="Remove the given host.",
@@ -315,15 +364,25 @@ def remove(args: argparse.Namespace) -> None:
         # And the fallback is "no".
         return False
 
+    override_checks: list[OverrideRequired[Any]] = [
+        OverrideRequired(Override.CNAME, "CNAME", host.cnames),
+        OverrideRequired(Override.MX, "MX", host.mxs),
+        OverrideRequired(Override.SRV, "SRV", host.srvs),
+        OverrideRequired(Override.PTR, "PTR", host.ptr_overrides),
+        OverrideRequired(Override.NAPTR, "NAPTR", host.naptrs),
+    ]
+
+    # Determine required overrides and build warning message
+    # if force and override requirements are not met
     warnings: list[str] = []
     overrides_required: set[Override] = set()
-
-    # Require force if host has any cnames.
-    if host.cnames and not forced(Override.CNAME):
-        overrides_required.add(Override.CNAME)
-        warnings.append(f"  {len(host.cnames)} cnames")
-        for cname in host.cnames:
-            warnings.append(f"    - {cname.name}")
+    for check in override_checks:
+        if check.items and not forced(check.override):
+            overrides_required.add(check.override)
+            warnings.append(f"  {len(check.items)} {check.name} records")
+            for item in check.items:
+                value = get_record_identifier(item)
+                warnings.append(f"    - {value}")
 
     # Require force if host has multiple A/AAAA records and they are not in the same VLAN.
     if len(host.ipaddresses) > 1:
@@ -339,63 +398,6 @@ def remove(args: argparse.Namespace) -> None:
                 ip_strings = [str(ip.ipaddress) for ip in vlans]
                 ip_strings.sort()
                 warnings.append(f"    - {', '.join(ip_strings)} (vlan: {vlan_id})")
-
-    if host.mxs and not forced(Override.MX):
-        overrides_required.add(Override.MX)
-        warnings.append(f"  {len(host.mxs)} MX records")
-        for mx in host.mxs:
-            warnings.append(f"    - {mx.mx} (priority: {mx.priority})")
-
-    # Require force if host has any NAPTR records. Delete the NAPTR records if
-    # force
-    naptrs = host.naptrs
-    if len(naptrs) > 0:
-        if not forced(Override.NAPTR):
-            overrides_required.add(Override.NAPTR)
-            warnings.append(f"  {len(naptrs)} NAPTR records")
-            for naptr in naptrs:
-                warnings.append(f"    - {naptr.replacement}")
-        else:
-            for naptr in naptrs:
-                OutputManager().add_ok(
-                    "deleted NAPTR record {} when removing {}".format(
-                        naptr.replacement,
-                        host.name,
-                    )
-                )
-
-    # Require force if host has any SRV records. Delete the SRV records if force
-    srvs = host.srvs
-    if len(srvs) > 0:
-        if not forced(Override.SRV):
-            overrides_required.add(Override.SRV)
-            warnings.append(f"  {len(srvs)} SRV records")
-            for srv in srvs:
-                warnings.append(f"    - {srv.name}")
-        else:
-            for srv in srvs:
-                OutputManager().add_ok(
-                    "deleted SRV record {} when removing {}".format(
-                        srv.name,
-                        host.name,
-                    )
-                )
-
-    # Require force if host has any PTR records. Delete the PTR records if force
-    if len(host.ptr_overrides) > 0:
-        if not forced(Override.PTR):
-            overrides_required.add(Override.PTR)
-            warnings.append(f"  {len(host.ptr_overrides)} PTR records")
-            for ptr in host.ptr_overrides:
-                warnings.append(f"    - {ptr.ipaddress}")
-        else:
-            for ptr in host.ptr_overrides:
-                OutputManager().add_ok(
-                    "deleted PTR record {} when removing {}".format(
-                        ptr.ipaddress,
-                        host.name,
-                    )
-                )
 
     # Warn user and raise exception if any force requirements was found
     if warnings:
@@ -423,10 +425,20 @@ def remove(args: argparse.Namespace) -> None:
         # Raise the exception with the formatted message
         raise ForceMissing(complete_error_msg)
 
-    if host.delete():
-        OutputManager().add_ok(f"removed {host.name}")
-    else:
+    # Delete the host and any associated records
+    if not host.delete():
         raise DeleteError(f"failed to remove {host.name}")
+
+    # Print messages for associated records that were deleted
+    for check in override_checks:
+        for item in check.items:
+            OutputManager().add_ok(
+                (
+                    f"deleted {check.name} record "
+                    f"{get_record_identifier(item)} when removing {host.name}"
+                )
+            )
+    OutputManager().add_ok(f"removed {host.name}")
 
 
 @command_registry.register_command(
@@ -460,7 +472,7 @@ def host_info(args: argparse.Namespace) -> None:
     for host in args.hosts:
         hosts = Host.get_list_by_any_means_or_raise(host, inform_as_cname=True)
         if hosts:
-            Host.output_multiple(hosts, traverse_hostgroups=args.traverse_hostgroups)
+            output_hosts(hosts, traverse_hostgroups=args.traverse_hostgroups)
 
 
 @command_registry.register_command(
@@ -510,7 +522,8 @@ def find(args: argparse.Namespace) -> None:
         if value:
             _add_param(param, value)
 
-    HostList.get(params=params).output()
+    hosts = HostList.get(params=params)
+    output_hostlist(hosts)
 
 
 @command_registry.register_command(
@@ -597,11 +610,14 @@ def set_comment(args: argparse.Namespace) -> None:
 
 @command_registry.register_command(
     prog="set_contact",
-    description="Set contact for host. If <name> is an alias the cname host is updated.",
+    description=(
+        "Set contact emails for host. Replaces existing contacts. "
+        "If <name> is an alias the cname host is updated."
+    ),
     short_desc="Set contact.",
     flags=[
         Flag("name", description="Name of the target host.", metavar="NAME"),
-        Flag("contact", description="Mail address of the contact.", metavar="CONTACT"),
+        Flag("contact", description="Mail address of the contact.", nargs="+", metavar="CONTACT"),
     ],
 )
 def set_contact(args: argparse.Namespace) -> None:
@@ -609,13 +625,110 @@ def set_contact(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, contact)
     """
-    host = Host.get_by_any_means_or_raise(args.name, inform_as_cname=True)
-    updated_host = host.set_contact(args.contact)
+    name: str = args.name
+    contact: list[str] = args.contact
+
+    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+    updated_host = host.set_contacts(contact)
 
     if not updated_host:
         raise PatchError(f"Failed to update contact of {host.name}")
 
-    OutputManager().add_ok(f"Updated contact of {host} to {args.contact}")
+    OutputManager().add_ok(f"Set contact of {host} to {', '.join(contact)}")
+
+
+@command_registry.register_command(
+    prog="unset_contact",
+    description=(
+        "Remove all contact emails for host. If <name> is an alias the cname host is updated."
+    ),
+    short_desc="Unset contact.",
+    flags=[
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("-force", action="store_true", description="Enable force."),
+    ],
+)
+def unset_contact(args: argparse.Namespace) -> None:
+    """Set contact for host. If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, contact)
+    """
+    name: str = args.name
+    force: bool = args.force
+
+    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+    if not host.contacts:
+        raise DeleteError(f"Host {host.name} has no contacts to remove.")
+
+    if len(host.contacts) > 1 and not force:
+        raise ForceMissing(
+            f"Host {host.name} has multiple contacts, must use -force to remove all contacts."
+        )
+
+    updated = host.clear_contacts()
+    if not updated.removed:
+        raise PatchError(f"Failed to update contact of {host.name}")
+
+    OutputManager().add_ok(f"Removed contact from {host}: {', '.join(updated.removed)}")
+
+
+@command_registry.register_command(
+    prog="add_contact",
+    description="Add contact email for host. If <name> is an alias the cname host is updated.",
+    short_desc="Add contact.",
+    flags=[
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("contact", description="Mail address of the contact.", nargs="+", metavar="CONTACT"),
+    ],
+)
+def add_contact(args: argparse.Namespace) -> None:
+    """Add contact for host. If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, contact)
+    """
+    name: str = args.name
+    contact: list[str] = args.contact
+
+    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+    updated = host.add_contacts(contact)
+
+    if not updated.added:
+        # TODO: add not_found warning?
+        raise PatchError(f"Host already has the given contacts: {', '.join(contact)}")
+
+    OutputManager().add_ok(f"Updated contact of {host} to {', '.join(contact)}")
+
+
+@command_registry.register_command(
+    prog="remove_contact",
+    description="Remove contact email for host. If <name> is an alias the cname host is updated.",
+    short_desc="Remove contact.",
+    flags=[
+        Flag("name", description="Name of the target host.", metavar="NAME"),
+        Flag("contact", description="Mail address of the contact.", nargs="+", metavar="CONTACT"),
+    ],
+)
+def remove_contact(args: argparse.Namespace) -> None:
+    """Remove contact for host. If <name> is an alias the cname host is updated.
+
+    :param args: argparse.Namespace (name, contact)
+    """
+    name: str = args.name
+    contact: list[str] = args.contact
+
+    if not contact:
+        raise InputFailure("At least one contact must be specified.")
+
+    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+
+    updated = host.remove_contacts(contact)
+    if not updated.removed:
+        if updated.not_found:
+            not_found = ", ".join(updated.not_found)
+            raise PatchError(f"Host does not have the given contacts: {not_found}")
+        raise PatchError(f"Failed to remove contacts from {host.name}")
+
+    OutputManager().add_ok(f"Removed contact {', '.join(updated.removed)} from {host}")
 
 
 @command_registry.register_command(
@@ -634,4 +747,4 @@ def history(args: argparse.Namespace) -> None:
     name: str = args.name
 
     hostname = HostName.parse_or_raise(name)
-    Host.output_history(hostname)
+    output_host_history(hostname)

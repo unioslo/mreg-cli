@@ -5,8 +5,9 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.fields import MacAddress
-from mreg_cli.api.models import Host, IPAddress, NetworkOrIP
+from mreg_api.models import Host, IPAddress, NetworkOrIP
+from mreg_api.models.fields import MacAddress
+
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import EntityOwnershipMismatch, InputFailure

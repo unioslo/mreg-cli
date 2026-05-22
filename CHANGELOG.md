@@ -5,7 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Changed
+
+- `host find` now shows IP address(es) for each host.
+- `host add -contact` is now repeatable, with one contact per flag, so options can be placed before or after the hostname.
+
+### Fixed
+
+- `naptr_remove` removing all records regardless of the provided options. Now requires all options to match for a record to be removed.
+
+## [1.9.0](https://github.com/unioslo/mreg-cli/releases/tag/1.9.0) - 2026-04-14
+
+### Changed
+
+- Now uses `mreg-api` package for all API interactions. All API code has been stripped out of `mreg-cli`.
+
+### Fixed
+
+- `host remove` printing success messages for associated record removal when host deletion failed and no records were actually deleted.
+
+## [1.8.3](https://github.com/unioslo/mreg-cli/releases/tag/1.8.3) - 2026-02-03
+
+### Added
+
+- `host add_contact <host> <contact> [<contact> ...]` command to add one or more contacts to a host.
+- `host remove_contact <host> <contact> [<contact> ...]` command to remove one or more contacts from a host.
+- `host unset_contact <host> [-force]` command to remove all contacts from a host.
+- `network community_list -sort <name|global>` option to sort communities by name or global name (defaults to name).
+
+### Changed
+
+- `host set_contact <host> <contact> [<contact> ...]` command now accepts multiple contacts to set at once, replacing all existing contacts.
+- `host add -contact` option now accepts multiple arguments.
+
+## [1.8.2](https://github.com/unioslo/mreg-cli/releases/tag/1.8.2) - 2026-01-06
+
+<!-- NOTE: 1.8.1 skipped in changelog due to Github release issues that required creating a separate 1.8.1 release for PyPI. -->
+
+### Fixed
+
+- `network policy_attribute_delete` command not actually deleting the attribute.
 
 ## [1.8.0](https://github.com/unioslo/mreg-cli/releases/tag/1.8.0) - 2025-12-09
 

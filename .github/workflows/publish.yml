@@ -8,9 +8,6 @@ on:
 concurrency:
   group: build-mreg-cli-${{ github.head_ref }}
 
-env:
-  UV_FROZEN: 1
-
 jobs:
   build_pypi:
     name: Build wheels and source distribution
@@ -81,6 +78,9 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
+
+      - name: Add repo directory to git safe.directory
+        run: git config --global --add safe.directory /__w/mreg-cli/mreg-cli
 
       - name: Install build dependencies
         run: uv sync --group ci

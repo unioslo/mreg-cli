@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Any, Literal, overload
 from urllib.parse import urlencode, urlparse
 
-import requests
+import httpx
+from mreg_api.client import RequestRecord
 from pydantic import BaseModel
 
 from mreg_cli.errorbuilder import build_error_message
@@ -271,30 +272,23 @@ class OutputManager:
 
         self._recorded_data.append(self.recording_entry())
 
-    def recording_request(
-        self,
-        method: str,
-        url: str,
-        params: JsonMapping,
-        data: dict[str, Any],
-        result: requests.Response,
-    ) -> None:
+    def recording_request(self, record: RequestRecord) -> None:
         """Record a request, if recording is active."""
         if not self.recording_active():
             return
         ret_dict: dict[str, Any] = {
-            "method": method.upper(),
-            "url": urlpath(url, params),
-            "data": data,
-            "status": result.status_code,
+            "method": record.method,
+            "url": record.path,
+            "data": record.json or record.data or {},
+            "status": record.status,
         }
         try:
-            obj = result.json()
+            obj = record.response.json()
             for key in self.KEYS_NOT_TO_RECORD:
                 remove_dict_key_recursive(obj, key)
             ret_dict["response"] = obj
-        except requests.JSONDecodeError:
-            s = result.content.decode("utf-8").strip()
+        except (httpx.DecodingError, json.JSONDecodeError):
+            s = record.response.content.decode("utf-8").strip()
             # Compare to empty string to avoid being tripped up by strings having
             # false-like values (0, False, etc)
             if s != "":

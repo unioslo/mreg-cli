@@ -5,8 +5,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_cli.api.models import (
-    Community,
+from mreg_api.models import (
     Host,
     IPAddress,
     Network,
@@ -14,16 +13,29 @@ from mreg_cli.api.models import (
     NetworkPolicy,
     NetworkPolicyAttribute,
 )
+
+from mreg_cli.choices import CommunitySortOrder
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import (
-    APIError,
     DeleteError,
     EntityNotFound,
     ForceMissing,
     InputFailure,
     NetworkOverlap,
 )
+from mreg_cli.output import (
+    output_communities,
+    output_community,
+    output_network_excluded_ranges,
+    output_network_policies,
+    output_network_policy,
+    output_network_policy_attributes,
+    output_network_unused_addresses,
+    output_network_used_addresses,
+    output_networks,
+)
+from mreg_cli.output.network import output_network_policy_attribute
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
@@ -132,7 +144,7 @@ def info(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (networks)
     """
     networks = [Network.get_by_any_means_or_raise(net) for net in args.networks]
-    Network.output_multiple(networks)
+    output_networks(networks)
 
 
 @command_registry.register_command(
@@ -214,6 +226,7 @@ def find(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (limit, silent, addr_only, ip, network, description, vlan,
                                      dns_delegated, category, location, frozen, reserved)
     """
+    addr_only: bool = args.addr_only
     args_dict = vars(args)
 
     if ip_arg := args_dict.get("ip"):
@@ -256,12 +269,16 @@ def find(args: argparse.Namespace) -> None:
     if not networks:
         raise EntityNotFound("No networks matching the query were found.")
 
-    Network.output_multiple(networks)
-    if not args.silent:
-        s = "s" if len(networks) > 1 else ""
-        OutputManager().add_line(
-            f"\nFound {len(networks)} network{s} matching the search criteria."
-        )
+    if addr_only:
+        for network in networks:
+            OutputManager().add_line(network.network)
+    else:
+        output_networks(networks)
+        if not args.silent:
+            s = "s" if len(networks) > 1 else ""
+            OutputManager().add_line(
+                f"\nFound {len(networks)} network{s} matching the search criteria."
+            )
 
 
 @command_registry.register_command(
@@ -278,7 +295,7 @@ def list_unused_addresses(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network)
     """
     net = Network.get_by_any_means_or_raise(args.network)
-    net.output_unused_addresses()
+    output_network_unused_addresses(net)
 
 
 @command_registry.register_command(
@@ -295,7 +312,7 @@ def list_used_addresses(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network)
     """
     net = Network.get_by_any_means_or_raise(args.network)
-    net.output_used_addresses()
+    output_network_used_addresses(net)
 
 
 @command_registry.register_command(
@@ -380,7 +397,7 @@ def list_excluded_ranges(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
     net = Network.get_by_any_means_or_raise(args.network)
-    net.output_excluded_ranges()
+    output_network_excluded_ranges(net.excluded_ranges)
 
 
 @command_registry.register_command(
@@ -765,7 +782,7 @@ def policy_info(args: argparse.Namespace) -> None:
     name: str = args.name
 
     policy = NetworkPolicy.get_by_name_or_raise(name)
-    policy.output()
+    output_network_policy(policy)
 
 
 # TODO[rename]: network policy list
@@ -794,7 +811,7 @@ def policy_list(args: argparse.Namespace) -> None:
         policies = NetworkPolicy.get_list_by_name_regex(name)
     else:
         policies = NetworkPolicy.get_list()
-    NetworkPolicy.output_multiple(policies)
+    output_network_policies(policies)
 
 
 # TODO[rename]: network policy rename
@@ -1002,9 +1019,11 @@ def policy_attribute_delete(args: argparse.Namespace) -> None:
     if not force and (pols := attr.get_policies()):
         policy_names = ", ".join(f"{pol.name!r}" for pol in pols)
         raise ForceMissing(
-            f"Attribute {attr.name!r} is used by the following policies: {policy_names}. Must force."
+            f"Attribute {attr.name!r} is used by the following policies: "
+            f"{policy_names}. Must force."
         )
 
+    attr.delete()
     OutputManager().add_ok(f"Deleted network policy attribute {attribute!r}")
 
 
@@ -1025,7 +1044,7 @@ def policy_attribute_info(args: argparse.Namespace) -> None:
     attribute: str = args.attribute
 
     attr = NetworkPolicyAttribute.get_by_name_or_raise(attribute)
-    attr.output()
+    output_network_policy_attribute(attr)
 
 
 # TODO[rename]: network policy attribute list
@@ -1056,7 +1075,7 @@ def policy_attribute_list(args: argparse.Namespace) -> None:
         attributes = NetworkPolicyAttribute.get_list()
 
     if attributes:
-        NetworkPolicyAttribute.output_multiple(attributes)
+        output_network_policy_attributes(attributes)
     else:
         OutputManager().add_line("No match.")
 
@@ -1196,7 +1215,7 @@ def community_info(args: argparse.Namespace) -> None:
     net = Network.get_by_network_or_raise(network)
     com = net.get_community_or_raise(community)
 
-    com.output()
+    output_community(com)
 
 
 # TODO[rename]: network community list
@@ -1206,7 +1225,14 @@ def community_info(args: argparse.Namespace) -> None:
     short_desc="List communities",
     flags=[
         Flag("network", description="Network", metavar="NETWORK"),
-        Flag("-hosts", action="store_true", description="Show names of hosts."),
+        Flag("-hosts", action="store_true", description="Show hosts in each community."),
+        Flag(
+            "-sort",
+            description="Sorting order",
+            choices=list(CommunitySortOrder),
+            default=CommunitySortOrder.NAME,
+            metavar=CommunitySortOrder.metavar(),
+        ),
     ],
 )
 def community_list(args: argparse.Namespace) -> None:
@@ -1216,9 +1242,10 @@ def community_list(args: argparse.Namespace) -> None:
     """
     network: str = args.network
     hosts: bool = args.hosts
+    sort: CommunitySortOrder = CommunitySortOrder(args.sort)
 
     net = Network.get_by_network_or_raise(network)
-    Community.output_multiple(net.communities, show_hosts=hosts)
+    output_communities(net.communities, show_hosts=hosts, sort=sort)
 
 
 # TODO[rename]: network community rename

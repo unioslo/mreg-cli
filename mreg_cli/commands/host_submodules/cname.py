@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_cli.api.fields import HostName
-from mreg_cli.api.models import CNAME, ForwardZone, Host
+from mreg_api.models import CNAME, ForwardZone, Host
+from mreg_api.models.fields import HostName
+
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
@@ -16,6 +17,7 @@ from mreg_cli.exceptions import (
     InputFailure,
     PatchError,
 )
+from mreg_cli.output.host import output_cnames
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
 
@@ -64,7 +66,7 @@ def cname_add(args: argparse.Namespace) -> None:
     if not zone:
         raise EntityNotFound(f"Could not find a zone for the alias {alias}.")
 
-    CNAME.create(params={"host": str(host.id), "name": alias})
+    CNAME.create(data={"host": str(host.id), "name": alias})
     cname = CNAME.get_by_host_and_name(host.name, alias)
 
     if cname:
@@ -170,4 +172,5 @@ def cname_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    Host.get_by_any_means_or_raise(args.name).output_cnames()
+    host = Host.get_by_any_means_or_raise(args.name)
+    output_cnames(host.cnames, host=host)
