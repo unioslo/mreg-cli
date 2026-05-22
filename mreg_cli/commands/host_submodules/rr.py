@@ -65,6 +65,7 @@ from mreg_cli.exceptions import (
     ForceMissing,
     InputFailure,
     PatchError,
+    handle_exception,
 )
 from mreg_cli.output.host import (
     output_hinfo,
@@ -365,6 +366,32 @@ def naptr_add(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Added NAPTR record to {host.name}.")
 
 
+def filter_naptrs(
+    naptrs: list[NAPTR],
+    preference: int,
+    order: int,
+    flag: str | None,
+    service: str | None,
+    regex: str | None,
+    replacement: str,
+) -> list[NAPTR]:
+    """Filter NAPTRs, matching on all required fields and any optional fields that are provided."""
+    return [
+        naptr
+        for naptr in naptrs
+        if (
+            naptr.preference == preference
+            and naptr.order == order
+            and naptr.replacement == replacement
+            # These 3 fields can be blank, and we need to
+            # know if we should filter on them or not based on user input
+            and (flag is None or naptr.flag == flag)
+            and (service is None or naptr.service == service)
+            and (regex is None or naptr.regex == regex)
+        )
+    ]
+
+
 @command_registry.register_command(
     prog="naptr_remove",
     description="Remove matching NAPTR records from a host.",
@@ -390,15 +417,15 @@ def naptr_add(args: argparse.Namespace) -> None:
             required=True,
             metavar="ORDER",
         ),
-        Flag("-flag", description="NAPTR flag.", required=True, metavar="FLAG"),
-        Flag("-service", description="NAPTR service.", required=True, metavar="SERVICE"),
-        Flag("-regex", description="NAPTR regexp.", required=True, metavar="REGEXP"),
         Flag(
             "-replacement",
             description="NAPTR replacement.",
             required=True,
             metavar="REPLACEMENT",
         ),
+        Flag("-flag", description="NAPTR flag.", default=None, metavar="FLAG"),
+        Flag("-service", description="NAPTR service.", default=None, metavar="SERVICE"),
+        Flag("-regex", description="NAPTR regexp.", default=None, metavar="REGEXP"),
         Flag("-force", action="store_true", description="Force deletion for multiple records."),
     ],
 )
@@ -408,16 +435,15 @@ def naptr_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
     host = Host.get_by_any_means_or_raise(args.name)
-    naptrs = host.naptrs
-
-    to_delete: list[NAPTR] = []
-
-    for naptr in naptrs:
-        for attribute in ("preference", "order", "flag", "service", "regex", "replacement"):
-            if getattr(args, attribute) and getattr(naptr, attribute) != getattr(args, attribute):
-                break
-
-        to_delete.append(naptr)
+    to_delete = filter_naptrs(
+        host.naptrs,
+        preference=args.preference,
+        order=args.order,
+        flag=args.flag,
+        service=args.service,
+        regex=args.regex,
+        replacement=args.replacement,
+    )
 
     if not to_delete:
         raise EntityNotFound(f"No matching NAPTR record found for {host}")
@@ -429,11 +455,13 @@ def naptr_remove(args: argparse.Namespace) -> None:
 
     # This should ideally be done in a transaction, but the API doesn't support it.
     # Right now we may end up in a situation where some records are deleted and some are not.
+    # Best-effort lets us delete as many as possible at the very least.
     for naptr in to_delete:
-        if naptr.delete():
+        try:
+            naptr.delete()
             OutputManager().add_ok(f"Deleted NAPTR record from {host.name}.")
-        else:
-            raise DeleteError(f"Failed to remove NAPTR for {host}")
+        except Exception as e:
+            handle_exception(e)
 
 
 @command_registry.register_command(
