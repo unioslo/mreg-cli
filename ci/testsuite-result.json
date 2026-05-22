@@ -23251,8 +23251,8 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name                 Contact              Comment",
-      "foo.example.org      hi@ho.com            meh"
+      "Name                 Contact              IP                   Comment",
+      "foo.example.org      hi@ho.com            10.0.0.10            meh"
     ],
     "api_requests": [
       {
@@ -23269,8 +23269,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "11:22:33:aa:bb:cc",
-                  "created_at": "2025-12-18T11:57:42.249661+01:00",
-                  "updated_at": "2025-12-18T11:57:42.329996+01:00",
+                  "created_at": "2026-04-20T16:03:33.608920+02:00",
+                  "updated_at": "2026-04-20T16:03:34.121446+02:00",
                   "ipaddress": "10.0.0.10",
                   "host": 19
                 }
@@ -23279,8 +23279,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2025-12-18T11:57:42.230049+01:00",
-                  "updated_at": "2025-12-18T11:57:42.230056+01:00",
+                  "created_at": "2026-04-20T16:03:33.351245+02:00",
+                  "updated_at": "2026-04-20T16:03:33.351281+02:00",
                   "txt": "v=spf1 -all",
                   "host": 19
                 }
@@ -23298,12 +23298,12 @@
               "contacts": [
                 {
                   "email": "hi@ho.com",
-                  "created_at": "2025-12-18T11:57:42.232796+01:00",
-                  "updated_at": "2025-12-18T11:57:42.232806+01:00"
+                  "created_at": "2026-04-20T16:03:33.379144+02:00",
+                  "updated_at": "2026-04-20T16:03:33.379164+02:00"
                 }
               ],
-              "created_at": "2025-12-18T11:57:42.227827+01:00",
-              "updated_at": "2025-12-18T11:57:42.227837+01:00",
+              "created_at": "2026-04-20T16:03:33.328134+02:00",
+              "updated_at": "2026-04-20T16:03:33.328152+02:00",
               "name": "foo.example.org",
               "ttl": null,
               "comment": "meh",
@@ -23325,8 +23325,8 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name                 Contact              Comment",
-      "foo.example.org      hi@ho.com            meh"
+      "Name                 Contact              IP                   Comment",
+      "foo.example.org      hi@ho.com            10.0.0.10            meh"
     ],
     "api_requests": [
       {
@@ -23343,8 +23343,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "11:22:33:aa:bb:cc",
-                  "created_at": "2025-12-18T11:57:42.249661+01:00",
-                  "updated_at": "2025-12-18T11:57:42.329996+01:00",
+                  "created_at": "2026-04-20T16:03:33.608920+02:00",
+                  "updated_at": "2026-04-20T16:03:34.121446+02:00",
                   "ipaddress": "10.0.0.10",
                   "host": 19
                 }
@@ -23353,8 +23353,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2025-12-18T11:57:42.230049+01:00",
-                  "updated_at": "2025-12-18T11:57:42.230056+01:00",
+                  "created_at": "2026-04-20T16:03:33.351245+02:00",
+                  "updated_at": "2026-04-20T16:03:33.351281+02:00",
                   "txt": "v=spf1 -all",
                   "host": 19
                 }
@@ -23372,12 +23372,12 @@
               "contacts": [
                 {
                   "email": "hi@ho.com",
-                  "created_at": "2025-12-18T11:57:42.232796+01:00",
-                  "updated_at": "2025-12-18T11:57:42.232806+01:00"
+                  "created_at": "2026-04-20T16:03:33.379144+02:00",
+                  "updated_at": "2026-04-20T16:03:33.379164+02:00"
                 }
               ],
-              "created_at": "2025-12-18T11:57:42.227827+01:00",
-              "updated_at": "2025-12-18T11:57:42.227837+01:00",
+              "created_at": "2026-04-20T16:03:33.328134+02:00",
+              "updated_at": "2026-04-20T16:03:33.328152+02:00",
               "name": "foo.example.org",
               "ttl": null,
               "comment": "meh",
@@ -23399,8 +23399,8 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name                 Contact              Comment",
-      "foo.example.org      hi@ho.com            meh"
+      "Name                 Contact              IP                   Comment",
+      "foo.example.org      hi@ho.com            10.0.0.10            meh"
     ],
     "api_requests": [
       {
@@ -23417,8 +23417,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "11:22:33:aa:bb:cc",
-                  "created_at": "2025-12-18T11:57:42.249661+01:00",
-                  "updated_at": "2025-12-18T11:57:42.329996+01:00",
+                  "created_at": "2026-04-20T16:03:33.608920+02:00",
+                  "updated_at": "2026-04-20T16:03:34.121446+02:00",
                   "ipaddress": "10.0.0.10",
                   "host": 19
                 }
@@ -23427,8 +23427,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2025-12-18T11:57:42.230049+01:00",
-                  "updated_at": "2025-12-18T11:57:42.230056+01:00",
+                  "created_at": "2026-04-20T16:03:33.351245+02:00",
+                  "updated_at": "2026-04-20T16:03:33.351281+02:00",
                   "txt": "v=spf1 -all",
                   "host": 19
                 }
@@ -23446,12 +23446,12 @@
               "contacts": [
                 {
                   "email": "hi@ho.com",
-                  "created_at": "2025-12-18T11:57:42.232796+01:00",
-                  "updated_at": "2025-12-18T11:57:42.232806+01:00"
+                  "created_at": "2026-04-20T16:03:33.379144+02:00",
+                  "updated_at": "2026-04-20T16:03:33.379164+02:00"
                 }
               ],
-              "created_at": "2025-12-18T11:57:42.227827+01:00",
-              "updated_at": "2025-12-18T11:57:42.227837+01:00",
+              "created_at": "2026-04-20T16:03:33.328134+02:00",
+              "updated_at": "2026-04-20T16:03:33.328152+02:00",
               "name": "foo.example.org",
               "ttl": null,
               "comment": "meh",
@@ -23473,8 +23473,8 @@
     "warning": [],
     "error": [],
     "output": [
-      "Name                 Contact              Comment",
-      "foo.example.org      hi@ho.com            meh"
+      "Name                 Contact              IP                   Comment",
+      "foo.example.org      hi@ho.com            10.0.0.10            meh"
     ],
     "api_requests": [
       {
@@ -23491,8 +23491,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "11:22:33:aa:bb:cc",
-                  "created_at": "2025-12-18T11:57:42.249661+01:00",
-                  "updated_at": "2025-12-18T11:57:42.329996+01:00",
+                  "created_at": "2026-04-20T16:03:33.608920+02:00",
+                  "updated_at": "2026-04-20T16:03:34.121446+02:00",
                   "ipaddress": "10.0.0.10",
                   "host": 19
                 }
@@ -23501,8 +23501,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2025-12-18T11:57:42.230049+01:00",
-                  "updated_at": "2025-12-18T11:57:42.230056+01:00",
+                  "created_at": "2026-04-20T16:03:33.351245+02:00",
+                  "updated_at": "2026-04-20T16:03:33.351281+02:00",
                   "txt": "v=spf1 -all",
                   "host": 19
                 }
@@ -23520,12 +23520,12 @@
               "contacts": [
                 {
                   "email": "hi@ho.com",
-                  "created_at": "2025-12-18T11:57:42.232796+01:00",
-                  "updated_at": "2025-12-18T11:57:42.232806+01:00"
+                  "created_at": "2026-04-20T16:03:33.379144+02:00",
+                  "updated_at": "2026-04-20T16:03:33.379164+02:00"
                 }
               ],
-              "created_at": "2025-12-18T11:57:42.227827+01:00",
-              "updated_at": "2025-12-18T11:57:42.227837+01:00",
+              "created_at": "2026-04-20T16:03:33.328134+02:00",
+              "updated_at": "2026-04-20T16:03:33.328152+02:00",
               "name": "foo.example.org",
               "ttl": null,
               "comment": "meh",

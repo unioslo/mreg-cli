@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # FIXME: this function currently does TOO MUCH
 def get_writable_file_or_tempfile(path: Path) -> Path:
-    """Ensure a writable file path exists, creating it if necessary, or fall back to a temporary file.
+    """Ensure a writable file path exists, or fall back to a temporary file.
 
     Creates parent directories as needed.
 

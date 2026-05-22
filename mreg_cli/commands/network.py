@@ -1019,7 +1019,8 @@ def policy_attribute_delete(args: argparse.Namespace) -> None:
     if not force and (pols := attr.get_policies()):
         policy_names = ", ".join(f"{pol.name!r}" for pol in pols)
         raise ForceMissing(
-            f"Attribute {attr.name!r} is used by the following policies: {policy_names}. Must force."
+            f"Attribute {attr.name!r} is used by the following policies: "
+            f"{policy_names}. Must force."
         )
 
     attr.delete()

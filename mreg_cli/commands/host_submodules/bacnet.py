@@ -52,7 +52,7 @@ def bacnetid_add(args: argparse.Namespace) -> None:
             f"BACnet ID {existing.id} is already in use by {existing.hostname}."
         )
 
-    BacnetID.create(params={"hostname": host.name, "id": args.id})
+    BacnetID.create(data={"hostname": host.name, "id": args.id})
 
     validator = BacnetID.get(args.id)
     if validator and validator.hostname == host.name:

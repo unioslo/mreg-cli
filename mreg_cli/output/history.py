@@ -2,19 +2,12 @@
 
 from __future__ import annotations
 
-from typing import ClassVar, Protocol
-
 from mreg_api.models import Atom, Host, HostGroup, Role
-from mreg_api.models.history import HistoryItem, HistoryResource
+from mreg_api.models.history import HistoryItem
+from mreg_api.models.models import WithHistory
 
 from mreg_cli.exceptions import InternalError
 from mreg_cli.outputmanager import OutputManager
-
-
-class HasHistoryResource(Protocol):
-    """Protocol for classes with a history resource."""
-
-    history_resource: ClassVar[HistoryResource]
 
 
 def get_history_item_message(item: HistoryItem, _basename: str) -> str:
@@ -71,7 +64,7 @@ def _output_history_items(basename: str, items: list[HistoryItem]) -> None:
         _output_object_history(basename, item)
 
 
-def output_history(name: str, obj: type[HasHistoryResource]) -> None:
+def output_history(name: str, obj: type[WithHistory]) -> None:
     """Output the history for the object."""
     history = HistoryItem.get(name, obj.history_resource)
     _output_history_items(name, history)
@@ -95,9 +88,3 @@ def output_host_history(name: str) -> None:
 def output_hostgroup_history(name: str) -> None:
     """Output the history for a hostgroup."""
     output_history(name, HostGroup)
-
-
-# NOTE: NYI? Permission does not have a history_resource field
-# def output_permission_history(name: str) -> None:
-#     """Output the history for a permission."""
-#     output_history(name, Permission)

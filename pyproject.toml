@@ -27,12 +27,12 @@ authors = [
 ]
 
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 keywords = ["mreg", "cli", "interactive"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.11",
@@ -48,7 +48,7 @@ dependencies = [
     "platformdirs>=4.3.0",
     "pydantic-settings>=2.10.1",
     "rich>=13.9.4",
-    "mreg-api>=0.1.5",
+    "mreg-api>=0.2.0,<0.3.0",      # prevent breaking changes in pre-1.0.0 minor versions
 ]
 dynamic = ["version"]
 
@@ -63,7 +63,6 @@ mreg-cli = "mreg_cli.main:main"
 dev = [
     "pytest",
     "inline-snapshot",
-    "pytest-httpserver",
     "ruff",
     "tox-uv",
     "setuptools",
@@ -125,9 +124,6 @@ ignore = [
     # D213 (Multi-line docstring summary should start at the second line) is incompatible with
     # D212 (Multi-line docstring summary should start at the first line). We ignore D213.
     "D213",
-    # ANN101 (Missing type annotation for `self` in method) is infered.
-    "ANN101",
-
     # Rules disabled due to using ruff as a formatter. Most of these rules
     # will thus be enforced by the formatter.
     # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
