@@ -186,6 +186,7 @@ def main():
         url=config.url,
         domain=config.domain,
         timeout=config.http_timeout,
+        user_agent=f"mreg-cli/{__version__}",
         cache=CacheConfig(
             enable=config.cache,
             ttl=config.cache_ttl,
