@@ -179,7 +179,7 @@ class MregCliConfig(BaseSettings):
     category_tags: list[str] = []
     location_tags: list[str] = []
     cache: bool = True
-    cache_ttl: int = Field(default=300, ge=0)
+    cache_ttl: int = Field(default=60, ge=0)
     http_timeout: int = Field(default=20, ge=0)
     record_traffic: ResolvedPath | None = None
     record_traffic_without_timestamps: bool = False

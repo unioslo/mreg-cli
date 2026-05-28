@@ -169,11 +169,11 @@ cache=true
 
 ### Cache TTL
 
-Time-to-live for cached API results, in seconds. Defaults to 300 seconds (5 minutes).
+Time-to-live for cached API results, in seconds. Defaults to 60 seconds (1 minute).
 
 ```ini
 [mreg]
-cache_ttl=300
+cache_ttl=60
 ```
 
 ### History
