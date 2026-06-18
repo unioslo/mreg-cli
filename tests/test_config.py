@@ -34,7 +34,7 @@ def test_get_default_config() -> None:
             "category_tags": [],
             "location_tags": [],
             "cache": True,
-            "cache_ttl": 300,
+            "cache_ttl": 60,
             "http_timeout": 20,
             "record_traffic": None,
             "record_traffic_without_timestamps": False,

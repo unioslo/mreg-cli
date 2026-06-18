@@ -95,7 +95,7 @@ def main():
         dest="cache_ttl",
         help="Maximum time to live for cache entries in seconds.",
         type=int,
-        default=300,
+        default=60,
     )
 
     output_args = parser.add_argument_group("output settings")
