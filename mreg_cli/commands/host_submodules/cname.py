@@ -47,7 +47,7 @@ def cname_add(args: argparse.Namespace) -> None:
 
     # Get host info or raise exception
     host = resolve_host(client, name)
-    alias = HostName.parse_or_raise(alias)
+    alias = client.fqdn(alias)
 
     alias_in_use = resolve_host(client, alias, required=False)
     if alias_in_use:
@@ -96,7 +96,7 @@ def cname_remove(args: argparse.Namespace) -> None:
     alias: str = args.alias
 
     host = resolve_host(client, name)
-    alias = HostName.parse_or_raise(alias)
+    alias = client.fqdn(alias)
 
     alias_as_host = client.host.get_by_name(alias)
     if alias_as_host:
@@ -139,7 +139,7 @@ def cname_replace(args: argparse.Namespace) -> None:
     cname: str = args.cname
     host_arg: str = args.host
 
-    cname = HostName.parse_or_raise(cname)
+    cname = client.fqdn(cname)
     host = resolve_host(client, host_arg)
 
     cname_obj = client.cname.get_by_name(cname)

@@ -533,9 +533,7 @@ def ptr_change(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"No PTR records for {old_host}")
 
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
-    ptr_override = next(
-        (ptr for ptr in old_host.ptr_overrides if ptr.ipaddress == ip), None
-    )
+    ptr_override = next((ptr for ptr in old_host.ptr_overrides if ptr.ipaddress == ip), None)
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {old_host} with IP {ip}")
 
@@ -562,9 +560,7 @@ def ptr_remove(args: argparse.Namespace) -> None:
     client = get_client()
     host = resolve_host(client, args.name)
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
-    ptr_override = next(
-        (ptr for ptr in host.ptr_overrides if ptr.ipaddress == ip), None
-    )
+    ptr_override = next((ptr for ptr in host.ptr_overrides if ptr.ipaddress == ip), None)
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {host} with IP {ip}")
 
@@ -661,7 +657,7 @@ def srv_add(args: argparse.Namespace) -> None:
     client = get_client()
     name: str = args.name
 
-    sname = HostName.parse_or_raise(name)
+    sname = client.fqdn(name)
     host = resolve_host(client, args.host)
 
     szone = client.zone.get_from_host(sname)
@@ -733,7 +729,7 @@ def srv_remove(args: argparse.Namespace) -> None:
     host_arg: str = args.host
 
     host = resolve_host(client, host_arg)
-    sname = HostName.parse_or_raise(name)
+    sname = client.fqdn(name)
 
     srv = client.srv.first(
         name=str(sname),
@@ -767,7 +763,7 @@ def srv_show(args: argparse.Namespace) -> None:
     client = get_client()
     service: str = args.service
 
-    sname = HostName.parse_or_raise(service)
+    sname = client.fqdn(service)
     srvs = client.srv.list(name=str(sname))
 
     if len(srvs) == 0:

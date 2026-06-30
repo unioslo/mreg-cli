@@ -103,7 +103,7 @@ def add(args: argparse.Namespace) -> None:
     """
     client = get_client()
 
-    hname = HostName.parse_or_raise(args.name)
+    hname = client.fqdn(args.name)
     network_or_ip: str = args.ip
     macaddress: str | None = args.macaddress
     force: bool = args.force
@@ -607,7 +607,7 @@ def rename(args: argparse.Namespace) -> None:
     new_name: str = args.new_name
 
     old_host = resolve_host(client, old_name)
-    new_name = HostName.parse_or_raise(new_name)
+    new_name = client.fqdn(new_name)
 
     new_host = resolve_host(client, new_name, required=False, inform_if_cname=True)
     if new_host:
@@ -797,5 +797,5 @@ def history(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
-    hostname = HostName.parse_or_raise(name)
+    hostname = client.fqdn(name)
     output_host_history(hostname)
