@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_api.models import CNAME, ForwardZone, Host
 from mreg_api.models.fields import HostName
 
+from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
@@ -20,6 +20,7 @@ from mreg_cli.exceptions import (
 from mreg_cli.output.host import output_cnames
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
+from mreg_cli.utilities.resolution import resolve_host
 
 
 @command_registry.register_command(
@@ -40,14 +41,15 @@ def cname_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, alias, force)
     """
+    client = get_client()
     name: str = args.name
     alias: str = args.alias
 
     # Get host info or raise exception
-    host = Host.get_by_any_means_or_raise(name)
+    host = resolve_host(client, name)
     alias = HostName.parse_or_raise(alias)
 
-    alias_in_use = Host.get_by_any_means(alias, inform_as_cname=False)
+    alias_in_use = resolve_host(client, alias, required=False)
     if alias_in_use:
         if alias_in_use.id == host.id:
             raise EntityAlreadyExists(f"The alias {alias} is already active for {host}.")
@@ -62,12 +64,12 @@ def cname_add(args: argparse.Namespace) -> None:
             "The alias name is in use by an existing host. Find a new alias."
         )
 
-    zone = ForwardZone.get_from_hostname(alias)
+    zone = client.zone.get_from_host(alias)
     if not zone:
         raise EntityNotFound(f"Could not find a zone for the alias {alias}.")
 
-    CNAME.create(data={"host": str(host.id), "name": alias})
-    cname = CNAME.get_by_host_and_name(host.name, alias)
+    client.cname.create(host=host, name=alias)
+    cname = client.cname.get_by_host_and_name(host, alias)
 
     if cname:
         OutputManager().add_ok(f"Added CNAME {cname.name} for {host.name}.")
@@ -89,23 +91,24 @@ def cname_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, alias)
     """
+    client = get_client()
     name: str = args.name
     alias: str = args.alias
 
-    host = Host.get_by_any_means_or_raise(name)
+    host = resolve_host(client, name)
     alias = HostName.parse_or_raise(alias)
 
-    alias_as_host = Host.get_by_field("name", alias)
+    alias_as_host = client.host.get_by_name(alias)
     if alias_as_host:
         raise InputFailure(f"The alias {alias} is a host, did you mix up the arguments?")
 
-    cname = CNAME.get_by_field("name", alias)
+    cname = client.cname.get_by_name(alias)
     if not cname:
         raise EntityNotFound(f"No CNAME record found for {alias}.")
 
     # Handle situation where the CNAME is not associated with the host we are removing it from.
     if cname.host != host.id:
-        cname_host = Host.get_by_id(cname.host)
+        cname_host = client.host.get_by_id(cname.host)
         if not cname_host:
             raise EntityNotFound(f"Could not find the host for the CNAME {alias}.")
         actual = cname_host.name
@@ -114,10 +117,8 @@ def cname_remove(args: argparse.Namespace) -> None:
             f"The CNAME {cname.name} is associated with {actual}, NOT {desired}."
         )
 
-    if cname.delete():
-        OutputManager().add_line(f"Removed CNAME {cname.name} for {host.name}.")
-    else:
-        raise DeleteError(f"Failed to remove CNAME {cname.name} for {host.name}.")
+    client.cname.delete(cname)
+    OutputManager().add_line(f"Removed CNAME {cname.name} for {host.name}.")
 
 
 @command_registry.register_command(
@@ -134,21 +135,22 @@ def cname_replace(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (cname, host)
     """
+    client = get_client()
     cname: str = args.cname
     host_arg: str = args.host
 
     cname = HostName.parse_or_raise(cname)
-    host = Host.get_by_any_means_or_raise(host_arg)
+    host = resolve_host(client, host_arg)
 
-    cname_obj = CNAME.get_by_name(cname)
+    cname_obj = client.cname.get_by_name(cname)
     if not cname_obj:
         raise EntityNotFound(f"No CNAME record found for {cname}.")
 
-    old_host = Host.get_by_id(cname_obj.host)
+    old_host = client.host.get_by_id(cname_obj.host)
     if not old_host:
         raise EntityNotFound(f"Could not find the host for the CNAME {cname}.")
 
-    updated_cname = cname_obj.patch({"host": host.id})
+    updated_cname = client.cname.update(cname_obj, host=host)
     if updated_cname:
         OutputManager().add_ok(f"Moved CNAME alias {cname}: {old_host.name} -> {host.name}.")
     else:
@@ -172,5 +174,6 @@ def cname_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     output_cnames(host.cnames, host=host)

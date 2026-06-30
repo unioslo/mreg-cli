@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from mreg_api.models import Atom, Host, HostGroup, Role
 from mreg_api.models.history import HistoryItem
-from mreg_api.models.models import WithHistory
 
-from mreg_cli.exceptions import InternalError
+from mreg_cli.exceptions import CliWarning, InternalError
 from mreg_cli.outputmanager import OutputManager
 
 
@@ -64,27 +62,45 @@ def _output_history_items(basename: str, items: list[HistoryItem]) -> None:
         _output_object_history(basename, item)
 
 
-def output_history(name: str, obj: type[WithHistory]) -> None:
-    """Output the history for the object."""
-    history = HistoryItem.get(name, obj.history_resource)
-    _output_history_items(name, history)
-
-
 def output_atom_history(name: str) -> None:
     """Output the history for an atom."""
-    output_history(name, Atom)
+    from mreg_cli.client import get_client  # noqa: PLC0415
+
+    client = get_client()
+    history = client.atom.history(name)
+    if not history:
+        raise CliWarning(f"No history found for atom {name!r}.")
+    _output_history_items(name, history)
 
 
 def output_role_history(name: str) -> None:
     """Output the history for a role."""
-    output_history(name, Role)
+    from mreg_cli.client import get_client  # noqa: PLC0415
+
+    client = get_client()
+    history = client.role.history(name)
+    if not history:
+        raise CliWarning(f"No history found for role {name!r}.")
+    _output_history_items(name, history)
 
 
 def output_host_history(name: str) -> None:
     """Output the history for a host."""
-    output_history(name, Host)
+    from mreg_cli.client import get_client  # noqa: PLC0415
+
+    client = get_client()
+    history = client.host.history(name)
+    if not history:
+        raise CliWarning(f"No history found for host {name!r}.")
+    _output_history_items(name, history)
 
 
 def output_hostgroup_history(name: str) -> None:
     """Output the history for a hostgroup."""
-    output_history(name, HostGroup)
+    from mreg_cli.client import get_client  # noqa: PLC0415
+
+    client = get_client()
+    history = client.hostgroup.history(name)
+    if not history:
+        raise CliWarning(f"No history found for hostgroup {name!r}.")
+    _output_history_items(name, history)

@@ -13,9 +13,9 @@ from urllib.parse import urljoin
 
 import httpx
 import mreg_api
-from mreg_api import MregClient
 from prompt_toolkit import prompt
 
+from mreg_cli.client import get_client
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliError, LoginFailedError
 from mreg_cli.tokenfile import TokenFile
@@ -32,7 +32,7 @@ def disable_cache(func: Callable[P, T]) -> Callable[P, T]:
 
     @functools.wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        with MregClient().caching(enable=False):
+        with get_client().caching(enable=False):
             return func(*args, **kwargs)
 
     return wrapper
@@ -51,7 +51,7 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
     :returns: Nothing.
     """
     token = TokenFile.get_entry(user, url)
-    client = MregClient()
+    client = get_client()
 
     if token and token.token:
         client.set_token(token.token)
@@ -109,7 +109,7 @@ def prompt_for_password_and_try_update_token() -> None:
 
 def auth_and_update_token(username: str, password: str) -> None:
     """Perform the actual token update."""
-    client = MregClient()
+    client = get_client()
 
     base_url = MregCliConfig().url
     tokenurl = urljoin(base_url, "/api/token-auth/")

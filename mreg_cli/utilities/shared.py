@@ -12,7 +12,7 @@ def string_to_int(value: Any, error_tag: str) -> int:
     try:
         return int(value)
     except ValueError as e:
-        raise InputFailure("%s: Not a valid integer" % error_tag) from e
+        raise InputFailure(f"{error_tag}: Not a valid integer") from e
 
 
 def convert_wildcard_to_regex(

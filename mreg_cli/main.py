@@ -14,6 +14,7 @@ from rich.panel import Panel
 
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, get_cli_history, source
+from mreg_cli.client import set_client
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliException, LoginFailedError, handle_exception
 from mreg_cli.log import MregCliLogger
@@ -181,7 +182,6 @@ def main():
         print("mreg url not set in config or as argument")
         return
 
-    # Initialize MregClient singleton with config settings
     client = MregClient(
         url=config.url,
         domain=config.domain,
@@ -193,6 +193,7 @@ def main():
             # other cache settings from config should go here
         ),
     )
+    set_client(client)
     client.events.subscribe(mreg_client_event_hook)
 
     try:

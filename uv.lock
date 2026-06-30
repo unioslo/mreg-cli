@@ -252,8 +252,8 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.2.3"
-source = { registry = "https://pypi.org/simple" }
+version = "0.2.4.dev50+gb715e1f00"
+source = { git = "https://github.com/unioslo/mreg-api?branch=remove-singleton-pattern#b715e1f00d19a0a35e33a8d80f26f783365e9088" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },
@@ -261,10 +261,6 @@ dependencies = [
     { name = "pydantic-extra-types" },
     { name = "pydantic-settings" },
     { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a9/70/e6727f685d9603cf482e186b51144b7726cdd9bd70a9289f0051541af4a4/mreg_api-0.2.3.tar.gz", hash = "sha256:6aa83d4ed04f0f7648be8efd32b28b2b173f5911d7a6e67ff8262d7efde2687d", size = 154018, upload-time = "2026-05-21T09:18:40.411Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/fb/22ab4eabfc3d5e72da8cf5753274cc57cc5aef2ab1fc2ca0971c3407d8a8/mreg_api-0.2.3-py3-none-any.whl", hash = "sha256:f7247b55cb794c5b9cec763949f744392ae2ee62be62c3f6359c3450c5c573ce", size = 83426, upload-time = "2026-05-21T09:18:39.012Z" },
 ]
 
 [[package]]
@@ -307,7 +303,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mreg-api", specifier = ">=0.2.0,<0.3.0" },
+    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api?branch=remove-singleton-pattern" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.7.1" },

@@ -35,6 +35,7 @@ from mreg_cli.commands.policy import PolicyCommands
 from mreg_cli.commands.recording import RecordingCommmands
 from mreg_cli.commands.root import RootCommmands
 from mreg_cli.commands.zone import ZoneCommands
+from mreg_cli.client import get_client
 from mreg_cli.config import MregCliConfig
 
 # Import other mreg_cli modules
@@ -279,7 +280,7 @@ class Command(Completer):
     def record_responses(self) -> None:
         """Record API responses for the last executed command."""
         output = OutputManager()
-        client = mreg_api.MregClient()
+        client = get_client()
         for response in client.get_client_history():
             output.recording_request(response)
         client.clear_client_history()
@@ -300,7 +301,7 @@ class Command(Completer):
         # Create and set the corrolation id, using the cleaned command
         # as the suffix. This is used to track the command in the logs
         # on the server side.
-        mreg_api.MregClient().set_correlation_id(cmd)
+        get_client().set_correlation_id(cmd)
         # Run the command
         cli.parse(cmd, interactive=interactive)
         # Render the output

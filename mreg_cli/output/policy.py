@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from mreg_api.models import Atom, Label, Permission, Role
 from pydantic import BaseModel
 
+from mreg_cli.client import get_client
 from mreg_cli.output.base import output_timestamps
 from mreg_cli.outputmanager import OutputManager
 
@@ -46,10 +47,11 @@ def output_role(role: Role, padding: int = 14) -> None:
     output_timestamps(role)
     manager.add_line(f"{'Description:':<{padding}}{role.description}")
 
+    client = get_client()
     manager.add_line("Atom members:")
     for atom in role.atoms:
         manager.add_formatted_line("", atom, padding)
-    labels = role.get_labels()
+    labels = client.role.get_labels(role)
     manager.add_line("Labels:")
     for label in labels:
         manager.add_formatted_line("", label.name, padding)
@@ -92,9 +94,10 @@ def output_roles_table(roles: Sequence[Role], padding: int = 14) -> None:
         description: str
         labels: str
 
+    client = get_client()
     rows: list[RoleTableRow] = []
     for role in roles:
-        labels = role.get_labels()
+        labels = client.role.get_labels(role)
         row = RoleTableRow(
             name=role.name,
             description=role.description,
@@ -221,14 +224,15 @@ def output_label(label: Label, padding: int = 14) -> None:
     manager.add_line(f"{'Description:':<{padding}}{label.description}")
     manager.add_line("Roles with this label:")
 
-    roles = Role.get_list_by_field("labels", label.id)
+    client = get_client()
+    roles = client.role.list(labels=label.id)
     if roles:
         for role in roles:
             manager.add_line(f"{'':<{short_padding}}{role.name}")
     else:
         manager.add_line(f"{'None':<{short_padding}}")
 
-    permission_list = Permission.get_list_by_field("labels", label.id)
+    permission_list = client.permission.list(labels=label.id)
 
     manager.add_line("Permissions with this label:")
     if permission_list:

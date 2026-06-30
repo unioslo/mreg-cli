@@ -5,11 +5,12 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_api.models import Label, NetworkOrIP, Permission
+from mreg_api.models import NetworkOrIP
 
+from mreg_cli.client import get_client
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError, EntityNotFound
+from mreg_cli.exceptions import EntityAlreadyExists, EntityNotFound
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, QueryParams
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
@@ -45,7 +46,7 @@ def network_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, range)
     """
-    permission_list: list[Permission] = []
+    client = get_client()
 
     params: QueryParams = {}
     if args.group is not None:
@@ -54,8 +55,9 @@ def network_list(args: argparse.Namespace) -> None:
 
     # Well, this is effin' awful. We have to fetch all permissions, but the API wants to limit
     # the number of results. We should probably fix this in the API.
-    permissions = Permission.get_by_query(query=params, ordering="range,group", limit=None)
+    permissions = client.permission.list(**params)
 
+    permission_list = []
     if args.range is not None:
         argnetwork = NetworkOrIP.parse_or_raise(args.range, mode="network")
 
@@ -74,7 +76,7 @@ def network_list(args: argparse.Namespace) -> None:
     output: list[dict[str, str]] = []
     labelnames: dict[int, str] = {}
 
-    for label in Label.get_all():
+    for label in client.label.list(ordering="name"):
         labelnames[label.id] = label.name
 
     for permission in permission_list:
@@ -108,16 +110,17 @@ def network_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (range, group, regex)
     """
+    client = get_client()
+
     NetworkOrIP.parse_or_raise(args.range, mode="network")
 
-    query = {
-        "range": args.range,
-        "group": args.group,
-        "regex": args.regex,
-    }
+    existing = client.permission.get_by_triplet(args.group, args.range, args.regex)
+    if existing:
+        raise EntityAlreadyExists(
+            f"Permission already exists for group={args.group!r}, range={args.range!r}, regex={args.regex!r}."
+        )
 
-    Permission.get_by_query_unique_and_raise(query)
-    Permission.create(data=query)
+    client.permission.create(group=args.group, range=args.range, regex=args.regex)
     OutputManager().add_ok(f"Added permission to {args.range}")
 
 
@@ -136,17 +139,11 @@ def network_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (range, group, regex)
     """
-    query = {
-        "group": args.group,
-        "range": args.range,
-        "regex": args.regex,
-    }
+    client = get_client()
 
-    permission = Permission.get_by_query_unique_or_raise(query)
-    if permission.delete():
-        OutputManager().add_ok(f"Removed permission for {args.range}")
-    else:
-        raise DeleteError(f"Failed to remove permission for {args.range}")
+    permission = client.permission.get_by_triplet(args.group, args.range, args.regex, required=True)
+    client.permission.delete(permission)
+    OutputManager().add_ok(f"Removed permission for {args.range}")
 
 
 @command_registry.register_command(
@@ -165,14 +162,10 @@ def add_label_to_permission(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (range, group, regex, label)
     """
-    # find the permission
-    query = {
-        "group": args.group,
-        "range": args.range,
-        "regex": args.regex,
-    }
-    permission = Permission.get_by_query_unique_or_raise(query)
-    permission.add_label(args.label)
+    client = get_client()
+
+    permission = client.permission.get_by_triplet(args.group, args.range, args.regex, required=True)
+    client.permission.add_label(permission, args.label)
     OutputManager().add_ok(f"Added the label {args.label!r} to the permission.")
 
 
@@ -192,12 +185,8 @@ def remove_label_from_permission(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (range, group, regex, label)
     """
-    # find the permission
-    query = {
-        "group": args.group,
-        "range": args.range,
-        "regex": args.regex,
-    }
-    permission = Permission.get_by_query_unique_or_raise(query)
-    permission.remove_label(args.label)
+    client = get_client()
+
+    permission = client.permission.get_by_triplet(args.group, args.range, args.regex, required=True)
+    client.permission.remove_label(permission, args.label)
     OutputManager().add_ok(f"Removed the label {args.label!r} from the permission.")

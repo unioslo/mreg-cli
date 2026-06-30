@@ -5,8 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Literal, NamedTuple
 
-from mreg_api import MregClient
 from mreg_api.endpoints import Endpoint
+
+from mreg_cli.client import get_client
 from mreg_api.models import (
     CNAME,
     MX,
@@ -84,8 +85,9 @@ def output_host(
 
     output_roles(host.roles, padding=padding)
 
+    client = get_client()
     if traverse_hostgroups:
-        hostgroups = host.get_hostgroups(traverse=True)
+        hostgroups = client.hostgroup.list_by_host(host, traverse=True)
     else:
         hostgroups = host.hostgroups
     output_hostgroups(hostgroups, padding=padding)
@@ -168,7 +170,8 @@ def output_host_networks(
     :param padding: Number of spaces for left-padding the output.
     :param only: If 4, only output IPv4; if 6, only output IPv6.
     """
-    networks = host.networks()
+    client = get_client()
+    networks = client.host.networks(host)
     if not networks:
         return
 
@@ -202,7 +205,9 @@ def output_host_networks(
         ip_to_community: dict[IPAddress, Community] = {}
         if host.communities:
             for com in host.communities:
-                ip = host.get_ip_by_id(com.ipaddress)
+                ip = next((i for i in host.ipaddresses if i.id == com.ipaddress), None)
+                if ip is None:
+                    continue
                 ip = IPAddress.model_validate(ip, from_attributes=True)
 
                 if ip:
@@ -337,7 +342,7 @@ def output_ipaddress(
 
     name = ""
     if names:
-        host = Host.get_by_id(ip.host)
+        host = get_client().host.get_by_id(ip.host)
         name = host.name if host else "<Not found>"
 
     OutputManager().add_line(f"{name:<{len_names}}{ip_str:<{len_ip}}{mac}")
@@ -412,10 +417,9 @@ def output_cname(
     """
     if host:
         hostname = host.name
-    elif actual_host := cname.resolve_host():
-        hostname = actual_host.name
     else:
-        hostname = "<Not found>"
+        actual_host = get_client().host.get_by_id(cname.host)
+        hostname = actual_host.name if actual_host else "<Not found>"
     OutputManager().add_line(f"{'Cname:':<{padding}}{cname.name} -> {hostname}")
 
 
@@ -562,7 +566,7 @@ def output_srv(
     if host_id_name_map and srv.host in host_id_name_map:
         host_name = host_id_name_map[srv.host]
     elif not host_id_name_map or srv.host not in host_id_name_map:
-        host = srv.resolve_host()
+        host = get_client().host.get_by_id(srv.host)
         if host:
             host_name = host.name
 
@@ -594,7 +598,7 @@ def output_srvs(srvs: Sequence[Srv], padding: int = 14) -> None:
 
     # FIXME: refactor to not require Endpoint! API library should handle this
     # Surely we can use some variant of `Host.get_list_by_id`?
-    host_data = MregClient().get_list_in(Endpoint.Hosts, "id", list(host_ids))
+    host_data = get_client().get_list_in(Endpoint.Hosts, "id", list(host_ids))
     hosts = [Host.model_validate(host) for host in host_data]
 
     host_id_name_map = {host.id: str(host.name) for host in hosts}
@@ -621,7 +625,7 @@ def output_ptr_override(ptr: PTR_override, padding: int = 14) -> None:
     :param ptr: PTR override to output.
     :param padding: Number of spaces for left-padding the output.
     """
-    host = ptr.resolve_host()
+    host = get_client().host.get_by_id(ptr.host)
     hostname = host.name if host else "<Not found>"
     OutputManager().add_line(f"{'PTR override:':<{padding}}{ptr.ipaddress} -> {hostname}")
 

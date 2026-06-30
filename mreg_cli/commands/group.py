@@ -5,15 +5,15 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_api.models import Host, HostGroup
-
+from mreg_cli.client import get_client
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import CreateError, DeleteError, EntityNotFound, ForceMissing
+from mreg_cli.exceptions import DeleteError, EntityNotFound, ForceMissing
 from mreg_cli.output.group import output_hostgroup, output_hostgroup_members, output_hostgroups
 from mreg_cli.output.history import output_hostgroup_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
+from mreg_cli.utilities.resolution import resolve_host
 
 command_registry = CommandRegistry()
 
@@ -40,11 +40,9 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
-    HostGroup.get_by_field_and_raise("name", args.name)
-    newgroup = HostGroup.create(data={"name": args.name, "description": args.description})
-    if not newgroup:
-        raise CreateError("Failed to create new group '{args.name}'")
-
+    client = get_client()
+    client.hostgroup.ensure_absent(args.name)
+    newgroup = client.hostgroup.create(name=args.name, description=args.description)
     OutputManager().add_ok(f"Created new group {newgroup.name}")
 
 
@@ -61,8 +59,9 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
+    client = get_client()
     for name in args.name:
-        hg = HostGroup.get_by_name_or_raise(name)
+        hg = client.hostgroup.get_by_name(name, required=True)
         output_hostgroup(hg)
 
 
@@ -83,7 +82,8 @@ def find(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    groups = HostGroup.get_list_by_name_regex(args.name)
+    client = get_client()
+    groups = client.hostgroup.list_by_name_regex(args.name)
     if not groups:
         raise EntityNotFound("No host groups matching the query were found.")
 
@@ -104,9 +104,10 @@ def rename(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (oldname, newname)
     """
-    group = HostGroup.get_by_name_or_raise(args.oldname)
-    HostGroup.get_by_name_and_raise(args.newname)
-    group.rename(args.newname)
+    client = get_client()
+    group = client.hostgroup.get_by_name(args.oldname, required=True)
+    client.hostgroup.ensure_absent(args.newname)
+    client.hostgroup.rename(group, args.newname)
     OutputManager().add_ok(f"Renamed group {args.oldname!r} to {args.newname!r}")
 
 
@@ -124,7 +125,8 @@ def group_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, expand)
     """
-    group = HostGroup.get_by_name_or_raise(args.name)
+    client = get_client()
+    group = client.hostgroup.get_by_name(args.name, required=True)
     output_hostgroup_members(group, expand=args.expand)
 
 
@@ -142,13 +144,12 @@ def group_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, force)
     """
-    group = HostGroup.get_by_name_or_raise(args.name)
+    client = get_client()
+    group = client.hostgroup.get_by_name(args.name, required=True)
     if (group.hosts or group.groups) and not args.force:
         raise ForceMissing("Group contains hosts or groups, must force")
 
-    if not group.delete():
-        raise DeleteError(f"Failed to delete group {args.name}")
-
+    client.hostgroup.delete(group)
     OutputManager().add_ok(f"Deleted group {args.name!r}")
 
 
@@ -166,11 +167,12 @@ def group_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (dstgroup, srcgroup)
     """
-    sourcegroups = [HostGroup.get_by_name_or_raise(name) for name in args.srcgroup]
-    destgroup = HostGroup.get_by_name_or_raise(args.dstgroup)
+    client = get_client()
+    sourcegroups = [client.hostgroup.get_by_name(name, required=True) for name in args.srcgroup]
+    destgroup = client.hostgroup.get_by_name(args.dstgroup, required=True)
 
     for src in sourcegroups:
-        destgroup.add_group(src.name)
+        client.hostgroup.add_group(destgroup, src.name)
         OutputManager().add_ok(f"Added group {src.name!r} to {destgroup.name!r}")
 
 
@@ -188,14 +190,15 @@ def group_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (dstgroup, srcgroup)
     """
-    ownergroup = HostGroup.get_by_name_or_raise(args.dstgroup)
+    client = get_client()
+    ownergroup = client.hostgroup.get_by_name(args.dstgroup, required=True)
 
     for name in args.srcgroup:
         if not ownergroup.has_group(name):
             raise EntityNotFound(f"Group {name!r} not a member in {ownergroup.name!r}")
 
     for name in args.srcgroup:
-        ownergroup.remove_group(name)
+        client.hostgroup.remove_group(ownergroup, name)
         OutputManager().add_ok(f"Removed group {name!r} from {ownergroup.name!r}")
 
 
@@ -213,12 +216,13 @@ def host_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, hosts)
     """
-    hostgroup = HostGroup.get_by_name_or_raise(args.group)
+    client = get_client()
+    hostgroup = client.hostgroup.get_by_name(args.group, required=True)
 
     for name in args.hosts:
-        host = Host.get_by_any_means_or_raise(name)
+        host = resolve_host(client, name)
         fqname = host.name
-        hostgroup.add_host(fqname)
+        client.hostgroup.add_host(hostgroup, fqname)
         OutputManager().add_ok(f"Added host {fqname!r} to {args.group!r}")
 
 
@@ -236,18 +240,19 @@ def host_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, hosts)
     """
-    hostgroup = HostGroup.get_by_name_or_raise(args.group)
+    client = get_client()
+    hostgroup = client.hostgroup.get_by_name(args.group, required=True)
 
     to_remove: set[str] = set()
     for name in args.hosts:
-        host = Host.get_by_any_means_or_raise(name)
+        host = resolve_host(client, name)
         fqname = host.name
         if not hostgroup.has_host(fqname):
             raise EntityNotFound(f"Host {name!r} ({fqname!r}) not a member in {args.group!r}")
         to_remove.add(fqname)
 
     for name in to_remove:
-        hostgroup.remove_host(name)
+        client.hostgroup.remove_host(hostgroup, name)
         OutputManager().add_ok(f"Removed host {name!r} from {args.group!r}")
 
 
@@ -270,8 +275,9 @@ def host_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (host, traverse-hostgroups)
     """
-    host = Host.get_by_any_means_or_raise(args.host)
-    hostgroups = host.get_hostgroups(traverse=args.traverse_hostgroups)
+    client = get_client()
+    host = resolve_host(client, args.host)
+    hostgroups = client.hostgroup.list_by_host(host, traverse=args.traverse_hostgroups)
     output_hostgroups(hostgroups, multiline=True)
 
 
@@ -289,10 +295,11 @@ def owner_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, owners)
     """
-    hostgroup = HostGroup.get_by_name_or_raise(args.group)
+    client = get_client()
+    hostgroup = client.hostgroup.get_by_name(args.group, required=True)
 
     for name in args.owners:
-        hostgroup.add_owner(name)
+        client.hostgroup.add_owner(hostgroup, name)
         OutputManager().add_ok(f"Added owner {name!r} to {args.group!r}")
 
 
@@ -310,14 +317,15 @@ def owner_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (group, owners)
     """
-    hostgroup = HostGroup.get_by_name_or_raise(args.group)
+    client = get_client()
+    hostgroup = client.hostgroup.get_by_name(args.group, required=True)
 
     for name in args.owners:
         if not hostgroup.has_owner(name):
             raise EntityNotFound(f"Owner {name!r} not a member in {args.group!r}")
 
     for name in args.owners:
-        hostgroup.remove_owner(name)
+        client.hostgroup.remove_owner(hostgroup, name)
         OutputManager().add_ok(f"Removed owner {name!r} from {args.group!r}")
 
 
@@ -335,7 +343,9 @@ def set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
-    HostGroup.get_by_name_or_raise(args.name).set_description(args.description)
+    client = get_client()
+    group = client.hostgroup.get_by_name(args.name, required=True)
+    client.hostgroup.set_description(group, args.description)
     OutputManager().add_ok(f"Updated description to {args.description!r} for {args.name!r}")
 
 
