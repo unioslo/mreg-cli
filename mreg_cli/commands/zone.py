@@ -6,6 +6,7 @@ import argparse
 from typing import Any
 
 from mreg_api.models import ForwardZone, ReverseZone
+from typing_extensions import NotRequired, TypedDict
 
 from mreg_cli.client import get_client
 from mreg_cli.commands.base import BaseCommand
@@ -265,6 +266,18 @@ def set_ns(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Updated nameservers for {args.zone}")
 
 
+class ZoneSetSoaKwargs(TypedDict, total=False):
+    """Keyword arguments for creating a network."""
+
+    primary_ns: NotRequired[str]
+    email: NotRequired[str]
+    serialno: NotRequired[int]
+    refresh: NotRequired[int]
+    retry: NotRequired[int]
+    expire: NotRequired[int]
+    soa_ttl: NotRequired[int]
+
+
 @command_registry.register_command(
     prog="set_soa",
     description="Updated the SOA of a zone.",
@@ -286,18 +299,39 @@ def set_soa(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone, ns, email, serialno, retry, expire, soa_ttl)
     """
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
-    client.zone.update_soa(
-        zone,
-        primary_ns=args.ns,
-        email=args.email,
-        serialno=args.serialno,
-        refresh=args.refresh,
-        retry=args.retry,
-        expire=args.expire,
-        soa_ttl=args.soa_ttl,
-    )
-    OutputManager().add_ok(f"Updated SOA for {args.zone}")
+    zone: str = args.zone
+    primary_ns: str | None = args.ns
+    email: str | None = args.email
+    serialno: int | None = args.serialno
+    refresh: int | None = args.refresh
+    retry: int | None = args.retry
+    expire: int | None = args.expire
+    soa_ttl: int | None = args.soa_ttl
+
+    kwargs: ZoneSetSoaKwargs = {}
+    if primary_ns is not None:
+        kwargs["primary_ns"] = primary_ns
+    if email is not None:
+        kwargs["email"] = email
+    if serialno is not None:
+        kwargs["serialno"] = serialno
+    if refresh is not None:
+        kwargs["refresh"] = refresh
+    if retry is not None:
+        kwargs["retry"] = retry
+    if expire is not None:
+        kwargs["expire"] = expire
+    if soa_ttl is not None:
+        kwargs["soa_ttl"] = soa_ttl
+
+    if not kwargs:
+        raise InputFailure(
+            "At least one of the following must be provided: ns, email, serialno, refresh, retry, expire, soa_ttl"
+        )
+
+    zone_obj = client.zone.get_by_name(zone, required=True)
+    client.zone.update_soa(zone_obj, **kwargs)
+    OutputManager().add_ok(f"Updated SOA for {zone}")
 
 
 @command_registry.register_command(

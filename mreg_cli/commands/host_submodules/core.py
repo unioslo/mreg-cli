@@ -201,9 +201,9 @@ def add(args: argparse.Namespace) -> None:
     host = client.host.create(
         name=str(data["name"]),
         comment=str(data["comment"]) if data.get("comment") else "",
-        contacts=data.get("contacts") if data.get("contacts") else None,  # type: ignore[arg-type]
-        ipaddress=data.get("ipaddress"),  # type: ignore[arg-type]
-        network=data.get("network"),  # type: ignore[arg-type]
+        contacts=data.get("contacts") if data.get("contacts") else None,  # pyright: ignore[reportArgumentType]
+        ipaddress=data.get("ipaddress"),  # pyright: ignore[reportArgumentType]
+        network=data.get("network"),  # pyright: ignore[reportArgumentType]
     )
     if not host:
         raise CreateError("Failed to add host.")
@@ -567,8 +567,8 @@ def find(args: argparse.Namespace) -> None:
         if value:
             _add_param(param, value)
 
-    hosts = client.host.list(**params)
-    output_hostlist(HostList(results=hosts))
+    hosts = client.host.list(limit=500, **params)
+    output_hostlist(hosts)
 
 
 @command_registry.register_command(
@@ -797,5 +797,6 @@ def history(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
+    client = get_client()
     hostname = client.fqdn(name)
     output_host_history(hostname)

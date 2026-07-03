@@ -289,6 +289,9 @@ def print_greeting(config: MregCliConfig) -> None:
 def mreg_client_event_hook(event: Event) -> None:
     """Event hook for MregClient to record events in the OutputManager."""
     om = OutputManager()
+    if om.is_suppressing_events():
+        return
+
     if event.level >= EventLevel.WARNING:
         om.add_warning(event.message)
     elif event.kind == EventKind.MUTATION:

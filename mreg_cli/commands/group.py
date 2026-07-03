@@ -8,7 +8,7 @@ from typing import Any
 from mreg_cli.client import get_client
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError, EntityNotFound, ForceMissing
+from mreg_cli.exceptions import EntityNotFound, ForceMissing
 from mreg_cli.output.group import output_hostgroup, output_hostgroup_members, output_hostgroups
 from mreg_cli.output.history import output_hostgroup_history
 from mreg_cli.outputmanager import OutputManager
@@ -41,9 +41,13 @@ def create(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, description)
     """
     client = get_client()
-    client.hostgroup.ensure_absent(args.name)
-    newgroup = client.hostgroup.create(name=args.name, description=args.description)
-    OutputManager().add_ok(f"Created new group {newgroup.name}")
+    name: str = args.name
+    description: str = args.description
+
+    client.hostgroup.ensure_absent(name)
+    newgroup = client.hostgroup.create(name=name, description=description)
+    if newgroup:
+        OutputManager().add_ok(f"Created new group {newgroup.name}")
 
 
 @command_registry.register_command(
@@ -104,11 +108,14 @@ def rename(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (oldname, newname)
     """
+    oldname: str = args.oldname
+    newname: str = args.newname
+
     client = get_client()
-    group = client.hostgroup.get_by_name(args.oldname, required=True)
-    client.hostgroup.ensure_absent(args.newname)
-    client.hostgroup.rename(group, args.newname)
-    OutputManager().add_ok(f"Renamed group {args.oldname!r} to {args.newname!r}")
+    group = client.hostgroup.get_by_name(oldname, required=True)
+    client.hostgroup.ensure_absent(newname)
+    client.hostgroup.rename(group, newname)
+    OutputManager().add_ok(f"Renamed group {oldname!r} to {newname!r}")
 
 
 @command_registry.register_command(

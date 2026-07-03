@@ -8,13 +8,14 @@ command.
 from __future__ import annotations
 
 import atexit
+from contextlib import contextmanager
 import datetime
 import json
 import logging
 import re
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Literal, overload
+from typing import Any, Generator, Literal, overload
 from urllib.parse import urlencode, urlparse
 
 import httpx
@@ -127,6 +128,7 @@ class OutputManager:
         "serialno",
         "create_date",
     ]
+    _suppressing_events: bool = False
 
     def __new__(cls):
         """Create a new instance of the class, or return the existing one."""
@@ -159,6 +161,19 @@ class OutputManager:
         self._recording: bool = False
         self._file: Path | None = None
         self._record_timestamps: bool = True
+
+    @contextmanager
+    def suppress_events(self) -> Generator[None, None, None]:
+        """Context manager to suppress events."""
+        self._suppressing_events = True
+        try:
+            yield
+        finally:
+            self._suppressing_events = False
+
+    def is_suppressing_events(self) -> bool:
+        """Return True if MregClient events should be suppressed."""
+        return self._suppressing_events
 
     def record_timestamps(self, state: bool) -> None:
         """Set whether to record timestamps in the recording.

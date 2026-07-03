@@ -236,3 +236,4 @@ version_file = "mreg_cli/_version.py"
 # is not up to date with most recent mreg-api git main commit.
 [tool.uv.sources]
 mreg-api = { git = "https://github.com/unioslo/mreg-api", branch = "remove-singleton-pattern" }
+# mreg-api = { path = "/Users/pederhan/repos/mreg-api", editable = true }

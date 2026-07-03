@@ -144,7 +144,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
 
     # Find the IPAddress object for the old IP
     host_ip = next(
-        (h_ip for h_ip in host.ipaddresses if h_ip.ipaddress == old_ip.as_ip()),
+        (h_ip for h_ip in host.ipaddresses if h_ip.ipaddress == old_ip),
         None,
     )
     if not host_ip:
@@ -167,16 +167,14 @@ def _ip_move(ipaddr: str, fromhost: str, tohost: str, ipversion: IP_Version) -> 
     """
     client = get_client()
 
-    ip = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
-    if ip.version != ipversion:
+    ip_addr = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
+    if ip_addr.version != ipversion:
         raise InputFailure(
-            f"IP version {ip.version} does not match the requested version {ipversion}"
+            f"IP version {ip_addr.version} does not match the requested version {ipversion}"
         )
 
     from_host = resolve_host(client, fromhost)
     to_host = resolve_host(client, tohost)
-
-    ip_addr = ip.as_ip()
 
     # Find the IPAddress object on from_host
     host_ip = next(
@@ -191,11 +189,11 @@ def _ip_move(ipaddr: str, fromhost: str, tohost: str, ipversion: IP_Version) -> 
     )
 
     if not host_ip and not ptr:
-        raise EntityNotFound(f"Host {from_host} has no IP or PTR with address {ip}")
+        raise EntityNotFound(f"Host {from_host} has no IP or PTR with address {ipaddr}")
 
     msg = ""
     if host_ip:
-        client.patch(f"/api/v1/ipaddresses/{host_ip.id}/", json={"host": to_host.id})
+        client.ipaddress.update(host_ip, host=to_host)
         msg = f"Moved ipaddress {ipaddr}"
     else:
         msg += "No ipaddresses matched. "
@@ -218,19 +216,18 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version, force: bool = Fals
 
     # TODO: use event suppression ctx manager to avoid printing cname and PTR resolution here
     host = resolve_host(client, name)
-    ip = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
-    if ip.version != ipversion:
+    ip_addr = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
+    if ip_addr.version != ipversion:
         raise InputFailure(
-            f"IP version {ip.version} does not match the requested version {ipversion}"
+            f"IP version {ip_addr.version} does not match the requested version {ipversion}"
         )
 
-    ip_addr = ip.as_ip()
     host_ip = next(
         (h_ip for h_ip in host.ipaddresses if h_ip.ipaddress == ip_addr),
         None,
     )
     if not host_ip:
-        raise EntityNotFound(f"Host {host} does not have IP {ip}")
+        raise EntityNotFound(f"Host {host} does not have IP {ipaddr}")
 
     # Check if we fetched the host via a CNAME.
     if not force and host.cnames:
@@ -286,7 +283,7 @@ def _ip_add(
     if macaddress:
         mac = MacAddress.parse_or_raise(macaddress)
 
-    client.ipaddress.create(host=host, ipaddress=ip, macaddress=mac or None)
+    client.ipaddress.create(host=host, ipaddress=ip, macaddress=mac)
     OutputManager().add_ok(f"Added ipaddress {ip} to {host}")
 
     # Resolve and return the updated host

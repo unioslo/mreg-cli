@@ -75,7 +75,10 @@ def output_network(network: Network, padding: int = 25) -> None:
         fmt("Excluded ranges:", f"{excluded_ips} ipaddresses")
         output_network_excluded_ranges(network.excluded_ranges, padding=padding)
     fmt("Used addresses:", client.network.get_used_count(network))
-    fmt("Unused addresses:", f"{client.network.get_unused_count(network)} (excluding reserved adr.)")
+    fmt(
+        "Unused addresses:",
+        f"{client.network.get_unused_count(network)} (excluding reserved adr.)",
+    )
 
 
 def output_networks(

@@ -6,10 +6,10 @@ The CLI is responsible for composing the heuristic lookup chain.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Literal, overload
 
 from mreg_api import MregClient
-from mreg_api.exceptions import EntityNotFound
 from mreg_api.models import Atom, Host, Network, Role
 
 from mreg_cli.exceptions import EntityNotFound as CliEntityNotFound
@@ -63,35 +63,48 @@ def resolve_host(
     """
     from mreg_cli.outputmanager import OutputManager
 
+    # We got passed an integer, assume host ID
     if isinstance(identifier, int):
-        host = client.host.get_by_id(identifier)
-        if host is not None:
-            return host
-    else:
-        ident_str = str(identifier)
-        for getter in [
-            lambda s: client.host.get_by_ip(s),
-            lambda s: client.host.get_by_mac(s),
-            lambda s: client.host.get_by_name(s),
-        ]:
-            try:
-                host = getter(ident_str)
-                if host is not None:
-                    return host
-            except Exception:
-                continue
+        return client.host.get_by_id(identifier, required=required)
 
-        # Fall back to CNAME
-        cname = client.cname.get_by_name(ident_str)
-        if cname is not None:
-            host = client.host.get_by_id(cname.host)
+    getters: list[Callable[[str], Host | None]] = []
+    ident_str = str(identifier)
+
+    # Try by ID first if the identifier is a digit
+    if ident_str.isdigit():
+        getters.append(lambda s: client.host.get_by_id(int(s)))
+
+    # Try by IP → MAC → name
+    getters.extend(
+        [
+            client.host.get_by_ip,
+            client.host.get_by_mac,
+            client.host.get_by_name,
+        ]
+    )
+
+    for getter in getters:
+        try:
+            host = getter(ident_str)
             if host is not None:
-                if inform_if_cname:
-                    OutputManager().add_line(f"{ident_str!r} is a CNAME for {host.name!r}")
                 return host
+        except Exception:
+            pass
+
+    # Fall back to CNAME
+    cname = client.cname.get_by_name(ident_str)
+    if cname is not None:
+        host = client.host.get_by_id(cname.host)
+        # NOTE: should it be an error if CNAME has host ID that doesn't exist? Probably.
+        # At the very least produce a warning if CNAME host ID cannot be resolved.
+        if host is not None:
+            if inform_if_cname:
+                OutputManager().add_line(f"{ident_str!r} is a CNAME for {host.name!r}")
+            return host
 
     if required:
         raise CliEntityNotFound(f"Host {identifier!r} not found.")
+
     return None
 
 

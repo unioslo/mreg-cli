@@ -48,14 +48,14 @@ def network_list(args: argparse.Namespace) -> None:
     """
     client = get_client()
 
-    params: QueryParams = {}
+    params: QueryParams = {"ordering": "range,group"}
     if args.group is not None:
         param, value = convert_wildcard_to_regex("group", args.group)
         params[param] = value
 
     # Well, this is effin' awful. We have to fetch all permissions, but the API wants to limit
     # the number of results. We should probably fix this in the API.
-    permissions = client.permission.list(**params)
+    permissions = client.permission.list(limit=None, **params)
 
     permission_list = []
     if args.range is not None:
@@ -141,7 +141,9 @@ def network_remove(args: argparse.Namespace) -> None:
     """
     client = get_client()
 
-    permission = client.permission.get_by_triplet(args.group, args.range, args.regex, required=True)
+    permission = client.permission.get_by_triplet(
+        args.group, args.range, args.regex, required=True
+    )
     client.permission.delete(permission)
     OutputManager().add_ok(f"Removed permission for {args.range}")
 
@@ -164,7 +166,9 @@ def add_label_to_permission(args: argparse.Namespace) -> None:
     """
     client = get_client()
 
-    permission = client.permission.get_by_triplet(args.group, args.range, args.regex, required=True)
+    permission = client.permission.get_by_triplet(
+        args.group, args.range, args.regex, required=True
+    )
     client.permission.add_label(permission, args.label)
     OutputManager().add_ok(f"Added the label {args.label!r} to the permission.")
 
@@ -187,6 +191,8 @@ def remove_label_from_permission(args: argparse.Namespace) -> None:
     """
     client = get_client()
 
-    permission = client.permission.get_by_triplet(args.group, args.range, args.regex, required=True)
+    permission = client.permission.get_by_triplet(
+        args.group, args.range, args.regex, required=True
+    )
     client.permission.remove_label(permission, args.label)
     OutputManager().add_ok(f"Removed the label {args.label!r} from the permission.")

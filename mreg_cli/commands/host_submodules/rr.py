@@ -293,6 +293,9 @@ def mx_remove(args: argparse.Namespace) -> None:
     host = resolve_host(client, name)
     mx_obj = client.mx.get_by_all(host, mx_arg, priority)
     client.mx.delete(mx_obj)
+    OutputManager().add_ok(
+        f"Deleted MX {mx_obj.mx} with priority {priority} from {host.name}.",
+    )
 
 
 @command_registry.register_command(
@@ -625,14 +628,16 @@ def ptr_show(args: argparse.Namespace) -> None:
 
     client = get_client()
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
-    # TODO: use event suppression ctx manager to avoid printing PTR resolution here
-    host = resolve_host(client, str(ip))
-    if not host.ptr_overrides:
-        OutputManager().add_line(f"No PTR records for {host.name}")
 
-    for ptr in host.ptr_overrides:
-        if ip == ptr.ipaddress:
-            output_ptr_override(ptr)
+    # Suppress PTR override events from being printed when we resolve PTR overrides
+    with OutputManager().suppress_events():
+        host = resolve_host(client, str(ip))
+        if not host.ptr_overrides:
+            OutputManager().add_line(f"No PTR records for {host.name}")
+
+        for ptr in host.ptr_overrides:
+            if ip == ptr.ipaddress:
+                output_ptr_override(ptr)
 
 
 @command_registry.register_command(

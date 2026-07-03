@@ -112,13 +112,15 @@ def output_hosts(
             OutputManager().add_line("")
 
 
-def output_hostlist(hostlist: HostList) -> None:
-    """Output a list of hosts to the console.
+# NOTE: we used to distinguish between `list[Host]` and `HostList`
+# this is no longer the case. No client methods return `HostList` anymore.
+def output_hostlist(hostlist: list[Host]) -> None:
+    """Output a table of hosts, showing only the most relevant info.
 
-    :param hostlist: HostList object containing hosts to output.
+    :param hostlist: List of Host objects to output.
     :raises EntityNotFound: If no hosts are found.
     """
-    if not hostlist.results:
+    if not hostlist:
         raise EntityNotFound("No hosts found.")
 
     max_name = max_contacts = max_ips = 20
@@ -131,12 +133,12 @@ def output_hostlist(hostlist: HostList) -> None:
 
     hosts = [
         HostOutput(
-            name=str(i.name),
-            contacts=", ".join(i.contact_emails),
-            comment=i.comment or "",
-            ips=", ".join(str(ip.ipaddress) for ip in i.ipaddresses),
+            name=str(host.name),
+            contacts=", ".join(host.contact_emails),
+            comment=host.comment or "",
+            ips=", ".join(str(ip.ipaddress) for ip in host.ipaddresses),
         )
-        for i in hostlist.results
+        for host in hostlist
     ]
     max_name = max(max_name, max(len(host.name) for host in hosts))
     max_contacts = max(max_contacts, max(len(host.contacts) for host in hosts))
@@ -625,6 +627,8 @@ def output_ptr_override(ptr: PTR_override, padding: int = 14) -> None:
     :param ptr: PTR override to output.
     :param padding: Number of spaces for left-padding the output.
     """
+    # FIXME: surely the ptr.host is the host we got the PTR override from in `ptr_show`?
+    # We should pass in the host object to avoid this extra lookup.
     host = get_client().host.get_by_id(ptr.host)
     hostname = host.name if host else "<Not found>"
     OutputManager().add_line(f"{'PTR override:':<{padding}}{ptr.ipaddress} -> {hostname}")

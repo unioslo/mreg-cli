@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, MutableMapping, Sequence
 from enum import StrEnum
 from functools import lru_cache
 from typing import (
@@ -56,7 +56,7 @@ NargsType = int | NargsStr
 
 
 Json = mreg_api.types.Json
-JsonMapping = mreg_api.types.JsonMapping
+JsonMapping = MutableMapping[str, Json]
 QueryParams = mreg_api.types.QueryParams
 
 
