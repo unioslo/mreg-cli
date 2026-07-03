@@ -252,8 +252,8 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.2.4.dev72+ge7c92418a"
-source = { git = "https://github.com/unioslo/mreg-api?branch=remove-singleton-pattern#e7c92418a66c78b9034fe6f4d4ab5f3e6ed327d3" }
+version = "0.2.4.dev76+g9a88bac8c"
+source = { git = "https://github.com/unioslo/mreg-api?branch=remove-singleton-pattern#9a88bac8c555ebb2d979b7ab27d6a7903dd91778" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },

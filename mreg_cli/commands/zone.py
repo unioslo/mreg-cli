@@ -83,7 +83,7 @@ def delegation_create(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (ns, force, zone, delegation, comment)
     """
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
+    zone = client.zone.get_by_name(args.zone)
     client.delegation.create(
         zone,
         name=args.delegation,
@@ -109,7 +109,7 @@ def zone_delete(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone, force)
     """
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
+    zone = client.zone.get_by_name(args.zone)
     client.zone.delete(zone, force=args.force)
     OutputManager().add_ok(f"Deleted zone {zone.name}")
 
@@ -132,7 +132,7 @@ def delegation_delete(args: argparse.Namespace) -> None:
     # i.e. uio.no -> pederhan.uio.no -> sub.pederhan.uio.no
     # and we try to delete pederhan.uio.no?
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
+    zone = client.zone.get_by_name(args.zone)
     client.delegation.delete(zone, args.delegation)
     OutputManager().add_ok(f"Removed zone delegation {args.delegation}")
 
@@ -151,7 +151,7 @@ def info(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone)
     """
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
+    zone = client.zone.get_by_name(args.zone)
     output_zone(zone)
 
 
@@ -198,7 +198,7 @@ def zone_delegation_list(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone)
     """
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
+    zone = client.zone.get_by_name(args.zone)
     output_delegations(zone)
 
 
@@ -218,7 +218,7 @@ def zone_delegation_comment_set(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone, delegation, comment)
     """
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
+    zone = client.zone.get_by_name(args.zone)
     client.delegation.set_comment(zone, args.delegation, args.comment)
     OutputManager().add_ok(f"Updated comment for {args.delegation}")
 
@@ -238,7 +238,7 @@ def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone, delegation)
     """
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
+    zone = client.zone.get_by_name(args.zone)
     client.delegation.set_comment(zone, args.delegation, "")
     OutputManager().add_ok(f"Removed comment for {args.delegation}")
 
@@ -261,7 +261,7 @@ def set_ns(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone, ns, force)
     """
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
+    zone = client.zone.get_by_name(args.zone)
     client.zone.set_nameservers(zone, args.ns, force=args.force)
     OutputManager().add_ok(f"Updated nameservers for {args.zone}")
 
@@ -329,7 +329,7 @@ def set_soa(args: argparse.Namespace) -> None:
             "At least one of the following must be provided: ns, email, serialno, refresh, retry, expire, soa_ttl"
         )
 
-    zone_obj = client.zone.get_by_name(zone, required=True)
+    zone_obj = client.zone.get_by_name(zone)
     client.zone.update_soa(zone_obj, **kwargs)
     OutputManager().add_ok(f"Updated SOA for {zone}")
 
@@ -349,6 +349,6 @@ def set_default_ttl(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (zone, ttl)
     """
     client = get_client()
-    zone = client.zone.get_by_name(args.zone, required=True)
+    zone = client.zone.get_by_name(args.zone)
     client.zone.set_default_ttl(zone, args.ttl)
     OutputManager().add_ok(f"Set default TTL for {args.zone}")

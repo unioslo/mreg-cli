@@ -368,6 +368,7 @@ def naptr_add(args: argparse.Namespace) -> None:
         service=args.service,
         regex=args.regex,
         replacement=args.replacement,
+        required=False,
     )
     if existing_naptr:
         raise EntityAlreadyExists(f"{host} already has that NAPTR defined.")
@@ -679,6 +680,7 @@ def srv_add(args: argparse.Namespace) -> None:
         priority=args.priority,
         weight=args.weight,
         port=args.port,
+        required=False,
     )
     if existing_srv:
         raise EntityAlreadyExists(f"{sname} already has that SRV defined.")
@@ -742,6 +744,7 @@ def srv_remove(args: argparse.Namespace) -> None:
         priority=args.priority,
         port=args.port,
         weight=args.weight,
+        required=False,
     )
     if not srv:
         raise EntityNotFound(
@@ -801,6 +804,7 @@ def sshfp_add(args: argparse.Namespace) -> None:
         algorithm=args.algorithm,
         hash_type=args.hash_type,
         fingerprint=args.fingerprint,
+        required=False,
     )
     if existing_sshfp:
         raise EntityAlreadyExists(f"{host} already has that SSHFP defined.")
@@ -929,7 +933,7 @@ def ttl_set(args: argparse.Namespace) -> None:
     target_srv: Srv | None = None
 
     if target_host is None:
-        target_srv = client.srv.first(name=name)
+        target_srv = client.srv.first(name=name, required=False)
 
     if target_host is None and target_srv is None:
         raise EntityNotFound(f"No host or SRV record found for {name}")
@@ -1020,7 +1024,7 @@ def txt_remove(args: argparse.Namespace) -> None:
     """
     client = get_client()
     host = resolve_host(client, args.name)
-    txt = client.txt.first(host=host.id, txt=args.text)
+    txt = client.txt.first(host=host.id, txt=args.text, required=False)
 
     if not txt:
         raise EntityNotFound(f"{host} has no TXT record matching '{args.text}'")

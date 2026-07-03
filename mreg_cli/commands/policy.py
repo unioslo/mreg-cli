@@ -86,7 +86,7 @@ def atom_delete(args: argparse.Namespace) -> None:
     client = get_client()
     name: str = args.name
 
-    atom = client.atom.get_by_name(name, required=True)
+    atom = client.atom.get_by_name(name)
     client.atom.delete(atom)
     OutputManager().add_ok(f"Deleted atom {name}")
 
@@ -138,7 +138,7 @@ def role_delete(args: argparse.Namespace) -> None:
     client = get_client()
     name: str = args.name
 
-    role = client.role.get_by_name(name, required=True)
+    role = client.role.get_by_name(name)
     client.role.delete(role)
     OutputManager().add_ok(f"Deleted role {name!r}")
 
@@ -161,7 +161,7 @@ def add_atom(args: argparse.Namespace) -> None:
     role_name: str = args.role
     atom_name: str = args.atom
 
-    role = client.role.get_by_name(role_name, required=True)
+    role = client.role.get_by_name(role_name)
     client.role.add_atom(role, atom_name)
     OutputManager().add_ok(f"Added atom {atom_name!r} to role {role_name!r}")
 
@@ -184,7 +184,7 @@ def remove_atom(args: argparse.Namespace) -> None:
     role_name: str = args.role
     atom_name: str = args.atom
 
-    role = client.role.get_by_name(role_name, required=True)
+    role = client.role.get_by_name(role_name)
     client.role.remove_atom(role, atom_name)
     OutputManager().add_ok(f"Removed atom {atom_name!r} from role {role_name!r}")
 
@@ -205,7 +205,7 @@ def info(args: argparse.Namespace) -> None:
     client = get_client()
     names: list[str] = args.name
     for name in names:
-        role_or_atom = resolve_policy(client, name, required=True)
+        role_or_atom = resolve_policy(client, name)
         output_host_policy(role_or_atom)
 
 
@@ -289,7 +289,7 @@ def list_hosts(args: argparse.Namespace) -> None:
     name: str = args.name
     exclude: list[str] = args.exclude if args.exclude else []
 
-    role = client.role.get_by_name(name, required=True)
+    role = client.role.get_by_name(name)
 
     exclude_roles = list(
         itertools.chain.from_iterable(client.role.list_by_name_regex(r) for r in exclude)
@@ -313,7 +313,7 @@ def list_members(args: argparse.Namespace) -> None:
     client = get_client()
     name: str = args.name
 
-    role = client.role.get_by_name(name, required=True)
+    role = client.role.get_by_name(name)
     output_role_atoms(role)
 
 
@@ -335,7 +335,7 @@ def host_add(args: argparse.Namespace) -> None:
     role_name: str = args.role
     host_names: list[str] = args.hosts
 
-    role = client.role.get_by_name(role_name, required=True)
+    role = client.role.get_by_name(role_name)
     hosts = [resolve_host(client, host) for host in host_names]
 
     for host in hosts:
@@ -426,7 +426,7 @@ def host_remove(args: argparse.Namespace) -> None:
     role_name: str = args.role
     host_names: list[str] = args.hosts
 
-    role = client.role.get_by_name(role_name, required=True)
+    role = client.role.get_by_name(role_name)
     hosts = [resolve_host(client, host) for host in host_names]
 
     for host in hosts:
@@ -456,10 +456,12 @@ def rename(args: argparse.Namespace) -> None:
         raise EntityAlreadyExists("Old and new names are the same")
 
     # Check if role or atom with the new name already exists
-    if client.atom.get_by_name(newname) or client.role.get_by_name(newname):
+    if client.atom.get_by_name(newname, required=False) or client.role.get_by_name(
+        newname, required=False
+    ):
         raise EntityAlreadyExists(f"An atom or role named {newname!r} already exists")
 
-    role_or_atom = resolve_policy(client, oldname, required=True)
+    role_or_atom = resolve_policy(client, oldname)
     if isinstance(role_or_atom, Role):
         client.role.rename(role_or_atom, newname)
     else:
@@ -485,7 +487,7 @@ def set_description(args: argparse.Namespace) -> None:
     name: str = args.name
     description: str = args.description
 
-    role_or_atom = resolve_policy(client, name, required=True)
+    role_or_atom = resolve_policy(client, name)
     if isinstance(role_or_atom, Role):
         client.role.set_description(role_or_atom, description)
     else:
@@ -511,7 +513,7 @@ def add_label_to_role(args: argparse.Namespace) -> None:
     role_name: str = args.role
     label_name: str = args.label
 
-    role = client.role.get_by_name(role_name, required=True)
+    role = client.role.get_by_name(role_name)
     client.role.add_label(role, label_name)
     OutputManager().add_ok(f"Added the label {label_name!r} to the role {role_name!r}.")
 
@@ -534,7 +536,7 @@ def remove_label_from_role(args: argparse.Namespace) -> None:
     role_name: str = args.role
     label_name: str = args.label
 
-    role = client.role.get_by_name(role_name, required=True)
+    role = client.role.get_by_name(role_name)
     client.role.remove_label(role, label_name)
     OutputManager().add_ok(f"Removed the label {label_name!r} from the role {role_name!r}.")
 

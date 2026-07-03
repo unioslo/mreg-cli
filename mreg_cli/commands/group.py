@@ -65,7 +65,7 @@ def info(args: argparse.Namespace) -> None:
     """
     client = get_client()
     for name in args.name:
-        hg = client.hostgroup.get_by_name(name, required=True)
+        hg = client.hostgroup.get_by_name(name)
         output_hostgroup(hg)
 
 
@@ -112,7 +112,7 @@ def rename(args: argparse.Namespace) -> None:
     newname: str = args.newname
 
     client = get_client()
-    group = client.hostgroup.get_by_name(oldname, required=True)
+    group = client.hostgroup.get_by_name(oldname)
     client.hostgroup.ensure_absent(newname)
     client.hostgroup.rename(group, newname)
     OutputManager().add_ok(f"Renamed group {oldname!r} to {newname!r}")
@@ -133,7 +133,7 @@ def group_list(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, expand)
     """
     client = get_client()
-    group = client.hostgroup.get_by_name(args.name, required=True)
+    group = client.hostgroup.get_by_name(args.name)
     output_hostgroup_members(group, expand=args.expand)
 
 
@@ -152,7 +152,7 @@ def group_delete(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, force)
     """
     client = get_client()
-    group = client.hostgroup.get_by_name(args.name, required=True)
+    group = client.hostgroup.get_by_name(args.name)
     if (group.hosts or group.groups) and not args.force:
         raise ForceMissing("Group contains hosts or groups, must force")
 
@@ -175,8 +175,8 @@ def group_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (dstgroup, srcgroup)
     """
     client = get_client()
-    sourcegroups = [client.hostgroup.get_by_name(name, required=True) for name in args.srcgroup]
-    destgroup = client.hostgroup.get_by_name(args.dstgroup, required=True)
+    sourcegroups = [client.hostgroup.get_by_name(name) for name in args.srcgroup]
+    destgroup = client.hostgroup.get_by_name(args.dstgroup)
 
     for src in sourcegroups:
         client.hostgroup.add_group(destgroup, src.name)
@@ -198,7 +198,7 @@ def group_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (dstgroup, srcgroup)
     """
     client = get_client()
-    ownergroup = client.hostgroup.get_by_name(args.dstgroup, required=True)
+    ownergroup = client.hostgroup.get_by_name(args.dstgroup)
 
     for name in args.srcgroup:
         if not ownergroup.has_group(name):
@@ -224,7 +224,7 @@ def host_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, hosts)
     """
     client = get_client()
-    hostgroup = client.hostgroup.get_by_name(args.group, required=True)
+    hostgroup = client.hostgroup.get_by_name(args.group)
 
     for name in args.hosts:
         host = resolve_host(client, name)
@@ -248,7 +248,7 @@ def host_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, hosts)
     """
     client = get_client()
-    hostgroup = client.hostgroup.get_by_name(args.group, required=True)
+    hostgroup = client.hostgroup.get_by_name(args.group)
 
     to_remove: set[str] = set()
     for name in args.hosts:
@@ -303,7 +303,7 @@ def owner_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, owners)
     """
     client = get_client()
-    hostgroup = client.hostgroup.get_by_name(args.group, required=True)
+    hostgroup = client.hostgroup.get_by_name(args.group)
 
     for name in args.owners:
         client.hostgroup.add_owner(hostgroup, name)
@@ -325,7 +325,7 @@ def owner_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (group, owners)
     """
     client = get_client()
-    hostgroup = client.hostgroup.get_by_name(args.group, required=True)
+    hostgroup = client.hostgroup.get_by_name(args.group)
 
     for name in args.owners:
         if not hostgroup.has_owner(name):
@@ -351,7 +351,7 @@ def set_description(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, description)
     """
     client = get_client()
-    group = client.hostgroup.get_by_name(args.name, required=True)
+    group = client.hostgroup.get_by_name(args.name)
     client.hostgroup.set_description(group, args.description)
     OutputManager().add_ok(f"Updated description to {args.description!r} for {args.name!r}")
 

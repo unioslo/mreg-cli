@@ -114,7 +114,7 @@ def create(args: argparse.Namespace) -> None:
     if location and not is_valid_location_tag(location):
         raise InputFailure(f"Not a valid location tag: {location!r}")
     if policy:
-        policy_obj = client.networkpolicy.get_by_name(policy, required=True)
+        policy_obj = client.networkpolicy.get_by_name(policy)
     else:
         policy_obj = None
 
@@ -252,17 +252,17 @@ def find(args: argparse.Namespace) -> None:
     addr_only: bool = args.addr_only
     args_dict = vars(args)
 
+    networks: list[Network] = []
     if ip_arg := args_dict.get("ip"):
         addr = NetworkOrIP.parse_or_raise(ip_arg, mode="ip")
-        networks = [client.network.get_by_ip(addr, required=True)]
+        networks = [client.network.get_by_ip(addr)]
     elif host_arg := args_dict.get("host"):
-        host = resolve_host(client, host_arg, required=True)
+        host = resolve_host(client, host_arg)
         ipaddrs = client.ipaddress.list_by_host(host)
-        networks = []
         for ipaddr in ipaddrs:
             # Get the network for each IP address
             # IP might not be in a network managed by MREG, does not raise exception.
-            net = client.network.get_by_ip(str(ipaddr.ipaddress))
+            net = client.network.get_by_ip(str(ipaddr.ipaddress), required=False)
             if net and net not in networks:
                 networks.append(net)
     else:
@@ -707,8 +707,8 @@ def policy_add(args: argparse.Namespace) -> None:
     network: str = args.network
     force: bool = args.force
 
-    pol = client.networkpolicy.get_by_name(policy, required=True)
-    net = client.network.get(network, required=True)
+    pol = client.networkpolicy.get_by_name(policy)
+    net = client.network.get(network)
 
     if net.policy and net.policy.id == pol.id:
         raise InputFailure(f"Network {net.network} already has policy {pol.name!r}.")
@@ -761,7 +761,7 @@ def policy_create(args: argparse.Namespace) -> None:
 
     attrs: list[NetworkPolicyAttributeValue] = []
     for attr_name in attribute:
-        attr = client.network.policy.attribute.get_by_name(attr_name, required=True)
+        attr = client.network.policy.attribute.get_by_name(attr_name)
         attrs.append(NetworkPolicyAttributeValue(name=attr.name, value=True))
 
     client.network.policy.create(
@@ -792,7 +792,7 @@ def policy_delete(args: argparse.Namespace) -> None:
     name: str = args.name
     force: bool = args.force
 
-    pol = client.network.policy.get_by_name(name, required=True)
+    pol = client.network.policy.get_by_name(name)
     networks = client.network.policy.networks(pol)
 
     if networks and not force:
@@ -822,7 +822,7 @@ def policy_info(args: argparse.Namespace) -> None:
     client = get_client()
     name: str = args.name
 
-    policy = client.network.policy.get_by_name(name, required=True)
+    policy = client.network.policy.get_by_name(name)
     output_network_policy(policy)
 
 
@@ -875,7 +875,7 @@ def policy_rename(args: argparse.Namespace) -> None:
     oldname: str = args.oldname
     newname: str = args.newname
 
-    pol = client.network.policy.get_by_name(oldname, required=True)
+    pol = client.network.policy.get_by_name(oldname)
     client.network.policy.rename(pol, newname)
     OutputManager().add_ok(f"Renamed network policy {oldname!r} to {newname!r}")
 
@@ -898,7 +898,7 @@ def policy_remove(args: argparse.Namespace) -> None:
     client = get_client()
     network: str = args.network
 
-    net = client.network.get(network, required=True)
+    net = client.network.get(network)
 
     if not net.policy:
         raise EntityNotFound(f"Network {net.network} does not have a policy assigned.")
@@ -926,7 +926,7 @@ def policy_set_description(args: argparse.Namespace) -> None:
     policy: str = args.policy
     description: str = args.description
 
-    pol = client.network.policy.get_by_name(policy, required=True)
+    pol = client.network.policy.get_by_name(policy)
     client.network.policy.update(pol, description=description)
     OutputManager().add_ok(f"Set new description for network policy {policy!r}")
 
@@ -950,7 +950,7 @@ def policy_set_pattern(args: argparse.Namespace) -> None:
     policy: str = args.policy
     pattern: str = args.pattern
 
-    pol = client.network.policy.get_by_name(policy, required=True)
+    pol = client.network.policy.get_by_name(policy)
     client.network.policy.update(pol, community_template_pattern=pattern)
     OutputManager().add_ok(
         f"Set new community mapping template pattern for network policy {policy!r}"
@@ -977,7 +977,7 @@ def policy_unset_pattern(args: argparse.Namespace) -> None:
     client = get_client()
     policy: str = args.policy
 
-    pol = client.network.policy.get_by_name(policy, required=True)
+    pol = client.network.policy.get_by_name(policy)
     client.network.policy.update(pol, community_template_pattern=None)
     OutputManager().add_ok(
         f"Unset community mapping template pattern for network policy {policy!r}"
@@ -1008,8 +1008,8 @@ def policy_attribute_add(args: argparse.Namespace) -> None:
     attribute: str = args.attribute
     policy: str = args.policy
 
-    attr = client.network.policy.attribute.get_by_name(attribute, required=True)
-    pol = client.network.policy.get_by_name(policy, required=True)
+    attr = client.network.policy.attribute.get_by_name(attribute)
+    pol = client.network.policy.get_by_name(policy)
 
     if pol.get_attribute(attribute):
         raise InputFailure(f"Policy {pol.name!r} already has attribute {attr.name!r}")
@@ -1064,7 +1064,7 @@ def policy_attribute_delete(args: argparse.Namespace) -> None:
     attribute: str = args.attribute
     force: bool = args.force
 
-    attr = client.network.policy.attribute.get_by_name(attribute, required=True)
+    attr = client.network.policy.attribute.get_by_name(attribute)
 
     if not force and (pols := client.network.policy.attribute.get_policies(attr)):
         policy_names = ", ".join(f"{pol.name!r}" for pol in pols)
@@ -1094,7 +1094,7 @@ def policy_attribute_info(args: argparse.Namespace) -> None:
     client = get_client()
     attribute: str = args.attribute
 
-    attr = client.network.policy.attribute.get_by_name(attribute, required=True)
+    attr = client.network.policy.attribute.get_by_name(attribute)
     output_network_policy_attribute(attr)
 
 
@@ -1151,8 +1151,8 @@ def policy_attribute_remove(args: argparse.Namespace) -> None:
     attribute: str = args.attribute
     policy: str = args.policy
 
-    attr = client.network.policy.attribute.get_by_name(attribute, required=True)
-    pol = client.network.policy.get_by_name(policy, required=True)
+    attr = client.network.policy.attribute.get_by_name(attribute)
+    pol = client.network.policy.get_by_name(policy)
 
     if not pol.get_attribute(attribute):
         raise InputFailure(f"Policy {pol.name!r} does not have attribute {attr.name!r}")
@@ -1180,7 +1180,7 @@ def policy_attribute_set_description(args: argparse.Namespace) -> None:
     attribute: str = args.attribute
     description: str = args.description
 
-    attr = client.network.policy.attribute.get_by_name(attribute, required=True)
+    attr = client.network.policy.attribute.get_by_name(attribute)
     client.network.policy.attribute.update(attr, description=description)
     OutputManager().add_ok(f"Set new description for network policy attribute {attribute!r}")
 
@@ -1221,11 +1221,11 @@ def community_create(args: argparse.Namespace) -> None:
     name: str = args.name
     description: str = args.description
 
-    net = client.network.get(network, required=True)
+    net = client.network.get(network)
     com = net.get_community(name)
     if com:
         raise InputFailure(f"Community {name!r} already exists for network {network}")
-    client.network.communities.create(net, name=name, description=description)
+    client.network.community.create(net, name=name, description=description)
     OutputManager().add_ok(f"Created community {name!r} for network {network}")
 
 
@@ -1250,12 +1250,12 @@ def community_delete(args: argparse.Namespace) -> None:
     community: str = args.community
     force: bool = args.force
 
-    net = client.network.get(network, required=True)
+    net = client.network.get(network)
     com = get_network_community(net, community)
-    if not force and client.network.communities.get_hosts(com, net):
+    if not force and client.network.community.get_hosts(com, net):
         raise ForceMissing(f"Community {com.name!r} has hosts. Must force.")
 
-    client.network.communities.delete(com, net)
+    client.network.community.delete(com, net)
     OutputManager().add_ok(f"Deleted community {community!r}")
 
 
@@ -1278,7 +1278,7 @@ def community_info(args: argparse.Namespace) -> None:
     network: str = args.network
     community: str = args.community
 
-    net = client.network.get(network, required=True)
+    net = client.network.get(network)
     com = get_network_community(net, community)
     output_community(com)
 
@@ -1310,7 +1310,7 @@ def community_list(args: argparse.Namespace) -> None:
     hosts: bool = args.hosts
     sort: CommunitySortOrder = CommunitySortOrder(args.sort)
 
-    net = client.network.get(network, required=True)
+    net = client.network.get(network)
     output_communities(net.communities, show_hosts=hosts, sort=sort)
 
 
@@ -1335,9 +1335,9 @@ def community_rename(args: argparse.Namespace) -> None:
     oldname: str = args.oldname
     newname: str = args.newname
 
-    net = client.network.get(network, required=True)
-    com = client.network.communities.get_by_name(oldname, net, required=True)
-    client.network.communities.update(com, net, name=newname)
+    net = client.network.get(network)
+    com = client.network.community.get_by_name(oldname, net)
+    client.network.community.update(com, net, name=newname)
     OutputManager().add_ok(f"Renamed community {oldname!r} to {newname!r}")
 
 
@@ -1362,9 +1362,9 @@ def community_set_description(args: argparse.Namespace) -> None:
     community: str = args.community
     description: str = args.description
 
-    net = client.network.get(network, required=True)
-    com = client.network.communities.get_by_name(community, net, required=True)
-    client.network.communities.update(com, net, description=description)
+    net = client.network.get(network)
+    com = client.network.community.get_by_name(community, net)
+    client.network.community.update(com, net, description=description)
     OutputManager().add_ok(f"Set new description for community {community!r}")
 
 
@@ -1408,15 +1408,15 @@ def community_host_add(args: argparse.Namespace) -> None:
     community: str = args.community
     ip: str | None = args.ip
 
-    h = resolve_host(client, host, required=True)
+    h = resolve_host(client, host)
     ipaddr = _check_host_ip(h, ip)
 
-    net = client.network.get_by_ip(str(ipaddr.ipaddress))
+    net = client.network.get_by_ip(str(ipaddr.ipaddress), required=False)
     if not net:
         raise EntityNotFound(f"{h.name!r} is not in a network controlled by MREG.")
 
     com = get_network_community(net, community)
-    client.network.communities.add_host(com, net, h, ipaddress=ipaddr.ipaddress)
+    client.network.community.add_host(com, net, h, ipaddress=ipaddr.ipaddress)
 
     OutputManager().add_ok(f"Added host {h.name!r} to community {com.name!r}")
 
@@ -1441,10 +1441,10 @@ def community_host_remove(args: argparse.Namespace) -> None:
     community: str = args.community
     ip: str | None = args.ip
 
-    h = resolve_host(client, host, required=True)
+    h = resolve_host(client, host)
     ipaddr = _check_host_ip(h, ip)
 
-    net = client.network.get_by_ip(str(ipaddr.ipaddress))
+    net = client.network.get_by_ip(str(ipaddr.ipaddress), required=False)
     if not net:
         raise EntityNotFound(f"{h.name!r} is not in a network controlled by MREG.")
 
@@ -1455,8 +1455,8 @@ def community_host_remove(args: argparse.Namespace) -> None:
             msg += f" for IP address {ipaddr}"
         raise EntityNotFound(f"{msg} not found.")
 
-    com = client.network.communities.get_by_name(community, net, required=True)
-    client.network.communities.remove_host(com, net, h)
+    com = client.network.community.get_by_name(community, net)
+    client.network.community.remove_host(com, net, h)
 
     OutputManager().add_ok(
         f"Removed host {h.name!r} (IP: {ipaddr.ipaddress}) from community {com.name!r}"

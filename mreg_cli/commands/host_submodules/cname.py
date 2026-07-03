@@ -98,17 +98,17 @@ def cname_remove(args: argparse.Namespace) -> None:
     host = resolve_host(client, name)
     alias = client.fqdn(alias)
 
-    alias_as_host = client.host.get_by_name(alias)
+    alias_as_host = client.host.get_by_name(alias, required=False)
     if alias_as_host:
         raise InputFailure(f"The alias {alias} is a host, did you mix up the arguments?")
 
-    cname = client.cname.get_by_name(alias)
+    cname = client.cname.get_by_name(alias, required=False)
     if not cname:
         raise EntityNotFound(f"No CNAME record found for {alias}.")
 
     # Handle situation where the CNAME is not associated with the host we are removing it from.
     if cname.host != host.id:
-        cname_host = client.host.get_by_id(cname.host)
+        cname_host = client.host.get_by_id(cname.host, required=False)
         if not cname_host:
             raise EntityNotFound(f"Could not find the host for the CNAME {alias}.")
         actual = cname_host.name
@@ -142,11 +142,11 @@ def cname_replace(args: argparse.Namespace) -> None:
     cname = client.fqdn(cname)
     host = resolve_host(client, host_arg)
 
-    cname_obj = client.cname.get_by_name(cname)
+    cname_obj = client.cname.get_by_name(cname, required=False)
     if not cname_obj:
         raise EntityNotFound(f"No CNAME record found for {cname}.")
 
-    old_host = client.host.get_by_id(cname_obj.host)
+    old_host = client.host.get_by_id(cname_obj.host, required=False)
     if not old_host:
         raise EntityNotFound(f"Could not find the host for the CNAME {cname}.")
 

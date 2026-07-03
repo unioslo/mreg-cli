@@ -114,7 +114,7 @@ def network_add(args: argparse.Namespace) -> None:
 
     NetworkOrIP.parse_or_raise(args.range, mode="network")
 
-    existing = client.permission.get_by_triplet(args.group, args.range, args.regex)
+    existing = client.permission.get_by_triplet(args.group, args.range, args.regex, required=False)
     if existing:
         raise EntityAlreadyExists(
             f"Permission already exists for group={args.group!r}, range={args.range!r}, regex={args.regex!r}."
@@ -141,9 +141,7 @@ def network_remove(args: argparse.Namespace) -> None:
     """
     client = get_client()
 
-    permission = client.permission.get_by_triplet(
-        args.group, args.range, args.regex, required=True
-    )
+    permission = client.permission.get_by_triplet(args.group, args.range, args.regex)
     client.permission.delete(permission)
     OutputManager().add_ok(f"Removed permission for {args.range}")
 
@@ -166,9 +164,7 @@ def add_label_to_permission(args: argparse.Namespace) -> None:
     """
     client = get_client()
 
-    permission = client.permission.get_by_triplet(
-        args.group, args.range, args.regex, required=True
-    )
+    permission = client.permission.get_by_triplet(args.group, args.range, args.regex)
     client.permission.add_label(permission, args.label)
     OutputManager().add_ok(f"Added the label {args.label!r} to the permission.")
 
@@ -191,8 +187,6 @@ def remove_label_from_permission(args: argparse.Namespace) -> None:
     """
     client = get_client()
 
-    permission = client.permission.get_by_triplet(
-        args.group, args.range, args.regex, required=True
-    )
+    permission = client.permission.get_by_triplet(args.group, args.range, args.regex)
     client.permission.remove_label(permission, args.label)
     OutputManager().add_ok(f"Removed the label {args.label!r} from the permission.")

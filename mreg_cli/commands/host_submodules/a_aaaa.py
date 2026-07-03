@@ -128,10 +128,10 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     new_ip = NetworkOrIP.validate(new)
     network = None
     if new_ip.is_network():
-        network = client.network.get(str(new_ip.ip_or_network), required=True)
+        network = client.network.get(str(new_ip.ip_or_network))
         new_ip = client.network.get_first_available_ip(network)
     else:
-        network = client.network.get_by_ip(str(new_ip.as_ip()))
+        network = client.network.get_by_ip(str(new_ip.as_ip()), required=False)
         new_ip = new_ip.as_ip()
 
     if old_ip.version != ipversion:
@@ -271,10 +271,10 @@ def _ip_add(
     ip = None
     network = None
     if ip_or_net.is_network():
-        network = client.network.get(str(ip_or_net.ip_or_network), required=True)
+        network = client.network.get(str(ip_or_net.ip_or_network))
         ip = client.network.get_first_available_ip(network)
     else:
-        network = client.network.get_by_ip(str(ip_or_net.as_ip()))
+        network = client.network.get_by_ip(str(ip_or_net.as_ip()), required=False)
         ip = ip_or_net.as_ip()
 
     check_ip_constraints(ip, network, host, IPOperation.ADD, force)

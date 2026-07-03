@@ -7,7 +7,7 @@ The CLI is responsible for composing the heuristic lookup chain.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Literal, overload
+from typing import TYPE_CHECKING, Literal, Protocol, overload
 
 from mreg_api import MregClient
 from mreg_api.models import Atom, Host, Network, Role
@@ -72,14 +72,14 @@ def resolve_host(
 
     # Try by ID first if the identifier is a digit
     if ident_str.isdigit():
-        getters.append(lambda s: client.host.get_by_id(int(s)))
+        getters.append(lambda s: client.host.get_by_id(int(s), required=False))
 
     # Try by IP → MAC → name
     getters.extend(
         [
-            client.host.get_by_ip,
-            client.host.get_by_mac,
-            client.host.get_by_name,
+            lambda s: client.host.get_by_ip(s, required=False),
+            lambda s: client.host.get_by_mac(s, required=False),
+            lambda s: client.host.get_by_name(s, required=False),
         ]
     )
 
@@ -92,9 +92,9 @@ def resolve_host(
             pass
 
     # Fall back to CNAME
-    cname = client.cname.get_by_name(ident_str)
+    cname = client.cname.get_by_name(ident_str, required=False)
     if cname is not None:
-        host = client.host.get_by_id(cname.host)
+        host = client.host.get_by_id(cname.host, required=False)
         # NOTE: should it be an error if CNAME has host ID that doesn't exist? Probably.
         # At the very least produce a warning if CNAME host ID cannot be resolved.
         if host is not None:
@@ -150,20 +150,21 @@ def resolve_network(
     network: Network | None = None
     try:
         # Try as IP first
-        network = client.network.get_by_ip(identifier)
+        network = client.network.get_by_ip(identifier, required=False)
     except Exception:
         pass
 
     if network is None:
         try:
             # Try as CIDR / network address
-            network = client.network.get(identifier)
+            network = client.network.get(identifier, required=False)
         except Exception:
             pass
 
     if network is None and identifier.isdigit():
         try:
-            network = client.network.first(id=int(identifier))
+            network = client.network.first(id=int(identifier), required=False)
+            # network = client.network.get(int(identifier), required=False)
         except Exception:
             pass
 
@@ -210,10 +211,10 @@ def resolve_policy(
     Replaces HostPolicy.get_role_or_atom_or_raise().
     Atom is checked first (old order).
     """
-    atom = client.atom.get_by_name(name)
+    atom = client.atom.get_by_name(name, required=False)
     if atom is not None:
         return atom
-    role = client.role.get_by_name(name)
+    role = client.role.get_by_name(name, required=False)
     if role is not None:
         return role
     if required:

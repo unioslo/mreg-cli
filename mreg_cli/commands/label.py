@@ -80,7 +80,7 @@ def label_delete(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    label = client.label.get_by_name(args.name, required=True)
+    label = client.label.get_by_name(args.name)
     client.label.delete(label)
     OutputManager().add_ok(f'Removed label "{args.name}"')
 
@@ -97,7 +97,7 @@ def label_info(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    label = client.label.get_by_name(args.name, required=True)
+    label = client.label.get_by_name(args.name)
     output_label(label)
 
 
@@ -120,7 +120,7 @@ def label_rename(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (oldname, newname)
     """
     client = get_client()
-    label = client.label.get_by_name(args.oldname, required=True)
+    label = client.label.get_by_name(args.oldname)
     client.label.rename(label, args.newname)
     OutputManager().add_ok(f'Renamed label "{args.oldname}" to "{args.newname}"')
 
@@ -148,6 +148,6 @@ def label_redesc(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, desc)
     """
     client = get_client()
-    label = client.label.get_by_name(args.name, required=True)
+    label = client.label.get_by_name(args.name)
     client.label.set_description(label, args.desc)
     OutputManager().add_ok(f'Set description for label "{args.name}" to "{args.desc}"')
