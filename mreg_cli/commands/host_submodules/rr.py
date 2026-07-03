@@ -45,7 +45,6 @@ from mreg_api.models import (
     NAPTR,
     Srv,
 )
-from mreg_api.models.fields import HostName
 
 from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry

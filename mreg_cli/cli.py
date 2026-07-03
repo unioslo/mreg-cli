@@ -21,6 +21,8 @@ from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from prompt_toolkit.history import FileHistory
 
+from mreg_cli.client import get_client
+
 # Import all the commands
 from mreg_cli.commands.cache import CacheCommands
 from mreg_cli.commands.dhcp import DHCPCommands
@@ -35,7 +37,6 @@ from mreg_cli.commands.policy import PolicyCommands
 from mreg_cli.commands.recording import RecordingCommmands
 from mreg_cli.commands.root import RootCommmands
 from mreg_cli.commands.zone import ZoneCommands
-from mreg_cli.client import get_client
 from mreg_cli.config import MregCliConfig
 
 # Import other mreg_cli modules

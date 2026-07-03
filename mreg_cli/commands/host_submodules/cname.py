@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_api.models.fields import HostName
-
 from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
-    DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,

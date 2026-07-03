@@ -8,12 +8,12 @@ command.
 from __future__ import annotations
 
 import atexit
-from contextlib import contextmanager
 import datetime
 import json
 import logging
 import re
 from collections.abc import Iterable
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Generator, Literal, overload
 from urllib.parse import urlencode, urlparse

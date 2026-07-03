@@ -6,8 +6,6 @@ from collections.abc import Sequence
 from typing import Literal, NamedTuple
 
 from mreg_api.endpoints import Endpoint
-
-from mreg_cli.client import get_client
 from mreg_api.models import (
     CNAME,
     MX,
@@ -18,7 +16,6 @@ from mreg_api.models import (
     Community,
     HInfo,
     Host,
-    HostList,
     IPAddress,
     Location,
     Network,
@@ -26,6 +23,7 @@ from mreg_api.models import (
     Srv,
 )
 
+from mreg_cli.client import get_client
 from mreg_cli.exceptions import EntityNotFound
 from mreg_cli.output.base import output_timestamps, output_ttl
 from mreg_cli.outputmanager import OutputManager

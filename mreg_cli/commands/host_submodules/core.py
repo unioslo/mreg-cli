@@ -23,7 +23,6 @@ from mreg_api.models import (
     MX,
     NAPTR,
     Host,
-    HostList,
     NetworkOrIP,
     PTR_override,
     Srv,

@@ -7,7 +7,7 @@ The CLI is responsible for composing the heuristic lookup chain.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Literal, Protocol, overload
+from typing import TYPE_CHECKING, Literal, overload
 
 from mreg_api import MregClient
 from mreg_api.models import Atom, Host, Network, Role
