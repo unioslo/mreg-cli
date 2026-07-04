@@ -165,6 +165,7 @@ class OutputManager:
     @contextmanager
     def suppress_events(self) -> Generator[None, None, None]:
         """Context manager to suppress events."""
+        # NOTE: could expand this with a list of event types to suppress!
         self._suppressing_events = True
         try:
             yield

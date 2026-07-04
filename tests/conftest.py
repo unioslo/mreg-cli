@@ -6,7 +6,7 @@ from collections.abc import Iterator
 import pytest
 from mreg_api.client import last_request_method, last_request_url
 
-from mreg_cli.client import set_client
+from mreg_cli.client import _reset_client  # pyright: ignore[reportPrivateUsage]
 from mreg_cli.config import MregCliConfig
 from mreg_cli.outputmanager import OutputManager
 
@@ -54,7 +54,7 @@ def reset_context_vars() -> Iterator[None]:
 def reset_mreg_client() -> Iterator[None]:
     """Reset the global MregClient after each test."""
     yield
-    set_client(None)  # type: ignore[arg-type]
+    _reset_client()
 
 
 @pytest.fixture(autouse=True)

@@ -6,7 +6,7 @@ import argparse
 import functools
 import logging
 
-from mreg_api import CacheConfig, MregClient
+from mreg_api import MregClient
 from mreg_api.events import Event, EventKind, EventLevel
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from rich.console import Console, Group
@@ -14,7 +14,7 @@ from rich.panel import Panel
 
 from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, get_cli_history, source
-from mreg_cli.client import set_client
+from mreg_cli.client import init_client
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import CliException, LoginFailedError, handle_exception
 from mreg_cli.log import MregCliLogger
@@ -182,19 +182,7 @@ def main():
         print("mreg url not set in config or as argument")
         return
 
-    client = MregClient(
-        url=config.url,
-        domain=config.domain,
-        timeout=config.http_timeout,
-        user_agent=f"mreg-cli/{__version__}",
-        cache=CacheConfig(
-            enable=config.cache,
-            ttl=config.cache_ttl,
-            # other cache settings from config should go here
-        ),
-    )
-    set_client(client)
-    client.events.subscribe(mreg_client_event_hook)
+    client = bootstrap_client(config)
 
     try:
         try_token_or_login(
@@ -286,7 +274,19 @@ def print_greeting(config: MregCliConfig) -> None:
     console.print()  # blank line
 
 
-def mreg_client_event_hook(event: Event) -> None:
+def bootstrap_client(config: MregCliConfig) -> MregClient:
+    """Configure global client instance and set up event hooks.
+
+    :param config: MregCliConfig object
+    :return: MregClient object
+    """
+    client = init_client(config)
+    client.events.subscribe(_mreg_client_event_hook)
+    # Expand with further per-client config here
+    return client
+
+
+def _mreg_client_event_hook(event: Event) -> None:
     """Event hook for MregClient to record events in the OutputManager."""
     om = OutputManager()
     if om.is_suppressing_events():
