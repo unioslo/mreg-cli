@@ -39738,8 +39738,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2026-07-02T16:49:11.562623+02:00",
-              "updated_at": "2026-07-02T16:49:11.809411+02:00",
+              "created_at": "2026-07-08T14:48:47.160018+02:00",
+              "updated_at": "2026-07-08T14:48:47.412577+02:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -39748,8 +39748,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-07-02T16:49:11.425658+02:00",
-              "updated_at": "2026-07-02T16:49:11.425712+02:00",
+              "created_at": "2026-07-08T14:48:47.029922+02:00",
+              "updated_at": "2026-07-08T14:48:47.029974+02:00",
               "txt": "v=spf1 -all",
               "host": 30
             }
@@ -39774,20 +39774,20 @@
                   "tinyhost.example.org"
                 ],
                 "global_name": "community02",
-                "created_at": "2026-07-02T16:49:12.288892+02:00",
-                "updated_at": "2026-07-02T16:49:16.146442+02:00"
+                "created_at": "2026-07-08T14:48:47.903755+02:00",
+                "updated_at": "2026-07-08T14:48:51.727084+02:00"
               }
             }
           ],
           "contacts": [
             {
               "email": "tinyhost@example.org",
-              "created_at": "2026-07-02T16:49:11.444548+02:00",
-              "updated_at": "2026-07-02T16:49:11.444608+02:00"
+              "created_at": "2026-07-08T14:48:47.048448+02:00",
+              "updated_at": "2026-07-08T14:48:47.048510+02:00"
             }
           ],
-          "created_at": "2026-07-02T16:49:11.413648+02:00",
-          "updated_at": "2026-07-02T16:49:11.413704+02:00",
+          "created_at": "2026-07-08T14:48:47.017385+02:00",
+          "updated_at": "2026-07-08T14:48:47.017444+02:00",
           "name": "tinyhost.example.org",
           "ttl": null,
           "comment": "",
@@ -39812,8 +39812,8 @@
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2026-07-02T16:49:04.917311+02:00",
-            "updated_at": "2026-07-02T16:49:10.522449+02:00"
+            "created_at": "2026-07-08T14:48:40.484680+02:00",
+            "updated_at": "2026-07-08T14:48:46.084497+02:00"
           },
           "communities": [
             {
@@ -39822,8 +39822,8 @@
               "network": 10,
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2026-07-02T16:49:12.150363+02:00",
-              "updated_at": "2026-07-02T16:49:12.150450+02:00"
+              "created_at": "2026-07-08T14:48:47.744667+02:00",
+              "updated_at": "2026-07-08T14:48:47.744734+02:00"
             },
             {
               "name": "labequipment",
@@ -39833,12 +39833,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2026-07-02T16:49:12.288892+02:00",
-              "updated_at": "2026-07-02T16:49:16.146442+02:00"
+              "created_at": "2026-07-08T14:48:47.903755+02:00",
+              "updated_at": "2026-07-08T14:48:51.727084+02:00"
             }
           ],
-          "created_at": "2026-07-02T16:49:03.924028+02:00",
-          "updated_at": "2026-07-02T16:49:08.694317+02:00",
+          "created_at": "2026-07-08T14:48:39.347142+02:00",
+          "updated_at": "2026-07-08T14:48:44.116104+02:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -39851,42 +39851,11 @@
         }
       },
       {
-        "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28/communities/",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 2,
-          "next": null,
-          "previous": null,
-          "results": [
-            {
-              "name": "guests",
-              "description": "Guest hosts.",
-              "network": 10,
-              "hosts": [],
-              "global_name": "community01",
-              "created_at": "2026-07-02T16:49:12.150363+02:00",
-              "updated_at": "2026-07-02T16:49:12.150450+02:00"
-            },
-            {
-              "name": "labequipment",
-              "description": "Lab equipment (expensive)",
-              "network": 10,
-              "hosts": [
-                "tinyhost.example.org"
-              ],
-              "global_name": "community02",
-              "created_at": "2026-07-02T16:49:12.288892+02:00",
-              "updated_at": "2026-07-02T16:49:16.146442+02:00"
-            }
-          ]
-        }
-      },
-      {
         "method": "DELETE",
         "url": "/api/v1/networks/10.0.2.0/28/communities/2/hosts/30",
-        "data": {},
+        "data": {
+          "ipaddress": "10.0.2.4"
+        },
         "status": 204
       }
     ],

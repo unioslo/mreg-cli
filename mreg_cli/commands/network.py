@@ -1368,24 +1368,81 @@ def community_set_description(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Set new description for community {community!r}")
 
 
-def _check_host_ip(host: Host, ip: str | None) -> IPAddress:
-    """Ensure host has an IP that can be added to/removed from a community."""
+def _get_host_ip_to_add(host: Host, ip: str | None) -> IPAddress:
+    """Get the IP address to add to a community for a host.
+
+    Requires `ip` to be specified if the host has multiple IP addresses.
+
+    :param host: Host object
+    :param ip: Optional IP address string
+    :return: IPAddress object
+
+    :raises EntityNotFound: If the host has no IP addresses.
+    :raises EntityNotFound: If the given IP address is not associated with the host.
+    :raises InputFailure: If the host has multiple IP addresses and no IP is specified.
+    """
     if not host.ipaddresses:
         raise EntityNotFound(f"Host {host.name!r} is not associated with any networks.")
-    elif not ip and len(host.ipaddresses) > 1:
+
+    if not ip and len(host.ipaddresses) > 1:
         raise InputFailure(
             f"Host {host.name!r} is associated with multiple IP addresses. Must specify IP."
         )
 
+    # Disambiguate or choose the first IP address if only one is present
     if ip:
-        ip_t = NetworkOrIP.parse_or_raise(ip, mode="ip")
-        ipaddr = host.get_ip(ip_t)
-        if not ipaddr:
-            raise EntityNotFound(f"Host {host.name!r} is not associated with IP {ip_t}")
+        ipaddr = _get_host_ip(host, ip)
     else:
         ipaddr = host.ipaddresses[0]
 
+    # NOTE: no check if the IP address is already associated with a community
+
     return ipaddr
+
+
+def _get_host_ip(host: Host, ip: str) -> IPAddress:
+    """Thin wrapper over Host.get_ip() that raises an exception if the IP address is not found."""
+    ip_t = NetworkOrIP.parse_or_raise(ip, mode="ip")
+    ipaddr = host.get_ip(ip_t)
+    if not ipaddr:
+        raise EntityNotFound(f"Host {host.name!r} is not associated with IP {ip_t}")
+    return ipaddr
+
+
+def _get_host_community_and_ip_to_remove(
+    host: Host, community: str, ip: str | None
+) -> tuple[Community, IPAddress]:
+    """Retrieve the Community and IPaddress object for a host given a community name."""
+    # NOTE: all this scaffolding presents a very compelling argument for
+    # adding server-side functionality for removing a host from a community
+    # given a hostname and a community name.
+
+    associations = host.get_community_associations(community)
+
+    # Disambiguate by IP if specified
+    if ip:
+        ipaddr = _get_host_ip(host, ip)
+        associations = [assoc for assoc in associations if assoc[1].id == ipaddr.id]
+
+    # Require a single matching HostCommunity:
+
+    # No matches
+    if len(associations) == 0:
+        msg = f"Host {host.name!r} is not part of community {community!r}"
+        if ip:
+            msg += f" on IP {ip}"
+        raise EntityNotFound(msg)
+    # Too many matches
+    elif len(associations) > 1:
+        # Try to get the IP address objects associated with the ipaddress IDs
+        # of the HostCommunity objects.
+        ips_str = ", ".join(str(assoc[1].ipaddress) for assoc in associations)
+        raise InputFailure(
+            f"Host is part of community {community!r} on multiple IPs ({ips_str}). Must specify IP."
+        )
+    # Single match
+    else:
+        return associations[0]
 
 
 @command_registry.register_command(
@@ -1409,7 +1466,7 @@ def community_host_add(args: argparse.Namespace) -> None:
     ip: str | None = args.ip
 
     h = resolve_host(client, host)
-    ipaddr = _check_host_ip(h, ip)
+    ipaddr = _get_host_ip_to_add(h, ip)
 
     net = client.network.get_by_ip(str(ipaddr.ipaddress), required=False)
     if not net:
@@ -1442,21 +1499,13 @@ def community_host_remove(args: argparse.Namespace) -> None:
     ip: str | None = args.ip
 
     h = resolve_host(client, host)
-    ipaddr = _check_host_ip(h, ip)
+    com, ipaddr = _get_host_community_and_ip_to_remove(h, community, ip)
 
     net = client.network.get_by_ip(str(ipaddr.ipaddress), required=False)
     if not net:
         raise EntityNotFound(f"{h.name!r} is not in a network controlled by MREG.")
 
-    com = h.get_community(community, ipaddr)
-    if not com:
-        msg = f"Community {community!r}"
-        if ipaddr:
-            msg += f" for IP address {ipaddr}"
-        raise EntityNotFound(f"{msg} not found.")
-
-    com = client.network.community.get_by_name(community, net)
-    client.network.community.remove_host(com, net, h)
+    client.network.community.remove_host(com, net, h, ipaddress=ipaddr.ipaddress)
 
     OutputManager().add_ok(
         f"Removed host {h.name!r} (IP: {ipaddr.ipaddress}) from community {com.name!r}"
