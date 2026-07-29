@@ -48,12 +48,24 @@ if [ -n "$2" ]; then
 elif [ -z "$MREG_IMAGE" ]; then
 	MREG_IMAGE="ghcr.io/unioslo/mreg:master"
 fi
-export MREG_IMAGE
+
+# Allow callers to require an already loaded local image. The default keeps
+# existing local usage unchanged and pulls the image only when it is missing.
+MREG_IMAGE_PULL_POLICY="${MREG_IMAGE_PULL_POLICY:-missing}"
+export MREG_IMAGE MREG_IMAGE_PULL_POLICY
+
+if [[ "$MREG_IMAGE_PULL_POLICY" == "never" ]] &&
+	! docker image inspect "$MREG_IMAGE" >/dev/null 2>&1; then
+	echo "MREG image '$MREG_IMAGE' is not available locally, but pulling is disabled."
+	exit 1
+fi
 
 if [[ -n "$GITHUB_ACTIONS" ]]; then
 	echo "::notice::Using MREG image: $MREG_IMAGE"
+	echo "::notice::MREG image pull policy: $MREG_IMAGE_PULL_POLICY"
 else
 	echo "Using MREG image: $MREG_IMAGE"
+	echo "MREG image pull policy: $MREG_IMAGE_PULL_POLICY"
 fi
 
 # build a container image for mreg-cli
