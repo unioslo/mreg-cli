@@ -75,6 +75,7 @@ class Flag:
         required: bool = False,
         metavar: str | None = None,
         action: str | None = None,
+        hidden: bool = False,
     ):
         """Initialize a Flag object."""
         self.name = name
@@ -87,6 +88,7 @@ class Flag:
         self.required = required
         self.metavar = metavar
         self.action = action
+        self.hidden = hidden
 
 
 class Command(NamedTuple):

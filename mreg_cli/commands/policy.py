@@ -46,7 +46,12 @@ class PolicyCommands(BaseCommand):
     flags=[
         Flag("name", description="Atom name", metavar="NAME"),
         Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("-created", description="Created date", metavar="CREATED"),
+        Flag(
+            "-created",
+            description="DEPRECATED: Created date.",
+            metavar="CREATED",
+            hidden=True,
+        ),
     ],
 )
 def atom_create(args: argparse.Namespace) -> None:

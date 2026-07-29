@@ -159,6 +159,8 @@ class Command(Completer):
                 args["metavar"] = f.metavar
             if f.action:
                 args["action"] = f.action
+            if f.hidden:
+                args["help"] = argparse.SUPPRESS
             parser.add_argument(f.name, **args)
         parser.set_defaults(func=callback)
 
