@@ -14,6 +14,7 @@ services:
 
   mreg:
     image: ${MREG_IMAGE:?MREG_IMAGE environment variable not set}
+    pull_policy: ${MREG_IMAGE_PULL_POLICY:-missing}
     container_name: mreg
     depends_on:
       postgres:
