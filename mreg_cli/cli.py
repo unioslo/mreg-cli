@@ -159,8 +159,13 @@ class Command(Completer):
                 args["metavar"] = f.metavar
             if f.action:
                 args["action"] = f.action
+
+            # `hidden` is marked by overriding help field.
+            # Ensure we do this as the very last step, so other
+            # parameters do not override the suppression.
             if f.hidden:
                 args["help"] = argparse.SUPPRESS
+
             parser.add_argument(f.name, **args)
         parser.set_defaults(func=callback)
 
