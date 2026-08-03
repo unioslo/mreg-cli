@@ -28,7 +28,7 @@ from mreg_api.models import (
     Srv,
 )
 from mreg_api.models.fields import HostName, MacAddress
-from typing_extensions import override
+from typing_extensions import NotRequired, TypedDict, override
 
 from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
@@ -107,6 +107,7 @@ def add(args: argparse.Namespace) -> None:
     macaddress: str | None = args.macaddress
     force: bool = args.force
     contact: list[str] = args.contact or []
+    comment: str | None = args.comment
 
     if macaddress is not None:
         macaddress = MacAddress.parse_or_raise(macaddress)
@@ -140,7 +141,7 @@ def add(args: argparse.Namespace) -> None:
     if "*" in hname and not force:
         raise ForceMissing("Wildcards must be forced.")
 
-    data = _host_create_payload(hname, contact, args.comment)
+    data = _host_create_payload(hname, contact, comment)
 
     if network_or_ip:
         autodetect = False
@@ -198,11 +199,11 @@ def add(args: argparse.Namespace) -> None:
         net_or_ip = None
 
     host = client.host.create(
-        name=str(data["name"]),
-        comment=str(data["comment"]) if data.get("comment") else "",
-        contacts=data.get("contacts") if data.get("contacts") else None,  # pyright: ignore[reportArgumentType]
-        ipaddress=data.get("ipaddress"),  # pyright: ignore[reportArgumentType]
-        network=data.get("network"),  # pyright: ignore[reportArgumentType]
+        name=data["name"],
+        comment=data["comment"],
+        contacts=data.get("contacts"),
+        ipaddress=data.get("ipaddress"),
+        network=data.get("network"),
     )
     if not host:
         raise CreateError("Failed to add host.")
@@ -233,15 +234,27 @@ def add(args: argparse.Namespace) -> None:
     output_host(host)
 
 
-def _host_create_payload(hname: HostName, contact: list[str], comment: str | None) -> JsonMapping:
+class HostCreatePayload(TypedDict):
+    """Payload for creating a host."""
+
+    name: HostName
+    comment: str  # TODO: mark NotRequired after API parity!
+    contacts: NotRequired[list[str]]
+    ipaddress: NotRequired[str]
+    network: NotRequired[str]
+
+
+def _host_create_payload(
+    hname: HostName, contact: list[str], comment: str | None
+) -> HostCreatePayload:
     """Build the API payload for creating a host."""
     # Note: The JSON test results relies on the order of these keys to produce consistent diffs.
-    data: dict[str, Json] = {
+    data: HostCreatePayload = {
         "name": hname,
+        "comment": comment or "",
     }
     if contact:
         data["contacts"] = contact
-    data["comment"] = comment or None
 
     return data
 
