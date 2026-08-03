@@ -97,7 +97,7 @@ def atom_delete(args: argparse.Namespace) -> None:
     flags=[
         Flag("name", description="Role name", metavar="NAME"),
         Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("-created", description="Created date", hidden=True, metavar="CREATED"),
+        Flag("-created", description="DEPRECATED: Created date", hidden=True, metavar="CREATED"),
     ],
 )
 def role_create(args: argparse.Namespace) -> None:
