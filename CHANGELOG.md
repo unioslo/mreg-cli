@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `naptr_remove` removing all records regardless of the provided options. Now requires all options to match for a record to be removed.
 
+### Deprecated
+
+- `policy atom_create -created` option. This option is now hidden and will be removed in a future release.
+
 ## [1.9.0](https://github.com/unioslo/mreg-cli/releases/tag/1.9.0) - 2026-04-14
 
 ### Changed
