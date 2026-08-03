@@ -18051,10 +18051,10 @@
     "time": null
   },
   {
-    "command": "policy atom_create -created 2018-07-07 orange \"Round and orange\"",
+    "command": "policy atom_create orange \"Round and orange\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "policy atom_create -created 2018-07-07 orange \"Round and orange\"",
+    "command_issued": "policy atom_create orange \"Round and orange\"",
     "ok": [
       "Created new atom orange"
     ],

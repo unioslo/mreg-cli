@@ -62,16 +62,10 @@ def atom_create(args: argparse.Namespace) -> None:
     client = get_client()
     name: str = args.name
     description: str = args.description
-    created: str = args.created
 
     # Check if atom with that name already exists
     client.atom.ensure_absent(name)
-
-    params = {"name": name, "description": description}
-    if created:
-        params["create_date"] = created
-
-    client.atom.create(name=params["name"], description=params.get("description", ""))
+    client.atom.create(name=name, description=description)
     OutputManager().add_ok(f"Created new atom {name}")
 
 
@@ -103,7 +97,7 @@ def atom_delete(args: argparse.Namespace) -> None:
     flags=[
         Flag("name", description="Role name", metavar="NAME"),
         Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("-created", description="Created date", metavar="CREATED"),
+        Flag("-created", description="Created date", hidden=True, metavar="CREATED"),
     ],
 )
 def role_create(args: argparse.Namespace) -> None:
@@ -114,16 +108,10 @@ def role_create(args: argparse.Namespace) -> None:
     client = get_client()
     name: str = args.name
     description: str = args.description
-    created: str = args.created
 
     # Check if role with that name already exists
     client.role.ensure_absent(name)
-
-    params = {"name": name, "description": description}
-    if created:
-        params["create_date"] = created
-
-    client.role.create(name=params["name"], description=params.get("description", ""))
+    client.role.create(name=name, description=description)
     OutputManager().add_ok(f"Created new role {name!r}")
 
 

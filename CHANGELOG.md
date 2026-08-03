@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 - `policy atom_create -created` option. This option is now hidden and will be removed in a future release.
+- `policy role_create -created` option. This option is now hidden and will be removed in a future release.
 
 ## [1.9.0](https://github.com/unioslo/mreg-cli/releases/tag/1.9.0) - 2026-04-14
 
