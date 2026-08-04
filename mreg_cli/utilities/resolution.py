@@ -70,8 +70,8 @@ def resolve_host(
     getters: list[Callable[[str], Host | None]] = []
     ident_str = str(identifier)
 
-    # Try by ID first if the identifier is a digit
-    if ident_str.isdigit():
+    # Try by ID first if the identifier is a decimal number
+    if ident_str.isdecimal():
         getters.append(lambda s: client.host.get_by_id(int(s), required=False))
 
     # Try by IP → MAC → name
