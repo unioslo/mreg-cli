@@ -215,7 +215,7 @@ def test_host_add_payload_omits_empty_contacts() -> None:
 
     assert payload == {
         "name": "foo.example.org",
-        "comment": None,
+        "comment": "",
     }
 
 
@@ -229,6 +229,6 @@ def test_host_add_payload_includes_supplied_contacts() -> None:
 
     assert payload == {
         "name": "foo.example.org",
-        "comment": None,
+        "comment": "",
         "contacts": ["foo@example.org", "bar@example.org"],
     }
