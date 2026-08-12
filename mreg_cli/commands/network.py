@@ -757,7 +757,7 @@ def policy_create(args: argparse.Namespace) -> None:
     attribute: list[str] = args.attribute or []
     pattern: str | None = args.pattern
 
-    client.networkpolicy.ensure_absent(name)
+    client.networkpolicy.assert_absent(name)
 
     attrs: list[NetworkPolicyAttributeValue] = []
     for attr_name in attribute:
@@ -1038,7 +1038,7 @@ def policy_attribute_create(args: argparse.Namespace) -> None:
     name: str = args.name
     description: str = args.description
 
-    client.network.policy.attribute.ensure_absent(name)
+    client.network.policy.attribute.assert_absent(name)
 
     client.network.policy.attribute.create(name=name, description=description)
 

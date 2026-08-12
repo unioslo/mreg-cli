@@ -252,8 +252,8 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.2.4.dev88+gdd75f51ab"
-source = { git = "https://github.com/unioslo/mreg-api?branch=remove-singleton-pattern#dd75f51ab307efec3d35aa8d21927f7b0a0b4bf8" }
+version = "0.2.4.dev17+gae3fd5bbe"
+source = { git = "https://github.com/unioslo/mreg-api?branch=main#ae3fd5bbe9f98c2b24b0d0fea16c1634ba755fac" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },
@@ -303,7 +303,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api?branch=remove-singleton-pattern" },
+    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api?branch=main" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.7.1" },

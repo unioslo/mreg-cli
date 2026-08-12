@@ -44,7 +44,7 @@ def create(args: argparse.Namespace) -> None:
     name: str = args.name
     description: str = args.description
 
-    client.hostgroup.ensure_absent(name)
+    client.hostgroup.assert_absent(name)
     newgroup = client.hostgroup.create(name=name, description=description)
     if newgroup:
         OutputManager().add_ok(f"Created new group {newgroup.name}")
@@ -113,7 +113,7 @@ def rename(args: argparse.Namespace) -> None:
 
     client = get_client()
     group = client.hostgroup.get_by_name(oldname)
-    client.hostgroup.ensure_absent(newname)
+    client.hostgroup.assert_absent(newname)
     client.hostgroup.rename(group, newname)
     OutputManager().add_ok(f"Renamed group {oldname!r} to {newname!r}")
 

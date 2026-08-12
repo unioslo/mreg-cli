@@ -64,7 +64,7 @@ def atom_create(args: argparse.Namespace) -> None:
     description: str = args.description
 
     # Check if atom with that name already exists
-    client.atom.ensure_absent(name)
+    client.atom.assert_absent(name)
     client.atom.create(name=name, description=description)
     OutputManager().add_ok(f"Created new atom {name}")
 
@@ -110,7 +110,7 @@ def role_create(args: argparse.Namespace) -> None:
     description: str = args.description
 
     # Check if role with that name already exists
-    client.role.ensure_absent(name)
+    client.role.assert_absent(name)
     client.role.create(name=name, description=description)
     OutputManager().add_ok(f"Created new role {name!r}")
 
