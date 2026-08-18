@@ -47,7 +47,7 @@ from mreg_cli.exceptions import (
 from mreg_cli.output import output_host, output_hostlist, output_hosts
 from mreg_cli.output.history import output_host_history
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag, Json, JsonMapping, QueryParams
+from mreg_cli.types import Flag, QueryParams
 from mreg_cli.utilities.resolution import resolve_host
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
