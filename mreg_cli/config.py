@@ -121,7 +121,7 @@ class IniConfigSettingsSource(InitSettingsSource, ConfigFileSourceMixin):
     # Modified version of ConfigFileSourceMixin._read_files() with extra
     # protection against Path.expanduser() failures
     @override
-    def _read_files(self, files: PathType | None) -> dict[str, Any]:
+    def _read_files(self, files: PathType | None, deep_merge: bool = False) -> dict[str, Any]:
         if files is None:
             return {}
         if isinstance(files, (str, os.PathLike)):

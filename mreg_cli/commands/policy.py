@@ -6,17 +6,13 @@ import argparse
 import itertools
 from typing import Any
 
-from mreg_api.exceptions import APIError, DeleteError, EntityAlreadyExists, PostError
-from mreg_api.models import (
-    Atom,
-    Host,
-    HostPolicy,
-    Role,
-)
+from mreg_api.exceptions import APIError
+from mreg_api.models import Role
 
+from mreg_cli.client import get_client
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import handle_exception
+from mreg_cli.exceptions import EntityAlreadyExists, handle_exception
 from mreg_cli.output import (
     output_atoms_lines,
     output_host_policy,
@@ -28,6 +24,7 @@ from mreg_cli.output import (
 from mreg_cli.output.history import output_atom_history, output_role_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
+from mreg_cli.utilities.resolution import resolve_host, resolve_policy
 
 command_registry = CommandRegistry()
 
@@ -49,7 +46,12 @@ class PolicyCommands(BaseCommand):
     flags=[
         Flag("name", description="Atom name", metavar="NAME"),
         Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("-created", description="Created date", metavar="CREATED"),
+        Flag(
+            "-created",
+            description="DEPRECATED: Created date.",
+            metavar="CREATED",
+            hidden=True,
+        ),
     ],
 )
 def atom_create(args: argparse.Namespace) -> None:
@@ -57,18 +59,13 @@ def atom_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description, created)
     """
+    client = get_client()
     name: str = args.name
     description: str = args.description
-    created: str = args.created
 
     # Check if atom with that name already exists
-    Atom.get_by_name_and_raise(name)
-
-    params = {"name": name, "description": description}
-    if created:
-        params["create_date"] = created
-
-    Atom.create(params)
+    client.atom.assert_absent(name)
+    client.atom.create(name=name, description=description)
     OutputManager().add_ok(f"Created new atom {name}")
 
 
@@ -85,13 +82,12 @@ def atom_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
+    client = get_client()
     name: str = args.name
 
-    atom = Atom.get_by_name_or_raise(name)
-    if atom.delete():
-        OutputManager().add_ok(f"Deleted atom {name}")
-    else:
-        raise DeleteError(f"Failed to delete atom {name}")
+    atom = client.atom.get_by_name(name)
+    client.atom.delete(atom)
+    OutputManager().add_ok(f"Deleted atom {name}")
 
 
 @command_registry.register_command(
@@ -101,7 +97,7 @@ def atom_delete(args: argparse.Namespace) -> None:
     flags=[
         Flag("name", description="Role name", metavar="NAME"),
         Flag("description", description="Description", metavar="DESCRIPTION"),
-        Flag("-created", description="Created date", metavar="CREATED"),
+        Flag("-created", description="DEPRECATED: Created date", hidden=True, metavar="CREATED"),
     ],
 )
 def role_create(args: argparse.Namespace) -> None:
@@ -109,18 +105,13 @@ def role_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description, created)
     """
+    client = get_client()
     name: str = args.name
     description: str = args.description
-    created: str = args.created
 
     # Check if role with that name already exists
-    Role.get_by_name_and_raise(name)
-
-    params = {"name": name, "description": description}
-    if created:
-        params["create_date"] = created
-
-    Role.create(params)
+    client.role.assert_absent(name)
+    client.role.create(name=name, description=description)
     OutputManager().add_ok(f"Created new role {name!r}")
 
 
@@ -137,13 +128,12 @@ def role_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
+    client = get_client()
     name: str = args.name
 
-    role = Role.get_by_name_or_raise(name)
-    if role.delete():
-        OutputManager().add_ok(f"Deleted role {name!r}")
-    else:
-        raise DeleteError(f"Failed to delete role {name!r}")
+    role = client.role.get_by_name(name)
+    client.role.delete(role)
+    OutputManager().add_ok(f"Deleted role {name!r}")
 
 
 @command_registry.register_command(
@@ -160,14 +150,13 @@ def add_atom(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, atom)
     """
+    client = get_client()
     role_name: str = args.role
     atom_name: str = args.atom
 
-    role = Role.get_by_name_or_raise(role_name)
-    if role.add_atom(atom_name):
-        OutputManager().add_ok(f"Added atom {atom_name!r} to role {role_name!r}")
-    else:
-        raise PostError(f"Failed to add atom {atom_name!r} to role {role_name!r}")
+    role = client.role.get_by_name(role_name)
+    client.role.add_atom(role, atom_name)
+    OutputManager().add_ok(f"Added atom {atom_name!r} to role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -184,14 +173,13 @@ def remove_atom(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, atom)
     """
+    client = get_client()
     role_name: str = args.role
     atom_name: str = args.atom
 
-    role = Role.get_by_name_or_raise(role_name)
-    if role.remove_atom(atom_name):
-        OutputManager().add_ok(f"Removed atom {atom_name!r} from role {role_name!r}")
-    else:
-        raise DeleteError(f"Failed to remove atom {atom_name!r} from role {role_name!r}")
+    role = client.role.get_by_name(role_name)
+    client.role.remove_atom(role, atom_name)
+    OutputManager().add_ok(f"Removed atom {atom_name!r} from role {role_name!r}")
 
 
 @command_registry.register_command(
@@ -207,9 +195,10 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
+    client = get_client()
     names: list[str] = args.name
     for name in names:
-        role_or_atom = HostPolicy.get_role_or_atom_or_raise(name)
+        role_or_atom = resolve_policy(client, name)
         output_host_policy(role_or_atom)
 
 
@@ -230,9 +219,10 @@ def list_atoms(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
+    client = get_client()
     name: str = args.name
 
-    atoms = Atom.get_list_by_name_regex(name)
+    atoms = client.atom.list_by_name_regex(name)
     if atoms:
         output_atoms_lines(atoms)
     else:
@@ -256,9 +246,10 @@ def list_roles(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
+    client = get_client()
     name: str = args.name
 
-    roles = Role.get_list_by_name_regex(name)
+    roles = client.role.list_by_name_regex(name)
     if not roles:
         OutputManager().add_line("No match")
         return
@@ -287,13 +278,14 @@ def list_hosts(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
+    client = get_client()
     name: str = args.name
     exclude: list[str] = args.exclude if args.exclude else []
 
-    role = Role.get_by_name_or_raise(name)
+    role = client.role.get_by_name(name)
 
     exclude_roles = list(
-        itertools.chain.from_iterable(Role.get_list_by_name_regex(r) for r in exclude)
+        itertools.chain.from_iterable(client.role.list_by_name_regex(r) for r in exclude)
     )
     output_role_hosts(role, exclude_roles=exclude_roles)
 
@@ -311,9 +303,10 @@ def list_members(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
+    client = get_client()
     name: str = args.name
 
-    role = Role.get_by_name_or_raise(name)
+    role = client.role.get_by_name(name)
     output_role_atoms(role)
 
 
@@ -331,16 +324,17 @@ def host_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, hosts)
     """
+    client = get_client()
     role_name: str = args.role
     host_names: list[str] = args.hosts
 
-    role = Role.get_by_name_or_raise(role_name)
-    hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
+    role = client.role.get_by_name(role_name)
+    hosts = [resolve_host(client, host) for host in host_names]
 
     for host in hosts:
-        # Best-effort approach – try to assign roles to all hosts
+        # Best-effort approach -- try to assign roles to all hosts
         try:
-            role.add_host(host.name)
+            client.role.add_host(role, host.name)
             OutputManager().add_ok(f"Added host {host.name} to role {role_name!r}")
         except APIError as e:
             if e.response and e.response.status_code == 409:
@@ -366,13 +360,14 @@ def host_copy(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (source, destination)
     """
+    client = get_client()
     source_name: str = args.source
-    source = Host.get_by_any_means_or_raise(source_name)
-    source_roles = set(source.get_roles())
+    source = resolve_host(client, source_name)
+    source_roles = set(client.role.list_by_host(source))
 
     for destination_name in args.destination:
-        destination = Host.get_by_any_means_or_raise(destination_name)
-        destination_roles = set(destination.get_roles())
+        destination = resolve_host(client, destination_name)
+        destination_roles = set(client.role.list_by_host(destination))
         OutputManager().add_line(f"Copying roles from from {source_name} to {destination_name}")
 
         # Check if role already exists in destination
@@ -381,7 +376,7 @@ def host_copy(args: argparse.Namespace) -> None:
 
         # Check what roles need to be added
         for role in source_roles - destination_roles:
-            role.add_host(destination.name)
+            client.role.add_host(role, destination.name)
             OutputManager().add_line(f"    + {role.name}")
 
 
@@ -398,10 +393,11 @@ def host_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (hosts)
     """
+    client = get_client()
     hosts: list[str] = args.hosts
 
     for name in hosts:
-        host = Host.get_by_any_means_or_raise(name)
+        host = resolve_host(client, name)
         output_host_roles(host)
 
 
@@ -419,14 +415,15 @@ def host_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, hosts)
     """
+    client = get_client()
     role_name: str = args.role
     host_names: list[str] = args.hosts
 
-    role = Role.get_by_name_or_raise(role_name)
-    hosts = [Host.get_by_any_means_or_raise(host) for host in host_names]
+    role = client.role.get_by_name(role_name)
+    hosts = [resolve_host(client, host) for host in host_names]
 
     for host in hosts:
-        role.remove_host(host.name)
+        client.role.remove_host(role, host.name)
         OutputManager().add_ok(f"Removed host {host.name!r} from role {role_name!r}")
 
 
@@ -444,6 +441,7 @@ def rename(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (oldname, newname)
     """
+    client = get_client()
     oldname: str = args.oldname
     newname: str = args.newname
 
@@ -451,10 +449,16 @@ def rename(args: argparse.Namespace) -> None:
         raise EntityAlreadyExists("Old and new names are the same")
 
     # Check if role or atom with the new name already exists
-    HostPolicy.get_role_or_atom_and_raise(newname)
+    if client.atom.get_by_name(newname, required=False) or client.role.get_by_name(
+        newname, required=False
+    ):
+        raise EntityAlreadyExists(f"An atom or role named {newname!r} already exists")
 
-    role_or_atom = HostPolicy.get_role_or_atom_or_raise(oldname)
-    role_or_atom.rename(newname)
+    role_or_atom = resolve_policy(client, oldname)
+    if isinstance(role_or_atom, Role):
+        client.role.rename(role_or_atom, newname)
+    else:
+        client.atom.rename(role_or_atom, newname)
     OutputManager().add_ok(f"Renamed {oldname!r} to {newname!r}")
 
 
@@ -472,11 +476,15 @@ def set_description(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
+    client = get_client()
     name: str = args.name
     description: str = args.description
 
-    role_or_atom = HostPolicy.get_role_or_atom_or_raise(name)
-    role_or_atom.set_description(description)
+    role_or_atom = resolve_policy(client, name)
+    if isinstance(role_or_atom, Role):
+        client.role.set_description(role_or_atom, description)
+    else:
+        client.atom.set_description(role_or_atom, description)
     OutputManager().add_ok(f"updated description to {description!r} for {name!r}")
 
 
@@ -494,11 +502,12 @@ def add_label_to_role(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, label)
     """
+    client = get_client()
     role_name: str = args.role
     label_name: str = args.label
 
-    role = Role.get_by_name_or_raise(role_name)
-    role.add_label(label_name)
+    role = client.role.get_by_name(role_name)
+    client.role.add_label(role, label_name)
     OutputManager().add_ok(f"Added the label {label_name!r} to the role {role_name!r}.")
 
 
@@ -516,11 +525,12 @@ def remove_label_from_role(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (role, label)
     """
+    client = get_client()
     role_name: str = args.role
     label_name: str = args.label
 
-    role = Role.get_by_name_or_raise(role_name)
-    role.remove_label(label_name)
+    role = client.role.get_by_name(role_name)
+    client.role.remove_label(role, label_name)
     OutputManager().add_ok(f"Removed the label {label_name!r} from the role {role_name!r}.")
 
 

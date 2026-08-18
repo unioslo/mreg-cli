@@ -18,12 +18,12 @@ from __future__ import annotations
 import argparse
 from enum import Enum, auto
 
-from mreg_api.models import CNAME, Host, HostList, Network, NetworkOrIP
-from mreg_api.models.fields import HostName, MacAddress
+from mreg_api.models import Host, Network, NetworkOrIP
+from mreg_api.models.fields import MacAddress
 
+from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     ForceMissing,
@@ -32,6 +32,7 @@ from mreg_cli.exceptions import (
 from mreg_cli.output import output_host_ipaddresses
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
+from mreg_cli.utilities.resolution import resolve_host
 
 
 class IPOperation(Enum):
@@ -48,9 +49,10 @@ def _bail_if_ip_in_use_and_not_force(ip: IP_AddressT) -> None:
 
     :param ip: The IP address to check.
     """
-    hosts_using_ip = HostList.get_by_ip(ip)
+    client = get_client()
+    hosts_using_ip = client.host.list_by_ip(str(ip))
     if hosts_using_ip:
-        hostnames = ", ".join(hosts_using_ip.hostnames())
+        hostnames = ", ".join(str(h.name) for h in hosts_using_ip)
         raise ForceMissing(f"IP {ip} in use by {hostnames}, must force.")
 
 
@@ -95,8 +97,11 @@ def check_ip_constraints(
         raise ForceMissing(f"Network for {ip} not found, must force")
     if network and network.frozen:
         raise ForceMissing(f"Network {network.network} is frozen, must force")
+
+    # Check if host already has this IP
     if host.has_ip(ip):
         raise EntityAlreadyExists(f"Host {host} already has IP {ip}")
+
     if operation == IPOperation.ADD and len(host.ipaddresses) > 0:
         raise ForceMissing(f"Host {host} already has one or more ip addresses, must force")
 
@@ -116,15 +121,17 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     if old == new:
         raise EntityAlreadyExists("New and old IP are equal")
 
+    client = get_client()
+
     old_ip = NetworkOrIP.parse_or_raise(old, mode="ip")
 
     new_ip = NetworkOrIP.validate(new)
     network = None
     if new_ip.is_network():
-        network = Network.get_by_network_or_raise(str(new_ip.ip_or_network))
-        new_ip = network.get_first_available_ip()
+        network = client.network.get(str(new_ip.ip_or_network))
+        new_ip = client.network.get_first_available_ip(network)
     else:
-        network = Network.get_by_ip(new_ip.as_ip())
+        network = client.network.get_by_ip(str(new_ip.as_ip()), required=False)
         new_ip = new_ip.as_ip()
 
     if old_ip.version != ipversion:
@@ -133,15 +140,16 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     if new_ip.version != ipversion:
         raise InputFailure("New IP version does not match the requested version")
 
-    host = Host.get_by_any_means_or_raise(name)
+    host = resolve_host(client, name)
 
+    # Find the IPAddress object for the old IP
     host_ip = host.get_ip(old_ip)
     if not host_ip:
         raise EntityNotFound(f"Host {host} does not have IP {old_ip}")
 
     check_ip_constraints(new_ip, network, host, IPOperation.CHANGE, force)
 
-    host_ip.patch(data={"ipaddress": str(new_ip)})
+    client.ipaddress.update(host_ip, ipaddress=new_ip)
 
     OutputManager().add_ok(f"changed ip {old} to {new_ip} for {host}")
 
@@ -154,30 +162,35 @@ def _ip_move(ipaddr: str, fromhost: str, tohost: str, ipversion: IP_Version) -> 
     :param tohost: Name of destination host
     :param ipversion: 4 or 6
     """
-    ip = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
-    if ip.version != ipversion:
+    client = get_client()
+
+    ip_addr = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
+    if ip_addr.version != ipversion:
         raise InputFailure(
-            f"IP version {ip.version} does not match the requested version {ipversion}"
+            f"IP version {ip_addr.version} does not match the requested version {ipversion}"
         )
 
-    from_host = Host.get_by_any_means_or_raise(fromhost)
-    to_host = Host.get_by_any_means_or_raise(tohost)
+    from_host = resolve_host(client, fromhost)
+    to_host = resolve_host(client, tohost)
 
-    host_ip = from_host.get_ip(ip)
+    # Find the IPAddress object on from_host
+    host_ip = from_host.get_ip(ip_addr)
 
-    ptr = from_host.get_ptr_override(ip)
+    # Find PTR override on from_host
+    ptr = from_host.get_ptr_override(ip_addr)
+
     if not host_ip and not ptr:
-        raise EntityNotFound(f"Host {from_host} has no IP or PTR with address {ip}")
+        raise EntityNotFound(f"Host {from_host} has no IP or PTR with address {ipaddr}")
 
     msg = ""
     if host_ip:
-        host_ip.patch(data={"host": to_host.id})
+        client.ipaddress.update(host_ip, host=to_host)
         msg = f"Moved ipaddress {ipaddr}"
     else:
         msg += "No ipaddresses matched. "
 
     if ptr:
-        ptr.patch(data={"host": to_host.id})
+        client.ptroverride.update(ptr, host=to_host)
         msg += "Moved PTR override."
 
     OutputManager().add_line(msg)
@@ -190,30 +203,30 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version, force: bool = Fals
     :param ipaddr: IP to remove.
     :param ipversion: 4 or 6
     """
-    host = Host.get_by_any_means_or_raise(name, inform_as_cname=False, inform_as_ptr=False)
-    ip = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
-    if ip.version != ipversion:
+    client = get_client()
+
+    # TODO: use event suppression ctx manager to avoid printing cname and PTR resolution here
+    host = resolve_host(client, name)
+    ip_addr = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
+    if ip_addr.version != ipversion:
         raise InputFailure(
-            f"IP version {ip.version} does not match the requested version {ipversion}"
+            f"IP version {ip_addr.version} does not match the requested version {ipversion}"
         )
 
-    host_ip = host.get_ip(ip)
+    host_ip = host.get_ip(ip_addr)
     if not host_ip:
-        raise EntityNotFound(f"Host {host} does not have IP {ip}")
+        raise EntityNotFound(f"Host {host} does not have IP {ipaddr}")
 
     # Check if we fetched the host via a CNAME.
     if not force and host.cnames:
-        # Ensure arg is a valid host name with a domain
-        # (e.g. "foo" -> "foo.example.com")
-        name_hostname = HostName.parse_or_raise(name)
-        cname = CNAME.get_by_field("name", name_hostname)
+        # Expand the name to a FQDN and check for CNAME
+        fqdn_name = client.fqdn(name)
+        cname = client.cname.get_by_name(fqdn_name)
         if cname:
             raise ForceMissing(f"{cname.name} is a CNAME for {host.name}, must force.")
 
-    if host_ip.delete():
-        OutputManager().add_ok(f"Removed ipaddress {ipaddr} from {host}")
-    else:
-        raise DeleteError(f"Failed to remove ipaddress {ipaddr} from {host}")
+    client.ipaddress.delete(host_ip)
+    OutputManager().add_ok(f"Removed ipaddress {ipaddr} from {host}")
 
 
 def _ip_add(
@@ -225,14 +238,17 @@ def _ip_add(
 ) -> Host:
     """Add a new IP address to a host.
 
-    :param host: Name of the host to add the IP to.
+    :param name: Name of the host to add the IP to.
     :param ipaddr: The IP address to add.
     :param macaddress: The MAC address to add.
     :param force: Whether to force the addition.
+    :param ipversion: 4 or 6
 
     :return: The updated host object.
     """
-    host = Host.get_by_any_means_or_raise(name)
+    client = get_client()
+
+    host = resolve_host(client, name)
     ip_or_net = NetworkOrIP.validate(ipaddr)
 
     if ipversion == 4 and (ip_or_net.is_ipv6() or ip_or_net.is_ipv6_network()):
@@ -243,10 +259,10 @@ def _ip_add(
     ip = None
     network = None
     if ip_or_net.is_network():
-        network = Network.get_by_network_or_raise(str(ip_or_net.ip_or_network))
-        ip = network.get_first_available_ip()
+        network = client.network.get(str(ip_or_net.ip_or_network))
+        ip = client.network.get_first_available_ip(network)
     else:
-        network = Network.get_by_ip(ip_or_net.as_ip())
+        network = client.network.get_by_ip(str(ip_or_net.as_ip()), required=False)
         ip = ip_or_net.as_ip()
 
     check_ip_constraints(ip, network, host, IPOperation.ADD, force)
@@ -255,9 +271,12 @@ def _ip_add(
     if macaddress:
         mac = MacAddress.parse_or_raise(macaddress)
 
-    host = host.add_ip(ip, mac)  # returns the refetched host
+    client.ipaddress.create(host=host, ipaddress=ip, macaddress=mac)
     OutputManager().add_ok(f"Added ipaddress {ip} to {host}")
-    return host
+
+    # Resolve and return the updated host
+    updated_host = resolve_host(client, str(host.name))
+    return updated_host
 
 
 @command_registry.register_command(
@@ -408,7 +427,8 @@ def a_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     name: str = args.name
-    host = Host.get_by_any_means_or_raise(name)
+    client = get_client()
+    host = resolve_host(client, name)
     output_host_ipaddresses(host, only=4)
 
 
@@ -554,5 +574,6 @@ def aaaa_show(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
-    host = Host.get_by_any_means_or_raise(name)
+    client = get_client()
+    host = resolve_host(client, name)
     output_host_ipaddresses(host, only=6)

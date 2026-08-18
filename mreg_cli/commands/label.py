@@ -5,11 +5,10 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_api.models import Label
-
+from mreg_cli.client import get_client
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import EntityNotFound, InputFailure
+from mreg_cli.exceptions import InputFailure
 from mreg_cli.output.policy import output_label
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
@@ -39,14 +38,19 @@ def label_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
-    if " " in args.name:
+    name: str = args.name
+    description: str | None = args.description
+    if " " in name:
         raise InputFailure("The label name can't contain spaces.")
+    if not description:
+        raise InputFailure("The label description can't be empty.")
 
+    client = get_client()
     # We can't do a fetch_after_create here because the API is... broken.
     # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views_labels.py#L30
     # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views.py#L187
-    Label.create({"name": args.name, "description": args.description}, fetch_after_create=False)
-    OutputManager().add_ok(f'Added label "{args.name}"')
+    client.label.create(name=name, description=description, fetch_after_create=False)
+    OutputManager().add_ok(f'Added label "{name}"')
 
 
 @command_registry.register_command(
@@ -54,7 +58,8 @@ def label_add(args: argparse.Namespace) -> None:
 )
 def label_list(_: argparse.Namespace) -> None:
     """List labels."""
-    labels = Label.get_all()
+    client = get_client()
+    labels = client.label.list(ordering="name")
     if not labels:
         OutputManager().add_line("No labels")
         return
@@ -78,11 +83,9 @@ def label_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    label = Label.get_by_name_or_raise(args.name)
-    if not label:
-        raise EntityNotFound(f'Label "{args.name}" does not exist.')
-
-    label.delete()
+    client = get_client()
+    label = client.label.get_by_name(args.name)
+    client.label.delete(label)
     OutputManager().add_ok(f'Removed label "{args.name}"')
 
 
@@ -97,7 +100,8 @@ def label_info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    label = Label.get_by_name_or_raise(args.name)
+    client = get_client()
+    label = client.label.get_by_name(args.name)
     output_label(label)
 
 
@@ -119,7 +123,9 @@ def label_rename(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (oldname, newname)
     """
-    Label.get_by_name_or_raise(args.oldname).rename(args.newname)
+    client = get_client()
+    label = client.label.get_by_name(args.oldname)
+    client.label.rename(label, args.newname)
     OutputManager().add_ok(f'Renamed label "{args.oldname}" to "{args.newname}"')
 
 
@@ -145,5 +151,7 @@ def label_redesc(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, desc)
     """
-    Label.get_by_name_or_raise(args.name).set_description(args.desc)
+    client = get_client()
+    label = client.label.get_by_name(args.name)
+    client.label.set_description(label, args.desc)
     OutputManager().add_ok(f'Set description for label "{args.name}" to "{args.desc}"')

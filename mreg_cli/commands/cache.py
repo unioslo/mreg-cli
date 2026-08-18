@@ -5,9 +5,9 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_api import MregClient
 from mreg_api.exceptions import CacheError
 
+from mreg_cli.client import get_client
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
 from mreg_cli.exceptions import CliError
@@ -31,7 +31,7 @@ class CacheCommands(BaseCommand):
 def cache_clear(_: argparse.Namespace) -> None:
     """Clear the cache."""
     try:
-        client = MregClient()
+        client = get_client()
         items_removed = client.clear_cache()
         OutputManager().add_ok(f"Cleared cache, {items_removed} items removed")
     except CacheError as e:
@@ -44,7 +44,7 @@ def cache_clear(_: argparse.Namespace) -> None:
 )
 def cache_info(_: argparse.Namespace) -> None:
     """Show cache information."""
-    client = MregClient()
+    client = get_client()
     if not client.cache.is_enabled:
         OutputManager().add_line("Cache is disabled.")
         return
@@ -63,7 +63,7 @@ def cache_info(_: argparse.Namespace) -> None:
 )
 def cache_enable(_: argparse.Namespace) -> None:
     """Enable caching."""
-    client = MregClient()
+    client = get_client()
     if client.cache.is_enabled:
         OutputManager().add_line("Cache is already enabled")
         return
@@ -76,7 +76,7 @@ def cache_enable(_: argparse.Namespace) -> None:
 )
 def cache_disable(_: argparse.Namespace) -> None:
     """Disable caching."""
-    client = MregClient()
+    client = get_client()
     if not client.cache.is_enabled:
         OutputManager().add_line("Cache is already disabled")
         return

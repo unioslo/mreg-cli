@@ -43,19 +43,10 @@ import argparse
 
 from mreg_api.models import (
     NAPTR,
-    SSHFP,
-    TXT,
-    ForwardZone,
-    HInfo,
-    Host,
-    Location,
-    Network,
-    NetworkOrIP,
-    PTR_override,
     Srv,
 )
-from mreg_api.models.fields import HostName
 
+from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
@@ -64,7 +55,6 @@ from mreg_cli.exceptions import (
     EntityNotFound,
     ForceMissing,
     InputFailure,
-    PatchError,
     handle_exception,
 )
 from mreg_cli.output.host import (
@@ -79,7 +69,8 @@ from mreg_cli.output.host import (
     output_txts,
 )
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag, QueryParams
+from mreg_cli.types import Flag
+from mreg_cli.utilities.resolution import resolve_host
 
 
 @command_registry.register_command(
@@ -99,14 +90,15 @@ def hinfo_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, cpu, os)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     if host.hinfo:
         raise EntityAlreadyExists(f"{host} already has hinfo set.")
 
-    HInfo.create({"host": host.id, "cpu": args.cpu, "os": args.os})
-    host = host.refetch()
+    client.hinfo.create(host=host, cpu=args.cpu, os=args.os)
+    hinfo = client.hinfo.get_by_host(host)
 
-    if host.hinfo and host.hinfo.cpu == args.cpu and host.hinfo.os == args.os:
+    if hinfo and hinfo.cpu == args.cpu and hinfo.os == args.os:
         OutputManager().add_ok(f"Added HINFO record for {host.name}.")
     else:
         raise CreateError(f"Failed to add correct HINFO for {host}")
@@ -127,12 +119,14 @@ def hinfo_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     if not host.hinfo:
         raise EntityNotFound(f"{host} already has no hinfo set.")
 
-    hinfo = HInfo.get_by_field("host", host.id)
-    if hinfo and hinfo.delete():
+    hinfo = client.hinfo.get_by_host(host)
+    if hinfo:
+        client.hinfo.delete(hinfo)
         OutputManager().add_ok(f"Removed HINFO record for {host.name}.")
     else:
         raise DeleteError(f"Failed to remove HINFO for {host}")
@@ -153,11 +147,12 @@ def hinfo_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     if not host.hinfo:
         OutputManager().add_line(f"No hinfo for {host.name}")
 
-    hinfo = HInfo.get_by_field("host", host.id)
+    hinfo = client.hinfo.get_by_host(host)
     if hinfo:
         output_hinfo(hinfo)
     else:
@@ -179,11 +174,14 @@ def loc_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     if not host.loc:
         raise EntityNotFound(f"{host} already has no loc set.")
 
-    if host.loc.delete():
+    loc = client.location.get_by_host(host)
+    if loc:
+        client.location.delete(loc)
         OutputManager().add_ok(f"Removed LOC for {host.name}.")
     else:
         raise DeleteError(f"Failed to remove LOC for {host}")
@@ -205,15 +203,16 @@ def loc_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, loc)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
 
     if host.loc:
         raise EntityAlreadyExists(f"{host} already has loc set.")
 
-    Location.create({"host": host.id, "loc": args.loc})
-    host = host.refetch()
+    client.location.create(host=host, loc=args.loc)
+    loc = client.location.get_by_host(host)
 
-    if host.loc and host.loc.loc == args.loc:
+    if loc and loc.loc == args.loc:
         OutputManager().add_ok(f"Added LOC record for {host.name}.")
     else:
         CreateError(f"Failed to set LOC for {host}")
@@ -234,7 +233,8 @@ def loc_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     if not host.loc:
         raise EntityNotFound(f"No loc for {host.name}")
 
@@ -258,12 +258,13 @@ def mx_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, mx)
     """
+    client = get_client()
     mx: str = args.mx
     priority: int = args.priority
     name: str = args.name
 
-    host = Host.get_by_any_means_or_raise(name)
-    host.add_mx(mx, priority)
+    host = resolve_host(client, name)
+    client.mx.create(host=host, mx=mx, priority=priority)
 
     OutputManager().add_ok(f"Added MX record to {host.name}.")
 
@@ -283,12 +284,17 @@ def mx_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, mx)
     """
+    client = get_client()
     name: str = args.name
     mx_arg: str = args.mx
     priority: int = args.priority
 
-    host = Host.get_by_any_means_or_raise(name)
-    host.remove_mx(mx_arg, priority)
+    host = resolve_host(client, name)
+    mx_obj = client.mx.get_by_all(host, mx_arg, priority)
+    client.mx.delete(mx_obj)
+    OutputManager().add_ok(
+        f"Deleted MX {mx_obj.mx} with priority {priority} from {host.name}.",
+    )
 
 
 @command_registry.register_command(
@@ -304,7 +310,8 @@ def mx_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     output_mxs(host.mxs)
 
 
@@ -349,20 +356,31 @@ def naptr_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
-    params: QueryParams = {
-        "preference": args.preference,
-        "order": args.order,
-        "flag": args.flag,
-        "service": args.service,
-        "regex": args.regex,
-        "replacement": args.replacement,
-        "host": host.id,
-    }
-    existing_naptr = NAPTR.get_by_query_unique(params)
+    client = get_client()
+    host = resolve_host(client, args.name)
+
+    existing_naptr = client.naptr.first(
+        host=host.id,
+        preference=args.preference,
+        order=args.order,
+        flag=args.flag,
+        service=args.service,
+        regex=args.regex,
+        replacement=args.replacement,
+        required=False,
+    )
     if existing_naptr:
         raise EntityAlreadyExists(f"{host} already has that NAPTR defined.")
-    NAPTR.create(data=params)
+
+    client.naptr.create(
+        host=host,
+        preference=args.preference,
+        order=args.order,
+        flag=args.flag,
+        service=args.service,
+        regex=args.regex,
+        replacement=args.replacement,
+    )
     OutputManager().add_ok(f"Added NAPTR record to {host.name}.")
 
 
@@ -434,7 +452,8 @@ def naptr_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     to_delete = filter_naptrs(
         host.naptrs,
         preference=args.preference,
@@ -458,7 +477,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
     # Best-effort lets us delete as many as possible at the very least.
     for naptr in to_delete:
         try:
-            naptr.delete()
+            client.naptr.delete(naptr)
             OutputManager().add_ok(f"Deleted NAPTR record from {host.name}.")
         except Exception as e:
             handle_exception(e)
@@ -477,7 +496,8 @@ def naptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     output_naptrs(host.naptrs)
 
 
@@ -503,8 +523,11 @@ def ptr_change(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, old, new, force)
     """
-    old_host = Host.get_by_any_means_or_raise(args.old)
-    new_host = Host.get_by_any_means_or_raise(args.new)
+    from mreg_api.models import NetworkOrIP
+
+    client = get_client()
+    old_host = resolve_host(client, args.old)
+    new_host = resolve_host(client, args.new)
 
     if new_host.ptr_overrides:
         raise InputFailure(f"{new_host} already has a PTR record.")
@@ -517,11 +540,8 @@ def ptr_change(args: argparse.Namespace) -> None:
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {old_host} with IP {ip}")
 
-    data = {"host": new_host.id}
-    if not ptr_override.patch(data):
-        raise PatchError(f"Failed to move PTR record from {old_host} to {new_host}")
-    else:
-        OutputManager().add_ok(f"Moved PTR record {ip} from {old_host.name} to {new_host.name}.")
+    client.ptroverride.update(ptr_override, host=new_host)
+    OutputManager().add_ok(f"Moved PTR record {ip} from {old_host.name} to {new_host.name}.")
 
 
 @command_registry.register_command(
@@ -538,16 +558,17 @@ def ptr_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    from mreg_api.models import NetworkOrIP
+
+    client = get_client()
+    host = resolve_host(client, args.name)
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
     ptr_override = host.get_ptr_override(ip)
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {host} with IP {ip}")
 
-    if ptr_override.delete():
-        OutputManager().add_ok(f"Removed PTR record {ip} from {host.name}.")
-    else:
-        raise DeleteError(f"Failed to remove PTR record from {host}")
+    client.ptroverride.delete(ptr_override)
+    OutputManager().add_ok(f"Removed PTR record {ip} from {host.name}.")
 
 
 @command_registry.register_command(
@@ -565,23 +586,28 @@ def ptr_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, name, force)
     """
+    from mreg_api.models import NetworkOrIP
+
+    client = get_client()
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
 
-    host = Host.get_by_any_means_or_raise(args.name)
-    existing_ptrs = PTR_override.get_list_by_field("ipaddress", str(ip))
+    host = resolve_host(client, args.name)
+    existing_ptrs = client.ptroverride.list(ipaddress=str(ip))
     if existing_ptrs:
         raise EntityAlreadyExists(f"{ip} already exists in a PTR record.")
 
-    network = Network.get_by_ip(ip)
+    network = client.network.get_by_ip(str(ip))
     if not args.force:
         if host.zone is None:
             raise ForceMissing(f"{host} isn't in a zone controlled by MREG, must force")
         elif not network:
             raise ForceMissing(f"{ip} isn't in a network controlled by MREG, must force")
-        elif network and network.is_reserved_ip(ip):
-            raise ForceMissing(f"{ip} is reserved, must force")
+        elif network:
+            reserved_ips = client.network.get_reserved_ips(network)
+            if ip in reserved_ips:
+                raise ForceMissing(f"{ip} is reserved, must force")
 
-    PTR_override.create({"host": host.id, "ipaddress": str(ip)})
+    client.ptroverride.create(host=host, ipaddress=ip)
     OutputManager().add_ok(f"Added PTR record {ip} to {host.name}.")
 
 
@@ -598,14 +624,20 @@ def ptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip)
     """
-    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
-    host = Host.get_by_any_means_or_raise(str(ip), inform_as_ptr=False)
-    if not host.ptr_overrides:
-        OutputManager().add_line(f"No PTR records for {host.name}")
+    from mreg_api.models import NetworkOrIP
 
-    for ptr in host.ptr_overrides:
-        if ip == ptr.ipaddress:
-            output_ptr_override(ptr)
+    client = get_client()
+    ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
+
+    # Suppress PTR override events from being printed when we resolve PTR overrides
+    with OutputManager().suppress_events():
+        host = resolve_host(client, str(ip))
+        if not host.ptr_overrides:
+            OutputManager().add_line(f"No PTR records for {host.name}")
+
+        for ptr in host.ptr_overrides:
+            if ip == ptr.ipaddress:
+                output_ptr_override(ptr)
 
 
 @command_registry.register_command(
@@ -627,32 +659,39 @@ def srv_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, weight, port, host, ttl, force)
     """
+    client = get_client()
     name: str = args.name
 
-    sname = HostName.parse_or_raise(name)
-    host = Host.get_by_any_means_or_raise(args.host)
+    sname = client.fqdn(name)
+    host = resolve_host(client, args.host)
 
-    szone = ForwardZone.get_from_hostname(sname)
+    szone = client.zone.get_from_host(sname)
     if not szone:
         raise EntityNotFound(f"{sname} isn't in a zone controlled by MREG")
 
-    hzone = ForwardZone.get_from_hostname(host.name)
+    hzone = client.zone.get_from_host(host.name)
     if not hzone:
         raise EntityNotFound(f"{host} isn't in a zone controlled by MREG")
 
-    data: QueryParams = {
-        "name": sname,
-        "priority": args.priority,
-        "weight": args.weight,
-        "port": args.port,
-        "ttl": args.ttl,
-        "host": host.id,
-    }
-
-    existing_srv = Srv.get_by_query_unique(data)
+    existing_srv = client.srv.first(
+        name=str(sname),
+        host=host.id,
+        priority=args.priority,
+        weight=args.weight,
+        port=args.port,
+        required=False,
+    )
     if existing_srv:
         raise EntityAlreadyExists(f"{sname} already has that SRV defined.")
-    Srv.create(data)
+
+    client.srv.create(
+        host=host,
+        name=str(sname),
+        priority=args.priority,
+        weight=args.weight,
+        port=args.port,
+        ttl=args.ttl if args.ttl is not None else None,
+    )
     OutputManager().add_ok(f"Added SRV record {sname} with target {host}.")
 
 
@@ -691,30 +730,28 @@ def srv_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, priority, weight, port, host)
     """
+    client = get_client()
     name: str = args.name
     host_arg: str = args.host
 
-    host = Host.get_by_any_means_or_raise(host_arg)
-    sname = HostName.parse_or_raise(name)
+    host = resolve_host(client, host_arg)
+    sname = client.fqdn(name)
 
-    data: QueryParams = {
-        "name": sname,
-        "host": host.id,
-        "priority": args.priority,
-        "port": args.port,
-        "weight": args.weight,
-    }
-
-    srv = Srv.get_by_query_unique(data)
+    srv = client.srv.first(
+        name=str(sname),
+        host=host.id,
+        priority=args.priority,
+        port=args.port,
+        weight=args.weight,
+        required=False,
+    )
     if not srv:
         raise EntityNotFound(
             f"No SRV record for {sname} with target {host} matching the given values."
         )
 
-    if srv.delete():
-        OutputManager().add_ok(f"Removed SRV record {sname} from {host.name}.")
-    else:
-        raise DeleteError(f"Failed to remove SRV for {sname}")
+    client.srv.delete(srv)
+    OutputManager().add_ok(f"Removed SRV record {sname} from {host.name}.")
 
 
 @command_registry.register_command(
@@ -730,10 +767,11 @@ def srv_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (service)
     """
+    client = get_client()
     service: str = args.service
 
-    sname = HostName.parse_or_raise(service)
-    srvs = Srv.get_list_by_field("name", sname)
+    sname = client.fqdn(service)
+    srvs = client.srv.list(name=str(sname))
 
     if len(srvs) == 0:
         raise EntityNotFound(f"No SRV records for {sname}")
@@ -757,20 +795,25 @@ def sshfp_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, algorithm, hash_type, fingerprint)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
 
-    data: QueryParams = {
-        "algorithm": args.algorithm,
-        "hash_type": args.hash_type,
-        "fingerprint": args.fingerprint,
-        "host": host.id,
-    }
-
-    existing_sshfp = SSHFP.get_by_query_unique(data)
+    existing_sshfp = client.sshfp.first(
+        host=host.id,
+        algorithm=args.algorithm,
+        hash_type=args.hash_type,
+        fingerprint=args.fingerprint,
+        required=False,
+    )
     if existing_sshfp:
         raise EntityAlreadyExists(f"{host} already has that SSHFP defined.")
 
-    SSHFP.create(data)
+    client.sshfp.create(
+        host=host,
+        algorithm=args.algorithm,
+        hash_type=args.hash_type,
+        fingerprint=args.fingerprint,
+    )
     OutputManager().add_ok(f"Added SSHFP record for {host.name}.")
 
 
@@ -797,13 +840,13 @@ def sshfp_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, fingerprint)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     sshfps = None
 
     if args.fingerprint:
-        sshfps = [
-            SSHFP.get_by_query_unique_or_raise({"fingerprint": args.fingerprint, "host": host.id})
-        ]
+        sshfp = client.sshfp.first(required=True, fingerprint=args.fingerprint, host=host.id)
+        sshfps = [sshfp]
     else:
         sshfps = host.sshfps
 
@@ -811,11 +854,9 @@ def sshfp_remove(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"No matching SSHFP records for {host}")
     else:
         for sshfp in sshfps:
-            if not sshfp.delete():
-                raise DeleteError(f"Failed to remove SSHFP for {host}")
-            else:
-                fp = sshfp.fingerprint
-                OutputManager().add_ok(f"Removed SSHFP record with fingerprint {fp} for {host}.")
+            fp = sshfp.fingerprint
+            client.sshfp.delete(sshfp)
+            OutputManager().add_ok(f"Removed SSHFP record with fingerprint {fp} for {host}.")
 
 
 @command_registry.register_command(
@@ -831,7 +872,8 @@ def sshfp_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     sshfps = host.sshfps
 
     if not sshfps:
@@ -879,22 +921,31 @@ def ttl_set(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, ttl)
     """
+    client = get_client()
     name: str = args.name
     ttl: str = args.ttl
 
-    target = Host.get_by_any_means(name)
-    if not target:
-        target = Srv.get_by_field("name", name)
+    # Convert "default" to None (API uses None for default TTL)
+    ttl_value: int | None = None if ttl == "default" else int(ttl)
 
-    if not target:
+    target_host = resolve_host(client, name, required=False)
+    target_srv: Srv | None = None
+
+    if target_host is None:
+        target_srv = client.srv.first(name=name, required=False)
+
+    if target_host is None and target_srv is None:
         raise EntityNotFound(f"No host or SRV record found for {name}")
 
-    result = target.set_ttl(ttl)
-    new_ttl = result.ttl or ttl  # prefer the actual value if it exists
-    if result:
-        OutputManager().add_ok(f"Set TTL for {target} to {new_ttl}.")
+    if target_host is not None:
+        result = client.host.update(target_host, ttl=ttl_value)
+        new_ttl = result.ttl if result.ttl is not None else ttl
+        OutputManager().add_ok(f"Set TTL for {target_host} to {new_ttl}.")
     else:
-        raise PatchError(f"Failed to set TTL for {target}")
+        assert target_srv is not None
+        result = client.srv.update(target_srv, ttl=ttl_value)
+        new_ttl = result.ttl if result.ttl is not None else ttl
+        OutputManager().add_ok(f"Set TTL for {target_srv} to {new_ttl}.")
 
 
 @command_registry.register_command(
@@ -912,7 +963,8 @@ def ttl_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     output_host_ttl(host)
 
 
@@ -939,11 +991,13 @@ def txt_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, text)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
+
     if host.has_txt(args.text):
         raise EntityAlreadyExists(f"{host} already has that TXT defined.")
 
-    TXT.create({"host": host.id, "txt": args.text})
+    client.txt.create(host=host, txt=args.text)
     OutputManager().add_ok(f"Added TXT record to {host}.")
 
 
@@ -966,16 +1020,15 @@ def txt_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, text)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
-    txt = TXT.get_by_query_unique({"host": host.id, "txt": args.text})
+    client = get_client()
+    host = resolve_host(client, args.name)
+    txt = client.txt.first(host=host.id, txt=args.text, required=False)
 
     if not txt:
         raise EntityNotFound(f"{host} has no TXT record matching '{args.text}'")
 
-    if txt.delete():
-        OutputManager().add_ok(f"Removed TXT record '{args.text}' from {host}.")
-    else:
-        raise DeleteError(f"Failed to remove TXT with '{args.text}' for {host}")
+    client.txt.delete(txt)
+    OutputManager().add_ok(f"Removed TXT record '{args.text}' from {host}.")
 
 
 @command_registry.register_command(
@@ -991,7 +1044,8 @@ def txt_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
+    client = get_client()
+    host = resolve_host(client, args.name)
     txts = host.txts
 
     if not txts:

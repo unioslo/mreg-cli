@@ -92,6 +92,10 @@ class EntityOwnershipMismatch(mreg_api.exceptions.EntityOwnershipMismatch):
     """Warning class for an entity that already exists but owned by someone else."""
 
 
+class MultipleEntitiesFound(mreg_api.exceptions.MultipleEntitiesFound):
+    """Multiple entities found when only one was expected."""
+
+
 class InputFailure(mreg_api.exceptions.InputFailure):
     """Warning class for input failure."""
 

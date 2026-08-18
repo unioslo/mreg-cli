@@ -180,7 +180,7 @@ zone delegation_delete example.org wut.example.org
 #   - rename
 #   - set description
 policy atom_create apple "Here's the description"
-policy atom_create -created 2018-07-07 orange "Round and orange"
+policy atom_create orange "Round and orange"
 policy list_atoms *
 policy list_atoms ppl
 policy role_create fruit "5 a day"

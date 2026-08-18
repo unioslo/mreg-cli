@@ -22,18 +22,15 @@ from mreg_api.models import (
     CNAME,
     MX,
     NAPTR,
-    ForwardZone,
     Host,
-    HostList,
-    IPAddress,
-    Network,
     NetworkOrIP,
     PTR_override,
     Srv,
 )
 from mreg_api.models.fields import HostName, MacAddress
-from typing_extensions import override
+from typing_extensions import NotRequired, TypedDict, override
 
+from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     APIError,
@@ -50,7 +47,8 @@ from mreg_cli.exceptions import (
 from mreg_cli.output import output_host, output_hostlist, output_hosts
 from mreg_cli.output.history import output_host_history
 from mreg_cli.outputmanager import OutputManager
-from mreg_cli.types import Flag, Json, JsonMapping, QueryParams
+from mreg_cli.types import Flag, QueryParams
+from mreg_cli.utilities.resolution import resolve_host
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 
@@ -102,24 +100,39 @@ def add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, ip, contact, comment, force, macaddress)
 
     """
-    hname = HostName.parse_or_raise(args.name)
+    client = get_client()
+
+    hname = client.fqdn(args.name)
     network_or_ip: str = args.ip
     macaddress: str | None = args.macaddress
     force: bool = args.force
     contact: list[str] = args.contact or []
+    comment: str | None = args.comment
 
     if macaddress is not None:
         macaddress = MacAddress.parse_or_raise(macaddress)
-        IPAddress.ensure_associable(macaddress, force=force)
+        if not force:
+            existing_ips = client.ipaddress.list_by_mac(macaddress)
+            if len(existing_ips) == 1:
+                raise EntityAlreadyExists(
+                    f"MAC address {macaddress} is already associated with IP address "
+                    f"{existing_ips[0].ipaddress}, must force."
+                )
+            elif len(existing_ips) > 1:
+                ips_str = ", ".join(str(ip.ipaddress) for ip in existing_ips)
+                raise EntityAlreadyExists(
+                    f"MAC address {macaddress} is already associated with multiple IP addresses: "
+                    f"{ips_str}, must force."
+                )
 
-    host = Host.get_by_any_means(hname)
+    host = resolve_host(client, hname, required=False)
     if host:
         if host.name != hname:
             raise EntityOwnershipMismatch(f"{hname} is a CNAME pointing to {host.name}")
         else:
             raise EntityAlreadyExists(f"Host {hname} already exists.")
 
-    zone = ForwardZone.get_from_hostname(hname)
+    zone = client.zone.get_from_host(hname)
     if not zone and not force:
         raise ForceMissing(f"{hname} isn't in a zone controlled by MREG, must force")
     if zone and zone.is_delegated() and not force:
@@ -128,7 +141,7 @@ def add(args: argparse.Namespace) -> None:
     if "*" in hname and not force:
         raise ForceMissing("Wildcards must be forced.")
 
-    data = _host_create_payload(hname, contact, args.comment)
+    data = _host_create_payload(hname, contact, comment)
 
     if network_or_ip:
         autodetect = False
@@ -148,7 +161,7 @@ def add(args: argparse.Namespace) -> None:
         if net_or_ip.is_ip() and not autodetect:
             ipaddr = net_or_ip.as_ip()
             try:
-                network = Network.get_by_ip(ipaddr)
+                network = client.network.get_by_ip(str(ipaddr))
                 if network:
                     if ipaddr == network.network_address and not force:
                         raise InvalidIPAddress(
@@ -165,9 +178,9 @@ def add(args: argparse.Namespace) -> None:
 
         elif net_or_ip.is_network() or autodetect:
             network = (
-                Network.get_by_ip(net_or_ip.as_ip())
+                client.network.get_by_ip(str(net_or_ip.as_ip()))
                 if autodetect
-                else Network.get_by_network(str(network_or_ip))
+                else client.network.get(str(network_or_ip))
             )
             if network:
                 data["network"] = str(network.network)
@@ -185,14 +198,24 @@ def add(args: argparse.Namespace) -> None:
     else:
         net_or_ip = None
 
-    host = Host.create(data)
+    host = client.host.create(
+        name=data["name"],
+        comment=data["comment"],
+        contacts=data.get("contacts"),
+        ipaddress=data.get("ipaddress"),
+        network=data.get("network"),
+    )
     if not host:
         raise CreateError("Failed to add host.")
     OutputManager().add_ok(f"Created host {host.name}")
 
     if macaddress is not None and net_or_ip is not None:
         if net_or_ip.is_ip():
-            host = host.associate_mac_to_ip(macaddress, network_or_ip, force=force)
+            ip_objs = client.ipaddress.list_by_ip(str(network_or_ip))
+            if ip_objs:
+                host_ip = ip_objs[0]
+                client.ipaddress.associate_mac(host_ip, macaddress, force=force)
+                host = resolve_host(client, str(host.name))
         else:
             # We passed a network to create the host, so we need to find the IP
             # that was assigned to the host. We don't get that in the response
@@ -200,9 +223,9 @@ def add(args: argparse.Namespace) -> None:
             # use that. If there are more than one, we can't know which one was
             # assigned to the host during create, so we abort.
             if len(host.ipaddresses) == 1:
-                host = host.associate_mac_to_ip(
-                    macaddress, host.ipaddresses[0].ipaddress, force=force
-                )
+                host_ip = host.ipaddresses[0]
+                client.ipaddress.associate_mac(host_ip, macaddress, force=force)
+                host = resolve_host(client, str(host.name))
             else:
                 OutputManager().add_ok(
                     "Failed to associate MAC address to IP, multiple IP addresses after creation."
@@ -211,15 +234,27 @@ def add(args: argparse.Namespace) -> None:
     output_host(host)
 
 
-def _host_create_payload(hname: HostName, contact: list[str], comment: str | None) -> JsonMapping:
+class HostCreatePayload(TypedDict):
+    """Payload for creating a host."""
+
+    name: HostName
+    comment: str  # TODO: mark NotRequired after API parity!
+    contacts: NotRequired[list[str]]
+    ipaddress: NotRequired[str]
+    network: NotRequired[str]
+
+
+def _host_create_payload(
+    hname: HostName, contact: list[str], comment: str | None
+) -> HostCreatePayload:
     """Build the API payload for creating a host."""
     # Note: The JSON test results relies on the order of these keys to produce consistent diffs.
-    data: dict[str, Json] = {
+    data: HostCreatePayload = {
         "name": hname,
+        "comment": comment or "",
     }
     if contact:
         data["contacts"] = contact
-    data["comment"] = comment or None
 
     return data
 
@@ -346,8 +381,10 @@ def remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, force, override)
     """
+    client = get_client()
+
     hostname = args.name
-    host = Host.get_by_any_means_or_raise(hostname, inform_as_cname=True)
+    host = resolve_host(client, hostname, inform_if_cname=True)
 
     override_arg = args.override or ""
     overrides: list[Override] = Override.parse_overrides(override_arg)
@@ -386,7 +423,7 @@ def remove(args: argparse.Namespace) -> None:
 
     # Require force if host has multiple A/AAAA records and they are not in the same VLAN.
     if len(host.ipaddresses) > 1:
-        host_vlans = host.vlans()
+        host_vlans = client.host.vlans(host)
         same_vlan = len(host_vlans) == 1
 
         if same_vlan and not forced():
@@ -426,8 +463,7 @@ def remove(args: argparse.Namespace) -> None:
         raise ForceMissing(complete_error_msg)
 
     # Delete the host and any associated records
-    if not host.delete():
-        raise DeleteError(f"failed to remove {host.name}")
+    client.host.delete(host)
 
     # Print messages for associated records that were deleted
     for check in override_checks:
@@ -469,8 +505,28 @@ def host_info(args: argparse.Namespace) -> None:
     Setting traverse hostgroups will show memberships of all parent groups as well as
     direct groups.
     """
-    for host in args.hosts:
-        hosts = Host.get_list_by_any_means_or_raise(host, inform_as_cname=True)
+    client = get_client()
+
+    for host_arg in args.hosts:
+        # Try IP lookup first (may return multiple hosts)
+        hosts: list[Host] = []
+        try:
+            hosts = client.host.list_by_ip(host_arg)
+        except Exception:
+            pass
+
+        # Try MAC lookup if IP lookup returned nothing
+        if not hosts:
+            try:
+                hosts = client.host.list_by_mac(host_arg)
+            except Exception:
+                pass
+
+        # Fall back to single host resolution by name/CNAME
+        if not hosts:
+            host = resolve_host(client, host_arg, inform_if_cname=True)
+            hosts = [host]
+
         if hosts:
             output_hosts(hosts, traverse_hostgroups=args.traverse_hostgroups)
 
@@ -505,6 +561,7 @@ def find(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, comment, contact)
     """
+    client = get_client()
 
     def _add_param(param: str, value: str) -> None:
         param, value = convert_wildcard_to_regex(param, value, True)
@@ -522,7 +579,7 @@ def find(args: argparse.Namespace) -> None:
         if value:
             _add_param(param, value)
 
-    hosts = HostList.get(params=params)
+    hosts = client.host.list(limit=500, **params)
     output_hostlist(hosts)
 
 
@@ -556,25 +613,27 @@ def rename(args: argparse.Namespace) -> None:
 
     :return: The updated Host or None
     """
+    client = get_client()
+
     old_name: str = args.old_name
     new_name: str = args.new_name
 
-    old_host = Host.get_by_any_means_or_raise(old_name)
-    new_name = HostName.parse_or_raise(new_name)
+    old_host = resolve_host(client, old_name)
+    new_name = client.fqdn(new_name)
 
-    new_host = Host.get_by_any_means(new_name, inform_as_cname=True)
+    new_host = resolve_host(client, new_name, required=False, inform_if_cname=True)
     if new_host:
         raise EntityAlreadyExists(f"host {new_host} already exists")
 
     # Require force if FQDN not in MREG zone
-    zone = ForwardZone.get_from_hostname(new_name)
+    zone = client.zone.get_from_host(new_name)
     if not zone and not args.force:
         raise ForceMissing(f"{new_name} isn't in a zone controlled by MREG, must force")
 
     if "*" in new_name and not args.force:
         raise ForceMissing("Wildcards must be forced.")
 
-    new_host = old_host.rename(new_name)
+    client.host.update(old_host, name=new_name)
     OutputManager().add_ok(f"renamed {old_host} to {new_name}")
 
 
@@ -599,11 +658,10 @@ def set_comment(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, comment)
     """
-    host = Host.get_by_any_means_or_raise(args.name, inform_as_cname=True)
-    updated_host = host.set_comment(args.comment)
+    client = get_client()
 
-    if not updated_host:
-        raise PatchError(f"Failed to update comment of {host.name}")
+    host = resolve_host(client, args.name, inform_if_cname=True)
+    client.host.update(host, comment=args.comment)
 
     OutputManager().add_ok(f"Updated comment of {host} to {args.comment}")
 
@@ -625,14 +683,13 @@ def set_contact(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, contact)
     """
+    client = get_client()
+
     name: str = args.name
     contact: list[str] = args.contact
 
-    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
-    updated_host = host.set_contacts(contact)
-
-    if not updated_host:
-        raise PatchError(f"Failed to update contact of {host.name}")
+    host = resolve_host(client, name, inform_if_cname=True)
+    client.host.update(host, contacts=contact)
 
     OutputManager().add_ok(f"Set contact of {host} to {', '.join(contact)}")
 
@@ -653,10 +710,12 @@ def unset_contact(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, contact)
     """
+    client = get_client()
+
     name: str = args.name
     force: bool = args.force
 
-    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+    host = resolve_host(client, name, inform_if_cname=True)
     if not host.contacts:
         raise DeleteError(f"Host {host.name} has no contacts to remove.")
 
@@ -665,7 +724,7 @@ def unset_contact(args: argparse.Namespace) -> None:
             f"Host {host.name} has multiple contacts, must use -force to remove all contacts."
         )
 
-    updated = host.clear_contacts()
+    updated = client.host.clear_contacts(host)
     if not updated.removed:
         raise PatchError(f"Failed to update contact of {host.name}")
 
@@ -686,11 +745,13 @@ def add_contact(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, contact)
     """
+    client = get_client()
+
     name: str = args.name
     contact: list[str] = args.contact
 
-    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
-    updated = host.add_contacts(contact)
+    host = resolve_host(client, name, inform_if_cname=True)
+    updated = client.host.add_contacts(host, contact)
 
     if not updated.added:
         # TODO: add not_found warning?
@@ -713,15 +774,17 @@ def remove_contact(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, contact)
     """
+    client = get_client()
+
     name: str = args.name
     contact: list[str] = args.contact
 
     if not contact:
         raise InputFailure("At least one contact must be specified.")
 
-    host = Host.get_by_any_means_or_raise(name, inform_as_cname=True)
+    host = resolve_host(client, name, inform_if_cname=True)
 
-    updated = host.remove_contacts(contact)
+    updated = client.host.remove_contacts(host, contact)
     if not updated.removed:
         if updated.not_found:
             not_found = ", ".join(updated.not_found)
@@ -746,5 +809,6 @@ def history(args: argparse.Namespace) -> None:
     """
     name: str = args.name
 
-    hostname = HostName.parse_or_raise(name)
+    client = get_client()
+    hostname = client.fqdn(name)
     output_host_history(hostname)

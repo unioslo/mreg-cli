@@ -252,7 +252,7 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.2.3"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "diskcache" },
@@ -262,9 +262,9 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a9/70/e6727f685d9603cf482e186b51144b7726cdd9bd70a9289f0051541af4a4/mreg_api-0.2.3.tar.gz", hash = "sha256:6aa83d4ed04f0f7648be8efd32b28b2b173f5911d7a6e67ff8262d7efde2687d", size = 154018, upload-time = "2026-05-21T09:18:40.411Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/30/8267b17e5964d39522fe5098ec7e738b11aac497fae7411f403e4ec0ce0a/mreg_api-0.3.0.tar.gz", hash = "sha256:6fd7b1e2b7f0bda1947759a0029808c6a4163da0ab05d4bcacd1a21d9012965c", size = 189106, upload-time = "2026-08-12T13:07:41.949Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/fb/22ab4eabfc3d5e72da8cf5753274cc57cc5aef2ab1fc2ca0971c3407d8a8/mreg_api-0.2.3-py3-none-any.whl", hash = "sha256:f7247b55cb794c5b9cec763949f744392ae2ee62be62c3f6359c3450c5c573ce", size = 83426, upload-time = "2026-05-21T09:18:39.012Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/66/19b35fe46f27432cb70d9f15bd56260e3362dcfa4cdcef6c544b9ee7145d/mreg_api-0.3.0-py3-none-any.whl", hash = "sha256:2b9f2015ba7b04747f49786a5300130eebf270064549630c103e5d4f233dd868", size = 94280, upload-time = "2026-08-12T13:07:40.72Z" },
 ]
 
 [[package]]
@@ -307,7 +307,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mreg-api", specifier = ">=0.2.0,<0.3.0" },
+    { name = "mreg-api", specifier = ">=0.3.0,<0.4.0" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.7.1" },
@@ -816,11 +816,11 @@ wheels = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.15.0"
+version = "4.16.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/72/94/1a15dd82efb362ac84269196e94cf00f187f7ed21c242792a923cdb1c61f/typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466", size = 109391, upload-time = "2025-08-25T13:49:26.313Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz", hash = "sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5", size = 113555, upload-time = "2026-07-02T08:40:05.92Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548", size = 44614, upload-time = "2025-08-25T13:49:24.86Z" },
+    { url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl", hash = "sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8", size = 45571, upload-time = "2026-07-02T08:40:04.659Z" },
 ]
 
 [[package]]

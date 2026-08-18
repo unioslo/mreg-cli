@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 from mreg_api.models import ForwardZone, NameServer, ReverseZone, Zone
 
+from mreg_cli.client import get_client
 from mreg_cli.output.base import output_ttl
 from mreg_cli.outputmanager import OutputManager
 
@@ -76,7 +77,8 @@ def output_delegations(zone: Zone, padding: int = 20) -> None:
     :param zone: Zone whose delegations to output.
     :param padding: Number of spaces for left-padding the output.
     """
-    delegations = zone.get_delegations()
+    client = get_client()
+    delegations = client.delegation.list_by_zone(zone)
 
     manager = OutputManager()
     if not delegations:

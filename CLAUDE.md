@@ -53,7 +53,7 @@ def zone_info(args):
 
 - `output_host(host, names=False, traverse_hostgroups=False)` - Single host
 - `output_hosts(hosts, names=False, traverse_hostgroups=False)` - Multiple hosts
-- `output_hostlist(hostlist)` - HostList result
+- `output_hostlist(hosts)` - table of hosts
 - `output_ipaddresses(ips, padding=14, names=False)` - IP addresses
 - `output_cnames(cnames, host=None, padding=14)` - CNAME records
 - `output_mxs(mxs, padding=14)` - MX records

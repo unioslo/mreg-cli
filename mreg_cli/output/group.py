@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 from mreg_api.models import HostGroup
 
+from mreg_cli.client import get_client
 from mreg_cli.output.base import output_timestamps
 from mreg_cli.outputmanager import OutputManager
 
@@ -18,10 +19,11 @@ def output_hostgroup(hostgroup: HostGroup, padding: int = 14) -> None:
     """
     manager = OutputManager()
 
+    client = get_client()
     parents = hostgroup.parent
     inherited: list[str] = []
 
-    for p in hostgroup.get_all_parents():
+    for p in client.hostgroup.list_parents(hostgroup):
         if p.name not in parents:
             inherited.append(p.name)
 
@@ -108,10 +110,11 @@ def _output_members_expanded(hostgroup: HostGroup) -> None:
 
     :param hostgroup: HostGroup whose members to output.
     """
+    client = get_client()
     manager = OutputManager()
     manager.add_formatted_line_with_source("Type", "Name", "Source")
 
-    for parent in hostgroup.get_all_parents():
+    for parent in client.hostgroup.list_parents(hostgroup):
         for host in parent.hosts:
             manager.add_formatted_line_with_source("host", host, parent.name)
 

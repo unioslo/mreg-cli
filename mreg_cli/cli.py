@@ -21,6 +21,8 @@ from prompt_toolkit import HTML, document, print_formatted_text
 from prompt_toolkit.completion import CompleteEvent, Completer, Completion
 from prompt_toolkit.history import FileHistory
 
+from mreg_cli.client import get_client
+
 # Import all the commands
 from mreg_cli.commands.cache import CacheCommands
 from mreg_cli.commands.dhcp import DHCPCommands
@@ -157,6 +159,13 @@ class Command(Completer):
                 args["metavar"] = f.metavar
             if f.action:
                 args["action"] = f.action
+
+            # `hidden` is marked by overriding help field.
+            # Ensure we do this as the very last step, so other
+            # parameters do not override the suppression.
+            if f.hidden:
+                args["help"] = argparse.SUPPRESS
+
             parser.add_argument(f.name, **args)
         parser.set_defaults(func=callback)
 
@@ -279,7 +288,7 @@ class Command(Completer):
     def record_responses(self) -> None:
         """Record API responses for the last executed command."""
         output = OutputManager()
-        client = mreg_api.MregClient()
+        client = get_client()
         for response in client.get_client_history():
             output.recording_request(response)
         client.clear_client_history()
@@ -300,7 +309,7 @@ class Command(Completer):
         # Create and set the corrolation id, using the cleaned command
         # as the suffix. This is used to track the command in the logs
         # on the server side.
-        mreg_api.MregClient().set_correlation_id(cmd)
+        get_client().set_correlation_id(cmd)
         # Run the command
         cli.parse(cmd, interactive=interactive)
         # Render the output

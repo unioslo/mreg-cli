@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from mreg_api.models import ForwardZone, ReverseZone, Zone
+from mreg_api.models import ForwardZone, ReverseZone
+from typing_extensions import NotRequired, TypedDict
 
+from mreg_cli.client import get_client
 from mreg_cli.commands.base import BaseCommand
 from mreg_cli.commands.registry import CommandRegistry
-from mreg_cli.exceptions import DeleteError, InputFailure
+from mreg_cli.exceptions import InputFailure
 from mreg_cli.output import output_delegations, output_zone, output_zones
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
@@ -23,11 +25,12 @@ def _output_zones_by_type(forward: bool, reverse: bool) -> None:
     :param forward: Whether to list forward zones.
     :param reverse: Whether to list reverse zones.
     """
+    client = get_client()
     zones: list[ForwardZone | ReverseZone] = []
     if forward:
-        zones.extend(ForwardZone.get_list())
+        zones.extend(client.zone.list_forward())
     if reverse:
-        zones.extend(ReverseZone.get_list())
+        zones.extend(client.zone.list_reverse())
     output_zones(zones)
 
 
@@ -55,7 +58,8 @@ def create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ns, force, zone, email)
     """
-    Zone.create_zone(args.zone, args.email, args.ns, args.force)
+    client = get_client()
+    client.zone.create(name=args.zone, email=args.email, primary_ns=args.ns, force=args.force)
     OutputManager().add_ok(f"Created zone {args.zone}")
 
 
@@ -78,8 +82,15 @@ def delegation_create(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ns, force, zone, delegation, comment)
     """
-    zone = Zone.get_zone_or_raise(args.zone)
-    zone.create_delegation(args.delegation, args.ns, args.comment, args.force)
+    client = get_client()
+    zone = client.zone.get_by_name(args.zone)
+    client.delegation.create(
+        zone,
+        name=args.delegation,
+        nameservers=args.ns,
+        comment=args.comment or "",
+        force=args.force,
+    )
     OutputManager().add_ok(f"Created zone delegation {args.delegation}")
 
 
@@ -97,11 +108,10 @@ def zone_delete(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, force)
     """
-    zone = Zone.get_zone_or_raise(args.zone)
-    if zone.delete_zone(args.force):
-        OutputManager().add_ok(f"Deleted zone {zone.name}")
-    else:
-        raise DeleteError(f"Unable to delete zone {zone.name}")
+    client = get_client()
+    zone = client.zone.get_by_name(args.zone)
+    client.zone.delete(zone, force=args.force)
+    OutputManager().add_ok(f"Deleted zone {zone.name}")
 
 
 @command_registry.register_command(
@@ -121,11 +131,10 @@ def delegation_delete(args: argparse.Namespace) -> None:
     # NOTE: how to handle delegation that has delegation?
     # i.e. uio.no -> pederhan.uio.no -> sub.pederhan.uio.no
     # and we try to delete pederhan.uio.no?
-    zone = Zone.get_zone_or_raise(args.zone)
-    if zone.delete_delegation(args.delegation):
-        OutputManager().add_ok(f"Removed zone delegation {args.delegation}")
-    else:
-        raise DeleteError(f"Unable to delete delegation {args.delegation}")
+    client = get_client()
+    zone = client.zone.get_by_name(args.zone)
+    client.delegation.delete(zone, args.delegation)
+    OutputManager().add_ok(f"Removed zone delegation {args.delegation}")
 
 
 @command_registry.register_command(
@@ -141,7 +150,8 @@ def info(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone)
     """
-    zone = Zone.get_zone_or_raise(args.zone)
+    client = get_client()
+    zone = client.zone.get_by_name(args.zone)
     output_zone(zone)
 
 
@@ -187,7 +197,8 @@ def zone_delegation_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone)
     """
-    zone = Zone.get_zone_or_raise(args.zone)
+    client = get_client()
+    zone = client.zone.get_by_name(args.zone)
     output_delegations(zone)
 
 
@@ -206,8 +217,9 @@ def zone_delegation_comment_set(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, delegation, comment)
     """
-    zone = Zone.get_zone_or_raise(args.zone)
-    zone.set_delegation_comment(args.delegation, args.comment)
+    client = get_client()
+    zone = client.zone.get_by_name(args.zone)
+    client.delegation.set_comment(zone, args.delegation, args.comment)
     OutputManager().add_ok(f"Updated comment for {args.delegation}")
 
 
@@ -225,8 +237,9 @@ def zone_delegation_comment_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, delegation)
     """
-    zone = Zone.get_zone_or_raise(args.zone)
-    zone.set_delegation_comment(args.delegation, "")
+    client = get_client()
+    zone = client.zone.get_by_name(args.zone)
+    client.delegation.set_comment(zone, args.delegation, "")
     OutputManager().add_ok(f"Removed comment for {args.delegation}")
 
 
@@ -247,9 +260,22 @@ def set_ns(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, ns, force)
     """
-    zone = Zone.get_zone_or_raise(args.zone)
-    zone.update_nameservers(args.ns, args.force)
+    client = get_client()
+    zone = client.zone.get_by_name(args.zone)
+    client.zone.set_nameservers(zone, args.ns, force=args.force)
     OutputManager().add_ok(f"Updated nameservers for {args.zone}")
+
+
+class ZoneSetSoaKwargs(TypedDict, total=False):
+    """Keyword arguments for creating a network."""
+
+    primary_ns: NotRequired[str]
+    email: NotRequired[str]
+    serialno: NotRequired[int]
+    refresh: NotRequired[int]
+    retry: NotRequired[int]
+    expire: NotRequired[int]
+    soa_ttl: NotRequired[int]
 
 
 @command_registry.register_command(
@@ -272,17 +298,40 @@ def set_soa(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, ns, email, serialno, retry, expire, soa_ttl)
     """
-    zone = Zone.get_zone_or_raise(args.zone)
-    zone.update_soa(
-        primary_ns=args.ns,
-        email=args.email,
-        serialno=args.serialno,
-        refresh=args.refresh,
-        retry=args.retry,
-        expire=args.expire,
-        soa_ttl=args.soa_ttl,
-    )
-    OutputManager().add_ok(f"Updated SOA for {args.zone}")
+    client = get_client()
+    zone: str = args.zone
+    primary_ns: str | None = args.ns
+    email: str | None = args.email
+    serialno: int | None = args.serialno
+    refresh: int | None = args.refresh
+    retry: int | None = args.retry
+    expire: int | None = args.expire
+    soa_ttl: int | None = args.soa_ttl
+
+    kwargs: ZoneSetSoaKwargs = {}
+    if primary_ns is not None:
+        kwargs["primary_ns"] = primary_ns
+    if email is not None:
+        kwargs["email"] = email
+    if serialno is not None:
+        kwargs["serialno"] = serialno
+    if refresh is not None:
+        kwargs["refresh"] = refresh
+    if retry is not None:
+        kwargs["retry"] = retry
+    if expire is not None:
+        kwargs["expire"] = expire
+    if soa_ttl is not None:
+        kwargs["soa_ttl"] = soa_ttl
+
+    if not kwargs:
+        raise InputFailure(
+            "At least one of the following must be provided: ns, email, serialno, refresh, retry, expire, soa_ttl"
+        )
+
+    zone_obj = client.zone.get_by_name(zone)
+    client.zone.update_soa(zone_obj, **kwargs)
+    OutputManager().add_ok(f"Updated SOA for {zone}")
 
 
 @command_registry.register_command(
@@ -299,6 +348,7 @@ def set_default_ttl(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (zone, ttl)
     """
-    zone = Zone.get_zone_or_raise(args.zone)
-    zone.set_default_ttl(args.ttl)
+    client = get_client()
+    zone = client.zone.get_by_name(args.zone)
+    client.zone.set_default_ttl(zone, args.ttl)
     OutputManager().add_ok(f"Set default TTL for {args.zone}")

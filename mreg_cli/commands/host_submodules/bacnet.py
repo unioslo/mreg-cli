@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_api.models import BacnetID, Host
+from mreg_api.models import BacnetID
 
+from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     CreateError,
-    DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,
@@ -25,6 +25,8 @@ from mreg_cli.exceptions import (
 from mreg_cli.output import output_bacnetids
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
+from mreg_cli.utilities.resolution import resolve_host
+from mreg_cli.utilities.shared import string_to_int
 
 
 @command_registry.register_command(
@@ -41,21 +43,20 @@ def bacnetid_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, id)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
-    host_bacnet = host.bacnet()
+    client = get_client()
+    host = resolve_host(client, args.name)
+    host_bacnet = client.bacnetid.get_by_host(host)
     if host_bacnet is not None:
         raise EntityAlreadyExists(f"{host.name} already has BACnet ID {host_bacnet.id}.")
 
-    existing = BacnetID.get(args.id)
+    existing = client.bacnetid.first(id=args.id)
     if existing:
         raise EntityOwnershipMismatch(
             f"BACnet ID {existing.id} is already in use by {existing.hostname}."
         )
 
-    BacnetID.create(data={"hostname": host.name, "id": args.id})
-
-    validator = BacnetID.get(args.id)
-    if validator and validator.hostname == host.name:
+    validator = client.bacnetid.create(host=host, id=args.id)
+    if validator and validator.hostname == str(host.name):
         OutputManager().add_ok(f"Assigned BACnet ID {validator.id} to {validator.hostname}.")
     else:
         raise CreateError(f"Failed to assign BACnet ID {args.id} to {host.name}.")
@@ -74,15 +75,14 @@ def bacnetid_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
-    host = Host.get_by_any_means_or_raise(args.name)
-    host_bacnet = host.bacnet()
+    client = get_client()
+    host = resolve_host(client, args.name)
+    host_bacnet = client.bacnetid.get_by_host(host)
     if host_bacnet is None:
         raise EntityNotFound(f"{host.name} does not have a BACnet ID assigned.")
 
-    if host_bacnet.delete():
-        OutputManager().add_ok(f"Unassigned BACnet ID {host_bacnet.id} from {host.name}.")
-    else:
-        raise DeleteError(f"Failed to unassign BACnet ID {host_bacnet.id} from {host.name}.")
+    client.bacnetid.delete(host_bacnet)
+    OutputManager().add_ok(f"Unassigned BACnet ID {host_bacnet.id} from {host.name}.")
 
 
 @command_registry.register_command(
@@ -95,12 +95,14 @@ def bacnetid_remove(args: argparse.Namespace) -> None:
             description=f"Minimum ID value (0-{BacnetID.MAX_ID()})",
             flag_type=int,
             metavar="MIN",
+            default=0,
         ),
         Flag(
             "-max",
             description=f"Maximum ID value (0-{BacnetID.MAX_ID()})",
             flag_type=int,
             metavar="MAX",
+            default=BacnetID.MAX_ID(),
         ),
     ],
 )
@@ -109,19 +111,21 @@ def bacnetid_list(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (min, max)
     """
-    min_id = args.min if args.min is not None else 0
-    max_id = args.max if args.max is not None else BacnetID.MAX_ID()
+    client = get_client()
+
+    min_id = string_to_int(args.min, "Minimum ID")
+    max_id = string_to_int(args.max, "Maximum ID")
 
     if min_id < 0:
         raise InputFailure("Minimum ID value cannot be less than 0.")
 
-    if min_id is not None and max_id is not None and min_id > max_id:
+    if min_id > max_id:
         raise InputFailure("Minimum ID value cannot be greater than maximum ID value.")
 
-    if max_id is not None and max_id > BacnetID.MAX_ID():
+    if max_id > BacnetID.MAX_ID():
         raise InputFailure(f"The maximum ID value is {BacnetID.MAX_ID()}.")
 
-    bacnetids = BacnetID.get_in_range(min_id, max_id)
+    bacnetids = client.bacnetid.list_in_range(min_id, max_id)
     if not bacnetids:
         raise EntityNotFound("No BACnet IDs found in the specified range.")
 

@@ -15,6 +15,7 @@ from mreg_api.models import (
 )
 
 from mreg_cli.choices import CommunitySortOrder
+from mreg_cli.client import get_client
 from mreg_cli.output.base import output_timestamps
 from mreg_cli.outputmanager import OutputManager
 
@@ -34,8 +35,9 @@ def output_network(network: Network, padding: int = 25) -> None:
     def fmt(label: str, value: Any) -> None:
         manager.add_line(f"{label:<{padding}}{value}")
 
+    client = get_client()
     ipnet = NetworkOrIP.parse_or_raise(network.network, mode="network")
-    reserved_ips = network.get_reserved_ips()
+    reserved_ips = client.network.get_reserved_ips(network)
     # Remove network address and broadcast address from reserved IPs
     reserved_ips_filtered = [
         ip for ip in reserved_ips if ip not in (ipnet.network_address, ipnet.broadcast_address)
@@ -72,8 +74,11 @@ def output_network(network: Network, padding: int = 25) -> None:
             excluded_ips += ex_range.excluded_ips()
         fmt("Excluded ranges:", f"{excluded_ips} ipaddresses")
         output_network_excluded_ranges(network.excluded_ranges, padding=padding)
-    fmt("Used addresses:", network.get_used_count())
-    fmt("Unused addresses:", f"{network.get_unused_count()} (excluding reserved adr.)")
+    fmt("Used addresses:", client.network.get_used_count(network))
+    fmt(
+        "Unused addresses:",
+        f"{client.network.get_unused_count(network)} (excluding reserved adr.)",
+    )
 
 
 def output_networks(
@@ -97,7 +102,8 @@ def output_network_unused_addresses(network: Network, padding: int = 25) -> None
     :param network: Network whose unused addresses to output.
     :param padding: Number of spaces for left-padding the output.
     """
-    unused = network.get_unused_list()
+    client = get_client()
+    unused = client.network.get_unused_list(network)
 
     manager = OutputManager()
     if not unused:
@@ -114,8 +120,9 @@ def output_network_used_addresses(network: Network, padding: int = 46) -> None:
     :param network: Network whose used addresses to output.
     :param padding: Width for the IP address column (46 for IPv6 max length).
     """
-    used = network.get_used_host_list()
-    ptr_overrides = network.get_ptroverride_host_list()
+    client = get_client()
+    used = client.network.get_used_host_list(network)
+    ptr_overrides = client.network.get_ptroverride_host_list(network)
     ips = set(list(used.keys()) + list(ptr_overrides.keys()))
     ips_sorted = sorted(ips, key=ipaddress.ip_address)
 
@@ -231,7 +238,8 @@ def output_network_policy(policy: NetworkPolicy) -> None:
         for attribute in policy.attributes:
             manager.add_line(f" {attribute.name}: {attribute.value}")
 
-    networks = policy.networks()
+    client = get_client()
+    networks = client.networkpolicy.networks(policy)
     if networks:
         manager.add_line("Networks:")
         for network in networks:
