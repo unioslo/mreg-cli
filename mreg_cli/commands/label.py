@@ -38,15 +38,19 @@ def label_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, description)
     """
-    if " " in args.name:
+    name: str = args.name
+    description: str | None = args.description
+    if " " in name:
         raise InputFailure("The label name can't contain spaces.")
+    if not description:
+        raise InputFailure("The label description can't be empty.")
 
     client = get_client()
     # We can't do a fetch_after_create here because the API is... broken.
     # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views_labels.py#L30
     # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views.py#L187
-    client.label.create(name=args.name, description=args.description)
-    OutputManager().add_ok(f'Added label "{args.name}"')
+    client.label.create(name=name, description=description, fetch_after_create=False)
+    OutputManager().add_ok(f'Added label "{name}"')
 
 
 @command_registry.register_command(
