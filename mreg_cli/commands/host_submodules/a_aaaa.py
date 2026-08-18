@@ -99,7 +99,7 @@ def check_ip_constraints(
         raise ForceMissing(f"Network {network.network} is frozen, must force")
 
     # Check if host already has this IP
-    if any(h_ip.ipaddress == ip for h_ip in host.ipaddresses):
+    if host.has_ip(ip):
         raise EntityAlreadyExists(f"Host {host} already has IP {ip}")
 
     if operation == IPOperation.ADD and len(host.ipaddresses) > 0:
