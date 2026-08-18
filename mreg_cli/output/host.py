@@ -205,7 +205,7 @@ def output_host_networks(
         ip_to_community: dict[IPAddress, Community] = {}
         if host.communities:
             for com in host.communities:
-                ip = next((i for i in host.ipaddresses if i.id == com.ipaddress), None)
+                ip = host.get_ip_by_id(com.ipaddress)
                 if ip is None:
                     continue
                 ip = IPAddress.model_validate(ip, from_attributes=True)

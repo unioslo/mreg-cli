@@ -536,7 +536,7 @@ def ptr_change(args: argparse.Namespace) -> None:
         raise EntityNotFound(f"No PTR records for {old_host}")
 
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
-    ptr_override = next((ptr for ptr in old_host.ptr_overrides if ptr.ipaddress == ip), None)
+    ptr_override = old_host.get_ptr_override(ip)
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {old_host} with IP {ip}")
 
@@ -563,7 +563,7 @@ def ptr_remove(args: argparse.Namespace) -> None:
     client = get_client()
     host = resolve_host(client, args.name)
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
-    ptr_override = next((ptr for ptr in host.ptr_overrides if ptr.ipaddress == ip), None)
+    ptr_override = host.get_ptr_override(ip)
     if not ptr_override:
         raise EntityNotFound(f"No PTR record for {host} with IP {ip}")
 
@@ -994,8 +994,7 @@ def txt_add(args: argparse.Namespace) -> None:
     client = get_client()
     host = resolve_host(client, args.name)
 
-    existing_txt = next((t for t in host.txts if t.txt == args.text), None)
-    if existing_txt:
+    if host.has_txt(args.text):
         raise EntityAlreadyExists(f"{host} already has that TXT defined.")
 
     client.txt.create(host=host, txt=args.text)

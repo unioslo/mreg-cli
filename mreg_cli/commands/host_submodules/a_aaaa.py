@@ -143,10 +143,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     host = resolve_host(client, name)
 
     # Find the IPAddress object for the old IP
-    host_ip = next(
-        (h_ip for h_ip in host.ipaddresses if h_ip.ipaddress == old_ip),
-        None,
-    )
+    host_ip = host.get_ip(old_ip)
     if not host_ip:
         raise EntityNotFound(f"Host {host} does not have IP {old_ip}")
 
@@ -177,16 +174,10 @@ def _ip_move(ipaddr: str, fromhost: str, tohost: str, ipversion: IP_Version) -> 
     to_host = resolve_host(client, tohost)
 
     # Find the IPAddress object on from_host
-    host_ip = next(
-        (h_ip for h_ip in from_host.ipaddresses if h_ip.ipaddress == ip_addr),
-        None,
-    )
+    host_ip = from_host.get_ip(ip_addr)
 
     # Find PTR override on from_host
-    ptr = next(
-        (p for p in from_host.ptr_overrides if p.ipaddress == ip_addr),
-        None,
-    )
+    ptr = from_host.get_ptr_override(ip_addr)
 
     if not host_ip and not ptr:
         raise EntityNotFound(f"Host {from_host} has no IP or PTR with address {ipaddr}")
@@ -222,10 +213,7 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version, force: bool = Fals
             f"IP version {ip_addr.version} does not match the requested version {ipversion}"
         )
 
-    host_ip = next(
-        (h_ip for h_ip in host.ipaddresses if h_ip.ipaddress == ip_addr),
-        None,
-    )
+    host_ip = host.get_ip(ip_addr)
     if not host_ip:
         raise EntityNotFound(f"Host {host} does not have IP {ipaddr}")
 
