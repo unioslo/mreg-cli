@@ -90,18 +90,17 @@ def hinfo_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, cpu, os)
     """
+    name: str = args.name
+    cpu: str = args.cpu
+    os: str = args.os
+
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = resolve_host(client, name)
     if host.hinfo:
         raise EntityAlreadyExists(f"{host} already has hinfo set.")
 
-    client.hinfo.create(host=host, cpu=args.cpu, os=args.os)
-    hinfo = client.hinfo.get_by_host(host)
-
-    if hinfo and hinfo.cpu == args.cpu and hinfo.os == args.os:
-        OutputManager().add_ok(f"Added HINFO record for {host.name}.")
-    else:
-        raise CreateError(f"Failed to add correct HINFO for {host}")
+    client.hinfo.create(host=host, cpu=cpu, os=os)
+    OutputManager().add_ok(f"Added HINFO record for {host.name}.")
 
 
 @command_registry.register_command(
@@ -203,19 +202,17 @@ def loc_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, loc)
     """
+    name: str = args.name
+    loc: str = args.loc
+
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = resolve_host(client, name)
 
     if host.loc:
         raise EntityAlreadyExists(f"{host} already has loc set.")
 
-    client.location.create(host=host, loc=args.loc)
-    loc = client.location.get_by_host(host)
-
-    if loc and loc.loc == args.loc:
-        OutputManager().add_ok(f"Added LOC record for {host.name}.")
-    else:
-        CreateError(f"Failed to set LOC for {host}")
+    client.location.create(host=host, loc=loc)
+    OutputManager().add_ok(f"Added LOC record for {host.name}.")
 
 
 @command_registry.register_command(

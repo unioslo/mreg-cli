@@ -110,18 +110,22 @@ def network_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (range, group, regex)
     """
+    group: str = args.group
+    range_: str = args.range
+    regex: str = args.regex
+
     client = get_client()
 
-    NetworkOrIP.parse_or_raise(args.range, mode="network")
+    NetworkOrIP.parse_or_raise(range_, mode="network")
 
-    existing = client.permission.get_by_triplet(args.group, args.range, args.regex, required=False)
+    existing = client.permission.get_by_triplet(group, range_, regex, required=False)
     if existing:
         raise EntityAlreadyExists(
-            f"Permission already exists for group={args.group!r}, range={args.range!r}, regex={args.regex!r}."
+            f"Permission already exists for group={group!r}, range={range_!r}, regex={regex!r}."
         )
 
-    client.permission.create(group=args.group, range=args.range, regex=args.regex)
-    OutputManager().add_ok(f"Added permission to {args.range}")
+    perm = client.permission.create(group=group, range=range_, regex=regex)
+    OutputManager().add_ok(f"Added permission to {perm.range}")
 
 
 @command_registry.register_command(

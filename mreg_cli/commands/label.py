@@ -46,11 +46,8 @@ def label_add(args: argparse.Namespace) -> None:
         raise InputFailure("The label description can't be empty.")
 
     client = get_client()
-    # We can't do a fetch_after_create here because the API is... broken.
-    # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views_labels.py#L30
-    # https://github.com/unioslo/mreg/blob/eed5c154bcc47b1dea474feabad46125ebde0aec/mreg/api/v1/views.py#L187
-    client.label.create(name=name, description=description, fetch_after_create=False)
-    OutputManager().add_ok(f'Added label "{name}"')
+    label = client.label.create(name=name, description=description)
+    OutputManager().add_ok(f'Added label "{label.name}"')
 
 
 @command_registry.register_command(
