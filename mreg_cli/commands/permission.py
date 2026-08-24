@@ -53,8 +53,6 @@ def network_list(args: argparse.Namespace) -> None:
         param, value = convert_wildcard_to_regex("group", args.group)
         params[param] = value
 
-    # Well, this is effin' awful. We have to fetch all permissions, but the API wants to limit
-    # the number of results. We should probably fix this in the API.
     permissions = client.permission.list(limit=None, **params)
 
     permission_list = []

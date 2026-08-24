@@ -555,7 +555,7 @@ def host_info(args: argparse.Namespace) -> None:
     ],
 )
 def find(args: argparse.Namespace) -> None:
-    """List hosts maching search criteria.
+    """List hosts matching search criteria.
 
     :param args: argparse.Namespace (name, comment, contact)
     """

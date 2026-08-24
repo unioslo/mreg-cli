@@ -443,6 +443,7 @@ def set_category(args: argparse.Namespace) -> None:
     """
     client = get_client()
     net = resolve_network(client, args.network)
+    # TODO: add category validation
     client.network.update(net, category=args.category)
     OutputManager().add_ok(f"Updated category tag to {args.category!r} for {net.network}")
 
@@ -521,6 +522,7 @@ def set_location(args: argparse.Namespace) -> None:
     """
     client = get_client()
     net = resolve_network(client, args.network)
+    # TODO: add location validation
     client.network.update(net, location=args.location)
     OutputManager().add_ok(f"Updated location tag to '{args.location}' for {args.network}")
 
