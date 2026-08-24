@@ -252,8 +252,8 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.3.1.dev6+gb5af82bf1"
-source = { git = "https://github.com/unioslo/mreg-api?branch=do-not-refetch-unless-necessary#b5af82bf146cf5d02afcdfb6c33702db6c165024" }
+version = "0.3.1.dev13+ge2405150d"
+source = { git = "https://github.com/unioslo/mreg-api?branch=main#e2405150d8612cfbeb4f00d70ab13af31a456a9a" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },
@@ -303,7 +303,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api?branch=do-not-refetch-unless-necessary" },
+    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api?branch=main" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.7.1" },
