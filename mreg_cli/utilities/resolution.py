@@ -61,7 +61,7 @@ def resolve_host(
 
     Resolution order: numeric id → IP → MAC → name → CNAME target.
     """
-    from mreg_cli.outputmanager import OutputManager
+    from mreg_cli.outputmanager import OutputManager  # noqa: PLC0415
 
     # We got passed an integer, assume host ID
     if isinstance(identifier, int):
@@ -145,8 +145,6 @@ def resolve_network(
 
     Replaces Network.get_by_any_means() / get_by_any_means_or_raise().
     """
-    from mreg_cli.exceptions import EntityNotFound as CliEntityNotFound
-
     network: Network | None = None
     try:
         # Try as IP first
@@ -161,7 +159,7 @@ def resolve_network(
         except Exception:
             pass
 
-    if network is None and identifier.isdigit():
+    if network is None and identifier.isdecimal():
         try:
             network = client.network.first(id=int(identifier), required=False)
             # network = client.network.get(int(identifier), required=False)
