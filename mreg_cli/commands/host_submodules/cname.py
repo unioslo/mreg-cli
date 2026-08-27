@@ -7,7 +7,6 @@ import argparse
 from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    CreateError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,
