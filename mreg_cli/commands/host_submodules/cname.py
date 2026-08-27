@@ -65,13 +65,8 @@ def cname_add(args: argparse.Namespace) -> None:
     if not zone:
         raise EntityNotFound(f"Could not find a zone for the alias {alias}.")
 
-    client.cname.create(host=host, name=alias)
-    cname = client.cname.get_by_host_and_name(host, alias)
-
-    if cname:
-        OutputManager().add_ok(f"Added CNAME {cname.name} for {host.name}.")
-    else:
-        raise CreateError(f"Failed to add CNAME {alias} for {host.name}.")
+    cname = client.cname.create(host=host, name=alias)
+    OutputManager().add_ok(f"Added CNAME {cname.name} for {host.name}.")
 
 
 @command_registry.register_command(

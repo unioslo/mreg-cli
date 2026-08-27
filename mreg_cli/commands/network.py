@@ -140,10 +140,10 @@ def create(args: argparse.Namespace) -> None:
     net = client.network.create(**kwargs)
 
     # TODO: investigate if we can pass policy directly to create()
-    if net and policy_obj:
+    if policy_obj:
         client.network.update(net, policy=policy_obj.id)
 
-    OutputManager().add_ok(f"created network {network}")
+    OutputManager().add_ok(f"created network {net.network}")
 
 
 @command_registry.register_command(
@@ -443,6 +443,7 @@ def set_category(args: argparse.Namespace) -> None:
     """
     client = get_client()
     net = resolve_network(client, args.network)
+    # TODO: add category validation
     client.network.update(net, category=args.category)
     OutputManager().add_ok(f"Updated category tag to {args.category!r} for {net.network}")
 
@@ -521,6 +522,7 @@ def set_location(args: argparse.Namespace) -> None:
     """
     client = get_client()
     net = resolve_network(client, args.network)
+    # TODO: add location validation
     client.network.update(net, location=args.location)
     OutputManager().add_ok(f"Updated location tag to '{args.location}' for {args.network}")
 
@@ -764,13 +766,13 @@ def policy_create(args: argparse.Namespace) -> None:
         attr = client.network.policy.attribute.get_by_name(attr_name)
         attrs.append(NetworkPolicyAttributeValue(name=attr.name, value=True))
 
-    client.network.policy.create(
+    pol = client.network.policy.create(
         name=name,
         description=description,
         attributes=attrs,
         community_template_pattern=pattern,
     )
-    OutputManager().add_ok(f"Created network policy {name!r}")
+    OutputManager().add_ok(f"Created network policy {pol.name!r}")
 
 
 # TODO[rename]: network policy delete
@@ -1040,9 +1042,9 @@ def policy_attribute_create(args: argparse.Namespace) -> None:
 
     client.network.policy.attribute.assert_absent(name)
 
-    client.network.policy.attribute.create(name=name, description=description)
+    pol = client.network.policy.attribute.create(name=name, description=description)
 
-    OutputManager().add_ok(f"Created network policy attribute {name!r}")
+    OutputManager().add_ok(f"Created network policy attribute {pol.name!r}")
 
 
 # TODO[rename]: network policy attribute delete
@@ -1225,8 +1227,8 @@ def community_create(args: argparse.Namespace) -> None:
     com = net.get_community(name)
     if com:
         raise InputFailure(f"Community {name!r} already exists for network {network}")
-    client.network.community.create(net, name=name, description=description)
-    OutputManager().add_ok(f"Created community {name!r} for network {network}")
+    com = client.network.community.create(net, name=name, description=description)
+    OutputManager().add_ok(f"Created community {com.name!r} for network {network}")
 
 
 # TODO[rename]: network community delete

@@ -46,8 +46,7 @@ def create(args: argparse.Namespace) -> None:
 
     client.hostgroup.assert_absent(name)
     newgroup = client.hostgroup.create(name=name, description=description)
-    if newgroup:
-        OutputManager().add_ok(f"Created new group {newgroup.name}")
+    OutputManager().add_ok(f"Created new group {newgroup.name}")
 
 
 @command_registry.register_command(

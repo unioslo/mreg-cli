@@ -252,7 +252,7 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.3.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "diskcache" },
@@ -262,9 +262,9 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/30/8267b17e5964d39522fe5098ec7e738b11aac497fae7411f403e4ec0ce0a/mreg_api-0.3.0.tar.gz", hash = "sha256:6fd7b1e2b7f0bda1947759a0029808c6a4163da0ab05d4bcacd1a21d9012965c", size = 189106, upload-time = "2026-08-12T13:07:41.949Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/48/dfa7696b96b8b94264c93672fded05068c99eb5c9e1fd61fbacac0c14208/mreg_api-0.4.0.tar.gz", hash = "sha256:1fc7da920ec921e608c553704bc20115447da9b407d1340eb12cb8bf5a2fb96c", size = 215486, upload-time = "2026-08-24T14:00:31.902Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f5/66/19b35fe46f27432cb70d9f15bd56260e3362dcfa4cdcef6c544b9ee7145d/mreg_api-0.3.0-py3-none-any.whl", hash = "sha256:2b9f2015ba7b04747f49786a5300130eebf270064549630c103e5d4f233dd868", size = 94280, upload-time = "2026-08-12T13:07:40.72Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/c1/eda618d27db1351c05bed4cad5219d05ad592c64b2cbc89d936aae32bcde/mreg_api-0.4.0-py3-none-any.whl", hash = "sha256:48cd3cbfb48ec5b69acdf4d466da2c1c91e64ad91ff10085b891f729f187dcd5", size = 96348, upload-time = "2026-08-24T14:00:30.612Z" },
 ]
 
 [[package]]
@@ -307,7 +307,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mreg-api", specifier = ">=0.3.0,<0.4.0" },
+    { name = "mreg-api", specifier = ">=0.4.0,<0.5.0" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.7.1" },

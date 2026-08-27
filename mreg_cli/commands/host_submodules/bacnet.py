@@ -35,7 +35,13 @@ from mreg_cli.utilities.shared import string_to_int
     short_desc="Add BACnet ID",
     flags=[
         Flag("name", description="Name of host.", metavar="NAME"),
-        Flag("-id", description=f"ID value (0-{BacnetID.MAX_ID()})", metavar="ID"),
+        Flag(
+            "-id",
+            description=f"ID value (0-{BacnetID.MAX_ID()})",
+            flag_type=int,
+            required=True,
+            metavar="ID",
+        ),
     ],
 )
 def bacnetid_add(args: argparse.Namespace) -> None:
@@ -43,23 +49,26 @@ def bacnetid_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name, id)
     """
+    name: str = args.name
+    id_: int = args.id
+
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = resolve_host(client, name)
     host_bacnet = client.bacnetid.get_by_host(host)
     if host_bacnet is not None:
         raise EntityAlreadyExists(f"{host.name} already has BACnet ID {host_bacnet.id}.")
 
-    existing = client.bacnetid.first(id=args.id)
+    existing = client.bacnetid.first(id=id_)
     if existing:
         raise EntityOwnershipMismatch(
             f"BACnet ID {existing.id} is already in use by {existing.hostname}."
         )
 
-    validator = client.bacnetid.create(host=host, id=args.id)
-    if validator and validator.hostname == str(host.name):
-        OutputManager().add_ok(f"Assigned BACnet ID {validator.id} to {validator.hostname}.")
+    bacnetid = client.bacnetid.create(host=host, id=id_)
+    if bacnetid and bacnetid.hostname == str(host.name):
+        OutputManager().add_ok(f"Assigned BACnet ID {bacnetid.id} to {bacnetid.hostname}.")
     else:
-        raise CreateError(f"Failed to assign BACnet ID {args.id} to {host.name}.")
+        raise CreateError(f"Failed to assign BACnet ID {id_} to {host.name}.")
 
 
 @command_registry.register_command(
@@ -75,8 +84,10 @@ def bacnetid_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (name)
     """
+    name: str = args.name
+
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = resolve_host(client, name)
     host_bacnet = client.bacnetid.get_by_host(host)
     if host_bacnet is None:
         raise EntityNotFound(f"{host.name} does not have a BACnet ID assigned.")

@@ -205,8 +205,6 @@ def add(args: argparse.Namespace) -> None:
         ipaddress=data.get("ipaddress"),
         network=data.get("network"),
     )
-    if not host:
-        raise CreateError("Failed to add host.")
     OutputManager().add_ok(f"Created host {host.name}")
 
     if macaddress is not None and net_or_ip is not None:
@@ -557,7 +555,7 @@ def host_info(args: argparse.Namespace) -> None:
     ],
 )
 def find(args: argparse.Namespace) -> None:
-    """List hosts maching search criteria.
+    """List hosts matching search criteria.
 
     :param args: argparse.Namespace (name, comment, contact)
     """
