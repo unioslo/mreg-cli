@@ -326,8 +326,8 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.4.1.dev4+geb1f84295"
-source = { git = "https://github.com/unioslo/mreg-api?branch=change-limit-behavior#eb1f8429568502d5161a04e1a504e31c13b8c9f6" }
+version = "0.4.1.dev3+gc236fafe6"
+source = { git = "https://github.com/unioslo/mreg-api?branch=main#c236fafe68ccd5ebd8c5c09ee492395ccee7e1b6" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },
@@ -379,7 +379,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api?branch=change-limit-behavior" },
+    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api?branch=main" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.7.1" },

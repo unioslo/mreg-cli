@@ -236,4 +236,4 @@ version_file = "mreg_cli/_version.py"
 # Uncomment to activate git installation for local development if PyPI version
 # is not up to date with most recent mreg-api git main commit.
 [tool.uv.sources]
-mreg-api = { git = "https://github.com/unioslo/mreg-api", branch = "change-limit-behavior" }
+mreg-api = { git = "https://github.com/unioslo/mreg-api", branch = "main" }

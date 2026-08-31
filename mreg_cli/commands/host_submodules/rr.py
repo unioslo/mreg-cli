@@ -933,13 +933,16 @@ def ttl_set(args: argparse.Namespace) -> None:
     if target_host is None and target_srv is None:
         raise EntityNotFound(f"No host or SRV record found for {name}")
 
+    # NOTE: do we really need to confirm that we set the TTL by refreshing?
     if target_host is not None:
-        result = client.host.update(target_host, ttl=ttl_value)
+        client.host.update(target_host, ttl=ttl_value)
+        result = client.host.refresh(target_host)
         new_ttl = result.ttl if result.ttl is not None else ttl
         OutputManager().add_ok(f"Set TTL for {target_host} to {new_ttl}.")
     else:
         assert target_srv is not None
-        result = client.srv.update(target_srv, ttl=ttl_value)
+        client.srv.update(target_srv, ttl=ttl_value)
+        result = client.srv.refresh(target_srv)
         new_ttl = result.ttl if result.ttl is not None else ttl
         OutputManager().add_ok(f"Set TTL for {target_srv} to {new_ttl}.")
 
