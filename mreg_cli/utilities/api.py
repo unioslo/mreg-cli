@@ -48,19 +48,19 @@ def disable_cache(func: Callable[P, T]) -> Callable[P, T]:
 def strict_limit(client: MregClient) -> Generator[None, None, None]:
     """Context manager that aborts requests for a query that returns too many results.
 
-    Adds a temporary mreg-api handler that listens for TRUNCATE events and
+    Adds a temporary mreg-api handler that listens for TRUNCATION events and
     raises TooManyResults if such an event is received.
     """
 
-    def fail_on_truncate(event: Event) -> None:
+    def fail_on_truncation(event: Event) -> None:
         if event.kind == EventKind.TRUNCATION:
             raise TooManyResults(f"{event.message} Refine your search.")
 
-    client.events.subscribe(fail_on_truncate)
+    client.events.subscribe(fail_on_truncation)
     try:
         yield
     finally:
-        client.events.unsubscribe(fail_on_truncate)
+        client.events.unsubscribe(fail_on_truncation)
 
 
 def try_token_or_login(user: str, url: str, fail_without_token: bool = False) -> None:
