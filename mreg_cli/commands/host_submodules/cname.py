@@ -11,7 +11,6 @@ from mreg_cli.exceptions import (
     EntityNotFound,
     EntityOwnershipMismatch,
     InputFailure,
-    PatchError,
 )
 from mreg_cli.output.host import output_cnames
 from mreg_cli.outputmanager import OutputManager
