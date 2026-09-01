@@ -6,8 +6,6 @@ import argparse
 import functools
 import logging
 
-from mreg_api import MregClient
-from mreg_api.events import Event, EventKind, EventLevel
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -182,6 +180,7 @@ def main():
         print("mreg url not set in config or as argument")
         return
 
+    # Bootstrap the application-wide client object
     client = init_client(config)
 
     try:

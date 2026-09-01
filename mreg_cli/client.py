@@ -6,9 +6,8 @@ All other modules retrieve it via get_client() instead of instantiating MregClie
 
 from __future__ import annotations
 
-from collections.abc import Callable, Generator
-from contextlib import contextmanager
-from typing import TYPE_CHECKING, Literal, overload
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Literal, overload, override
 
 from mreg_api import MregClient
 from mreg_api.cache import CacheConfig
@@ -47,13 +46,25 @@ def _record_events(event: Event) -> None:
         om.add_line(event.message)
 
 
-class MregCliClient(MregClient):
-    """Subclass of MregClient that adds CLI-specific functionality."""
+class _AutoListenersMeta(type):
+    """Metaclass that automatically adds mreg-api event listeners to MregCliClient instances.
 
-    def _add_listeners(self) -> None:
-        """Add event listeners for CLI-specific behavior."""
-        self.events.subscribe(_fail_on_truncate)  # fail fast - don't double print
-        self.events.subscribe(_record_events)
+    Ensures some key objectives:
+    1. Listeners are added automatically without requiring consumers to call a separate method.
+    2. Event listeners are added only once per instance.
+    3. Removes the need to override __init__ in MregCliClient.
+    """
+
+    @override
+    def __call__(cls, *args: object, **kwargs: object) -> MregCliClient:
+        obj: MregCliClient = super().__call__(*args, **kwargs)
+        obj.events.subscribe(_fail_on_truncate)  # fail fast - don't double print
+        obj.events.subscribe(_record_events)
+        return obj
+
+
+class MregCliClient(MregClient, metaclass=_AutoListenersMeta):
+    """Subclass of MregClient that adds CLI-specific functionality."""
 
     @overload
     def resolve_policy(
@@ -261,7 +272,6 @@ def init_client(config: MregCliConfig) -> MregCliClient:
                 # other cache settings from config should go here
             ),
         )
-        _client._add_listeners()  # pyright: ignore[reportPrivateUsage]
     return _client
 
 
