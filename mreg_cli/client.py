@@ -7,12 +7,13 @@ All other modules retrieve it via get_client() instead of instantiating MregClie
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Literal, overload, override
+from typing import TYPE_CHECKING, Literal, overload
 
 from mreg_api import MregClient
 from mreg_api.cache import CacheConfig
 from mreg_api.events import Event, EventKind, EventLevel
 from mreg_api.models import Atom, Host, Network, Role
+from typing_extensions import override
 
 from mreg_cli.__about__ import __version__
 from mreg_cli.exceptions import EntityNotFound as CliEntityNotFound
