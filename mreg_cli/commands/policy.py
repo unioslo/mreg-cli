@@ -419,7 +419,7 @@ def host_remove(args: argparse.Namespace) -> None:
     host_names: list[str] = args.hosts
 
     role = client.role.get_by_name(role_name)
-    hosts = [resolve_host(client, host) for host in host_names]
+    hosts = [client.resolve_host(host) for host in host_names]
 
     for host in hosts:
         client.role.remove_host(role, host.name)
