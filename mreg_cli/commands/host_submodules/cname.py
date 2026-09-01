@@ -7,7 +7,6 @@ import argparse
 from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    CreateError,
     EntityAlreadyExists,
     EntityNotFound,
     EntityOwnershipMismatch,
@@ -142,11 +141,8 @@ def cname_replace(args: argparse.Namespace) -> None:
     if not old_host:
         raise EntityNotFound(f"Could not find the host for the CNAME {cname}.")
 
-    updated_cname = client.cname.update(cname_obj, host=host)
-    if updated_cname:
-        OutputManager().add_ok(f"Moved CNAME alias {cname}: {old_host.name} -> {host.name}.")
-    else:
-        raise PatchError(f"Failed to move CNAME alias {cname}.")
+    client.cname.update(cname_obj, host=host)
+    OutputManager().add_ok(f"Moved CNAME alias {cname}: {old_host.name} -> {host.name}.")
 
 
 @command_registry.register_command(

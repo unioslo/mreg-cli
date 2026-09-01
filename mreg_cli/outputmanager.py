@@ -15,16 +15,18 @@ import re
 from collections.abc import Iterable
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, Literal, overload
+from typing import TYPE_CHECKING, Any, Generator, Literal, overload
 from urllib.parse import urlencode, urlparse
 
 import httpx
-from mreg_api.client import RequestRecord
 from pydantic import BaseModel
 
 from mreg_cli.errorbuilder import build_error_message
 from mreg_cli.exceptions import CliError, FileError
 from mreg_cli.types import Json, JsonMapping, RecordingEntry, TimeInfo
+
+if TYPE_CHECKING:
+    from mreg_api.requestlog import RequestRecord
 
 logger = logging.getLogger(__name__)
 

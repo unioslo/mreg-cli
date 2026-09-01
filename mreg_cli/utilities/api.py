@@ -8,17 +8,23 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Callable, ParamSpec, TypeVar
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Callable, ParamSpec, TypeVar
 from urllib.parse import urljoin
 
 import httpx
 import mreg_api
+from mreg_api.events import Event, EventKind
 from prompt_toolkit import prompt
 
 from mreg_cli.client import get_client
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import CliError, LoginFailedError
+from mreg_cli.exceptions import CliError, LoginFailedError, TooManyResults
 from mreg_cli.tokenfile import TokenFile
+
+if TYPE_CHECKING:
+    from mreg_api import MregClient
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +42,25 @@ def disable_cache(func: Callable[P, T]) -> Callable[P, T]:
             return func(*args, **kwargs)
 
     return wrapper
+
+
+@contextmanager
+def strict_limit(client: MregClient) -> Generator[None, None, None]:
+    """Context manager that aborts requests for a query that returns too many results.
+
+    Adds a temporary mreg-api handler that listens for TRUNCATION events and
+    raises TooManyResults if such an event is received.
+    """
+
+    def fail_on_truncation(event: Event) -> None:
+        if event.kind == EventKind.TRUNCATION:
+            raise TooManyResults(f"{event.message} Refine your search.")
+
+    client.events.subscribe(fail_on_truncation)
+    try:
+        yield
+    finally:
+        client.events.unsubscribe(fail_on_truncation)
 
 
 def try_token_or_login(user: str, url: str, fail_without_token: bool = False) -> None:

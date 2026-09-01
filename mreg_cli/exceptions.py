@@ -135,6 +135,10 @@ class LoginFailedError(CliError):
     """Error class for login failure."""
 
 
+class TooManyResults(CliWarning):
+    """API returned too many results."""
+
+
 # FIXME: Inconsistent handling of HTTP errors in the original CLI implementation
 #        DELETE errors were considered errors, while other HTTP errors were
 #        considered warnings. They should all be considered errors.

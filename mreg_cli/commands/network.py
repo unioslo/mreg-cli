@@ -40,6 +40,7 @@ from mreg_cli.output import (
 from mreg_cli.output.network import output_network_policy_attribute
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, QueryParams
+from mreg_cli.utilities.api import strict_limit
 from mreg_cli.utilities.resolution import resolve_host, resolve_network
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
@@ -287,7 +288,8 @@ def find(args: argparse.Namespace) -> None:
         if not params:
             raise InputFailure("Need at least one search criteria")
 
-        networks = client.network.list(limit=500, **params)
+        with strict_limit(client):
+            networks = client.network.list(limit=500, **params)
 
     if not networks:
         raise EntityNotFound("No networks matching the query were found.")

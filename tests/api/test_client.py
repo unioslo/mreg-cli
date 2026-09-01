@@ -1,17 +1,26 @@
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import patch
 
+import pytest
 from mreg_api import CacheConfig, MregClient
+from mreg_api.endpoints import Endpoint
+from pytest_httpserver import HTTPServer
 
 from mreg_cli.config import MregCliConfig
+from mreg_cli.exceptions import TooManyResults
+from mreg_cli.utilities.api import strict_limit
 
 
 def test_client_cache_readonly_fs_dir() -> None:
     """Test that client caching handles read-only filesystem gracefully (with directory arg)."""
     with patch("os.makedirs") as mock_makedirs:
         mock_makedirs.side_effect = PermissionError("Read-only directory")
-        client = MregClient(url="https://mreg.example.com", cache=CacheConfig(enable=True, directory="/readonly/path"))
+        client = MregClient(
+            url="https://mreg.example.com",
+            cache=CacheConfig(enable=True, directory="/readonly/path"),
+        )
     assert not client.cache.is_enabled
     assert client.cache._cache is None  # pyright: ignore[reportPrivateUsage]
 
@@ -31,3 +40,70 @@ def test_client_cache_default_enabled() -> None:
     client = MregClient(url="https://mreg.example.com", cache=CacheConfig(enable=cliconf.cache))
     assert client.cache.is_enabled
     assert client.cache._cache is not None  # pyright: ignore[reportPrivateUsage
+
+
+@pytest.mark.parametrize("paginated_response", [True, False])
+def test_client_strict_limit(httpserver: HTTPServer, paginated_response: bool) -> None:
+    """Test the `strict_limit` context manager."""
+    client = MregClient(url=httpserver.url_for("/"), cache=False)
+
+    resp: list[dict[str, Any]] | dict[str, Any] = [
+        {
+            "id": 1,
+            "name": "host1",
+            "comment": "",
+            "ipaddresses": [],
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        },
+        {
+            "id": 2,
+            "name": "host2",
+            "comment": "",
+            "ipaddresses": [],
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        },
+        {
+            "id": 3,
+            "name": "host3",
+            "comment": "",
+            "ipaddresses": [],
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        },
+        {
+            "id": 4,
+            "name": "host4",
+            "comment": "",
+            "ipaddresses": [],
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        },
+        {
+            "id": 5,
+            "name": "host5",
+            "comment": "",
+            "ipaddresses": [],
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        },
+    ]
+    if paginated_response:
+        resp = {
+            "results": resp,
+            "next": None,
+            "previous": None,
+            "count": 5,
+        }
+    httpserver.expect_request(Endpoint.Hosts).respond_with_json(resp)
+
+    # This fails
+    with strict_limit(client):
+        with pytest.raises(TooManyResults) as excinfo:
+            client.host.list(limit=4)
+        assert "Refine your search" in str(excinfo.value)
+
+    # This succeeds (listener is removed after the context manager exits)
+    hosts = client.host.list(limit=4)  # truncates without raising
+    assert len(hosts) == 4

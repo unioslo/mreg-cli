@@ -34,7 +34,6 @@ from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
     APIError,
-    CreateError,
     DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
@@ -48,6 +47,7 @@ from mreg_cli.output import output_host, output_hostlist, output_hosts
 from mreg_cli.output.history import output_host_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, QueryParams
+from mreg_cli.utilities.api import strict_limit
 from mreg_cli.utilities.resolution import resolve_host
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
@@ -577,7 +577,9 @@ def find(args: argparse.Namespace) -> None:
         if value:
             _add_param(param, value)
 
-    hosts = client.host.list(limit=500, **params)
+    with strict_limit(client):
+        hosts = client.host.list(limit=500, **params)
+
     output_hostlist(hosts)
 
 
