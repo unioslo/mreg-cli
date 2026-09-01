@@ -22,7 +22,6 @@ from mreg_cli.exceptions import (
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.resolution import resolve_host
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +166,7 @@ def assoc(args: argparse.Namespace) -> None:
     # Parse Name as an IP address first, if not found, resolve as a host name
     ipaddress = ipaddress_from_ip_arg(name, client)
     if not ipaddress:
-        host = resolve_host(client, name)
+        host = client.resolve_host(name)
         ipaddress = get_associable_ip(host, client)
 
     client.ipaddress.associate_mac(ipaddress, mac, force=force)
@@ -200,7 +199,7 @@ def disassoc(args: argparse.Namespace) -> None:
 
     # Name is not an IP -> resolve as host
     if not ipaddress:
-        host = resolve_host(client, name)
+        host = client.resolve_host(name)
         # Check if name itself looks like a MAC address and find the matching IP.
         # This replicates the old host.has_ip_with_mac(mac) logic.
         if mac := MacAddress.parse(name):

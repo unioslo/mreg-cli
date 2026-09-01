@@ -47,8 +47,6 @@ from mreg_cli.output import output_host, output_hostlist, output_hosts
 from mreg_cli.output.history import output_host_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, QueryParams
-from mreg_cli.utilities.api import strict_limit
-from mreg_cli.utilities.resolution import resolve_host
 from mreg_cli.utilities.shared import convert_wildcard_to_regex
 
 
@@ -125,7 +123,7 @@ def add(args: argparse.Namespace) -> None:
                     f"{ips_str}, must force."
                 )
 
-    host = resolve_host(client, hname, required=False)
+    host = client.resolve_host(hname, required=False)
     if host:
         if host.name != hname:
             raise EntityOwnershipMismatch(f"{hname} is a CNAME pointing to {host.name}")
@@ -213,7 +211,7 @@ def add(args: argparse.Namespace) -> None:
             if ip_objs:
                 host_ip = ip_objs[0]
                 client.ipaddress.associate_mac(host_ip, macaddress, force=force)
-                host = resolve_host(client, str(host.name))
+                host = client.resolve_host(str(host.name))
         else:
             # We passed a network to create the host, so we need to find the IP
             # that was assigned to the host. We don't get that in the response
@@ -223,7 +221,7 @@ def add(args: argparse.Namespace) -> None:
             if len(host.ipaddresses) == 1:
                 host_ip = host.ipaddresses[0]
                 client.ipaddress.associate_mac(host_ip, macaddress, force=force)
-                host = resolve_host(client, str(host.name))
+                host = client.resolve_host(str(host.name))
             else:
                 OutputManager().add_ok(
                     "Failed to associate MAC address to IP, multiple IP addresses after creation."
@@ -382,7 +380,7 @@ def remove(args: argparse.Namespace) -> None:
     client = get_client()
 
     hostname = args.name
-    host = resolve_host(client, hostname, inform_if_cname=True)
+    host = client.resolve_host(hostname, inform_if_cname=True)
 
     override_arg = args.override or ""
     overrides: list[Override] = Override.parse_overrides(override_arg)
@@ -522,7 +520,7 @@ def host_info(args: argparse.Namespace) -> None:
 
         # Fall back to single host resolution by name/CNAME
         if not hosts:
-            host = resolve_host(client, host_arg, inform_if_cname=True)
+            host = client.resolve_host(host_arg, inform_if_cname=True)
             hosts = [host]
 
         if hosts:
@@ -577,8 +575,7 @@ def find(args: argparse.Namespace) -> None:
         if value:
             _add_param(param, value)
 
-    with strict_limit(client):
-        hosts = client.host.list(limit=500, **params)
+    hosts = client.host.list(limit=500, **params)
 
     output_hostlist(hosts)
 
@@ -618,10 +615,10 @@ def rename(args: argparse.Namespace) -> None:
     old_name: str = args.old_name
     new_name: str = args.new_name
 
-    old_host = resolve_host(client, old_name)
+    old_host = client.resolve_host(old_name)
     new_name = client.fqdn(new_name)
 
-    new_host = resolve_host(client, new_name, required=False, inform_if_cname=True)
+    new_host = client.resolve_host(new_name, required=False, inform_if_cname=True)
     if new_host:
         raise EntityAlreadyExists(f"host {new_host} already exists")
 
@@ -660,7 +657,7 @@ def set_comment(args: argparse.Namespace) -> None:
     """
     client = get_client()
 
-    host = resolve_host(client, args.name, inform_if_cname=True)
+    host = client.resolve_host(args.name, inform_if_cname=True)
     client.host.update(host, comment=args.comment)
 
     OutputManager().add_ok(f"Updated comment of {host} to {args.comment}")
@@ -688,7 +685,7 @@ def set_contact(args: argparse.Namespace) -> None:
     name: str = args.name
     contact: list[str] = args.contact
 
-    host = resolve_host(client, name, inform_if_cname=True)
+    host = client.resolve_host(name, inform_if_cname=True)
     client.host.update(host, contacts=contact)
 
     OutputManager().add_ok(f"Set contact of {host} to {', '.join(contact)}")
@@ -715,7 +712,7 @@ def unset_contact(args: argparse.Namespace) -> None:
     name: str = args.name
     force: bool = args.force
 
-    host = resolve_host(client, name, inform_if_cname=True)
+    host = client.resolve_host(name, inform_if_cname=True)
     if not host.contacts:
         raise DeleteError(f"Host {host.name} has no contacts to remove.")
 
@@ -750,7 +747,7 @@ def add_contact(args: argparse.Namespace) -> None:
     name: str = args.name
     contact: list[str] = args.contact
 
-    host = resolve_host(client, name, inform_if_cname=True)
+    host = client.resolve_host(name, inform_if_cname=True)
     updated = client.host.add_contacts(host, contact)
 
     if not updated.added:
@@ -782,7 +779,7 @@ def remove_contact(args: argparse.Namespace) -> None:
     if not contact:
         raise InputFailure("At least one contact must be specified.")
 
-    host = resolve_host(client, name, inform_if_cname=True)
+    host = client.resolve_host(name, inform_if_cname=True)
 
     updated = client.host.remove_contacts(host, contact)
     if not updated.removed:

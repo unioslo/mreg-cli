@@ -16,7 +16,6 @@ from mreg_cli.exceptions import (
 from mreg_cli.output.host import output_cnames
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.resolution import resolve_host
 
 
 @command_registry.register_command(
@@ -42,10 +41,10 @@ def cname_add(args: argparse.Namespace) -> None:
     alias: str = args.alias
 
     # Get host info or raise exception
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     alias = client.fqdn(alias)
 
-    alias_in_use = resolve_host(client, alias, required=False)
+    alias_in_use = client.resolve_host(alias, required=False)
     if alias_in_use:
         if alias_in_use.id == host.id:
             raise EntityAlreadyExists(f"The alias {alias} is already active for {host}.")
@@ -86,7 +85,7 @@ def cname_remove(args: argparse.Namespace) -> None:
     name: str = args.name
     alias: str = args.alias
 
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     alias = client.fqdn(alias)
 
     alias_as_host = client.host.get_by_name(alias, required=False)
@@ -131,7 +130,7 @@ def cname_replace(args: argparse.Namespace) -> None:
     host_arg: str = args.host
 
     cname = client.fqdn(cname)
-    host = resolve_host(client, host_arg)
+    host = client.resolve_host(host_arg)
 
     cname_obj = client.cname.get_by_name(cname, required=False)
     if not cname_obj:
@@ -163,5 +162,5 @@ def cname_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     output_cnames(host.cnames, host=host)

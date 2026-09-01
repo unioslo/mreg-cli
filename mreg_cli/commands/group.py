@@ -13,7 +13,6 @@ from mreg_cli.output.group import output_hostgroup, output_hostgroup_members, ou
 from mreg_cli.output.history import output_hostgroup_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.resolution import resolve_host
 
 command_registry = CommandRegistry()
 
@@ -226,7 +225,7 @@ def host_add(args: argparse.Namespace) -> None:
     hostgroup = client.hostgroup.get_by_name(args.group)
 
     for name in args.hosts:
-        host = resolve_host(client, name)
+        host = client.resolve_host(name)
         fqname = host.name
         client.hostgroup.add_host(hostgroup, fqname)
         OutputManager().add_ok(f"Added host {fqname!r} to {args.group!r}")
@@ -251,7 +250,7 @@ def host_remove(args: argparse.Namespace) -> None:
 
     to_remove: set[str] = set()
     for name in args.hosts:
-        host = resolve_host(client, name)
+        host = client.resolve_host(name)
         fqname = host.name
         if not hostgroup.has_host(fqname):
             raise EntityNotFound(f"Host {name!r} ({fqname!r}) not a member in {args.group!r}")
@@ -282,7 +281,7 @@ def host_list(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (host, traverse-hostgroups)
     """
     client = get_client()
-    host = resolve_host(client, args.host)
+    host = client.resolve_host(args.host)
     hostgroups = client.hostgroup.list_by_host(host, traverse=args.traverse_hostgroups)
     output_hostgroups(hostgroups, multiline=True)
 
