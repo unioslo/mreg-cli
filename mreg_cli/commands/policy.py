@@ -24,7 +24,6 @@ from mreg_cli.output import (
 from mreg_cli.output.history import output_atom_history, output_role_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.resolution import resolve_host, resolve_policy
 
 command_registry = CommandRegistry()
 
@@ -198,7 +197,7 @@ def info(args: argparse.Namespace) -> None:
     client = get_client()
     names: list[str] = args.name
     for name in names:
-        role_or_atom = resolve_policy(client, name)
+        role_or_atom = client.resolve_policy(name)
         output_host_policy(role_or_atom)
 
 
@@ -329,7 +328,7 @@ def host_add(args: argparse.Namespace) -> None:
     host_names: list[str] = args.hosts
 
     role = client.role.get_by_name(role_name)
-    hosts = [resolve_host(client, host) for host in host_names]
+    hosts = [client.resolve_host(host) for host in host_names]
 
     for host in hosts:
         # Best-effort approach -- try to assign roles to all hosts
@@ -362,11 +361,11 @@ def host_copy(args: argparse.Namespace) -> None:
     """
     client = get_client()
     source_name: str = args.source
-    source = resolve_host(client, source_name)
+    source = client.resolve_host(source_name)
     source_roles = set(client.role.list_by_host(source))
 
     for destination_name in args.destination:
-        destination = resolve_host(client, destination_name)
+        destination = client.resolve_host(destination_name)
         destination_roles = set(client.role.list_by_host(destination))
         OutputManager().add_line(f"Copying roles from from {source_name} to {destination_name}")
 
@@ -397,7 +396,7 @@ def host_list(args: argparse.Namespace) -> None:
     hosts: list[str] = args.hosts
 
     for name in hosts:
-        host = resolve_host(client, name)
+        host = client.resolve_host(name)
         output_host_roles(host)
 
 
@@ -420,7 +419,7 @@ def host_remove(args: argparse.Namespace) -> None:
     host_names: list[str] = args.hosts
 
     role = client.role.get_by_name(role_name)
-    hosts = [resolve_host(client, host) for host in host_names]
+    hosts = [client.resolve_host(host) for host in host_names]
 
     for host in hosts:
         client.role.remove_host(role, host.name)
@@ -449,12 +448,10 @@ def rename(args: argparse.Namespace) -> None:
         raise EntityAlreadyExists("Old and new names are the same")
 
     # Check if role or atom with the new name already exists
-    if client.atom.get_by_name(newname, required=False) or client.role.get_by_name(
-        newname, required=False
-    ):
+    if client.resolve_policy(newname, required=False):
         raise EntityAlreadyExists(f"An atom or role named {newname!r} already exists")
 
-    role_or_atom = resolve_policy(client, oldname)
+    role_or_atom = client.resolve_policy(oldname)
     if isinstance(role_or_atom, Role):
         client.role.rename(role_or_atom, newname)
     else:
@@ -480,7 +477,7 @@ def set_description(args: argparse.Namespace) -> None:
     name: str = args.name
     description: str = args.description
 
-    role_or_atom = resolve_policy(client, name)
+    role_or_atom = client.resolve_policy(name)
     if isinstance(role_or_atom, Role):
         client.role.set_description(role_or_atom, description)
     else:

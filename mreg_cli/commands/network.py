@@ -40,8 +40,6 @@ from mreg_cli.output import (
 from mreg_cli.output.network import output_network_policy_attribute
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, QueryParams
-from mreg_cli.utilities.api import strict_limit
-from mreg_cli.utilities.resolution import resolve_host, resolve_network
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
@@ -166,7 +164,7 @@ def info(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (networks)
     """
     client = get_client()
-    networks = [resolve_network(client, net) for net in args.networks]
+    networks = [client.resolve_network(net) for net in args.networks]
     output_networks(networks)
 
 
@@ -258,7 +256,7 @@ def find(args: argparse.Namespace) -> None:
         addr = NetworkOrIP.parse_or_raise(ip_arg, mode="ip")
         networks = [client.network.get_by_ip(addr)]
     elif host_arg := args_dict.get("host"):
-        host = resolve_host(client, host_arg)
+        host = client.resolve_host(host_arg)
         ipaddrs = client.ipaddress.list_by_host(host)
         for ipaddr in ipaddrs:
             # Get the network for each IP address
@@ -288,8 +286,7 @@ def find(args: argparse.Namespace) -> None:
         if not params:
             raise InputFailure("Need at least one search criteria")
 
-        with strict_limit(client):
-            networks = client.network.list(limit=500, **params)
+        networks = client.network.list(limit=500, **params)
 
     if not networks:
         raise EntityNotFound("No networks matching the query were found.")
@@ -320,7 +317,7 @@ def list_unused_addresses(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     output_network_unused_addresses(net)
 
 
@@ -338,7 +335,7 @@ def list_used_addresses(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     output_network_used_addresses(net)
 
 
@@ -357,7 +354,7 @@ def remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, force)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     if client.network.get_used_count(net):
         raise DeleteError(
             "Network contains addresses that are in use. Remove hosts before deletion"
@@ -385,7 +382,7 @@ def add_excluded_range(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     client.network.add_excluded_range(net, args.start_ip, args.end_ip)
     OutputManager().add_ok(f"Added exclude range to {net.network}")
 
@@ -406,7 +403,7 @@ def remove_excluded_range(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     client.network.remove_excluded_range(net, args.start_ip, args.end_ip)
     OutputManager().add_ok(f"Removed exclude range from {net.network}")
 
@@ -425,7 +422,7 @@ def list_excluded_ranges(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, start_ip, end_ip)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     output_network_excluded_ranges(net.excluded_ranges)
 
 
@@ -444,7 +441,7 @@ def set_category(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, category)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     # TODO: add category validation
     client.network.update(net, category=args.category)
     OutputManager().add_ok(f"Updated category tag to {args.category!r} for {net.network}")
@@ -465,7 +462,7 @@ def set_description(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, description)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     client.network.update(net, description=args.description)
     OutputManager().add_ok(f"Updated description to {args.description!r} for {net.network}")
 
@@ -484,7 +481,7 @@ def set_dns_delegated(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     client.network.update(net, dns_delegated=True)
     OutputManager().add_ok(f"Set DNS delegation to 'True' for {net.network}")
 
@@ -503,7 +500,7 @@ def set_frozen(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     client.network.update(net, frozen=True)
     OutputManager().add_ok(f"Updated frozen to 'True' for {net.network}")
 
@@ -523,7 +520,7 @@ def set_location(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, location)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     # TODO: add location validation
     client.network.update(net, location=args.location)
     OutputManager().add_ok(f"Updated location tag to '{args.location}' for {args.network}")
@@ -549,7 +546,7 @@ def set_reserved(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, number)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     client.network.update(net, reserved=args.number)
     OutputManager().add_ok(f"Updated reserved to '{args.number}' for {net.network}")
 
@@ -569,7 +566,7 @@ def set_vlan(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network, vlan)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     client.network.update(net, vlan=args.vlan)
     OutputManager().add_ok(f"Updated vlan to {args.vlan} for {net.network}")
 
@@ -598,7 +595,7 @@ def set_max_communities(args: argparse.Namespace) -> None:
     if max_coms < 0:
         raise InputFailure("Number of communities must be a non-negative integer")
 
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
 
     # Max communities requires a policy
     if not net.policy:
@@ -634,7 +631,7 @@ def unset_dns_delegated(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     client.network.update(net, dns_delegated=False)
     OutputManager().add_ok(f"Set DNS delegation to 'False' for {net.network}")
 
@@ -653,7 +650,7 @@ def unset_frozen(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
     client.network.update(net, frozen=False)
     OutputManager().add_ok(f"Updated frozen to 'False' for {net.network}")
 
@@ -675,7 +672,7 @@ def unset_max_communities(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (network)
     """
     client = get_client()
-    net = resolve_network(client, args.network)
+    net = client.resolve_network(args.network)
 
     # No change
     if net.max_communities is None:
@@ -1469,7 +1466,7 @@ def community_host_add(args: argparse.Namespace) -> None:
     community: str = args.community
     ip: str | None = args.ip
 
-    h = resolve_host(client, host)
+    h = client.resolve_host(host)
     ipaddr = _get_host_ip_to_add(h, ip)
 
     net = client.network.get_by_ip(str(ipaddr.ipaddress), required=False)
@@ -1502,7 +1499,7 @@ def community_host_remove(args: argparse.Namespace) -> None:
     community: str = args.community
     ip: str | None = args.ip
 
-    h = resolve_host(client, host)
+    h = client.resolve_host(host)
     com, ipaddr = _get_host_community_and_ip_to_remove(h, community, ip)
 
     net = client.network.get_by_ip(str(ipaddr.ipaddress), required=False)
