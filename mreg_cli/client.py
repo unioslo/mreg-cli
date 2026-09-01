@@ -87,8 +87,7 @@ class MregCliClient(MregClient):
     ) -> Atom | Role | None:
         """Resolve a host policy name to an Atom or Role.
 
-        Replaces HostPolicy.get_role_or_atom_or_raise().
-        Atom is checked first (old order).
+        Resolution order: Atom name → Role name.
         """
         atom = self.atom.get_by_name(name, required=False)
         if atom is not None:
@@ -135,8 +134,6 @@ class MregCliClient(MregClient):
         inform_if_cname: bool = False,
     ) -> Host | None:
         """Resolve a host by id, IP, MAC, name, or CNAME target.
-
-        Replaces Host.get_by_any_means() / get_by_any_means_or_raise().
 
         Resolution order: numeric id → IP → MAC → name → CNAME target.
         """
@@ -218,7 +215,7 @@ class MregCliClient(MregClient):
     ) -> Network | None:
         """Resolve a network by IP address, CIDR notation, or numeric id.
 
-        Replaces Network.get_by_any_means() / get_by_any_means_or_raise().
+        Resolution order: IP address → CIDR / network address → numeric id.
         """
         network: Network | None = None
         try:
