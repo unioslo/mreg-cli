@@ -26,7 +26,7 @@ from mreg_cli.exceptions import CliError, FileError
 from mreg_cli.types import Json, JsonMapping, RecordingEntry, TimeInfo
 
 if TYPE_CHECKING:
-    from mreg_api.history import RequestRecord
+    from mreg_api.requestlog import RequestRecord
 
 logger = logging.getLogger(__name__)
 

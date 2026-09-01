@@ -289,9 +289,9 @@ class Command(Completer):
         """Record API responses for the last executed command."""
         output = OutputManager()
         client = get_client()
-        for response in client.get_client_history():
+        for response in client.requests:
             output.recording_request(response)
-        client.clear_client_history()
+        client.requests.clear()
 
     def process_command_line(self, line: str, *, interactive: bool = True) -> None:
         """Process a line containing a command."""
