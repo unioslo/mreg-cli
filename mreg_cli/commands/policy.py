@@ -24,7 +24,6 @@ from mreg_cli.output import (
 from mreg_cli.output.history import output_atom_history, output_role_history
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.resolution import resolve_host
 
 command_registry = CommandRegistry()
 
@@ -329,7 +328,7 @@ def host_add(args: argparse.Namespace) -> None:
     host_names: list[str] = args.hosts
 
     role = client.role.get_by_name(role_name)
-    hosts = [resolve_host(client, host) for host in host_names]
+    hosts = [client.resolve_host(host) for host in host_names]
 
     for host in hosts:
         # Best-effort approach -- try to assign roles to all hosts

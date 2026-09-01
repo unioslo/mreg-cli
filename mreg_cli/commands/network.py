@@ -40,7 +40,6 @@ from mreg_cli.output import (
 from mreg_cli.output.network import output_network_policy_attribute
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, QueryParams
-from mreg_cli.utilities.resolution import resolve_network
 from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
@@ -165,7 +164,7 @@ def info(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (networks)
     """
     client = get_client()
-    networks = [resolve_network(client, net) for net in args.networks]
+    networks = [client.resolve_network(net) for net in args.networks]
     output_networks(networks)
 
 
