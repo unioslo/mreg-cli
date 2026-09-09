@@ -32,7 +32,6 @@ from mreg_cli.exceptions import (
 from mreg_cli.output import output_host_ipaddresses
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag, IP_AddressT, IP_Version
-from mreg_cli.utilities.resolution import resolve_host
 
 
 class IPOperation(Enum):
@@ -140,7 +139,7 @@ def _ip_change(name: str, old: str, new: str, force: bool, ipversion: IP_Version
     if new_ip.version != ipversion:
         raise InputFailure("New IP version does not match the requested version")
 
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
 
     # Find the IPAddress object for the old IP
     host_ip = host.get_ip(old_ip)
@@ -170,8 +169,8 @@ def _ip_move(ipaddr: str, fromhost: str, tohost: str, ipversion: IP_Version) -> 
             f"IP version {ip_addr.version} does not match the requested version {ipversion}"
         )
 
-    from_host = resolve_host(client, fromhost)
-    to_host = resolve_host(client, tohost)
+    from_host = client.resolve_host(fromhost)
+    to_host = client.resolve_host(tohost)
 
     # Find the IPAddress object on from_host
     host_ip = from_host.get_ip(ip_addr)
@@ -206,7 +205,7 @@ def _ip_remove(name: str, ipaddr: str, ipversion: IP_Version, force: bool = Fals
     client = get_client()
 
     # TODO: use event suppression ctx manager to avoid printing cname and PTR resolution here
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     ip_addr = NetworkOrIP.parse_or_raise(ipaddr, mode="ip")
     if ip_addr.version != ipversion:
         raise InputFailure(
@@ -248,7 +247,7 @@ def _ip_add(
     """
     client = get_client()
 
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     ip_or_net = NetworkOrIP.validate(ipaddr)
 
     if ipversion == 4 and (ip_or_net.is_ipv6() or ip_or_net.is_ipv6_network()):
@@ -275,7 +274,7 @@ def _ip_add(
     OutputManager().add_ok(f"Added ipaddress {ip} to {host}")
 
     # Resolve and return the updated host
-    updated_host = resolve_host(client, str(host.name))
+    updated_host = client.resolve_host(str(host.name))
     return updated_host
 
 
@@ -428,7 +427,7 @@ def a_show(args: argparse.Namespace) -> None:
     """
     name: str = args.name
     client = get_client()
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     output_host_ipaddresses(host, only=4)
 
 
@@ -575,5 +574,5 @@ def aaaa_show(args: argparse.Namespace) -> None:
     name: str = args.name
 
     client = get_client()
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     output_host_ipaddresses(host, only=6)

@@ -69,7 +69,6 @@ from mreg_cli.output.host import (
 )
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.resolution import resolve_host
 
 
 @command_registry.register_command(
@@ -94,7 +93,7 @@ def hinfo_add(args: argparse.Namespace) -> None:
     os: str = args.os
 
     client = get_client()
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     if host.hinfo:
         raise EntityAlreadyExists(f"{host} already has hinfo set.")
 
@@ -118,7 +117,7 @@ def hinfo_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     if not host.hinfo:
         raise EntityNotFound(f"{host} already has no hinfo set.")
 
@@ -146,7 +145,7 @@ def hinfo_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     if not host.hinfo:
         OutputManager().add_line(f"No hinfo for {host.name}")
 
@@ -173,7 +172,7 @@ def loc_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     if not host.loc:
         raise EntityNotFound(f"{host} already has no loc set.")
 
@@ -205,7 +204,7 @@ def loc_add(args: argparse.Namespace) -> None:
     loc: str = args.loc
 
     client = get_client()
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
 
     if host.loc:
         raise EntityAlreadyExists(f"{host} already has loc set.")
@@ -230,7 +229,7 @@ def loc_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     if not host.loc:
         raise EntityNotFound(f"No loc for {host.name}")
 
@@ -259,7 +258,7 @@ def mx_add(args: argparse.Namespace) -> None:
     priority: int = args.priority
     name: str = args.name
 
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     client.mx.create(host=host, mx=mx, priority=priority)
 
     OutputManager().add_ok(f"Added MX record to {host.name}.")
@@ -285,7 +284,7 @@ def mx_remove(args: argparse.Namespace) -> None:
     mx_arg: str = args.mx
     priority: int = args.priority
 
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     mx_obj = client.mx.get_by_all(host, mx_arg, priority)
     client.mx.delete(mx_obj)
     OutputManager().add_ok(
@@ -307,7 +306,7 @@ def mx_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     output_mxs(host.mxs)
 
 
@@ -353,7 +352,7 @@ def naptr_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
 
     existing_naptr = client.naptr.first(
         host=host.id,
@@ -449,7 +448,7 @@ def naptr_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, preference, order, flag, service, regex, replacement)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     to_delete = filter_naptrs(
         host.naptrs,
         preference=args.preference,
@@ -493,7 +492,7 @@ def naptr_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     output_naptrs(host.naptrs)
 
 
@@ -522,8 +521,8 @@ def ptr_change(args: argparse.Namespace) -> None:
     from mreg_api.models import NetworkOrIP
 
     client = get_client()
-    old_host = resolve_host(client, args.old)
-    new_host = resolve_host(client, args.new)
+    old_host = client.resolve_host(args.old)
+    new_host = client.resolve_host(args.new)
 
     if new_host.ptr_overrides:
         raise InputFailure(f"{new_host} already has a PTR record.")
@@ -557,7 +556,7 @@ def ptr_remove(args: argparse.Namespace) -> None:
     from mreg_api.models import NetworkOrIP
 
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
     ptr_override = host.get_ptr_override(ip)
     if not ptr_override:
@@ -587,7 +586,7 @@ def ptr_add(args: argparse.Namespace) -> None:
     client = get_client()
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
 
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     existing_ptrs = client.ptroverride.list(ipaddress=str(ip))
     if existing_ptrs:
         raise EntityAlreadyExists(f"{ip} already exists in a PTR record.")
@@ -627,7 +626,7 @@ def ptr_show(args: argparse.Namespace) -> None:
 
     # Suppress PTR override events from being printed when we resolve PTR overrides
     with OutputManager().suppress_events():
-        host = resolve_host(client, str(ip))
+        host = client.resolve_host(str(ip))
         if not host.ptr_overrides:
             OutputManager().add_line(f"No PTR records for {host.name}")
 
@@ -659,7 +658,7 @@ def srv_add(args: argparse.Namespace) -> None:
     name: str = args.name
 
     sname = client.fqdn(name)
-    host = resolve_host(client, args.host)
+    host = client.resolve_host(args.host)
 
     szone = client.zone.get_from_host(sname)
     if not szone:
@@ -730,7 +729,7 @@ def srv_remove(args: argparse.Namespace) -> None:
     name: str = args.name
     host_arg: str = args.host
 
-    host = resolve_host(client, host_arg)
+    host = client.resolve_host(host_arg)
     sname = client.fqdn(name)
 
     srv = client.srv.first(
@@ -792,7 +791,7 @@ def sshfp_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, algorithm, hash_type, fingerprint)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
 
     existing_sshfp = client.sshfp.first(
         host=host.id,
@@ -837,7 +836,7 @@ def sshfp_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, fingerprint)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     sshfps = None
 
     if args.fingerprint:
@@ -869,7 +868,7 @@ def sshfp_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     sshfps = host.sshfps
 
     if not sshfps:
@@ -924,7 +923,7 @@ def ttl_set(args: argparse.Namespace) -> None:
     # Convert "default" to None (API uses None for default TTL)
     ttl_value: int | None = None if ttl == "default" else int(ttl)
 
-    target_host = resolve_host(client, name, required=False)
+    target_host = client.resolve_host(name, required=False)
     target_srv: Srv | None = None
 
     if target_host is None:
@@ -963,7 +962,7 @@ def ttl_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     output_host_ttl(host)
 
 
@@ -991,7 +990,7 @@ def txt_add(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, text)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
 
     if host.has_txt(args.text):
         raise EntityAlreadyExists(f"{host} already has that TXT defined.")
@@ -1020,7 +1019,7 @@ def txt_remove(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name, text)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     txt = client.txt.first(host=host.id, txt=args.text, required=False)
 
     if not txt:
@@ -1044,7 +1043,7 @@ def txt_show(args: argparse.Namespace) -> None:
     :param args: argparse.Namespace (name)
     """
     client = get_client()
-    host = resolve_host(client, args.name)
+    host = client.resolve_host(args.name)
     txts = host.txts
 
     if not txts:

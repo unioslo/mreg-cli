@@ -25,7 +25,6 @@ from mreg_cli.exceptions import (
 from mreg_cli.output import output_bacnetids
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import Flag
-from mreg_cli.utilities.resolution import resolve_host
 from mreg_cli.utilities.shared import string_to_int
 
 
@@ -53,7 +52,7 @@ def bacnetid_add(args: argparse.Namespace) -> None:
     id_: int = args.id
 
     client = get_client()
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     host_bacnet = client.bacnetid.get_by_host(host)
     if host_bacnet is not None:
         raise EntityAlreadyExists(f"{host.name} already has BACnet ID {host_bacnet.id}.")
@@ -87,7 +86,7 @@ def bacnetid_remove(args: argparse.Namespace) -> None:
     name: str = args.name
 
     client = get_client()
-    host = resolve_host(client, name)
+    host = client.resolve_host(name)
     host_bacnet = client.bacnetid.get_by_host(host)
     if host_bacnet is None:
         raise EntityNotFound(f"{host.name} does not have a BACnet ID assigned.")

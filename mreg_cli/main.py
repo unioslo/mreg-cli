@@ -6,8 +6,6 @@ import argparse
 import functools
 import logging
 
-from mreg_api import MregClient
-from mreg_api.events import Event, EventKind, EventLevel
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -182,7 +180,8 @@ def main():
         print("mreg url not set in config or as argument")
         return
 
-    client = bootstrap_client(config)
+    # Bootstrap the application-wide client object
+    client = init_client(config)
 
     try:
         try_token_or_login(
@@ -272,32 +271,6 @@ def print_greeting(config: MregCliConfig) -> None:
     )
     console.print(panel)
     console.print()  # blank line
-
-
-def bootstrap_client(config: MregCliConfig) -> MregClient:
-    """Configure global client instance and set up event hooks.
-
-    :param config: MregCliConfig object
-    :return: MregClient object
-    """
-    client = init_client(config)
-    client.events.subscribe(_mreg_client_event_hook)
-    # Expand with further per-client config here
-    return client
-
-
-def _mreg_client_event_hook(event: Event) -> None:
-    """Event hook for MregClient to record events in the OutputManager."""
-    om = OutputManager()
-    if om.is_suppressing_events():
-        return
-
-    if event.level >= EventLevel.WARNING:
-        om.add_warning(event.message)
-    elif event.kind == EventKind.MUTATION:
-        om.add_ok(event.message)
-    else:
-        om.add_line(event.message)
 
 
 if __name__ == "__main__":

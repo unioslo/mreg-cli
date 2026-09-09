@@ -4,20 +4,20 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from mreg_api import CacheConfig, MregClient
+from mreg_api import CacheConfig
 from mreg_api.endpoints import Endpoint
 from pytest_httpserver import HTTPServer
 
+from mreg_cli.client import MregCliClient
 from mreg_cli.config import MregCliConfig
 from mreg_cli.exceptions import TooManyResults
-from mreg_cli.utilities.api import strict_limit
 
 
 def test_client_cache_readonly_fs_dir() -> None:
     """Test that client caching handles read-only filesystem gracefully (with directory arg)."""
     with patch("os.makedirs") as mock_makedirs:
         mock_makedirs.side_effect = PermissionError("Read-only directory")
-        client = MregClient(
+        client = MregCliClient(
             url="https://mreg.example.com",
             cache=CacheConfig(enable=True, directory="/readonly/path"),
         )
@@ -29,7 +29,7 @@ def test_client_cache_readonly_fs_no_dir() -> None:
     """Test that client caching handles read-only filesystem gracefully."""
     with patch("tempfile.mkdtemp") as mock_mkdtemp:
         mock_mkdtemp.side_effect = PermissionError("Read-only directory")
-        client = MregClient(url="https://mreg.example.com", cache=CacheConfig(enable=True))
+        client = MregCliClient(url="https://mreg.example.com", cache=CacheConfig(enable=True))
     assert not client.cache.is_enabled
     assert client.cache._cache is None  # pyright: ignore[reportPrivateUsage]
 
@@ -37,15 +37,15 @@ def test_client_cache_readonly_fs_no_dir() -> None:
 def test_client_cache_default_enabled() -> None:
     """Test that client caching is enabled by default."""
     cliconf = MregCliConfig()
-    client = MregClient(url="https://mreg.example.com", cache=CacheConfig(enable=cliconf.cache))
+    client = MregCliClient(url="https://mreg.example.com", cache=CacheConfig(enable=cliconf.cache))
     assert client.cache.is_enabled
     assert client.cache._cache is not None  # pyright: ignore[reportPrivateUsage
 
 
 @pytest.mark.parametrize("paginated_response", [True, False])
-def test_client_strict_limit(httpserver: HTTPServer, paginated_response: bool) -> None:
-    """Test the `strict_limit` context manager."""
-    client = MregClient(url=httpserver.url_for("/"), cache=False)
+def test_client_limit(httpserver: HTTPServer, paginated_response: bool) -> None:
+    """Test that exceeding the limit raises TooManyResults, and that the limit is respected."""
+    client = MregCliClient(url=httpserver.url_for("/"), cache=False)
 
     resp: list[dict[str, Any]] | dict[str, Any] = [
         {
@@ -99,11 +99,10 @@ def test_client_strict_limit(httpserver: HTTPServer, paginated_response: bool) -
     httpserver.expect_request(Endpoint.Hosts).respond_with_json(resp)
 
     # This fails
-    with strict_limit(client):
-        with pytest.raises(TooManyResults) as excinfo:
-            client.host.list(limit=4)
-        assert "Refine your search" in str(excinfo.value)
+    with pytest.raises(TooManyResults) as excinfo:
+        client.host.list(limit=4)
+    assert "Refine your search" in str(excinfo.value)
 
-    # This succeeds (listener is removed after the context manager exits)
-    hosts = client.host.list(limit=4)  # truncates without raising
-    assert len(hosts) == 4
+    # This succeeds
+    hosts = client.host.list(limit=5)  # truncates without raising
+    assert len(hosts) == 5
