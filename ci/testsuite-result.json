@@ -18453,10 +18453,10 @@
     "command_filter_negate": false,
     "command_issued": "policy remove_atom fruit banana # should fail",
     "ok": [],
-    "warning": [
-      "Atom 'banana' not a member of 'fruit'"
+    "warning": [],
+    "error": [
+      "DELETE \"http://127.0.0.1:8000/api/v1/hostpolicy/roles/fruit/atoms/banana\": 404: Not Found\n{\n  \"type\": \"client_error\",\n  \"errors\": [\n    {\n      \"code\": \"not_found\",\n      \"detail\": \"Not found.\",\n      \"attr\": null\n    }\n  ]\n}"
     ],
-    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -18471,10 +18471,26 @@
               "name": "tangerine"
             }
           ],
-          "updated_at": "2024-12-11T16:45:04.346261+01:00",
+          "updated_at": "2026-09-11T18:39:41.811484+02:00",
           "description": "5 a day",
           "name": "fruit",
           "labels": []
+        }
+      },
+      {
+        "method": "DELETE",
+        "url": "/api/v1/hostpolicy/roles/fruit/atoms/banana",
+        "data": {},
+        "status": 404,
+        "response": {
+          "type": "client_error",
+          "errors": [
+            {
+              "code": "not_found",
+              "detail": "Not found.",
+              "attr": null
+            }
+          ]
         }
       }
     ],
