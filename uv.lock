@@ -326,8 +326,8 @@ wheels = [
 
 [[package]]
 name = "mreg-api"
-version = "0.5.1.dev3+gd49484003"
-source = { git = "https://github.com/unioslo/mreg-api?branch=fix-delegations#d494840032cda9c62ff64fa3514e8177b4715db0" }
+version = "0.5.1.dev8+g589d2ec96"
+source = { git = "https://github.com/unioslo/mreg-api?branch=refactor-exception-parsing#589d2ec960617a578d5b0824740a318c37d7dca3" }
 dependencies = [
     { name = "diskcache" },
     { name = "httpx", extra = ["socks"] },
@@ -379,7 +379,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api?branch=fix-delegations" },
+    { name = "mreg-api", git = "https://github.com/unioslo/mreg-api?branch=refactor-exception-parsing" },
     { name = "platformdirs", specifier = ">=4.3.0" },
     { name = "prompt-toolkit", specifier = ">=3.0.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.7.1" },
