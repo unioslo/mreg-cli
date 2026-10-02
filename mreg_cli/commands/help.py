@@ -144,13 +144,8 @@ def whoami_help(args: argparse.Namespace) -> None:
     """Show information about the current user."""
     django: bool = args.django
 
-    try:
-        user_info = get_client().meta.userinfo.get(required=True)
-        output_user_info(user_info, django=django)
-    except Exception as e:
-        raise CliError(
-            f"Failed to display user info for current user {MregCliConfig().user!r}: {e}"
-        ) from e
+    user_info = get_client().meta.userinfo.get(required=True)
+    output_user_info(user_info, django=django)
 
 
 @command_registry.register_command(
@@ -168,11 +163,8 @@ def whois_help(args: argparse.Namespace) -> None:
     user: str = args.user
     django: bool = args.django
 
-    try:
-        user_info = get_client().meta.userinfo.get(required=True, user=user)
-        output_user_info(user_info, django=django)
-    except Exception as e:
-        raise CliError(f"Failed to display user info for {args.user!r}: {e}") from e
+    user_info = get_client().meta.userinfo.get(required=True, user=user)
+    output_user_info(user_info, django=django)
 
 
 @command_registry.register_command(
