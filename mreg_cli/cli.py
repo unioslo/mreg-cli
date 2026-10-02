@@ -195,9 +195,9 @@ class Command(Completer):
             OutputManager().recording_stop()
             sys.exit(0)
         except Exception as exc:
-            if isinstance(exc, mreg_api.exceptions.APIError):
+            if isinstance(exc, mreg_api.exceptions.ResponseError):
                 # Retry command after re-authenticating if we got a 401 Unauthorized
-                if exc.response and exc.response.status_code == 401 and interactive and not retry:
+                if exc.response.status_code == 401 and interactive and not retry:
                     with handle_exceptions(json=False):
                         prompt_for_password_and_try_update_token()
                     return self.parse(command, interactive=interactive, retry=True)

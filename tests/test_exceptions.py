@@ -17,7 +17,7 @@ def _get_warning_exceptions() -> list[ParameterSet]:
     for obj in mreg_api.exceptions.__dict__.values():
         if (
             isinstance(obj, type)
-            and issubclass(obj, mreg_api.exceptions.APIError)
+            and issubclass(obj, mreg_api.exceptions.ResponseError)
             and obj not in _MREG_API_ERROR_EXCEPTIONS
         ):
             params.append(
