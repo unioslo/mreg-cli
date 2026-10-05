@@ -64,8 +64,6 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
     except mreg_api.exceptions.InvalidAuthTokenError as e:
         client.unset_token()  # NOTE: might be redundant
         logger.info("Stored token for %s @ %s is invalid", user, url)
-        if not e.response:  # Invalid auth should always have a response
-            raise e
         if e.response.status_code == 401:
             if fail_without_token:
                 raise SystemExit("Token only login failed.") from None
@@ -119,7 +117,7 @@ def auth_and_update_token(username: str, password: str) -> None:
     except httpx.HTTPError as e:
         raise CliError(str(e)) from e  # should be unreachable
     except mreg_api.exceptions.LoginFailedError as e:
-        raise LoginFailedError(e.details) from e
+        raise LoginFailedError(e.error_message) from e
     else:
         TokenFile.set_entry(username, base_url, token)
         logger.info("Token updated for %s @ %s", username, tokenurl)
