@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+## [1.12.0](https://github.com/unioslo/mreg-cli/releases/tag/1.12.0) - 2026-10-05
+
+### Changed
+
+- Mreg API errors are now rendered as human-readable messages instead of formatted JSON. This is a result of improved exception parsing and handling in `mreg-api` 0.6.0.
+- Large internal refactor of exceptions, drastically reducing the number of exception classes. Should have no effect on the user experience.
+
 ## [1.11.0](https://github.com/unioslo/mreg-cli/releases/tag/1.11.0) - 2026-09-09
 
 ### Changed
