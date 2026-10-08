@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+## [1.12.1](https://github.com/unioslo/mreg-cli/releases/tag/1.12.1) - 2026-10-08
+
+### Changes
+
+- Updated `mreg-api` dependency to 0.6.1. This removes some custom error handling code for M2M errors (hostgroups->owners,hosts; roles->atoms,hosts) and instead uses the server's own error messages.
+
+### Changed
+
 ## [1.12.0](https://github.com/unioslo/mreg-cli/releases/tag/1.12.0) - 2026-10-05
 
 ### Changed
