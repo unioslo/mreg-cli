@@ -14,6 +14,8 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
 from pydantic import ValidationError
 
+from mreg_cli.diagnostics import Diagnostic
+
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=Exception)
@@ -25,6 +27,16 @@ class CliExit(Exception):
 
 class CliException(Exception):
     """Base exception class for the CLI."""
+
+    def __init__(self, *args: object, diagnostic: Diagnostic | None = None) -> None:
+        """Initialize the exception with an optional diagnostic.
+
+        :param args: Message arguments, passed on to the base exception.
+        :param diagnostic: Optional diagnostic tied to a span of the issued
+            command; rendered centrally when the exception is displayed.
+        """
+        super().__init__(*args)
+        self.diagnostic = diagnostic
 
 
 class CliError(CliException):
@@ -106,6 +118,30 @@ class TooManyResults(CliWarning):
     """API returned too many results."""
 
 
+class ArgumentSplitBySeparator(CliWarning):
+    """An argument containing an unquoted '|' was split into a command part and a filter part."""
+
+    def __init__(self, diagnostic: Diagnostic) -> None:
+        """Initialize the warning with a diagnostic.
+
+        :param diagnostic: The diagnostic to carry; its message becomes the
+            exception message.
+        """
+        super().__init__(diagnostic.message, diagnostic=diagnostic)
+
+
+class InvalidFilterRegex(CliWarning):
+    """The regular expression used as an output filter failed to compile."""
+
+    def __init__(self, diagnostic: Diagnostic) -> None:
+        """Initialize the warning with a diagnostic.
+
+        :param diagnostic: The diagnostic to carry; its message becomes the
+            exception message.
+        """
+        super().__init__(diagnostic.message, diagnostic=diagnostic)
+
+
 # FIXME: Inconsistent handling of HTTP errors in the original CLI implementation
 #        DELETE errors were considered errors, while other HTTP errors were
 #        considered warnings.
@@ -145,6 +181,21 @@ def get_exception_message(exc: Exception, *, json: bool = False) -> str:
     return str(exc)
 
 
+def get_exception_diagnostic(exc: Exception) -> Diagnostic | None:
+    """Get the diagnostic carried by an exception, if any.
+
+    :param exc: The exception to inspect.
+    :returns: The diagnostic if present, otherwise None.
+    """
+    diag = getattr(exc, "diagnostic", None)
+    if not diag:
+        return None
+    if not isinstance(diag, Diagnostic):
+        logger.warning("Exception has a 'diagnostic' attribute that is not a Diagnostic instance.")
+        return None
+    return diag
+
+
 class ExceptionHandler:
     """Handler for exceptions from mreg_cli and mreg_api.
 
@@ -158,6 +209,7 @@ class ExceptionHandler:
         is_error: True if the exception is non-recoverable (displayed in red).
         is_validation_error: True if the exception is a ValidationError.
         message: The plain text message from the exception.
+        diagnostic: The diagnostic carried by the exception, if any.
         formatted_message: HTML-formatted message for prompt_toolkit display.
 
     """
@@ -178,6 +230,7 @@ class ExceptionHandler:
 
         # Precompute messages
         self.message = get_exception_message(self.exception, json=self._json)
+        self.diagnostic = get_exception_diagnostic(self.exception)
         self.formatted_message = self.get_formatted_message()
 
     def _transform_exception(self, exc: Exception) -> Exception:
@@ -192,8 +245,14 @@ class ExceptionHandler:
         """Get the HTML-formatted message for prompt_toolkit display.
 
         Errors are formatted with red text, warnings with italics.
+        Exceptions carrying a diagnostic are rendered from the diagnostic's
+        full message (if it exists), otherwise the plain exception message is used.
         """
-        msg = html_escape(self.message)
+        if self.diagnostic is not None and (diag := self.diagnostic.render()):
+            msg = diag
+        else:
+            msg = self.message
+        msg = html_escape(msg)
 
         # Classify by severity
         if self.is_error:

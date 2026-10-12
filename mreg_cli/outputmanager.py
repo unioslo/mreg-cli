@@ -21,8 +21,12 @@ from urllib.parse import urlencode, urlparse
 import httpx
 from pydantic import BaseModel
 
-from mreg_cli.errorbuilder import build_error_message
-from mreg_cli.exceptions import CliError, FileError
+from mreg_cli.diagnostics import (
+    argument_split_by_separator,
+    invalid_filter_regex,
+    is_standalone_separator,
+)
+from mreg_cli.exceptions import ArgumentSplitBySeparator, FileError, InvalidFilterRegex
 from mreg_cli.types import Json, JsonMapping, RecordingEntry, TimeInfo
 
 if TYPE_CHECKING:
@@ -323,7 +327,9 @@ class OutputManager:
         Also records the command if recording is active.
 
         :param command: The command to add.
-        :raises CliError: If the command is invalid.
+        :raises InvalidFilterRegex: If the filter's regular expression fails to compile.
+        :raises ArgumentSplitBySeparator: If an unquoted '|' in an argument was
+            mistaken for the filter separator.
         :return: The cleaned command, devoid of filters and other noise.
         """
         logger.debug(f"From command: {command}")
@@ -383,7 +389,9 @@ class OutputManager:
         splitting.
 
         :param command: The command to parse for the filter.
-        :raises CliError: If the filter is invalid.
+        :raises InvalidFilterRegex: If the filter's regular expression fails to compile.
+        :raises ArgumentSplitBySeparator: If an unquoted '|' in an argument was
+            mistaken for the filter separator.
         :return: The command, the filter, and whether it is a negated filter.
         """
         negate = False
@@ -404,9 +412,13 @@ class OutputManager:
                 try:
                     filter_re = re.compile(filter_str)
                 except re.error as exc:
-                    base_msg = f"Unable to compile regex '{filter_str}'"
-                    msg = build_error_message(command_issued, base_msg)
-                    raise CliError(msg) from exc
+                    if is_standalone_separator(command_issued, split_index):
+                        raise InvalidFilterRegex(
+                            invalid_filter_regex(command_issued, split_index, filter_str, exc)
+                        ) from exc
+                    raise ArgumentSplitBySeparator(
+                        argument_split_by_separator(command_issued, split_index, filter_str)
+                    ) from exc
 
         return (command, filter_re, negate)
 
