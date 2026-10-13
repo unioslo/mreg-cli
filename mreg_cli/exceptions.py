@@ -181,19 +181,15 @@ def get_exception_message(exc: Exception, *, json: bool = False) -> str:
     return str(exc)
 
 
-def get_exception_diagnostic(exc: Exception) -> Diagnostic | None:
+def get_exception_diagnostic(exc: CliException | Exception) -> Diagnostic | None:
     """Get the diagnostic carried by an exception, if any.
 
     :param exc: The exception to inspect.
     :returns: The diagnostic if present, otherwise None.
     """
-    diag = getattr(exc, "diagnostic", None)
-    if not diag:
-        return None
-    if not isinstance(diag, Diagnostic):
-        logger.warning("Exception has a 'diagnostic' attribute that is not a Diagnostic instance.")
-        return None
-    return diag
+    if isinstance(exc, CliException):
+        return exc.diagnostic
+    return None
 
 
 class ExceptionHandler:
