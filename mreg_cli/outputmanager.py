@@ -379,9 +379,7 @@ class OutputManager:
         """
         return find_char_outside_quotes(command, "|", True)
 
-    # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
-    # don't have that type. So we use Any instead.
-    def get_filter(self, command: str) -> tuple[str, Any, bool]:
+    def get_filter(self, command: str) -> tuple[str, re.Pattern[str] | None, bool]:
         """Return the filter for the output.
 
         Parses the command string and extracts a filter if present, taking into
@@ -412,10 +410,12 @@ class OutputManager:
                 try:
                     filter_re = re.compile(filter_str)
                 except re.error as exc:
+                    # Invalid regex following filter separator `|`
                     if is_standalone_separator(command_issued, split_index):
                         raise InvalidFilterRegex(
                             invalid_filter_regex(command_issued, split_index, filter_str, exc)
                         ) from exc
+                    # Filter separator `|` used as part of regex pattern
                     raise ArgumentSplitBySeparator(
                         argument_split_by_separator(command_issued, split_index, filter_str)
                     ) from exc

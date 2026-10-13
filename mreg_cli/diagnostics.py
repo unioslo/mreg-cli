@@ -121,10 +121,7 @@ def word_span(command: str, index: int) -> tuple[int, int]:
 def tail_span(command: str, split_index: int) -> tuple[int, int]:
     """Get the span of the filter that follows the '|' separator.
 
-    The span covers the stripped remainder after the separator, including any
-    internal spaces. Mirroring how `OutputManager.get_filter` extracts the
-    filter, an optional leading negation marker ('!') is skipped, so the span
-    is by construction exactly what `get_filter` tried to compile.
+    Optional leading negation marker ('!') is skipped.
 
     :param str command: The command to inspect.
     :param int split_index: The index of the '|' separator in the command.
@@ -171,7 +168,7 @@ def tail_span(command: str, split_index: int) -> tuple[int, int]:
 def invalid_filter_regex(
     command: str, split_index: int, filter_str: str, error: re.error
 ) -> Diagnostic:
-    """For a standalone '|' separator: the user intentionally filtered, and the regex is invalid.
+    """Create a diagnostic for an invalid regex following a filter separator (`|`).
 
     :param str command: The command the filter was part of.
     :param int split_index: The index of the '|' separator in the command.
@@ -189,15 +186,11 @@ def invalid_filter_regex(
 
 
 def argument_split_by_separator(command: str, split_index: int, filter_str: str) -> Diagnostic:
-    """For a '|' embedded in an argument word: the split broke the argument.
-
-    Quoting the argument keeps it intact. The 'regex' in the headline is a
-    fragment the user never wrote, so the compile error is deliberately omitted
-    from the headline.
+    """Create a diagnostic for an unquoted argument containing a filter separator (`|`).
 
     :param str command: The command that was split.
     :param int split_index: The index of the '|' separator in the command.
-    :param str filter_str: The filter string that failed to compile.
+    :param str filter_str: The substring of the command following the '|' separator.
 
     :returns: A diagnostic pointing at the argument word containing the '|'.
     """

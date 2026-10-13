@@ -66,7 +66,7 @@ def test_argument_split_by_separator_factory() -> None:
 
 
 def test_render_invalid_filter_regex() -> None:
-    """Golden test: rendered message for an invalid standalone filter."""
+    """Test underlining an invalid regex following a filter separator."""
     diag = invalid_filter_regex(
         COMMAND_WITH_STANDALONE_FILTER, 20, "*dbora*", _compile_error("*dbora*")
     )
@@ -79,7 +79,7 @@ policy list_atoms * | *dbora*
 
 
 def test_render_argument_split_by_separator() -> None:
-    """Golden test: rendered message for an embedded separator, byte-identical to the old builder."""
+    """Test underlining an unquoted command argument unintentionally split by a filter separator `|`."""
     diag = argument_split_by_separator(
         COMMAND_WITH_EMBEDDED_SEPARATOR, 53, EMBEDDED_SEPARATOR_FILTER
     )
