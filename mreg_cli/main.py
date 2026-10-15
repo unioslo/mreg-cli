@@ -6,6 +6,7 @@ import argparse
 import functools
 import logging
 
+from mreg_api.exceptions import ResponseError
 from prompt_toolkit.shortcuts import CompleteStyle, PromptSession
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -14,7 +15,7 @@ from mreg_cli.__about__ import __version__
 from mreg_cli.cli import cli, get_cli_history, source
 from mreg_cli.client import init_client
 from mreg_cli.config import MregCliConfig
-from mreg_cli.exceptions import CliException, LoginFailedError, handle_exception
+from mreg_cli.exceptions import CliException, handle_exception
 from mreg_cli.log import MregCliLogger
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.prompt import get_prompt_message
@@ -189,8 +190,8 @@ def main():
             config.url,
             fail_without_token=config.token_only,
         )
-    except (EOFError, KeyboardInterrupt, LoginFailedError) as e:
-        if isinstance(e, LoginFailedError):
+    except (EOFError, KeyboardInterrupt, ResponseError) as e:
+        if isinstance(e, ResponseError):
             handle_exception(e)
         else:
             print(e)
