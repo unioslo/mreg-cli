@@ -9,14 +9,17 @@ from httpx import Request, Response
 from inline_snapshot import snapshot
 from mreg_api.exceptions import (
     APIError,
-    DeleteError,
-    GetError,
+    BadRequestError,
+    ClientError,
+    ConflictError,
+    ForbiddenError,
     HTTPStatusError,
     InvalidAuthTokenError,
     LoginFailedError,
-    PatchError,
-    PostError,
+    NotFoundError,
     ResponseError,
+    ServerError,
+    UnauthorizedError,
     UnexpectedDataError,
     UnexpectedResponseError,
 )
@@ -33,6 +36,9 @@ from mreg_cli.exceptions import (
     handle_exception,
 )
 from tests.utils import normalize_line_endings
+
+# We test some deprecated exceptions in this module. Suppress all DeprecationWarnings.
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 
 def _get_responseerror_warnings_params() -> list[ParameterSet]:
@@ -108,7 +114,7 @@ def _instantiate_response_error(e: type[ErrorT], message: str, method: str = "HE
 def test_responseerror_errors_snapshot() -> None:
     """Test snapshot of ResponseError errors."""
     exceptions = _get_responseerror_errors()
-    assert exceptions == snapshot([DeleteError])
+    assert exceptions == snapshot([])
 
 
 def test_responseerror_warnings_snapshot() -> None:
@@ -119,13 +125,17 @@ def test_responseerror_warnings_snapshot() -> None:
             ResponseError,
             APIError,
             HTTPStatusError,
-            PostError,
-            PatchError,
-            GetError,
-            UnexpectedResponseError,
-            UnexpectedDataError,
+            ClientError,
+            ServerError,
+            BadRequestError,
+            UnauthorizedError,
+            ForbiddenError,
+            NotFoundError,
+            ConflictError,
             LoginFailedError,
             InvalidAuthTokenError,
+            UnexpectedResponseError,
+            UnexpectedDataError,
         ]
     )
 
@@ -261,7 +271,7 @@ ERROR: Failed to validate Host
     assert err == ""
 
 
-def test_clierror_handling(
+def test_handle_exception_clierror(
     caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Test handling of mreg_cli.exceptions.CliError."""
@@ -280,7 +290,7 @@ def test_clierror_handling(
     assert err == snapshot("")
 
 
-def test_cliwarning_handling(
+def test_handle_exception_cliwarning(
     caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Test handling of mreg_cli.exceptions.CliWarning."""
