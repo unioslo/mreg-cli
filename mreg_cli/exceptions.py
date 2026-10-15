@@ -110,19 +110,21 @@ class TooManyResults(CliWarning):
 #        DELETE errors were considered errors, while other HTTP errors were
 #        considered warnings.
 _MREG_API_ERROR_EXCEPTIONS = (
-    mreg_api.exceptions.DeleteError,
     mreg_api.exceptions.InternalError,
     mreg_api.exceptions.MregValidationError,
 )
 
 
-def is_error(exc: Exception) -> bool:
+def is_error(exc: BaseException) -> bool:
     """Determine if an exception should produce an error or warning."""
     # mreg_cli errors
     if isinstance(exc, CliError):
         return True
     elif isinstance(exc, CliWarning):
         return False
+    elif isinstance(exc, mreg_api.exceptions.ResponseError):
+        if exc.response.request.method == "DELETE":  # maintain legacy behavior
+            return True
 
     # mreg_api exceptions that should be treated as errors
     if isinstance(exc, _MREG_API_ERROR_EXCEPTIONS):
