@@ -117,7 +117,9 @@ def auth_and_update_token(username: str, password: str) -> None:
     except httpx.HTTPError as e:
         raise CliError(str(e)) from e  # should be unreachable
     except mreg_api.exceptions.LoginFailedError as e:
+        # wrap the server API error in a CliError to classify as error + hide URL & drf details
         raise LoginFailedError(e.error_message) from e
+    # Other MREG API exceptions fall through
     else:
         TokenFile.set_entry(username, base_url, token)
         logger.info("Token updated for %s @ %s", username, tokenurl)

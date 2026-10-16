@@ -9898,10 +9898,10 @@
     "command_filter_negate": false,
     "command_issued": "host add somehost -ip 10.0.1.20 -contact support@example.org -force # should fail because ip is in excluded range",
     "ok": [],
-    "warning": [
+    "warning": [],
+    "error": [
       "400 Bad Request: POST http://127.0.0.1:8000/api/v1/hosts/\n1 error:\n  non_field_errors: IP 10.0.1.20 in an excluded range: 10.0.1.0/24 -> [10.0.1.20 -> [10.0.1.30]  (invalid)"
     ],
-    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -9945,18 +9945,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2026-09-23T14:32:35.657121+02:00",
-                "updated_at": "2026-09-23T14:32:35.657200+02:00",
+                "created_at": "2026-10-16T12:53:57.454405+02:00",
+                "updated_at": "2026-10-16T12:53:57.454474+02:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2026-09-23T14:32:33.995871+02:00",
-            "updated_at": "2026-09-23T14:32:41.586500+02:00",
+            "created_at": "2026-10-16T12:53:57.061219+02:00",
+            "updated_at": "2026-10-16T12:54:02.548724+02:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2026-09-23T14:32:37.698376+02:00",
+            "serialno_updated_at": "2026-10-16T12:53:57.561895+02:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -9974,8 +9974,8 @@
         "response": {
           "excluded_ranges": [
             {
-              "created_at": "2026-09-23T14:32:42.228959+02:00",
-              "updated_at": "2026-09-23T14:32:42.229024+02:00",
+              "created_at": "2026-10-16T12:54:03.158958+02:00",
+              "updated_at": "2026-10-16T12:54:03.159059+02:00",
               "start_ip": "10.0.1.20",
               "end_ip": "10.0.1.30",
               "network": 3
@@ -9983,8 +9983,8 @@
           ],
           "policy": null,
           "communities": [],
-          "created_at": "2026-09-23T14:32:41.879909+02:00",
-          "updated_at": "2026-09-23T14:32:41.990455+02:00",
+          "created_at": "2026-10-16T12:54:02.849972+02:00",
+          "updated_at": "2026-10-16T12:54:02.949770+02:00",
           "network": "10.0.1.0/24",
           "description": "Frozzzen",
           "vlan": null,
@@ -11176,10 +11176,10 @@
     "command_filter_negate": false,
     "command_issued": "host add otherhost -ip 10.0.1.20 -contact support@example.org  # fails because reserved range",
     "ok": [],
-    "warning": [
+    "warning": [],
+    "error": [
       "400 Bad Request: POST http://127.0.0.1:8000/api/v1/hosts/\n1 error:\n  non_field_errors: IP 10.0.1.20 in an excluded range: 10.0.1.0/24 -> [10.0.1.20 -> [10.0.1.30]  (invalid)"
     ],
-    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -11223,18 +11223,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2026-09-23T14:32:35.657121+02:00",
-                "updated_at": "2026-09-23T14:32:35.657200+02:00",
+                "created_at": "2026-10-16T12:53:57.454405+02:00",
+                "updated_at": "2026-10-16T12:53:57.454474+02:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2026-09-23T14:32:33.995871+02:00",
-            "updated_at": "2026-09-23T14:32:46.806823+02:00",
+            "created_at": "2026-10-16T12:53:57.061219+02:00",
+            "updated_at": "2026-10-16T12:54:06.763646+02:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2026-09-23T14:32:37.698376+02:00",
+            "serialno_updated_at": "2026-10-16T12:53:57.561895+02:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -11252,8 +11252,8 @@
         "response": {
           "excluded_ranges": [
             {
-              "created_at": "2026-09-23T14:32:42.228959+02:00",
-              "updated_at": "2026-09-23T14:32:42.229024+02:00",
+              "created_at": "2026-10-16T12:54:03.158958+02:00",
+              "updated_at": "2026-10-16T12:54:03.159059+02:00",
               "start_ip": "10.0.1.20",
               "end_ip": "10.0.1.30",
               "network": 3
@@ -11261,8 +11261,8 @@
           ],
           "policy": null,
           "communities": [],
-          "created_at": "2026-09-23T14:32:41.879909+02:00",
-          "updated_at": "2026-09-23T14:32:46.986540+02:00",
+          "created_at": "2026-10-16T12:54:02.849972+02:00",
+          "updated_at": "2026-10-16T12:54:06.888787+02:00",
           "network": "10.0.1.0/24",
           "description": "Frozen but has one host",
           "vlan": 1234,
@@ -11862,10 +11862,10 @@
     "command_filter_negate": false,
     "command_issued": "host add somehost -ip 2001:db8::20 -contact support@example.org -force # should fail, because the address is in a reserved range",
     "ok": [],
-    "warning": [
+    "warning": [],
+    "error": [
       "400 Bad Request: POST http://127.0.0.1:8000/api/v1/hosts/\n1 error:\n  non_field_errors: IP 2001:db8::20 in an excluded range: 2001:db8::/64 -> [2001:db8::20 -> [2001:db8::30]  (invalid)"
     ],
-    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -11909,18 +11909,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2026-09-23T14:32:35.657121+02:00",
-                "updated_at": "2026-09-23T14:32:35.657200+02:00",
+                "created_at": "2026-10-16T12:53:57.454405+02:00",
+                "updated_at": "2026-10-16T12:53:57.454474+02:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2026-09-23T14:32:33.995871+02:00",
-            "updated_at": "2026-09-23T14:32:49.223843+02:00",
+            "created_at": "2026-10-16T12:53:57.061219+02:00",
+            "updated_at": "2026-10-16T12:54:08.066493+02:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2026-09-23T14:32:37.698376+02:00",
+            "serialno_updated_at": "2026-10-16T12:53:57.561895+02:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -11938,8 +11938,8 @@
         "response": {
           "excluded_ranges": [
             {
-              "created_at": "2026-09-23T14:32:49.735938+02:00",
-              "updated_at": "2026-09-23T14:32:49.736006+02:00",
+              "created_at": "2026-10-16T12:54:08.538757+02:00",
+              "updated_at": "2026-10-16T12:54:08.538830+02:00",
               "start_ip": "2001:db8::20",
               "end_ip": "2001:db8::30",
               "network": 4
@@ -11947,8 +11947,8 @@
           ],
           "policy": null,
           "communities": [],
-          "created_at": "2026-09-23T14:32:49.397695+02:00",
-          "updated_at": "2026-09-23T14:32:49.502026+02:00",
+          "created_at": "2026-10-16T12:54:08.253602+02:00",
+          "updated_at": "2026-10-16T12:54:08.349296+02:00",
           "network": "2001:db8::/64",
           "description": "Lorem ipsum dolor sit amet",
           "vlan": null,
@@ -22009,10 +22009,10 @@
     "command_filter_negate": false,
     "command_issued": "host set_contact bar \"I'm the contact\"   # fails because invalid email address",
     "ok": [],
-    "warning": [
+    "warning": [],
+    "error": [
       "400 Bad Request: PATCH http://127.0.0.1:8000/api/v1/hosts/bar.example.org\n1 error:\n  contacts: Invalid email address(es): I'm the contact  (invalid)"
     ],
-    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -22024,8 +22024,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2026-09-24T12:38:16.662475+02:00",
-              "updated_at": "2026-09-24T12:38:16.872318+02:00",
+              "created_at": "2026-10-16T12:54:34.323181+02:00",
+              "updated_at": "2026-10-16T12:54:34.531313+02:00",
               "ipaddress": "10.0.0.10",
               "host": 19
             }
@@ -22034,8 +22034,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-09-24T12:38:16.484425+02:00",
-              "updated_at": "2026-09-24T12:38:16.484490+02:00",
+              "created_at": "2026-10-16T12:54:34.189966+02:00",
+              "updated_at": "2026-10-16T12:54:34.190031+02:00",
               "txt": "v=spf1 -all",
               "host": 19
             }
@@ -22053,12 +22053,12 @@
           "contacts": [
             {
               "email": "hi@ho.com",
-              "created_at": "2026-09-24T12:38:16.505257+02:00",
-              "updated_at": "2026-09-24T12:38:16.505343+02:00"
+              "created_at": "2026-10-16T12:54:34.213061+02:00",
+              "updated_at": "2026-10-16T12:54:34.213129+02:00"
             }
           ],
-          "created_at": "2026-09-24T12:38:16.471534+02:00",
-          "updated_at": "2026-09-24T12:38:20.920521+02:00",
+          "created_at": "2026-10-16T12:54:34.177486+02:00",
+          "updated_at": "2026-10-16T12:54:37.163243+02:00",
           "name": "bar.example.org",
           "ttl": null,
           "comment": "This is the comment",
@@ -26113,10 +26113,10 @@
     "command_filter_negate": false,
     "command_issued": "host srv_add -name \"whatever\" -priority 1 -weight 1 -port 80 -host baz  # doesn't work",
     "ok": [],
-    "warning": [
+    "warning": [],
+    "error": [
       "400 Bad Request: POST http://127.0.0.1:8000/api/v1/srvs/\n1 error:\n  name: Must match: ^_[a-z0-9]+(([a-z0-9][_-]?)+[a-z0-9]+)?._(tcp|tls|udp)\\.  (invalid)"
     ],
-    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -26128,15 +26128,15 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2026-09-24T12:38:16.662475+02:00",
-              "updated_at": "2026-09-24T12:38:25.375340+02:00",
+              "created_at": "2026-10-16T12:54:34.323181+02:00",
+              "updated_at": "2026-10-16T12:54:40.816516+02:00",
               "ipaddress": "10.0.0.10",
               "host": 20
             },
             {
               "macaddress": "11:22:33:44:55:67",
-              "created_at": "2026-09-24T12:38:26.218910+02:00",
-              "updated_at": "2026-09-24T12:38:29.491713+02:00",
+              "created_at": "2026-10-16T12:54:41.501492+02:00",
+              "updated_at": "2026-10-16T12:54:43.873479+02:00",
               "ipaddress": "2001:db8::14",
               "host": 20
             }
@@ -26145,8 +26145,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-09-24T12:38:24.816917+02:00",
-              "updated_at": "2026-09-24T12:38:24.816973+02:00",
+              "created_at": "2026-10-16T12:54:40.368541+02:00",
+              "updated_at": "2026-10-16T12:54:40.368622+02:00",
               "txt": "v=spf1 -all",
               "host": 20
             }
@@ -26162,8 +26162,8 @@
           "bacnetid": null,
           "communities": [],
           "contacts": [],
-          "created_at": "2026-09-24T12:38:24.804365+02:00",
-          "updated_at": "2026-09-24T12:38:24.804423+02:00",
+          "created_at": "2026-10-16T12:54:40.355234+02:00",
+          "updated_at": "2026-10-16T12:54:40.355299+02:00",
           "name": "baz.example.org",
           "ttl": null,
           "comment": "",
@@ -26180,18 +26180,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2026-09-24T12:37:29.215087+02:00",
-                "updated_at": "2026-09-24T12:37:29.215169+02:00",
+                "created_at": "2026-10-16T12:53:57.454405+02:00",
+                "updated_at": "2026-10-16T12:53:57.454474+02:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2026-09-24T12:37:28.770845+02:00",
-            "updated_at": "2026-09-24T12:38:36.267338+02:00",
+            "created_at": "2026-10-16T12:53:57.061219+02:00",
+            "updated_at": "2026-10-16T12:54:49.256682+02:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2026-09-24T12:37:32.222443+02:00",
+            "serialno_updated_at": "2026-10-16T12:53:57.561895+02:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -26210,18 +26210,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2026-09-24T12:37:29.215087+02:00",
-                "updated_at": "2026-09-24T12:37:29.215169+02:00",
+                "created_at": "2026-10-16T12:53:57.454405+02:00",
+                "updated_at": "2026-10-16T12:53:57.454474+02:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2026-09-24T12:37:28.770845+02:00",
-            "updated_at": "2026-09-24T12:38:36.267338+02:00",
+            "created_at": "2026-10-16T12:53:57.061219+02:00",
+            "updated_at": "2026-10-16T12:54:49.256682+02:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2026-09-24T12:37:32.222443+02:00",
+            "serialno_updated_at": "2026-10-16T12:53:57.561895+02:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -36964,10 +36964,10 @@
     "command_filter_negate": false,
     "command_issued": "network community_host_add tinierhost guests",
     "ok": [],
-    "warning": [
+    "warning": [],
+    "error": [
       "406 Not Acceptable: POST http://127.0.0.1:8000/api/v1/networks/10.0.2.0/28/communities/1/hosts/\n1 error:\n  The IP must have a MAC address to bind it to a community.  (not_acceptable)"
     ],
-    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -36979,8 +36979,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2026-09-24T12:39:13.141038+02:00",
-              "updated_at": "2026-09-24T12:39:13.141093+02:00",
+              "created_at": "2026-10-16T12:55:17.277750+02:00",
+              "updated_at": "2026-10-16T12:55:17.277816+02:00",
               "ipaddress": "10.0.2.5",
               "host": 31
             }
@@ -36989,8 +36989,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-09-24T12:39:12.984388+02:00",
-              "updated_at": "2026-09-24T12:39:12.984445+02:00",
+              "created_at": "2026-10-16T12:55:17.136938+02:00",
+              "updated_at": "2026-10-16T12:55:17.136998+02:00",
               "txt": "v=spf1 -all",
               "host": 31
             }
@@ -37008,12 +37008,12 @@
           "contacts": [
             {
               "email": "tinierhost@example.org",
-              "created_at": "2026-09-24T12:39:13.009905+02:00",
-              "updated_at": "2026-09-24T12:39:13.009988+02:00"
+              "created_at": "2026-10-16T12:55:17.156360+02:00",
+              "updated_at": "2026-10-16T12:55:17.156429+02:00"
             }
           ],
-          "created_at": "2026-09-24T12:39:12.969826+02:00",
-          "updated_at": "2026-09-24T12:39:12.969886+02:00",
+          "created_at": "2026-10-16T12:55:17.125199+02:00",
+          "updated_at": "2026-10-16T12:55:17.125265+02:00",
           "name": "tinierhost.example.org",
           "ttl": null,
           "comment": "",

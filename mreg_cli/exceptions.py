@@ -106,10 +106,8 @@ class TooManyResults(CliWarning):
     """API returned too many results."""
 
 
-# FIXME: Inconsistent handling of HTTP errors in the original CLI implementation
-#        DELETE errors were considered errors, while other HTTP errors were
-#        considered warnings.
 _MREG_API_ERROR_EXCEPTIONS = (
+    mreg_api.exceptions.ResponseError,
     mreg_api.exceptions.InternalError,
     mreg_api.exceptions.MregValidationError,
 )
@@ -122,18 +120,14 @@ def is_error(exc: BaseException) -> bool:
         return True
     elif isinstance(exc, CliWarning):
         return False
-    elif isinstance(exc, mreg_api.exceptions.ResponseError):
-        if exc.response.request.method == "DELETE":  # maintain legacy behavior
-            return True
-
     # mreg_api exceptions that should be treated as errors
-    if isinstance(exc, _MREG_API_ERROR_EXCEPTIONS):
+    elif isinstance(exc, _MREG_API_ERROR_EXCEPTIONS):
         return True
 
     return False
 
 
-def get_exception_message(exc: Exception, *, json: bool = False) -> str:
+def get_exception_message(exc: BaseException, *, json: bool = False) -> str:
     """Get the plain text message from an exception.
 
     :param exc: The exception to get the message from.
@@ -161,14 +155,15 @@ class ExceptionHandler:
         is_validation_error: True if the exception is a ValidationError.
         message: The plain text message from the exception.
         formatted_message: HTML-formatted message for prompt_toolkit display.
+        json: Whether to display mreg_api exceptions as their original JSON representation.
 
     """
 
-    def __init__(self, exc: Exception, *, json: bool = False) -> None:
+    def __init__(self, exc: BaseException, *, json: bool = False) -> None:
         """Initialize the handler with an exception.
 
         :param exc: The exception to handle.
-        :param json: Whether to include JSON details for mreg_api exceptions.
+        :param json: Display mreg_api exceptions as their original JSON representation.
         """
         self.original_exception = exc
         self.exception = self._transform_exception(exc)
@@ -182,7 +177,7 @@ class ExceptionHandler:
         self.message = get_exception_message(self.exception, json=self._json)
         self.formatted_message = self.get_formatted_message()
 
-    def _transform_exception(self, exc: Exception) -> Exception:
+    def _transform_exception(self, exc: BaseException) -> BaseException:
         """Transform an exception into an appropriate mreg_cli exception if needed."""
         if isinstance(exc, ValidationError):
             return mreg_api.exceptions.MregValidationError.from_pydantic(exc)
@@ -237,7 +232,7 @@ class ExceptionHandler:
         self.print()
 
 
-def handle_exception(exc: Exception) -> None:
+def handle_exception(exc: BaseException, json: bool = False) -> None:
     """Log and print an exception with appropriate formatting.
 
     This is the main entry point for exception handling.
@@ -246,17 +241,24 @@ def handle_exception(exc: Exception) -> None:
     """
     # TODO: add JSON toggle via config here
     # possibly via verbosity level/debug flag
-    ExceptionHandler(exc).handle()
+    ExceptionHandler(exc, json=json).handle()
 
 
 @contextmanager
-def handle_exceptions(json: bool = False) -> Generator[None, None, None]:
+def handle_and_exit(
+    *exc_cls: type[BaseException], json: bool = False
+) -> Generator[None, None, None]:
     """Context manager to handle exceptions using ExceptionHandler and exit.
 
+    Suppresses traceback and shows a formatted message in the console.
+
+    :param exc_cls: The exception class(es) to handle. Defaults to (Exception,).
     :param json: Whether to include JSON details for mreg_api exceptions.
     """
+    if not exc_cls:
+        exc_cls = (Exception,)
     try:
         yield
-    except Exception as exc:
-        ExceptionHandler(exc, json=json).handle()
+    except exc_cls as exc:
+        handle_exception(exc, json=json)
         sys.exit(1)

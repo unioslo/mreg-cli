@@ -40,7 +40,7 @@ from mreg_cli.commands.zone import ZoneCommands
 from mreg_cli.config import MregCliConfig
 
 # Import other mreg_cli modules
-from mreg_cli.exceptions import CliError, CliExit, CliWarning, handle_exception, handle_exceptions
+from mreg_cli.exceptions import CliError, CliExit, CliWarning, handle_and_exit, handle_exception
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
@@ -198,7 +198,7 @@ class Command(Completer):
             if isinstance(exc, mreg_api.exceptions.ResponseError):
                 # Retry command after re-authenticating if we got a 401 Unauthorized
                 if exc.response.status_code == 401 and interactive and not retry:
-                    with handle_exceptions(json=False):
+                    with handle_and_exit(json=False):
                         prompt_for_password_and_try_update_token()
                     return self.parse(command, interactive=interactive, retry=True)
             handle_exception(exc)
