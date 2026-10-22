@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+### Changed
+
+- Updated `mreg-api` dependency to 0.8.1.
+
+### Fixed
+
+- Dependencies affected by the eMudhra/emSign root cert vulnerabilities.
+
 ## [1.12.2](https://github.com/unioslo/mreg-cli/releases/tag/1.12.2) - 2026-10-16
 
 ### Changed
