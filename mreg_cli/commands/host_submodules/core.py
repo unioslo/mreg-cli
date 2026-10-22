@@ -18,6 +18,7 @@ import re
 from enum import Enum
 from typing import Any, Generic, NamedTuple, Self, TypeVar
 
+from mreg_api.exceptions import EntityError, ResponseError
 from mreg_api.models import (
     CNAME,
     MX,
@@ -33,7 +34,6 @@ from typing_extensions import NotRequired, TypedDict, override
 from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
 from mreg_cli.exceptions import (
-    APIError,
     DeleteError,
     EntityAlreadyExists,
     EntityNotFound,
@@ -169,7 +169,7 @@ def add(args: argparse.Namespace) -> None:
                         raise InvalidIPAddress(
                             f"IP {ipaddr} is a broadcast address, not a host address, must force"
                         )
-            except (EntityNotFound, APIError) as e:
+            except (EntityError, ResponseError) as e:
                 if not force:
                     raise ForceMissing(f"IP {ipaddr} is not in a network, must force") from e
             data["ipaddress"] = str(network_or_ip)

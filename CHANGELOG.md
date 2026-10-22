@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+## [1.12.2](https://github.com/unioslo/mreg-cli/releases/tag/1.12.2) - 2026-10-16
+
+### Changed
+
+- Updated `mreg-api` dependency to 0.8.0.
+
+### Fixed
+
+- Commands that resolve hosts and networks throwing generic "not found" error instead of prompting for re-login on expired token.
+
+## [1.12.1](https://github.com/unioslo/mreg-cli/releases/tag/1.12.1) - 2026-10-08
+
+### Changed
+
+- Updated `mreg-api` dependency to 0.6.1. This removes some custom error handling code for M2M errors (hostgroups->owners,hosts; roles->atoms,hosts) and instead uses the server's own error messages.
+
+## [1.12.0](https://github.com/unioslo/mreg-cli/releases/tag/1.12.0) - 2026-10-05
+
+### Changed
+
+- Mreg API errors are now rendered as human-readable messages instead of formatted JSON. This is a result of improved exception parsing and handling in `mreg-api` 0.6.0.
+- Large internal refactor of exceptions, drastically reducing the number of exception classes. Should have no effect on the user experience.
+
 ## [1.11.0](https://github.com/unioslo/mreg-cli/releases/tag/1.11.0) - 2026-09-09
 
 ### Changed

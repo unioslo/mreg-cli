@@ -125,20 +125,6 @@ This allows uniform handling of exceptions from both `mreg_cli` and `mreg_api`.
 
 ### Exception Classes
 
-Exception classes in `mreg_cli.exceptions` are pure data containers with no output methods:
-
-```text
-CliException (base)
-├── CliError (non-recoverable errors, displayed in red)
-│   ├── CreateError, PatchError, DeleteError, GetError
-│   ├── InternalError, FileError, ValidationError, LoginFailedError
-└── CliWarning (recoverable, displayed in italics)
-    ├── APIError (has response attribute), UnexpectedDataError
-    ├── EntityNotFound, EntityAlreadyExists, MultipleEntitiesFound
-    ├── TooManyResults, NoHistoryFound, ForceMissing
-    └── IPNetworkWarning and subclasses
-```
-
 ### Exception Handling Locations
 
 - `mreg_cli/cli.py` - Main command parsing catches and handles exceptions

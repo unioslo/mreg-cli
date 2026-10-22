@@ -51,7 +51,7 @@ def output_role(role: Role, padding: int = 14) -> None:
     manager.add_line("Atom members:")
     for atom in role.atoms:
         manager.add_formatted_line("", atom, padding)
-    labels = client.role.get_labels(role)
+    labels = client.role.list_labels(role)
     manager.add_line("Labels:")
     for label in labels:
         manager.add_formatted_line("", label.name, padding)

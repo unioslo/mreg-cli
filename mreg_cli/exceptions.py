@@ -42,93 +42,60 @@ class CliWarning(CliException):
     """
 
 
-class CreateError(mreg_api.exceptions.PostError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class CreateError(CliError):
     """Error class for failed creation."""
 
 
-class PatchError(mreg_api.exceptions.PatchError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class PatchError(CliError):
     """Error class for failed patching."""
 
 
-class DeleteError(mreg_api.exceptions.DeleteError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class DeleteError(CliError):
     """Error class for failed deletion."""
 
 
-class GetError(mreg_api.exceptions.GetError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
+class GetError(CliError):
     """Error class for failed retrieval."""
 
 
-class InternalError(mreg_api.exceptions.InternalError, CliError):
+class InternalError(CliError):
     """Error class for internal errors."""
-
-
-class APIError(mreg_api.exceptions.APIError, CliError):  # pyright: ignore[reportUnsafeMultipleInheritance]
-    """Error class for API errors."""
 
 
 class FileError(CliError):
     """Error class for file errors."""
 
 
-### Begin mreg_api wrappers ###
-
-# NOTE: These exceptions currently just wrap mreg_api exceptions,
-#       since we historically used them directly in the CLI.
-#       In the future, we should consider if we want to rename
-#       them to avoid confusion with mreg_api exceptions.
-#       Inheriting from mreg_api allows us to catch them like we did before
-#       we moved API code to mreg_api.
-
-
-class EntityNotFound(mreg_api.exceptions.EntityNotFound):
-    """Warning class for an entity that was not found."""
-
-
-class EntityAlreadyExists(mreg_api.exceptions.EntityAlreadyExists):
-    """Warning class for an entity that already exists."""
-
-
-class EntityOwnershipMismatch(mreg_api.exceptions.EntityOwnershipMismatch):
-    """Warning class for an entity that already exists but owned by someone else."""
-
-
-class MultipleEntitiesFound(mreg_api.exceptions.MultipleEntitiesFound):
-    """Multiple entities found when only one was expected."""
-
-
-class InputFailure(mreg_api.exceptions.InputFailure):
+class InputFailure(CliWarning):
     """Warning class for input failure."""
 
 
-class ForceMissing(mreg_api.exceptions.ForceMissing):
+class ForceMissing(CliWarning):
     """Warning class for missing force flag."""
 
 
-class IPNetworkWarning(mreg_api.exceptions.IPNetworkError):
-    """Warning class for IP network/address warnings."""
+class EntityNotFound(CliWarning):
+    """Warning class for an entity that was not found."""
 
 
-class InvalidIPAddress(mreg_api.exceptions.InvalidIPAddress):
-    """Warning class for an entity that is not an IP address."""
+class EntityAlreadyExists(CliWarning):
+    """Warning class for an entity that already exists."""
 
 
-class InvalidIPv4Address(mreg_api.exceptions.InvalidIPv4Address):
-    """Warning class for an entity that is not an IPv4 address."""
+class EntityOwnershipMismatch(CliWarning):
+    """Warning class for an entity that already exists but owned by someone else."""
 
 
-class InvalidIPv6Address(mreg_api.exceptions.InvalidIPv6Address):
-    """Warning class for an entity that is not an IPv6 address."""
+class MultipleEntitiesFound(CliWarning):
+    """Multiple entities found when only one was expected."""
 
 
-class InvalidNetwork(mreg_api.exceptions.InvalidNetwork):
-    """Warning class for an entity that is not a network."""
-
-
-### End mreg_api wrappers ###
-
-
-class NetworkOverlap(IPNetworkWarning):
+class NetworkOverlap(CliWarning):
     """Warning class for a network that overlaps with another network."""
+
+
+class InvalidIPAddress(CliWarning):
+    """Warning class for an entity that is not an IP address."""
 
 
 class LoginFailedError(CliError):
@@ -139,41 +106,35 @@ class TooManyResults(CliWarning):
     """API returned too many results."""
 
 
-# FIXME: Inconsistent handling of HTTP errors in the original CLI implementation
-#        DELETE errors were considered errors, while other HTTP errors were
-#        considered warnings. They should all be considered errors.
-#        This merely makes it more confusing, as we inherit from the original
-#        mreg_api exceptions for our own `GetError`, `CreateError`, etc.
 _MREG_API_ERROR_EXCEPTIONS = (
-    mreg_api.exceptions.DeleteError,
+    mreg_api.exceptions.ResponseError,
     mreg_api.exceptions.InternalError,
     mreg_api.exceptions.MregValidationError,
 )
 
 
-def is_error(exc: Exception) -> bool:
+def is_error(exc: BaseException) -> bool:
     """Determine if an exception should produce an error or warning."""
     # mreg_cli errors
     if isinstance(exc, CliError):
         return True
     elif isinstance(exc, CliWarning):
         return False
-
     # mreg_api exceptions that should be treated as errors
-    if isinstance(exc, _MREG_API_ERROR_EXCEPTIONS):
+    elif isinstance(exc, _MREG_API_ERROR_EXCEPTIONS):
         return True
 
     return False
 
 
-def get_exception_message(exc: Exception, *, json: bool = True) -> str:
+def get_exception_message(exc: BaseException, *, json: bool = False) -> str:
     """Get the plain text message from an exception.
 
     :param exc: The exception to get the message from.
     :param json: Whether to include JSON details for mreg_api exceptions.
     :returns: The plain text message.
     """
-    if isinstance(exc, mreg_api.exceptions.APIError):
+    if isinstance(exc, mreg_api.exceptions.ResponseError):
         return exc.formatted_message(json=json)
     elif isinstance(exc, ValidationError):
         mreg_api.exceptions.MregValidationError.from_pydantic(exc)
@@ -194,14 +155,15 @@ class ExceptionHandler:
         is_validation_error: True if the exception is a ValidationError.
         message: The plain text message from the exception.
         formatted_message: HTML-formatted message for prompt_toolkit display.
+        json: Whether to display mreg_api exceptions as their original JSON representation.
 
     """
 
-    def __init__(self, exc: Exception, *, json: bool = True) -> None:
+    def __init__(self, exc: BaseException, *, json: bool = False) -> None:
         """Initialize the handler with an exception.
 
         :param exc: The exception to handle.
-        :param json: Whether to include JSON details for mreg_api exceptions.
+        :param json: Display mreg_api exceptions as their original JSON representation.
         """
         self.original_exception = exc
         self.exception = self._transform_exception(exc)
@@ -215,7 +177,7 @@ class ExceptionHandler:
         self.message = get_exception_message(self.exception, json=self._json)
         self.formatted_message = self.get_formatted_message()
 
-    def _transform_exception(self, exc: Exception) -> Exception:
+    def _transform_exception(self, exc: BaseException) -> BaseException:
         """Transform an exception into an appropriate mreg_cli exception if needed."""
         if isinstance(exc, ValidationError):
             return mreg_api.exceptions.MregValidationError.from_pydantic(exc)
@@ -270,7 +232,7 @@ class ExceptionHandler:
         self.print()
 
 
-def handle_exception(exc: Exception) -> None:
+def handle_exception(exc: BaseException, json: bool = False) -> None:
     """Log and print an exception with appropriate formatting.
 
     This is the main entry point for exception handling.
@@ -279,17 +241,24 @@ def handle_exception(exc: Exception) -> None:
     """
     # TODO: add JSON toggle via config here
     # possibly via verbosity level/debug flag
-    ExceptionHandler(exc).handle()
+    ExceptionHandler(exc, json=json).handle()
 
 
 @contextmanager
-def handle_exceptions(json: bool = True) -> Generator[None, None, None]:
+def handle_and_exit(
+    *exc_cls: type[BaseException], json: bool = False
+) -> Generator[None, None, None]:
     """Context manager to handle exceptions using ExceptionHandler and exit.
 
+    Suppresses traceback and shows a formatted message in the console.
+
+    :param exc_cls: The exception class(es) to handle. Defaults to (Exception,).
     :param json: Whether to include JSON details for mreg_api exceptions.
     """
+    if not exc_cls:
+        exc_cls = (Exception,)
     try:
         yield
-    except Exception as exc:
-        ExceptionHandler(exc, json=json).handle()
+    except exc_cls as exc:
+        handle_exception(exc, json=json)
         sys.exit(1)

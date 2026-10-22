@@ -6,7 +6,7 @@ import argparse
 import itertools
 from typing import Any
 
-from mreg_api.exceptions import APIError
+from mreg_api.exceptions import ResponseError
 from mreg_api.models import Role
 
 from mreg_cli.client import get_client
@@ -335,8 +335,8 @@ def host_add(args: argparse.Namespace) -> None:
         try:
             client.role.add_host(role, host.name)
             OutputManager().add_ok(f"Added host {host.name} to role {role_name!r}")
-        except APIError as e:
-            if e.response and e.response.status_code == 409:
+        except ResponseError as e:
+            if e.response.status_code == 409:
                 OutputManager().add_line(
                     f"Host {host.name} is already a member of role {role_name!r}"
                 )
