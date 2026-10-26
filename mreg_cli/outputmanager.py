@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator, Literal, overload
 from urllib.parse import urlencode, urlparse
 
-import httpx
 from pydantic import BaseModel
 
 from mreg_cli.errorbuilder import build_error_message
@@ -305,7 +304,7 @@ class OutputManager:
             for key in self.KEYS_NOT_TO_RECORD:
                 remove_dict_key_recursive(obj, key)
             ret_dict["response"] = obj
-        except (httpx.DecodingError, json.JSONDecodeError):
+        except ValueError:
             s = record.response.content.decode("utf-8").strip()
             # Compare to empty string to avoid being tripped up by strings having
             # false-like values (0, False, etc)

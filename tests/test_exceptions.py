@@ -5,7 +5,7 @@ from typing import TypeVar
 import mreg_api.exceptions
 import pytest
 from _pytest.mark.structures import ParameterSet
-from httpx import Request, Response
+from httpx2 import Request, Response
 from inline_snapshot import snapshot
 from mreg_api.exceptions import (
     APIError,
