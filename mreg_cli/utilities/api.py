@@ -11,7 +11,6 @@ import logging
 from typing import Callable, ParamSpec, TypeVar
 from urllib.parse import urljoin
 
-import httpx2
 import mreg_api
 from prompt_toolkit import prompt
 
@@ -59,7 +58,7 @@ def try_token_or_login(user: str, url: str, fail_without_token: bool = False) ->
     try:
         client.test_auth()
         logger.info("Using stored token for %s @ %s", user, url)
-    except httpx2.RequestError as e:
+    except mreg_api.exceptions.ConnectionFailedError as e:
         raise SystemExit(f"Could not connect to {url}: {e}") from None
     except mreg_api.exceptions.InvalidAuthTokenError as e:
         client.unset_token()  # NOTE: might be redundant
@@ -114,7 +113,7 @@ def auth_and_update_token(username: str, password: str) -> None:
     logger.info("Updating token for %s @ %s", username, tokenurl)
     try:
         token = client.login(username, password)
-    except httpx2.HTTPError as e:
+    except mreg_api.exceptions.ConnectionFailedError as e:
         raise CliError(str(e)) from e  # should be unreachable
     except mreg_api.exceptions.LoginFailedError as e:
         # wrap the server API error in a CliError to classify as error + hide URL & drf details
