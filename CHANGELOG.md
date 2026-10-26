@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+## [1.12.4](https://github.com/unioslo/mreg-cli/releases/tag/1.12.4) - 2026-10-26
+
+### Changed
+
+- Updated `mreg-api` dependency to 0.8.3.
+- Underlying `mreg-api` dependency `httpx` changed to `httpx2`, which uses [truststore](https://pypi.org/project/truststore/) for certificate verification by default, using the system's certificate store instead of relying on bundled certificates via certifi.
+
 ## [1.12.3](https://github.com/unioslo/mreg-cli/releases/tag/1.12.3) - 2026-10-22
 
 ### Changed
