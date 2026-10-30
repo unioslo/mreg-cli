@@ -19,6 +19,7 @@ def make_community(id_: int, name: str) -> Community:
         name=name,
         description="",
         network=1,
+        network_cidr="10.0.0.0/24",
         created_at=DT,
         updated_at=DT,
     )
