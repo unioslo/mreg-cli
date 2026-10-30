@@ -1191,16 +1191,6 @@ def policy_attribute_set_description(args: argparse.Namespace) -> None:
 ##########################################
 
 
-def get_network_community(network: Network, community: str) -> Community:
-    """Get a community with a given name from a Network object."""
-    com = network.get_community(community)
-    if not com:
-        raise EntityNotFound(
-            f"Community {community!r} does not exist for network {network.network}"
-        )
-    return com
-
-
 # TODO[rename]: network community create
 @command_registry.register_command(
     prog="community_create",
@@ -1226,7 +1216,7 @@ def community_create(args: argparse.Namespace) -> None:
     com = net.get_community(name)
     if com:
         raise InputFailure(f"Community {name!r} already exists for network {network}")
-    com = client.network.community.create(net, name=name, description=description)
+    com = client.network.community.create(name=name, description=description, network=net)
     OutputManager().add_ok(f"Created community {com.name!r} for network {network}")
 
 
@@ -1251,12 +1241,12 @@ def community_delete(args: argparse.Namespace) -> None:
     community: str = args.community
     force: bool = args.force
 
-    net = client.network.get(network)
-    com = get_network_community(net, community)
-    if not force and client.network.community.get_hosts(com, net):
+    com = client.community.get(community, network)
+
+    if not force and client.network.community.get_hosts(com):
         raise ForceMissing(f"Community {com.name!r} has hosts. Must force.")
 
-    client.network.community.delete(com, net)
+    client.network.community.delete(com)
     OutputManager().add_ok(f"Deleted community {community!r}")
 
 
@@ -1279,8 +1269,7 @@ def community_info(args: argparse.Namespace) -> None:
     network: str = args.network
     community: str = args.community
 
-    net = client.network.get(network)
-    com = get_network_community(net, community)
+    com = client.community.get(community, network)
     output_community(com)
 
 
@@ -1336,9 +1325,8 @@ def community_rename(args: argparse.Namespace) -> None:
     oldname: str = args.oldname
     newname: str = args.newname
 
-    net = client.network.get(network)
-    com = client.network.community.get_by_name(oldname, net)
-    client.network.community.update(com, net, name=newname)
+    com = client.network.community.get(oldname, network)
+    client.network.community.update(com, name=newname)
     OutputManager().add_ok(f"Renamed community {oldname!r} to {newname!r}")
 
 
@@ -1363,9 +1351,8 @@ def community_set_description(args: argparse.Namespace) -> None:
     community: str = args.community
     description: str = args.description
 
-    net = client.network.get(network)
-    com = client.network.community.get_by_name(community, net)
-    client.network.community.update(com, net, description=description)
+    com = client.network.community.get(community, network)
+    client.network.community.update(com, description=description)
     OutputManager().add_ok(f"Set new description for community {community!r}")
 
 
@@ -1473,8 +1460,8 @@ def community_host_add(args: argparse.Namespace) -> None:
     if not net:
         raise EntityNotFound(f"{h.name!r} is not in a network controlled by MREG.")
 
-    com = get_network_community(net, community)
-    client.network.community.add_host(com, net, h, ipaddress=ipaddr.ipaddress)
+    com = client.network.community.get(community, net)
+    client.network.community.add_host(com, h, ipaddress=ipaddr.ipaddress)
 
     OutputManager().add_ok(f"Added host {h.name!r} to community {com.name!r}")
 
@@ -1502,11 +1489,11 @@ def community_host_remove(args: argparse.Namespace) -> None:
     h = client.resolve_host(host)
     com, ipaddr = _get_host_community_and_ip_to_remove(h, community, ip)
 
-    net = client.network.get_by_ip(str(ipaddr.ipaddress), required=False)
-    if not net:
-        raise EntityNotFound(f"{h.name!r} is not in a network controlled by MREG.")
+    # net = client.network.get_by_ip(str(ipaddr.ipaddress), required=False)
+    # if not net:
+    #     raise EntityNotFound(f"{h.name!r} is not in a network controlled by MREG.")
 
-    client.network.community.remove_host(com, net, h, ipaddress=ipaddr.ipaddress)
+    client.network.community.remove_host(com, h, ipaddress=ipaddr.ipaddress)
 
     OutputManager().add_ok(
         f"Removed host {h.name!r} (IP: {ipaddr.ipaddress}) from community {com.name!r}"
