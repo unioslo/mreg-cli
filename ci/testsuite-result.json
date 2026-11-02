@@ -349,10 +349,10 @@
     "command_filter_negate": false,
     "command_issued": "zone set_default_ttl example.org 60    # should fail, must be >= 300",
     "ok": [],
-    "warning": [
-      "Invalid TTL value: 60 (300->68400)"
+    "warning": [],
+    "error": [
+      "400 Bad Request: PATCH http://127.0.0.1:8000/api/v1/zones/forward/example.org\n1 error:\n  default_ttl: Ensure this value is greater than or equal to 300.  (min_value)"
     ],
-    "error": [],
     "output": [],
     "api_requests": [
       {
@@ -363,24 +363,42 @@
         "response": {
           "nameservers": [
             {
-              "created_at": "2024-12-11T16:44:40.356452+01:00",
-              "updated_at": "2024-12-11T16:44:40.356481+01:00",
+              "created_at": "2026-10-30T12:17:41.495664+01:00",
+              "updated_at": "2026-10-30T12:17:41.495739+01:00",
               "name": "ns2.example.org",
               "ttl": null
             }
           ],
-          "created_at": "2024-12-11T16:44:39.701254+01:00",
-          "updated_at": "2024-12-11T16:44:40.481572+01:00",
+          "created_at": "2026-10-30T12:17:40.969062+01:00",
+          "updated_at": "2026-10-30T12:17:41.633202+01:00",
           "updated": true,
           "primary_ns": "ns2.example.org",
           "email": "hostperson@example.org",
-          "serialno_updated_at": "2024-12-11T16:44:40.474871+01:00",
+          "serialno_updated_at": "2026-10-30T12:17:41.625561+01:00",
           "refresh": 360,
           "retry": 1800,
           "expire": 2400,
           "soa_ttl": 1800,
           "default_ttl": 43200,
           "name": "example.org"
+        }
+      },
+      {
+        "method": "PATCH",
+        "url": "/api/v1/zones/forward/example.org",
+        "data": {
+          "default_ttl": 60
+        },
+        "status": 400,
+        "response": {
+          "type": "validation_error",
+          "errors": [
+            {
+              "code": "min_value",
+              "detail": "Ensure this value is greater than or equal to 300.",
+              "attr": "default_ttl"
+            }
+          ]
         }
       }
     ],
@@ -35092,8 +35110,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2026-10-02T15:02:06.148204+02:00",
-              "updated_at": "2026-10-02T15:02:06.473682+02:00",
+              "created_at": "2026-10-30T12:19:11.131446+01:00",
+              "updated_at": "2026-10-30T12:19:11.350763+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -35102,8 +35120,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-10-02T15:02:05.957281+02:00",
-              "updated_at": "2026-10-02T15:02:05.957395+02:00",
+              "created_at": "2026-10-30T12:19:10.976025+01:00",
+              "updated_at": "2026-10-30T12:19:10.976087+01:00",
               "txt": "v=spf1 -all",
               "host": 30
             }
@@ -35121,12 +35139,12 @@
           "contacts": [
             {
               "email": "tinyhost@example.org",
-              "created_at": "2026-10-02T15:02:05.992857+02:00",
-              "updated_at": "2026-10-02T15:02:05.992940+02:00"
+              "created_at": "2026-10-30T12:19:10.996349+01:00",
+              "updated_at": "2026-10-30T12:19:10.996418+01:00"
             }
           ],
-          "created_at": "2026-10-02T15:02:05.945109+02:00",
-          "updated_at": "2026-10-02T15:02:05.945174+02:00",
+          "created_at": "2026-10-30T12:19:10.961959+01:00",
+          "updated_at": "2026-10-30T12:19:10.962037+01:00",
           "name": "tinyhost.example.org",
           "ttl": null,
           "comment": "",
@@ -35151,8 +35169,8 @@
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
+            "created_at": "2026-10-30T12:19:05.767710+01:00",
+            "updated_at": "2026-10-30T12:19:10.174718+01:00"
           },
           "communities": [
             {
@@ -35162,8 +35180,8 @@
               "network_cidr": "10.0.2.0/28",
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
+              "created_at": "2026-10-30T12:19:11.690502+01:00",
+              "updated_at": "2026-10-30T12:19:11.690583+01:00"
             },
             {
               "name": "lab",
@@ -35172,12 +35190,12 @@
               "network_cidr": "10.0.2.0/28",
               "hosts": [],
               "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:07.090719+02:00"
+              "created_at": "2026-10-30T12:19:11.871560+01:00",
+              "updated_at": "2026-10-30T12:19:11.871658+01:00"
             }
           ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
+          "created_at": "2026-10-30T12:19:05.006594+01:00",
+          "updated_at": "2026-10-30T12:19:08.697476+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -35187,6 +35205,29 @@
           "frozen": false,
           "reserved": 3,
           "max_communities": null
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=guests",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "network_cidr": "10.0.2.0/28",
+              "hosts": [],
+              "global_name": "community01",
+              "created_at": "2026-10-30T12:19:11.690502+01:00",
+              "updated_at": "2026-10-30T12:19:11.690583+01:00"
+            }
+          ]
         }
       },
       {
@@ -35201,8 +35242,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2026-10-02T15:02:06.148204+02:00",
-              "updated_at": "2026-10-02T15:02:06.473682+02:00",
+              "created_at": "2026-10-30T12:19:11.131446+01:00",
+              "updated_at": "2026-10-30T12:19:11.350763+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -35211,8 +35252,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-10-02T15:02:05.957281+02:00",
-              "updated_at": "2026-10-02T15:02:05.957395+02:00",
+              "created_at": "2026-10-30T12:19:10.976025+01:00",
+              "updated_at": "2026-10-30T12:19:10.976087+01:00",
               "txt": "v=spf1 -all",
               "host": 30
             }
@@ -35238,20 +35279,20 @@
                   "tinyhost.example.org"
                 ],
                 "global_name": "community01",
-                "created_at": "2026-10-02T15:02:06.799299+02:00",
-                "updated_at": "2026-10-02T15:02:06.799378+02:00"
+                "created_at": "2026-10-30T12:19:11.690502+01:00",
+                "updated_at": "2026-10-30T12:19:11.690583+01:00"
               }
             }
           ],
           "contacts": [
             {
               "email": "tinyhost@example.org",
-              "created_at": "2026-10-02T15:02:05.992857+02:00",
-              "updated_at": "2026-10-02T15:02:05.992940+02:00"
+              "created_at": "2026-10-30T12:19:10.996349+01:00",
+              "updated_at": "2026-10-30T12:19:10.996418+01:00"
             }
           ],
-          "created_at": "2026-10-02T15:02:05.945109+02:00",
-          "updated_at": "2026-10-02T15:02:05.945174+02:00",
+          "created_at": "2026-10-30T12:19:10.961959+01:00",
+          "updated_at": "2026-10-30T12:19:10.962037+01:00",
           "name": "tinyhost.example.org",
           "ttl": null,
           "comment": "",
@@ -35422,6 +35463,29 @@
     "output": [],
     "api_requests": [
       {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=lab",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "network_cidr": "10.0.2.0/28",
+              "hosts": [],
+              "global_name": "community02",
+              "created_at": "2026-10-30T12:19:11.871560+01:00",
+              "updated_at": "2026-10-30T12:19:11.871658+01:00"
+            }
+          ]
+        }
+      },
+      {
         "method": "POST",
         "url": "/api/v1/networks/10.0.2.0/28/communities/2/hosts/",
         "data": {
@@ -35433,8 +35497,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2026-10-02T15:02:06.148204+02:00",
-              "updated_at": "2026-10-02T15:02:06.473682+02:00",
+              "created_at": "2026-10-30T12:19:11.131446+01:00",
+              "updated_at": "2026-10-30T12:19:11.350763+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -35443,8 +35507,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-10-02T15:02:05.957281+02:00",
-              "updated_at": "2026-10-02T15:02:05.957395+02:00",
+              "created_at": "2026-10-30T12:19:10.976025+01:00",
+              "updated_at": "2026-10-30T12:19:10.976087+01:00",
               "txt": "v=spf1 -all",
               "host": 30
             }
@@ -35470,20 +35534,20 @@
                   "tinyhost.example.org"
                 ],
                 "global_name": "community02",
-                "created_at": "2026-10-02T15:02:07.090601+02:00",
-                "updated_at": "2026-10-02T15:02:07.090719+02:00"
+                "created_at": "2026-10-30T12:19:11.871560+01:00",
+                "updated_at": "2026-10-30T12:19:11.871658+01:00"
               }
             }
           ],
           "contacts": [
             {
               "email": "tinyhost@example.org",
-              "created_at": "2026-10-02T15:02:05.992857+02:00",
-              "updated_at": "2026-10-02T15:02:05.992940+02:00"
+              "created_at": "2026-10-30T12:19:10.996349+01:00",
+              "updated_at": "2026-10-30T12:19:10.996418+01:00"
             }
           ],
-          "created_at": "2026-10-02T15:02:05.945109+02:00",
-          "updated_at": "2026-10-02T15:02:05.945174+02:00",
+          "created_at": "2026-10-30T12:19:10.961959+01:00",
+          "updated_at": "2026-10-30T12:19:10.962037+01:00",
           "name": "tinyhost.example.org",
           "ttl": null,
           "comment": "",
@@ -35653,32 +35717,21 @@
       "Name:         guests",
       "Description:  Guest hosts.",
       "Global name:  community01",
-      "Created:      Fri Oct  2 15:02:06 2026",
-      "Updated:      Fri Oct  2 15:02:06 2026",
+      "Created:      Fri Oct 30 12:31:03 2026",
+      "Updated:      Fri Oct 30 12:31:03 2026",
       "Hosts:        0"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=guests",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "insecurepolicy",
-            "description": "Insecure policy for a network",
-            "attributes": [
-              {
-                "name": "baz",
-                "value": true
-              }
-            ],
-            "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
-          },
-          "communities": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
               "name": "guests",
               "description": "Guest hosts.",
@@ -35686,33 +35739,10 @@
               "network_cidr": "10.0.2.0/28",
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
-            },
-            {
-              "name": "lab",
-              "description": "Lab hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [
-                "tinyhost.example.org"
-              ],
-              "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:07.090719+02:00"
+              "created_at": "2026-10-30T12:31:03.838595+01:00",
+              "updated_at": "2026-10-30T12:31:03.838668+01:00"
             }
-          ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
-          "network": "10.0.2.0/28",
-          "description": "TinyNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
+          ]
         }
       }
     ],
@@ -35730,12 +35760,38 @@
       "Name:         lab",
       "Description:  Lab hosts.",
       "Global name:  community02",
-      "Created:      Tue Aug 26 11:57:13 2025",
-      "Updated:      Tue Aug 26 11:57:13 2025",
+      "Created:      Fri Oct 30 12:31:03 2026",
+      "Updated:      Fri Oct 30 12:31:03 2026",
       "Hosts:",
       "              tinyhost.example.org"
     ],
-    "api_requests": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=lab",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "lab",
+              "description": "Lab hosts.",
+              "network": 10,
+              "network_cidr": "10.0.2.0/28",
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": "community02",
+              "created_at": "2026-10-30T12:31:03.977465+01:00",
+              "updated_at": "2026-10-30T12:31:03.977538+01:00"
+            }
+          ]
+        }
+      }
+    ],
     "time": null
   },
   {
@@ -36071,27 +36127,21 @@
       "Name:         foo",
       "Description:  Foo community",
       "Global name:  custom01",
-      "Created:      Fri Oct  2 15:02:09 2026",
-      "Updated:      Fri Oct  2 15:02:09 2026",
+      "Created:      Fri Oct 30 12:31:06 2026",
+      "Updated:      Fri Oct 30 12:31:06 2026",
       "Hosts:        0"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.3.0/24",
+        "url": "/api/v1/networks/10.0.3.0/24/communities/?name=foo",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "custompattern",
-            "description": "Custom community mapping template pattern",
-            "attributes": [],
-            "community_template_pattern": "custom",
-            "created_at": "2026-10-02T15:02:08.420173+02:00",
-            "updated_at": "2026-10-02T15:02:08.420247+02:00"
-          },
-          "communities": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
               "name": "foo",
               "description": "Foo community",
@@ -36099,21 +36149,10 @@
               "network_cidr": "10.0.3.0/24",
               "hosts": [],
               "global_name": "custom01",
-              "created_at": "2026-10-02T15:02:09.096778+02:00",
-              "updated_at": "2026-10-02T15:02:09.096856+02:00"
+              "created_at": "2026-10-30T12:31:06.190277+01:00",
+              "updated_at": "2026-10-30T12:31:06.190355+01:00"
             }
-          ],
-          "created_at": "2026-10-02T15:02:08.728229+02:00",
-          "updated_at": "2026-10-02T15:02:08.794671+02:00",
-          "network": "10.0.3.0/24",
-          "description": "CustomPatternNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
+          ]
         }
       }
     ],
@@ -36183,27 +36222,21 @@
       "Name:         foo",
       "Description:  Foo community",
       "Global name:  newpattern01",
-      "Created:      Fri Oct  2 15:02:09 2026",
-      "Updated:      Fri Oct  2 15:02:09 2026",
+      "Created:      Fri Oct 30 12:31:06 2026",
+      "Updated:      Fri Oct 30 12:31:06 2026",
       "Hosts:        0"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.3.0/24",
+        "url": "/api/v1/networks/10.0.3.0/24/communities/?name=foo",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "custompattern",
-            "description": "Custom community mapping template pattern",
-            "attributes": [],
-            "community_template_pattern": "newpattern",
-            "created_at": "2026-10-02T15:02:08.420173+02:00",
-            "updated_at": "2026-10-02T15:02:09.316597+02:00"
-          },
-          "communities": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
               "name": "foo",
               "description": "Foo community",
@@ -36211,21 +36244,10 @@
               "network_cidr": "10.0.3.0/24",
               "hosts": [],
               "global_name": "newpattern01",
-              "created_at": "2026-10-02T15:02:09.096778+02:00",
-              "updated_at": "2026-10-02T15:02:09.096856+02:00"
+              "created_at": "2026-10-30T12:31:06.190277+01:00",
+              "updated_at": "2026-10-30T12:31:06.190355+01:00"
             }
-          ],
-          "created_at": "2026-10-02T15:02:08.728229+02:00",
-          "updated_at": "2026-10-02T15:02:08.794671+02:00",
-          "network": "10.0.3.0/24",
-          "description": "CustomPatternNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
+          ]
         }
       }
     ],
@@ -36295,27 +36317,21 @@
       "Name:         foo",
       "Description:  Foo community",
       "Global name:  community01",
-      "Created:      Fri Oct  2 15:02:09 2026",
-      "Updated:      Fri Oct  2 15:02:09 2026",
+      "Created:      Fri Oct 30 12:31:06 2026",
+      "Updated:      Fri Oct 30 12:31:06 2026",
       "Hosts:        0"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.3.0/24",
+        "url": "/api/v1/networks/10.0.3.0/24/communities/?name=foo",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "custompattern",
-            "description": "Custom community mapping template pattern",
-            "attributes": [],
-            "community_template_pattern": null,
-            "created_at": "2026-10-02T15:02:08.420173+02:00",
-            "updated_at": "2026-10-02T15:02:09.494335+02:00"
-          },
-          "communities": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
               "name": "foo",
               "description": "Foo community",
@@ -36323,21 +36339,10 @@
               "network_cidr": "10.0.3.0/24",
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2026-10-02T15:02:09.096778+02:00",
-              "updated_at": "2026-10-02T15:02:09.096856+02:00"
+              "created_at": "2026-10-30T12:31:06.190277+01:00",
+              "updated_at": "2026-10-30T12:31:06.190355+01:00"
             }
-          ],
-          "created_at": "2026-10-02T15:02:08.728229+02:00",
-          "updated_at": "2026-10-02T15:02:08.794671+02:00",
-          "network": "10.0.3.0/24",
-          "description": "CustomPatternNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
+          ]
         }
       }
     ],
@@ -36355,6 +36360,46 @@
     "error": [],
     "output": [],
     "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.3.0/24",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "custompattern",
+            "description": "Custom community mapping template pattern",
+            "attributes": [],
+            "community_template_pattern": null,
+            "created_at": "2026-10-30T12:31:05.506080+01:00",
+            "updated_at": "2026-10-30T12:31:06.680269+01:00"
+          },
+          "communities": [
+            {
+              "name": "foo",
+              "description": "Foo community",
+              "network": 11,
+              "network_cidr": "10.0.3.0/24",
+              "hosts": [],
+              "global_name": "community01",
+              "created_at": "2026-10-30T12:31:06.190277+01:00",
+              "updated_at": "2026-10-30T12:31:06.190355+01:00"
+            }
+          ],
+          "created_at": "2026-10-30T12:31:05.795272+01:00",
+          "updated_at": "2026-10-30T12:31:05.885495+01:00",
+          "network": "10.0.3.0/24",
+          "description": "CustomPatternNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3,
+          "max_communities": null
+        }
+      },
       {
         "method": "GET",
         "url": "/api/v1/networks/10.0.3.0/24/used_count",
@@ -36439,82 +36484,15 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=lab",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "insecurepolicy",
-            "description": "Insecure policy for a network",
-            "attributes": [
-              {
-                "name": "baz",
-                "value": true
-              }
-            ],
-            "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
-          },
-          "communities": [
-            {
-              "name": "guests",
-              "description": "Guest hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [],
-              "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
-            },
-            {
-              "name": "lab",
-              "description": "Lab hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [
-                "tinyhost.example.org"
-              ],
-              "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:07.090719+02:00"
-            }
-          ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
-          "network": "10.0.2.0/28",
-          "description": "TinyNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28/communities/",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 2,
+          "count": 1,
           "next": null,
           "previous": null,
           "results": [
             {
-              "name": "guests",
-              "description": "Guest hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [],
-              "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
-            },
-            {
               "name": "lab",
               "description": "Lab hosts.",
               "network": 10,
@@ -36523,8 +36501,8 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:07.090719+02:00"
+              "created_at": "2026-10-30T12:19:11.871560+01:00",
+              "updated_at": "2026-10-30T12:19:11.871658+01:00"
             }
           ]
         }
@@ -36545,8 +36523,8 @@
             "tinyhost.example.org"
           ],
           "global_name": "community02",
-          "created_at": "2026-10-02T15:02:07.090601+02:00",
-          "updated_at": "2026-10-02T15:02:10.234279+02:00"
+          "created_at": "2026-10-30T12:19:11.871560+01:00",
+          "updated_at": "2026-10-30T12:19:15.260682+01:00"
         }
       }
     ],
@@ -36566,82 +36544,15 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=labequipment",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "insecurepolicy",
-            "description": "Insecure policy for a network",
-            "attributes": [
-              {
-                "name": "baz",
-                "value": true
-              }
-            ],
-            "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
-          },
-          "communities": [
-            {
-              "name": "guests",
-              "description": "Guest hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [],
-              "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
-            },
-            {
-              "name": "labequipment",
-              "description": "Lab hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [
-                "tinyhost.example.org"
-              ],
-              "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:10.234279+02:00"
-            }
-          ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
-          "network": "10.0.2.0/28",
-          "description": "TinyNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28/communities/",
-        "data": {},
-        "status": 200,
-        "response": {
-          "count": 2,
+          "count": 1,
           "next": null,
           "previous": null,
           "results": [
             {
-              "name": "guests",
-              "description": "Guest hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [],
-              "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
-            },
-            {
               "name": "labequipment",
               "description": "Lab hosts.",
               "network": 10,
@@ -36650,8 +36561,8 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:10.234279+02:00"
+              "created_at": "2026-10-30T12:19:11.871560+01:00",
+              "updated_at": "2026-10-30T12:19:15.260682+01:00"
             }
           ]
         }
@@ -36672,8 +36583,8 @@
             "tinyhost.example.org"
           ],
           "global_name": "community02",
-          "created_at": "2026-10-02T15:02:07.090601+02:00",
-          "updated_at": "2026-10-02T15:02:10.589845+02:00"
+          "created_at": "2026-10-30T12:19:11.871560+01:00",
+          "updated_at": "2026-10-30T12:19:15.473693+01:00"
         }
       }
     ],
@@ -36691,43 +36602,22 @@
       "Name:         labequipment",
       "Description:  Lab equipment (expensive)",
       "Global name:  community02",
-      "Created:      Fri Oct  2 15:02:07 2026",
-      "Updated:      Fri Oct  2 15:02:10 2026",
+      "Created:      Fri Oct 30 12:31:03 2026",
+      "Updated:      Fri Oct 30 12:31:07 2026",
       "Hosts:",
       "              tinyhost.example.org"
     ],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=labequipment",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "insecurepolicy",
-            "description": "Insecure policy for a network",
-            "attributes": [
-              {
-                "name": "baz",
-                "value": true
-              }
-            ],
-            "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
-          },
-          "communities": [
-            {
-              "name": "guests",
-              "description": "Guest hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [],
-              "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
-            },
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
               "name": "labequipment",
               "description": "Lab equipment (expensive)",
@@ -36737,21 +36627,10 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:10.589845+02:00"
+              "created_at": "2026-10-30T12:31:03.977465+01:00",
+              "updated_at": "2026-10-30T12:31:07.531347+01:00"
             }
-          ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
-          "network": "10.0.2.0/28",
-          "description": "TinyNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
+          ]
         }
       }
     ],
@@ -36775,8 +36654,8 @@
       "              10.0.2.5   <not set>   ",
       "TTL:          (Default)",
       "TXT:          v=spf1 -all",
-      "Created:      Fri Oct  2 15:02:11 2026",
-      "Updated:      Fri Oct  2 15:02:11 2026"
+      "Created:      Fri Oct 30 12:31:07 2026",
+      "Updated:      Fri Oct 30 12:31:07 2026"
     ],
     "api_requests": [
       {
@@ -36820,18 +36699,18 @@
           "zone": {
             "nameservers": [
               {
-                "created_at": "2026-10-02T15:00:29.418834+02:00",
-                "updated_at": "2026-10-02T15:00:29.418917+02:00",
+                "created_at": "2026-10-30T12:29:44.479843+01:00",
+                "updated_at": "2026-10-30T12:29:44.479927+01:00",
                 "name": "ns2.example.org",
                 "ttl": null
               }
             ],
-            "created_at": "2026-10-02T15:00:28.684133+02:00",
-            "updated_at": "2026-10-02T15:02:06.469063+02:00",
+            "created_at": "2026-10-30T12:29:42.986226+01:00",
+            "updated_at": "2026-10-30T12:31:03.552130+01:00",
             "updated": true,
             "primary_ns": "ns2.example.org",
             "email": "hostperson@example.org",
-            "serialno_updated_at": "2026-10-02T15:00:29.563061+02:00",
+            "serialno_updated_at": "2026-10-30T12:29:45.093299+01:00",
             "refresh": 360,
             "retry": 1800,
             "expire": 2400,
@@ -36839,6 +36718,63 @@
             "default_ttl": 300,
             "name": "example.org"
           }
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28",
+        "data": {},
+        "status": 200,
+        "response": {
+          "excluded_ranges": [],
+          "policy": {
+            "name": "insecurepolicy",
+            "description": "Insecure policy for a network",
+            "attributes": [
+              {
+                "name": "baz",
+                "value": true
+              }
+            ],
+            "community_template_pattern": null,
+            "created_at": "2026-10-30T12:30:58.282952+01:00",
+            "updated_at": "2026-10-30T12:31:02.388864+01:00"
+          },
+          "communities": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "network_cidr": "10.0.2.0/28",
+              "hosts": [],
+              "global_name": "community01",
+              "created_at": "2026-10-30T12:31:03.838595+01:00",
+              "updated_at": "2026-10-30T12:31:03.838668+01:00"
+            },
+            {
+              "name": "labequipment",
+              "description": "Lab equipment (expensive)",
+              "network": 10,
+              "network_cidr": "10.0.2.0/28",
+              "hosts": [
+                "tinyhost.example.org"
+              ],
+              "global_name": "community02",
+              "created_at": "2026-10-30T12:31:03.977465+01:00",
+              "updated_at": "2026-10-30T12:31:07.531347+01:00"
+            }
+          ],
+          "created_at": "2026-10-30T12:30:57.470218+01:00",
+          "updated_at": "2026-10-30T12:31:00.923378+01:00",
+          "network": "10.0.2.0/28",
+          "description": "TinyNet",
+          "vlan": null,
+          "dns_delegated": false,
+          "category": "",
+          "location": "",
+          "frozen": false,
+          "reserved": 3,
+          "max_communities": null
         }
       },
       {
@@ -36856,8 +36792,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2026-10-02T15:02:11.494347+02:00",
-              "updated_at": "2026-10-02T15:02:11.494440+02:00",
+              "created_at": "2026-10-30T12:31:08.076681+01:00",
+              "updated_at": "2026-10-30T12:31:08.076744+01:00",
               "ipaddress": "10.0.2.5",
               "host": 31
             }
@@ -36866,8 +36802,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-10-02T15:02:11.048634+02:00",
-              "updated_at": "2026-10-02T15:02:11.048762+02:00",
+              "created_at": "2026-10-30T12:31:07.940249+01:00",
+              "updated_at": "2026-10-30T12:31:07.940326+01:00",
               "txt": "v=spf1 -all",
               "host": 31
             }
@@ -36885,12 +36821,12 @@
           "contacts": [
             {
               "email": "tinierhost@example.org",
-              "created_at": "2026-10-02T15:02:11.115973+02:00",
-              "updated_at": "2026-10-02T15:02:11.116139+02:00"
+              "created_at": "2026-10-30T12:31:07.960849+01:00",
+              "updated_at": "2026-10-30T12:31:07.960914+01:00"
             }
           ],
-          "created_at": "2026-10-02T15:02:11.030566+02:00",
-          "updated_at": "2026-10-02T15:02:11.030647+02:00",
+          "created_at": "2026-10-30T12:31:07.925495+01:00",
+          "updated_at": "2026-10-30T12:31:07.925561+01:00",
           "name": "tinierhost.example.org",
           "ttl": null,
           "comment": "",
@@ -36915,8 +36851,8 @@
               }
             ],
             "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
+            "created_at": "2026-10-30T12:30:58.282952+01:00",
+            "updated_at": "2026-10-30T12:31:02.388864+01:00"
           },
           "communities": [
             {
@@ -36926,8 +36862,8 @@
               "network_cidr": "10.0.2.0/28",
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
+              "created_at": "2026-10-30T12:31:03.838595+01:00",
+              "updated_at": "2026-10-30T12:31:03.838668+01:00"
             },
             {
               "name": "labequipment",
@@ -36938,12 +36874,12 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:10.589845+02:00"
+              "created_at": "2026-10-30T12:31:03.977465+01:00",
+              "updated_at": "2026-10-30T12:31:07.531347+01:00"
             }
           ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
+          "created_at": "2026-10-30T12:30:57.470218+01:00",
+          "updated_at": "2026-10-30T12:31:00.923378+01:00",
           "network": "10.0.2.0/28",
           "description": "TinyNet",
           "vlan": null,
@@ -36979,8 +36915,8 @@
           "ipaddresses": [
             {
               "macaddress": "",
-              "created_at": "2026-10-16T12:55:17.277750+02:00",
-              "updated_at": "2026-10-16T12:55:17.277816+02:00",
+              "created_at": "2026-10-30T12:19:15.956042+01:00",
+              "updated_at": "2026-10-30T12:19:15.956104+01:00",
               "ipaddress": "10.0.2.5",
               "host": 31
             }
@@ -36989,8 +36925,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-10-16T12:55:17.136938+02:00",
-              "updated_at": "2026-10-16T12:55:17.136998+02:00",
+              "created_at": "2026-10-30T12:19:15.816676+01:00",
+              "updated_at": "2026-10-30T12:19:15.816740+01:00",
               "txt": "v=spf1 -all",
               "host": 31
             }
@@ -37008,17 +36944,40 @@
           "contacts": [
             {
               "email": "tinierhost@example.org",
-              "created_at": "2026-10-16T12:55:17.156360+02:00",
-              "updated_at": "2026-10-16T12:55:17.156429+02:00"
+              "created_at": "2026-10-30T12:19:15.838151+01:00",
+              "updated_at": "2026-10-30T12:19:15.838232+01:00"
             }
           ],
-          "created_at": "2026-10-16T12:55:17.125199+02:00",
-          "updated_at": "2026-10-16T12:55:17.125265+02:00",
+          "created_at": "2026-10-30T12:19:15.802842+01:00",
+          "updated_at": "2026-10-30T12:19:15.802923+01:00",
           "name": "tinierhost.example.org",
           "ttl": null,
           "comment": "",
           "zone": 1,
           "contact": "tinierhost@example.org"
+        }
+      },
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=guests",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "name": "guests",
+              "description": "Guest hosts.",
+              "network": 10,
+              "network_cidr": "10.0.2.0/28",
+              "hosts": [],
+              "global_name": "community01",
+              "created_at": "2026-10-30T12:19:11.690502+01:00",
+              "updated_at": "2026-10-30T12:19:11.690583+01:00"
+            }
+          ]
         }
       },
       {
@@ -37500,11 +37459,24 @@
     "command_issued": "network community_host_add mediumhost labequipment # fails, community not found in network",
     "ok": [],
     "warning": [
-      "Community 'labequipment' does not exist for network 10.0.0.0/24"
+      "Community 'labequipment' not found."
     ],
     "error": [],
     "output": [],
-    "api_requests": [],
+    "api_requests": [
+      {
+        "method": "GET",
+        "url": "/api/v1/networks/10.0.0.0/24/communities/?name=labequipment",
+        "data": {},
+        "status": 200,
+        "response": {
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
+        }
+      }
+    ],
     "time": null
   },
   {
@@ -37586,35 +37558,14 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=labequipment",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "insecurepolicy",
-            "description": "Insecure policy for a network",
-            "attributes": [
-              {
-                "name": "baz",
-                "value": true
-              }
-            ],
-            "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
-          },
-          "communities": [
-            {
-              "name": "guests",
-              "description": "Guest hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [],
-              "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
-            },
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
               "name": "labequipment",
               "description": "Lab equipment (expensive)",
@@ -37624,21 +37575,10 @@
                 "tinyhost.example.org"
               ],
               "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:10.589845+02:00"
+              "created_at": "2026-10-30T12:19:11.871560+01:00",
+              "updated_at": "2026-10-30T12:19:15.473693+01:00"
             }
-          ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
-          "network": "10.0.2.0/28",
-          "description": "TinyNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
+          ]
         }
       },
       {
@@ -37655,8 +37595,8 @@
               "ipaddresses": [
                 {
                   "macaddress": "11:22:33:aa:bb:cc",
-                  "created_at": "2026-10-02T15:02:06.148204+02:00",
-                  "updated_at": "2026-10-02T15:02:06.473682+02:00",
+                  "created_at": "2026-10-30T12:19:11.131446+01:00",
+                  "updated_at": "2026-10-30T12:19:11.350763+01:00",
                   "ipaddress": "10.0.2.4",
                   "host": 30
                 }
@@ -37665,8 +37605,8 @@
               "mxs": [],
               "txts": [
                 {
-                  "created_at": "2026-10-02T15:02:05.957281+02:00",
-                  "updated_at": "2026-10-02T15:02:05.957395+02:00",
+                  "created_at": "2026-10-30T12:19:10.976025+01:00",
+                  "updated_at": "2026-10-30T12:19:10.976087+01:00",
                   "txt": "v=spf1 -all",
                   "host": 30
                 }
@@ -37692,20 +37632,20 @@
                       "tinyhost.example.org"
                     ],
                     "global_name": "community02",
-                    "created_at": "2026-10-02T15:02:07.090601+02:00",
-                    "updated_at": "2026-10-02T15:02:10.589845+02:00"
+                    "created_at": "2026-10-30T12:19:11.871560+01:00",
+                    "updated_at": "2026-10-30T12:19:15.473693+01:00"
                   }
                 }
               ],
               "contacts": [
                 {
                   "email": "tinyhost@example.org",
-                  "created_at": "2026-10-02T15:02:05.992857+02:00",
-                  "updated_at": "2026-10-02T15:02:05.992940+02:00"
+                  "created_at": "2026-10-30T12:19:10.996349+01:00",
+                  "updated_at": "2026-10-30T12:19:10.996418+01:00"
                 }
               ],
-              "created_at": "2026-10-02T15:02:05.945109+02:00",
-              "updated_at": "2026-10-02T15:02:05.945174+02:00",
+              "created_at": "2026-10-30T12:19:10.961959+01:00",
+              "updated_at": "2026-10-30T12:19:10.962037+01:00",
               "name": "tinyhost.example.org",
               "ttl": null,
               "comment": "",
@@ -37739,8 +37679,8 @@
           "ipaddresses": [
             {
               "macaddress": "11:22:33:aa:bb:cc",
-              "created_at": "2026-10-02T15:02:06.148204+02:00",
-              "updated_at": "2026-10-02T15:02:06.473682+02:00",
+              "created_at": "2026-10-30T12:19:11.131446+01:00",
+              "updated_at": "2026-10-30T12:19:11.350763+01:00",
               "ipaddress": "10.0.2.4",
               "host": 30
             }
@@ -37749,8 +37689,8 @@
           "mxs": [],
           "txts": [
             {
-              "created_at": "2026-10-02T15:02:05.957281+02:00",
-              "updated_at": "2026-10-02T15:02:05.957395+02:00",
+              "created_at": "2026-10-30T12:19:10.976025+01:00",
+              "updated_at": "2026-10-30T12:19:10.976087+01:00",
               "txt": "v=spf1 -all",
               "host": 30
             }
@@ -37776,82 +37716,25 @@
                   "tinyhost.example.org"
                 ],
                 "global_name": "community02",
-                "created_at": "2026-10-02T15:02:07.090601+02:00",
-                "updated_at": "2026-10-02T15:02:10.589845+02:00"
+                "created_at": "2026-10-30T12:19:11.871560+01:00",
+                "updated_at": "2026-10-30T12:19:15.473693+01:00"
               }
             }
           ],
           "contacts": [
             {
               "email": "tinyhost@example.org",
-              "created_at": "2026-10-02T15:02:05.992857+02:00",
-              "updated_at": "2026-10-02T15:02:05.992940+02:00"
+              "created_at": "2026-10-30T12:19:10.996349+01:00",
+              "updated_at": "2026-10-30T12:19:10.996418+01:00"
             }
           ],
-          "created_at": "2026-10-02T15:02:05.945109+02:00",
-          "updated_at": "2026-10-02T15:02:05.945174+02:00",
+          "created_at": "2026-10-30T12:19:10.961959+01:00",
+          "updated_at": "2026-10-30T12:19:10.962037+01:00",
           "name": "tinyhost.example.org",
           "ttl": null,
           "comment": "",
           "zone": 1,
           "contact": "tinyhost@example.org"
-        }
-      },
-      {
-        "method": "GET",
-        "url": "/api/v1/networks/ip/10.0.2.4",
-        "data": {},
-        "status": 200,
-        "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "insecurepolicy",
-            "description": "Insecure policy for a network",
-            "attributes": [
-              {
-                "name": "baz",
-                "value": true
-              }
-            ],
-            "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
-          },
-          "communities": [
-            {
-              "name": "guests",
-              "description": "Guest hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [],
-              "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
-            },
-            {
-              "name": "labequipment",
-              "description": "Lab equipment (expensive)",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [
-                "tinyhost.example.org"
-              ],
-              "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:10.589845+02:00"
-            }
-          ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
-          "network": "10.0.2.0/28",
-          "description": "TinyNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
         }
       },
       {
@@ -37879,35 +37762,14 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=labequipment",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "insecurepolicy",
-            "description": "Insecure policy for a network",
-            "attributes": [
-              {
-                "name": "baz",
-                "value": true
-              }
-            ],
-            "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
-          },
-          "communities": [
-            {
-              "name": "guests",
-              "description": "Guest hosts.",
-              "network": 10,
-              "network_cidr": "10.0.2.0/28",
-              "hosts": [],
-              "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
-            },
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
               "name": "labequipment",
               "description": "Lab equipment (expensive)",
@@ -37915,21 +37777,10 @@
               "network_cidr": "10.0.2.0/28",
               "hosts": [],
               "global_name": "community02",
-              "created_at": "2026-10-02T15:02:07.090601+02:00",
-              "updated_at": "2026-10-02T15:02:10.589845+02:00"
+              "created_at": "2026-10-30T12:19:11.871560+01:00",
+              "updated_at": "2026-10-30T12:19:15.473693+01:00"
             }
-          ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
-          "network": "10.0.2.0/28",
-          "description": "TinyNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
+          ]
         }
       },
       {
@@ -37967,25 +37818,14 @@
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=guests",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "insecurepolicy",
-            "description": "Insecure policy for a network",
-            "attributes": [
-              {
-                "name": "baz",
-                "value": true
-              }
-            ],
-            "community_template_pattern": null,
-            "created_at": "2026-10-02T15:01:59.417917+02:00",
-            "updated_at": "2026-10-02T15:02:05.090042+02:00"
-          },
-          "communities": [
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
             {
               "name": "guests",
               "description": "Guest hosts.",
@@ -37993,21 +37833,10 @@
               "network_cidr": "10.0.2.0/28",
               "hosts": [],
               "global_name": "community01",
-              "created_at": "2026-10-02T15:02:06.799299+02:00",
-              "updated_at": "2026-10-02T15:02:06.799378+02:00"
+              "created_at": "2026-10-30T12:19:11.690502+01:00",
+              "updated_at": "2026-10-30T12:19:11.690583+01:00"
             }
-          ],
-          "created_at": "2026-10-02T15:01:58.751056+02:00",
-          "updated_at": "2026-10-02T15:02:03.074758+02:00",
-          "network": "10.0.2.0/28",
-          "description": "TinyNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
+          ]
         }
       },
       {
@@ -38038,43 +37867,21 @@
     "command_issued": "network community_delete 10.0.2.0/28 guests -force",
     "ok": [],
     "warning": [
-      "Community 'guests' does not exist for network 10.0.2.0/28"
+      "Community 'guests' not found."
     ],
     "error": [],
     "output": [],
     "api_requests": [
       {
         "method": "GET",
-        "url": "/api/v1/networks/10.0.2.0/28",
+        "url": "/api/v1/networks/10.0.2.0/28/communities/?name=guests",
         "data": {},
         "status": 200,
         "response": {
-          "excluded_ranges": [],
-          "policy": {
-            "name": "insecurepolicy",
-            "description": "Insecure policy for a network",
-            "attributes": [
-              {
-                "name": "baz",
-                "value": true
-              }
-            ],
-            "community_template_pattern": null,
-            "created_at": "2026-07-02T19:27:34.613230+02:00",
-            "updated_at": "2026-07-02T19:27:41.528291+02:00"
-          },
-          "communities": [],
-          "created_at": "2026-07-02T19:27:33.351381+02:00",
-          "updated_at": "2026-07-02T19:27:39.277219+02:00",
-          "network": "10.0.2.0/28",
-          "description": "TinyNet",
-          "vlan": null,
-          "dns_delegated": false,
-          "category": "",
-          "location": "",
-          "frozen": false,
-          "reserved": 3,
-          "max_communities": null
+          "count": 0,
+          "next": null,
+          "previous": null,
+          "results": []
         }
       }
     ],
