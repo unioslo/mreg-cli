@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     # Can't use _SubParsersAction as generic in Python <3.9
-    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # type: ignore # private attribute
+    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # private attribute
 
     # Subclasses of BaseCommand change the constructor signature from
     # 6 arguments to a single argument `cli`. That means we cannot
@@ -60,8 +60,8 @@ if TYPE_CHECKING:
     # which lets the type checker understand what kind of classes we are
     # trying to instantiate.
     class BaseCommandSubclass(Protocol):  # noqa: D101 (undocumented-public-class)
-        def __init__(self, cli: Command) -> None: ...  # noqa: D107 (undocumented-public-init)
-        def register_all_commands(self) -> None: ...  # noqa: D102 (undocumented-public-method)
+        def __init__(self, cli: Command) -> None: ...
+        def register_all_commands(self) -> None: ...  # noqa: D102 (undocumented-public-method
 
 
 def get_cli_history(config: MregCliConfig) -> FileHistory | None:

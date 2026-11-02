@@ -65,7 +65,7 @@ from mreg_cli.types import Json
             [[[{}]], [[{}]]],
             id="deeply_nested_lists",
         ),
-    ],  # type: ignore
+    ],
 )
 def test_remove_dict_key_recursive(inp: Json, key: str, expected: Json) -> None:
     """Test remove_dict_key_recursive with a variety of inputs."""
