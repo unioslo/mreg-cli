@@ -6,8 +6,8 @@
 repo = "builtin"
 hooks = [
     { id = "trailing-whitespace" },
-    { id = "end-of-file-fixer" },
-    { id = "check-yaml", exclude = "^ci/.*\\.json$" },
+    { id = "end-of-file-fixer", exclude = "^ci/.*\\.json$" },
+    { id = "check-yaml" },
     { id = "check-toml" },
     { id = "check-added-large-files" },
 ]
