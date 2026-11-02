@@ -35,24 +35,24 @@ Publishing new versions is automatically handled by GitHub actions for versions 
 
 1. Switch to the `master` branch:
 
-```bash
-git checkout master
-```
+    ```bash
+    git checkout master
+    ```
 
-1. Create a new tag:
+2. Create a new tag:
 
-```bash
-git tag 1.2.3
-```
+    ```bash
+    git tag 1.2.3
+    ```
 
-1. Push the tag to the upstream repository:
+3. Push the tag to the upstream repository:
 
-```bash
-git push upstream 1.2.3
-```
+    ```bash
+    git push upstream 1.2.3
+    ```
 
-To push a tag together with a new commit:
+    To push a tag together with a new commit:
 
-```bash
-git push upstream master --tags
-```
+    ```bash
+    git push upstream master --tags
+    ```
