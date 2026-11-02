@@ -11,6 +11,7 @@ The finished binary will be in the `dist` directory.
 The hidden import is required to include the host submodules in the executable,
 due to using dynamic imports.
 """
+
 from __future__ import annotations
 
 import re
