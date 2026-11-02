@@ -41,10 +41,7 @@ from __future__ import annotations
 
 import argparse
 
-from mreg_api.models import (
-    NAPTR,
-    Srv,
-)
+from mreg_api.models import NAPTR, NetworkOrIP, Srv
 
 from mreg_cli.client import get_client
 from mreg_cli.commands.host import registry as command_registry
@@ -518,8 +515,6 @@ def ptr_change(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, old, new, force)
     """
-    from mreg_api.models import NetworkOrIP
-
     client = get_client()
     old_host = client.resolve_host(args.old)
     new_host = client.resolve_host(args.new)
@@ -553,8 +548,6 @@ def ptr_remove(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, name)
     """
-    from mreg_api.models import NetworkOrIP
-
     client = get_client()
     host = client.resolve_host(args.name)
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
@@ -581,8 +574,6 @@ def ptr_add(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip, name, force)
     """
-    from mreg_api.models import NetworkOrIP
-
     client = get_client()
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
 
@@ -619,8 +610,6 @@ def ptr_show(args: argparse.Namespace) -> None:
 
     :param args: argparse.Namespace (ip)
     """
-    from mreg_api.models import NetworkOrIP
-
     client = get_client()
     ip = NetworkOrIP.parse_or_raise(args.ip, mode="ip")
 

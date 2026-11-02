@@ -40,7 +40,7 @@ pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 
 def _get_responseerror_warnings_params() -> list[ParameterSet]:
-    """Get the list of mreg_api exception types that should be treated as warnings as pytest params"""
+    """Get the list of mreg_api exception types that should be treated as warnings as pytest params."""
     params: list[ParameterSet] = []
     for obj in _get_responseerror_warnings():
         params.append(
