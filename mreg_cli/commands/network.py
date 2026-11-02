@@ -1426,7 +1426,7 @@ def _get_host_community_and_ip_to_remove(
         # of the HostCommunity objects.
         ips_str = ", ".join(str(assoc[1].ipaddress) for assoc in associations)
         raise InputFailure(
-            f"Host is part of community {community!r} on multiple IPs ({ips_str}). Must specify IP."
+            f"Host is part of community {community!r} on multiple IPs ({ips_str}). Must specify IP."  # noqa: E501
         )
     # Single match
     else:

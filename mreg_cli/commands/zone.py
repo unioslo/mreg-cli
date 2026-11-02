@@ -357,7 +357,10 @@ def set_soa(args: argparse.Namespace) -> None:
 
     if not kwargs:
         raise InputFailure(
-            "At least one of the following must be provided: ns, email, serialno, refresh, retry, expire, soa_ttl"
+            (
+                "At least one of the following must be provided: "
+                "ns, email, serialno, refresh, retry, expire, soa_ttl"
+            )
         )
 
     zone_obj = client.zone.get_by_name(zone)

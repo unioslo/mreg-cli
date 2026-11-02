@@ -119,6 +119,7 @@ select = [
 ignore = [
     # B905 (`zip()` without an explicit `strict=` parameter) is incompatible with older python versions.
     "B905",
+    "D107", # Missing docstring in __init__. Shadows docstring of the class.
     # D203 (1 blank line required before class docstring) is incompatible with
     # D211 (No blank lines allowed before class docstring). We ignore D203.
     "D203",

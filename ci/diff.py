@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: D100, INP001
 
 import argparse
 import difflib
@@ -163,9 +163,8 @@ def preprocess_json(s: str) -> str:
     # Must be done _after_ all other replacements
     s = api_v1_pattern_with_number.sub(replace_url_id, s)
 
-    s = re.sub(
-        r"\s+", " ", s
-    )  # replace all whitespace with one space, so the diff doesn't complain about different lengths
+    # replace all whitespace with one space, so the diff doesn't complain about different lengths
+    s = re.sub(r"\s+", " ", s)
     return s
 
 
@@ -284,7 +283,7 @@ class CommandDiffer:
         differences = [line for line in diff if line.startswith("-") or line.startswith("+")]
         if differences:
             err_console.print(
-                "Diff between what commands were run in the recorded result and the current testsuite:"
+                "Diff between what commands were run in the recorded result and the current testsuite:"  # noqa: E501
             )
             for line in differences:
                 err_console.print(fmt_line(line))
