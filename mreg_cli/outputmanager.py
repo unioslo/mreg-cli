@@ -411,7 +411,7 @@ class OutputManager:
         except re.error as exc:
             word = word_span(command, split_index)
             if word == (split_index, split_index + 1):
-                # `|` is a standalone separator: the pattern after it is invalid
+                # `|` is used correctly: the filter pattern following it is invalid
                 raise InvalidFilterRegex(
                     Diagnostic(
                         message=f"Unable to compile regex '{filter_str}': {exc}",
@@ -420,7 +420,7 @@ class OutputManager:
                         annotation="This part is not a valid regular expression.",
                     )
                 ) from exc
-            # `|` is inside an unquoted argument and was mistaken for the separator
+            # `|` is inside an unquoted argument and was mistaken for the filter separator
             raise ArgumentSplitBySeparator(
                 Diagnostic(
                     message=f"Unable to compile regex '{filter_str}'",
