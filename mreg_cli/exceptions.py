@@ -227,8 +227,8 @@ class ExceptionHandler:
         """Get the HTML-formatted message for prompt_toolkit display.
 
         Errors are formatted with red text, warnings with italics.
-        Exceptions carrying a diagnostic are rendered in full, otherwise the
-        plain exception message is used.
+        Exceptions with a diagnostic are use diagnostic rendering,
+        otherwise the plain exception message is used.
         """
         msg = html_escape(self.diagnostic.render() if self.diagnostic else self.message)
 

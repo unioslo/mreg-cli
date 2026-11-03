@@ -368,10 +368,10 @@ def test_handle_and_exit_context_manager_multiple(
     assert err == snapshot("")
 
 
-def test_diagnostic_carrying_exception_handling(
+def test_exception_with_diagnostic_handling(
     caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Test handling of a diagnostic-carrying exception.
+    """Test handling of an exception with a diagnostic.
 
     The rendered message is printed for display, while only the headline is logged.
     """
