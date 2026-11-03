@@ -79,8 +79,10 @@ class CliSettingsSource(PydanticBaseSettingsSource):
                 continue
             if k in self.settings_cls.model_fields:
                 field = self.settings_cls.model_fields[k]
-                # Only include if different from default value
-                if v == field.get_default(call_default_factory=True):
+                # Only include if different from default value + factory doesn't require args
+                if not field.default_factory_takes_validated_data and v == field.get_default(
+                    call_default_factory=True
+                ):
                     continue
                 active[k] = v
         return active
