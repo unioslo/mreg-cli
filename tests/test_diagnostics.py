@@ -7,7 +7,7 @@ import pytest
 from inline_snapshot import snapshot
 
 import mreg_cli.diagnostics
-from mreg_cli.diagnostics import word_span
+from mreg_cli.diagnostics import Diagnostic, word_span
 from mreg_cli.exceptions import ArgumentSplitBySeparator, InvalidFilterRegex
 from mreg_cli.outputmanager import OutputManager
 
@@ -72,10 +72,19 @@ def test_word_span_at_string_start() -> None:
 
 
 @pytest.mark.parametrize("index", [-1, 8, 25, 99])
-def test_word_span_invalid_index_raises(index: int) -> None:
-    """Test that word_span raises ValueError for whitespace or out-of-range indices."""
-    with pytest.raises(ValueError):
-        word_span("do_thing ^(yes|no)_thing$", index)
+def test_word_span_outside_word_is_empty(index: int) -> None:
+    """Test that word_span returns an empty span for whitespace or out-of-range indices."""
+    assert word_span("do_thing ^(yes|no)_thing$", index) == (index, index)
+
+
+@pytest.mark.parametrize("span", [(-5, 2), (99, 99), (5, 2), (-1, -1)])
+def test_render_clamps_span_to_command(span: tuple[int, int]) -> None:
+    """Test that a bad span never draws outside the command."""
+    command = "ls a|b x"
+    lines = Diagnostic("msg", command, span, "note").render().splitlines()
+    underline, annotation = lines[2], lines[3]
+    assert len(underline) <= len(command)
+    assert annotation.index("└") <= len(command)
 
 
 @pytest.mark.parametrize(

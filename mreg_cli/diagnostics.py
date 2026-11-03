@@ -37,9 +37,13 @@ class Diagnostic:
     def render(self) -> str:
         """Render headline, command, underline and annotation (4 lines, no trailing newline).
 
+        The span is clamped to the command, so a bad span can never break rendering.
+
         :returns: The rendered diagnostic.
         """
         start, end = self.span
+        start = max(0, min(start, len(self.command)))
+        end = max(start, min(end, len(self.command)))
         offset = " " * start
         lines = [
             self.message,
@@ -54,11 +58,13 @@ def word_span(command: str, index: int) -> tuple[int, int]:
     """Get the span of the whitespace-delimited word containing index.
 
     :param str command: The command to inspect.
-    :param int index: Index of a non-whitespace character in the command.
+    Never raises: used while reporting errors, so it must not create new ones.
 
-    :returns: Tuple of the word's start (inclusive) and end (exclusive) index.
+    :param str command: The command to inspect.
+    :param int index: Index of a character in the command.
 
-    :raises ValueError: If index does not point at a non-whitespace character.
+    :returns: Tuple of the word's start (inclusive) and end (exclusive) index,
+        or the empty span (index, index) if index is not inside a word.
 
     :examples:
         >>> word_span("do_thing ^(yes|no)_thing$", 14)
@@ -71,4 +77,4 @@ def word_span(command: str, index: int) -> tuple[int, int]:
     for match in re.finditer(r"\S+", command):
         if match.start() <= index < match.end():
             return match.span()
-    raise ValueError(f"index {index} is not inside a word of {command!r}")
+    return (index, index)  # dummy span for out-of-word indices
