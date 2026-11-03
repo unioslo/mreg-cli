@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import configparser
 import logging
-import os
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, Any, ClassVar, Self, TypedDict
 
@@ -124,8 +124,9 @@ class IniConfigSettingsSource(InitSettingsSource, ConfigFileSourceMixin):
     def _read_files(self, files: PathType | None, deep_merge: bool = False) -> dict[str, Any]:
         if files is None:
             return {}
-        if isinstance(files, (str, os.PathLike)):
+        if not isinstance(files, Sequence) or isinstance(files, str):
             files = [files]
+
         vars: dict[str, Any] = {}  # noqa: A001
         for file in files:
             try:

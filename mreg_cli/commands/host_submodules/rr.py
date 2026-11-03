@@ -282,7 +282,7 @@ def mx_remove(args: argparse.Namespace) -> None:
     priority: int = args.priority
 
     host = client.resolve_host(name)
-    mx_obj = client.mx.get_by_all(host, mx_arg, priority)
+    mx_obj = client.mx.get_unique(host, mx_arg, priority)
     client.mx.delete(mx_obj)
     OutputManager().add_ok(
         f"Deleted MX {mx_obj.mx} with priority {priority} from {host.name}.",

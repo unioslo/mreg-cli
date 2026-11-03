@@ -12,8 +12,11 @@ from mreg_cli.outputmanager import OutputManager
 class HasTimestamps(Protocol):
     """Protocol for objects with timestamp fields."""
 
-    created_at: datetime
-    updated_at: datetime
+    # read-only fields
+    @property
+    def created_at(self) -> datetime: ...  # noqa: D102
+    @property
+    def updated_at(self) -> datetime: ...  # noqa: D102
 
 
 def output_timestamps(

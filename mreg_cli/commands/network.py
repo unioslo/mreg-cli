@@ -1067,7 +1067,7 @@ def policy_attribute_delete(args: argparse.Namespace) -> None:
 
     attr = client.network.policy.attribute.get_by_name(attribute)
 
-    if not force and (pols := client.network.policy.attribute.get_policies(attr)):
+    if not force and (pols := client.network.policy.attribute.list_policies(attr)):
         policy_names = ", ".join(f"{pol.name!r}" for pol in pols)
         raise ForceMissing(
             f"Attribute {attr.name!r} is used by the following policies: "

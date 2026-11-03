@@ -8,7 +8,6 @@ from _pytest.mark.structures import ParameterSet
 from httpx2 import Request, Response
 from inline_snapshot import snapshot
 from mreg_api.exceptions import (
-    APIError,
     BadRequestError,
     ClientError,
     ConflictError,
@@ -20,7 +19,6 @@ from mreg_api.exceptions import (
     ResponseError,
     ServerError,
     UnauthorizedError,
-    UnexpectedDataError,
     UnexpectedResponseError,
 )
 from mreg_api.models import Host
@@ -60,6 +58,7 @@ def _get_responseerror_warnings() -> list[type[mreg_api.exceptions.ResponseError
             isinstance(obj, type)
             and issubclass(obj, mreg_api.exceptions.ResponseError)
             and obj not in _MREG_API_ERROR_EXCEPTIONS
+            and not hasattr(obj, "__deprecated__")
         ):
             exceptions.append(obj)
 
@@ -120,7 +119,6 @@ def test_responseerror_warnings_snapshot() -> None:
     exceptions = _get_responseerror_warnings()
     assert exceptions == snapshot(
         [
-            APIError,
             HTTPStatusError,
             ClientError,
             ServerError,
@@ -132,7 +130,6 @@ def test_responseerror_warnings_snapshot() -> None:
             LoginFailedError,
             InvalidAuthTokenError,
             UnexpectedResponseError,
-            UnexpectedDataError,
         ]
     )
 

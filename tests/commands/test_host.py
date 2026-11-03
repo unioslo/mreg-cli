@@ -168,7 +168,7 @@ def test_get_record_identifier_unknown() -> None:
         fingerprint="abc123",
         ttl=3600,
     )
-    assert get_record_identifier(record) == snapshot(  # pyright: ignore[reportArgumentType]
+    assert get_record_identifier(record) == snapshot(  # ty: ignore[invalid-argument-type]
         "SSHFP(created_at=datetime.datetime(2026, 1, 1, 0, 0), updated_at=datetime.datetime(2026, 1, 1, 0, 0), id=1, algorithm=1, hash_type=2, fingerprint='abc123', host=123, ttl=3600)"
     )
 

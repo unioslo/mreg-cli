@@ -266,12 +266,12 @@ def test_resolvedpath_type() -> None:
     # Handles str input the same
     inp = "~/some/path"
     p = Path(inp)
-    rp = ResolvedPath(inp)  # pyright: ignore[reportCallIssue]
+    rp = ResolvedPath(inp)  # ty: ignore[call-non-callable]
     assert p == rp
 
     # Handles Path input the same
     inp_path = Path("~/some/other/path")
-    rp2 = ResolvedPath(inp_path)  # pyright: ignore[reportCallIssue]
+    rp2 = ResolvedPath(inp_path)  # ty: ignore[call-non-callable]
     assert inp_path == rp2
 
     # Model with required ResolvedPath field
@@ -313,5 +313,5 @@ def test_resolvedpath_invalid(optional: bool) -> None:
     for invalid in [123, 45.6, True, False, [], {}, ()]:
         with pytest.raises(ValidationError) as excinfo:
             # Ensure we raise a pydantic ValidationError on invalid input
-            TestModel(filename=invalid)  # pyright: ignore[reportArgumentType]
+            TestModel(filename=invalid)  # ty: ignore[invalid-argument-type]
             assert "Invalid path" in str(excinfo.value)
