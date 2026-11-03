@@ -9,23 +9,57 @@ If you would like to contribute to this project, please follow these steps:
 5. Push to the branch (`git push origin feature/branch-name`)
 6. Create a Pull Request
 
+## Development environment
+
+After cloning the repository, the development environment can be set up with uv:
+
+```bash
+uv sync
+# or explicitly:
+# uv venv
+# uv sync
+```
+
+Optionally, the virtual environment can be activated with:
+
+```bash
+. .venv/bin/activate
+```
+
 ## Pre-commit hooks
 
 This project uses [prek](https://github.com/j178/prek) to manage its Git hooks. Prek can be installed via:
 
-```
+```bash
 uv tool install prek
 ```
 
 The Git hooks can be installed by running:
 
-```
+```bash
 prek install
 ```
 
 Prek hooks are defined in [`.pre-commit-config.yaml`](.pre-commit-config.yaml).
 
+## Type checking
+
+This project uses [ty](https://docs.astral.sh/ty/) for type checking. It is installed automatically when setting up the environment with `uv sync`.
+
 ## Testing
+
+### Unit tests
+
+To run unit tests locally, use the following command:
+
+```
+uv run pytest --inline-snapshot=review
+
+# omit --inline-snapshot option if running headless (CI/Agent):
+# uv run pytest
+```
+
+### Integration tests
 
 To run tests locally, just run the script `ci/run_testsuite_and_record_V2.sh` from anywhere. The only prerequisite is a working installation of docker or podman.
 
