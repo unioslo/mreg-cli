@@ -8,7 +8,12 @@ import pytest
 from inline_snapshot import snapshot
 from pydantic import BaseModel, ValidationError
 
-from mreg_cli.config import IniConfigSettingsSource, MregCliConfig, ResolvedPath
+from mreg_cli.config import (
+    CliSettingsSource,
+    IniConfigSettingsSource,
+    MregCliConfig,
+    ResolvedPath,
+)
 
 
 def test_get_default_config() -> None:
@@ -315,3 +320,20 @@ def test_resolvedpath_invalid(optional: bool) -> None:
             # Ensure we raise a pydantic ValidationError on invalid input
             TestModel(filename=invalid)  # ty: ignore[invalid-argument-type]
             assert "Invalid path" in str(excinfo.value)
+
+
+def test_cli_settings_source_call() -> None:
+    """Test that the CLI source only reports known args that differ from defaults."""
+    source = CliSettingsSource(MregCliConfig)
+    source.set_cli_args(
+        {
+            "url": "https://mreg.uio.no",  # equal to plain default
+            "category_tags": [],  # equal to default (default_factory)
+            "location_tags": ["foo"],  # differs from default (default_factory)
+            "timeout": 30,  # differs from plain default
+            "verbose": False,  # falsy, equal to default
+            "user": None,  # None is dropped
+            "not_a_field": "x",  # unknown keys are dropped
+        }
+    )
+    assert source() == snapshot({"location_tags": ["foo"], "timeout": 30})
