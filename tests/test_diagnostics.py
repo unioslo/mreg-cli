@@ -26,8 +26,8 @@ def spanned(command: str, span: tuple[int, int]) -> str:
     return command[start:end]
 
 
-def test_helper_doctests() -> None:
-    """Run the span helpers' doctests to keep them honest."""
+def test_doctests() -> None:
+    """Ensure diagnostics module doctests are correct."""
     results = doctest.testmod(mreg_cli.diagnostics, verbose=False)
     assert results.attempted > 0
     assert results.failed == 0
