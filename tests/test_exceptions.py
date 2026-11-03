@@ -5,19 +5,20 @@ from typing import TypeVar
 import mreg_api.exceptions
 import pytest
 from _pytest.mark.structures import ParameterSet
-from httpx import Request, Response
+from httpx2 import Request, Response
 from inline_snapshot import snapshot
 from mreg_api.exceptions import (
-    APIError,
-    DeleteError,
-    GetError,
+    BadRequestError,
+    ClientError,
+    ConflictError,
+    ForbiddenError,
     HTTPStatusError,
     InvalidAuthTokenError,
     LoginFailedError,
-    PatchError,
-    PostError,
+    NotFoundError,
     ResponseError,
-    UnexpectedDataError,
+    ServerError,
+    UnauthorizedError,
     UnexpectedResponseError,
 )
 from mreg_api.models import Host
@@ -30,9 +31,13 @@ from mreg_cli.exceptions import (
     CliWarning,
     ExceptionHandler,
     InvalidFilterRegex,
+    handle_and_exit,
     handle_exception,
 )
 from tests.utils import normalize_line_endings
+
+# We test some deprecated exceptions in this module. Suppress all DeprecationWarnings.
+pytestmark = pytest.mark.filterwarnings("ignore::DeprecationWarning")
 
 
 def _get_responseerror_warnings_params() -> list[ParameterSet]:
@@ -56,6 +61,7 @@ def _get_responseerror_warnings() -> list[type[mreg_api.exceptions.ResponseError
             isinstance(obj, type)
             and issubclass(obj, mreg_api.exceptions.ResponseError)
             and obj not in _MREG_API_ERROR_EXCEPTIONS
+            and not hasattr(obj, "__deprecated__")
         ):
             exceptions.append(obj)
 
@@ -108,7 +114,7 @@ def _instantiate_response_error(e: type[ErrorT], message: str, method: str = "HE
 def test_responseerror_errors_snapshot() -> None:
     """Test snapshot of ResponseError errors."""
     exceptions = _get_responseerror_errors()
-    assert exceptions == snapshot([DeleteError])
+    assert exceptions == snapshot([ResponseError])
 
 
 def test_responseerror_warnings_snapshot() -> None:
@@ -116,16 +122,17 @@ def test_responseerror_warnings_snapshot() -> None:
     exceptions = _get_responseerror_warnings()
     assert exceptions == snapshot(
         [
-            ResponseError,
-            APIError,
             HTTPStatusError,
-            PostError,
-            PatchError,
-            GetError,
-            UnexpectedResponseError,
-            UnexpectedDataError,
+            ClientError,
+            ServerError,
+            BadRequestError,
+            UnauthorizedError,
+            ForbiddenError,
+            NotFoundError,
+            ConflictError,
             LoginFailedError,
             InvalidAuthTokenError,
+            UnexpectedResponseError,
         ]
     )
 
@@ -145,7 +152,7 @@ def test_handle_exception_warning(
         [
             (
                 "mreg_cli.exceptions",
-                30,
+                40,
                 """\
 400 Bad Request: HEAD https://example.com
 Test warning message\
@@ -157,7 +164,7 @@ Test warning message\
     out, err = capsys.readouterr()
     out = normalize_line_endings(out)
     assert out == snapshot("""\
-400 Bad Request: HEAD https://example.com
+ERROR: 400 Bad Request: HEAD https://example.com
 Test warning message
 """)
     assert err == ""
@@ -261,7 +268,7 @@ ERROR: Failed to validate Host
     assert err == ""
 
 
-def test_clierror_handling(
+def test_handle_exception_clierror(
     caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Test handling of mreg_cli.exceptions.CliError."""
@@ -280,7 +287,7 @@ def test_clierror_handling(
     assert err == snapshot("")
 
 
-def test_cliwarning_handling(
+def test_handle_exception_cliwarning(
     caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Test handling of mreg_cli.exceptions.CliWarning."""
@@ -296,6 +303,68 @@ def test_cliwarning_handling(
     out, err = capsys.readouterr()
     out = normalize_line_endings(out)
     assert out == snapshot("Test CLI warning message\n")
+    assert err == snapshot("")
+
+
+@pytest.mark.parametrize("exc_type", [ValueError, KeyboardInterrupt, SystemExit])
+def test_handle_exception_builtins(
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+    exc_type: type[BaseException],
+) -> None:
+    """Test handling of common built-in exceptions."""
+    exc_instance = exc_type("Test built-in error message")
+
+    # Call function and check output
+    handle_exception(exc_instance)
+
+    # NOTE: builtins are currently treated as WARNINGS, not ERRORS.
+    # Only the exceptions listed in _MREG_API_ERROR_EXCEPTIONS are treated as errors.
+    assert caplog.record_tuples == snapshot(
+        [("mreg_cli.exceptions", 30, "Test built-in error message")]
+    )
+
+    out, err = capsys.readouterr()
+    out = normalize_line_endings(out)
+    assert out == snapshot("Test built-in error message\n")
+    assert err == snapshot("")
+
+
+def test_handle_and_exit_context_manager_default(
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test the handle_and_exit context manager."""
+    with pytest.raises(SystemExit):
+        with handle_and_exit():
+            raise ValueError("Test context manager error")
+
+    assert caplog.record_tuples == snapshot(
+        [("mreg_cli.exceptions", 30, "Test context manager error")]
+    )
+
+    out, err = capsys.readouterr()
+    out = normalize_line_endings(out)
+    assert out == snapshot("Test context manager error\n")
+    assert err == snapshot("")
+
+
+def test_handle_and_exit_context_manager_multiple(
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Test the handle_and_exit context manager."""
+    with pytest.raises(SystemExit):
+        with handle_and_exit(ValueError, KeyboardInterrupt):
+            raise ValueError("Test context manager error")
+
+    assert caplog.record_tuples == snapshot(
+        [("mreg_cli.exceptions", 30, "Test context manager error")]
+    )
+
+    out, err = capsys.readouterr()
+    out = normalize_line_endings(out)
+    assert out == snapshot("Test context manager error\n")
     assert err == snapshot("")
 
 

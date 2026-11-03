@@ -48,7 +48,7 @@ dependencies = [
     "platformdirs>=4.3.0",
     "pydantic-settings>=2.10.1",
     "rich>=13.9.4",
-    "mreg-api>=0.6.1,<0.7.0",      # prevent breaking changes in pre-1.0.0 minor versions
+    "mreg-api>=0.9.0,<0.10.0",     # prevent breaking changes in pre-1.0.0 minor versions
 ]
 dynamic = ["version"]
 
@@ -70,6 +70,7 @@ dev = [
     "build",
     "pyinstaller",
     "pytest-httpserver>=1.1.5",
+    "ty>=0.0.96",
 ]
 ci = [{ include-group = "dev" }, "tox-gh-actions"]
 
@@ -114,11 +115,12 @@ select = [
     "PLE", # pylint-error
     # "PLR", # pylint-refactor
     # "PLW", # pylint-warning
-    "W", # warnings        
+    "W", # warnings
 ]
 ignore = [
     # B905 (`zip()` without an explicit `strict=` parameter) is incompatible with older python versions.
     "B905",
+    "D107", # Missing docstring in __init__. Shadows docstring of the class.
     # D203 (1 blank line required before class docstring) is incompatible with
     # D211 (No blank lines allowed before class docstring). We ignore D203.
     "D203",
@@ -139,7 +141,7 @@ ignore = [
     "Q002",   # Remove bad quotes (docstring)
     "Q003",   # Avoidable escape quote
     "COM812", # Missing trailing comma in Python 3.6+
-    "COM819", # Prohibited trailing comma    
+    "COM819", # Prohibited trailing comma
     "ISC001", # Implicit string concatenation (single line)
     "ISC002", # Implicit string concatenation (multiline)
 ]

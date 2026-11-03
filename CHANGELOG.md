@@ -7,13 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
-## [1.12.1](https://github.com/unioslo/mreg-cli/releases/tag/1.12.1) - 2026-10-08
-
-### Changes
-
-- Updated `mreg-api` dependency to 0.6.1. This removes some custom error handling code for M2M errors (hostgroups->owners,hosts; roles->atoms,hosts) and instead uses the server's own error messages.
+## [1.13.0](https://github.com/unioslo/mreg-cli/releases/tag/1.13.0) - 2026-11-02
 
 ### Changed
+
+- Updated `mreg-api` dependency to 0.9.0.
+
+## [1.12.4](https://github.com/unioslo/mreg-cli/releases/tag/1.12.4) - 2026-10-26
+
+### Changed
+
+- Updated `mreg-api` dependency to 0.8.3.
+- Underlying `mreg-api` dependency `httpx` changed to `httpx2`, which uses [truststore](https://pypi.org/project/truststore/) for certificate verification by default, using the system's certificate store instead of relying on bundled certificates via certifi.
+
+## [1.12.3](https://github.com/unioslo/mreg-cli/releases/tag/1.12.3) - 2026-10-22
+
+### Changed
+
+- Updated `mreg-api` dependency to 0.8.1.
+
+### Fixed
+
+- Dependencies affected by the eMudhra/emSign root cert vulnerabilities.
+
+## [1.12.2](https://github.com/unioslo/mreg-cli/releases/tag/1.12.2) - 2026-10-16
+
+### Changed
+
+- Updated `mreg-api` dependency to 0.8.0.
+
+### Fixed
+
+- Commands that resolve hosts and networks throwing generic "not found" error instead of prompting for re-login on expired token.
+
+## [1.12.1](https://github.com/unioslo/mreg-cli/releases/tag/1.12.1) - 2026-10-08
+
+### Changed
+
+- Updated `mreg-api` dependency to 0.6.1. This removes some custom error handling code for M2M errors (hostgroups->owners,hosts; roles->atoms,hosts) and instead uses the server's own error messages.
 
 ## [1.12.0](https://github.com/unioslo/mreg-cli/releases/tag/1.12.0) - 2026-10-05
 

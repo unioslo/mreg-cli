@@ -40,7 +40,7 @@ from mreg_cli.commands.zone import ZoneCommands
 from mreg_cli.config import MregCliConfig
 
 # Import other mreg_cli modules
-from mreg_cli.exceptions import CliError, CliExit, CliWarning, handle_exception, handle_exceptions
+from mreg_cli.exceptions import CliError, CliExit, CliWarning, handle_and_exit, handle_exception
 from mreg_cli.help_formatter import CustomHelpFormatter
 from mreg_cli.outputmanager import OutputManager
 from mreg_cli.types import CommandFunc, Flag
@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     # Can't use _SubParsersAction as generic in Python <3.9
-    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # type: ignore # private attribute
+    SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # private attribute
 
     # Subclasses of BaseCommand change the constructor signature from
     # 6 arguments to a single argument `cli`. That means we cannot
@@ -60,8 +60,8 @@ if TYPE_CHECKING:
     # which lets the type checker understand what kind of classes we are
     # trying to instantiate.
     class BaseCommandSubclass(Protocol):  # noqa: D101 (undocumented-public-class)
-        def __init__(self, cli: Command) -> None: ...  # noqa: D107 (undocumented-public-init)
-        def register_all_commands(self) -> None: ...  # noqa: D102 (undocumented-public-method)
+        def __init__(self, cli: Command) -> None: ...
+        def register_all_commands(self) -> None: ...  # noqa: D102 (undocumented-public-method
 
 
 def get_cli_history(config: MregCliConfig) -> FileHistory | None:
@@ -198,7 +198,7 @@ class Command(Completer):
             if isinstance(exc, mreg_api.exceptions.ResponseError):
                 # Retry command after re-authenticating if we got a 401 Unauthorized
                 if exc.response.status_code == 401 and interactive and not retry:
-                    with handle_exceptions(json=False):
+                    with handle_and_exit(json=False):
                         prompt_for_password_and_try_update_token()
                     return self.parse(command, interactive=interactive, retry=True)
             handle_exception(exc)

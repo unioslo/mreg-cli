@@ -272,19 +272,19 @@ As an example, you may add a host to a network unknown to mreg, or a frozen netw
 ```cli
    host remove <name|ip>
        Remove host. If <name> is an alias the cname host is removed.
-       
+
 ```
 
 ```cli
    host info <name|ip>
        Print information about host. If <name> is an alias the cname hosts info is shown.
-       
+
    host rename <old-name> <new-name>
        Rename host. If <old-name> is an alias then the alias is renamed.
-    
+
    host set_comment <name> <comment>
        Set comment for host. If <name> is an alias the cname host is updated.
-       
+
    host set_contact <name> <contact>
        Set contact for host. If <name> is an alias the cname host is updated.
 
@@ -292,31 +292,31 @@ As an example, you may add a host to a network unknown to mreg, or a frozen netw
 
 #### A/AAAA
 
-The API doesn't differentiate between ipv4 and ipv6, so A/AAAA are only different on the client side.  
+The API doesn't differentiate between ipv4 and ipv6, so A/AAAA are only different on the client side.
 Require force if the host already has A/AAAA record(s), or if the ip is in a subnet not controlled by MREG.
 
 ```cli
    host a_add <name> <ip|subnet>
        Add an A record to host. If <name> is an alias the cname host is used.
-       
+
    host a_change <name> <old-ip> <new-ip-or-subnet>
        Change A record. If <name> is an alias the cname host is used.
-       
+
    host a_remove <name> <ip>
        Remove A record from host. If <name> is an alias the cname host is used.
-       
+
    host a_show <name>
        Show hosts ipaddresses. If <name> is an alias the cname host is used.
-       
+
    host aaaa_add <name> <ipv6>
        Add an AAAA record to host. If <name> is an alias the cname host is used.
-       
+
    host aaaa_change <name> <old-ipv6> <new-ipv6>
        Change AAAA record. If <name> is an alias the cname host is used.
-       
+
    host aaaa_remove <name> <ipv6>
        Remove AAAA record from host. If <name> is an alias the cname host is used.
-       
+
    host aaaa_show <name>
        Show hosts ipaddresses. If <name> is an alias the cname host is used.
 ```
@@ -327,10 +327,10 @@ Require force if the host already has A/AAAA record(s), or if the ip is in a sub
    host cname_add <existing-name> <new-alias>
        Add a CNAME record to host. If <existing-name> is an alias the cname host is used as
        target for <new-alias>.
-       
+
    host cname_remove <name> <alias-to-delete>
        Remove CNAME record.
-       
+
    host cname_show <name>
        Show CNAME records for host. If <name> is an alias the cname hosts aliases are shown.
 ```
@@ -340,10 +340,10 @@ Require force if the host already has A/AAAA record(s), or if the ip is in a sub
 ```cli
    host hinfo_remove <name>
        Remove hinfo for host. If <name> is an alias the cname host is updated.
-       
+
    host hinfo_set <name> <hinfo>
        Set hinfo for host. If <name> is an alias the cname host is updated.
-       
+
    host hinfo_show <name>
        Show hinfo for host. If <name> is an alias the cname hosts hinfo is shown.
 ```
@@ -355,10 +355,10 @@ All LOC commands require force.
 ```cli
    host loc_remove <name>
        Remove location from host. If <name> is an alias the cname host is updated.
-       
+
    host loc_set <name> <loc>
        Set location of host. If <name> is an alias the cname host is updated.
-       
+
    host loc_show <name>
        Show location of host. If <name> is an alias the cname hosts LOC is shown.
 ```
@@ -368,10 +368,10 @@ All LOC commands require force.
 ```cli
    host naptr_add <name> <preference> <order> <flagg> <service> <regexp> <replacement>
        Add a NAPTR record to host.
-       
+
    host naptr_remove <name> <replacement>
        Remove NAPTR record.
-       
+
    host naptr_show <name>
        Show all NAPTR records for host.
 ```
@@ -381,13 +381,13 @@ All LOC commands require force.
 ```cli
    host ptr_change <ipv4|ipv6> <old-name> <new-name>
        Move PTR record from <old-name> to <new-name>.
-       
+
    host ptr_remove <ipv4|ipv6> <name>
        Remove PTR record from host.
-       
+
    host ptr_set <ipv4|ipv6> <name>
        Create a PTR record for host.
-       
+
    host ptr_show <ipv4|ipv6>
        Show PTR record matching given ip (empty input shows all PTR records).
 ```
@@ -399,10 +399,10 @@ Require force if a host with `target-name` doesn't exist.
 ```cli
    host srv_add <service-name> <pri> <weight> <port> <target-name>
        Add SRV record.
-       
+
    host srv_remove <service-name>
        Remove SRV record.
-       
+
    host srv_show <service-name>
        Show SRV records for the service.
 ```
@@ -426,11 +426,11 @@ Require force if a host with `target-name` doesn't exist.
 ```cli
    host ttl_remove <name>
        Remove explicit TTL for host. If <name> is an alias the alias host is updated.
-       
+
    host ttl_set <name> <ttl>
        Set ttl for host. Valid values are 300 <= TTL <= 68400 or "default". If <name> is an
        alias the alias host is updated.
-       
+
    host ttl_show <name>
        Show ttl for host. If <name> is an alias the alias hosts TTL is shown.
 ```
@@ -441,10 +441,10 @@ Require force if a host with `target-name` doesn't exist.
    host txt_add <name> <text>
        Add a txt record to host. <text> must be enclosed in double quotes if it contains more
        than one word.
-       
+
    host txt_remove <name> <text>
        Remove TXT record for host matching <text>.
-       
+
    host txt_show <name>
        Show all TXT records for host.
 ```
@@ -455,7 +455,7 @@ Require force if a host with `target-name` doesn't exist.
    dhcp assoc <name|ip> <mac-addr>
        Associate MAC address with host. If host got multiple A/AAAA records an IP must be
        given instead of name.
-       
+
    dhcp disassoc <name|ip>
        Disassociate MAC address with host/ip. If host got multiple A/AAAA records an IP must be
        given instead of name
@@ -466,46 +466,46 @@ Require force if a host with `target-name` doesn't exist.
 ```cli
    subnet create <subnet> <description> <vlan> <dns_delegated> <category> <location> <frozen>
        Create a new subnet
-       
+
    subnet import <file>
        Import subnet data from <file>.
-       
+
    subnet info <subnet>
        Display subnet info
-       
+
    subnet list_unused_addresses <subnet>
        Lists all the unused addresses for a subnet
-       
+
    subnet list_used_addresses <subnet>
        Lists all the used addresses for a subnet
-       
+
    subnet remove <subnet>
        Remove subnet
-       
+
    subnet set_category <subnet> <category_tag>
        Set category tag for subnet
-       
+
    subnet set_description <subnet> <description>
        Set description for subnet
-       
+
    subnet set_dns_delegated <subnet>
        Set that DNS-administration is being handled elsewhere.
-       
+
    subnet set_frozen <subnet>
        Freeze a subnet.
-       
+
    subnet set_location <subnet> <location_tag>
        Set location tag for subnet
-       
+
    subnet set_reserved <subnet> <number>
        Set number of reserved hosts.
-       
+
    subnet set_vlan <subnet> <vlan>
        Set VLAN for subnet
-       
+
    subnet unset_dns_delegated <subnet>
        Set that DNS-administration is not being handled elsewhere.
-       
+
    subnet unset_frozen <subnet>
        Unfreeze a subnet.
 ```
@@ -515,13 +515,13 @@ Require force if a host with `target-name` doesn't exist.
 ```cli
    zone create <zone-name> (<nameservers>)
        Create new zone.
-       
+
    zone delete <zone-name>
        Delete a zone
-       
+
    zone set_ns <zone-name> (<nameservers>)
        Update nameservers for an existing zone.
-       
+
    zone set_soa <zone-name> (<primary_ns> <email> <serialno> <refresh> <retry> <expire> <ttl>)
        Updated the SOA of a zone.
 ```
@@ -541,3 +541,5 @@ help <cmd>
 `shell <cmd>`: Run a bash command.
 
 `source <file-name> [--exit]`: Read commands from a file. If --exit is supplied then it'll stop executing on error.
+
+### Developmetn

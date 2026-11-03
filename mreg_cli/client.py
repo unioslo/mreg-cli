@@ -176,7 +176,7 @@ class MregCliClient(MregClient, metaclass=_AutoListenersMeta):
                 host = getter(ident_str)
                 if host is not None:
                     return host
-            except Exception:
+            except ValueError:  # invalid identifier for this getter
                 pass
 
         # Fall back to CNAME
@@ -230,25 +230,18 @@ class MregCliClient(MregClient, metaclass=_AutoListenersMeta):
         Resolution order: IP address → CIDR / network address → numeric id.
         """
         network: Network | None = None
+
         try:
-            # Try as IP first
             network = self.network.get_by_ip(identifier, required=False)
-        except Exception:
+        except ValueError:  # invalid IP address
             pass
 
         if network is None:
-            try:
-                # Try as CIDR / network address
-                network = self.network.get(identifier, required=False)
-            except Exception:
-                pass
+            # Try as CIDR / network address
+            network = self.network.get(identifier, required=False)
 
         if network is None and identifier.isdecimal():
-            try:
-                network = self.network.first(id=int(identifier), required=False)
-                # network = self.network.get(int(identifier), required=False)
-            except Exception:
-                pass
+            network = self.network.first(id=int(identifier), required=False)
 
         if network is None and required:
             raise CliEntityNotFound(f"Network {identifier!r} not found.")

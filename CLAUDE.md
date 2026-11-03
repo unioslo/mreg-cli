@@ -34,6 +34,7 @@ Commands use `mreg_api.models` for data operations and `mreg_cli.output` for pre
 from mreg_api.models import Zone
 from mreg_cli.output import output_zone
 
+
 def zone_info(args):
     zone = Zone.get_zone_or_raise(args.name)
     output_zone(zone)  # Standalone function

@@ -66,7 +66,7 @@ def ensure_macaddress_associable(mac: MacAddress, force: bool, client: MregClien
 
     :raises EntityAlreadyExists: If the MAC address is already associated with an IP address and force is not set.
     :raises MultipleEntitiesFound: If the MAC address is associated with multiple IP addresses and force
-    """
+    """  # noqa: E501
     if force:
         return
 
@@ -76,12 +76,12 @@ def ensure_macaddress_associable(mac: MacAddress, force: bool, client: MregClien
 
     if len(ips) == 1:
         raise EntityAlreadyExists(
-            f"MAC address {mac} is already associated with IP address {ips[0].ipaddress}, must force."
+            f"MAC address {mac} is already associated with IP address {ips[0].ipaddress}, must force."  # noqa: E501
         )
     else:
         ips_str = ", ".join([str(ip.ipaddress) for ip in ips])
         raise MultipleEntitiesFound(
-            f"MAC address {mac} is already associated with multiple IP addresses: {ips_str}, must force."
+            f"MAC address {mac} is already associated with multiple IP addresses: {ips_str}, must force."  # noqa: E501
         )
 
 

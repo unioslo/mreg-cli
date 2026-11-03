@@ -97,7 +97,7 @@ def output_roles_table(roles: Sequence[Role], padding: int = 14) -> None:
     client = get_client()
     rows: list[RoleTableRow] = []
     for role in roles:
-        labels = client.role.get_labels(role)
+        labels = client.role.list_labels(role)
         row = RoleTableRow(
             name=role.name,
             description=role.description,

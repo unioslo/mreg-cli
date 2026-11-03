@@ -142,32 +142,28 @@ class InvalidFilterRegex(CliWarning):
         super().__init__(diagnostic.message, diagnostic=diagnostic)
 
 
-# FIXME: Inconsistent handling of HTTP errors in the original CLI implementation
-#        DELETE errors were considered errors, while other HTTP errors were
-#        considered warnings.
 _MREG_API_ERROR_EXCEPTIONS = (
-    mreg_api.exceptions.DeleteError,
+    mreg_api.exceptions.ResponseError,
     mreg_api.exceptions.InternalError,
     mreg_api.exceptions.MregValidationError,
 )
 
 
-def is_error(exc: Exception) -> bool:
+def is_error(exc: BaseException) -> bool:
     """Determine if an exception should produce an error or warning."""
     # mreg_cli errors
     if isinstance(exc, CliError):
         return True
     elif isinstance(exc, CliWarning):
         return False
-
     # mreg_api exceptions that should be treated as errors
-    if isinstance(exc, _MREG_API_ERROR_EXCEPTIONS):
+    elif isinstance(exc, _MREG_API_ERROR_EXCEPTIONS):
         return True
 
     return False
 
 
-def get_exception_message(exc: Exception, *, json: bool = False) -> str:
+def get_exception_message(exc: BaseException, *, json: bool = False) -> str:
     """Get the plain text message from an exception.
 
     :param exc: The exception to get the message from.
@@ -181,7 +177,7 @@ def get_exception_message(exc: Exception, *, json: bool = False) -> str:
     return str(exc)
 
 
-def get_exception_diagnostic(exc: CliException | Exception) -> Diagnostic | None:
+def get_exception_diagnostic(exc: BaseException) -> Diagnostic | None:
     """Get the diagnostic carried by an exception, if any.
 
     :param exc: The exception to inspect.
@@ -207,14 +203,15 @@ class ExceptionHandler:
         message: The plain text message from the exception.
         diagnostic: The diagnostic carried by the exception, if any.
         formatted_message: HTML-formatted message for prompt_toolkit display.
+        json: Whether to display mreg_api exceptions as their original JSON representation.
 
     """
 
-    def __init__(self, exc: Exception, *, json: bool = False) -> None:
+    def __init__(self, exc: BaseException, *, json: bool = False) -> None:
         """Initialize the handler with an exception.
 
         :param exc: The exception to handle.
-        :param json: Whether to include JSON details for mreg_api exceptions.
+        :param json: Display mreg_api exceptions as their original JSON representation.
         """
         self.original_exception = exc
         self.exception = self._transform_exception(exc)
@@ -229,7 +226,7 @@ class ExceptionHandler:
         self.diagnostic = get_exception_diagnostic(self.exception)
         self.formatted_message = self.get_formatted_message()
 
-    def _transform_exception(self, exc: Exception) -> Exception:
+    def _transform_exception(self, exc: BaseException) -> BaseException:
         """Transform an exception into an appropriate mreg_cli exception if needed."""
         if isinstance(exc, ValidationError):
             return mreg_api.exceptions.MregValidationError.from_pydantic(exc)
@@ -290,7 +287,7 @@ class ExceptionHandler:
         self.print()
 
 
-def handle_exception(exc: Exception) -> None:
+def handle_exception(exc: BaseException, json: bool = False) -> None:
     """Log and print an exception with appropriate formatting.
 
     This is the main entry point for exception handling.
@@ -299,17 +296,24 @@ def handle_exception(exc: Exception) -> None:
     """
     # TODO: add JSON toggle via config here
     # possibly via verbosity level/debug flag
-    ExceptionHandler(exc).handle()
+    ExceptionHandler(exc, json=json).handle()
 
 
 @contextmanager
-def handle_exceptions(json: bool = False) -> Generator[None, None, None]:
+def handle_and_exit(
+    *exc_cls: type[BaseException], json: bool = False
+) -> Generator[None, None, None]:
     """Context manager to handle exceptions using ExceptionHandler and exit.
 
+    Suppresses traceback and shows a formatted message in the console.
+
+    :param exc_cls: The exception class(es) to handle. Defaults to (Exception,).
     :param json: Whether to include JSON details for mreg_api exceptions.
     """
+    if not exc_cls:
+        exc_cls = (Exception,)
     try:
         yield
-    except Exception as exc:
-        ExceptionHandler(exc, json=json).handle()
+    except exc_cls as exc:
+        handle_exception(exc, json=json)
         sys.exit(1)
