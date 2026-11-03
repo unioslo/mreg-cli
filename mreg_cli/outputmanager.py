@@ -20,8 +20,8 @@ from urllib.parse import urlencode, urlparse
 
 from pydantic import BaseModel
 
-from mreg_cli.errorbuilder import build_error_message
-from mreg_cli.exceptions import CliError, FileError
+from mreg_cli.diagnostics import Diagnostic, word_span
+from mreg_cli.exceptions import ArgumentSplitBySeparator, FileError, InvalidFilterRegex
 from mreg_cli.types import Json, JsonMapping, RecordingEntry, TimeInfo
 
 if TYPE_CHECKING:
@@ -79,6 +79,11 @@ def remove_comments(line: str) -> str:
     :return: The line with comments removed.
     """
     return find_char_outside_quotes(line, "#", False).rstrip(" ")
+
+
+def _skip_whitespace(line: str, pos: int) -> int:
+    """Return the index of the first non-whitespace character at or after pos."""
+    return len(line) - len(line[pos:].lstrip())
 
 
 def remove_dict_key_recursive(obj: Json, key: str) -> None:
@@ -322,7 +327,9 @@ class OutputManager:
         Also records the command if recording is active.
 
         :param command: The command to add.
-        :raises CliError: If the command is invalid.
+        :raises InvalidFilterRegex: If the filter's regular expression fails to compile.
+        :raises ArgumentSplitBySeparator: If an unquoted '|' in an argument was
+            mistaken for the filter separator.
         :return: The cleaned command, devoid of filters and other noise.
         """
         logger.debug(f"From command: {command}")
@@ -372,9 +379,7 @@ class OutputManager:
         """
         return find_char_outside_quotes(command, "|", True)
 
-    # We want to use re.Pattern as the type here, but python 3.6 and older re-modules
-    # don't have that type. So we use Any instead.
-    def get_filter(self, command: str) -> tuple[str, Any, bool]:
+    def get_filter(self, command: str) -> tuple[str, re.Pattern[str] | None, bool]:
         """Return the filter for the output.
 
         Parses the command string and extracts a filter if present, taking into
@@ -382,32 +387,50 @@ class OutputManager:
         splitting.
 
         :param command: The command to parse for the filter.
-        :raises CliError: If the filter is invalid.
+        :raises InvalidFilterRegex: If the filter's regular expression fails to compile.
+        :raises ArgumentSplitBySeparator: If an unquoted '|' in an argument was
+            mistaken for the filter separator.
         :return: The command, the filter, and whether it is a negated filter.
         """
-        negate = False
-        filter_re = None
+        split_index = self._find_split_index(command) if command else -1
+        if split_index == -1:
+            return (command, None, False)
 
-        if command:
-            split_index = self._find_split_index(command)
+        # Locate the pattern as a span of the command, so the compiled string
+        # and the span reported in diagnostics are one and the same.
+        start = _skip_whitespace(command, split_index + 1)
+        end = len(command.rstrip())
+        negate = command.startswith("!", start, end)
+        if negate:
+            start = _skip_whitespace(command, start + 1)
+        start = min(start, end)
+        filter_str = command[start:end]
 
-            if split_index != -1:
-                command_issued = command
-                filter_str = command[split_index + 1 :].strip()
-                command = command[:split_index].strip()
+        try:
+            filter_re = re.compile(filter_str)
+        except re.error as exc:
+            word = word_span(command, split_index)
+            if word == (split_index, split_index + 1):
+                # `|` is used correctly: the filter pattern following it is invalid
+                raise InvalidFilterRegex(
+                    Diagnostic(
+                        message=f"Unable to compile regex '{filter_str}': {exc}",
+                        command=command,
+                        span=(start, end),
+                        annotation="This part is not a valid regular expression.",
+                    )
+                ) from exc
+            # `|` is inside an unquoted argument and was mistaken for the filter separator
+            raise ArgumentSplitBySeparator(
+                Diagnostic(
+                    message=f"Unable to compile regex '{filter_str}'",
+                    command=command,
+                    span=word,
+                    annotation="Consider enclosing this part in quotes.",
+                )
+            ) from exc
 
-                if filter_str.startswith("!"):
-                    negate = True
-                    filter_str = filter_str[1:].strip()
-
-                try:
-                    filter_re = re.compile(filter_str)
-                except re.error as exc:
-                    base_msg = f"Unable to compile regex '{filter_str}'"
-                    msg = build_error_message(command_issued, base_msg)
-                    raise CliError(msg) from exc
-
-        return (command, filter_re, negate)
+        return (command[:split_index].strip(), filter_re, negate)
 
     def add_formatted_table(
         self,

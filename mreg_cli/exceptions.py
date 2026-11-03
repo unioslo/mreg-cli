@@ -14,6 +14,8 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.formatted_text.html import html_escape
 from pydantic import ValidationError
 
+from mreg_cli.diagnostics import Diagnostic
+
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=Exception)
@@ -106,6 +108,31 @@ class TooManyResults(CliWarning):
     """API returned too many results."""
 
 
+class DiagnosticWarning(CliWarning):
+    """Warning whose sole argument is a Diagnostic.
+
+    `str(exc)` is the diagnostic's headline (used for logs and recordings),
+    while the full diagnostic is rendered when displayed in the terminal.
+    """
+
+    @property
+    def diagnostic(self) -> Diagnostic:
+        """The diagnostic carried by this warning."""
+        return self.args[0]
+
+    def __str__(self) -> str:
+        """Return the diagnostic's headline."""
+        return self.diagnostic.message
+
+
+class ArgumentSplitBySeparator(DiagnosticWarning):
+    """An argument containing an unquoted '|' was split into a command part and a filter part."""
+
+
+class InvalidFilterRegex(DiagnosticWarning):
+    """The regular expression used as an output filter failed to compile."""
+
+
 _MREG_API_ERROR_EXCEPTIONS = (
     mreg_api.exceptions.ResponseError,
     mreg_api.exceptions.InternalError,
@@ -141,6 +168,15 @@ def get_exception_message(exc: BaseException, *, json: bool = False) -> str:
     return str(exc)
 
 
+def get_exception_diagnostic(exc: BaseException) -> Diagnostic | None:
+    """Get the diagnostic carried by an exception, if any.
+
+    :param exc: The exception to inspect.
+    :returns: The diagnostic if present, otherwise None.
+    """
+    return exc.diagnostic if isinstance(exc, DiagnosticWarning) else None
+
+
 class ExceptionHandler:
     """Handler for exceptions from mreg_cli and mreg_api.
 
@@ -154,6 +190,7 @@ class ExceptionHandler:
         is_error: True if the exception is non-recoverable (displayed in red).
         is_validation_error: True if the exception is a ValidationError.
         message: The plain text message from the exception.
+        diagnostic: The diagnostic carried by the exception, if any.
         formatted_message: HTML-formatted message for prompt_toolkit display.
         json: Whether to display mreg_api exceptions as their original JSON representation.
 
@@ -175,6 +212,7 @@ class ExceptionHandler:
 
         # Precompute messages
         self.message = get_exception_message(self.exception, json=self._json)
+        self.diagnostic = get_exception_diagnostic(self.exception)
         self.formatted_message = self.get_formatted_message()
 
     def _transform_exception(self, exc: BaseException) -> BaseException:
@@ -189,8 +227,10 @@ class ExceptionHandler:
         """Get the HTML-formatted message for prompt_toolkit display.
 
         Errors are formatted with red text, warnings with italics.
+        Exceptions with a diagnostic are use diagnostic rendering,
+        otherwise the plain exception message is used.
         """
-        msg = html_escape(self.message)
+        msg = html_escape(self.diagnostic.render() if self.diagnostic else self.message)
 
         # Classify by severity
         if self.is_error:

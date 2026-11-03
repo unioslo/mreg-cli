@@ -24,10 +24,13 @@ from mreg_api.exceptions import (
 from mreg_api.models import Host
 from pydantic import ValidationError as PydanticValidationError
 
+from mreg_cli.diagnostics import Diagnostic
 from mreg_cli.exceptions import (
     _MREG_API_ERROR_EXCEPTIONS,
     CliError,
     CliWarning,
+    ExceptionHandler,
+    InvalidFilterRegex,
     handle_and_exit,
     handle_exception,
 )
@@ -363,3 +366,50 @@ def test_handle_and_exit_context_manager_multiple(
     out = normalize_line_endings(out)
     assert out == snapshot("Test context manager error\n")
     assert err == snapshot("")
+
+
+def test_exception_with_diagnostic_handling(
+    caplog: pytest.LogCaptureFixture, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Test handling of an exception with a diagnostic.
+
+    The rendered message is printed for display, while only the headline is logged.
+    """
+    diagnostic = Diagnostic(
+        message="Unable to compile regex '*dbora*': nothing to repeat at position 0",
+        command="policy list_atoms * | *dbora*",
+        span=(22, 29),
+        annotation="This part is not a valid regular expression.",
+    )
+    handle_exception(InvalidFilterRegex(diagnostic))
+
+    assert caplog.record_tuples == snapshot(
+        [
+            (
+                "mreg_cli.exceptions",
+                30,
+                "Unable to compile regex '*dbora*': nothing to repeat at position 0",
+            )
+        ]
+    )
+
+    out, err = capsys.readouterr()
+    out = normalize_line_endings(out)
+    assert out == snapshot("""\
+Unable to compile regex '*dbora*': nothing to repeat at position 0
+policy list_atoms * | *dbora*
+                      ^^^^^^^
+                      └ This part is not a valid regular expression.
+""")
+    assert err == snapshot("")
+
+
+def test_plain_exceptions_render_without_diagnostic() -> None:
+    """Test that plain CLI exceptions without diagnostics render as html-formatted messages."""
+    error_handler = ExceptionHandler(CliError("Test CLI error message"))
+    assert error_handler.diagnostic is None
+    assert error_handler.formatted_message == "<ansired>ERROR: Test CLI error message</ansired>"
+
+    warning_handler = ExceptionHandler(CliWarning("Test CLI warning message"))
+    assert warning_handler.diagnostic is None
+    assert warning_handler.formatted_message == "<i>Test CLI warning message</i>"
