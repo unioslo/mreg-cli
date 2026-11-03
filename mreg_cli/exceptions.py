@@ -28,16 +28,6 @@ class CliExit(Exception):
 class CliException(Exception):
     """Base exception class for the CLI."""
 
-    def __init__(self, *args: object, diagnostic: Diagnostic | None = None) -> None:
-        """Initialize the exception with an optional diagnostic.
-
-        :param args: Message arguments, passed on to the base exception.
-        :param diagnostic: Optional diagnostic tied to a span of the issued
-            command; rendered centrally when the exception is displayed.
-        """
-        super().__init__(*args)
-        self.diagnostic = diagnostic
-
 
 class CliError(CliException):
     """Exception class for CLI errors.
@@ -118,28 +108,29 @@ class TooManyResults(CliWarning):
     """API returned too many results."""
 
 
-class ArgumentSplitBySeparator(CliWarning):
+class DiagnosticWarning(CliWarning):
+    """Warning whose sole argument is a Diagnostic.
+
+    `str(exc)` is the diagnostic's headline (used for logs and recordings),
+    while the full diagnostic is rendered when displayed in the terminal.
+    """
+
+    @property
+    def diagnostic(self) -> Diagnostic:
+        """The diagnostic carried by this warning."""
+        return self.args[0]
+
+    def __str__(self) -> str:
+        """Return the diagnostic's headline."""
+        return self.diagnostic.message
+
+
+class ArgumentSplitBySeparator(DiagnosticWarning):
     """An argument containing an unquoted '|' was split into a command part and a filter part."""
 
-    def __init__(self, diagnostic: Diagnostic) -> None:
-        """Initialize the warning with a diagnostic.
 
-        :param diagnostic: The diagnostic to carry; its message becomes the
-            exception message.
-        """
-        super().__init__(diagnostic.message, diagnostic=diagnostic)
-
-
-class InvalidFilterRegex(CliWarning):
+class InvalidFilterRegex(DiagnosticWarning):
     """The regular expression used as an output filter failed to compile."""
-
-    def __init__(self, diagnostic: Diagnostic) -> None:
-        """Initialize the warning with a diagnostic.
-
-        :param diagnostic: The diagnostic to carry; its message becomes the
-            exception message.
-        """
-        super().__init__(diagnostic.message, diagnostic=diagnostic)
 
 
 _MREG_API_ERROR_EXCEPTIONS = (
@@ -183,9 +174,7 @@ def get_exception_diagnostic(exc: BaseException) -> Diagnostic | None:
     :param exc: The exception to inspect.
     :returns: The diagnostic if present, otherwise None.
     """
-    if isinstance(exc, CliException):
-        return exc.diagnostic
-    return None
+    return exc.diagnostic if isinstance(exc, DiagnosticWarning) else None
 
 
 class ExceptionHandler:
@@ -238,14 +227,10 @@ class ExceptionHandler:
         """Get the HTML-formatted message for prompt_toolkit display.
 
         Errors are formatted with red text, warnings with italics.
-        Exceptions carrying a diagnostic are rendered from the diagnostic's
-        full message (if it exists), otherwise the plain exception message is used.
+        Exceptions carrying a diagnostic are rendered in full, otherwise the
+        plain exception message is used.
         """
-        if self.diagnostic is not None and (diag := self.diagnostic.render()):
-            msg = diag
-        else:
-            msg = self.message
-        msg = html_escape(msg)
+        msg = html_escape(self.diagnostic.render() if self.diagnostic else self.message)
 
         # Classify by severity
         if self.is_error:

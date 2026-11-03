@@ -20,11 +20,7 @@ from urllib.parse import urlencode, urlparse
 
 from pydantic import BaseModel
 
-from mreg_cli.diagnostics import (
-    argument_split_by_separator,
-    invalid_filter_regex,
-    is_standalone_separator,
-)
+from mreg_cli.diagnostics import Diagnostic, word_span
 from mreg_cli.exceptions import ArgumentSplitBySeparator, FileError, InvalidFilterRegex
 from mreg_cli.types import Json, JsonMapping, RecordingEntry, TimeInfo
 
@@ -83,6 +79,11 @@ def remove_comments(line: str) -> str:
     :return: The line with comments removed.
     """
     return find_char_outside_quotes(line, "#", False).rstrip(" ")
+
+
+def _skip_whitespace(line: str, pos: int) -> int:
+    """Return the index of the first non-whitespace character at or after pos."""
+    return len(line) - len(line[pos:].lstrip())
 
 
 def remove_dict_key_recursive(obj: Json, key: str) -> None:
@@ -391,35 +392,45 @@ class OutputManager:
             mistaken for the filter separator.
         :return: The command, the filter, and whether it is a negated filter.
         """
-        negate = False
-        filter_re = None
+        split_index = self._find_split_index(command) if command else -1
+        if split_index == -1:
+            return (command, None, False)
 
-        if command:
-            split_index = self._find_split_index(command)
+        # Locate the pattern as a span of the command, so the compiled string
+        # and the span reported in diagnostics are one and the same.
+        start = _skip_whitespace(command, split_index + 1)
+        end = len(command.rstrip())
+        negate = command.startswith("!", start, end)
+        if negate:
+            start = _skip_whitespace(command, start + 1)
+        start = min(start, end)
+        filter_str = command[start:end]
 
-            if split_index != -1:
-                command_issued = command
-                filter_str = command[split_index + 1 :].strip()
-                command = command[:split_index].strip()
+        try:
+            filter_re = re.compile(filter_str)
+        except re.error as exc:
+            word = word_span(command, split_index)
+            if word == (split_index, split_index + 1):
+                # `|` is a standalone separator: the pattern after it is invalid
+                raise InvalidFilterRegex(
+                    Diagnostic(
+                        message=f"Unable to compile regex '{filter_str}': {exc}",
+                        command=command,
+                        span=(start, end),
+                        annotation="This part is not a valid regular expression.",
+                    )
+                ) from exc
+            # `|` is inside an unquoted argument and was mistaken for the separator
+            raise ArgumentSplitBySeparator(
+                Diagnostic(
+                    message=f"Unable to compile regex '{filter_str}'",
+                    command=command,
+                    span=word,
+                    annotation="Consider enclosing this part in quotes.",
+                )
+            ) from exc
 
-                if filter_str.startswith("!"):
-                    negate = True
-                    filter_str = filter_str[1:].strip()
-
-                try:
-                    filter_re = re.compile(filter_str)
-                except re.error as exc:
-                    # Invalid regex following filter separator `|`
-                    if is_standalone_separator(command_issued, split_index):
-                        raise InvalidFilterRegex(
-                            invalid_filter_regex(command_issued, split_index, filter_str, exc)
-                        ) from exc
-                    # Filter separator `|` used as part of regex pattern
-                    raise ArgumentSplitBySeparator(
-                        argument_split_by_separator(command_issued, split_index, filter_str)
-                    ) from exc
-
-        return (command, filter_re, negate)
+        return (command[:split_index].strip(), filter_re, negate)
 
     def add_formatted_table(
         self,

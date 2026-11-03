@@ -405,13 +405,7 @@ policy list_atoms * | *dbora*
 
 
 def test_plain_exceptions_render_without_diagnostic() -> None:
-    """Test that plain CLI exceptions render byte-identical to before the refactor.
-
-    The diagnostic carrier defaults to None and does not alter rendering.
-    """
-    assert CliError("Test CLI error message").diagnostic is None
-    assert CliWarning("Test CLI warning message").diagnostic is None
-
+    """Test that plain CLI exceptions without diagnostics render as html-formatted messages."""
     error_handler = ExceptionHandler(CliError("Test CLI error message"))
     assert error_handler.diagnostic is None
     assert error_handler.formatted_message == "<ansired>ERROR: Test CLI error message</ansired>"
