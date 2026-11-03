@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import configparser
 import logging
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, Any, ClassVar, Self, TypedDict
@@ -23,13 +24,17 @@ from pydantic_settings import (
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
-from pydantic_settings.sources import ConfigFileSourceMixin
-from pydantic_settings.sources.types import PathType
+from pydantic_settings.sources import ConfigFileSourceMixin, ConfigFileSourceType
 from typing_extensions import override
 
 from mreg_cli.dirs import DEFAULT_CONFIG_PATH, HISTORY_FILE_DEFAULT, LOG_FILE_DEFAULT
 from mreg_cli.types import LogLevel
 from mreg_cli.utilities.fs import get_writable_file_or_tempfile, to_path
+
+if sys.version_info >= (3, 12):
+    from importlib.resources.abc import Traversable
+else:
+    from importlib.abc import Traversable
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +80,7 @@ class CliSettingsSource(PydanticBaseSettingsSource):
             if k in self.settings_cls.model_fields:
                 field = self.settings_cls.model_fields[k]
                 # Only include if different from default value
-                if field.default is not None and v == field.default:
-                    continue
-                elif field.default_factory is not None and v == field.default_factory():
+                if v == field.get_default(call_default_factory=True):
                     continue
                 active[k] = v
         return active
@@ -107,7 +110,7 @@ class IniConfigSettingsSource(InitSettingsSource, ConfigFileSourceMixin):
     def __init__(self, settings_cls: type[BaseSettings]):
         """Initialize the INI config settings source."""
         # NOTE: Declare variables _before_ any method is executed
-        self.paths: list[Path] = []
+        self.paths: list[Path | Traversable] = []
         """List of successfully read config file paths in chronological order."""
 
         # Read INI files to populate initial configuration data.
@@ -118,32 +121,42 @@ class IniConfigSettingsSource(InitSettingsSource, ConfigFileSourceMixin):
         self.ini_data = self._read_files(DEFAULT_CONFIG_PATH[::-1])  # reverse order
         super().__init__(settings_cls, self.ini_data)
 
-    # Modified version of ConfigFileSourceMixin._read_files() with extra
+    # Modified version of ConfigFileSourceMixin._existing_files() with extra
     # protection against Path.expanduser() failures
     @override
-    def _read_files(self, files: PathType | None, deep_merge: bool = False) -> dict[str, Any]:
+    @staticmethod
+    def _existing_files(files: ConfigFileSourceType | None) -> list[Path | Traversable]:
+        """Return the given files that exist, with `~` expanded in native paths."""
         if files is None:
-            return {}
+            return []
         if not isinstance(files, Sequence) or isinstance(files, str):
             files = [files]
-
-        vars: dict[str, Any] = {}  # noqa: A001
+        existing: list[Path | Traversable] = []
         for file in files:
-            try:
-                file_path = to_path(file)  # handles failed Path.expanduser()
-            except Exception as e:
-                logger.warning("Skipping invalid config file path %s: %s", file, e)
-                continue
+            file_path: Path | Traversable = Path(file) if isinstance(file, str) else file
+            if isinstance(file_path, Path):
+                try:
+                    file_path = file_path.expanduser()
+                except Exception as e:
+                    logger.warning("Skipping invalid config file path %s: %s", file, e)
+                    continue
             if file_path.is_file():
-                vars.update(self._read_file(file_path))
-        return vars
+                existing.append(file_path)
+        return existing
 
+    # NOTE on control flow that may not be immediately obvious:
+    # 1. ConfigFileSourceMixin._read_files() calls _existing_files() to filter valid files.
+    # 2. _existing_files() expands user paths and skips invalid ones.
+    # 3. _read_files() then calls _read_file() for each existing file.
+    # 4. _read_file() reads the INI file and updates the configuration dictionary.
     @override
-    def _read_file(self, path: Path) -> dict[str, Any]:
+    def _read_file(self, path: Path | Traversable) -> dict[str, Any]:
         """Read from an INI file and return a dictionary of settings."""
         try:
             config = configparser.ConfigParser()
-            config.read(path)
+            # ConfigParser.read() uses builtin open(), which rejects non-PathLike Traversables
+            with path.open() as f:
+                config.read_file(f, source=str(path))
             vals = {k: v for k, v in config["mreg"].items()}
             # no error here, assume we loaded from the file
             self.paths.append(path)  # no duplicate checking here
