@@ -70,8 +70,7 @@ function build_context {
 	context_files | tar --null --files-from=- -cf -
 }
 
-# build a container image for mreg-cli
-# docker and podman both accept a tar archive on stdin as the build context
+# build a container image for mreg-cli with build context tarball
 build_context | docker build -f ci/Dockerfile -t mreg-cli --build-arg python_version=$PYTHON_VERSION -
 
 # arm64 hosts refuse to pull amd64-only mreg images without an explicit platform.
