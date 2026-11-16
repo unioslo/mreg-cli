@@ -59,6 +59,15 @@ fi
 # build a container image for mreg-cli
 docker build -f Dockerfile -t mreg-cli --build-arg python_version=$PYTHON_VERSION ..
 
+# arm64 hosts refuse to pull amd64-only mreg images without an explicit platform.
+# Force amd64 only if the published image has no arm64 variant, so we switch to
+# native images automatically once they exist. Only applies to the mreg service
+# (see docker-compose.yml), so postgres and mreg-cli always stay native.
+if [[ -z "$MREG_PLATFORM" && "$(uname -m)" =~ ^(arm64|aarch64)$ && "$MREG_IMAGE_PULL_POLICY" != "never" ]] &&
+	! docker manifest inspect "$MREG_IMAGE" 2>/dev/null | grep -q '"architecture": *"arm64"'; then
+	export MREG_PLATFORM=linux/amd64
+fi
+
 # start mreg+postgres in containers
 if [[ -n "$GITHUB_ACTIONS" ]]; then
 	docker compose $GH_PARAMS up -d
