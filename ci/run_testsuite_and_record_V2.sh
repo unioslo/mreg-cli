@@ -56,8 +56,23 @@ else
 	echo "Using MREG image: $MREG_IMAGE"
 fi
 
+# List the files to include in the build context: .git (needed by setuptools_scm),
+# plus all files tracked by git. `--exclude-standard` ensures both repo .gitignore
+# as well as global .gitignore is respected.
+function context_files {
+	printf '.git\0'
+	git ls-files -z --cached --others --exclude-standard
+}
+
+# Write the build context as a tar archive to stdout.
+function build_context {
+	cd "$(git rev-parse --show-toplevel)"
+	context_files | tar --null --files-from=- -cf -
+}
+
 # build a container image for mreg-cli
-docker build -f Dockerfile -t mreg-cli --build-arg python_version=$PYTHON_VERSION ..
+# docker and podman both accept a tar archive on stdin as the build context
+build_context | docker build -f ci/Dockerfile -t mreg-cli --build-arg python_version=$PYTHON_VERSION -
 
 # arm64 hosts refuse to pull amd64-only mreg images without an explicit platform.
 # Force amd64 only if the published image has no arm64 variant, so we switch to
