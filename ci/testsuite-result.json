@@ -32414,10 +32414,10 @@
     "time": null
   },
   {
-    "command": "network policy_attribute_create foo \"Foo attribute\"",
+    "command": "network policy attribute create foo \"Foo attribute\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_attribute_create foo \"Foo attribute\"",
+    "command_issued": "network policy attribute create foo \"Foo attribute\"",
     "ok": [
       "Created network policy attribute 'foo'"
     ],
@@ -32456,10 +32456,10 @@
     "time": null
   },
   {
-    "command": "network policy_attribute_create bar \"Bar attribute\"",
+    "command": "network policy attribute create bar \"Bar attribute\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_attribute_create bar \"Bar attribute\"",
+    "command_issued": "network policy attribute create bar \"Bar attribute\"",
     "ok": [
       "Created network policy attribute 'bar'"
     ],
@@ -32498,10 +32498,10 @@
     "time": null
   },
   {
-    "command": "network policy_attribute_create baz \"Baz attribute\"",
+    "command": "network policy attribute create baz \"Baz attribute\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_attribute_create baz \"Baz attribute\"",
+    "command_issued": "network policy attribute create baz \"Baz attribute\"",
     "ok": [
       "Created network policy attribute 'baz'"
     ],
@@ -32540,10 +32540,10 @@
     "time": null
   },
   {
-    "command": "network policy_create SecurePolicy \"Secure policy for a network\" -attribute foo -attribute bar",
+    "command": "network policy create SecurePolicy \"Secure policy for a network\" -attribute foo -attribute bar",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_create SecurePolicy \"Secure policy for a network\" -attribute foo -attribute bar",
+    "command_issued": "network policy create SecurePolicy \"Secure policy for a network\" -attribute foo -attribute bar",
     "ok": [
       "Created network policy 'securepolicy'"
     ],
@@ -32641,10 +32641,10 @@
     "time": null
   },
   {
-    "command": "network policy_create Autoconfigure \"Automatic host configuration\" -attribute baz",
+    "command": "network policy create Autoconfigure \"Automatic host configuration\" -attribute baz",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_create Autoconfigure \"Automatic host configuration\" -attribute baz",
+    "command_issued": "network policy create Autoconfigure \"Automatic host configuration\" -attribute baz",
     "ok": [
       "Created network policy 'autoconfigure'"
     ],
@@ -32715,10 +32715,10 @@
     "time": null
   },
   {
-    "command": "network policy_create NoICMP \"ICMP disallowed\"",
+    "command": "network policy create NoICMP \"ICMP disallowed\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_create NoICMP \"ICMP disallowed\" # no attributes",
+    "command_issued": "network policy create NoICMP \"ICMP disallowed\" # no attributes",
     "ok": [
       "Created network policy 'noicmp'"
     ],
@@ -32760,10 +32760,10 @@
     "time": null
   },
   {
-    "command": "network policy_list",
+    "command": "network policy list",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_list",
+    "command_issued": "network policy list",
     "ok": [],
     "warning": [],
     "error": [],
@@ -32881,10 +32881,10 @@
     "time": null
   },
   {
-    "command": "network policy_info SecurePolicy",
+    "command": "network policy info SecurePolicy",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_info SecurePolicy",
+    "command_issued": "network policy info SecurePolicy",
     "ok": [],
     "warning": [],
     "error": [],
@@ -32932,10 +32932,10 @@
     "time": null
   },
   {
-    "command": "network policy_info Autoconfigure",
+    "command": "network policy info Autoconfigure",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_info Autoconfigure",
+    "command_issued": "network policy info Autoconfigure",
     "ok": [],
     "warning": [],
     "error": [],
@@ -32978,10 +32978,10 @@
     "time": null
   },
   {
-    "command": "network policy_add 10.0.2.0/28 SecurePolicy",
+    "command": "network policy add 10.0.2.0/28 SecurePolicy",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_add 10.0.2.0/28 SecurePolicy",
+    "command_issued": "network policy add 10.0.2.0/28 SecurePolicy",
     "ok": [
       "Added network policy 'securepolicy' to 10.0.2.0/28"
     ],
@@ -33023,10 +33023,10 @@
     "time": null
   },
   {
-    "command": "network policy_add 10.0.2.0/28 Autoconfigure",
+    "command": "network policy add 10.0.2.0/28 Autoconfigure",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_add 10.0.2.0/28 Autoconfigure # requires force",
+    "command_issued": "network policy add 10.0.2.0/28 Autoconfigure # requires force",
     "ok": [],
     "warning": [
       "Network 10.0.2.0/28 already has the policy 'securepolicy'. Must force."
@@ -33102,10 +33102,10 @@
     "time": null
   },
   {
-    "command": "network policy_add 10.0.2.0/28 Autoconfigure -force",
+    "command": "network policy add 10.0.2.0/28 Autoconfigure -force",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_add 10.0.2.0/28 Autoconfigure -force",
+    "command_issued": "network policy add 10.0.2.0/28 Autoconfigure -force",
     "ok": [
       "Added network policy 'autoconfigure' to 10.0.2.0/28"
     ],
@@ -33394,10 +33394,10 @@
     "time": null
   },
   {
-    "command": "network policy_delete Autoconfigure",
+    "command": "network policy delete Autoconfigure",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_delete Autoconfigure # requires force",
+    "command_issued": "network policy delete Autoconfigure # requires force",
     "ok": [],
     "warning": [
       "Policy 'autoconfigure' is assigned to the following networks: '10.0.2.0/28'. Must force."
@@ -33476,10 +33476,10 @@
     "time": null
   },
   {
-    "command": "network policy_delete Autoconfigure -force",
+    "command": "network policy delete Autoconfigure -force",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_delete Autoconfigure -force",
+    "command_issued": "network policy delete Autoconfigure -force",
     "ok": [
       "Deleted network policy 'Autoconfigure'"
     ],
@@ -33579,10 +33579,10 @@
     "time": null
   },
   {
-    "command": "network policy_list",
+    "command": "network policy list",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_list",
+    "command_issued": "network policy list",
     "ok": [],
     "warning": [],
     "error": [],
@@ -33668,10 +33668,10 @@
     "time": null
   },
   {
-    "command": "network policy_add 10.0.2.0/28 SecurePolicy",
+    "command": "network policy add 10.0.2.0/28 SecurePolicy",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_add 10.0.2.0/28 SecurePolicy",
+    "command_issued": "network policy add 10.0.2.0/28 SecurePolicy",
     "ok": [
       "Added network policy 'securepolicy' to 10.0.2.0/28"
     ],
@@ -33721,10 +33721,10 @@
     "time": null
   },
   {
-    "command": "network policy_rename SecurePolicy InsecurePolicy",
+    "command": "network policy rename SecurePolicy InsecurePolicy",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_rename SecurePolicy InsecurePolicy",
+    "command_issued": "network policy rename SecurePolicy InsecurePolicy",
     "ok": [
       "Renamed network policy 'SecurePolicy' to 'InsecurePolicy'"
     ],
@@ -33791,10 +33791,10 @@
     "time": null
   },
   {
-    "command": "network policy_list",
+    "command": "network policy list",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_list",
+    "command_issued": "network policy list",
     "ok": [],
     "warning": [],
     "error": [],
@@ -34013,10 +34013,10 @@
     "time": null
   },
   {
-    "command": "network policy_set_description InsecurePolicy \"Insecure policy for a network\"",
+    "command": "network policy set_description InsecurePolicy \"Insecure policy for a network\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_set_description InsecurePolicy \"Insecure policy for a network\"",
+    "command_issued": "network policy set_description InsecurePolicy \"Insecure policy for a network\"",
     "ok": [
       "Set new description for network policy 'InsecurePolicy'"
     ],
@@ -34083,10 +34083,10 @@
     "time": null
   },
   {
-    "command": "network policy_attribute_add InsecurePolicy baz",
+    "command": "network policy attribute add InsecurePolicy baz",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_attribute_add InsecurePolicy baz",
+    "command_issued": "network policy attribute add InsecurePolicy baz",
     "ok": [
       "Added attribute 'baz' to policy 'insecurepolicy'"
     ],
@@ -34189,10 +34189,10 @@
     "time": null
   },
   {
-    "command": "network policy_attribute_set_description baz \"Baz attribute (new)\"",
+    "command": "network policy attribute set_description baz \"Baz attribute (new)\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_attribute_set_description baz \"Baz attribute (new)\"",
+    "command_issued": "network policy attribute set_description baz \"Baz attribute (new)\"",
     "ok": [
       "Set new description for network policy attribute 'baz'"
     ],
@@ -34237,10 +34237,10 @@
     "time": null
   },
   {
-    "command": "network policy_attribute_list",
+    "command": "network policy attribute list",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_attribute_list",
+    "command_issued": "network policy attribute list",
     "ok": [],
     "warning": [],
     "error": [],
@@ -34292,10 +34292,10 @@
     "time": null
   },
   {
-    "command": "network policy_attribute_remove InsecurePolicy foo",
+    "command": "network policy attribute remove InsecurePolicy foo",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_attribute_remove InsecurePolicy foo",
+    "command_issued": "network policy attribute remove InsecurePolicy foo",
     "ok": [
       "Removed attribute 'foo' from policy 'insecurepolicy'"
     ],
@@ -34394,10 +34394,10 @@
     "time": null
   },
   {
-    "command": "network policy_info InsecurePolicy",
+    "command": "network policy info InsecurePolicy",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_info InsecurePolicy",
+    "command_issued": "network policy info InsecurePolicy",
     "ok": [],
     "warning": [],
     "error": [],
@@ -34492,10 +34492,10 @@
     "time": null
   },
   {
-    "command": "network policy_attribute_delete bar",
+    "command": "network policy attribute delete bar",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_attribute_delete bar # requires force (in use)",
+    "command_issued": "network policy attribute delete bar # requires force (in use)",
     "ok": [],
     "warning": [
       "Attribute 'bar' is used by the following policies: 'insecurepolicy'. Must force."
@@ -34556,10 +34556,10 @@
     "time": null
   },
   {
-    "command": "network policy_attribute_delete bar -force",
+    "command": "network policy attribute delete bar -force",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_attribute_delete bar -force",
+    "command_issued": "network policy attribute delete bar -force",
     "ok": [
       "Deleted network policy attribute 'bar'"
     ],
@@ -34860,10 +34860,10 @@
     "time": null
   },
   {
-    "command": "network community_create 10.0.2.0/28 guests \"Guest hosts.\"",
+    "command": "network community create 10.0.2.0/28 guests \"Guest hosts.\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_create 10.0.2.0/28 guests \"Guest hosts.\"",
+    "command_issued": "network community create 10.0.2.0/28 guests \"Guest hosts.\"",
     "ok": [
       "Created community 'guests' for network 10.0.2.0/28"
     ],
@@ -34928,10 +34928,10 @@
     "time": null
   },
   {
-    "command": "network community_create 10.0.2.0/28 lab \"Lab hosts.\"",
+    "command": "network community create 10.0.2.0/28 lab \"Lab hosts.\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_create 10.0.2.0/28 lab \"Lab hosts.\"",
+    "command_issued": "network community create 10.0.2.0/28 lab \"Lab hosts.\"",
     "ok": [
       "Created community 'lab' for network 10.0.2.0/28"
     ],
@@ -35007,10 +35007,10 @@
     "time": null
   },
   {
-    "command": "network community_list 10.0.2.0/28",
+    "command": "network community list 10.0.2.0/28",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_list 10.0.2.0/28",
+    "command_issued": "network community list 10.0.2.0/28",
     "ok": [],
     "warning": [],
     "error": [],
@@ -35090,10 +35090,10 @@
     "time": null
   },
   {
-    "command": "network community_host_add tinyhost guests",
+    "command": "network community host add tinyhost guests",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_host_add tinyhost guests",
+    "command_issued": "network community host add tinyhost guests",
     "ok": [
       "Added host 'tinyhost.example.org' to community 'guests'"
     ],
@@ -35451,10 +35451,10 @@
     "time": null
   },
   {
-    "command": "network community_host_add tinyhost lab",
+    "command": "network community host add tinyhost lab",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_host_add tinyhost lab",
+    "command_issued": "network community host add tinyhost lab",
     "ok": [
       "Added host 'tinyhost.example.org' to community 'lab'"
     ],
@@ -35706,10 +35706,10 @@
     "time": null
   },
   {
-    "command": "network community_info 10.0.2.0/28 guests",
+    "command": "network community info 10.0.2.0/28 guests",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_info 10.0.2.0/28 guests",
+    "command_issued": "network community info 10.0.2.0/28 guests",
     "ok": [],
     "warning": [],
     "error": [],
@@ -35749,10 +35749,10 @@
     "time": null
   },
   {
-    "command": "network community_info 10.0.2.0/28 lab",
+    "command": "network community info 10.0.2.0/28 lab",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_info 10.0.2.0/28 lab",
+    "command_issued": "network community info 10.0.2.0/28 lab",
     "ok": [],
     "warning": [],
     "error": [],
@@ -35795,10 +35795,10 @@
     "time": null
   },
   {
-    "command": "network policy_create CustomPattern \"Custom community mapping template pattern\" -pattern \"custom\"",
+    "command": "network policy create CustomPattern \"Custom community mapping template pattern\" -pattern \"custom\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_create CustomPattern \"Custom community mapping template pattern\" -pattern \"custom\" # no attributes",
+    "command_issued": "network policy create CustomPattern \"Custom community mapping template pattern\" -pattern \"custom\" # no attributes",
     "ok": [
       "Created network policy 'custompattern'"
     ],
@@ -35975,10 +35975,10 @@
     "time": null
   },
   {
-    "command": "network policy_info CustomPattern",
+    "command": "network policy info CustomPattern",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_info CustomPattern",
+    "command_issued": "network policy info CustomPattern",
     "ok": [],
     "warning": [],
     "error": [],
@@ -36053,10 +36053,10 @@
     "time": null
   },
   {
-    "command": "network community_create 10.0.3.0/24 foo \"Foo community\"",
+    "command": "network community create 10.0.3.0/24 foo \"Foo community\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_create 10.0.3.0/24 foo \"Foo community\"",
+    "command_issued": "network community create 10.0.3.0/24 foo \"Foo community\"",
     "ok": [
       "Created community 'foo' for network 10.0.3.0/24"
     ],
@@ -36116,10 +36116,10 @@
     "time": null
   },
   {
-    "command": "network community_info 10.0.3.0/24 foo",
+    "command": "network community info 10.0.3.0/24 foo",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_info 10.0.3.0/24 foo",
+    "command_issued": "network community info 10.0.3.0/24 foo",
     "ok": [],
     "warning": [],
     "error": [],
@@ -36159,10 +36159,10 @@
     "time": null
   },
   {
-    "command": "network policy_set_pattern CustomPattern \"newpattern\"",
+    "command": "network policy set_pattern CustomPattern \"newpattern\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_set_pattern CustomPattern \"newpattern\"",
+    "command_issued": "network policy set_pattern CustomPattern \"newpattern\"",
     "ok": [
       "Set new community mapping template pattern for network policy 'CustomPattern'"
     ],
@@ -36211,10 +36211,10 @@
     "time": null
   },
   {
-    "command": "network community_info 10.0.3.0/24 foo",
+    "command": "network community info 10.0.3.0/24 foo",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_info 10.0.3.0/24 foo",
+    "command_issued": "network community info 10.0.3.0/24 foo",
     "ok": [],
     "warning": [],
     "error": [],
@@ -36254,10 +36254,10 @@
     "time": null
   },
   {
-    "command": "network policy_unset_pattern CustomPattern",
+    "command": "network policy unset_pattern CustomPattern",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_unset_pattern CustomPattern",
+    "command_issued": "network policy unset_pattern CustomPattern",
     "ok": [
       "Unset community mapping template pattern for network policy 'CustomPattern'"
     ],
@@ -36306,10 +36306,10 @@
     "time": null
   },
   {
-    "command": "network community_info 10.0.3.0/24 foo",
+    "command": "network community info 10.0.3.0/24 foo",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_info 10.0.3.0/24 foo",
+    "command_issued": "network community info 10.0.3.0/24 foo",
     "ok": [],
     "warning": [],
     "error": [],
@@ -36417,10 +36417,10 @@
     "time": null
   },
   {
-    "command": "network policy_delete CustomPattern",
+    "command": "network policy delete CustomPattern",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network policy_delete CustomPattern",
+    "command_issued": "network policy delete CustomPattern",
     "ok": [
       "Deleted network policy 'CustomPattern'"
     ],
@@ -36471,10 +36471,10 @@
     "time": null
   },
   {
-    "command": "network community_rename 10.0.2.0/28 lab labequipment",
+    "command": "network community rename 10.0.2.0/28 lab labequipment",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_rename 10.0.2.0/28 lab labequipment",
+    "command_issued": "network community rename 10.0.2.0/28 lab labequipment",
     "ok": [
       "Renamed community 'lab' to 'labequipment'"
     ],
@@ -36531,10 +36531,10 @@
     "time": null
   },
   {
-    "command": "network community_set_description 10.0.2.0/28 labequipment \"Lab equipment (expensive)\"",
+    "command": "network community set_description 10.0.2.0/28 labequipment \"Lab equipment (expensive)\"",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_set_description 10.0.2.0/28 labequipment \"Lab equipment (expensive)\"",
+    "command_issued": "network community set_description 10.0.2.0/28 labequipment \"Lab equipment (expensive)\"",
     "ok": [
       "Set new description for community 'labequipment'"
     ],
@@ -36591,10 +36591,10 @@
     "time": null
   },
   {
-    "command": "network community_info 10.0.2.0/28 labequipment",
+    "command": "network community info 10.0.2.0/28 labequipment",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_info 10.0.2.0/28 labequipment",
+    "command_issued": "network community info 10.0.2.0/28 labequipment",
     "ok": [],
     "warning": [],
     "error": [],
@@ -36895,10 +36895,10 @@
     "time": null
   },
   {
-    "command": "network community_host_add tinierhost guests",
+    "command": "network community host add tinierhost guests",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_host_add tinierhost guests",
+    "command_issued": "network community host add tinierhost guests",
     "ok": [],
     "warning": [],
     "error": [
@@ -37003,10 +37003,10 @@
     "time": null
   },
   {
-    "command": "network community_list 10.0.2.0/28 -hosts",
+    "command": "network community list 10.0.2.0/28 -hosts",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_list 10.0.2.0/28 -hosts",
+    "command_issued": "network community list 10.0.2.0/28 -hosts",
     "ok": [],
     "warning": [],
     "error": [],
@@ -37453,10 +37453,10 @@
     "time": null
   },
   {
-    "command": "network community_host_add mediumhost labequipment",
+    "command": "network community host add mediumhost labequipment",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_host_add mediumhost labequipment # fails, community not found in network",
+    "command_issued": "network community host add mediumhost labequipment # fails, community not found in network",
     "ok": [],
     "warning": [
       "Community 'labequipment' not found."
@@ -37545,10 +37545,10 @@
     "time": null
   },
   {
-    "command": "network community_delete 10.0.2.0/28 labequipment",
+    "command": "network community delete 10.0.2.0/28 labequipment",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_delete 10.0.2.0/28 labequipment # fails",
+    "command_issued": "network community delete 10.0.2.0/28 labequipment # fails",
     "ok": [],
     "warning": [
       "Community 'labequipment' has hosts. Must force."
@@ -37659,10 +37659,10 @@
     "time": null
   },
   {
-    "command": "network community_host_remove tinyhost labequipment",
+    "command": "network community host remove tinyhost labequipment",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_host_remove tinyhost labequipment",
+    "command_issued": "network community host remove tinyhost labequipment",
     "ok": [
       "Removed host 'tinyhost.example.org' (IP: 10.0.2.4) from community 'labequipment'"
     ],
@@ -37749,10 +37749,10 @@
     "time": null
   },
   {
-    "command": "network community_delete 10.0.2.0/28 labequipment",
+    "command": "network community delete 10.0.2.0/28 labequipment",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_delete 10.0.2.0/28 labequipment",
+    "command_issued": "network community delete 10.0.2.0/28 labequipment",
     "ok": [
       "Deleted community 'labequipment'"
     ],
@@ -37805,10 +37805,10 @@
     "time": null
   },
   {
-    "command": "network community_delete 10.0.2.0/28 guests",
+    "command": "network community delete 10.0.2.0/28 guests",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_delete 10.0.2.0/28 guests # fails",
+    "command_issued": "network community delete 10.0.2.0/28 guests # fails",
     "ok": [
       "Deleted community 'guests'"
     ],
@@ -37861,10 +37861,10 @@
     "time": null
   },
   {
-    "command": "network community_delete 10.0.2.0/28 guests -force",
+    "command": "network community delete 10.0.2.0/28 guests -force",
     "command_filter": null,
     "command_filter_negate": false,
-    "command_issued": "network community_delete 10.0.2.0/28 guests -force",
+    "command_issued": "network community delete 10.0.2.0/28 guests -force",
     "ok": [],
     "warning": [
       "Community 'guests' not found."
