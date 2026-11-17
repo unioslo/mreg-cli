@@ -5,7 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Changed
+
+- Network policy and community commands are now nested subcommands. The old names still work as hidden aliases.
+
+| Old | New |
+| --- | --- |
+| `network policy_add` | `network policy add` |
+| `network policy_create` | `network policy create` |
+| `network policy_delete` | `network policy delete` |
+| `network policy_info` | `network policy info` |
+| `network policy_list` | `network policy list` |
+| `network policy_rename` | `network policy rename` |
+| `network policy_remove` | `network policy remove` |
+| `network policy_set_description` | `network policy set_description` |
+| `network policy_set_pattern` | `network policy set_pattern` |
+| `network policy_unset_pattern` | `network policy unset_pattern` |
+| `network policy_attribute_add` | `network policy attribute add` |
+| `network policy_attribute_create` | `network policy attribute create` |
+| `network policy_attribute_delete` | `network policy attribute delete` |
+| `network policy_attribute_info` | `network policy attribute info` |
+| `network policy_attribute_list` | `network policy attribute list` |
+| `network policy_attribute_remove` | `network policy attribute remove` |
+| `network policy_attribute_set_description` | `network policy attribute set_description` |
+| `network community_create` | `network community create` |
+| `network community_delete` | `network community delete` |
+| `network community_info` | `network community info` |
+| `network community_list` | `network community list` |
+| `network community_rename` | `network community rename` |
+| `network community_set_description` | `network community set_description` |
+| `network community_host_add` | `network community host add` |
+| `network community_host_remove` | `network community host remove` |
 
 ## [1.13.0](https://github.com/unioslo/mreg-cli/releases/tag/1.13.0) - 2026-11-02
 

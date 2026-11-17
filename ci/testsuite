@@ -438,90 +438,90 @@ label remove postit
 
 ##### Tests: Network Policy
 network create -network 10.0.2.0/28 -desc "TinyNet"
-network policy_attribute_create foo "Foo attribute"
-network policy_attribute_create bar "Bar attribute"
-network policy_attribute_create baz "Baz attribute"
-network policy_create SecurePolicy "Secure policy for a network" -attribute foo -attribute bar
-network policy_create Autoconfigure "Automatic host configuration" -attribute baz
-network policy_create NoICMP "ICMP disallowed" # no attributes
-network policy_list
-network policy_info SecurePolicy
-network policy_info Autoconfigure
-network policy_add 10.0.2.0/28 SecurePolicy
-network policy_add 10.0.2.0/28 Autoconfigure # requires force
-network policy_add 10.0.2.0/28 Autoconfigure -force
+network policy attribute create foo "Foo attribute"
+network policy attribute create bar "Bar attribute"
+network policy attribute create baz "Baz attribute"
+network policy create SecurePolicy "Secure policy for a network" -attribute foo -attribute bar
+network policy create Autoconfigure "Automatic host configuration" -attribute baz
+network policy create NoICMP "ICMP disallowed" # no attributes
+network policy list
+network policy info SecurePolicy
+network policy info Autoconfigure
+network policy add 10.0.2.0/28 SecurePolicy
+network policy add 10.0.2.0/28 Autoconfigure # requires force
+network policy add 10.0.2.0/28 Autoconfigure -force
 network set_max_communities 10.0.2.0/28 5
 network info 10.0.2.0/28
 network unset_max_communities 10.0.2.0/28
 network info 10.0.2.0/28
-network policy_delete Autoconfigure # requires force
-network policy_delete Autoconfigure -force
+network policy delete Autoconfigure # requires force
+network policy delete Autoconfigure -force
 network info 10.0.2.0/28
-network policy_list
-network policy_add 10.0.2.0/28 SecurePolicy
-network policy_rename SecurePolicy InsecurePolicy
-network policy_list
+network policy list
+network policy add 10.0.2.0/28 SecurePolicy
+network policy rename SecurePolicy InsecurePolicy
+network policy list
 network info 10.0.2.0/28
-network policy_set_description InsecurePolicy "Insecure policy for a network"
-network policy_attribute_add InsecurePolicy baz
-network policy_attribute_set_description baz "Baz attribute (new)"
-network policy_attribute_list
-network policy_attribute_remove InsecurePolicy foo
-network policy_info InsecurePolicy
-network policy_attribute_delete bar # requires force (in use)
-network policy_attribute_delete bar -force
+network policy set_description InsecurePolicy "Insecure policy for a network"
+network policy attribute add InsecurePolicy baz
+network policy attribute set_description baz "Baz attribute (new)"
+network policy attribute list
+network policy attribute remove InsecurePolicy foo
+network policy info InsecurePolicy
+network policy attribute delete bar # requires force (in use)
+network policy attribute delete bar -force
 
 # Communities
 host add tinyhost -ip 10.0.2.0/28 -macaddress 11:22:33:aa:bb:cc -contact tinyhost@example.org
-network community_create 10.0.2.0/28 guests "Guest hosts."
-network community_create 10.0.2.0/28 lab "Lab hosts."
-network community_list 10.0.2.0/28
-network community_host_add tinyhost guests
+network community create 10.0.2.0/28 guests "Guest hosts."
+network community create 10.0.2.0/28 lab "Lab hosts."
+network community list 10.0.2.0/28
+network community host add tinyhost guests
 host info tinyhost
-network community_host_add tinyhost lab
+network community host add tinyhost lab
 host info tinyhost
-# TODO: test network community_host_add with specific IP address on host with multiple IPs
-network community_info 10.0.2.0/28 guests
-network community_info 10.0.2.0/28 lab
+# TODO: test network community host add with specific IP address on host with multiple IPs
+network community info 10.0.2.0/28 guests
+network community info 10.0.2.0/28 lab
 
 # Custom community mapping template pattern
-network policy_create CustomPattern "Custom community mapping template pattern" -pattern "custom" # no attributes
+network policy create CustomPattern "Custom community mapping template pattern" -pattern "custom" # no attributes
 network create -network 10.0.3.0/24 -desc "CustomPatternNet" -policy CustomPattern # add policy during creation
-network policy_info CustomPattern
-network community_create 10.0.3.0/24 foo "Foo community"
-network community_info 10.0.3.0/24 foo
-network policy_set_pattern CustomPattern "newpattern"
-network community_info 10.0.3.0/24 foo
-network policy_unset_pattern CustomPattern
-network community_info 10.0.3.0/24 foo
+network policy info CustomPattern
+network community create 10.0.3.0/24 foo "Foo community"
+network community info 10.0.3.0/24 foo
+network policy set_pattern CustomPattern "newpattern"
+network community info 10.0.3.0/24 foo
+network policy unset_pattern CustomPattern
+network community info 10.0.3.0/24 foo
 network remove 10.0.3.0/24 -force
-network policy_delete CustomPattern
+network policy delete CustomPattern
 
 ## Rename community
-network community_rename 10.0.2.0/28 lab labequipment
-network community_set_description 10.0.2.0/28 labequipment "Lab equipment (expensive)"
-network community_info 10.0.2.0/28 labequipment
+network community rename 10.0.2.0/28 lab labequipment
+network community set_description 10.0.2.0/28 labequipment "Lab equipment (expensive)"
+network community info 10.0.2.0/28 labequipment
 
 ## Add another host to a community before displaying communities with hosts
 host add tinierhost -ip 10.0.2.0/28 -contact tinierhost@example.org
-network community_host_add tinierhost guests
-network community_list 10.0.2.0/28 -hosts
+network community host add tinierhost guests
+network community list 10.0.2.0/28 -hosts
 
 ## Attempt to add host from other network to community (fails)
 network create -network 10.0.0.0/24 -desc "MediumNet"
 host add mediumhost -ip 10.0.0.0/24 -macaddress 11:22:34:aa:bb:cd -contact mediumhost@example.org
-network community_host_add mediumhost labequipment # fails, community not found in network
+network community host add mediumhost labequipment # fails, community not found in network
 host remove mediumhost -force
 network remove 10.0.0.0/24
 
 ## Delete community (remove host from community first)
-network community_delete 10.0.2.0/28 labequipment # fails
-network community_host_remove tinyhost labequipment
-network community_delete 10.0.2.0/28 labequipment
+network community delete 10.0.2.0/28 labequipment # fails
+network community host remove tinyhost labequipment
+network community delete 10.0.2.0/28 labequipment
 
 ## Delete community with hosts (force)
-network community_delete 10.0.2.0/28 guests # fails
-network community_delete 10.0.2.0/28 guests -force
+network community delete 10.0.2.0/28 guests # fails
+network community delete 10.0.2.0/28 guests -force
 
 ## Clean up community resources
 host remove tinyhost

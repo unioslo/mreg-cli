@@ -44,6 +44,16 @@ from mreg_cli.utilities.shared import convert_wildcard_to_regex, string_to_int
 from mreg_cli.utilities.validators import is_valid_category_tag, is_valid_location_tag
 
 command_registry = CommandRegistry()
+policy = command_registry.group("policy", "Manage network policies.", "Manage network policies")
+attribute = policy.group(
+    "attribute", "Manage network policy attributes.", "Manage network policy attributes"
+)
+community = command_registry.group(
+    "community", "Manage network communities.", "Manage network communities"
+)
+community_host = community.group(
+    "host", "Manage hosts in network communities.", "Manage community hosts"
+)
 
 
 class NetworkCommands(BaseCommand):
@@ -687,9 +697,9 @@ def unset_max_communities(args: argparse.Namespace) -> None:
 ##########################################
 
 
-# TODO[rename]: network policy add
-@command_registry.register_command(
-    prog="policy_add",
+@policy.register_command(
+    prog="add",
+    aliases=["network policy_add"],
     description="Add a policy to a network",
     short_desc="Add a policy to a network",
     flags=[
@@ -724,9 +734,9 @@ def policy_add(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Added network policy {pol.name!r} to {network}")
 
 
-# TODO[rename]: network policy create
-@command_registry.register_command(
-    prog="policy_create",
+@policy.register_command(
+    prog="create",
+    aliases=["network policy_create"],
     description="Create a network policy. Separate attributes with spaces.",
     short_desc="Create a network policy",
     flags=[
@@ -774,9 +784,9 @@ def policy_create(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Created network policy {pol.name!r}")
 
 
-# TODO[rename]: network policy delete
-@command_registry.register_command(
-    prog="policy_delete",
+@policy.register_command(
+    prog="delete",
+    aliases=["network policy_delete"],
     description="Delete a network policy",
     short_desc="Delete a network policy",
     flags=[
@@ -806,9 +816,9 @@ def policy_delete(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Deleted network policy {name!r}")
 
 
-# TODO[rename]: network policy info
-@command_registry.register_command(
-    prog="policy_info",
+@policy.register_command(
+    prog="info",
+    aliases=["network policy_info"],
     description="Show information about a network policy",
     short_desc="Show information about a network policy",
     flags=[
@@ -827,9 +837,9 @@ def policy_info(args: argparse.Namespace) -> None:
     output_network_policy(policy)
 
 
-# TODO[rename]: network policy list
-@command_registry.register_command(
-    prog="policy_list",
+@policy.register_command(
+    prog="list",
+    aliases=["network policy_list"],
     description="List all or a subset of policies",
     short_desc="List policies",
     flags=[
@@ -857,9 +867,9 @@ def policy_list(args: argparse.Namespace) -> None:
     output_network_policies(policies)
 
 
-# TODO[rename]: network policy rename
-@command_registry.register_command(
-    prog="policy_rename",
+@policy.register_command(
+    prog="rename",
+    aliases=["network policy_rename"],
     description="Rename a network policy",
     short_desc="Rename a network policy",
     flags=[
@@ -881,9 +891,9 @@ def policy_rename(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Renamed network policy {oldname!r} to {newname!r}")
 
 
-# TODO[rename]: network policy remove
-@command_registry.register_command(
-    prog="policy_remove",
+@policy.register_command(
+    prog="remove",
+    aliases=["network policy_remove"],
     description="Remove a network's policy",
     short_desc="Remove a network's policy",
     flags=[
@@ -908,9 +918,9 @@ def policy_remove(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Removed network policy from {network}")
 
 
-# TODO[rename]: network policy set_description
-@command_registry.register_command(
-    prog="policy_set_description",
+@policy.register_command(
+    prog="set_description",
+    aliases=["network policy_set_description"],
     description="Set a description on a network policy",
     short_desc="Set a description on a network policy",
     flags=[
@@ -932,9 +942,9 @@ def policy_set_description(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Set new description for network policy {policy!r}")
 
 
-# TODO[rename]: network policy set_pattern
-@command_registry.register_command(
-    prog="policy_set_pattern",
+@policy.register_command(
+    prog="set_pattern",
+    aliases=["network policy_set_pattern"],
     description="Set the global community mapping template pattern for a network policy",
     short_desc="Set community mapping pattern",
     flags=[
@@ -958,9 +968,9 @@ def policy_set_pattern(args: argparse.Namespace) -> None:
     )
 
 
-# TODO[rename]: network policy unset_pattern
-@command_registry.register_command(
-    prog="policy_unset_pattern",
+@policy.register_command(
+    prog="unset_pattern",
+    aliases=["network policy_unset_pattern"],
     description=(
         "Unset the global community mapping template pattern for a network policy. "
         "Reverts the pattern to the global default."
@@ -990,9 +1000,9 @@ def policy_unset_pattern(args: argparse.Namespace) -> None:
 ##########################################
 
 
-# TODO[rename]: network policy attribute create
-@command_registry.register_command(
-    prog="policy_attribute_add",
+@attribute.register_command(
+    prog="add",
+    aliases=["network policy_attribute_add"],
     description="Add an attribute to a policy",
     short_desc="Add attribute to policy",
     flags=[
@@ -1020,9 +1030,9 @@ def policy_attribute_add(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Added attribute {attr.name!r} to policy {pol.name!r}")
 
 
-# TODO[rename]: network policy attribute create
-@command_registry.register_command(
-    prog="policy_attribute_create",
+@attribute.register_command(
+    prog="create",
+    aliases=["network policy_attribute_create"],
     description="Create a network policy attribute",
     short_desc="Create a network policy attribute",
     flags=[
@@ -1046,9 +1056,9 @@ def policy_attribute_create(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Created network policy attribute {pol.name!r}")
 
 
-# TODO[rename]: network policy attribute delete
-@command_registry.register_command(
-    prog="policy_attribute_delete",
+@attribute.register_command(
+    prog="delete",
+    aliases=["network policy_attribute_delete"],
     description="Delete a network policy attribute",
     short_desc="Delete a network policy attribute",
     flags=[
@@ -1078,9 +1088,9 @@ def policy_attribute_delete(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Deleted network policy attribute {attribute!r}")
 
 
-# TODO[rename]: network policy attribute info
-@command_registry.register_command(
-    prog="policy_attribute_info",
+@attribute.register_command(
+    prog="info",
+    aliases=["network policy_attribute_info"],
     description="Show information about a network policy attribute",
     short_desc="Policy attribute info",
     flags=[
@@ -1099,9 +1109,9 @@ def policy_attribute_info(args: argparse.Namespace) -> None:
     output_network_policy_attribute(attr)
 
 
-# TODO[rename]: network policy attribute list
-@command_registry.register_command(
-    prog="policy_attribute_list",
+@attribute.register_command(
+    prog="list",
+    aliases=["network policy_attribute_list"],
     description="List all network policy attributes",
     short_desc="List network policy attributes",
     flags=[
@@ -1133,9 +1143,9 @@ def policy_attribute_list(args: argparse.Namespace) -> None:
         OutputManager().add_line("No match.")
 
 
-# TODO[rename]: network policy attribute create
-@command_registry.register_command(
-    prog="policy_attribute_remove",
+@attribute.register_command(
+    prog="remove",
+    aliases=["network policy_attribute_remove"],
     description="Remove an attribute from a policy",
     short_desc="Remove attribute from policy",
     flags=[
@@ -1163,8 +1173,9 @@ def policy_attribute_remove(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Removed attribute {attr.name!r} from policy {pol.name!r}")
 
 
-@command_registry.register_command(
-    prog="policy_attribute_set_description",
+@attribute.register_command(
+    prog="set_description",
+    aliases=["network policy_attribute_set_description"],
     description="Set the description of a network policy attribute",
     short_desc="Set network policy attribute description",
     flags=[
@@ -1191,9 +1202,9 @@ def policy_attribute_set_description(args: argparse.Namespace) -> None:
 ##########################################
 
 
-# TODO[rename]: network community create
-@command_registry.register_command(
-    prog="community_create",
+@community.register_command(
+    prog="create",
+    aliases=["network community_create"],
     description="Create a network community",
     short_desc="Create a network community",
     flags=[
@@ -1220,9 +1231,9 @@ def community_create(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Created community {com.name!r} for network {network}")
 
 
-# TODO[rename]: network community delete
-@command_registry.register_command(
-    prog="community_delete",
+@community.register_command(
+    prog="delete",
+    aliases=["network community_delete"],
     description="Delete a community",
     short_desc="Delete a community",
     flags=[
@@ -1250,9 +1261,9 @@ def community_delete(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Deleted community {community!r}")
 
 
-# TODO[rename]: network community info
-@command_registry.register_command(
-    prog="community_info",
+@community.register_command(
+    prog="info",
+    aliases=["network community_info"],
     description="Show detailed information about a community",
     short_desc="Show community info",
     flags=[
@@ -1273,9 +1284,9 @@ def community_info(args: argparse.Namespace) -> None:
     output_community(com)
 
 
-# TODO[rename]: network community list
-@command_registry.register_command(
-    prog="community_list",
+@community.register_command(
+    prog="list",
+    aliases=["network community_list"],
     description="List all communities in a network",
     short_desc="List communities",
     flags=[
@@ -1304,9 +1315,9 @@ def community_list(args: argparse.Namespace) -> None:
     output_communities(net.communities, show_hosts=hosts, sort=sort)
 
 
-# TODO[rename]: network community rename
-@command_registry.register_command(
-    prog="community_rename",
+@community.register_command(
+    prog="rename",
+    aliases=["network community_rename"],
     description="Rename a community",
     short_desc="Rename a community",
     flags=[
@@ -1330,9 +1341,9 @@ def community_rename(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Renamed community {oldname!r} to {newname!r}")
 
 
-# TODO[rename]: network community set_description
-@command_registry.register_command(
-    prog="community_set_description",
+@community.register_command(
+    prog="set_description",
+    aliases=["network community_set_description"],
     description="Set description for a community",
     short_desc="Set community description",
     flags=[
@@ -1433,8 +1444,9 @@ def _get_host_community_and_ip_to_remove(
         return associations[0]
 
 
-@command_registry.register_command(
-    prog="community_host_add",
+@community_host.register_command(
+    prog="add",
+    aliases=["network community_host_add"],
     description="Add host to a community",
     short_desc="Add host to a community",
     flags=[
@@ -1466,8 +1478,9 @@ def community_host_add(args: argparse.Namespace) -> None:
     OutputManager().add_ok(f"Added host {h.name!r} to community {com.name!r}")
 
 
-@command_registry.register_command(
-    prog="community_host_remove",
+@community_host.register_command(
+    prog="remove",
+    aliases=["network community_host_remove"],
     description="Remove host from a community",
     short_desc="Remove host from a community",
     flags=[

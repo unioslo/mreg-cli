@@ -26,10 +26,14 @@ class CustomHelpFormatter(argparse.HelpFormatter):
             # Use a custom heading for subcommands
             formatted_action = "commands:\n"
 
+            # Subparsers added with help=SUPPRESS (aliases) are left out.
+            hidden = {a.dest for a in action._choices_actions if a.help is argparse.SUPPRESS}
+            visible = {k: v for k, v in action.choices.items() if k not in hidden}
+
             # Format each subcommand
-            longest_subcommand = len(max(action.choices.keys(), key=len))
+            longest_subcommand = max((len(k) for k in visible), default=0)
             padding = max(longest_subcommand, 20)
-            for subcommand, parser in action.choices.items():
+            for subcommand, parser in visible.items():
                 subcommand_help = parser.description if parser.description else ""
                 formatted_subcommand = f"  {subcommand:<{padding}} {subcommand_help}"
                 formatted_action += formatted_subcommand + "\n"

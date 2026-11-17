@@ -99,6 +99,7 @@ class Command(NamedTuple):
     short_desc: str
     callback: CommandFunc
     flags: list[Flag] | None = None
+    aliases: list[str] | None = None
 
 
 # Config

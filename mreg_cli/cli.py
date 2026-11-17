@@ -13,7 +13,7 @@ import shlex
 import sys
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any
 
 import mreg_api
 from mreg_api.client import last_request_url
@@ -24,6 +24,7 @@ from prompt_toolkit.history import FileHistory
 from mreg_cli.client import get_client
 
 # Import all the commands
+from mreg_cli.commands.base import register_commands
 from mreg_cli.commands.cache import CacheCommands
 from mreg_cli.commands.dhcp import DHCPCommands
 from mreg_cli.commands.group import GroupCommands
@@ -52,16 +53,6 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     # Can't use _SubParsersAction as generic in Python <3.9
     SubparserType = argparse._SubParsersAction[argparse.ArgumentParser]  # private attribute
-
-    # Subclasses of BaseCommand change the constructor signature from
-    # 6 arguments to a single argument `cli`. That means we cannot
-    # declare the list of commands as a list of `type[BaseCommand]`
-    # and then instantiate them. Instead, we need to declare this interface
-    # which lets the type checker understand what kind of classes we are
-    # trying to instantiate.
-    class BaseCommandSubclass(Protocol):  # noqa: D101 (undocumented-public-class)
-        def __init__(self, cli: Command) -> None: ...
-        def register_all_commands(self) -> None: ...  # noqa: D102 (undocumented-public-method
 
 
 def get_cli_history(config: MregCliConfig) -> FileHistory | None:
@@ -102,9 +93,17 @@ class Command(Completer):
     # Used to detect an error when running commands from a source file.
     last_errno: str | int | None = 0
 
-    def __init__(self, parser: argparse.ArgumentParser, flags: list[Flag], short_desc: str):
+    def __init__(
+        self,
+        parser: argparse.ArgumentParser,
+        flags: list[Flag],
+        short_desc: str,
+        hidden: bool = False,
+    ):
         """Initialize a Command object."""
         self.parser = parser
+        # Hidden commands (aliases) work, but are left out of help and completion.
+        self.hidden = hidden
         # sub is an object used for creating sub parser for this command. A
         # command/ArgParser can only have one of this object.
         self.sub: SubparserType | None = None
@@ -124,18 +123,25 @@ class Command(Completer):
         epilog: str | None = None,
         callback: CommandFunc | None = None,
         flags: list[Flag] | None = None,
+        hidden: bool = False,
     ):
         """Add a command to the current parser.
 
         :param flags: a list of Flag objects. NB: must be handled as read-only,
         since the default value is [].
+        :param hidden: hide the command from help and completion (used for aliases).
         :return: the Command object of the new command.
         """
         if flags is None:
             flags = []
         if self.sub is None:
             self.sub = _create_command_group(self.parser)
-        parser = self.sub.add_parser(prog, description=description, epilog=epilog, help=short_desc)
+        parser = self.sub.add_parser(
+            prog,
+            description=description,
+            epilog=epilog,
+            help=argparse.SUPPRESS if hidden else short_desc,
+        )
         parser.formatter_class = CustomHelpFormatter
         for f in flags:
             # Need to create a dict with the parameters so only used
@@ -169,7 +175,7 @@ class Command(Completer):
             parser.add_argument(f.name, **args)
         parser.set_defaults(func=callback)
 
-        new_cmd = Command(parser, flags, short_desc)
+        new_cmd = Command(parser, flags, short_desc, hidden=hidden)
         self.children[prog] = new_cmd
         return new_cmd
 
@@ -238,8 +244,9 @@ class Command(Completer):
         """
         # if line is empty suggest all sub commands
         if not words:
-            for name in self.children:
-                yield Completion(name, display_meta=self.children[name].short_desc)
+            for name, child in self.children.items():
+                if not child.hidden:
+                    yield Completion(name, display_meta=child.short_desc)
             return
 
         # only suggest sub commands if there's only one word on the line.
@@ -250,12 +257,12 @@ class Command(Completer):
         # NOTE: must not return at end of block or else there'll be a bug when
         # the first (and only) word is a flag.
         if len(words) < 2:
-            for name in self.children:
-                if name.startswith(cur) and cur:
+            for name, child in self.children.items():
+                if name.startswith(cur) and cur and not child.hidden:
                     yield Completion(
                         name,
                         start_position=-len(cur),
-                        display_meta=self.children[name].short_desc,
+                        display_meta=child.short_desc,
                     )
 
         # if the line starts with one of the sub commands, pass it along
@@ -319,23 +326,24 @@ class Command(Completer):
 # Top parser is the root of all the command parsers
 _top_parser = argparse.ArgumentParser(formatter_class=CustomHelpFormatter)
 cli = Command(_top_parser, list(), "")
-commands: list[type[BaseCommandSubclass]] = [
-    DHCPCommands,
-    GroupCommands,
-    HelpCommands,
-    HostCommands,
-    NetworkCommands,
-    PermissionCommands,
-    PolicyCommands,
-    ZoneCommands,
-    LabelCommands,
-    RecordingCommmands,
-    LoggingCommmands,
-    CacheCommands,
-    RootCommmands,
-]
-for command in commands:
-    command(cli).register_all_commands()
+register_commands(
+    cli,
+    [
+        DHCPCommands,
+        GroupCommands,
+        HelpCommands,
+        HostCommands,
+        NetworkCommands,
+        PermissionCommands,
+        PolicyCommands,
+        ZoneCommands,
+        LabelCommands,
+        RecordingCommmands,
+        LoggingCommmands,
+        CacheCommands,
+        RootCommmands,
+    ],
+)
 
 
 def source(files: list[Path], ignore_errors: bool, verbose: bool) -> Generator[str]:
